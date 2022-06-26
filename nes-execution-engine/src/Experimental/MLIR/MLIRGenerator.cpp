@@ -13,14 +13,17 @@
 */
 
 #include <Experimental/MLIR/MLIRGenerator.hpp>
+#include <Experimental/MLIR/YieldOperation.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -140,25 +143,25 @@ IR::Operations::OperationPtr MLIRGenerator::findLastTerminatorOp(IR::BasicBlockP
     // Generate Args for next block
     if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-        if (branchOp->getNextBlock()->getScopeLevel() <= ifParentBlockLevel) {
+        if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
             return branchOp;
         } else {
-            return findLastTerminatorOp(branchOp->getNextBlock(), ifParentBlockLevel);
+            return findLastTerminatorOp(branchOp->getNextBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
-        auto loopIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock()->getOperations().back());
-        if (loopIfOp->getElseBranchBlock()->getScopeLevel() <= ifParentBlockLevel) {
+        auto loopIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
+        if (loopIfOp->getFalseBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
             return loopIfOp;
         } else {
-            return findLastTerminatorOp(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
+            return findLastTerminatorOp(loopIfOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     } else {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-        if (ifOp->getElseBranchBlock() != nullptr) {
-            return findLastTerminatorOp(ifOp->getElseBranchBlock(), ifParentBlockLevel);
+        if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
+            return findLastTerminatorOp(ifOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         } else {
-            return findLastTerminatorOp(ifOp->getThenBranchBlock(), ifParentBlockLevel);
+            return findLastTerminatorOp(ifOp->getTrueBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     }
 }
@@ -247,8 +250,8 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
 };
 
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR) {
-    std::unordered_map<std::string, mlir::Value> firstBlockArgs;
-    generateMLIR(nesIR->getRootOperation(), firstBlockArgs);
+    ValueFrame firstframe;
+    generateMLIR(nesIR->getRootOperation(), firstframe);
     theModule->dump();
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -257,26 +260,31 @@ mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR>
     return theModule;
 }
 
-void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    auto terminatorOp = basicBlock->getOperations().back();
-    basicBlock->popOperation();
+void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame) {
+    // extract the last (terminator) operation of the block and generate operations for all remaining operations
+    //auto terminatorOp = basicBlock->getOperations().back();
+    //basicBlock->popOperation();
     for (const auto& operation : basicBlock->getOperations()) {
-        generateMLIR(operation, blockArgs);
+        generateMLIR(operation, frame);
     }
+
+    /*
     // Generate Args for next block
     if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-        if (basicBlock->getScopeLevel() <= branchOp->getNextBlock()->getScopeLevel()) {
-            generateMLIR(branchOp->getNextBlock(), blockArgs);
+        if (basicBlock->getScopeLevel() <= branchOp->getNextBlockInvocation().getBlock()->getScopeLevel()) {
+            generateMLIR(branchOp->getNextBlockInvocation().getBlock(), frame);
         } else {
-            for (int i = 0; i < (int) branchOp->getNextBlockArgs().size(); ++i) {
+            auto blockArguments = branchOp->getNextBlockInvocation().getArguments();
+            for (int i = 0; i < (int) blockArguments.size(); ++i) {
                 // If higher level block arg names are different, add values with new names and delete old entries.
-                auto nextBlockArg = branchOp->getNextBlock()->getArguments().at(i);
-                if (!(nextBlockArg->getIdentifier() == branchOp->getNextBlockArgs().at(i))
+                auto nextBlockArg = blockArguments.at(i);
+                if (!(nextBlockArg->getIdentifier() == blockArguments.at(i)->getIdentifier())
                     && !inductionVars.contains(nextBlockArg->getIdentifier())) {
-                    auto nameChangeNode = blockArgs.extract(branchOp->getNextBlockArgs().at(i));
-                    nameChangeNode.key() = nextBlockArg->getIdentifier();
-                    blockArgs.insert(std::move(nameChangeNode));
+                    // TODO what to do here?
+                    // auto nameChangeNode = frame.extract(blockArguments.at(i)->getIdentifier());
+                    // nameChangeNode.key() = nextBlockArg->getIdentifier();
+                    // frame.insert(std::move(nameChangeNode));
                 }
             }
         }
@@ -287,81 +295,116 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
             auto nextBlockArg = loopOp->getLoopHeadBlock()->getArguments().at(i);
             if (!(nextBlockArg->getIdentifier() == loopOp->getLoopBlockArgs().at(i))
                 && !inductionVars.contains(nextBlockArg->getIdentifier())) {
-                auto nameChangeNode = blockArgs.extract(loopOp->getLoopBlockArgs().at(i));
-                nameChangeNode.key() = nextBlockArg->getIdentifier();
-                blockArgs.insert(std::move(nameChangeNode));
+                // TODO what to do here?
+                //auto nameChangeNode = frame.extract(loopOp->getLoopBlockArgs().at(i));
+                //nameChangeNode.key() = nextBlockArg->getIdentifier();
+                //frame.insert(std::move(nameChangeNode));
             }
         }
-        generateMLIR(loopOp, blockArgs);
+        generateMLIR(loopOp, frame);
     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-        generateMLIR(ifOp, blockArgs);
+        generateMLIR(ifOp, frame);
     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::ReturnOp) {
         auto returnOp = std::static_pointer_cast<IR::Operations::ReturnOperation>(terminatorOp);
-        generateMLIR(returnOp, blockArgs);
+        generateMLIR(returnOp, frame);
     } else {// Currently necessary for LoopOps, where we remove the terminatorOp to prevent recursion.
-        generateMLIR(terminatorOp, blockArgs);
+        generateMLIR(terminatorOp, frame);
     }
+     */
 }
 
-void MLIRGenerator::generateMLIR(const IR::Operations::OperationPtr& operation,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(const IR::Operations::OperationPtr& operation, ValueFrame& frame) {
     switch (operation->getOperationType()) {
         case IR::Operations::Operation::OperationType::FunctionOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::FunctionOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::FunctionOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::LoopOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::LoopOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::LoopOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::ConstIntOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::ConstFloatOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::ConstFloatOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::ConstFloatOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::AddOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::AddOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::AddOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::SubOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::SubOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::SubOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::MulOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::MulOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::MulOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::DivOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::DivOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::DivOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::LoadOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::AddressOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::AddressOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::AddressOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::StoreOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::StoreOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::StoreOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::BranchOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::BranchOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::BranchOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::IfOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::IfOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::IfOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::CompareOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::CompareOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::CompareOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::ProxyCallOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::ReturnOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::ReturnOperation>(operation), blockArgs);
+            generateMLIR(std::static_pointer_cast<IR::Operations::ReturnOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::MLIR_YIELD:
+            generateMLIR(std::static_pointer_cast<IR::Operations::YieldOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::OrOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::OrOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::AndOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::AndOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::NegateOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::NegateOperation>(operation), frame);
             break;
         default: NES_NOT_IMPLEMENTED();
     }
 }
 
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> negateOperation, ValueFrame& frame) {
+    auto input = frame.getValue(negateOperation->getInput()->getIdentifier());
+    auto negate = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
+                                                       mlir::arith::CmpIPredicate::eq,
+                                                       input,
+                                                       this->getConstInt("const", 1, 0));
+    frame.setValue(negateOperation->getIdentifier(), negate);
+}
+
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::OrOperation> orOperation, ValueFrame& frame) {
+    auto leftInput = frame.getValue(orOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(orOperation->getRightInput()->getIdentifier());
+    auto mlirOrOp = builder->create<mlir::LLVM::OrOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(orOperation->getIdentifier(), mlirOrOp);
+}
+
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AndOperation> andOperation, ValueFrame& frame) {
+    auto leftInput = frame.getValue(andOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(andOperation->getRightInput()->getIdentifier());
+    auto mlirAndOp = builder->create<mlir::LLVM::AndOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(andOperation->getIdentifier(), mlirAndOp);
+}
+
 // Recursion. No dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp, ValueFrame& frame) {
     // Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
     for (auto inputArg : functionOp->getInputArgs()) {
@@ -382,26 +425,95 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperati
     // Store references to function args in the valueMap map.
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOp->getInputArgNames().size(); ++i) {
-        blockArgs.emplace(std::pair{functionOp->getInputArgNames().at(i), valueMapIterator[i]});
+        frame.setValue(functionOp->getInputArgNames().at(i), valueMapIterator[i]);
     }
 
     // Generate MLIR for operations in function body (BasicBlock)
-    generateMLIR(functionOp->getFunctionBasicBlock(), blockArgs);
+    generateMLIR(functionOp->getFunctionBasicBlock(), frame);
 
     theModule.push_back(mlirFunction);
 }
 
+void MLIRGenerator::generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
+    auto loopInfo = std::dynamic_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
+    auto mlirLowerBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("lowerBound"),
+                                                                    builder->getIndexType(),
+                                                                    frame.getValue(loopInfo->lowerBound.lock()->getIdentifier()));
+
+    auto mlirUpperBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("upperBound"),
+                                                                    builder->getIndexType(),
+                                                                    frame.getValue(loopInfo->upperBound.lock()->getIdentifier()));
+    auto mlirStepSize = builder->create<mlir::arith::IndexCastOp>(getNameLoc("stepSize"),
+                                                                  builder->getIndexType(),
+                                                                  frame.getValue(loopInfo->stepSize.lock()->getIdentifier()));
+    std::vector<mlir::Value> iteratorArgs{};
+    for (auto argument : loopInfo->loopInitialIteratorArguments) {
+        iteratorArgs.emplace_back(frame.getValue(argument->getIdentifier()));
+    }
+    auto mlirForLoop =
+        builder->create<mlir::scf::ForOp>(getNameLoc("forLoop"), mlirLowerBound, mlirUpperBound, mlirStepSize, iteratorArgs);
+    builder->setInsertionPointToStart(mlirForLoop.getBody());
+    // generate loop body
+    {
+        auto loopBodyBlock = loopInfo->loopBodyBlock;
+        auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(loopBodyBlock->getTerminatorOp());
+        loopBodyBlock->popOperation();
+        loopBodyBlock->addOperation(
+            std::make_shared<IR::Operations::YieldOperation>(branchOp->getNextBlockInvocation().getArguments(), nullptr));
+        auto loopBodyArguments = loopBodyBlock->getArguments();
+        ValueFrame loopBodyFrame;
+        for (uint64_t i = 0; i < loopInfo->loopBodyIteratorArguments.size(); i++) {
+            loopBodyFrame.setValue(loopInfo->loopBodyIteratorArguments[i]->getIdentifier(), mlirForLoop.getRegionIterArgs()[i]);
+        }
+        generateMLIR(loopBodyBlock, loopBodyFrame);
+    }
+    builder->restoreInsertionPoint(parentBlockInsertionPoint);
+    // generate loop merge block
+    {
+        auto loopEndBlock = loopInfo->loopEndBlock;
+        auto loopEndArguments = loopEndBlock->getArguments();
+        ValueFrame loopBodyFrame;
+        for (uint64_t i = 0; i < loopEndArguments.size(); i++) {
+            loopBodyFrame.setValue(loopEndArguments[i]->getIdentifier(), mlirForLoop.getResult(i));
+        }
+        generateMLIR(loopEndBlock, loopBodyFrame);
+    }
+}
+
+void MLIRGenerator::generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
+    this->useSCF = false;
+    std::vector<mlir::Value> mlirTargetBlockArguments;
+    auto loopHeadBlock =  loopOp->getLoopHeadBlock();
+    for (auto targetBlockArgument : loopHeadBlock.getArguments()) {
+        mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
+    }
+    auto* mlirTargetBlock = generateBasicBlock(loopHeadBlock, frame);
+    builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
+
+}
+
 // Recursion. No dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
+    if (loopOp->getLoopInfo()->isCountedLoop()) {
+        generateSCFCountedLoop(loopOp, frame);
+        return;
+    } else {
+        generateCFDefaultLoop(loopOp, frame);
+        return;
+    }
+/*
     // -=LOOP HEAD=-
     // Loop Head BasicBlock contains CompareOp and IfOperation(thenBlock, elseBlock)
     // thenBlock=loopBodyBB & elseBlock=executeReturnBB
-    auto compareOp =
-        std::static_pointer_cast<IR::Operations::CompareOperation>(loopOp->getLoopHeadBlock()->getOperations().at(0));
-    auto loopIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock()->getOperations().at(1));
-    auto loopBodyBB = loopIfOp->getThenBranchBlock();
-    auto afterLoopBB = loopIfOp->getElseBranchBlock();
+    auto loopHead = loopOp->getLoopHeadBlock();
+    // the loop head should always terminate with an if operation
+    NES_ASSERT(loopHead->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp,
+               "loop head should always terminate with an if operation");
+    auto loopIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopHead->getOperations().back());
+    auto compareOp = std::static_pointer_cast<IR::Operations::CompareOperation>(loopIfOp->getValue());
+    auto loopBodyBB = loopIfOp->getTrueBlockInvocation().getBlock();
+    auto afterLoopBB = loopIfOp->getFalseBlockInvocation().getBlock();
 
     std::string loopInductionVarName = compareOp->getLeftInput()->getIdentifier();
     inductionVars.emplace(loopInductionVarName);
@@ -410,56 +522,58 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
     auto lowerBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("LowerBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getLeftInput()->getIdentifier()]);
+                                                                frame.getValue(compareOp->getLeftInput()->getIdentifier()));
     auto stepSize =
-        builder->create<mlir::arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["const1Op"]);
+        builder->create<mlir::arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), frame.getValue("const1Op"));
 
     // Get the arguments of the branchOp, which branches back into loopHeader. Compare with loopHeader args.
     // All args that are different are args which are changed inside the loop and are hence iterator args.
     std::vector<mlir::Value> iteratorArgs{};
-    std::vector<std::string> loopTerminatorArgs;
+    std::vector<IR::Operations::OperationPtr> loopTerminatorArgs;
     std::vector<std::string> yieldOpArgs;
     std::vector<std::string> changedHeaderArgs;
     auto loopTerminatorOp = findLastTerminatorOp(loopBodyBB, loopOp->getLoopHeadBlock()->getScopeLevel());
     if (loopTerminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
-        loopTerminatorArgs = std::static_pointer_cast<IR::Operations::BranchOperation>(loopTerminatorOp)->getNextBlockArgs();
+        loopTerminatorArgs =
+            std::static_pointer_cast<IR::Operations::BranchOperation>(loopTerminatorOp)->getNextBlockInvocation().getArguments();
     } else {
-        loopTerminatorArgs = std::static_pointer_cast<IR::Operations::IfOperation>(loopTerminatorOp)->getElseBlockArgs();
+        loopTerminatorArgs =
+            std::static_pointer_cast<IR::Operations::IfOperation>(loopTerminatorOp)->getFalseBlockInvocation().getArguments();
     }
     auto loopHeadBBArgs = loopOp->getLoopHeadBlock()->getArguments();
     for (int i = 0; i < (int) loopHeadBBArgs.size(); ++i) {
-        if (loopHeadBBArgs.at(i)->getIdentifier() != loopTerminatorArgs.at(i)
+        if (loopHeadBBArgs.at(i)->getIdentifier() != loopTerminatorArgs.at(i)->getIdentifier()
             && loopHeadBBArgs.at(i)->getIdentifier() != loopInductionVarName) {
-            iteratorArgs.push_back(blockArgs[loopHeadBBArgs.at(i)->getIdentifier()]);
-            yieldOpArgs.push_back(loopTerminatorArgs.at(i));
+            iteratorArgs.push_back(frame.getValue(loopHeadBBArgs.at(i)->getIdentifier()));
+            yieldOpArgs.push_back(loopTerminatorArgs.at(i)->getIdentifier());
         }
     }
     // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
     insertComment("// For Loop Start");
     auto upperBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("UpperBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getRightInput()->getIdentifier()]);
+                                                                frame.getValue(compareOp->getRightInput()->getIdentifier()));
 
     auto forLoop = builder->create<mlir::scf::ForOp>(getNameLoc("forLoop"), lowerBound, upperBound, stepSize, iteratorArgs);
     //Replace header input args that are changed in body with dynamic iter args from ForOp.
     for (int i = 0; i < (int) changedHeaderArgs.size(); ++i) {
-        blockArgs[changedHeaderArgs.at(i)] = forLoop.getRegionIterArgs().begin()[i];
+        frame.setValue(changedHeaderArgs.at(i), forLoop.getRegionIterArgs().begin()[i]);
     }
     auto parentBlockInsertionPoint = builder->saveInsertionPoint();
 
     // -=LOOP BODY=-
     // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
     builder->setInsertionPointToStart(forLoop.getBody());
-    std::unordered_map<std::string, mlir::Value> loopBodyArgs = blockArgs;
-    loopBodyArgs[compareOp->getLeftInput()->getIdentifier()] =
-        builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
-                                                  builder->getI64Type(),
-                                                  forLoop.getInductionVar());
+    auto loopBodyArgs = frame;
+    auto mlirIndexCast = builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
+                                                                   builder->getI64Type(),
+                                                                   forLoop.getInductionVar());
+    loopBodyArgs.setValue(compareOp->getLeftInput()->getIdentifier(), mlirIndexCast);
     generateMLIR(loopBodyBB, loopBodyArgs);
     if (yieldOpArgs.size() > 0) {
         std::vector<mlir::Value> forYieldOps;
         for (auto yieldOpArg : yieldOpArgs) {
-            forYieldOps.push_back(loopBodyArgs[yieldOpArg]);
+            forYieldOps.push_back(loopBodyArgs.getValue(yieldOpArg));
         }
         builder->create<mlir::scf::YieldOp>(getNameLoc("forYield"), forYieldOps);
     }
@@ -467,32 +581,35 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     for (int i = 0; i < (int) afterLoopBB->getArguments().size(); ++i) {
         // If higher level block arg names are different, add values with new names and delete old entries.
         auto nextArgName = afterLoopBB->getArguments().at(i);
-        auto nextBlockArgs = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock()->getTerminatorOp())
-                                 ->getElseBlockArgs();
-        if (!(nextArgName->getIdentifier() == nextBlockArgs.at(i)) && !inductionVars.contains(nextArgName->getIdentifier())) {
-            auto nameChangeNode = blockArgs.extract(nextBlockArgs.at(i));
-            nameChangeNode.key() = nextArgName->getIdentifier();
-            blockArgs.insert(std::move(nameChangeNode));
+        auto nextframe = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock()->getTerminatorOp())
+                             ->getFalseBlockInvocation()
+                             .getArguments();
+        if (!(nextArgName->getIdentifier() == nextframe.at(i)->getIdentifier())
+            && !inductionVars.contains(nextArgName->getIdentifier())) {
+            // TODO what to do here?
+            //auto nameChangeNode = frame.extract(nextframe.at(i)->getIdentifier());
+            //nameChangeNode.key() = nextArgName->getIdentifier();
+            //frame.insert(std::move(nameChangeNode));
         }
     }
     // Leave LoopOp
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
     // LoopOp might be last Op in e.g. a nested If-Else case. The loopEndBB might then be higher in scope and reached from another Op.
     if (loopOp->getLoopHeadBlock()->getScopeLevel() <= afterLoopBB->getScopeLevel()) {
-        generateMLIR(afterLoopBB, blockArgs);
+        generateMLIR(afterLoopBB, frame);
     }
+    */
 }
 
 //==--------------------------==//
 //==-- MEMORY (LOAD, STORE) --==//
 //==--------------------------==//
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame) {
     printf("AddressOp");
     mlir::Value recordOffset;
     if (addressOp->getRecordIdxName() != "") {
         recordOffset = builder->create<mlir::LLVM::MulOp>(getNameLoc("recordOffset"),
-                                                          blockArgs[addressOp->getRecordIdxName()],
+                                                          frame.getValue(addressOp->getRecordIdxName()),
                                                           getConstInt("1", 64, addressOp->getRecordWidthInBytes()));
     } else {
         recordOffset = getConstInt("0", 64, 0);
@@ -503,217 +620,197 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperatio
     // Return I8* to first byte of field data
     mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                                     mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                                    blockArgs[addressOp->getAddressSourceName()],
+                                                                    frame.getValue(addressOp->getAddressSourceName()),
                                                                     mlir::ArrayRef<mlir::Value>({fieldOffset}));
-    blockArgs.emplace(
-        std::pair{addressOp->getIdentifier(),
-                  builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
-                                                         mlir::LLVM::LLVMPointerType::get(getMLIRType(addressOp->getDataType())),
-                                                         elementAddress)});
+    auto mlirBitcast =
+        builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+                                               mlir::LLVM::LLVMPointerType::get(getMLIRType(addressOp->getDataType())),
+                                               elementAddress);
+    frame.setValue(addressOp->getIdentifier(), mlirBitcast);
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame) {
     printf("LoadOp.\n");
-    blockArgs.emplace(std::pair{
-        loadOp->getIdentifier(),
-        builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), blockArgs[loadOp->getAddress()->getIdentifier()])});
+    auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
+    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), address);
+    frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {
     printf("ConstIntOp");
-    if (!blockArgs.contains(constIntOp->getIdentifier())) {
-        blockArgs.emplace(std::pair{constIntOp->getIdentifier(),
-                                    getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue())});
+    if (!frame.contains(constIntOp->getIdentifier())) {
+        frame.setValue(constIntOp->getIdentifier(),
+                       getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue()));
     } else {
-        blockArgs[constIntOp->getIdentifier()] =
-            getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue());
+        frame.setValue(constIntOp->getIdentifier(),
+                       getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue()));
     }
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame) {
     printf("ConstFloatOp");
     auto floatType = (constFloatOp->getNumBits() == 32) ? builder->getF32Type() : builder->getF64Type();
-    if (!blockArgs.contains(constFloatOp->getIdentifier())) {
-        blockArgs.emplace(std::pair{
+    if (!frame.contains(constFloatOp->getIdentifier())) {
+        frame.setValue(
             constFloatOp->getIdentifier(),
             builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
                                                     floatType,
-                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue()))});
+                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue())));
     } else {
-        blockArgs[constFloatOp->getIdentifier()] =
+        frame.setValue(
+            constFloatOp->getIdentifier(),
             builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
                                                     floatType,
-                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue()));
+                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue())));
     }
 }
 
 //==---------------------------==//
 //==-- ARITHMETIC OPERATIONS --==//
 //==---------------------------==//
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(addOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(addOp->getRightInput()->getIdentifier());
     if (addOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || addOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(
-            std::pair{addOp->getIdentifier(),
-                      builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
-                                                          blockArgs[addOp->getLeftInput()->getIdentifier()].getType(),
-                                                          blockArgs[addOp->getLeftInput()->getIdentifier()],
-                                                          blockArgs[addOp->getRightInput()->getIdentifier()],
-                                                          mlir::LLVM::FastmathFlags::fast)});
+
+        auto mlirAddOp = builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
+                                                             leftInput.getType(),
+                                                             leftInput,
+                                                             rightInput,
+                                                             mlir::LLVM::FastmathFlags::fast);
+        frame.setValue(addOp->getIdentifier(), mlirAddOp);
     } else {
         if (!inductionVars.contains(addOp->getLeftInput()->getIdentifier())) {
-            if (!blockArgs.contains(addOp->getIdentifier())) {
-                blockArgs.emplace(
-                    std::pair{addOp->getIdentifier(),
-                              builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                                 blockArgs[addOp->getLeftInput()->getIdentifier()],
-                                                                 blockArgs[addOp->getRightInput()->getIdentifier()])});
+            if (!frame.contains(addOp->getIdentifier())) {
+                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+                frame.setValue(addOp->getIdentifier(), mlirAddOp);
             } else {
-                blockArgs[addOp->getIdentifier()] =
-                    builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                       blockArgs[addOp->getLeftInput()->getIdentifier()],
-                                                       blockArgs[addOp->getRightInput()->getIdentifier()]);
+                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+                frame.setValue(addOp->getIdentifier(), mlirAddOp);
             }
         }
     }
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(subIntOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(subIntOp->getRightInput()->getIdentifier());
     if (subIntOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || subIntOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(
-            std::pair{subIntOp->getIdentifier(),
-                      builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
-                                                          // blockArgs[subFloatOp->getLeftInput()->getIdentifier()].getType(),
-                                                          blockArgs[subIntOp->getLeftInput()->getIdentifier()],
-                                                          blockArgs[subIntOp->getRightInput()->getIdentifier()],
-                                                          mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast))});
+        auto mlirSubOp = builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
+                                                             leftInput,
+                                                             rightInput,
+                                                             mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast));
+        frame.setValue(subIntOp->getIdentifier(), mlirSubOp);
     } else {
-        blockArgs.emplace(
-            std::pair{subIntOp->getIdentifier(),
-                      builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"),
-                                                         // blockArgs[subIntOp->getLeftInput()->getIdentifier()].getType(),
-                                                         blockArgs[subIntOp->getLeftInput()->getIdentifier()],
-                                                         blockArgs[subIntOp->getRightInput()->getIdentifier()])});
+        auto mlirSubOp = builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+        frame.setValue(subIntOp->getIdentifier(), mlirSubOp);
     }
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(mulOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(mulOp->getRightInput()->getIdentifier());
+    auto resultType = leftInput.getType();
     if (mulOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || mulOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(
-            std::pair{mulOp->getIdentifier(),
-                      builder->create<mlir::LLVM::FMulOp>(getNameLoc("binOpResult"),
-                                                          blockArgs[mulOp->getLeftInput()->getIdentifier()].getType(),
-                                                          blockArgs[mulOp->getLeftInput()->getIdentifier()],
-                                                          blockArgs[mulOp->getRightInput()->getIdentifier()],
-                                                          mlir::LLVM::FastmathFlags::fast)});
+        auto mlirMulOp = builder->create<mlir::LLVM::FMulOp>(getNameLoc("binOpResult"),
+                                                             resultType,
+                                                             leftInput,
+                                                             rightInput,
+                                                             mlir::LLVM::FastmathFlags::fast);
+        frame.setValue(mulOp->getIdentifier(), mlirMulOp);
     } else {
-        blockArgs.emplace(
-            std::pair{mulOp->getIdentifier(),
-                      builder->create<mlir::LLVM::MulOp>(getNameLoc("binOpResult"),
-                                                         blockArgs[mulOp->getLeftInput()->getIdentifier()].getType(),
-                                                         blockArgs[mulOp->getLeftInput()->getIdentifier()],
-                                                         blockArgs[mulOp->getRightInput()->getIdentifier()])});
+        auto mlirMulOp = builder->create<mlir::LLVM::MulOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+        frame.setValue(mulOp->getIdentifier(), mlirMulOp);
     }
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divIntOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divIntOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(divIntOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(divIntOp->getRightInput()->getIdentifier());
+    auto resultType = leftInput.getType();
     if (divIntOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || divIntOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(
-            std::pair{divIntOp->getIdentifier(),
-                      builder->create<mlir::LLVM::FDivOp>(getNameLoc("binOpResult"),
-                                                          blockArgs[divIntOp->getLeftInput()->getIdentifier()].getType(),
-                                                          blockArgs[divIntOp->getLeftInput()->getIdentifier()],
-                                                          blockArgs[divIntOp->getRightInput()->getIdentifier()],
-                                                          mlir::LLVM::FastmathFlags::fast)});
+        auto mlirDivOp = builder->create<mlir::LLVM::FDivOp>(getNameLoc("binOpResult"),
+                                                             resultType,
+                                                             leftInput,
+                                                             rightInput,
+                                                             mlir::LLVM::FastmathFlags::fast);
+        frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
     } else {
-        auto resultType = blockArgs[divIntOp->getLeftInput()->getIdentifier()].getType();
         if (resultType.isSignedInteger()) {
-            blockArgs.emplace(
-                std::pair{divIntOp->getIdentifier(),
-                          builder->create<mlir::LLVM::SDivOp>(getNameLoc("binOpResult"),
-                                                              resultType,
-                                                              blockArgs[divIntOp->getLeftInput()->getIdentifier()],
-                                                              blockArgs[divIntOp->getRightInput()->getIdentifier()])});
+            auto mlirDivOp = builder->create<mlir::LLVM::SDivOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
         } else {
-            blockArgs.emplace(
-                std::pair{divIntOp->getIdentifier(),
-                          builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"),
-                                                              resultType,
-                                                              blockArgs[divIntOp->getLeftInput()->getIdentifier()],
-                                                              blockArgs[divIntOp->getRightInput()->getIdentifier()])});
+            auto mlirDivOp = builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
         }
     }
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame) {
     printf("StoreOp\n");
     builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"),
-                                         blockArgs[storeOp->getValue()->getIdentifier()],
-                                         blockArgs[storeOp->getAddress()->getIdentifier()]);
+                                         frame.getValue(storeOp->getValue()->getIdentifier()),
+                                         frame.getValue(storeOp->getAddress()->getIdentifier()));
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame) {
     printf("ReturnOp\n");
-    printf("ReturnOp blockArgs size: %d\n", (int) blockArgs.size());
 
     // Insert return into 'execute' function block. This is the FINAL return.
-    builder->create<mlir::LLVM::ReturnOp>(getNameLoc("return"), getConstInt("return", 64, returnOp->getReturnOpCode()));
+    if (!returnOp->hasReturnValue()) {
+        builder->create<mlir::LLVM::ReturnOp>(getNameLoc("return"), mlir::ValueRange());
+    } else {
+        builder->create<mlir::LLVM::ReturnOp>(getNameLoc("return"), frame.getValue(returnOp->getReturnValue()->getIdentifier()));
+    }
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame& frame) {
     printf("ProxyCallOperation identifier: %s\n", proxyCallOp->getIdentifier().c_str());
-    printf("ProxyCallOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
+    printf("ProxyCallOperation first BlockArg name: \n");
 
     //Todo simplify!!!!
     switch (proxyCallOp->getProxyCallType()) {
-        case IR::Operations::Operation::GetDataBuffer:
-            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
-                                        builder
-                                            ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                                   memberFunctions[IR::Operations::Operation::GetDataBuffer],
-                                                                   blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()])
-                                            .getResult(0)});
+        case IR::Operations::Operation::GetDataBuffer: {
+            auto callOperation =
+                builder
+                    ->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                           memberFunctions[IR::Operations::Operation::GetDataBuffer],
+                                           frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()))
+                    .getResult(0);
+            frame.setValue(proxyCallOp->getIdentifier(), callOperation);
             break;
+        }
         case IR::Operations::Operation::SetNumTuples: {
-            std::vector<mlir::Value> operands = {blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()],
-                                                 blockArgs[proxyCallOp->getInputArguments().at(1)->getIdentifier()]};
-            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
-                                        builder
-                                            ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                                   memberFunctions[IR::Operations::Operation::SetNumTuples],
-                                                                   operands)
-                                            .getResult(0)});
+            std::vector<mlir::Value> operands = {frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()),
+                                                 frame.getValue(proxyCallOp->getInputArguments().at(1)->getIdentifier())};
+            frame.setValue(proxyCallOp->getIdentifier(),
+                           builder
+                               ->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                                      memberFunctions[IR::Operations::Operation::SetNumTuples],
+                                                      operands)
+                               .getResult(0));
             break;
         }
         case IR::Operations::Operation::GetNumTuples:
-            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
-                                        builder
-                                            ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                                   memberFunctions[IR::Operations::Operation::GetNumTuples],
-                                                                   blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()])
-                                            .getResult(0)});
+            frame.setValue(proxyCallOp->getIdentifier(),
+                           builder
+                               ->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                                      memberFunctions[IR::Operations::Operation::GetNumTuples],
+                                                      frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()))
+                               .getResult(0));
             break;
         default:
             mlir::FlatSymbolRefAttr functionRef;
@@ -727,7 +824,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             }
             std::vector<mlir::Value> functionArgs;
             for (auto arg : proxyCallOp->getInputArguments()) {
-                functionArgs.push_back(blockArgs[arg->getIdentifier()]);
+                functionArgs.push_back(frame.getValue(arg->getIdentifier()));
             }
             if (proxyCallOp->getResultType() != IR::Operations::VOID) {
                 builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
@@ -742,46 +839,127 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame) {
     printf("CompareOperation identifier: %s\n", compareOp->getIdentifier().c_str());
     // Comparator Enum < 10 is either a signed or unsigned Integer comparison.
     if (compareOp->getComparator() < 10) {
-        blockArgs.emplace(
-            std::pair{compareOp->getIdentifier(),
-                      builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
-                                                           convertToIntMLIRComparison(compareOp->getComparator()),
-                                                           blockArgs[compareOp->getLeftInput()->getIdentifier()],
-                                                           blockArgs[compareOp->getRightInput()->getIdentifier()])});
+        auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
+                                                          convertToIntMLIRComparison(compareOp->getComparator()),
+                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
+                                                          frame.getValue(compareOp->getRightInput()->getIdentifier()));
+        frame.setValue(compareOp->getIdentifier(), cmpOp);
     } else {
-        blockArgs.emplace(
-            std::pair{compareOp->getIdentifier(),
-                      builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
-                                                           convertToFloatMLIRComparison(compareOp->getComparator()),
-                                                           blockArgs[compareOp->getLeftInput()->getIdentifier()],
-                                                           blockArgs[compareOp->getRightInput()->getIdentifier()])});
+        auto cmpOp = builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
+                                                          convertToFloatMLIRComparison(compareOp->getComparator()),
+                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
+                                                          frame.getValue(compareOp->getRightInput()->getIdentifier()));
+        frame.setValue(compareOp->getIdentifier(), cmpOp);
     }
 }
 
+void MLIRGenerator::generateSCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame) {
+    auto currentInsertionPoint = builder->saveInsertionPoint();
+    // get merge block to determine the result values of the if operation
+    auto mergeBlock = ifOp->getMergeBlock();
+
+    // create result types for if
+    std::vector<mlir::Type> mlirIfOpResultTypes;
+    for (auto afterIfBlockArgType : mergeBlock->getArguments()) {
+        mlirIfOpResultTypes.push_back(getMLIRType(afterIfBlockArgType->getStamp()));
+    }
+
+    auto mlirIfOp = builder->create<mlir::scf::IfOp>(getNameLoc("ifOperation"),
+                                                     mlirIfOpResultTypes,
+                                                     frame.getValue(ifOp->getValue()->getIdentifier()),
+                                                     ifOp->hasFalseCase());
+
+    // for all predecessors of the merger block we delete the final branch operation and replace it with a mlir yield operation.
+    for (auto predecessor : mergeBlock->getPredecessors()) {
+        NES_ASSERT(!predecessor.expired(), "predecessor of merge block should exists.");
+        auto pred = predecessor.lock();
+        if (pred->getTerminatorOp()->getOperationType() == IR::Operations::Operation::MLIR_YIELD)
+            continue;
+        NES_ASSERT(pred->getTerminatorOp()->getOperationType() == IR::Operations::Operation::BranchOp,
+                   "A control-flow merge of an if must terminate with a branch op.");
+        auto branch = std::static_pointer_cast<IR::Operations::BranchOperation>(pred->getTerminatorOp());
+        pred->popOperation();
+        pred->addOperation(std::make_shared<IR::Operations::YieldOperation>(branch->getNextBlockInvocation().getArguments(),
+                                                                            branch->getNextBlockInvocation().getBlock()));
+    }
+
+    // IF case -> Change scope to true case. Finish by setting obligatory YieldOp for true case.
+    {
+        builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
+        ValueFrame trueCaseFrame = createFrameFromParentBlock(frame, ifOp->getTrueBlockInvocation());
+        generateMLIR(ifOp->getTrueBlockInvocation().getBlock(), trueCaseFrame);
+    }
+    if (ifOp->hasFalseCase()) {
+        builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
+        ValueFrame trueCaseFrame = createFrameFromParentBlock(frame, ifOp->getFalseBlockInvocation());
+        generateMLIR(ifOp->getFalseBlockInvocation().getBlock(), trueCaseFrame);
+    }
+
+    // prepare frame for code generation of merge block
+    builder->restoreInsertionPoint(currentInsertionPoint);
+    ValueFrame mergeBlockFrame;
+    for (size_t i = 0; i < mergeBlock->getArguments().size(); ++i) {
+        mergeBlockFrame.setValue(mergeBlock->getArguments().at(i)->getIdentifier(), mlirIfOp.getResult(i));
+    }
+    generateMLIR(mergeBlock, mergeBlockFrame);
+}
+
+void MLIRGenerator::generateCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame) {
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
+
+    std::vector<mlir::Value> trueBlockArgs;
+    mlir::Block* trueBlock = generateBasicBlock(ifOp->getTrueBlockInvocation(), frame);
+    for (auto blockArg : ifOp->getTrueBlockInvocation().getArguments()) {
+        trueBlockArgs.push_back(frame.getValue(blockArg->getIdentifier()));
+    }
+
+    std::vector<mlir::Value> elseBlockArgs;
+    mlir::Block* elseBlock = generateBasicBlock(ifOp->getFalseBlockInvocation(), frame);
+    for (auto blockArg : ifOp->getFalseBlockInvocation().getArguments()) {
+        elseBlockArgs.push_back(frame.getValue(blockArg->getIdentifier()));
+    }
+
+    builder->restoreInsertionPoint(parentBlockInsertionPoint);
+    builder->create<mlir::CondBranchOp>(getNameLoc("branch"),
+                                        frame.getValue(ifOp->getValue()->getIdentifier()),
+                                        trueBlock,
+                                        trueBlockArgs,
+                                        elseBlock,
+                                        elseBlockArgs);
+}
+
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    // Find next block that is on the same or on a higher scopeLevel than ifOp and get its input args.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame) {
+
+    // TODO we have to determine if we can use scf for this if operation
+    if (useSCF) {
+        generateSCFIf(ifOp, frame);
+    } else {
+        generateCFIf(ifOp, frame);
+    }
+
+    /*
+     * // Find next block that is on the same or on a higher scopeLevel than ifOp and get its input args.
     // (could use else Block, if exists -> allows for possibly faster traversal, but we will change this part anyway)
-    auto ifOpTerminatorOp = findLastTerminatorOp(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getScopeLevel() - 1);
+    auto ifOpTerminatorOp = findLastTerminatorOp(ifOp->getTrueBlockInvocation().getBlock(),
+                                                 ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1);
     IR::BasicBlockPtr afterIfOpBlock = (ifOpTerminatorOp->getOperationType() == IR::Operations::Operation::BranchOp)
-        ? std::static_pointer_cast<IR::Operations::BranchOperation>(ifOpTerminatorOp)->getNextBlock()
-        : std::static_pointer_cast<IR::Operations::IfOperation>(ifOpTerminatorOp)->getElseBranchBlock();
-    auto afterIfOpBlockArgs = afterIfOpBlock->getArguments();
+        ? std::static_pointer_cast<IR::Operations::BranchOperation>(ifOpTerminatorOp)->getNextBlockInvocation().getBlock()
+        : std::static_pointer_cast<IR::Operations::IfOperation>(ifOpTerminatorOp)->getFalseBlockInvocation().getBlock();
+    auto afterIfOpframe = afterIfOpBlock->getArguments();
 
     // Create MLIR-IF-Operation
     mlir::scf::IfOp mlirIfOp;
     auto currentInsertionPoint = builder->saveInsertionPoint();
     std::vector<mlir::Type> mlirIfOpResultTypes;
-    // Register all blockArgs for the IfOperation as output/yield args. All values that are not modified, will just be returned.
-    bool hasElse = (ifOp->getElseBranchBlock() != nullptr);
+    // Register all frame for the IfOperation as output/yield args. All values that are not modified, will just be returned.
+    bool hasElse = (ifOp->getFalseBlockInvocation().getBlock() != nullptr);
     bool requiresYield = false;
-    for (auto nextBlockArg : afterIfOpBlockArgs) {
+    for (auto nextBlockArg : afterIfOpframe) {
         if (!inductionVars.contains(nextBlockArg->getIdentifier())) {
             requiresYield = true;
             break;
@@ -794,20 +972,21 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     }
     mlirIfOp = builder->create<mlir::scf::IfOp>(getNameLoc("ifOperation"),
                                                 mlirIfOpResultTypes,
-                                                blockArgs[ifOp->getBoolArgName()],
+                                                frame.getValue(ifOp->getValue()->getIdentifier()),
                                                 (hasElse || requiresYield));
+
 
     // IF case -> Change scope to Then Branch. Finish by setting obligatory YieldOp for THEN case.
     builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
-    std::unordered_map<std::string, mlir::Value> ifBlockArgs = blockArgs;
-    generateMLIR(ifOp->getThenBranchBlock(), ifBlockArgs);
+    auto ifframe = frame;
+    generateMLIR(ifOp->getTrueBlockInvocation().getBlock(), ifframe);
 
     // An MLIR ifOp MUST have an else case, if it returns values (YieldOp). The else case must return the same arg types.
     // But, an MLIR ifOp might still have an else case, even it does not require a YieldOp.
     if (requiresYield) {
         std::vector<mlir::Value> ifYieldOps;
-        for (auto afterIfBlockArg : afterIfOpBlockArgs) {
-            ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg->getIdentifier()]);
+        for (auto afterIfBlockArg : afterIfOpframe) {
+            ifYieldOps.push_back(ifframe.getValue(afterIfBlockArg->getIdentifier()));
         }
         builder->create<mlir::scf::YieldOp>(getNameLoc("ifYield"), ifYieldOps);
         // No else case, but yielding required. Insert hollow else case with duplicated if-yield.
@@ -818,39 +997,101 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     }
     if (hasElse) {
         builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
-        std::unordered_map<std::string, mlir::Value> elseBlockArgs = blockArgs;
+        auto elseframe = frame;
         if (requiresYield) {
             std::vector<mlir::Value> elseYieldOps;
-            if (ifOp->getElseBranchBlock() != nullptr) {
-                generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
-                for (auto afterIfBlockArg : afterIfOpBlockArgs) {
-                    elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg->getIdentifier()]);
+            if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
+                generateMLIR(ifOp->getFalseBlockInvocation().getBlock(), elseframe);
+                for (auto afterIfBlockArg : afterIfOpframe) {
+                    elseYieldOps.push_back(elseframe.getValue(afterIfBlockArg->getIdentifier()));
                 }
                 builder->create<mlir::scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
             }
         }
     }
 
-    // Back to IfOp scope. Get all yielded result values from IfOperation, write to blockArgs and proceed.
+    // Back to IfOp scope. Get all yielded result values from IfOperation, write to frame and proceed.
     builder->restoreInsertionPoint(currentInsertionPoint);
     if (requiresYield) {
         for (int i = 0; i < (int) afterIfOpBlock->getArguments().size(); ++i) {
-            blockArgs[afterIfOpBlock->getArguments().at(i)->getIdentifier()] = mlirIfOp.getResult(i);
+            frame.setValue(afterIfOpBlock->getArguments().at(i)->getIdentifier(), mlirIfOp.getResult(i));
         }
     }
-    if (afterIfOpBlock->getScopeLevel() == (ifOp->getThenBranchBlock()->getScopeLevel()) - 1) {
-        generateMLIR(afterIfOpBlock, blockArgs);
+    if (afterIfOpBlock->getScopeLevel() == (ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel()) - 1) {
+        generateMLIR(afterIfOpBlock, frame);
     }
+     */
 }
 
 //==--------------------- Dummy OPERATIONS ----------------------==//
 // No recursion. Dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp,
-                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    printf("BranchOperation.getNextBlock.getIdentifier: %s\n", branchOp->getNextBlock()->getIdentifier().c_str());
-    printf("BranchOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
+    printf("BranchOperation.getNextBlock.getIdentifier: %s\n",
+           branchOp->getNextBlockInvocation().getBlock()->getIdentifier().c_str());
+    printf("BranchOperation first BlockArg name:\n");
+    if (!useSCF) {
+        std::vector<mlir::Value> mlirTargetBlockArguments;
+        for (auto targetBlockArgument : branchOp->getNextBlockInvocation().getArguments()) {
+            mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
+        }
+        auto* mlirTargetBlock = generateBasicBlock(branchOp->getNextBlockInvocation(), frame);
+        builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
+    }
+}
+
+mlir::Block* MLIRGenerator::generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame&) {
+    auto targetBlock = blockInvocation.getBlock();
+    // check if the block already exists
+    if (blockMapping.contains(targetBlock->getIdentifier())) {
+        return blockMapping[targetBlock->getIdentifier()];
+    }
+
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
+    // create new block
+    auto mlirBasicBlock = builder->createBlock(builder->getBlock()->getParent());
+
+    auto targetBlockArguments = targetBlock->getArguments();
+    // add attributes as arguments to block
+    for (auto headBlockHeadTypes : targetBlockArguments) {
+        mlirBasicBlock->addArgument(getMLIRType(headBlockHeadTypes->getStamp()), getNameLoc("arg"));
+    }
+    ValueFrame blockFrame;
+    for (uint32_t i = 0; i < targetBlockArguments.size(); i++) {
+        blockFrame.setValue(targetBlock->getArguments()[i]->getIdentifier(), mlirBasicBlock->getArgument(i));
+    }
+
+    blockMapping[blockInvocation.getBlock()->getIdentifier()] = mlirBasicBlock;
+    builder->setInsertionPointToStart(mlirBasicBlock);
+    generateMLIR(targetBlock, blockFrame);
+    builder->restoreInsertionPoint(parentBlockInsertionPoint);
+
+     return mlirBasicBlock;
 }
 
 std::vector<std::string> MLIRGenerator::getJitProxyFunctionSymbols() { return jitProxyFunctionSymbols; }
 std::vector<llvm::JITTargetAddress> MLIRGenerator::getJitProxyTargetAddresses() { return jitProxyFunctionTargetAddresses; }
+MLIRGenerator::ValueFrame MLIRGenerator::createFrameFromParentBlock(MLIRGenerator::ValueFrame& frame,
+                                                                    IR::Operations::BasicBlockInvocation& invocation) {
+    auto invocationArguments = invocation.getArguments();
+    auto childBlockArguments = invocation.getBlock()->getArguments();
+    NES_ASSERT(invocationArguments.size() == childBlockArguments.size(),
+               "the number of invocation parameters has to be the same as the number of block arguments in the invoked block.");
+    ValueFrame childFrame;
+    // copy all frame values to the child frame that are arguments of the child block
+    for (uint64_t i = 0; i < invocationArguments.size(); i++) {
+        auto parentOperation = invocationArguments[i];
+        auto parentValue = frame.getValue(parentOperation->getIdentifier());
+        auto childBlockArgument = childBlockArguments[i];
+        childFrame.setValue(childBlockArgument->getIdentifier(), parentValue);
+    }
+    return childFrame;
+}
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::YieldOperation> yieldOperation,
+                                 MLIRGenerator::ValueFrame& frame) {
+    std::vector<mlir::Value> ifYieldOps;
+    for (auto yieldArgument : yieldOperation->getArguments()) {
+        ifYieldOps.push_back(frame.getValue(yieldArgument->getIdentifier()));
+    }
+    builder->create<mlir::scf::YieldOp>(getNameLoc("yield"), ifYieldOps);
+}
 }// namespace NES::ExecutionEngine::Experimental::MLIR

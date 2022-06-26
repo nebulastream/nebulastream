@@ -27,6 +27,7 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -46,6 +47,7 @@ class TraceToIRConversionPhaseTest : public testing::Test {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
+    IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
@@ -62,37 +64,73 @@ class TraceToIRConversionPhaseTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-void assignmentOperator() {
+Value<> assignmentOperator() {
     auto iw = Value<>(1);
     auto iw2 = Value<>(2);
     iw = iw2 + iw;
+    return iw;
 }
 
 TEST_F(TraceToIRConversionPhaseTest, assignmentOperatorTest) {
-    auto executionTrace = Trace::traceFunctionSymbolically([]() {
-        assignmentOperator();
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return assignmentOperator();
     });
+
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir.get() << std::endl;
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
+    assert(loadedModuleSuccess == 0);
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 3);
 }
 
-void ifCondition() {
+Value<> ifThenCondition() {
     Value value = Value(1);
     Value iw = Value(1);
     if (value == 42) {
         iw = iw + 1;
     }
-    iw + 42;
+    return iw + 42;
 }
 
 TEST_F(TraceToIRConversionPhaseTest, ifConditionTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return ifThenCondition();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 43);
+}
+
+void ifThenElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+        iw = iw + 1;
+    } else {
+        iw = iw + 42;
+    }
+    iw + 42;
+}
+
+TEST_F(TraceToIRConversionPhaseTest, ifThenElseConditionTest) {
     auto executionTrace = Trace::traceFunctionSymbolically([]() {
-        ifCondition();
+        ifThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -105,14 +143,38 @@ TEST_F(TraceToIRConversionPhaseTest, ifConditionTest) {
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
 }
 
+void nestedIfThenElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+    } else {
+        if (iw == 8) {
+        } else {
+            iw = iw + 2;
+        }
+    }
+    iw = iw + 2;
+}
+
+TEST_F(TraceToIRConversionPhaseTest, nestedIFThenElseConditionTest) {
+    auto executionTrace = Trace::traceFunctionSymbolically([]() {
+        nestedIfThenElseCondition();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+}
+
 void sumLoop() {
     Value agg = Value(1);
-    agg = agg + 666;
     for (Value start = 0; start < 10; start = start + 1) {
-        agg = agg + 42;
-        if (agg == 2) {
-            agg = 0;
-        }
+        agg = agg + 43;
     }
     auto res = agg == 10;
 }
@@ -126,11 +188,13 @@ TEST_F(TraceToIRConversionPhaseTest, sumLoopTest) {
     std::cout << *execution.get() << std::endl;
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
 }
 
 TEST_F(TraceToIRConversionPhaseTest, emitQueryTest) {

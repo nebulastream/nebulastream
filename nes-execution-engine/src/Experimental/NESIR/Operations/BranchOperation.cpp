@@ -17,27 +17,20 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-BranchOperation::BranchOperation(const std::vector<std::string>& nextBlockArgs)
-    : Operation(OperationType::BranchOp, VOID), nextBlockArgs(nextBlockArgs) {}
+BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, VOID), basicBlock() {}
 
-BasicBlockPtr BranchOperation::setNextBlock(BasicBlockPtr nextBlock) { 
-    this->nextBlock = std::move(nextBlock);
-    return this->nextBlock; 
-}
+BasicBlockInvocation& BranchOperation::getNextBlockInvocation() { return basicBlock; }
 
-BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
-std::vector<std::string> BranchOperation::getNextBlockArgs() { return nextBlockArgs; }
-
-std::string BranchOperation::toString() { 
-    std::string baseString = "br " + nextBlock->getIdentifier() + "(";
-    if(nextBlockArgs.size() > 0) {
-        baseString += nextBlockArgs[0];
-        for(int i = 1; i < (int) nextBlockArgs.size(); ++i) { 
-            baseString += ", " + nextBlockArgs.at(i);
+std::string BranchOperation::toString() {
+    std::string baseString = "br " + basicBlock.getBlock()->getIdentifier() + "(";
+    if (basicBlock.getBlock()->getArguments().size() > 0) {
+        baseString += basicBlock.getBlock()->getArguments().at(0)->getIdentifier();
+        for (int i = 1; i < (int) basicBlock.getBlock()->getArguments().size(); ++i) {
+            baseString += ", " + basicBlock.getBlock()->getArguments().at(i)->getIdentifier();
         }
     }
     return baseString + ")";
 }
 bool BranchOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

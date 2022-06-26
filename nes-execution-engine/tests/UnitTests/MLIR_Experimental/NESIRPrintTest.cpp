@@ -22,7 +22,7 @@
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>

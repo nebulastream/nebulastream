@@ -16,7 +16,9 @@
 #define NES_LOOPOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
@@ -27,20 +29,20 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class LoopOperation : public Operation {
   public:
     enum LoopType{ForLoop};
-    LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs = {});
+    LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
-    std::vector<std::string> getLoopBlockArgs();
-    BasicBlockPtr setLoopHeadBlock(BasicBlockPtr loopHeadBlock);
-    BasicBlockPtr getLoopHeadBlock();
+    BasicBlockInvocation& getLoopHeadBlock();
+    void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
+    std::shared_ptr<LoopInfo> getLoopInfo();
 
     std::string toString() override;
 
   private:
     LoopType loopType;
-    std::vector<std::string> loopBlockArgs;
-    BasicBlockPtr loopHeadBlock;
+    BasicBlockInvocation loopHeadBlock;
+    std::shared_ptr<LoopInfo> loopInfo;
 };
 }// namespace NES
 #endif//NES_LoopOperation_HPP

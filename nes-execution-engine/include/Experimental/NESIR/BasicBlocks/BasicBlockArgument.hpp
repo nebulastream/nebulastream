@@ -7,15 +7,10 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class BasicBlockArgument : public Operation {
   public:
-   explicit BasicBlockArgument(const std::string identifier, PrimitiveStamp stamp);
+    explicit BasicBlockArgument(const std::string identifier, PrimitiveStamp stamp);
     ~BasicBlockArgument() override = default;
-    const std::string& getIdentifier() const;
-    void setIdentifier(const std::string& identifier);
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
-
-  private:
-    std::string identifier;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

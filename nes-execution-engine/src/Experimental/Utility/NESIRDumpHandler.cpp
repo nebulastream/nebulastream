@@ -15,7 +15,7 @@
 #include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include "Experimental/NESIR/Operations/BranchOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"
-#include "Experimental/NESIR/Operations/LoopOperation.hpp"
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/Utility/NESIRDumpHandler.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -35,25 +35,25 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
     auto terminatorOp = thenBlock->getOperations().back();
     if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-        if (branchOp->getNextBlock()->getScopeLevel() <= ifParentBlockLevel) {
-            return branchOp->getNextBlock();
+        if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
+            return branchOp->getNextBlockInvocation().getBlock();
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     } else if (terminatorOp->getOperationType() == Operations::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
-        auto loopIfOp = std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock()->getOperations().back());
-        if (loopIfOp->getElseBranchBlock()->getScopeLevel() <= ifParentBlockLevel) {
-            return loopIfOp->getElseBranchBlock();
+        auto loopIfOp = std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
+        if (loopIfOp->getTrueBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
+            return loopIfOp->getTrueBlockInvocation().getBlock();
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(loopIfOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     } else {
         auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
-        if (ifOp->getElseBranchBlock() != nullptr) {
-            return getNextLowerOrEqualLevelBasicBlock(ifOp->getElseBranchBlock(), ifParentBlockLevel);
+        if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
+            return getNextLowerOrEqualLevelBasicBlock(ifOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(ifOp->getThenBranchBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getBlock(), ifParentBlockLevel);
         }
     }
 }
@@ -62,23 +62,23 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
     switch(terminatorOp->getOperationType()) {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-            if(branchOp->getNextBlock()->getScopeLevel() > scopeLevel) {
-                dumpHelper(branchOp->getNextBlock());
+            if(branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
+                dumpHelper(branchOp->getNextBlockInvocation().getBlock());
             }
             break;
         }
         case Operations::Operation::OperationType::LoopOp: {
             auto loopOperation = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
-            dumpHelper(loopOperation->getLoopHeadBlock());
+            dumpHelper(loopOperation->getLoopHeadBlock().getBlock());
             break;
         }
         case Operations::Operation::OperationType::IfOp: {
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
-            BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(ifOp->getThenBranchBlock(),
-                                                                  ifOp->getThenBranchBlock()->getScopeLevel() -1);
-            dumpHelper(ifOp->getThenBranchBlock());
-            if(ifOp->getElseBranchBlock() && ifOp->getElseBranchBlock()->getScopeLevel() >= scopeLevel) {
-                dumpHelper(ifOp->getElseBranchBlock());
+            BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getBlock(),
+                                                                  ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() -1);
+            dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
+            if(ifOp->getFalseBlockInvocation().getBlock() && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= scopeLevel) {
+                dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             }
             dumpHelper(lastTerminatorOp);
             break;
@@ -96,9 +96,9 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
         visitedBlocks.emplace(basicBlock->getIdentifier());
         out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << basicBlock->getIdentifier() << '(';
         if(basicBlock->getArguments().size() > 0) {
-            out << basicBlock->getArguments().at(0);
+            out << basicBlock->getArguments().at(0)->getIdentifier();
             for(int i = 1; i < (int) basicBlock->getArguments().size(); ++i) {
-                out << ", " << basicBlock->getArguments().at(i);
+                out << ", " << basicBlock->getArguments().at(i)->getIdentifier();
             }
         }
         out << "):" << '\n';

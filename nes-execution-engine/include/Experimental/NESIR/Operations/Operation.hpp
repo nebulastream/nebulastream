@@ -43,7 +43,8 @@ class Operation {
         OrOp,
         AndOp,
         NegateOp,
-        BasicBlockArgument
+        BasicBlockArgument,
+        MLIR_YIELD
     };
 
     explicit Operation(OperationType opType, OperationIdentifier identifier, PrimitiveStamp stamp);

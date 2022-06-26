@@ -158,7 +158,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags) {
+int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags, bool useSCF) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
@@ -175,6 +175,7 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
         // Insert functions necessary to get information from TupleBuffer objects and more.
         auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
         mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
+        mlirGenerator->useSCF = useSCF;
         module = mlirGenerator->generateModuleFromNESIR(nesIR);
         printMLIRModule(module, debugFlags);
     }
@@ -263,5 +264,55 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     }
 
     return 0;
+}
+
+std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
+    // Initialize LLVM targets.
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+
+    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    mlir::registerLLVMDialectTranslation(*module->getContext());
+
+    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
+    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
+
+    printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
+        auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
+        auto optimizedModule = optPipeline(llvmIRModule);
+        // llvmIRModule->print(llvm::errs(), nullptr);
+        return optimizedModule;
+    };
+
+    // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
+    auto maybeEngine =
+        mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
+    assert(maybeEngine && "failed to construct an execution engine");
+    auto& engine = maybeEngine.get();
+
+    auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+        auto symbolMap = llvm::orc::SymbolMap();
+        for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
+            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
+                llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+        }
+        return symbolMap;
+    };
+    engine->registerSymbols(runtimeSymbolMap);
+
+    // Invoke the JIT-compiled function.
+    int64_t result = 0;
+    return std::move(engine);
+    /* auto invocationResult =
+        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
+    printf("Result: %ld\n", result);
+
+    if (invocationResult) {
+        llvm::errs() << "JIT invocation failed\n";
+        return -1;
+    }
+
+    return 0;
+    */
 }
 }// namespace NES::ExecutionEngine::Experimental::MLIR

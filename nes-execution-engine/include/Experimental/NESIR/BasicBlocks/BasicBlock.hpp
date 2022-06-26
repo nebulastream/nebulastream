@@ -44,9 +44,14 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
+    void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
     std::shared_ptr<BasicBlock> addThenBlock(std::shared_ptr<BasicBlock> thenBlock);
     std::shared_ptr<BasicBlock> addElseBlock(std::shared_ptr<BasicBlock> elseBlock);
-
+    void removeOperation(Operations::OperationPtr operation);
+    void addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation);
+    void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
+    std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
+    uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
     void popOperation();
 
   private:
@@ -54,6 +59,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     int32_t scopeLevel;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
+    std::vector<std::weak_ptr<BasicBlock>> predecessors;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 

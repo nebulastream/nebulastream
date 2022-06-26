@@ -19,7 +19,7 @@ OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput,
     : Operation(OperationType::OrOp, identifier, BOOLEAN), leftInput(std::move(leftInput)), rightInput(std::move(rightInput)) {}
 
 std::string OrOperation::toString() {
-    return "OrOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+    return "OrOperation_" + identifier + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier() + ")";
 }
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }

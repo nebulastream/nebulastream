@@ -21,15 +21,17 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class ReturnOperation : public Operation {
   public:
-    ReturnOperation(uint8_t returnOpCode);
+    ReturnOperation();
+    ReturnOperation(OperationPtr returnValue);
     ~ReturnOperation() override = default;
 
-    uint8_t getReturnOpCode();
+    OperationPtr getReturnValue();
+    bool hasReturnValue();
 
     std::string toString() override;
 
   private:
-    uint8_t returnOpCode;
+    OperationWPtr returnValue;
 };
 }// namespace NES
 #endif//NES_RETURNOPERATION_HPP

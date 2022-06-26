@@ -15,6 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Experimental/NESIR/Frame.hpp>
 #include <Experimental/NESIR/NESIR.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
@@ -68,12 +69,14 @@ class TraceToIRConversionPhase {
         void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         bool isBlockInLoop(int32_t scope, uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
+        void createBlockArguments(ValueFrame& frame, IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);
         std::string createValueIdentifier(InputVariant val);
 
       private:
         std::shared_ptr<ExecutionTrace> trace;
         std::shared_ptr<IR::NESIR> ir;
         std::unordered_map<uint32_t, IR::BasicBlockPtr> blockMap;
+        IR::BasicBlockPtr findControlFlowMerge(IR::BasicBlockPtr currentBlock, int32_t targetScope);
     };
 };
 

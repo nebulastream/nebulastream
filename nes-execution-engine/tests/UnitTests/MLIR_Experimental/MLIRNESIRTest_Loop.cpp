@@ -26,7 +26,7 @@
 // #include <Runtime/TupleBuffer.hpp>
 
 // #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-// #include <Experimental/NESIR/Operations/LoopOperation.hpp>
+// #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 // #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 // #include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 // #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>

@@ -17,19 +17,24 @@
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/NESIR.hpp>
+#include <Experimental/MLIR/YieldOperation.hpp>
+#include <Experimental/NESIR/Frame.hpp>
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
@@ -59,6 +64,8 @@ namespace NES::ExecutionEngine::Experimental::MLIR {
 
 class MLIRGenerator {
   public:
+    bool useSCF = true;
+    using ValueFrame = IR::Frame<std::string, mlir::Value>;
     /**
      * @brief Inserts mlir versions of frequently needed class member functions.
      */
@@ -95,30 +102,39 @@ class MLIRGenerator {
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
 
-    void generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
-    void generateMLIR(const IR::Operations::OperationPtr& operation, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(const IR::Operations::OperationPtr& operation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addIntOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::YieldOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame& frame);
+    void generateSCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
+    void generateCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
+    mlir::Block* generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame& frame);
+
+    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
+    void generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
+    void generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
@@ -176,6 +192,8 @@ class MLIRGenerator {
 
     //
     IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel);
+    ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
+    std::unordered_map<std::string, mlir::Block*> blockMapping;
 };
 }// namespace NES::ExecutionEngine::Experimental::MLIR
 #endif//NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

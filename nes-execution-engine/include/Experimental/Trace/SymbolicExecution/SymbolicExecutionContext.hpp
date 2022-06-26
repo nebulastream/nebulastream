@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionPath.hpp>
+#include <Experimental/Trace/ValueRef.hpp>
 #include <Experimental/Trace/Tag.hpp>
 #include <functional>
 #include <list>
@@ -37,7 +38,7 @@ class SymbolicExecutionContext {
      * @param function
      * @return The collected trace
      */
-    std::shared_ptr<ExecutionTrace> apply(const std::function<void()>& function);
+    std::shared_ptr<ExecutionTrace> apply(const std::function<NES::ExecutionEngine::Experimental::Trace::ValueRef()>& function);
 
     /**
      * @brief Performs a symbolic execution of a CMP operation.
@@ -85,6 +86,16 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolically(const Functor func) {
     auto symbolicExecution = initThreadSymbolicExecutionContext();
     return symbolicExecution->apply([&func] {
         func();
+        return createNextRef(IR::Operations::VOID);
+    });
+}
+
+template<typename Functor>
+std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functor func) {
+    auto symbolicExecution = initThreadSymbolicExecutionContext();
+    return symbolicExecution->apply([&func] {
+        auto res = func();
+        return res.ref;
     });
 }
 

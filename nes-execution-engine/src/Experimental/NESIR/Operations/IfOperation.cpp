@@ -12,47 +12,42 @@
     limitations under the License.
 */
 
-
 #include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-IfOperation::IfOperation(std::string boolArgName, std::vector<std::string> thenBlockArgs, std::vector<std::string> elseBlockArgs) 
-    : Operation(Operation::IfOp, VOID), boolArgName(boolArgName), thenBlockArgs(std::move(thenBlockArgs)), elseBlockArgs(std::move(elseBlockArgs)) {}
+IfOperation::IfOperation(OperationPtr booleanValue) : Operation(Operation::IfOp, VOID), booleanValue(booleanValue) {}
 
-    std::string IfOperation::getBoolArgName() { return boolArgName; }
+OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
 
-    BasicBlockPtr IfOperation::setThenBranchBlock(BasicBlockPtr thenBlock) {
-        this->thenBranchBlock = std::move(thenBlock);
-        return this->thenBranchBlock;
+BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockInvocation; }
+BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
+
+BasicBlockPtr IfOperation::getMergeBlock() {
+    return mergeBlock.lock();
+}
+void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) {
+    this->mergeBlock = mergeBlock;
+}
+
+std::string IfOperation::toString() {
+    std::string baseString = "br " + getIdentifier() + ", " + trueBlockInvocation.getBlock()->getIdentifier() + '(';
+    if (trueBlockInvocation.getArguments().size() > 0) {
+        baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
+        for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {
+            baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier();
+        }
     }
-    BasicBlockPtr IfOperation::setElseBranchBlock(BasicBlockPtr elseBlock) {
-        this->elseBranchBlock = std::move(elseBlock);
-        return this->elseBranchBlock;
-    }
-
-    BasicBlockPtr IfOperation::getThenBranchBlock() { return thenBranchBlock; }
-    BasicBlockPtr IfOperation::getElseBranchBlock() { return elseBranchBlock; }
-    std::vector<std::string> IfOperation::getThenBlockArgs() { return thenBlockArgs; }
-    std::vector<std::string> IfOperation::getElseBlockArgs() { return elseBlockArgs; }
-    
-    std::string IfOperation::toString() {
-        std::string baseString = "br " + boolArgName + ", " + thenBranchBlock->getIdentifier() + '(';
-        if(thenBlockArgs.size() > 0) {
-            baseString += thenBlockArgs[0];
-            for(int i = 1; i < (int) thenBlockArgs.size(); ++i) { 
-                baseString += ", " + thenBlockArgs.at(i);
+    if (falseBlockInvocation.getBlock()) {
+        baseString += "), " + falseBlockInvocation.getBlock()->getIdentifier() + '(';
+        if (falseBlockInvocation.getArguments().size() > 0) {
+            baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
+            for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {
+                baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier();
             }
         }
-        if(elseBranchBlock) {
-            baseString += "), " + elseBranchBlock->getIdentifier() + '(';
-            if(elseBlockArgs.size() > 0) {
-            baseString += elseBlockArgs[0];
-            for(int i = 1; i < (int) elseBlockArgs.size(); ++i) { 
-                baseString += ", " + elseBlockArgs.at(i);
-            }
-        }
-        }
-        return baseString += ')';
     }
-}// namespace NES
+    return baseString += ')';
+}
+bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getBlock() !=nullptr; }
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

@@ -33,8 +33,18 @@ target_link_libraries(nes-execution-engine
 
 #add_executable(mlir-nesir-if-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_IF.cpp")
 #target_link_libraries(mlir-nesir-if-test
- #       nes-execution-engine)
+#        nes-execution-engine)
 #add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
+
+add_executable(mlir-nesir-if-generation-test "UnitTests/MLIR_Experimental/MLIR_IF_GenerationTest.cpp")
+target_link_libraries(mlir-nesir-if-generation-test
+        nes-execution-engine)
+add_test(NAME mlir-nesir-if-generation-test COMMAND mlir-nesir-if-generation-test)
+
+add_executable(mlir-nesir-loop-generation-test "UnitTests/MLIR_Experimental/MLIR_Loop_GenerationTest.cpp")
+target_link_libraries(mlir-nesir-loop-generation-test
+        nes-execution-engine)
+add_test(NAME mlir-nesir-loop-generation-test COMMAND mlir-nesir-loop-generation-test)
 
 #add_executable(mlir-nesir-print-test "UnitTests/MLIR_Experimental/NESIRPrintTest.cpp")
 #target_link_libraries(mlir-nesir-print-test
@@ -46,10 +56,10 @@ target_link_libraries(nes-execution-engine
 #       nes-execution-engine)
 #add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
 
-#add_executable(mlir-nesir-arithmetic-ops-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_ArithmeticOps.cpp")
-#target_link_libraries(mlir-nesir-arithmetic-ops-test
-#       nes-execution-engine)
-#add_test(NAME mlir-nesir-arithmetic-ops-test COMMAND mlir-nesir-arithmetic-ops-test)
+add_executable(mlir-nesir-arithmetic-ops-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_ArithmeticOps.cpp")
+target_link_libraries(mlir-nesir-arithmetic-ops-test
+        nes-execution-engine)
+add_test(NAME mlir-nesir-arithmetic-ops-test COMMAND mlir-nesir-arithmetic-ops-test)
 
 add_executable(execution-engine-trace-test "UnitTests/Experimental/TraceTest.cpp")
 target_link_libraries(execution-engine-trace-test
@@ -60,6 +70,12 @@ add_executable(execution-engine-symbolic-execution-test "UnitTests/Experimental/
 target_link_libraries(execution-engine-symbolic-execution-test
         nes-execution-engine)
 add_test(NAME execution-engine-symbolic-execution-test COMMAND execution-engine-symbolic-execution-test)
+
+
+add_executable(execution-engine-loop-inference-phase-test "UnitTests/Experimental/LoopInferencePhaseTest.cpp")
+target_link_libraries(execution-engine-loop-inference-phase-test
+        nes-execution-engine)
+add_test(NAME execution-engine-loop-inference-phase-test COMMAND execution-engine-loop-inference-phase-test)
 
 
 add_executable(execution-engine-value-test "UnitTests/Experimental/ValueTest.cpp")

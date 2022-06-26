@@ -26,7 +26,7 @@
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
@@ -37,24 +37,27 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-
+namespace ExecutionEngine::Experimental::IR {
+namespace Operations {
 class MLIRGeneratorArithmeticOpsTest : public testing::Test {
   public:
+    NES::ExecutionEngine::Experimental::MLIR::MLIRUtility* mlirUtility;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLIRGeneratorIfTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MLIRGeneratorIfTest test case.");
     }
 
+    void SetUp() override { mlirUtility = new NES::ExecutionEngine::Experimental::MLIR::MLIRUtility("", false); }
+
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Tear down MLIRGeneratorIfTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down MLIRGeneratorIfTest test class."); }
-};
 
-namespace ExecutionEngine::Experimental::IR {
-namespace Operations {
+
+};
 
 void printBuffer(std::vector<Operations::PrimitiveStamp> types, uint64_t numTuples, int8_t* bufferPointer) {
     for (uint64_t i = 0; i < numTuples; ++i) {
@@ -143,6 +146,7 @@ void printBuffer(std::vector<Operations::PrimitiveStamp> types, uint64_t numTupl
     }
 }
 
+/*
 std::shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
 
     std::vector<PrimitiveStamp> proxyDataBufferReturnArgs{PrimitiveStamp::INT8PTR};
@@ -179,6 +183,7 @@ std::shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::Pr
         }
     }
 }
+ */
 
 template<typename... Args>
 BasicBlockPtr createBB(std::string identifier, int level, std::vector<PrimitiveStamp> argTypes, Args... args) {
@@ -197,8 +202,74 @@ saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>&
 }
 
 /**
- * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
+ * @brief Test MLIR Generation for Add Int Operation
+ *
+ * int64Const1 = 42
+ * int64Const2 = 58
+ * addOperation = int64Const1 + int64Const2
+ * return addOperation
  */
+TEST_F(MLIRGeneratorArithmeticOpsTest, testAddIntOperation) {
+    auto nesIR = std::make_shared<NESIR>();
+    auto rootBasicBlock = createBB("executeBodyBB", 0, {});
+    auto int64Const1 = std::make_shared<ConstIntOperation>("int64Const1", 42, 64);
+    rootBasicBlock->addOperation(int64Const1);
+    auto int64Const2 = std::make_shared<ConstIntOperation>("int64Const2", 58, 64);
+    rootBasicBlock->addOperation(int64Const2);
+    auto addOp = std::make_shared<AddOperation>("addOperation", int64Const1, int64Const2);
+    rootBasicBlock->addOperation(addOp);
+    auto returnOperation = std::make_shared<ReturnOperation>(addOp);
+    rootBasicBlock->addOperation(returnOperation);
+
+    std::vector<PrimitiveStamp> executeArgTypes{};
+    std::vector<std::string> executeArgNames{};
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
+        ->addFunctionBasicBlock(rootBasicBlock);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int (*)()) engine->lookup("execute").get();
+    int64_t resultValue = function();
+    ASSERT_EQ(resultValue, 100);
+}
+
+/**
+ * @brief Test MLIR Generation for Add Float Operation
+ *
+ * float64Const1 = 42.01
+ * float64Const2 = 58.05
+ * addOperation = float64Const1 + float64Const2
+ * return addOperation
+ */
+TEST_F(MLIRGeneratorArithmeticOpsTest, testAddFloatOperation) {
+    auto nesIR = std::make_shared<NESIR>();
+    auto rootBasicBlock = createBB("executeBodyBB", 0, {});
+    auto float64Const1 = std::make_shared<ConstFloatOperation>("float64Const1", 42.01, 64);
+    rootBasicBlock->addOperation(float64Const1);
+    auto float64Const2 = std::make_shared<ConstFloatOperation>("float64Const2", 58.05, 64);
+    rootBasicBlock->addOperation(float64Const2);
+    auto addOp = std::make_shared<AddOperation>("addOperation", float64Const1, float64Const2);
+    rootBasicBlock->addOperation(addOp);
+    auto returnOperation = std::make_shared<ReturnOperation>(addOp);
+    rootBasicBlock->addOperation(returnOperation);
+
+    std::vector<PrimitiveStamp> executeArgTypes{};
+    std::vector<std::string> executeArgNames{};
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, DOUBLE))
+        ->addFunctionBasicBlock(rootBasicBlock);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (double (*)()) engine->lookup("execute").get();
+    double resultValue = function();
+    ASSERT_EQ(resultValue, 100.06);
+}
+
+// TODO ADD TESTS FOR OTHER ARITHMETICAL OPERATIONS
+
+/*
+ * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
+
 TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
     const uint64_t numTuples = 2;
     auto buffMgr = std::make_shared<NES::Runtime::BufferManager>();
@@ -259,20 +330,20 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
                                 ->addOperation(std::make_shared<LoadOperation>("uint64", "inBufAddrOp8"))
                                 ->addOperation(std::make_shared<LoadOperation>("double", "inBufAddrOp10"))
 
-                                ->addOperation(std::make_shared<ConstIntOperation>("int64Const1", 65, /*bits*/ 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("int64Const1", 65,  64))
                                 ->addOperation(
                                     std::make_shared<SubOperation>("subInt64", "int64", "int64Const1", PrimitiveStamp::INT64))
                                 ->addOperation(
                                     std::make_shared<SubOperation>("subUInt64", "uint64", "int64Const1", PrimitiveStamp::UINT64))
-                                ->addOperation(std::make_shared<ConstIntOperation>("int64Const2", -3, /*bits*/ 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("int64Const2", -3,  64))
                                 ->addOperation(
                                     std::make_shared<MulOperation>("mulInt64", "int64", "int64Const2", PrimitiveStamp::INT64))
                                 ->addOperation(
                                     std::make_shared<DivOperation>("divInt64", "int64", "int64Const2", PrimitiveStamp::INT64))
-                                ->addOperation(std::make_shared<ConstIntOperation>("uint64Const2", 3, /*bits*/ 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("uint64Const2", 3,  64))
                                 ->addOperation(
                                     std::make_shared<DivOperation>("divUInt64", "uint64", "uint64Const2", PrimitiveStamp::UINT64))
-                                ->addOperation(std::make_shared<ConstFloatOperation>("doubleConst", -4.2, /*bits*/ 64))
+                                ->addOperation(std::make_shared<ConstFloatOperation>("doubleConst", -4.2,  64))
                                 ->addOperation(
                                     std::make_shared<MulOperation>("mulDouble", "double", "doubleConst", PrimitiveStamp::DOUBLE))
                                 ->addOperation(
@@ -307,6 +378,8 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
                                 ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                 ->addNextBlock(savedBBs["loopHeadBB"]))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
+
+
     // NESIR to MLIR
     auto mlirUtility = new NES::ExecutionEngine::Experimental::MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
@@ -319,7 +392,7 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
     auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
     NES_DEBUG("Number of tuples in OutputTupleBuffer: " << outputBuffer.getNumberOfTuples());
-}
+}*/
 
 }// namespace Operations
 }// namespace ExecutionEngine::Experimental::IR

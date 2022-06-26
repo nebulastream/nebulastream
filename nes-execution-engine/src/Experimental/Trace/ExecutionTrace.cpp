@@ -82,6 +82,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // create new block
     auto mergedBlockId = createBlock();
     auto& mergeBlock = getBlock(mergedBlockId);
+    mergeBlock.type = Block::ControlFlowMerge;
     // move operation to new block
     auto& oldBlock = getBlock(blockIndex);
     // copy everything between opId and end;

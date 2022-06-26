@@ -13,6 +13,7 @@
 
 add_subdirectory(ArithmeticOperations)
 add_subdirectory(LogicalOperations)
+add_subdirectory(Loop)
 
 add_source_files(nes-execution-engine
         Operation.cpp
@@ -20,7 +21,6 @@ add_source_files(nes-execution-engine
         StoreOperation.cpp
         ConstIntOperation.cpp
         ConstFloatOperation.cpp
-        LoopOperation.cpp
         AddressOperation.cpp
         FunctionOperation.cpp
         IfOperation.cpp
