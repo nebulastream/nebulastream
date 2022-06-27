@@ -577,59 +577,59 @@ TEST_F(SinkTest, testMonitoringSink) {
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 
-    auto metricStore = std::make_shared<AllEntriesMetricStore>();
+    auto metricStore = std::make_shared<Monitoring::AllEntriesMetricStore>();
 
     //write metrics to tuple buffer for disk collector
-    auto diskCollector = DiskCollector();
+    auto diskCollector = Monitoring::DiskCollector();
     diskCollector.setNodeId(nodeId1);
-    MetricPtr diskMetric = diskCollector.readMetric();
-    DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
-    ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
-    auto bufferSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
+    Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
+    Monitoring::DiskMetrics typedMetric = diskMetric->getValue<Monitoring::DiskMetrics>();
+    ASSERT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
+    auto bufferSize = Monitoring::DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     //write metrics to tuple buffer for cpu collector
-    auto cpuCollector = CpuCollector();
+    auto cpuCollector = Monitoring::CpuCollector();
     cpuCollector.setNodeId(nodeId2);
-    MetricPtr cpuMetric = cpuCollector.readMetric();
-    CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<CpuMetricsWrapper>();
-    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
-    auto bufferSizeCpu = CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
+    Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
+    Monitoring::CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
+    ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
+    auto bufferSizeCpu = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
     auto tupleBufferCpu = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSizeCpu).value();
     writeToBuffer(typedMetricCpu, tupleBufferCpu, 0);
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
     const DataSinkPtr monitoringSink =
-        createMonitoringSink(metricStore, diskCollector.getType(), DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, diskCollector.getType(), Monitoring::DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
     const DataSinkPtr monitoringSinkCpu =
-        createMonitoringSink(metricStore, cpuCollector.getType(), CpuMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, cpuCollector.getType(), Monitoring::CpuMetrics::getSchema(""), nodeEngine, 1, 0, 0);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
-    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId1));
-    auto metricVec = storedMetrics->at(MetricType::DiskMetric);
-    TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
-    MetricPtr retMetric = pairedDiskMetric->second;
-    DiskMetrics parsedMetrics = retMetric->getValue<DiskMetrics>();
+    Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId1));
+    auto metricVec = storedMetrics->at(Monitoring::MetricType::DiskMetric);
+    Monitoring::TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
+    Monitoring::MetricPtr retMetric = pairedDiskMetric->second;
+    Monitoring::DiskMetrics parsedMetrics = retMetric->getValue<Monitoring::DiskMetrics>();
 
-    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics" << Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_TRUE(storedMetrics->size() == 1);
     ASSERT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
-    StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
-    auto metricVecCpu = storedMetricsCpu->at(MetricType::WrappedCpuMetrics);
-    TimestampMetricPtr pairedCpuMetric = metricVecCpu->at(0);
-    MetricPtr retMetricCpu = pairedCpuMetric->second;
-    CpuMetricsWrapper parsedMetricsCpu = retMetricCpu->getValue<CpuMetricsWrapper>();
+    Monitoring::StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
+    auto metricVecCpu = storedMetricsCpu->at(Monitoring::MetricType::WrappedCpuMetrics);
+    Monitoring::TimestampMetricPtr pairedCpuMetric = metricVecCpu->at(0);
+    Monitoring::MetricPtr retMetricCpu = pairedCpuMetric->second;
+    Monitoring::CpuMetricsWrapper parsedMetricsCpu = retMetricCpu->getValue<Monitoring::CpuMetricsWrapper>();
 
-    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetricsCpu));
+    NES_INFO("MetricStoreTest: Stored metrics" << Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
     ASSERT_EQ(parsedMetricsCpu, typedMetricCpu);
 

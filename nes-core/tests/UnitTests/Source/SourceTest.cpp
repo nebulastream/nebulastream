@@ -421,7 +421,7 @@ class LambdaSourceProxy : public LambdaSource {
 
 class MonitoringSourceProxy : public MonitoringSource {
   public:
-    MonitoringSourceProxy(const MetricCollectorPtr& metricCollector,
+    MonitoringSourceProxy(const Monitoring::MetricCollectorPtr& metricCollector,
                           std::chrono::milliseconds waitTime,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
@@ -1936,9 +1936,9 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-    auto testCollector = std::make_shared<DiskCollector>();
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
@@ -1953,9 +1953,9 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-    auto testCollector = std::make_shared<DiskCollector>();
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
@@ -1974,16 +1974,16 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
 
-    DiskMetrics parsedValues{};
+    Monitoring::DiskMetrics parsedValues{};
     parsedValues.readFromBuffer(buf.value(), 0);
-    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
 }
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-    auto testCollector = std::make_shared<DiskCollector>();
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
@@ -1998,9 +1998,9 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     monitoringDataSource.open();
     while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = monitoringDataSource.receiveData();
-        DiskMetrics parsedValues{};
+        Monitoring::DiskMetrics parsedValues{};
         parsedValues.readFromBuffer(optBuf.value(), 0);
-        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+        ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
     }
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
