@@ -12,23 +12,78 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
+//TODO Change to UDF_ENABLED? since it will also be implemented for other languages
+#ifdef PYTHON_UDF_ENABLED
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <Nodes/Expressions/UnaryExpressionNode.hpp>
-#include <utility>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 
 namespace NES::Experimental {
+
+class ConstantValueExpressionNode;
+using ConstantValueExpressionNodePtr = std::shared_ptr<NES::ConstantValueExpressionNode>;
+
 /**
- * @brief This class indicates that a node is a udf call expression.
+ * @brief
  */
-class UdfCallExpressionNode {
+class UdfCallExpressionNode : public ExpressionNode {
   public:
-    UdfCallExpressionNode() = default;
-    virtual ~UdfCallExpressionNode() noexcept = default;
+    UdfCallExpressionNode();
+    explicit UdfCallExpressionNode(UdfCallExpressionNode* other);
+    ~UdfCallExpressionNode() override = default;
+
+    /**
+     * @brief UDF calls always need to start with the UDF name that has to be called.
+     * Additionally, a call can have 0 or more function arguments. To solve this, create
+     * is defined as a variadic function (taking a variable number of arguments)
+     * @tparam Args
+     * @param udfName
+     * @param functionArguments
+     * @return
+     */
+    template<typename... Args>
+    static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
+                                    Args... functionArguments);
+    /**
+    * @brief
+    */
+    void inferStamp(SchemaPtr schema) override;
+
+    /**
+    * @brief
+    */
+    std::string toString() const override;
+
+    /**
+     * @brief The udfName node is set as child[0] and a UdfArgumentsNode is generated which holds the
+     * function arguments and is set as child[1].
+     * @param udfName name of the UDF that needs to be called
+     * @param functionArguments function arguments for the UDF
+     */
+    void setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments);
+
+    /**
+     * @return the name of the UDF as a ConstantValueExpressionNode
+     */
+    ExpressionNodePtr getUdfName();
+
+    /**
+     * @return a UdfArgumentsNode containing all function arguments passed to the UDF
+     */
+    ExpressionNodePtr getFunctionArgumentsNode();
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override;
+
 };
 
 }// namespace NES::Experimental
 
-#endif// NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
+#endif// PYTHON_UDF_ENABLED

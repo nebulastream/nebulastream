@@ -13,9 +13,9 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <API/Expressions/UdfExpressions.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 
 namespace NES::Experimental {
 
@@ -31,7 +31,7 @@ ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, const NES::Expression
     }
     auto udfNameConstantValueExpression = udfNameExpression->as<NES::ConstantValueExpressionNode>();
     auto argumentsConstantValueExpression = argumentExpression->as<NES::ConstantValueExpressionNode>();
-    return UdfExpressionNode::create(udfNameConstantValueExpression, argumentsConstantValueExpression);
+    return UdfCallExpressionNode::create(udfNameConstantValueExpression, argumentsConstantValueExpression);
 }
 
 }// namespace NES::Experimental
