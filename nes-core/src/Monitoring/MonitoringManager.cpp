@@ -217,7 +217,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
         MetricType metricType = parse(monitoringStream);
         std::string metricCollectorStr = NES::Monitoring::toString(MetricUtils::createCollectorTypeFromMetricType(metricType));
         std::string query =
-            R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
+            R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%STREAM%"), monitoringStream);
         query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorStr);
 
