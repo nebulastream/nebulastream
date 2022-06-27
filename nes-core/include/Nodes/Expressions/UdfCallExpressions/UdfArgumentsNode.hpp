@@ -26,13 +26,22 @@ class UdfArgumentsNode : public ExpressionNode {
     explicit UdfArgumentsNode(UdfArgumentsNode* other);
     ~UdfArgumentsNode() override = default;
 
+    /**
+     *
+     * @param functionArguments
+     * @return
+     */
     static ExpressionNodePtr create(std::vector<ExpressionNodePtr> functionArguments);
 
+    /**
+     *
+     * @param functionArgs
+     */
     static void setFunctionArguments(std::vector<ExpressionNodePtr> functionArgs);
 
-    std::string toString() const override;
-
     std::vector<ExpressionNodePtr> getFunctionArguments();
+
+    std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -41,6 +50,9 @@ class UdfArgumentsNode : public ExpressionNode {
     ExpressionNodePtr copy() override;
 
   private:
+    /**
+     * @brief Function arguments can be any kind of ExpressionNode
+     */
     static std::vector<ExpressionNodePtr> functionArguments;
 };
 

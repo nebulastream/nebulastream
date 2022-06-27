@@ -12,74 +12,66 @@
     limitations under the License.
 */
 #ifdef PYTHON_UDF_ENABLED
-#include "Nodes/Expressions/FieldAccessExpressionNode.hpp"
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfArgumentsNode.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfExpressionNode.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <utility>
 
 namespace NES::Experimental {
 
-UdfExpressionNode::UdfExpressionNode(UdfExpressionNode* other) : ExpressionNode(other) {
+UdfCallExpressionNode::UdfCallExpressionNode(UdfCallExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getUdfName()->copy());
-    addChildWithEqual(getFunctionArguments()->copy());
+    addChildWithEqual(getFunctionArgumentsNode()->copy());
 }
 
-ExpressionNodePtr UdfExpressionNode::copy() {
-    return std::make_shared<UdfExpressionNode>(UdfExpressionNode(this));
-}
-
-template<typename ConstantValueExpressionNodePtr>
-ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr udfName) {
-    auto udfExpressionNode = std::make_shared<UdfExpressionNode>();
-    udfExpressionNode->setChildren(udfName, nullptr);
-    return udfExpressionNode;
-}
-
-template<typename ConstantValueExpressionNodePtr, typename... Args>
-ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr udfName,
+template<typename... Args>
+ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
                                             Args... functionArguments) {
-    auto udfExpressionNode = std::make_shared<UdfExpressionNode>();
-    std::vector<FieldAccessExpressionNodePtr> arguments({functionArguments...});
+    auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>();
+    std::vector<ExpressionNodePtr> arguments({functionArguments...});
     udfExpressionNode->setChildren(udfName, arguments);
     return udfExpressionNode;
 }
 
-void UdfExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments) {
+void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments) {
     addChild(udfName);
-    auto tmp = UdfArgumentsNode::create(std::move(functionArguments));
-    addChild(tmp);
+    auto functionArgsNode = UdfArgumentsNode::create(std::move(functionArguments));
+    addChild(functionArgsNode);
 }
 
-void UdfExpressionNode::inferStamp(SchemaPtr schema) {
+void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
     auto left = getUdfName();
-    auto right = getFunctionArguments();
+    auto right = getFunctionArgumentsNode();
     left->inferStamp(schema);
     right->inferStamp(schema);
 
     if (!left->getStamp()->isCharArray() || !right->getStamp()->isArray()) {
         throw std::logic_error(
-            "UdfExpressionNode: Error during stamp inference. Types need to be Text and Array but Left was:"
+            "UdfCallExpressionNode: Error during stamp inference. Types need to be Text and Array but Left was:"
             + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
     //TODO: Figure out return type
     stamp = DataTypeFactory::createInt32();
 }
 
-std::string UdfExpressionNode::toString() const {
+std::string UdfCallExpressionNode::toString() const {
     std::stringstream ss;
     ss << "CALL(" << children[0]->toString() << "," << children[1]->toString() << ")";
     return ss.str();
 }
 
-ExpressionNodePtr UdfExpressionNode::getUdfName() {
+ExpressionNodePtr UdfCallExpressionNode::copy() {
+    return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this));
+}
+
+ExpressionNodePtr UdfCallExpressionNode::getUdfName() {
     return children[0]->as<NES::ConstantValueExpressionNode>();
 }
 
-ExpressionNodePtr UdfExpressionNode::getFunctionArguments() {
-    return children[1]->as<NES::ConstantValueExpressionNode>();
+ExpressionNodePtr UdfCallExpressionNode::getFunctionArgumentsNode() {
+    return children[1]->as<UdfArgumentsNode>();
 }
 
 
