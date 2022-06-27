@@ -23,7 +23,7 @@ class Boolean : public Any {
     Boolean(int64_t value) : Any(type), value(value){};
     Boolean(Boolean& a) : Boolean(a.value) {}
 
-    std::unique_ptr<Any> copy() { return std::make_unique<Boolean>(this->value); }
+    std::unique_ptr<Any> copy() override { return std::make_unique<Boolean>(this->value); }
 
     ~Boolean() {}
 

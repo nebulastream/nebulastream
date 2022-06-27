@@ -23,7 +23,7 @@ class Float : public Any {
 
     std::shared_ptr<Float> add(std::shared_ptr<Float>& otherValue) const { return create<Float>(value + otherValue->value); };
 
-    std::unique_ptr<Any> copy() { return std::make_unique<Float>(this->value); }
+    std::unique_ptr<Any> copy() override { return std::make_unique<Float>(this->value); }
 
     std::unique_ptr<Float> add(std::unique_ptr<Float>& otherValue) const {
         return std::make_unique<Float>(value + otherValue->value);

@@ -25,7 +25,7 @@ class Integer : public Any {
     Integer(int64_t value) : Any(type), value(value){};
     Integer(Integer& a) : Integer(a.value) {}
 
-    std::unique_ptr<Any> copy() { return std::make_unique<Integer>(this->value); }
+    std::unique_ptr<Any> copy() override { return std::make_unique<Integer>(this->value); }
 
     std::unique_ptr<Integer> add(std::unique_ptr<Integer>& otherValue) const {
         return std::make_unique<Integer>(value + otherValue->value);

@@ -83,11 +83,6 @@ target_link_libraries(execution-engine-value-test
         nes-execution-engine)
 add_test(NAME execution-engine-value-test COMMAND execution-engine-value-test)
 
-add_executable(execution-engine-ir-creation-test "UnitTests/Experimental/TraceToIRConversionPhaseTest.cpp")
-target_link_libraries(execution-engine-ir-creation-test
-        nes-execution-engine)
-add_test(NAME execution-engine-ir-creation-test COMMAND execution-engine-ir-creation-test)
-
 add_executable(execution-engine-operator-test "UnitTests/Experimental/Interpreter/OperatorTest.cpp")
 target_link_libraries(execution-engine-operator-test
         nes-execution-engine)
@@ -97,6 +92,8 @@ add_executable(execution-engine-expression-test "UnitTests/Experimental/Interpre
 target_link_libraries(execution-engine-expression-test
         nes-execution-engine)
 add_test(NAME execution-engine-expression-test COMMAND execution-engine-expression-test)
+
+add_subdirectory(UnitTests/Experimental/ExecutionTests)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
