@@ -81,6 +81,16 @@ class UdfCallExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
+    /**
+     * @brief It is difficult to infer the stamp of any UDF, since the ExpressionNode has
+     * no way to check the return type of the function. We therefore need (for now) to
+     * set the UdfDescriptor manually to retrieve the return type.
+     * @param pyUdfDescriptor The (python) udf descriptor
+     */
+    void setPythonUdfDescriptorPtr(const PythonUdfDescriptorPtr& pyUdfDescriptor);
+
+  private:
+    PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
 };
 
 }// namespace NES::Experimental

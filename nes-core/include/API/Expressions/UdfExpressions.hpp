@@ -22,13 +22,14 @@
 namespace NES::Experimental {
 
 class ExpressionNode;
+
 class ExpressionItem;
 using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 
 /**
  * @brief
 **/
-ExpressionNodePtr CALL(ExpressionItem udfName, ExpressionNodePtr arguments...);
+ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, ExpressionNodePtr arguments...);
 
 }// namespace NES::Experimental
 
