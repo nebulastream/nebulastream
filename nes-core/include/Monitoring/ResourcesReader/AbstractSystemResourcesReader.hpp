@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::Monitoring {
 class CpuMetricsWrapper;
 class MemoryMetrics;
 class NetworkMetricsWrapper;
@@ -100,6 +100,6 @@ class AbstractSystemResourcesReader {
 };
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_ABSTRACTSYSTEMRESOURCESREADER_HPP

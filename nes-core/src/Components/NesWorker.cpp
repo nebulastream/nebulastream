@@ -49,7 +49,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore)
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore) {
     setThreadName("NesWorker");
@@ -137,7 +137,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
-        monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
+        monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring);
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =

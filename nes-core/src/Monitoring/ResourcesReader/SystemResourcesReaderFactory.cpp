@@ -17,7 +17,7 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResourcesReader() {
 #ifdef __linux__
@@ -31,4 +31,4 @@ AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResource
     return abstractReader;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring

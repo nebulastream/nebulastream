@@ -43,7 +43,7 @@ using namespace Runtime;
 class MetricCollectorTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
-    AbstractSystemResourcesReaderPtr reader;
+    Monitoring::AbstractSystemResourcesReaderPtr reader;
     TopologyNodeId nodeId;
 
     static void SetUpTestCase() {
@@ -60,7 +60,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
         auto bufferSize = 4096;
         nodeId = TopologyNodeId(4711);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
-        reader = SystemResourcesReaderFactory::getSystemResourcesReader();
+        reader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }
 
     /* Will be called after a test is executed. */
@@ -68,20 +68,20 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 };
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
-    auto networkCollector = NetworkCollector();
+    auto networkCollector = Monitoring::NetworkCollector();
     networkCollector.setNodeId(nodeId);
-    MetricPtr networkMetric = networkCollector.readMetric();
-    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+    Monitoring::MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), Monitoring::MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    Monitoring::NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<Monitoring::NetworkMetricsWrapper>();
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto bufferSize = Monitoring::NetworkMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
 
-        NetworkMetricsWrapper parsedMetric{};
+        Monitoring::NetworkMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
@@ -95,22 +95,22 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     auto readMetrics = reader->readNetworkStats();
     readMetrics.setNodeId(nodeId);
 
-    auto networkCollector = NetworkCollector();
+    auto networkCollector = Monitoring::NetworkCollector();
     networkCollector.setNodeId(nodeId);
-    MetricPtr networkMetric = networkCollector.readMetric();
-    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+    Monitoring::MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), Monitoring::MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    Monitoring::NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<Monitoring::NetworkMetricsWrapper>();
     ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
-        auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
+        Monitoring::NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
+        auto bufferSize = Monitoring::NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         writeToBuffer(totalMetrics, tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-        NetworkMetrics parsedMetric{};
+        Monitoring::NetworkMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
@@ -123,20 +123,20 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
-    auto cpuCollector = CpuCollector();
+    auto cpuCollector = Monitoring::CpuCollector();
     cpuCollector.setNodeId(nodeId);
-    MetricPtr cpuMetric = cpuCollector.readMetric();
-    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+    Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
+    ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    Monitoring::CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        auto bufferSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto bufferSize = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
 
-        CpuMetricsWrapper parsedMetric{};
+        Monitoring::CpuMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
@@ -150,22 +150,22 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     auto readMetrics = reader->readCpuStats();
     readMetrics.setNodeId(nodeId);
 
-    auto cpuCollector = CpuCollector();
+    auto cpuCollector = Monitoring::CpuCollector();
     cpuCollector.setNodeId(nodeId);
-    MetricPtr cpuMetric = cpuCollector.readMetric();
-    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+    Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
+    ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    Monitoring::CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
     ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        CpuMetrics totalMetrics = wrappedMetric.getValue(0);
-        auto bufferSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
+        Monitoring::CpuMetrics totalMetrics = wrappedMetric.getValue(0);
+        auto bufferSize = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         writeToBuffer(totalMetrics, tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-        CpuMetrics parsedMetric{};
+        Monitoring::CpuMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
@@ -178,41 +178,41 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
-    auto diskCollector = DiskCollector();
+    auto diskCollector = Monitoring::DiskCollector();
     diskCollector.setNodeId(nodeId);
-    MetricPtr diskMetric = diskCollector.readMetric();
-    DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
-    ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
-    auto bufferSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
+    Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
+    Monitoring::DiskMetrics typedMetric = diskMetric->getValue<Monitoring::DiskMetrics>();
+    ASSERT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
+    auto bufferSize = Monitoring::DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
-    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
+    ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
-    MetricPtr parsedMetric = std::make_shared<Metric>(DiskMetrics{});
+    Monitoring::MetricPtr parsedMetric = std::make_shared<Monitoring::Metric>(Monitoring::DiskMetrics{});
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
-    ASSERT_EQ(typedMetric, parsedMetric->getValue<DiskMetrics>());
-    ASSERT_EQ(parsedMetric->getValue<DiskMetrics>().nodeId, nodeId);
+    ASSERT_EQ(typedMetric, parsedMetric->getValue<Monitoring::DiskMetrics>());
+    ASSERT_EQ(parsedMetric->getValue<Monitoring::DiskMetrics>().nodeId, nodeId);
     ASSERT_EQ(typedMetric.nodeId, nodeId);
 }
 
 TEST_F(MetricCollectorTest, testMemoryCollector) {
-    auto memoryCollector = MemoryCollector();
+    auto memoryCollector = Monitoring::MemoryCollector();
     memoryCollector.setNodeId(nodeId);
 
-    MetricPtr memoryMetric = memoryCollector.readMetric();
-    MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
-    ASSERT_EQ(memoryMetric->getMetricType(), MetricType::MemoryMetric);
-    auto bufferSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
+    Monitoring::MetricPtr memoryMetric = memoryCollector.readMetric();
+    Monitoring::MemoryMetrics typedMetric = memoryMetric->getValue<Monitoring::MemoryMetrics>();
+    ASSERT_EQ(memoryMetric->getMetricType(), Monitoring::MetricType::MemoryMetric);
+    auto bufferSize = Monitoring::MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
-    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
+    ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
-    MemoryMetrics parsedMetric{};
+    Monitoring::MemoryMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
     ASSERT_EQ(typedMetric, parsedMetric);

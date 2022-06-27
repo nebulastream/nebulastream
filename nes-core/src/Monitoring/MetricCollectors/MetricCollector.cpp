@@ -14,11 +14,11 @@
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 MetricCollector::MetricCollector(TopologyNodeId nodeId) : nodeId(nodeId) {}
 TopologyNodeId MetricCollector::getNodeId() const { return nodeId; }
 void MetricCollector::setNodeId(const TopologyNodeId nodeId) { this->nodeId = nodeId; }
 MetricCollector::MetricCollector() : nodeId(TopologyNodeId(0)) {}
 
-}// namespace NES
+}// namespace NES::Monitoring

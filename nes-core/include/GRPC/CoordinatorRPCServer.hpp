@@ -38,8 +38,10 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class MonitoringManager;
-using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
+namespace Monitoring{
+    class MonitoringManager;
+    using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
+}// namespace Monitoring
 
 class ReplicationService;
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
@@ -62,7 +64,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
-                                  MonitoringManagerPtr monitoringManager,
+                                  Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService);
 
     /**
@@ -232,7 +234,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;
-    MonitoringManagerPtr monitoringManager;
+    Monitoring::MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
 };
 }// namespace NES

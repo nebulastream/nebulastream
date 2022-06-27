@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief Wrapper class to represent a tuple buffer with multiple NetworkMetrics objects.
@@ -99,6 +99,6 @@ void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, u
  */
 web::json::value asJson(const NetworkMetricsWrapper& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP

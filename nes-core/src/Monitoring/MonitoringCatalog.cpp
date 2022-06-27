@@ -20,7 +20,7 @@
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors)
     : metricMap(metricCollectors) {
@@ -50,4 +50,4 @@ MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) 
     return nullptr;
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

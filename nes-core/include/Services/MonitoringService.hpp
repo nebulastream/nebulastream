@@ -53,7 +53,7 @@ class MonitoringService {
      * @param monitoringPlan
      * @return json to indicate if it was successfully
      */
-    web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
+    web::json::value registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -95,7 +95,7 @@ class MonitoringService {
      * @brief Getter for MonitoringManager
      * @return The MonitoringManager
      */
-    [[nodiscard]] const MonitoringManagerPtr getMonitoringManager() const;
+    [[nodiscard]] const Monitoring::MonitoringManagerPtr getMonitoringManager() const;
 
     /**
      * @brief Returns bool if monitoring is enabled or not.
@@ -104,7 +104,7 @@ class MonitoringService {
     bool isMonitoringEnabled() const;
 
   private:
-    MonitoringManagerPtr monitoringManager;
+    Monitoring::MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;
     bool enableMonitoring;
 };

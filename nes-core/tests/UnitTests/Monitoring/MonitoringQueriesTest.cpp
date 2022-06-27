@@ -85,18 +85,18 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
     }
 
     std::string createQueryString(std::string logicalStream, std::string metricCollectorString) {
-        std::string query = R"(Query::from("%LOGS%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
+        std::string query = R"(Query::from("%LOGS%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%LOGS%"), logicalStream);
         query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorString);
         return query;
     }
 
-    void runMetricsQueryTest(uint64_t workerCnt, MetricCollectorType collectorType, SchemaPtr schema, MetricType expectedType) {
+    void runMetricsQueryTest(uint64_t workerCnt, Monitoring::MetricCollectorType collectorType, SchemaPtr schema, Monitoring::MetricType expectedType) {
         std::vector<NesWorkerPtr> workers;
-        MetricType retMetricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
+        Monitoring::MetricType retMetricType = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
         ASSERT_EQ(retMetricType, expectedType);
         MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
-        std::string metricCollectorStr = NES::toString(collectorType);
+        std::string metricCollectorStr = NES::Monitoring::toString(collectorType);
 
         NesCoordinatorPtr crd = createCoordinator();
         NES_INFO("MonitoringQueriesTest: Start coordinator");
@@ -153,8 +153,8 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
 
         // test disk metrics
         for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
-            StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(),
+            Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+            ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                  storedMetrics,
                                                  expectedType,
                                                  nodeId,
@@ -166,36 +166,36 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
 TEST_F(MonitoringQueriesTest, testDiskMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing disk metrics query");
     uint64_t workerCnt = 3;
-    MetricCollectorType collectorType = MetricCollectorType::DISK_COLLECTOR;
-    SchemaPtr schema = DiskMetrics::getSchema("");
-    MetricType expectedType = MetricType::DiskMetric;
+    Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::DISK_COLLECTOR;
+    SchemaPtr schema = Monitoring::DiskMetrics::getSchema("");
+    Monitoring::MetricType expectedType = Monitoring::MetricType::DiskMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
 
 TEST_F(MonitoringQueriesTest, testCpuMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing cpu metrics query");
     uint64_t workerCnt = 3;
-    MetricCollectorType collectorType = MetricCollectorType::CPU_COLLECTOR;
-    SchemaPtr schema = CpuMetrics::getSchema("");
-    MetricType expectedType = MetricType::WrappedCpuMetrics;
+    Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::CPU_COLLECTOR;
+    SchemaPtr schema = Monitoring::CpuMetrics::getSchema("");
+    Monitoring::MetricType expectedType = Monitoring::MetricType::WrappedCpuMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
 
 TEST_F(MonitoringQueriesTest, testMemoryMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing memory metrics query");
     uint64_t workerCnt = 3;
-    MetricCollectorType collectorType = MetricCollectorType::MEMORY_COLLECTOR;
-    SchemaPtr schema = MemoryMetrics::getSchema("");
-    MetricType expectedType = MetricType::MemoryMetric;
+    Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::MEMORY_COLLECTOR;
+    SchemaPtr schema = Monitoring::MemoryMetrics::getSchema("");
+    Monitoring::MetricType expectedType = Monitoring::MetricType::MemoryMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
 
 TEST_F(MonitoringQueriesTest, testNetworkMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing network metrics query");
     uint64_t workerCnt = 3;
-    MetricCollectorType collectorType = MetricCollectorType::NETWORK_COLLECTOR;
-    SchemaPtr schema = NetworkMetrics::getSchema("");
-    MetricType expectedType = MetricType::WrappedNetworkMetrics;
+    Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::NETWORK_COLLECTOR;
+    SchemaPtr schema = Monitoring::NetworkMetrics::getSchema("");
+    Monitoring::MetricType expectedType = Monitoring::MetricType::WrappedNetworkMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
 

@@ -28,7 +28,7 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(MetricCollectorPtr metricCollector,
+MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                                    std::chrono::milliseconds waitTime,
                                    Runtime::BufferManagerPtr bufferManager,
                                    Runtime::QueryManagerPtr queryManager,
@@ -69,7 +69,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     return buf;
 }
 
-MetricCollectorType MonitoringSource::getCollectorType() { return metricCollector->getType(); }
+Monitoring::MetricCollectorType MonitoringSource::getCollectorType() { return metricCollector->getType(); }
 
 SourceType MonitoringSource::getType() const { return MONITORING_SOURCE; }
 

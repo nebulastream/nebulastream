@@ -1238,7 +1238,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto waitTime = std::chrono::milliseconds(monitoringSerializedSourceDescriptor.waittime());
         auto metricCollectorType = monitoringSerializedSourceDescriptor.metriccollectortype();
-        auto ret = MonitoringSourceDescriptor::create(waitTime, MetricCollectorType(metricCollectorType));
+        auto ret = MonitoringSourceDescriptor::create(waitTime, Monitoring::MetricCollectorType(metricCollectorType));
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
         // de-serialize zmq source descriptor
@@ -1519,7 +1519,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MonitoringSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return MonitoringSinkDescriptor::create(MetricCollectorType(serializedSinkDescriptor.collectortype()),
+        return MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType(serializedSinkDescriptor.collectortype()),
                                                 FaultToleranceType(deserializedFaultTolerance),
                                                 deserializedNumberOfOrigins);
     }

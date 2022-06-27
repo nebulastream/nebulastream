@@ -22,7 +22,7 @@
 
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 MemoryCollector::MemoryCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(MemoryMetrics::getSchema("")) {
@@ -51,4 +51,4 @@ const MetricPtr MemoryCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

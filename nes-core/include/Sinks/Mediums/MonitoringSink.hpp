@@ -23,8 +23,11 @@
 
 namespace NES {
 
-class AbstractMetricStore;
-using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+namespace Monitoring{
+    class AbstractMetricStore;
+    using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+}// namespace Monitoring
+
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
 
@@ -38,8 +41,8 @@ class MonitoringSink : public SinkMedium {
      * @Note the default output will be written to cout
      */
     explicit MonitoringSink(SinkFormatPtr sinkFormat,
-                            MetricStorePtr metricStore,
-                            MetricCollectorType collectorType,
+                            Monitoring::MetricStorePtr metricStore,
+                            Monitoring::MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
                             QueryId queryId,
@@ -85,8 +88,8 @@ class MonitoringSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
-    MetricStorePtr metricStore;
-    MetricCollectorType collectorType;
+    Monitoring::MetricStorePtr metricStore;
+    Monitoring::MetricCollectorType collectorType;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 

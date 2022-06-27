@@ -33,7 +33,7 @@ namespace NES {
 
 class ResourcesReaderTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    AbstractSystemResourcesReaderPtr resourcesReader;
+    Monitoring::AbstractSystemResourcesReaderPtr resourcesReader;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ResourcesReaderTest.log", NES::LogLevel::LOG_DEBUG);
@@ -43,18 +43,18 @@ class ResourcesReaderTest : public Testing::TestWithErrorHandling<testing::Test>
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        resourcesReader = SystemResourcesReaderFactory::getSystemResourcesReader();
+        resourcesReader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }
 };
 
 TEST_F(ResourcesReaderTest, testAbstractSystemResourcesReader) {
-    auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
-    ASSERT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeMetrics{});
-    ASSERT_TRUE(resourcesReader->readRegistrationMetrics() == RegistrationMetrics{});
+    auto resourcesReader = std::make_shared<Monitoring::AbstractSystemResourcesReader>();
+    ASSERT_TRUE(resourcesReader->readRuntimeNesMetrics() == Monitoring::RuntimeMetrics{});
+    ASSERT_TRUE(resourcesReader->readRegistrationMetrics() == Monitoring::RegistrationMetrics{});
     ASSERT_TRUE(resourcesReader->readCpuStats().size() == 1);
     ASSERT_TRUE(resourcesReader->readNetworkStats().size() == 1);
-    ASSERT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics{});
-    ASSERT_TRUE(resourcesReader->readDiskStats() == DiskMetrics{});
+    ASSERT_TRUE(resourcesReader->readMemoryStats() == Monitoring::MemoryMetrics{});
+    ASSERT_TRUE(resourcesReader->readDiskStats() == Monitoring::DiskMetrics{});
     ASSERT_TRUE(resourcesReader->getWallTimeInNs() == 0);
 }
 

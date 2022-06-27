@@ -23,7 +23,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 RuntimeMetrics::RuntimeMetrics()
     : nodeId(0), wallTimeNs(0), memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0),
@@ -121,4 +121,4 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
 
 web::json::value asJson(const RuntimeMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

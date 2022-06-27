@@ -37,10 +37,12 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class MonitoringPlan;
+namespace Monitoring{
+    class MonitoringPlan;
 
-class MonitoringPlan;
-using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+    class MonitoringPlan;
+    using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+}// namespace Monitoring
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -149,7 +151,7 @@ class WorkerRPCClient {
      * @param the monitoring plan
      * @return bool if successful
      */
-    static bool registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan);
+    static bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

@@ -39,23 +39,23 @@ namespace NES {
  */
 class MetricValidator {
   public:
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, MetricPtr metric) {
-        if (metric->getMetricType() == DiskMetric) {
-            return isValid(reader, metric->getValue<DiskMetrics>());
-        } else if (metric->getMetricType() == MemoryMetric) {
-            return isValid(reader, metric->getValue<MemoryMetrics>());
-        } else if (metric->getMetricType() == RegistrationMetric) {
-            return isValid(reader, metric->getValue<RegistrationMetrics>());
-        } else if (metric->getMetricType() == WrappedCpuMetrics) {
-            return isValid(reader, metric->getValue<CpuMetricsWrapper>());
-        } else if (metric->getMetricType() == WrappedNetworkMetrics) {
-            return isValid(reader, metric->getValue<NetworkMetricsWrapper>());
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MetricPtr metric) {
+        if (metric->getMetricType() == Monitoring::DiskMetric) {
+            return isValid(reader, metric->getValue<Monitoring::DiskMetrics>());
+        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+            return isValid(reader, metric->getValue<Monitoring::MemoryMetrics>());
+        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+            return isValid(reader, metric->getValue<Monitoring::RegistrationMetrics>());
+        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+            return isValid(reader, metric->getValue<Monitoring::CpuMetricsWrapper>());
+        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+            return isValid(reader, metric->getValue<Monitoring::NetworkMetricsWrapper>());
         } else {
             return false;
         }
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, RuntimeMetrics metrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::RuntimeMetrics metrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -98,7 +98,7 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, RegistrationMetrics metrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::RegistrationMetrics metrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -137,7 +137,7 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, CpuMetricsWrapper cpuMetrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::CpuMetricsWrapper cpuMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -162,7 +162,7 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, NetworkMetricsWrapper networkMetrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::NetworkMetricsWrapper networkMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -177,7 +177,7 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, MemoryMetrics memoryMetrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MemoryMetrics memoryMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -192,7 +192,7 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, DiskMetrics diskMetrics) {
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::DiskMetrics diskMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -207,9 +207,9 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader,
-                        StoredNodeMetricsPtr storedMetrics,
-                        MetricType expectedType,
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                        Monitoring::StoredNodeMetricsPtr storedMetrics,
+                        Monitoring::MetricType expectedType,
                         TopologyNodeId expectedNodeId,
                         uint64_t expectedSize) {
         bool check = true;
@@ -220,10 +220,10 @@ class MetricValidator {
         }
 
         auto metricVec = storedMetrics->at(expectedType);
-        TimestampMetricPtr pairedNetworkMetric = metricVec->at(0);
-        MetricPtr retMetric = pairedNetworkMetric->second;
+        Monitoring::TimestampMetricPtr pairedNetworkMetric = metricVec->at(0);
+        Monitoring::MetricPtr retMetric = pairedNetworkMetric->second;
 
-        NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": " << MetricUtils::toJson(storedMetrics));
+        NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": " << Monitoring::MetricUtils::toJson(storedMetrics));
         if (retMetric->getMetricType() != expectedType) {
             NES_ERROR("MetricValidator: MetricType is not as expected " << toString(retMetric->getMetricType())
                                                                         << " != " << toString(expectedType));
@@ -246,7 +246,7 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidAll(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -306,7 +306,7 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidAllStorage(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidAllStorage(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
             NES_WARNING("MetricValidator: AbstractReader used. Returning true");
             return true;
@@ -365,13 +365,13 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidRegistrationMetrics(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidRegistrationMetrics(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
             NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics.");
             auto numFields = json.size();
-            if (numFields != RegistrationMetrics::getSchema("")->getSize()) {
+            if (numFields != Monitoring::RegistrationMetrics::getSchema("")->getSize()) {
                 NES_ERROR("MetricValidator: Entries for registration metrics missing");
                 return false;
             }
@@ -443,26 +443,26 @@ class MetricValidator {
         return check;
     }
 
-    static bool checkNodeIds(MetricPtr metric, uint64_t nodeId) {
-        if (metric->getMetricType() == DiskMetric) {
-            auto parsedMetrics = metric->getValue<DiskMetrics>();
+    static bool checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId) {
+        if (metric->getMetricType() == Monitoring::DiskMetric) {
+            auto parsedMetrics = metric->getValue<Monitoring::DiskMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == MemoryMetric) {
-            auto parsedMetrics = metric->getValue<MemoryMetrics>();
+        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+            auto parsedMetrics = metric->getValue<Monitoring::MemoryMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == RegistrationMetric) {
-            auto parsedMetrics = metric->getValue<RegistrationMetrics>();
+        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+            auto parsedMetrics = metric->getValue<Monitoring::RegistrationMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == WrappedCpuMetrics) {
-            auto parsedMetrics = metric->getValue<CpuMetricsWrapper>();
+        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+            auto parsedMetrics = metric->getValue<Monitoring::CpuMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getValue(i).nodeId != nodeId) {
                     return false;
                 }
             }
             return parsedMetrics.getNodeId() == nodeId;
-        } else if (metric->getMetricType() == WrappedNetworkMetrics) {
-            auto parsedMetrics = metric->getValue<NetworkMetricsWrapper>();
+        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+            auto parsedMetrics = metric->getValue<Monitoring::NetworkMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getNetworkValue(i).nodeId != nodeId) {
                     return false;

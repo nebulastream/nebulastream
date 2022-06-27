@@ -30,7 +30,7 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
-                                           MonitoringManagerPtr monitoringManager,
+                                           Monitoring::MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService)
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService){};
@@ -57,8 +57,8 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     }
 
     auto registrationMetrics =
-        std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);
-    registrationMetrics->getValue<RegistrationMetrics>().nodeId = id;
+        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()), Monitoring::MetricType::RegistrationMetric);
+    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = id;
     monitoringManager->addMonitoringData(id, registrationMetrics);
 
     if (id != 0) {

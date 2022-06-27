@@ -32,7 +32,9 @@ namespace NES {
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-class RegistrationMetrics;
+namespace Monitoring{
+    class RegistrationMetrics;
+}// namespace Monitoring
 
 namespace Spatial::Index::Experimental {
 class Location;
@@ -124,7 +126,7 @@ class CoordinatorRPCClient {
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
-                      const RegistrationMetrics& registrationMetrics,
+                      const Monitoring::RegistrationMetrics& registrationMetrics,
                       NES::Spatial::Index::Experimental::Location fixedCoordinates,
                       bool isMobile);
 

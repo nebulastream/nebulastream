@@ -15,7 +15,7 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * The MemoryCollector class enables measuring and writing records of class Metrics/Gauge/MemoryMetrics into a TupleBuffer.
@@ -56,4 +56,4 @@ class MemoryCollector : public MetricCollector {
 
 using MemoryCollectorPtr = std::shared_ptr<MemoryCollector>;
 
-}// namespace NES
+}// namespace NES::Monitoring

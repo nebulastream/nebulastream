@@ -17,7 +17,7 @@
 
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
 * @brief This is a static utility class to collect basic system information on a Linux operating System
@@ -73,6 +73,6 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     uint64_t getWallTimeInNs() override;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_UTIL_SYSTEM_RESOURCES_READER_HPP_

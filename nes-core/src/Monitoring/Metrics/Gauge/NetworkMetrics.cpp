@@ -22,16 +22,16 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 NetworkMetrics::NetworkMetrics()
     : nodeId(0), interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0), rMulticast(0),
       tBytes(0), tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
 
-SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
+NES::SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
 
                            ->addField(prefix + "name", BasicType::UINT64)
@@ -159,4 +159,4 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
 
 web::json::value asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

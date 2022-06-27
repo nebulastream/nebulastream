@@ -35,7 +35,7 @@ std::string MonitoringSourceType::toString() {
     std::stringstream ss;
     ss << "MonitoringSource Type => {\n";
     ss << "waitTimeInMs:" + std::to_string(waitTime.count());
-    ss << "metricCollectorType:" + NES::toString(MetricCollectorType(metricCollectorType));
+    ss << "metricCollectorType:" + NES::Monitoring::toString(Monitoring::MetricCollectorType(metricCollectorType));
     ss << "\n}";
     return ss.str();
 }

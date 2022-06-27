@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief This class represents the metric values read from /proc/net/dev:
@@ -41,7 +41,7 @@ class NetworkMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static NES::SchemaPtr getSchema(const std::string& prefix);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -111,6 +111,6 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 web::json::value asJson(const NetworkMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_

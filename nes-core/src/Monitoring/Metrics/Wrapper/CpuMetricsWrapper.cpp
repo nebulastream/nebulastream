@@ -21,7 +21,7 @@
 
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
 
 CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
@@ -57,7 +57,7 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         CpuMetrics metrics{};
-        NES::readFromBuffer(metrics, buf, tupleIndex + n);
+        NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         cpuList.emplace_back(metrics);
     }
     cpuMetrics = std::move(cpuList);
@@ -127,4 +127,4 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
 
 web::json::value asJson(const CpuMetricsWrapper& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

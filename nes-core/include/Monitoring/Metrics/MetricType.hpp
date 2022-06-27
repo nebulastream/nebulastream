@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
@@ -48,6 +48,6 @@ std::string toString(MetricType type);
  */
 MetricType parse(std::string metricTypeStr);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_

@@ -41,10 +41,10 @@ MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
     : topology(topology), enableMonitoring(enable) {
     NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
     monitoringManager =
-        std::make_shared<MonitoringManager>(workerClient, topology, queryService, catalogService, enableMonitoring);
+        std::make_shared<Monitoring::MonitoringManager>(workerClient, topology, queryService, catalogService, enableMonitoring);
 }
 
-web::json::value MonitoringService::registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan) {
+web::json::value MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {
     web::json::value metricsJson{};
     auto root = topology->getRoot();
 
@@ -69,8 +69,8 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     auto root = topology->getRoot();
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId());
-    StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
-    metricsJson[std::to_string(root->getId())]["registration"] = MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+    Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
+    metricsJson[std::to_string(root->getId())]["registration"] = Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
 
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 
@@ -79,8 +79,8 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
         NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
 
-        StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
-        metricsJson[std::to_string(tNode->getId())]["registration"] = MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+        Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
+        metricsJson[std::to_string(tNode->getId())]["registration"] = Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 
@@ -92,21 +92,21 @@ web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAs
     auto root = topology->getRoot();
 
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
-    StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
-    metricsJson[std::to_string(root->getId())] = MetricUtils::toJson(parsedValues);
+    Monitoring::StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
+    metricsJson[std::to_string(root->getId())] = Monitoring::MetricUtils::toJson(parsedValues);
 
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
-        StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
-        metricsJson[std::to_string(tNode->getId())] = MetricUtils::toJson(tMetrics);
+        Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
+        metricsJson[std::to_string(tNode->getId())] = Monitoring::MetricUtils::toJson(tMetrics);
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 
     return metricsJson;
 }
 
-const MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
+const Monitoring::MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
 
 bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
 

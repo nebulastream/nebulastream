@@ -17,7 +17,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for uint64_t not possible for metric " << metrics);
@@ -57,4 +57,4 @@ web::json::value asJson(std::string stringMetric) {
 
 web::json::value asJson(std::shared_ptr<Metric> ptrMetric) { return asJson(*ptrMetric); }
 
-}// namespace NES
+}// namespace NES::Monitoring

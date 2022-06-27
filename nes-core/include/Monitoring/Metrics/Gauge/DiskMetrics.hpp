@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief DiskMetrics class, that is responsible for collecting and managing disk metrics.
@@ -90,6 +90,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
  */
 web::json::value asJson(const DiskMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_

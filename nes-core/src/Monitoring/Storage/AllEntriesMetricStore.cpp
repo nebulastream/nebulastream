@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 
-namespace NES {
+namespace NES::Monitoring {
 
 AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG("AllEntriesMetricStore: Init NewestMetricStore"); }
 
@@ -42,7 +42,7 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
     NES_TRACE("AllEntriesMetricStore: Adding metrics for " << nodeId << " with type " << toString(metric->getMetricType()) << ": "
-                                                           << NES::asJson(metric));
+                                                           << NES::Monitoring::asJson(metric));
     TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));
@@ -67,4 +67,4 @@ StoredNodeMetricsPtr AllEntriesMetricStore::getAllMetrics(uint64_t nodeId) {
     return storedMetrics[nodeId];
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

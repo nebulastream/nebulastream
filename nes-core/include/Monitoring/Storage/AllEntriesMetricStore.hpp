@@ -17,7 +17,7 @@
 
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
 * @brief The AllEntriesMetricStore that stores all the metrics for monitoring.
@@ -65,6 +65,6 @@ class AllEntriesMetricStore : public AbstractMetricStore {
     mutable std::mutex storeMutex;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_

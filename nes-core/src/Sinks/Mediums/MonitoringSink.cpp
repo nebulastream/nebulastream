@@ -27,8 +27,8 @@
 
 namespace NES {
 MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
-                               MetricStorePtr metricStore,
-                               MetricCollectorType collectorType,
+                               Monitoring::MetricStorePtr metricStore,
+                               Monitoring::MetricCollectorType collectorType,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
@@ -59,8 +59,8 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto& buffer : dataBuffers) {
-        MetricPtr parsedMetric = MetricUtils::createMetricFromCollectorType(collectorType);
-        readFromBuffer(parsedMetric, buffer, 0);
+        Monitoring::MetricPtr parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
+        Monitoring::readFromBuffer(parsedMetric, buffer, 0);
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];
         NES_TRACE("MonitoringSink: Received buffer for " << nodeId << " with " << inputBuffer.getNumberOfTuples()
@@ -80,7 +80,7 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 std::string MonitoringSink::toString() const {
     std::stringstream ss;
     ss << "MONITORING_SINK(";
-    ss << "COLLECTOR(" << NES::toString(collectorType) << ")";
+    ss << "COLLECTOR(" << NES::Monitoring::toString(collectorType) << ")";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
     ss << ")";
     return ss.str();

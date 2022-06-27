@@ -24,7 +24,7 @@
 #include <cpprest/json.h>
 #include <cstring>
 
-namespace NES {
+namespace NES::Monitoring {
 
 CpuMetrics::CpuMetrics()
     : nodeId(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0), guest(0),
@@ -136,4 +136,4 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
 
 web::json::value asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

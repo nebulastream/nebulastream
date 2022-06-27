@@ -22,7 +22,7 @@
 
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 CpuCollector::CpuCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(CpuMetrics::getSchema("")) {
@@ -52,4 +52,4 @@ const MetricPtr CpuCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

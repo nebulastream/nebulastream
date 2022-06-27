@@ -16,7 +16,7 @@
 #define NES_SYSTEMRESOURCESREADERFACTORY_HPP
 #include <memory>
 
-namespace NES {
+namespace NES::Monitoring {
 
 class AbstractSystemResourcesReader;
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
@@ -30,6 +30,6 @@ class SystemResourcesReaderFactory {
     static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_SYSTEMRESOURCESREADERFACTORY_HPP

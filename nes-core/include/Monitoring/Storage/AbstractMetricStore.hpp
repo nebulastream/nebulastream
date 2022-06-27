@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace NES {
+namespace NES::Monitoring {
 /**
 * @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
 */
@@ -63,6 +63,6 @@ class AbstractMetricStore {
     */
     virtual bool hasMetrics(uint64_t nodeId) = 0;
 };
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

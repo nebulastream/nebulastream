@@ -34,6 +34,18 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
+class QueryService;
+using QueryServicePtr = std::shared_ptr<QueryService>;
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+namespace Monitoring{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
@@ -43,16 +55,6 @@ using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
-
-namespace Configurations {
-class CoordinatorConfiguration;
-using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
 
 /**
 * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
@@ -152,7 +154,7 @@ class MonitoringManager {
      * @brief Registers the logical monitoring streams at the coordinator.
      * @return true if monitoring is disabled or if the streams have been registered successfully, else false
      */
-    bool registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config);
+    bool registerLogicalMonitoringStreams(const NES::Configurations::CoordinatorConfigurationPtr config);
 
     /**
      * @brief Starts or redeploys monitoring queries at the coordinator
@@ -215,12 +217,13 @@ class MonitoringManager {
     bool enableMonitoring;
     std::set<MetricCollectorType> monitoringCollectors;
     std::set<std::string> logicalMonitoringSources;
-    QueryServicePtr queryService;
-    QueryCatalogServicePtr catalogService;
+    NES::QueryServicePtr queryService;
+    NES::QueryCatalogServicePtr catalogService;
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
+}// namespace Monitoring
 }// namespace NES
 
 #endif// NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_

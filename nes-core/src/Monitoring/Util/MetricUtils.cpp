@@ -28,7 +28,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
     if (i >= bufferSchema->getSize()) {
         return false;
@@ -98,7 +98,7 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
         case MetricCollectorType::NETWORK_COLLECTOR:
             return std::make_shared<Metric>(NetworkMetricsWrapper{}, WrappedNetworkMetrics);
         default: {
-            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
         }
     }
     return nullptr;
@@ -111,7 +111,7 @@ SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
         case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
         case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
         default: {
-            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
         }
     }
     return nullptr;
@@ -126,10 +126,10 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
         case MetricType::NetworkMetric: return MetricCollectorType::NETWORK_COLLECTOR;
         case MetricType::WrappedNetworkMetrics: return MetricCollectorType::NETWORK_COLLECTOR;
         default: {
-            NES_ERROR("MetricUtils: Metric type not supported " << NES::toString(type));
+            NES_ERROR("MetricUtils: Metric type not supported " << NES::Monitoring::toString(type));
             return MetricCollectorType::INVALID;
         }
     }
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

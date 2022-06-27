@@ -42,7 +42,7 @@
 #include <regex>
 #include <utility>
 
-namespace NES {
+namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      TopologyPtr topology,
                                      QueryServicePtr queryService,
@@ -181,13 +181,13 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {
+bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configurations::CoordinatorConfigurationPtr config) {
     if (enableMonitoring) {
         for (auto collectorType : monitoringCollectors) {
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string logicalSourceName = NES::toString(metricType);
+            std::string logicalSourceName = NES::Monitoring::toString(metricType);
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
             config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
@@ -215,7 +215,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
     // params for iteration
     if (success) {
         MetricType metricType = parse(monitoringStream);
-        std::string metricCollectorStr = NES::toString(MetricUtils::createCollectorTypeFromMetricType(metricType));
+        std::string metricCollectorStr = NES::Monitoring::toString(MetricUtils::createCollectorTypeFromMetricType(metricType));
         std::string query =
             R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%STREAM%"), monitoringStream);
@@ -351,4 +351,4 @@ const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMo
     return deployedMonitoringQueries;
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

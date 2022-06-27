@@ -18,11 +18,11 @@
 namespace NES {
 
 MonitoringSourceDescriptor::MonitoringSourceDescriptor(std::chrono::milliseconds waitTime,
-                                                       MetricCollectorType metricCollectorType)
+                                                       Monitoring::MetricCollectorType metricCollectorType)
     : SourceDescriptor(Schema::create()), waitTime(waitTime), metricCollectorType(metricCollectorType) {}
 
 SourceDescriptorPtr MonitoringSourceDescriptor::create(std::chrono::milliseconds waitTime,
-                                                       MetricCollectorType metricCollectorType) {
+                                                       Monitoring::MetricCollectorType metricCollectorType) {
     return std::make_shared<MonitoringSourceDescriptor>(MonitoringSourceDescriptor(waitTime, metricCollectorType));
 }
 
@@ -46,6 +46,6 @@ SourceDescriptorPtr MonitoringSourceDescriptor::copy() {
 
 std::chrono::milliseconds MonitoringSourceDescriptor::getWaitTime() { return waitTime; }
 
-MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() { return metricCollectorType; }
+Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() { return metricCollectorType; }
 
 }// namespace NES

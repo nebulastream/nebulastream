@@ -21,7 +21,7 @@
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * Class representing the static metrics that are transmitted during node registration in NES.
@@ -48,7 +48,7 @@ class RegistrationMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix = "");
+    static NES::SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -118,6 +118,6 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
  */
 web::json::value asJson(const RegistrationMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_

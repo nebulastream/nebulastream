@@ -20,7 +20,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
@@ -181,6 +181,6 @@ class Metric {
     MetricType type;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_

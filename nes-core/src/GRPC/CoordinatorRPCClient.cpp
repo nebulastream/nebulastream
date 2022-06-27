@@ -380,7 +380,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
-                                        const RegistrationMetrics& registrationMetrics,
+                                        const Monitoring::RegistrationMetrics& registrationMetrics,
                                         Spatial::Index::Experimental::Location fixedCoordinates,
                                         bool isMobile) {
 

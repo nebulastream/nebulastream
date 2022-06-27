@@ -38,7 +38,7 @@ class MonitoringSource : public DataSource {
      * @param numSourceLocalBuffers
      * @param successors
      */
-    MonitoringSource(MetricCollectorPtr metricCollector,
+    MonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                      std::chrono::milliseconds waitTime,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
@@ -55,7 +55,7 @@ class MonitoringSource : public DataSource {
      * @brief Returns the collector type of the monitoring source.
      * @return the collector type
      */
-    MetricCollectorType getCollectorType();
+    Monitoring::MetricCollectorType getCollectorType();
 
     /**
      * @brief Returns the wait time of the monitoring source
@@ -70,7 +70,7 @@ class MonitoringSource : public DataSource {
     std::string toString() const override;
 
   private:
-    MetricCollectorPtr metricCollector;
+    Monitoring::MetricCollectorPtr metricCollector;
     std::chrono::milliseconds waitTime;
 
   public:

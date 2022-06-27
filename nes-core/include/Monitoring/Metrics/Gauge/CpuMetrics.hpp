@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief This class represents the metrics read from /proc/stat:
@@ -114,6 +114,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
  */
 web::json::value asJson(const CpuMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

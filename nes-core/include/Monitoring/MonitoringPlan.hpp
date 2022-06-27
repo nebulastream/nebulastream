@@ -22,7 +22,7 @@
 #include <set>
 #include <string>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
 * @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
@@ -78,6 +78,6 @@ class MonitoringPlan {
     std::set<MetricType> metricTypes;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_

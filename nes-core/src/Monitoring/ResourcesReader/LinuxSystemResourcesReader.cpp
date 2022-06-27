@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <vector>
 
-namespace NES {
+namespace NES::Monitoring {
 LinuxSystemResourcesReader::LinuxSystemResourcesReader() { readerType = SystemResourcesReaderType::LinuxReader; }
 
 RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
@@ -402,4 +402,4 @@ uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
     uint64_t duration = value.count();
     return duration;
 }
-}// namespace NES
+}// namespace NES::Monitoring

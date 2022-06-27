@@ -20,7 +20,7 @@
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(AbstractReader) {}
 
 RuntimeMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
@@ -61,4 +61,4 @@ uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
 }
 
 SystemResourcesReaderType AbstractSystemResourcesReader::getReaderType() const { return readerType; }
-}// namespace NES
+}// namespace NES::Monitoring

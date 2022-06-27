@@ -18,7 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * The metric collector class for CPU metrics. Metric collectors are required for the integration with data sources.
@@ -59,6 +59,6 @@ class CpuCollector : public MetricCollector {
 
 using CpuCollectorPtr = std::shared_ptr<CpuCollector>;
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_

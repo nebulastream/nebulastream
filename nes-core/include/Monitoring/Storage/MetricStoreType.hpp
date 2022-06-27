@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
@@ -26,6 +26,6 @@ enum MetricStoreType { AllEntries, NewestEntry };
 
 std::string toString(MetricStoreType type);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_
