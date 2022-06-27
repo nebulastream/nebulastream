@@ -14,7 +14,7 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 std::string toString(MetricType type) {
     switch (type) {
@@ -51,4 +51,4 @@ MetricType parse(std::string metricTypeString) {
     return MetricType::UnknownMetric;
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

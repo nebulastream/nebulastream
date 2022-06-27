@@ -22,7 +22,7 @@
 
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 DiskCollector::DiskCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
@@ -52,4 +52,4 @@ const MetricPtr DiskCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

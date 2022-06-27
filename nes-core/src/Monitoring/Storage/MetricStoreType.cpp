@@ -14,7 +14,7 @@
 
 #include <Monitoring/Storage/MetricStoreType.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 std::string toString(MetricStoreType type) {
     switch (type) {
@@ -24,4 +24,4 @@ std::string toString(MetricStoreType type) {
     }
 };
 
-}// namespace NES
+}// namespace NES::Monitoring

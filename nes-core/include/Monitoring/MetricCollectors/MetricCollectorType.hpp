@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace NES {
+namespace NES::Monitoring {
 enum MetricCollectorType {
     CPU_COLLECTOR,
     DISK_COLLECTOR,
@@ -30,6 +30,6 @@ enum MetricCollectorType {
 
 std::string toString(MetricCollectorType type);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_METRICCOLLECTORTYPE_HPP

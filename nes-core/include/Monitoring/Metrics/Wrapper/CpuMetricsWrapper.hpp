@@ -19,7 +19,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief Wrapper class to represent a tuple buffer with multiple CpuMetrics objects.
@@ -103,6 +103,6 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
  */
 web::json::value asJson(const CpuMetricsWrapper& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_

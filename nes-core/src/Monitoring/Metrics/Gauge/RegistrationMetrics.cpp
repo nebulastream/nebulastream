@@ -24,7 +24,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 RegistrationMetrics::RegistrationMetrics()
     : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
@@ -46,8 +46,8 @@ RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& 
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
 }
 
-SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+NES::SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
+    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
 
                            ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
@@ -146,4 +146,4 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
 
 web::json::value asJson(const RegistrationMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

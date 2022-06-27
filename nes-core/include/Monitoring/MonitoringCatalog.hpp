@@ -19,7 +19,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::Monitoring {
 class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 class MonitoringCatalog;
@@ -55,6 +55,6 @@ class MonitoringCatalog {
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

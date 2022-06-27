@@ -266,8 +266,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   numberOfOrigins);
 }
 
-DataSinkPtr createMonitoringSink(MetricStorePtr metricStore,
-                                 MetricCollectorType type,
+DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
+                                 Monitoring::MetricCollectorType type,
                                  const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,
                                  uint32_t numOfProducers,

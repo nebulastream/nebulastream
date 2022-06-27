@@ -51,7 +51,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
         std::cout << "UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
-        bufferSize = (numCPU + 1) * sizeof(CpuMetrics) + sizeof(CpuMetricsWrapper);
+        bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
     }
 
@@ -63,7 +63,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
 
 TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
     web::json::value metricsJson{};
-    std::vector<Metric> metrics;
+    std::vector<Monitoring::Metric> metrics;
 
     uint64_t myInt = 12345;
     metrics.emplace_back(myInt);
@@ -78,13 +78,13 @@ TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
 }
 
 TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
-    auto monitoringPlan = MonitoringPlan::defaultPlan();
-    auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
+    auto monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
+    auto monitoringCatalog = Monitoring::MonitoringCatalog::defaultCatalog();
     web::json::value metricsJson{};
 
     for (auto type : monitoringPlan->getMetricTypes()) {
         auto collector = monitoringCatalog->getMetricCollector(type);
-        MetricPtr metric = collector->readMetric();
+        Monitoring::MetricPtr metric = collector->readMetric();
         metricsJson[toString(metric->getMetricType())] = asJson(metric);
     }
     NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);

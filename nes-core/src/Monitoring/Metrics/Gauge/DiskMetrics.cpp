@@ -21,7 +21,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
@@ -97,4 +97,4 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
 
 web::json::value asJson(const DiskMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

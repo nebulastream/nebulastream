@@ -21,7 +21,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::Monitoring {
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
@@ -97,6 +97,6 @@ class MonitoringAgent {
     bool enabled;
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_

@@ -15,7 +15,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 std::string toString(MetricCollectorType type) {
     switch (type) {
@@ -29,4 +29,4 @@ std::string toString(MetricCollectorType type) {
     }
 };
 
-}// namespace NES
+}// namespace NES::Monitoring

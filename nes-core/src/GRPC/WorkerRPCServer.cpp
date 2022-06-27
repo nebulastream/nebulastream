@@ -25,7 +25,7 @@
 namespace NES {
 
 WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                                 MonitoringAgentPtr monitoringAgent,
+                                 Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr nodeLocationWrapper)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(nodeLocationWrapper) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
@@ -100,11 +100,11 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
                                                MonitoringRegistrationReply*) {
     try {
         NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
-        std::set<MetricType> types;
+        std::set<Monitoring::MetricType> types;
         for (auto type : request->metrictypes()) {
-            types.insert((MetricType) type);
+            types.insert((Monitoring::MetricType) type);
         }
-        MonitoringPlanPtr plan = MonitoringPlan::create(types);
+        Monitoring::MonitoringPlanPtr plan = Monitoring::MonitoringPlan::create(types);
         monitoringAgent->setMonitoringPlan(plan);
         return Status::OK;
     } catch (std::exception& ex) {

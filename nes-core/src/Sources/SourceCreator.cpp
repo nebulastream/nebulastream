@@ -310,7 +310,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     successors);
 }
 
-DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                                      std::chrono::milliseconds waitTime,
                                      Runtime::BufferManagerPtr bufferManager,
                                      Runtime::QueryManagerPtr queryManager,

@@ -21,7 +21,6 @@
 #include <memory>
 
 namespace NES {
-
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 

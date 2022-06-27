@@ -299,7 +299,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
  * @param successors
  * @return a const data source pointer
  */
-DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                                      std::chrono::milliseconds waitTime,
                                      Runtime::BufferManagerPtr bufferManager,
                                      Runtime::QueryManagerPtr queryManager,

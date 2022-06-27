@@ -32,22 +32,22 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for Monitoring sink
      */
-    static SinkDescriptorPtr create(MetricCollectorType collectorType,
+    static SinkDescriptorPtr create(Monitoring::MetricCollectorType collectorType,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-    MetricCollectorType getCollectorType() const;
-    void setCollectorType(MetricCollectorType collectorType);
+    Monitoring::MetricCollectorType getCollectorType() const;
+    void setCollectorType(Monitoring::MetricCollectorType collectorType);
 
   private:
-    explicit MonitoringSinkDescriptor(MetricCollectorType collectorType,
+    explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType,
                                       FaultToleranceType faultToleranceType,
                                       uint64_t numberOfOrigins);
 
   private:
-    MetricCollectorType collectorType;
+    Monitoring::MetricCollectorType collectorType;
 };
 
 using MonitoringSinkDescriptorPtr = std::shared_ptr<MonitoringSinkDescriptor>;

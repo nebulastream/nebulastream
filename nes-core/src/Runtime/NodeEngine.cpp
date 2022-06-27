@@ -626,8 +626,8 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
     }
 }
 
-MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
-void NodeEngine::setMetricStore(MetricStorePtr metricStore) {
+Monitoring::MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
+void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
     NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
     this->metricStore = metricStore;
 }

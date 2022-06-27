@@ -21,7 +21,7 @@
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::Monitoring {
 
 class Metric;
 
@@ -87,6 +87,6 @@ class MetricCollector {
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif//NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_

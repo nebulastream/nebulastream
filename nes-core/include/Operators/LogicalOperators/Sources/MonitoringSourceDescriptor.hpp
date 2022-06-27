@@ -28,7 +28,7 @@ namespace NES {
  */
 class MonitoringSourceDescriptor : public SourceDescriptor {
   public:
-    static SourceDescriptorPtr create(std::chrono::milliseconds waitTime, MetricCollectorType metricCollectorType);
+    static SourceDescriptorPtr create(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief Return the wait time between sampling periods.
@@ -40,16 +40,16 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
      * @brief Return the type of metric collector used for the monitoring source
      * @return the metric collector
      */
-    MetricCollectorType getMetricCollectorType();
+    Monitoring::MetricCollectorType getMetricCollectorType();
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
     SourceDescriptorPtr copy() override;
 
   private:
-    explicit MonitoringSourceDescriptor(std::chrono::milliseconds waitTime, MetricCollectorType metricCollectorType);
+    explicit MonitoringSourceDescriptor(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
     std::chrono::milliseconds waitTime;
-    MetricCollectorType metricCollectorType;
+    Monitoring::MetricCollectorType metricCollectorType;
 };
 
 using MonitoringSourceDescriptorPtr = std::shared_ptr<MonitoringSourceDescriptor>;

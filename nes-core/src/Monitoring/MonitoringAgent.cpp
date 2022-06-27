@@ -30,7 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 using namespace Configurations;
 
 MonitoringAgent::MonitoringAgent() : MonitoringAgent(true) {}
@@ -103,7 +103,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
             // auto generate the specifics
             MonitoringSourceTypePtr sourceType =
                 MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
-            std::string metricTypeString = NES::toString(metricType);
+            std::string metricTypeString = NES::Monitoring::toString(metricType);
 
             NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
@@ -117,4 +117,4 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 
-}// namespace NES
+}// namespace NES::Monitoring

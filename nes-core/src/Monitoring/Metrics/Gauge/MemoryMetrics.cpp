@@ -21,7 +21,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
-namespace NES {
+namespace NES::Monitoring {
 
 MemoryMetrics::MemoryMetrics()
     : nodeId(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0), TOTAL_HIGH(0),
@@ -135,4 +135,4 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
 
 web::json::value asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
 
-}// namespace NES
+}// namespace NES::Monitoring

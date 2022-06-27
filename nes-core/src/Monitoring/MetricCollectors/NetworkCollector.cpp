@@ -23,7 +23,7 @@
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 NetworkCollector::NetworkCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(NetworkMetrics::getSchema("")) {
@@ -53,4 +53,4 @@ const MetricPtr NetworkCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

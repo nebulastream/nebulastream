@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief MemoryMetrics class, that is responsible for collecting and managing memory metrics.
@@ -98,6 +98,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
  */
 web::json::value asJson(const MemoryMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

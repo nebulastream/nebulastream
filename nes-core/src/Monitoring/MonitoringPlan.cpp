@@ -16,7 +16,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
@@ -87,4 +87,4 @@ const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {
     return output;
 }
 
-}// namespace NES
+}// namespace NES::Monitoring

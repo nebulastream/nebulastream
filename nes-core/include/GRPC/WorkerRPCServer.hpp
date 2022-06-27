@@ -28,8 +28,10 @@ using grpc::Status;
 
 namespace NES {
 
-class MonitoringAgent;
-using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+namespace Monitoring{
+    class MonitoringAgent;
+    using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+}// namespace Monitoring
 
 namespace Spatial::Mobility::Experimental {
 class NodeLocationWrapper;
@@ -39,7 +41,7 @@ using NodeLocationWrapperPtr = std::shared_ptr<NodeLocationWrapper>;
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                    MonitoringAgentPtr monitoringAgent,
+                    Monitoring::MonitoringAgentPtr monitoringAgent,
                     NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
@@ -65,7 +67,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
   private:
     Runtime::NodeEnginePtr nodeEngine;
-    MonitoringAgentPtr monitoringAgent;
+    Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
 };
 

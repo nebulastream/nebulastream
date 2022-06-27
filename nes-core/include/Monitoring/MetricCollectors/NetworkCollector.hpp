@@ -18,7 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * The NetworkCollector class enables measuring and writing records of class Metrics/Gauge/NetworkMetrics into a TupleBuffer.
@@ -59,5 +59,5 @@ class NetworkCollector : public MetricCollector {
 
 using NetworkCollectorPtr = std::shared_ptr<NetworkCollector>;
 
-}// namespace NES
+}// namespace NES::Monitoring
 #endif//NES_INCLUDE_MONITORING_COLLECTORS_NETWORKCOLLECTOR_HPP_

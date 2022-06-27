@@ -318,7 +318,7 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address,
     return true;
 }
 
-bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan) {
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRegistrationRequest request;

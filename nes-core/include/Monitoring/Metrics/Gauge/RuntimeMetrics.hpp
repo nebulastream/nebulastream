@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about dynamically changing data represented in other metric classes.
@@ -93,6 +93,6 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 web::json::value asJson(const RuntimeMetrics& metrics);
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_

@@ -18,7 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Monitoring {
 
 /**
  * @brief Pre-defined metrics used for NES internally.
@@ -84,6 +84,6 @@ class MetricUtils {
     static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
 };
 
-}// namespace NES
+}// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

@@ -206,7 +206,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
         auto metricCollector =
-            MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
+            Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
         metricCollector->setNodeId(nodeEngine->getNodeId());
         return createMonitoringSource(metricCollector,
                                       monitoringSourceDescriptor->getWaitTime(),
