@@ -65,7 +65,6 @@ class ExpressionExecutionTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ExpressionExecutionTest test class." << std::endl; }
 
-
 };
 
 Value<> addExpression() {
