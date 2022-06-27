@@ -16,22 +16,17 @@
 #include <API/Expressions/UdfExpressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <utility>
 
 namespace NES::Experimental {
 
-ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, const NES::ExpressionItem& argument) {
+ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, ExpressionNodePtr arguments...) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
         NES_ERROR("UDF name has to be a ConstantValueExpression but it was a " + udfNameExpression->toString());
     }
-
-    auto argumentExpression = argument.getExpressionNode();
-    if (!argumentExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
-        NES_ERROR("UDF argument has to be a ConstantValueExpression but it was a " + argumentExpression->toString());
-    }
     auto udfNameConstantValueExpression = udfNameExpression->as<NES::ConstantValueExpressionNode>();
-    auto argumentsConstantValueExpression = argumentExpression->as<NES::ConstantValueExpressionNode>();
-    return UdfCallExpressionNode::create(udfNameConstantValueExpression, argumentsConstantValueExpression);
+    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(arguments));
 }
 
 }// namespace NES::Experimental

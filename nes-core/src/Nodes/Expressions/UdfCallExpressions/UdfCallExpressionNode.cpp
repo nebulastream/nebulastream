@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #ifdef PYTHON_UDF_ENABLED
+#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
@@ -43,17 +44,18 @@ void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::v
 
 void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
     auto left = getUdfName();
-    auto right = getFunctionArgumentsNode();
     left->inferStamp(schema);
-    right->inferStamp(schema);
 
-    if (!left->getStamp()->isCharArray() || !right->getStamp()->isArray()) {
+    if (!left->getStamp()->isCharArray()) {
         throw std::logic_error(
-            "UdfCallExpressionNode: Error during stamp inference. Types need to be Text and Array but Left was:"
-            + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
+            "UdfCallExpressionNode: Error during stamp inference. Type needs to be Text but Left was:"
+            + left->getStamp()->toString());
     }
-    //TODO: Figure out return type
-    stamp = DataTypeFactory::createInt32();
+    if (pythonUdfDescriptorPtr != nullptr)
+        stamp = pythonUdfDescriptorPtr->getReturnType();
+    else
+        // If no udfDescriptor is set, we can't infer the stamp (for now)
+        stamp = DataTypeFactory::createUndefined();
 }
 
 std::string UdfCallExpressionNode::toString() const {
@@ -73,7 +75,9 @@ ExpressionNodePtr UdfCallExpressionNode::getUdfName() {
 ExpressionNodePtr UdfCallExpressionNode::getFunctionArgumentsNode() {
     return children[1]->as<UdfArgumentsNode>();
 }
-
+void UdfCallExpressionNode::setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor) {
+    pythonUdfDescriptorPtr = pyUdfDescriptor;
+}
 
 }// namespace NES::Experimental
 #endif
