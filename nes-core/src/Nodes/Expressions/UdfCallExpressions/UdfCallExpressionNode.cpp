@@ -51,11 +51,11 @@ void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
             "UdfCallExpressionNode: Error during stamp inference. Type needs to be Text but Left was:"
             + left->getStamp()->toString());
     }
-    if (pythonUdfDescriptorPtr != nullptr)
-        stamp = pythonUdfDescriptorPtr->getReturnType();
+    if (pythonUdfDescriptorPtr == nullptr)
+        throw std::logic_error(
+            "UdfCallExpressionNode: Error during stamp inference. No UdfDescriptor was set");
     else
-        // If no udfDescriptor is set, we can't infer the stamp (for now)
-        stamp = DataTypeFactory::createUndefined();
+        stamp = pythonUdfDescriptorPtr->getReturnType();
 }
 
 std::string UdfCallExpressionNode::toString() const {
