@@ -220,7 +220,9 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
+                // mark the pipeline as failed
                 fail();
+                // tell the query manager about it
                 queryManager->notifyPipelineCompletion(querySubPlanId,
                                                        inherited0::shared_from_this<ExecutablePipeline>(),
                                                        Runtime::QueryTerminationType::Failure);
