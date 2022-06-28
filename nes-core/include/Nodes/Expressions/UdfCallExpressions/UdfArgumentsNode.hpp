@@ -28,15 +28,11 @@ class UdfArgumentsNode : public ExpressionNode {
 
     /**
      *
-     * @param functionArguments
-     * @return
+     * @param functionArguments arguments for a UDF call.
+     * @return a UdfArgumentsNode holding all function call arguments
      */
     static ExpressionNodePtr create(std::vector<ExpressionNodePtr> functionArguments);
 
-    /**
-     *
-     * @param functionArgs
-     */
     static void setFunctionArguments(std::vector<ExpressionNodePtr> functionArgs);
 
     std::vector<ExpressionNodePtr> getFunctionArguments();
@@ -52,6 +48,7 @@ class UdfArgumentsNode : public ExpressionNode {
   private:
     /**
      * @brief Function arguments can be any kind of ExpressionNode
+     * For example: CALL(funcName, ABS(x)) should be valid
      */
     static std::vector<ExpressionNodePtr> functionArguments;
 };

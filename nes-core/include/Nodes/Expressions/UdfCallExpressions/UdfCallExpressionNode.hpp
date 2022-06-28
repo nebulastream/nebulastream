@@ -39,6 +39,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @brief UDF calls always need to start with the UDF name that has to be called.
      * Additionally, a call can have 0 or more function arguments. To solve this, create
      * is defined as a variadic function (taking a variable number of arguments)
+     * Calling a UDF would look like: CALL(funcName, Arg_1, ..., Arg_n)
      * @tparam Args
      * @param udfName
      * @param functionArguments
@@ -48,13 +49,11 @@ class UdfCallExpressionNode : public ExpressionNode {
     static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
                                     Args... functionArguments);
     /**
-    * @brief
+    * @brief determine the stamp of the Udf call by checking the return type of the function
+     * An error is thrown when no UDF descriptor is set.
     */
     void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief
-    */
     std::string toString() const override;
 
     /**
@@ -90,6 +89,10 @@ class UdfCallExpressionNode : public ExpressionNode {
     void setPythonUdfDescriptorPtr(const PythonUdfDescriptorPtr& pyUdfDescriptor);
 
   private:
+    /**
+     * For now we keep a PythonUdfDescriptorPtr for a minimal working example. As soon as
+     * support for other languages will be added we can use the base class UdfDescriptor instead.
+     */
     PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
 };
 
