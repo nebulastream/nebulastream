@@ -74,7 +74,7 @@ void STDWithinExpressionNode::inferStamp(SchemaPtr schema) {
     point->inferStamp(schema);
     auto shapeType = circle->getShapeType();
 
-    if (!point->getStamp()->isFloat() || shapeType != ShapeType::Circle) {
+    if (!point->getStamp()->isFloat() || shapeType != Circle) {
         throw std::logic_error(
             "ST_DWithinExpressionNode: Error during type inference. AccessTypes need to be Float and shape type needs"
             "to be Circle but Point was:" + point->getStamp()->toString() + ", shape was: " + circle->toString());

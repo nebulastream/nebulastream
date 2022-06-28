@@ -23,23 +23,37 @@ namespace NES {
 class CircleExpressionNode;
 using CircleExpressionNodePtr = std::shared_ptr<CircleExpressionNode>;
 
+/**
+ * @brief A circle expression represents a circle node which consists of a point
+ * (consisting of a latitude/longitude) which is the center of the circle and a
+ * radius of the circle defined in meters.
+ *
+ *               *  *
+ *           *          *
+ *         *      radius  *
+ *         *       o------*
+ *         *    (lat,lon) *
+ *           *          *
+ *               *  *
+ *
+ */
 class CircleExpressionNode : public ShapeExpressionNode {
   public:
     explicit CircleExpressionNode(CircleExpressionNode* other);
     explicit CircleExpressionNode(double latitude,
                                   double longitude,
-                                  double distance);
+                                  double radius);
     ~CircleExpressionNode() = default;
 
     /**
      * @brief Creates a new Circle expression node.
-     * @param latitude is the latitude
-     * @param longitude is the longitude
-     * @param distance represents the distance.
+     * @param latitude is the latitude of the center of the circle.
+     * @param longitude is the longitude of the center of the circle.
+     * @param radius represents the radius of the circle in meters.
      */
     static ShapeExpressionNodePtr create(double latitude,
                                          double longitude,
-                                         double distance);
+                                         double radius);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;
@@ -55,9 +69,9 @@ class CircleExpressionNode : public ShapeExpressionNode {
     double getLongitude() const;
 
     /**
-     * @brief gets the distance.
+     * @brief gets the radius.
      */
-    double getDistance() const;
+    double getRadius() const;
 
     /**
     * @brief Creates a deep copy of this circle node.
@@ -66,10 +80,9 @@ class CircleExpressionNode : public ShapeExpressionNode {
     ShapeExpressionNodePtr copy() override;
 
   private:
-
     double latitude;
     double longitude;
-    double distance;
+    double radius;
 };
 }// namespace NES
 

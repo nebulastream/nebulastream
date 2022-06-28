@@ -74,7 +74,7 @@ void STWithinExpressionNode::inferStamp(SchemaPtr schema) {
     auto shape = getShape();
     point->inferStamp(schema);
     auto shapeType = shape->getShapeType();
-    auto validShape = (shapeType == ShapeType::Rectangle) || (shapeType == ShapeType::Polygon);
+    auto validShape = (shapeType == Rectangle) || (shapeType == Polygon);
 
     // both sub expressions have to be numerical
     if (!point->getStamp()->isFloat() || !validShape) {

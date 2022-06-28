@@ -23,6 +23,10 @@ namespace NES {
 class PolygonExpressionNode;
 using PolygonExpressionNodePtr = std::shared_ptr<PolygonExpressionNode>;
 
+/**
+ * @brief A polygon expression represents a polygon node which consists of n number
+ * of latitude, longitude coordinate pair of points.
+ */
 class PolygonExpressionNode : public ShapeExpressionNode {
   public:
     explicit PolygonExpressionNode(PolygonExpressionNode* other);

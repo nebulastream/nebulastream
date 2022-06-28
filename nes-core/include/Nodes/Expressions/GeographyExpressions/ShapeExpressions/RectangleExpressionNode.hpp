@@ -23,47 +23,58 @@ namespace NES {
 class RectangleExpressionNode;
 using RectangleExpressionNodePtr = std::shared_ptr<RectangleExpressionNode>;
 
+/**
+ * @brief A rectangle expression represents a rectangle node, boundaries of which
+ * is defined by two points, a south-west (lower-left) point and a north-east
+ * (upper-right) point.
+ *
+ *                           o-----------------o north-east (latitudeHigh,
+ *                           |                 |             longitudeHigh)
+ *                           |                 |
+ * south-west (latitudeLow,  o-----------------o
+ *             longitudeLow)
+ */
 class RectangleExpressionNode : public ShapeExpressionNode {
   public:
     explicit RectangleExpressionNode(RectangleExpressionNode* other);
-    explicit RectangleExpressionNode(double latitude_low,
-                                     double longitude_low,
-                                     double latitude_high,
-                                     double longitude_high);
+    explicit RectangleExpressionNode(double latitudeLow,
+                                     double longitudeLow,
+                                     double latitudeHigh,
+                                     double longitudeHigh);
     ~RectangleExpressionNode() = default;
 
     /**
      * @brief Creates a new Rectangle expression node.
-     * @param latitude_low is the latitude value of south-west point of the rectangle.
-     * @param longitude_low is the longitude value of south-west point of the rectangle.
-     * @param latitude_high is the latitude value of north-east point of the rectangle.
-     * @param longitude_high is the longitude value of north-east point of the rectangle.
+     * @param latitudeLow is the latitude value of south-west point of the rectangle.
+     * @param longitudeLow is the longitude value of south-west point of the rectangle.
+     * @param latitudeHigh is the latitude value of north-east point of the rectangle.
+     * @param longitudeHigh is the longitude value of north-east point of the rectangle.
      */
-    static ShapeExpressionNodePtr create(double latitude_low,
-                                         double longitude_low,
-                                         double latitude_high,
-                                         double longitude_high);
+    static ShapeExpressionNodePtr create(double latitudeLow,
+                                         double longitudeLow,
+                                         double latitudeHigh,
+                                         double longitudeHigh);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;
 
     /**
-     * @brief gets the value of latitude_low.
+     * @brief gets the value of latitudeLow.
      */
     double getLatitudeLow() const;
 
     /**
-     * @brief gets the value of longitude_low.
+     * @brief gets the value of longitudeLow.
      */
     double getLongitudeLow() const;
 
     /**
-     * @brief gets the value of latitude_high.
+     * @brief gets the value of latitudeHigh.
      */
     double getLatitudeHigh() const;
 
     /**
-     * @brief gets the value of longitude_high.
+     * @brief gets the value of longitudeHigh.
      */
     double getLongitudeHigh() const;
 
@@ -74,10 +85,10 @@ class RectangleExpressionNode : public ShapeExpressionNode {
     ShapeExpressionNodePtr copy() override;
 
   private:
-    double latitude_low;
-    double longitude_low;
-    double latitude_high;
-    double longitude_high;
+    double latitudeLow;
+    double longitudeLow;
+    double latitudeHigh;
+    double longitudeHigh;
 };
 }// namespace NES
 

@@ -25,7 +25,7 @@ PolygonExpressionNode::PolygonExpressionNode(PolygonExpressionNode* other)
 }
 
 PolygonExpressionNode::PolygonExpressionNode(std::initializer_list<double> coords)
-    : ShapeExpressionNode(ShapeType::Polygon),
+    : ShapeExpressionNode(Polygon),
       coords(coords) {}
 
 ShapeExpressionNodePtr PolygonExpressionNode::create(std::initializer_list<double> coords) {

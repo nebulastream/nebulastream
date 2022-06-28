@@ -56,6 +56,11 @@ class STKnnExpressionNode : public ExpressionNode {
 
     /**
      * @brief set the children node of this expression.
+     * @param point is the GeographyFieldsAccessExpression which accesses two fields
+     * in the schema, the first of which should be the latitude and the second should
+     * be the longitude.
+     * @param queryPoint represents the query point (shape type should be point).
+     * @param k represents the value for parameter k in the query.
      */
     void setChildren(ExpressionNodePtr const& point,
                      ShapeExpressionNodePtr const& queryPoint,
