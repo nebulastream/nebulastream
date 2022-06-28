@@ -88,12 +88,11 @@ void STKnnExpressionNode::inferStamp(SchemaPtr schema) {
     auto shapeType = queryPoint->getShapeType();
     k->inferStamp(schema);
 
-    // check sub expressions if they are the correct type
     if (!point->getStamp()->isFloat() || shapeType != Point || !k->getStamp()->isNumeric()) {
         throw std::logic_error(
-            "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float, ShapeType should be Point,"
-            "and K should numeric but Point was: " + point->getStamp()->toString() + ", QueryPoint was: "
-            + queryPoint->toString() + ", and the k was: " + k->getStamp()->toString());
+            "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float for AttributeAccess,"
+            "ShapeType should be Point, and K should numeric but Point was: " + point->getStamp()->toString() +
+            ", QueryPoint was: " + queryPoint->toString() + ", and the k was: " + k->getStamp()->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

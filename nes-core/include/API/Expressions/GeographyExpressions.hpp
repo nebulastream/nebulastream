@@ -35,6 +35,14 @@ using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
  * @param latitude defines the latitude of the center of the circle.
  * @param longitude defines the longitude of the center of the circle.
  * @param radius defines the radius of the circle.
+ *
+ *               *  *
+ *           *          *
+ *         *      radius  *
+ *         *       o------*
+ *         *    (lat,lon) *
+ *           *          *
+ *               *  *
  */
 ShapeExpressionNodePtr CIRCLE(double latitude,
                               double longitude,
@@ -60,6 +68,13 @@ ShapeExpressionNodePtr POINT(double latitude,
  * of the rectangle.
  * @param longitudeHigh defines the longitude of the top-right (north-east) point
  * of the rectangle.
+ *
+ *                           o-----------------o north-east (latitudeHigh,
+ *                           |                 |             longitudeHigh)
+ *                           |                 |
+ * south-west (latitudeLow,  o-----------------o
+ *             longitudeLow)
+*/
  */
 ShapeExpressionNodePtr RECTANGLE(double latitudeLow,
                                  double longitudeLow,
