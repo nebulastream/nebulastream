@@ -60,13 +60,13 @@ ShapeExpressionNodePtr POINT(double latitude,
 /**
  * @brief Defines a rectangle shape. A user can define a rectangle as follows:
  * RECTANGLE(29.388829, 79.453806, 29.389843, 79.454933), where the
- * @param latitudeLow defines the latitude of the bottom-left (south-west) point
+ * @param latitudeLow defines the latitude of the south-west (bottom-left) point
  * of the rectangle.
- * @param longitudeLow defines the longitude of the bottom-left (south-west) point
+ * @param longitudeLow defines the longitude of the south-west (bottom-left) point
  * of the rectangle.
- * @param latitudeHigh defines the latitude of the top-right (north-east) point
+ * @param latitudeHigh defines the latitude of the north-east (top-right) point
  * of the rectangle.
- * @param longitudeHigh defines the longitude of the top-right (north-east) point
+ * @param longitudeHigh defines the longitude of the north-east (top-right) point
  * of the rectangle.
  *
  *                           o-----------------o north-east (latitudeHigh,
@@ -75,7 +75,6 @@ ShapeExpressionNodePtr POINT(double latitude,
  * south-west (latitudeLow,  o-----------------o
  *             longitudeLow)
 */
- */
 ShapeExpressionNodePtr RECTANGLE(double latitudeLow,
                                  double longitudeLow,
                                  double latitudeHigh,
