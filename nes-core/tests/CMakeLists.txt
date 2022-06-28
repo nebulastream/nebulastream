@@ -471,11 +471,6 @@ add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Sig
 target_link_libraries(z3-signature-inference-phase-test nes-tests)
 add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
 
-### JSON Source Tests ###
-add_executable(json-source-tests "UnitTests/Source/JSONSourceTest.cpp")
-target_link_libraries(json-source-tests nes-tests)
-add_test(NAME json-source-tests COMMAND json-source-tests)
-
 ### Circular Buffer Tests ###
 add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes-tests)
