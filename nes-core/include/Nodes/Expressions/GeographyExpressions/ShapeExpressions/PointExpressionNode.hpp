@@ -23,6 +23,10 @@ namespace NES {
 class PointExpressionNode;
 using PointExpressionNodePtr = std::shared_ptr<PointExpressionNode>;
 
+/**
+ * @brief A point expression represents a point node which consists of a
+ * latitude, longitude coordinate pair.
+ */
 class PointExpressionNode : public ShapeExpressionNode {
   public:
     explicit PointExpressionNode(PointExpressionNode* other);
@@ -32,8 +36,8 @@ class PointExpressionNode : public ShapeExpressionNode {
 
     /**
      * @brief Creates a new Point expression node.
-     * @param latitude is the latitude
-     * @param longitude is the longitude
+     * @param latitude is the latitude.
+     * @param longitude is the longitude.
      */
     static ShapeExpressionNodePtr create(double latitude,
                                          double longitude);

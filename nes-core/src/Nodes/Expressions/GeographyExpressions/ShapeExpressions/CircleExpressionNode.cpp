@@ -21,21 +21,21 @@ CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other)
     : ShapeExpressionNode(other->type) {
     latitude = other->getLongitude();
     longitude = other->getLongitude();
-    distance = other->getDistance();
+    radius = other->getRadius();
 }
 
 CircleExpressionNode::CircleExpressionNode(double latitude,
                                            double longitude,
-                                           double distance)
-    : ShapeExpressionNode(ShapeType::Circle),
+                                           double radius)
+    : ShapeExpressionNode(Circle),
       latitude(latitude),
       longitude(longitude),
-      distance(distance) {}
+      radius(radius) {}
 
 ShapeExpressionNodePtr CircleExpressionNode::create(double latitude,
                                                     double longitude,
-                                                    double distance) {
-    auto circleNode = std::make_shared<CircleExpressionNode>(latitude, longitude, distance);
+                                                    double radius) {
+    auto circleNode = std::make_shared<CircleExpressionNode>(latitude, longitude, radius);
     return circleNode;
 }
 
@@ -44,14 +44,14 @@ bool CircleExpressionNode::equal(NodePtr const& rhs) const {
         auto otherNode = rhs->as<CircleExpressionNode>();
         return getLatitude() == otherNode->getLatitude()
             && getLongitude() == otherNode->getLongitude()
-            && getDistance() == otherNode->getDistance();
+            && getRadius() == otherNode->getRadius();
     }
     return false;
 }
 
 std::string CircleExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "CIRCLE(lat: " << latitude << ", lon: " << longitude << ", dist: " << distance << ")";
+    ss << "CIRCLE(lat: " << latitude << ", lon: " << longitude << ", radius: " << radius << ")";
     return ss.str();
 }
 
@@ -59,7 +59,7 @@ double CircleExpressionNode::getLatitude() const { return latitude; }
 
 double CircleExpressionNode::getLongitude() const { return longitude; }
 
-double CircleExpressionNode::getDistance() const { return distance; }
+double CircleExpressionNode::getRadius() const { return radius; }
 
 ShapeExpressionNodePtr CircleExpressionNode::copy() {
     return std::make_shared<CircleExpressionNode>(CircleExpressionNode(this));

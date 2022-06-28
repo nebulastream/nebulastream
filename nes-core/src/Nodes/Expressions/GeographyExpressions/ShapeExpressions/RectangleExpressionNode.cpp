@@ -19,30 +19,30 @@
 namespace NES {
 RectangleExpressionNode::RectangleExpressionNode(RectangleExpressionNode* other)
     : ShapeExpressionNode(other->type) {
-    latitude_low = other->getLongitudeLow();
-    longitude_low = other->getLongitudeLow();
-    latitude_high = other->getLongitudeHigh();
-    longitude_high = other->getLongitudeHigh();
+    latitudeLow = other->getLongitudeLow();
+    longitudeLow = other->getLongitudeLow();
+    latitudeHigh = other->getLongitudeHigh();
+    longitudeHigh = other->getLongitudeHigh();
 }
 
-RectangleExpressionNode::RectangleExpressionNode(double latitude_low,
-                                                 double longitude_low,
-                                                 double latitude_high,
-                                                 double longitude_high)
-    : ShapeExpressionNode(ShapeType::Rectangle),
-      latitude_low(latitude_low),
-      longitude_low(longitude_low),
-      latitude_high(latitude_high),
-      longitude_high(longitude_high) {}
+RectangleExpressionNode::RectangleExpressionNode(double latitudeLow,
+                                                 double longitudeLow,
+                                                 double latitudeHigh,
+                                                 double longitudeHigh)
+    : ShapeExpressionNode(Rectangle),
+      latitudeLow(latitudeLow),
+      longitudeLow(longitudeLow),
+      latitudeHigh(latitudeHigh),
+      longitudeHigh(longitudeHigh) {}
 
-ShapeExpressionNodePtr RectangleExpressionNode::create(double latitude_low,
-                                                       double longitude_low,
-                                                       double latitude_high,
-                                                       double longitude_high) {
-    auto rectangleNode = std::make_shared<RectangleExpressionNode>(latitude_low,
-                                                                   longitude_low,
-                                                                   latitude_high,
-                                                                   longitude_high);
+ShapeExpressionNodePtr RectangleExpressionNode::create(double latitudeLow,
+                                                       double longitudeLow,
+                                                       double latitudeHigh,
+                                                       double longitudeHigh) {
+    auto rectangleNode = std::make_shared<RectangleExpressionNode>(latitudeLow,
+                                                                   longitudeLow,
+                                                                   latitudeHigh,
+                                                                   longitudeHigh);
     return rectangleNode;
 }
 
@@ -59,18 +59,18 @@ bool RectangleExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string RectangleExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "RECTANGLE(lat_low: " << latitude_low << ", lon_low: " << longitude_low
-       << ", lat_high: " << latitude_high << ", lon_high: " << longitude_high << ")";
+    ss << "RECTANGLE(lat_low: " << latitudeLow << ", lon_low: " << longitudeLow
+       << ", lat_high: " << latitudeHigh << ", lon_high: " << longitudeHigh << ")";
     return ss.str();
 }
 
-double RectangleExpressionNode::getLatitudeLow() const { return latitude_low; }
+double RectangleExpressionNode::getLatitudeLow() const { return latitudeLow; }
 
-double RectangleExpressionNode::getLongitudeLow() const { return longitude_low; }
+double RectangleExpressionNode::getLongitudeLow() const { return longitudeLow; }
 
-double RectangleExpressionNode::getLatitudeHigh() const { return latitude_high; }
+double RectangleExpressionNode::getLatitudeHigh() const { return latitudeHigh; }
 
-double RectangleExpressionNode::getLongitudeHigh() const { return longitude_high; }
+double RectangleExpressionNode::getLongitudeHigh() const { return longitudeHigh; }
 
 ShapeExpressionNodePtr RectangleExpressionNode::copy() {
     return std::make_shared<RectangleExpressionNode>(RectangleExpressionNode(this));

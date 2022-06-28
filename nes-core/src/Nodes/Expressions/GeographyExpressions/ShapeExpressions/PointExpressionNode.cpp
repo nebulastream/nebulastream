@@ -25,7 +25,7 @@ PointExpressionNode::PointExpressionNode(PointExpressionNode* other)
 
 PointExpressionNode::PointExpressionNode(double latitude,
                                          double longitude)
-    : ShapeExpressionNode(ShapeType::Point),
+    : ShapeExpressionNode(Point),
       latitude(latitude),
       longitude(longitude) {}
 

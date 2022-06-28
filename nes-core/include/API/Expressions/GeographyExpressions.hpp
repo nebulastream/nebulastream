@@ -52,19 +52,19 @@ ShapeExpressionNodePtr POINT(double latitude,
 /**
  * @brief Defines a rectangle shape. A user can define a rectangle as follows:
  * RECTANGLE(29.388829, 79.453806, 29.389843, 79.454933), where the
- * @param latitude_low defines the latitude of the bottom-left (south-west) point
+ * @param latitudeLow defines the latitude of the bottom-left (south-west) point
  * of the rectangle.
- * @param longitude_low defines the longitude of the bottom-left (south-west) point
+ * @param longitudeLow defines the longitude of the bottom-left (south-west) point
  * of the rectangle.
- * @param latitude_high defines the latitude of the top-right (north-east) point
+ * @param latitudeHigh defines the latitude of the top-right (north-east) point
  * of the rectangle.
- * @param longitude_high defines the longitude of the top-right (north-east) point
+ * @param longitudeHigh defines the longitude of the top-right (north-east) point
  * of the rectangle.
  */
-ShapeExpressionNodePtr RECTANGLE(double latitude_low,
-                                 double longitude_low,
-                                 double latitude_high,
-                                 double longitude_high);
+ShapeExpressionNodePtr RECTANGLE(double latitudeLow,
+                                 double longitudeLow,
+                                 double latitudeHigh,
+                                 double longitudeHigh);
 
 /**
  * @brief Defines a polygon shape. The user can define a polygon as follows:
@@ -84,9 +84,9 @@ ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords);
  * (i.e., whether a geometric object is within another geometric object or not). In NES,
  * we only expect the stream to report the GPS coordinates from a source (i.e., a Point).
  * Thus in NES, by using ST_WITHIN expression a user can filter points in the stream
- * which are within a geometric shape or not. The shape can be Circle, Polygon, or Rectangle.
- * If the shape is Circle we internally call ST_DWithin. ST_Within is supposed to be used with
- * the filter operator as follows:
+ * which are within a geometric shape or not. The shape can be a Circle, a Polygon, or a
+ * Rectangle. If the shape is Circle we internally call ST_DWithin. ST_Within is supposed
+ * to be used with the filter operator as follows:
  *
  * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE))
  *
@@ -95,6 +95,12 @@ ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords);
  * @see NES::CIRCLE
  * @see NES::POLYGON
  * @see NES::RECTANGLE
+ *
+ * @param latitude is the latitude attribute in the stream.
+ * @param longitude is the longitude attribute in the stream.
+ * @param shapeExpression is one of Circle, Polygon or Rectangle shape.
+ *
+ * @throws InvalidArgumentException when one of the arguments is invalid.
  */
 ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
                             const ExpressionItem& longitude,
@@ -113,9 +119,15 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
  * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE)
  *
  * where latitude, and longitude represent the attributes lat/long in the stream, and
- * SHAPE is a circle which constitutes of a lat/lon coordinate and a radius (radius defines
- * the distance for the ST_DWITHIN predicate).
+ * SHAPE is a circle which constitutes of a lat/lon coordinate and a radius (radius
+ * defines the distance for the ST_DWITHIN predicate).
  * @see NES::CIRCLE
+ *
+ * @param latitude is the latitude attribute in the stream.
+ * @param longitude is the longitude attribute in the stream.
+ * @param shapeExpression is a Circle shape, radius of which is the distance "D".
+ *
+ * @throws InvalidArgumentException when one of the arguments is invalid.
  */
 ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
                              const ExpressionItem& longitude,
@@ -127,8 +139,16 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
  * nearest neighbors of a query point from a group of geometric objects. In NES, we will
  * combine ST_KNN expression with a window which would allow us to define the batch of
  * objects from which to select the "k" nearest neighbors of the query point. For now,
- * this expression remains unimplemented and an error is thrown. To define the query point:
+ * this expression remains unimplemented and an error is thrown. To define the query
+ * point:
  * @see NES::POINT
+ *
+ * @param latitude is the latitude attribute in the stream.
+ * @param longitude is the longitude attribute in the stream.
+ * @param shapeExpression is the query point (a point shape).
+ * @param k is the variable K in KNN query.
+ *
+ * @throws InvalidArgumentException when one of the arguments is invalid.
  */
 ExpressionNodePtr ST_KNN(const ExpressionItem& latitude,
                          const ExpressionItem& longitude,
