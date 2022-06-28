@@ -34,6 +34,7 @@ NullOutputSink::~NullOutputSink() = default;
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    auto buffer = inputBuffer;
 //    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
 //        updateWatermark(inputBuffer);
 //    }
