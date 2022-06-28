@@ -230,6 +230,7 @@ if (ENABLE_PYTHON_UDF)
 endif ()
 
 # Native/Generic march support
+MESSAGE("CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if (NES_BUILD_NATIVE)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)

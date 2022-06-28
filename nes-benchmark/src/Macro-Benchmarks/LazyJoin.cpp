@@ -37,6 +37,21 @@
 #define min(A, B) ((A) < (B) ? (A) : (B))
 #endif
 
+namespace NexmarkCommon {
+static constexpr long PERSON_EVENT_RATIO = 1;
+static constexpr long AUCTION_EVENT_RATIO = 4;
+static constexpr long BID_EVENT_RATIO = 0;
+static constexpr long TOTAL_EVENT_RATIO = PERSON_EVENT_RATIO + AUCTION_EVENT_RATIO + BID_EVENT_RATIO;
+
+static constexpr long MAX_PERSON_ID = 540000000L;
+static constexpr long MAX_AUCTION_ID = 540000000000L;
+static constexpr long MAX_BID_ID = 540000000000L;
+
+static constexpr int HOT_SELLER_RATIO = 100;
+static constexpr int HOT_AUCTIONS_PROB = 85;
+static constexpr int HOT_AUCTION_RATIO = 100;
+};// namespace NexmarkCommon
+
 struct alignas(16) LeftStream {
     uint64_t key;
     uint64_t timestamp;
@@ -46,6 +61,31 @@ struct alignas(16) RightStream {
     uint64_t key;
     uint64_t timestamp;
 };
+
+struct alignas(16) BidStream {
+    uint64_t key;
+    uint64_t timestamp;
+    uint64_t bidder;
+    uint64_t price;
+};
+
+struct alignas(16) AuctionStream {
+    uint64_t key;
+    uint64_t timestamp;
+    uint64_t bidder;
+    char payload[64];
+};
+
+//char (*__kaboom)[sizeof(AuctionStream)] = 1;
+static_assert(sizeof(AuctionStream) % 8 == 0);
+
+struct alignas(16) PersonStream {
+    uint64_t key;
+    uint64_t timestamp;
+    char payload[64];
+};
+//char (*__kaboom)[sizeof(PersonStream)] = 1;
+static_assert(sizeof(PersonStream) % 8 == 0);
 
 namespace Slash {
 class abstract_zipfian_generator {
@@ -346,7 +386,9 @@ template<typename T>
 class alignas(64) FixedPage {
     template<typename>
     friend class ImmutableFixedPage;
-    static constexpr auto CHUNK_SIZE = 64 * 1024;
+
+  public:
+    static constexpr auto CHUNK_SIZE = 4 * 1024;
     static constexpr auto MAX_ITEM = CHUNK_SIZE / sizeof(T);
 
   public:
@@ -422,10 +464,13 @@ class ImmutableFixedPage {
 
 template<typename T>
 class alignas(64) FixedPagesLinkedList {
+    static constexpr auto PREALLOCATED_SIZE = 16 * 1024;
+    static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / FixedPage<T>::CHUNK_SIZE;
+
   public:
     explicit FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress)
         : tail(tail), overrunAddress(overrunAddress) {
-        for (auto i = 0; i < 2; ++i) {
+        for (auto i = 0; i < NUM_PREALLOCATED_PAGES; ++i) {
             pages.emplace_back(new FixedPage<T>(this->tail, overrunAddress));
         }
         currPage = pages[0];
@@ -657,10 +702,11 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
         auto numOfTuples = buffer.getNumberOfTuples();
 
         auto& ht = this->ht[wctx.getId()]->inner;
-
+        //        for (auto j = 0ul; j < numOfTuples; ++j) {
         for (auto i = 0ul, j = 0ul, len = numOfTuples / 4ul; i < len; ++i) {
             for (auto k = 0ul; k < 4ul; ++k, ++j) {
                 auto* record = input + j;
+
                 if PLACEHOLDER_LIKELY (record->timestamp) {
                     uint64_t h = record->key;
                     h ^= h >> 33;
@@ -670,22 +716,26 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
                     h ^= h >> 33;
                     ht[h & MASK]->append(h, record);
                 } else {
-                    NES_INFO("Got 0 timestamp -> trigger window key " << record->key);
-                    for (auto i = 0; i < NUM_PARTITIONS; ++i) {
-                        sharedState.ght[i].append(*ht[i]);
+                    NES_INFO("Got 0 timestamp -> trigger window key " << record->key << " " << record->timestamp);
+                    for (auto a = 0; a < NUM_PARTITIONS; ++a) {
+                        sharedState.ght[i].append(*ht[a]);
                     }
                     if (joinControlBlock.fetch_sub(1) == 1) {
                         // let's trigger
                         auto queryManager = execCtx.getQueryManager();
+                        auto numOfWorkers = queryManager->getNumberOfWorkerThreads();
                         for (auto i = 0; i < NUM_PARTITIONS; ++i) {
                             auto partitionId = i + 1;
                             auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(partitionId), 1, this);
+                            buffer.setNumberOfTuples(0);
                             queryManager->addWorkForNextPipeline(buffer, joinTrigger);
                         }
                     }
                 }
             }
         }
+        //        }
+        processedTuples[wctx.getId()].counter += numOfTuples;
         processedBytes[wctx.getId()].counter += (numOfTuples * 16);
         return ExecutionResult::Ok;
     }
@@ -699,6 +749,7 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
                     ht[context.getId()]->inner[i] = new FixedPagesLinkedList<TimestampedRecord>(tail, overrunAddress);
                 }
                 processedBytes[context.getId()].counter = 0;
+                processedTuples[context.getId()].counter = 0;
                 timings[context.getId()].counter = std::chrono::high_resolution_clock::now().time_since_epoch().count();
                 break;
             }
@@ -707,9 +758,14 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
             case Runtime::FailEndOfStream: {
                 auto elapsedNs =
                     std::chrono::high_resolution_clock::now().time_since_epoch().count() - timings[context.getId()].counter;
-                auto processedMb = processedBytes[context.getId()].counter / (1024ul * 1024ul);
-                auto throughput = processedMb / (elapsedNs / 1'000'000'000.0);
-                NES_DEBUG("Throughput worker=" << context.getId() << " is " << throughput);
+                auto throughput = processedTuples[context.getId()].counter / (elapsedNs / 1'000'000'000.0);
+                numOfProcessedTuplesPerSec.fetch_add(throughput);
+                //                auto elapsedNs =
+                //                    std::chrono::high_resolution_clock::now().time_since_epoch().count() - timings[context.getId()].counter;
+                //                auto processedMb = processedBytes[context.getId()].counter / (1024ul * 1024ul);
+                //                auto throughput = processedMb / (elapsedNs / 1'000'000'000.0);
+                NES_INFO("Throughput worker=" << context.getId() << " is " << throughput);
+                //                numOfProcessedTuplesPerSec.fetch_add(processedTuples[context.getId()].counter / (elapsedNs / 1'000'000'000.0));
                 for (auto i = 0; i < NUM_PARTITIONS; ++i) {
                     //                    NES_INFO("Partition i=" << i << " has " << ht[context.getId()]->inner[i]->size);
                     delete ht[context.getId()]->inner[i];
@@ -721,6 +777,8 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
             }
         }
     }
+
+    size_t getProcessedTuplesPerSec() const { return numOfProcessedTuplesPerSec; }
 
   private:
     struct alignas(64) HashTable {
@@ -736,10 +794,13 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
 
     std::array<Counter<int64_t>, Runtime::NesThread::MaxNumThreads> timings;
     std::array<Counter<size_t>, Runtime::NesThread::MaxNumThreads> processedBytes;
+    std::array<Counter<size_t>, Runtime::NesThread::MaxNumThreads> processedTuples;
 
     uint8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
+
+    std::atomic<size_t> numOfProcessedTuplesPerSec{0};
 
     SharedJoinHashTable<TimestampedRecord>& sharedState;
     JoinControlBlock& joinControlBlock;
@@ -747,18 +808,18 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
     Runtime::Execution::ExecutablePipelinePtr joinTrigger;
 };
 
-class LeftJoinPipelineStage : public JoinPipelineStage<LeftStream, true> {
+class LeftJoinPipelineStage : public JoinPipelineStage<AuctionStream, true> {
   public:
     explicit LeftJoinPipelineStage(JoinControlBlock& controlBlock,
-                                   SharedJoinHashTable<LeftStream>& sharedState,
+                                   SharedJoinHashTable<AuctionStream>& sharedState,
                                    Runtime::Execution::ExecutablePipelinePtr joinTrigger)
         : JoinPipelineStage(BinaryLeft, controlBlock, sharedState, joinTrigger) {}
 };
 
-class RightJoinPipelineStage : public JoinPipelineStage<RightStream, false> {
+class RightJoinPipelineStage : public JoinPipelineStage<PersonStream, false> {
   public:
     explicit RightJoinPipelineStage(JoinControlBlock& controlBlock,
-                                    SharedJoinHashTable<RightStream>& sharedState,
+                                    SharedJoinHashTable<PersonStream>& sharedState,
                                     Runtime::Execution::ExecutablePipelinePtr joinTrigger)
         : JoinPipelineStage(BinaryRight, controlBlock, sharedState, joinTrigger) {}
 };
@@ -770,7 +831,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
                             uint64_t numOfSources,
                             uint64_t startOffset,
                             Runtime::Execution::ExecutablePipelinePtr pipeline,
-                            std::function<void(uint8_t*, size_t, size_t)> writer) {
+                            std::function<void(uint8_t*, size_t, size_t, size_t)> writer) {
     auto ofs = dataProducers.size() + startOffset;
     auto bufferSize = nodeEngine->getBufferManager()->getBufferSize();
     size_t numOfBuffers = partitionSizeBytes / bufferSize;
@@ -779,7 +840,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
         size_t dataSegmentSize = bufferSize * numOfBuffers;
         NES_INFO("Creating BenchmarkSource #" << i);
         auto* data = detail::allocHugePages<uint8_t>(dataSegmentSize);// new uint8_t[dataSegmentSize];
-        writer(data, dataSegmentSize, reinterpret_cast<uintptr_t>(data));
+        writer(data, dataSegmentSize, bufferSize, reinterpret_cast<uintptr_t>(data));
         std::shared_ptr<uint8_t> ptr(data, [](uint8_t* ptr) {
             //delete[] ptr;
             std::free(ptr);
@@ -797,7 +858,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
                                                         0,
                                                         64ul,
                                                         GatheringMode::INGESTION_RATE_MODE,
-                                                        SourceMode::WRAP_BUFFER,
+                                                        SourceMode::COPY_BUFFER,
                                                         i,
                                                         0ul,
                                                         pipelines);
@@ -806,6 +867,110 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
         NES_INFO("Created BenchmarkSource #" << i << " in "
                                              << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count());
     }
+}
+
+void simpleWorkload(uint8_t* data, size_t length, uint64_t seed) {
+    auto* ptr = reinterpret_cast<LeftStream*>(data);
+    auto numOfTuples = length / sizeof(LeftStream);
+    std::mt19937 engine(seed * std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    Slash::ycsb_zipfian_generator generator(0, 10'000, 0.8);
+
+    for (size_t i = 0; i < numOfTuples; ++i) {
+        ptr[i].key = generator(engine);
+        ptr[i].timestamp = 1;
+    }
+    ptr[numOfTuples - 1].timestamp = 0;
+}
+
+void nexmarkAuctionGenerator(uint8_t* data, size_t length, size_t bufferSize, uint64_t minAuctionId) {
+    minAuctionId = 10000;
+    auto* ptr = reinterpret_cast<AuctionStream*>(data);
+    auto auctionsPerBuffer = bufferSize / sizeof(AuctionStream);
+    auto necessaryBuffers = length / bufferSize;
+    auto num = (necessaryBuffers * bufferSize) / sizeof(AuctionStream);
+    std::vector<AuctionStream*> buffers;
+    for (auto i = 0ul; i < necessaryBuffers; ++i) {
+        buffers.emplace_back(reinterpret_cast<AuctionStream*>(data + i * bufferSize));
+    }
+    auto now = std::chrono::system_clock::now().time_since_epoch().count() / 1'000'000;// ns to ms
+    auto currBuffer = 0ul;
+    auto currAuctionInBuffer = 0ul;
+    for (auto currentRecord = 0ul; currentRecord < num; ++currentRecord) {
+        if (currAuctionInBuffer >= auctionsPerBuffer) {
+            currAuctionInBuffer = 0ul;
+            currBuffer++;
+        }
+        if (currBuffer >= necessaryBuffers) {
+            return;
+        }
+        long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
+        long offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
+        if (offset < NexmarkCommon::PERSON_EVENT_RATIO) {
+            epoch--;
+            offset = NexmarkCommon::AUCTION_EVENT_RATIO - 1;
+        } else {
+            offset = NexmarkCommon::AUCTION_EVENT_RATIO - 1;
+        }
+        long auctionId = minAuctionId + epoch * NexmarkCommon::AUCTION_EVENT_RATIO + offset;
+
+        epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
+        offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
+
+        if (offset >= NexmarkCommon::PERSON_EVENT_RATIO) {
+            offset = NexmarkCommon::PERSON_EVENT_RATIO - 1;
+        }
+        long matchingPerson;
+        if (rand() % 100 > 85) {
+            long personId = minAuctionId + epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset;
+            matchingPerson = (personId / NexmarkCommon::HOT_SELLER_RATIO) * NexmarkCommon::HOT_SELLER_RATIO;
+        } else {
+            long personId = minAuctionId + epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset + 1;
+            long activePersons = min(personId, 20000L);
+            long n = rand() % (activePersons + 100);
+            matchingPerson = personId + activePersons - n;
+        }
+        buffers[currBuffer][currAuctionInBuffer].key = auctionId;
+        buffers[currBuffer][currAuctionInBuffer].bidder = matchingPerson;
+        buffers[currBuffer][currAuctionInBuffer].timestamp = 1;
+        ++currAuctionInBuffer;
+    }
+    NES_INFO("Generated " << num << " auctions");
+}
+
+void nexmarkPersonGenerator(uint8_t* data, size_t length, size_t bufferSize, uint64_t minPersonId) {
+    minPersonId = 10000;
+    auto* ptr = reinterpret_cast<PersonStream*>(data);
+    auto personsPerBuffer = bufferSize / sizeof(PersonStream);
+    auto necessaryBuffers = length / bufferSize;
+    auto num = (necessaryBuffers * bufferSize) / sizeof(PersonStream);
+    std::vector<PersonStream*> buffers;
+    for (auto i = 0ul; i < necessaryBuffers; ++i) {
+        buffers.emplace_back(reinterpret_cast<PersonStream*>(data + i * bufferSize));
+    }
+    auto now = std::chrono::system_clock::now().time_since_epoch().count() / 1'000'000;// ns to ms
+    auto currBuffer = 0ul;
+    auto currPersonInBuffer = 0ul;
+    for (auto currentRecord = 0ul; currentRecord < num; ++currentRecord) {
+        if (currPersonInBuffer >= personsPerBuffer) {
+            currPersonInBuffer = 0ul;
+            currBuffer++;
+        }
+        if (currBuffer >= necessaryBuffers) {
+            return;
+        }
+        long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
+        long offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
+
+        if (offset >= NexmarkCommon::PERSON_EVENT_RATIO) {
+            offset = NexmarkCommon::PERSON_EVENT_RATIO - 1;
+        }
+
+        long personId = minPersonId + epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset;
+        buffers[currBuffer][currPersonInBuffer].key = personId;
+        buffers[currBuffer][currPersonInBuffer].timestamp = 2;
+        currPersonInBuffer++;
+    }
+    NES_INFO("Generated " << num << " persons");
 }
 
 class DummyQueryListener : public AbstractQueryStatusListener {
@@ -820,39 +985,93 @@ class DummyQueryListener : public AbstractQueryStatusListener {
 };
 
 }// namespace NES
-int main(int, char**) {
+int main(int argc, char** argv) {
     using namespace NES;
-    NES::Logger::setupLogging("LazyJoin.log", NES::LogLevel::LOG_INFO);
-    auto lhsStreamSchema = Schema::create()
-                               ->addField("key", DataTypeFactory::createUInt64())
-                               ->addField("timestamp", DataTypeFactory::createUInt64());
+    using std::string;
+    WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
-    auto rhsStreamSchema = Schema::create()
-                               ->addField("key", DataTypeFactory::createUInt64())
-                               ->addField("timestamp", DataTypeFactory::createUInt64());
+    std::map<string, string> commandLineParams;
+    for (int i = 1; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    auto workerConfigPath = commandLineParams.find("--configPath");
+    //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
+    if (workerConfigPath != commandLineParams.end()) {
+        workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
+    }
+
+    //if command line params are provided that do not contain a path to a yaml file for worker config,
+    //command line param physicalSources are used to overwrite default physicalSources
+    if (argc >= 1 && !commandLineParams.contains("--configPath")) {
+        workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
+    }
+
+    NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
+
+    NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+
+    NES::Logger::setupLogging("LazyJoin.log", NES::LogLevel::LOG_INFO);
+
+    // fake schemas :: just to make the bench source happy :: make sure the schema sizes match the sizes of the two struct above
+    auto lhsStreamSchema = Schema::create()// 64 + 8 + 8 + 8
+                               ->addField("id", UINT64)
+                               ->addField("itemName", UINT64)
+                               ->addField("description", UINT64)
+                               ->addField("initialBit", UINT64)
+                               ->addField("reserve", UINT64)
+                               ->addField("dateTime", UINT64)
+                               ->addField("seller", UINT64)
+                               ->addField("expires", UINT64)
+                               ->addField("sellera", UINT64)
+                               ->addField("expireas", UINT64)
+                               ->addField("asdexpireas", UINT64)
+                               ->addField("category", UINT64);
+
+    auto rhsStreamSchema = Schema::create()// 64 + 8 + 8
+                               ->addField("id", UINT64)
+                               ->addField("itemName", UINT64)
+                               ->addField("description", UINT64)
+                               ->addField("initialBit", UINT64)
+                               ->addField("reserve", UINT64)
+                               ->addField("dateTime", UINT64)
+                               ->addField("seller", UINT64)
+                               ->addField("expires", UINT64)
+                               ->addField("expiresa", UINT64)
+                               ->addField("category", UINT64);
+
+    NES_ASSERT2_FMT(lhsStreamSchema->getSchemaSizeInBytes() == sizeof(AuctionStream),
+                    "invalid schema size " << lhsStreamSchema->getSchemaSizeInBytes());
+    NES_ASSERT2_FMT(rhsStreamSchema->getSchemaSizeInBytes() == sizeof(PersonStream),
+                    "invalid schema size " << rhsStreamSchema->getSchemaSizeInBytes());
 
     std::vector<PhysicalSourcePtr> physicalSources;
 
-    auto leftStreamSize = 32 * 1024 * 1024;
-    auto rightStreamSize = 32 * 1024 * 1024;
+    auto leftStreamSize = 6 * 128 * 1024 * 1024;
+    auto rightStreamSize = 128 * 1024 * 1024;
 
-    auto workerConfig = std::make_shared<WorkerConfiguration>();
-    workerConfig->bufferSizeInBytes = 1024 * 1024;
-    workerConfig->numberOfBuffersInGlobalBufferManager = 4 * 1024;
-    workerConfig->numberOfBuffersPerWorker = 64;
-    workerConfig->numberOfBuffersInSourceLocalBufferPool = 64;
-    workerConfig->numWorkerThreads = 16;
+    auto leftStreamSizeCfg = commandLineParams.find("--leftStreamSize");
+    if (leftStreamSizeCfg != commandLineParams.end()) {
+        leftStreamSize = std::stol(leftStreamSizeCfg->second);
+    }
+
+    auto rightStreamSizeCfg = commandLineParams.find("--rightStreamSize");
+    if (rightStreamSizeCfg != commandLineParams.end()) {
+        rightStreamSize = std::stol(rightStreamSizeCfg->second);
+    }
 
     auto fakeWorker = std::make_shared<DummyQueryListener>();
-    auto engine = Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(fakeWorker).build();
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(fakeWorker).build();
     Exceptions::installGlobalErrorListener(engine);
 
     auto sink = createNullOutputSink(0, 0, engine, 1);
 
-    auto numSourcesLeft = 4;
-    auto numSourcesRight = 4;
+    auto numSourcesLeft = 2;
+    auto numSourcesRight = 2;
 
-    JoinSharedState<LeftStream, RightStream> joinSharedState;
+    JoinSharedState<AuctionStream, PersonStream> joinSharedState;
     joinSharedState.control = numSourcesLeft + numSourcesRight;
 
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
@@ -880,7 +1099,7 @@ int main(int, char**) {
         },
         operatorHandlers);
 
-    auto executableTrigger = std::make_shared<JoinTriggerPipeline<LeftStream, RightStream>>(joinSharedState);
+    auto executableTrigger = std::make_shared<JoinTriggerPipeline<AuctionStream, PersonStream>>(joinSharedState);
     auto pipelineTrigger =
         Runtime::Execution::ExecutablePipeline::create(2, 0, 0, executionContextRight, executableTrigger, 2, {sink});
 
@@ -913,18 +1132,7 @@ int main(int, char**) {
                            numSourcesLeft,
                            1,
                            pipelineLeft,
-                           [](uint8_t* data, size_t length, uint64_t seed) {
-                               auto* ptr = reinterpret_cast<LeftStream*>(data);
-                               auto numOfTuples = length / sizeof(LeftStream);
-                               std::mt19937 engine(seed * std::chrono::high_resolution_clock::now().time_since_epoch().count());
-                               Slash::ycsb_zipfian_generator generator(0, 10'000, 0.2);
-
-                               for (size_t i = 0; i < numOfTuples; ++i) {
-                                   ptr[i].key = generator(engine);
-                                   ptr[i].timestamp = 1;
-                               }
-                               ptr[numOfTuples - 1].timestamp = 0;
-                           });
+                           nexmarkAuctionGenerator);
 
     createBenchmarkSources(dataProducers,
                            engine,
@@ -933,18 +1141,7 @@ int main(int, char**) {
                            numSourcesRight,
                            1,
                            pipelineRight,
-                           [](uint8_t* data, size_t length, uint64_t seed) {
-                               auto* ptr = reinterpret_cast<RightStream*>(data);
-                               auto numOfTuples = length / sizeof(RightStream);
-                               std::mt19937 engine(seed * std::chrono::high_resolution_clock::now().time_since_epoch().count());
-                               Slash::ycsb_zipfian_generator generator(0, 10'000, 0.2);
-
-                               for (size_t i = 0; i < numOfTuples; ++i) {
-                                   ptr[i].key = generator(engine);
-                                   ptr[i].timestamp = 1;
-                               }
-                               ptr[numOfTuples - 1].timestamp = 0;
-                           });
+                           nexmarkPersonGenerator);
 
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(0,
                                                                          0,
@@ -960,19 +1157,38 @@ int main(int, char**) {
 
     NES_ASSERT(engine->startQuery(executionPlan->getQueryId()), "Cannot start query");
 
-    while (engine->getQueryStatus(executionPlan->getQueryId()) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
-        _mm_pause();
-    }
+    auto processedTuplesSoFar = 0ul;
+    double throughputMTuples = 0ul;
+    double throughputMBytes = 0ul;
+    auto iterations = 0;
 
-    auto statistics = engine->getQueryManager()->getQueryStatistics(executionPlan->getQuerySubPlanId());
-    auto nowTs = std::chrono::high_resolution_clock::now();
-    auto elapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(nowTs - startTs);
-    double elapsedSec = elapsedNs.count() / 1'000'000'000.0;
-    double MTuples = statistics->getProcessedTuple() / 1'000'000.0;
-    auto throughputTuples = MTuples / elapsedSec;
-    auto throughputMBytes = ((16ul * MTuples * 1'000'000.0) / elapsedSec) / (1024ul * 1024ul);
-    NES_INFO("Processed: " << MTuples << " MTuples :: " << (16ul * MTuples * 1'000'000.0 / (1024ul * 1024ul)) << " MB :: "
-                           << elapsedSec << " s :: " << throughputTuples << " MTuple/sec :: " << throughputMBytes << " MB/sec");
+    auto statistics = engine->getQueryStatistics(executionPlan->getQueryId());
+    while (engine->getQueryStatus(executionPlan->getQueryId()) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        double elapsedNs = (std::chrono::high_resolution_clock::now() - startTs).count();
+        double elapsedSec = elapsedNs / 1'000'000'000.0;
+        double processedTuplesStep = statistics[0]->getProcessedTuple() - processedTuplesSoFar;
+        double throughputMTuplesStep = (processedTuplesStep / 1'000'000.0) / elapsedSec;
+        double throughputMBytesStep = (sizeof(AuctionStream) * processedTuplesStep / elapsedSec) / (1024.0 * 1024.0);
+        throughputMTuples += throughputMTuplesStep;
+        throughputMBytes += throughputMBytesStep;
+        processedTuplesSoFar = statistics[0]->getProcessedTuple();
+        ++iterations;
+        sleep(1);
+    }
+    // last step
+    double elapsedNs = (std::chrono::high_resolution_clock::now() - startTs).count();
+    double elapsedSec = elapsedNs / 1'000'000'000.0;
+    double processedTuplesStep = statistics[0]->getProcessedTuple() - processedTuplesSoFar;
+    double throughputMTuplesStep = (processedTuplesStep / 1'000'000.0) / elapsedSec;
+    double throughputMBytesStep = (sizeof(AuctionStream) * processedTuplesStep / elapsedSec) / (1024.0 * 1024.0);
+    throughputMTuples += throughputMTuplesStep;
+    throughputMBytes += throughputMBytesStep;
+
+    // do the math
+    throughputMTuples /= iterations;
+    throughputMBytes /= iterations;
+
+    NES_INFO("Processed: " << throughputMTuples << " MTuple/sec :: " << throughputMBytes << " MB/sec");
 
     NES_ASSERT(engine->undeployQuery(executionPlan->getQueryId()), "Cannot undeploy query");
     NES_ASSERT(engine->stop(), "Cannot stop query");
