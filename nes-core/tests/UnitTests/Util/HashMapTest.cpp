@@ -61,14 +61,14 @@ TEST_F(HashMapTest, insertSmallNumberOfUniqueKey) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto map = Experimental::Hashmap(bm, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
-    for (int i = 0; i < 100; i++) {
+    for (uint64_t i = 0; i < 100; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOrCreate<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
         *value = 42ULL;
     }
 
-    for (int i = 0; i < 100; i++) {
+    for (uint64_t i = 0; i < 100; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOneEntry<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
@@ -80,14 +80,14 @@ TEST_F(HashMapTest, updateSmallNumberOKeys) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto map = Experimental::Hashmap(bm, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
-    for (int i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOrCreate<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
         *value = 1ULL;
     }
 
-    for (int i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         auto key = i % 10;
         auto hash = hasher(key, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOrCreate<uint64_t, false>(key, hash);
@@ -95,7 +95,7 @@ TEST_F(HashMapTest, updateSmallNumberOKeys) {
         *value = *value + 1;
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOneEntry<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
@@ -107,14 +107,14 @@ TEST_F(HashMapTest, insertLargeNumberOfKeys) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto map = Experimental::Hashmap(bm, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
-    for (int i = 0; i < 100000; i++) {
+    for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOrCreate<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
         *value = 42ULL;
     }
 
-    for (int i = 0; i < 100000; i++) {
+    for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOneEntry<uint64_t, false>(i, hash);
         auto value = (uint64_t*) map.getValuePtr(entry1);
@@ -130,7 +130,7 @@ TEST_F(HashMapTest, insertMultipleValues) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto map = Experimental::Hashmap(bm, 8, sizeof(MapValues), 100);
     auto hasher = Experimental::CRC32Hash();
-    for (int i = 0; i < 100000; i++) {
+    for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOrCreate<uint64_t, false>(i, hash);
         auto value = (MapValues*) map.getValuePtr(entry1);
@@ -138,7 +138,7 @@ TEST_F(HashMapTest, insertMultipleValues) {
         value->v2 = i * 42;
     }
 
-    for (int i = 0; i < 100000; i++) {
+    for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
         auto entry1 = map.findOneEntry<uint64_t, false>(i, hash);
         auto value = (MapValues*) map.getValuePtr(entry1);
