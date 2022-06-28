@@ -25,18 +25,25 @@ class ProxyCallOperation : public Operation {
                        OperationIdentifier identifier,
                        std::vector<OperationWPtr> inputArguments,
                        PrimitiveStamp resultType);
+    ProxyCallOperation(ProxyCallType proxyCallType,
+                       std::string mangedFunctionSymbol,
+                       void* functionPtr,
+                       OperationIdentifier identifier,
+                       std::vector<OperationWPtr> inputArguments,
+                       PrimitiveStamp resultType);
     ~ProxyCallOperation() override = default;
     ProxyCallType getProxyCallType();
     std::vector<OperationPtr> getInputArguments();
-    PrimitiveStamp getResultType();
-
+    std::string getFunctionSymbol();
     std::string toString() override;
+    void* getFunctionPtr();
 
   private:
     ProxyCallType proxyCallType;
+    std::string mangedFunctionSymbol;
+    void* functionPtr;
     std::string identifier;
     std::vector<OperationWPtr> inputArguments;
-    PrimitiveStamp resultType;
 };
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_PROXYCALLOPERATION_HPP

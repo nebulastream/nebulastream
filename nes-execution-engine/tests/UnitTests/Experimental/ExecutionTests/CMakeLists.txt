@@ -19,3 +19,10 @@ target_link_libraries(execution-engine-query-execution-test
         nes-execution-engine)
 add_test(NAME execution-engine-expression-query-test COMMAND execution-engine-query-execution-test)
 
+add_executable(execution-engine-function-execution-test "FunctionExecutionTest.cpp")
+target_link_libraries(execution-engine-function-execution-test
+        nes-execution-engine)
+add_test(NAME execution-engine-function-test COMMAND execution-engine-function-execution-test)
+
+
+

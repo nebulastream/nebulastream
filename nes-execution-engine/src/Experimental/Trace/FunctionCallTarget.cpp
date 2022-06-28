@@ -15,13 +15,12 @@
 #include <Experimental/Trace/FunctionCallTarget.hpp>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::Trace{
+namespace NES::ExecutionEngine::Experimental::Trace {
 
-FunctionCallTarget::FunctionCallTarget(const std::__cxx11::basic_string<char>& functionName,
-                                       const std::__cxx11::basic_string<char>& mangledName)
-    : functionName(functionName), mangledName(mangledName) {}
+FunctionCallTarget::FunctionCallTarget(const std::basic_string<char>& mangledFunctionName,  void* functionPtr)
+    : mangledName(mangledFunctionName), functionPtr(functionPtr) {}
 std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target) {
-    os << target.functionName;
+    os << target.mangledName;
     return os;
 }
-}
+}// namespace NES::ExecutionEngine::Experimental::Trace

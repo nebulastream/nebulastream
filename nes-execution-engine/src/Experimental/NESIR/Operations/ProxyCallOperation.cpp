@@ -20,7 +20,16 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        std::vector<OperationWPtr> inputArguments,
                                        PrimitiveStamp resultType)
     : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
-      inputArguments(std::move(inputArguments)), resultType(resultType) {}
+      inputArguments(std::move(inputArguments)) {}
+
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
+                                       std::string functionSymbol,
+                                       void* functionPtr,
+                                       OperationIdentifier identifier,
+                                       std::vector<OperationWPtr> inputArguments,
+                                       PrimitiveStamp resultType)
+    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+      mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
 
 Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
 std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
@@ -30,10 +39,9 @@ std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
     }
     return args;
 }
-PrimitiveStamp ProxyCallOperation::getResultType() { return resultType; }
 
 std::string ProxyCallOperation::toString() {
-    std::string baseString = "ProxyCallOperation_" + identifier + "(";
+    std::string baseString = "ProxyCallOperation_" + identifier + getFunctionSymbol() + "(";
     if (inputArguments.size() > 0) {
         baseString += inputArguments[0].lock()->getIdentifier();
         for (int i = 1; i < (int) inputArguments.size(); ++i) {
@@ -41,6 +49,11 @@ std::string ProxyCallOperation::toString() {
         }
     }
     return baseString + ")";
+}
+std::string ProxyCallOperation::getFunctionSymbol() { return mangedFunctionSymbol; }
+
+void* ProxyCallOperation::getFunctionPtr(){
+    return functionPtr;
 }
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

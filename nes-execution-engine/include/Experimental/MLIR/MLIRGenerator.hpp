@@ -145,7 +145,7 @@ class MLIRGenerator {
      * @return FlatSymbolRefAttr: Reference to function used in CallOps.
      */
     mlir::FlatSymbolRefAttr
-    insertExternalFunction(const std::string& name, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs);
+    insertExternalFunction(const std::string& name, void* functionPtr, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs);
 
     /**
      * @brief Inserts an mlir::LLVM::UnknownOp into module with comment string

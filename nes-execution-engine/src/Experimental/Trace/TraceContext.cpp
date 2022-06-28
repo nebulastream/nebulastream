@@ -350,7 +350,7 @@ std::ostream& operator<<(std::ostream& os, const Operation& operation) {
         } else if (auto ref = std::get_if<ConstantValue>(&input)) {
             os << *ref << "\t";
         } else if (auto ref = std::get_if<FunctionCallTarget>(&input)) {
-            os << ref->functionName << "\t";
+            os << ref->mangledName << "\t";
         }
     }
     return os;

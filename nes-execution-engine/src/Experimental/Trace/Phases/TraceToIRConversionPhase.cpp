@@ -20,8 +20,8 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
+#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -136,7 +136,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
         };
         case ASSIGN: break;
         case RETURN: {
-            if (std::get<ValueRef>(operation.result).type == IR::Operations::VOID) {
+            if (std::get<ValueRef>(operation.input[0]).type == IR::Operations::VOID) {
                 auto operation = std::make_shared<IR::Operations::ReturnOperation>();
                 currentIrBlock->addOperation(operation);
             } else {
@@ -180,15 +180,14 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
         if (isBlockInLoop(scope, targetBlock.blockId, trueCaseBlockRef.block)) {
             NES_DEBUG("1. found loop");
-            auto loopOperator =
-                std::make_shared<IR::Operations::LoopOperation>(IR::Operations::LoopOperation::LoopType::ForLoop);
+            auto loopOperator = std::make_shared<IR::Operations::LoopOperation>(IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<IR::Operations::DefaultLoopInfo>());
             auto loopHeadBlock = processBlock(scope + 1, trace->getBlock(blockRef.block));
             loopOperator->getLoopHeadBlock().setBlock(loopHeadBlock);
             for (auto& arg : blockRef.arguments) {
-               auto arcIdentifier = createValueIdentifier(arg);
-               auto argument = frame.getValue(arcIdentifier);
-               loopOperator->getLoopHeadBlock().addArgument(argument);
+                auto arcIdentifier = createValueIdentifier(arg);
+                auto argument = frame.getValue(arcIdentifier);
+                loopOperator->getLoopHeadBlock().addArgument(argument);
             }
             blockMap[blockRef.block] = loopHeadBlock;
             block->addOperation(loopOperator);
@@ -246,11 +245,11 @@ IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlow
     if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
         auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
-        if(resultFromTrueBranch) {
+        if (resultFromTrueBranch) {
             return resultFromTrueBranch;
         }
         auto resultFromFalseBranch = findControlFlowMerge(branchOp->getFalseBlockInvocation().getBlock(), targetScope);
-        if(resultFromFalseBranch) {
+        if (resultFromFalseBranch) {
             return resultFromFalseBranch;
         }
     }
@@ -432,7 +431,8 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto proxyCallOperation =
         std::make_shared<IR::Operations::ProxyCallOperation>(IR::Operations::ProxyCallOperation::ProxyCallType::Other,
-                                                             //    functionCallTarget.mangledName,
+                                                             functionCallTarget.mangledName,
+                                                             functionCallTarget.functionPtr,
                                                              resultIdentifier,
                                                              inputArguments,
                                                              resultType);

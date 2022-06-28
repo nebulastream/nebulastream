@@ -5,6 +5,7 @@
 #include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
 #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR {
 
@@ -130,6 +131,9 @@ LoopInferencePhase::Context::isCountedLoop(BasicBlockPtr preLoopBlock) {
     countedLoopInfo->loopBodyBlock = loopBodyBlock;
     countedLoopInfo->loopEndBlock = ifOperation->getFalseBlockInvocation().getBlock();
     countedLoopInfo->loopBodyInductionVariable = loopBodyAddOperation->getLeftInput();
+
+    NES_DEBUG("Found counted loop" << lowerLoopBound << "-" << upperBound << "-" << stepSize);
+
     // copy iterator arguments
     for (auto argument : loopBodyBlock->getArguments()) {
         if (argument != loopBodyAddOperation->getLeftInput()) {

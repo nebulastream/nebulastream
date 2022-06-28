@@ -16,7 +16,6 @@
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-#include <execinfo.h>
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
@@ -95,16 +94,22 @@ auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, uint64_t>::value) {
         return Value<Integer>(std::make_unique<Integer>(argument));
     }
+    if constexpr (std::is_same<Arg, int64_t>::value) {
+        return Value<Integer>(std::make_unique<Integer>(argument));
+    }
     if constexpr (std::is_same<Arg, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
     }
-    if constexpr (std::is_same<Arg, uint8_t *>::value) {
+    if constexpr (std::is_same<Arg, uint8_t*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
     }
 }
 
 template<typename R>
 auto createDefault() {
+    if constexpr (std::is_same<R, int64_t>::value) {
+        return Value<Integer>(std::make_unique<Integer>(0));
+    }
     if constexpr (std::is_same<R, uint64_t>::value) {
         return Value<Integer>(std::make_unique<Integer>(0));
     }
@@ -133,7 +138,7 @@ class ProxyFunction : public AbstractFunction {
 
     ProxyFunction(CallbackFunction&& function, std::string& name) : function(function), name(name) {
         void* funptr = reinterpret_cast<void*>(&function);
-        backtrace_symbols_fd(&funptr, 1, 1);
+        //backtrace_symbols_fd(&funptr, 1, 1);
     }
     CallbackFunction function;
     std::string name;
@@ -166,11 +171,52 @@ void myFunction(CallbackFunction&& function) {
     std::cout << "call function " << &function << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
 }
 
+std::string getMangledName(void* funcPtr);
+
+template<typename R>
+auto FunctionCall(std::string functionName, R (*fnptr)()) {
+    //auto mangledName = getMangledName((void*) fnptr);
+    //NES_DEBUG("Function " << mangledName);
+    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
+
+    if constexpr (std::is_void_v<R>) {
+        if (!Trace::isInSymbolicExecution()) {
+            fnptr();
+        }
+        auto ctx = Trace::getThreadLocalTraceContext();
+        if (ctx != nullptr) {
+            auto operation = Trace::Operation(Trace::CALL, varRefs);
+            ctx->trace(operation);
+        }
+    } else {
+        if (!Trace::isInSymbolicExecution()) {
+            auto res = fnptr();
+            auto resultValue = transformReturn(res);
+            auto ctx = Trace::getThreadLocalTraceContext();
+            if (ctx != nullptr) {
+
+                auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+                ctx->trace(operation);
+            }
+            return resultValue;
+        } else {
+            auto resultValue = createDefault<R>();
+            auto ctx = Trace::getThreadLocalTraceContext();
+            auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+            ctx->trace(operation);
+            return resultValue;
+        }
+    }
+    //}
+}
+
 template<typename R, typename... Args2, typename... Args>
 auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... arguments) {
+    //auto mangledName = getMangledName((void*) fnptr);
+    //NES_DEBUG("Function " << mangledName);
+    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
 
-    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, functionName)};
-    for (auto& p : {getRefs(arguments)...}) {
+    for (const Trace::InputVariant& p : {getRefs(arguments)...}) {
         varRefs.emplace_back(p);
     }
 

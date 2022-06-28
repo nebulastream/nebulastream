@@ -97,9 +97,11 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
     std::cout << *execution.get() << std::endl;
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
+    loopInferencePhase.apply(ir);
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+
 }
 
 TEST_F(QueryExecutionTest, aggQueryTest) {

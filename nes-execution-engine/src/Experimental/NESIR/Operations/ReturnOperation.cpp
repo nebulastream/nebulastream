@@ -29,6 +29,6 @@ std::string ReturnOperation::toString() {
     }
 }
 OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
-bool ReturnOperation::hasReturnValue() { return getReturnValue() != nullptr; }
+bool ReturnOperation::hasReturnValue() { return stamp != VOID; }
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

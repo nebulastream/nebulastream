@@ -150,7 +150,8 @@ IR::Operations::OperationPtr MLIRGenerator::findLastTerminatorOp(IR::BasicBlockP
         }
     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
-        auto loopIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
+        auto loopIfOp =
+            std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
         if (loopIfOp->getFalseBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
             return loopIfOp;
         } else {
@@ -170,6 +171,7 @@ IR::Operations::OperationPtr MLIRGenerator::findLastTerminatorOp(IR::BasicBlockP
 //==-- Create & Insert Functionality --==//
 //==-----------------------------------==//
 mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
+                                                              void* functionPtr,
                                                               mlir::Type resultType,
                                                               std::vector<mlir::Type> argTypes,
                                                               bool varArgs) {
@@ -184,7 +186,10 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
     jitProxyFunctionSymbols.push_back(name);
-    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(ProxyFunctions.getProxyFunctionAddress(name)));
+    if (functionPtr == nullptr) {
+        functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
+    }
+    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
     return mlir::SymbolRefAttr::get(context, name);
 }
 
@@ -407,8 +412,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AndOperation> a
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp, ValueFrame& frame) {
     // Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
-    for (auto inputArg : functionOp->getInputArgs()) {
-        inputTypes.emplace_back(getMLIRType(inputArg));
+    for (auto inputArg : functionOp->getFunctionBasicBlock()->getArguments()) {
+        inputTypes.emplace_back(getMLIRType(inputArg->getStamp()));
     }
     llvm::SmallVector<mlir::Type, 4> outputTypes(1, getMLIRType(functionOp->getOutputArg()));
     auto functionInOutTypes = builder->getFunctionType(inputTypes, outputTypes);
@@ -424,8 +429,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperati
 
     // Store references to function args in the valueMap map.
     auto valueMapIterator = mlirFunction.args_begin();
-    for (int i = 0; i < (int) functionOp->getInputArgNames().size(); ++i) {
-        frame.setValue(functionOp->getInputArgNames().at(i), valueMapIterator[i]);
+    for (int i = 0; i < (int) functionOp->getFunctionBasicBlock()->getArguments().size(); ++i) {
+        frame.setValue(functionOp->getFunctionBasicBlock()->getArguments().at(i)->getIdentifier(), valueMapIterator[i]);
     }
 
     // Generate MLIR for operations in function body (BasicBlock)
@@ -484,13 +489,12 @@ void MLIRGenerator::generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopO
 void MLIRGenerator::generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
     this->useSCF = false;
     std::vector<mlir::Value> mlirTargetBlockArguments;
-    auto loopHeadBlock =  loopOp->getLoopHeadBlock();
+    auto loopHeadBlock = loopOp->getLoopHeadBlock();
     for (auto targetBlockArgument : loopHeadBlock.getArguments()) {
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
     }
     auto* mlirTargetBlock = generateBasicBlock(loopHeadBlock, frame);
     builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
-
 }
 
 // Recursion. No dependencies. Does NOT require addressMap insertion.
@@ -502,7 +506,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
         generateCFDefaultLoop(loopOp, frame);
         return;
     }
-/*
+    /*
     // -=LOOP HEAD=-
     // Loop Head BasicBlock contains CompareOp and IfOperation(thenBlock, elseBlock)
     // thenBlock=loopBodyBB & elseBlock=executeReturnBB
@@ -814,11 +818,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             break;
         default:
             mlir::FlatSymbolRefAttr functionRef;
-            if (theModule.lookupSymbol<mlir::LLVM::LLVMFuncOp>(proxyCallOp->getIdentifier())) {
-                functionRef = mlir::SymbolRefAttr::get(context, proxyCallOp->getIdentifier());
+            if (theModule.lookupSymbol<mlir::LLVM::LLVMFuncOp>(proxyCallOp->getFunctionSymbol())) {
+                functionRef = mlir::SymbolRefAttr::get(context, proxyCallOp->getFunctionSymbol());
             } else {
-                functionRef = insertExternalFunction(proxyCallOp->getIdentifier(),
-                                                     getMLIRType(proxyCallOp->getResultType()),
+                functionRef = insertExternalFunction(proxyCallOp->getFunctionSymbol(),
+                                                     proxyCallOp->getFunctionPtr(),
+                                                     getMLIRType(proxyCallOp->getStamp()),
                                                      getMLIRType(proxyCallOp->getInputArguments()),
                                                      true);
             }
@@ -826,11 +831,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             for (auto arg : proxyCallOp->getInputArguments()) {
                 functionArgs.push_back(frame.getValue(arg->getIdentifier()));
             }
-            if (proxyCallOp->getResultType() != IR::Operations::VOID) {
-                builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
-                                                    getMLIRType(proxyCallOp->getResultType()),
-                                                    functionRef,
-                                                    functionArgs);
+            if (proxyCallOp->getStamp() != IR::Operations::VOID) {
+                auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
+                                                               getMLIRType(proxyCallOp->getStamp()),
+                                                               functionRef,
+                                                               functionArgs);
+                frame.setValue(proxyCallOp->getIdentifier(), res.getResult(0));
             } else {
                 builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, functionArgs);
             }
@@ -1065,7 +1071,7 @@ mlir::Block* MLIRGenerator::generateBasicBlock(IR::Operations::BasicBlockInvocat
     generateMLIR(targetBlock, blockFrame);
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
 
-     return mlirBasicBlock;
+    return mlirBasicBlock;
 }
 
 std::vector<std::string> MLIRGenerator::getJitProxyFunctionSymbols() { return jitProxyFunctionSymbols; }
