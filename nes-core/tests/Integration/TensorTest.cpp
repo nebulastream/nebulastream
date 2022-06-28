@@ -22,12 +22,14 @@ limitations under the License.
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -35,6 +37,27 @@ limitations under the License.
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
+
+#ifndef OPERATORID
+#define OPERATORID 1
+#endif
+
+#ifndef ORIGINID
+#define ORIGINID 1
+#endif
+
+#ifndef NUMSOURCELOCALBUFFERS
+#define NUMSOURCELOCALBUFFERS 12
+#endif
+
+#ifndef SUCCESSORS
+#define SUCCESSORS                                                                                                               \
+    {}
+#endif
+
+#ifndef INPUTFORMAT
+#define INPUTFORMAT SourceDescriptor::InputFormat::JSON
+#endif
 
 using namespace std;
 
@@ -45,9 +68,34 @@ using namespace Configurations;
 class TensorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
+
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
+        mqttSourceType = MQTTSourceType::create();
+        auto workerConfigurations = WorkerConfiguration::create();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
+        bufferManager = nodeEngine->getBufferManager();
+        queryManager = nodeEngine->getQueryManager();
+    }
+
+    /* Will be called after a test is executed. */
+    void TearDown() override {
+        Testing::NESBaseTest::TearDown();
+        ASSERT_TRUE(nodeEngine->stop());
+        NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
+    }
+
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::BufferManagerPtr bufferManager;
+    Runtime::QueryManagerPtr queryManager;
+    uint64_t buffer_size{};
+    MQTTSourceTypePtr mqttSourceType;
 };
 
 /**
@@ -67,8 +115,9 @@ TEST_F(TensorTest, testCreateVectorInSchema) {
 
         // overload the == operator to check if two instances are the same
         bool operator==(Vector const& rhs) const {
-            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1
-                    && creditAmount_1 == rhs.creditAmount_1 && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
+            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score
+                    && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1 && creditAmount_1 == rhs.creditAmount_1
+                    && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
         }
     };
 
@@ -131,8 +180,9 @@ TEST_F(TensorTest, testCreateMatrixInSchema) {
 
         // overload the == operator to check if two instances are the same
         bool operator==(Matrix const& rhs) const {
-            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1
-                    && creditAmount_1 == rhs.creditAmount_1 && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
+            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score
+                    && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1 && creditAmount_1 == rhs.creditAmount_1
+                    && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
         }
     };
 
@@ -197,8 +247,9 @@ TEST_F(TensorTest, testCreateCubeInSchema) {
 
         // overload the == operator to check if two instances are the same
         bool operator==(Cube const& rhs) const {
-            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1
-                    && creditAmount_1 == rhs.creditAmount_1 && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
+            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score
+                    && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1 && creditAmount_1 == rhs.creditAmount_1
+                    && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
         }
     };
 
@@ -285,8 +336,9 @@ TEST_F(TensorTest, testCreateVectorSimpleFieldsMatrixInSchema) {
 
         // overload the == operator to check if two instances are the same
         bool operator==(TestSchema const& rhs) const {
-            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1
-                    && creditAmount_1 == rhs.creditAmount_1 && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
+            return (durationMonth == rhs.durationMonth && creditAmount == rhs.creditAmount && score == rhs.score
+                    && age25 == rhs.age25 && durationMonth_1 == rhs.durationMonth_1 && creditAmount_1 == rhs.creditAmount_1
+                    && score_1 == rhs.score_1 && age25_1 == rhs.age25_1);
         }
     };
 
@@ -321,22 +373,87 @@ TEST_F(TensorTest, testCreateVectorSimpleFieldsMatrixInSchema) {
                                   .validate()
                                   .setupTopology();
 
-    std::vector<TestSchema> expectedOutput = {{0.029411765, 0.949433256, {"0.600715353"}, 0, 0.029411765, 0.949433256, 0.600715353, 0},
-                                          {0.647058824, 0.686310113, {"0.496130655"}, 1, 0.647058824, 0.686310113, 0.496130655, 1},
-                                          {0.117647059, 0.898426323, {"0.506866366"}, 0, 0.117647059, 0.898426323, 0.506866366, 0},
-                                          {0.558823529, 0.580059426, {"0.5994821"}, 0, 0.558823529, 0.580059426, 0.5994821, 0},
-                                          {0.294117647, 0.74579069, {"0.550060466"}, 0, 0.294117647, 0.74579069, 0.550060466, 0},
-                                          {0.470588235, 0.515516672, {"0.501290835"}, 0, 0.470588235, 0.515516672, 0.501290835, 0},
-                                          {0.294117647, 0.857763838, {"0.617404307"}, 0, 0.294117647, 0.857763838, 0.617404307, 0},
-                                          {0.470588235, 0.631451524, {"0.476348482"}, 0, 0.470588235, 0.631451524, 0.476348482, 0},
-                                          {0.117647059, 0.845438539, {"0.543519801"}, 0, 0.117647059, 0.845438539, 0.543519801, 0},
-                                          {0.382352941, 0.725762078, {"0.368951631"}, 0, 0.382352941, 0.725762078, 0.368951631, 0}};
+    std::vector<TestSchema> expectedOutput = {
+        {0.029411765, 0.949433256, {"0.600715353"}, 0, 0.029411765, 0.949433256, 0.600715353, 0},
+        {0.647058824, 0.686310113, {"0.496130655"}, 1, 0.647058824, 0.686310113, 0.496130655, 1},
+        {0.117647059, 0.898426323, {"0.506866366"}, 0, 0.117647059, 0.898426323, 0.506866366, 0},
+        {0.558823529, 0.580059426, {"0.5994821"}, 0, 0.558823529, 0.580059426, 0.5994821, 0},
+        {0.294117647, 0.74579069, {"0.550060466"}, 0, 0.294117647, 0.74579069, 0.550060466, 0},
+        {0.470588235, 0.515516672, {"0.501290835"}, 0, 0.470588235, 0.515516672, 0.501290835, 0},
+        {0.294117647, 0.857763838, {"0.617404307"}, 0, 0.294117647, 0.857763838, 0.617404307, 0},
+        {0.470588235, 0.631451524, {"0.476348482"}, 0, 0.470588235, 0.631451524, 0.476348482, 0},
+        {0.117647059, 0.845438539, {"0.543519801"}, 0, 0.117647059, 0.845438539, 0.543519801, 0},
+        {0.382352941, 0.725762078, {"0.368951631"}, 0, 0.382352941, 0.725762078, 0.368951631, 0}};
 
-
-    std::vector<TestSchema> actualOutput = testHarness.getOutput<TestSchema>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<TestSchema> actualOutput =
+        testHarness.getOutput<TestSchema>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+// Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
+TEST_F(TensorTest, testDeployOneWorkerWithMQTTSourceConfig) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    //register logical source qnv
+    SchemaPtr schema = Schema::create()
+                           ->addField("vector", DataTypeFactory::createTensor({6}, "UINT8", "DENSE"))
+                           ->addField("matrix", DataTypeFactory::createTensor({2,4}, "UINT8", "DENSE"))
+                           ->addField("cube", DataTypeFactory::createTensor({2,2,3}, "UINT8", "DENSE"));
+
+    crd->getSourceCatalogService()->registerLogicalSource("stream", schema);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->coordinatorPort = port;
+    mqttSourceType->setUrl("tcp://127.0.0.1:1885");
+    mqttSourceType->setClientId("testClients");
+    mqttSourceType->setUserName("testUser");
+    mqttSourceType->setTopic("/dataGenerator");
+    mqttSourceType->setQos(2);
+    mqttSourceType->setCleanSession(true);
+    mqttSourceType->setFlushIntervalMS(2000);
+    auto physicalSource = PhysicalSource::create("stream", "test_stream", mqttSourceType);
+    wrkConf->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("stream").sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    sleep(2);
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
 }
 
 }// namespace NES

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,7 +38,9 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     std::vector<std::string> helperToken;
 
     // extract values as strings from MQTT message - should be improved with JSON library
+    NES_TRACE("Before parsing JSON object");
     auto parsedJSONObject = web::json::value::parse(jsonTuple);
+    NES_TRACE("After parsing JSON object");
 
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
@@ -52,8 +55,16 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
-
-        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        if (!field->isTensorType()) {
+            writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        } else {
+            auto tensorDataType = schema->fields[fieldIndex]->getDataType();
+            auto tensor = tensorDataType->as<TensorType>(tensorDataType);
+            char removing[] = "[] ";
+            Util::removeCharsFromString(jsonValue, removing);
+            std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(jsonValue, ",");
+            writeFieldValuesToTupleBuffer(values, fieldIndex, tupleBuffer, tensor, tupleCount);
+        }
     }
     return true;
 }

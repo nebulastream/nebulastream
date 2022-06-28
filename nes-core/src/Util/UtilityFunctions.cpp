@@ -103,6 +103,12 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
     return ss.str();
 }
 
+void Util::removeCharsFromString(std::string& str, char* charsToRemove){
+    for (char* t = charsToRemove; *t != '\0'; t++){
+        str.erase(remove(str.begin(), str.end(), *t), str.end()); //remove A from string
+    }
+}
+
 void Util::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);

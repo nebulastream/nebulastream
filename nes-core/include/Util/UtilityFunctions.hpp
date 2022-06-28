@@ -179,6 +179,13 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
+ * @brief removes given chars from a string
+ * @param str string to remove chars from
+ * @param charsToRemove chars to be removed
+ */
+void removeCharsFromString(std::string& str, char* charsToRemove);
+
+/**
 * @brief this method checks if the object is null
 * @return pointer to the object
 */
