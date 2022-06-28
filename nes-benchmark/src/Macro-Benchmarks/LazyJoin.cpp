@@ -30,7 +30,7 @@
 #include <immintrin.h>
 #include <random>
 #include <sys/mman.h>
-#include <tsl/robin_map.h>
+//#include <tsl/robin_map.h>
 #include <xmmintrin.h>
 
 #ifndef min
@@ -1068,8 +1068,18 @@ int main(int argc, char** argv) {
 
     auto sink = createNullOutputSink(0, 0, engine, 1);
 
-    auto numSourcesLeft = 2;
-    auto numSourcesRight = 2;
+    auto numSourcesLeft = 1;
+    auto numSourcesRight = 1;
+
+    auto numSourcesLeftCfg = commandLineParams.find("--numSourcesLeft");
+    if (numSourcesLeftCfg != commandLineParams.end()) {
+        numSourcesLeft = std::stol(numSourcesLeftCfg->second);
+    }
+
+    auto numSourcesRightCfg = commandLineParams.find("--numSourcesRight");
+    if (numSourcesRightCfg != commandLineParams.end()) {
+        numSourcesRight = std::stol(numSourcesRightCfg->second);
+    }
 
     JoinSharedState<AuctionStream, PersonStream> joinSharedState;
     joinSharedState.control = numSourcesLeft + numSourcesRight;
