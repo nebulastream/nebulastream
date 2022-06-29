@@ -13,5 +13,4 @@
 
 add_source_files(nes-core
         UdfCallExpressionNode.cpp
-        UdfArgumentsNode.cpp
 )
