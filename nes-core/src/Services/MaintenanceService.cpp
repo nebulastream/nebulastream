@@ -29,11 +29,8 @@
 namespace NES::Experimental {
 
 MaintenanceService::MaintenanceService(TopologyPtr topology,
-                                       QueryCatalogServicePtr queryCatalogService,
-                                       RequestQueuePtr queryRequestQueue,
-                                       GlobalExecutionPlanPtr globalExecutionPlan)
-    : topology{topology}, queryCatalogService{queryCatalogService}, queryRequestQueue{queryRequestQueue},
-      globalExecutionPlan{globalExecutionPlan} {
+                                       RequestQueuePtr queryRequestQueue)
+    : topology{topology}, queryRequestQueue{queryRequestQueue} {
     NES_DEBUG("MaintenanceService: Initializing");
 };
 
@@ -69,15 +66,18 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     //create MigrateQueryRequest
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
         if (type == MigrationType::Value::RESTART) {
-            queryRequestQueue->add(RestartQueryRequest::create(nodeId));
+            result.first = false;
+            result.second =
+                "RESTART currently not supported. Will be added in future";
+            //functionality will be added in #2873
         } else {
             queryRequestQueue->add(MigrateQueryRequest::create(nodeId, type));
+            result.first = true;
+            result.second =
+                "Successfully submitted Query Migration Requests for Topology Node with ID: "
+                + std::to_string(nodeId);
         }
 
-    result.first = true;
-    result.second =
-        "Successfully submitted Query Migration Requests for Topology Node with ID: "
-        + std::to_string(nodeId);
     return result;
 }
 }//namespace NES::Experimental
