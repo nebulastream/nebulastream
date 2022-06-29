@@ -15,25 +15,25 @@ limitations under the License.
 #ifndef NES_INCLUDE_SOURCES_TCPSOURCE_HPP
 #define NES_INCLUDE_SOURCES_TCPSOURCE_HPP
 
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <Sources/DataSource.hpp>
 
-namespace NES{
+namespace NES {
 
 class TupleBuffer;
 
 /**
  * @brief source to recieve data via TCP connection
  */
-class TCPSource : public DataSource{
+class TCPSource : public DataSource {
 
   public:
     explicit TCPSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       const TCPSourceTypePtr& tcpSourceType,
+                       TCPSourceTypePtr tcpSourceType,
                        OperatorId operatorId,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
@@ -51,7 +51,6 @@ class TCPSource : public DataSource{
     SourceType getType() const override;
 
   private:
-
     TCPSource() = delete;
 
     /**
@@ -68,17 +67,15 @@ class TCPSource : public DataSource{
      */
     bool disconnect();
 
-    friend class DataSource;
     std::vector<PhysicalTypePtr> physicalTypes;
-    std::unique_ptr<Parser> inputParser;
+    std::shared_ptr<Parser> inputParser;
     int connection;
     uint64_t tupleSize;
     int sock = 0;
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd;
-
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-}
+}// namespace NES
 #endif//NES_INCLUDE_SOURCES_TCPSOURCE_HPP
