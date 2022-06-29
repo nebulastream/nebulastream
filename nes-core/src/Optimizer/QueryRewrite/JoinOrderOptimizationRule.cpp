@@ -128,7 +128,9 @@ namespace NES::Optimizer {
                 // Alongside joins (cartesian products) we need the respective time-based filter operators
                 std::vector<FilterLogicalOperatorNodePtr> filters;
                 for(auto join : joinOperators){
-                    if (join->getJoinDefinition()->getJoinType() == Join::LogicalJoinDefinition::CARTESIAN_PRODUCT) {
+                    // FIXME: this is block commented, as SeqWith has a bug and we must use custom join + filter
+                    bool isCartesian = join->getJoinDefinition()->getJoinType() == Join::LogicalJoinDefinition::CARTESIAN_PRODUCT || true;
+                    if (isCartesian) {
 
                         auto parents = join->getParents();
                         if (parents.size() != 0) {
@@ -1304,6 +1306,9 @@ namespace NES::Optimizer {
             auto leftKeyName = joinDefinition->getLeftJoinKey()->getFieldName();
             auto rightKeyName = joinDefinition->getRightJoinKey()->getFieldName();
 
+            // FIXME: this is block commented, as SeqWith has a bug and we must use custom join + filter
+            //
+            /*
             // keys need to be equivalent to e.g. string "Temperature" leftChild->optimizerPlanOperator->sourceNode->getSourceDescriptor->logicalsourcename
             // The left keys look like: -_-_Quantity_Velocity_Temperature+leftKey_20, where the relevant part is the name before +leftKey
             // extract relevant name for comparison
@@ -1319,10 +1324,26 @@ namespace NES::Optimizer {
             if (pos != std::string::npos) {
                derivedLeftKeyName = derivedLeftKeyName.substr(0, pos);
             }
+             */
+            //FIXME: Hotfix for custom join+filter
+            size_t pos = leftKeyName.find("$key");
+            std::string derivedLeftKeyName = leftKeyName.substr(0, pos);
+            // check if there is $ before
+            while(derivedLeftKeyName.find('$') != std::string::npos){
+                pos = derivedLeftKeyName.find_last_of('$');
+                derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
+            }
+
             if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
                 leftDefinition = joinDefinition;
             }
+            // could also be the source of the right child.
+            if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
+                rightDefinition = joinDefinition;
+            }
 
+            // FIXME: this is block commented, as SeqWith has a bug and we must use custom join + filter
+            /*
             // right keys look like Velocity+rightKey_4, where the relevant part is everything before the +
             pos = rightKeyName.find("cep_rightkey");
             std::string derivedRightKeyName = rightKeyName.substr(0, pos);
@@ -1332,10 +1353,22 @@ namespace NES::Optimizer {
             if (pos != std::string::npos) {
                 derivedRightKeyName = derivedRightKeyName.substr(0, pos);
             }
+            */
+            //FIXME: Hotfix for custom join+filter
+            pos = rightKeyName.find("$key");
+            std::string derivedRightKeyName = rightKeyName.substr(0, pos);
+            // check if there is $ before
+            while(derivedRightKeyName.find('$') != std::string::npos){
+                pos = derivedRightKeyName.find_last_of('$');
+                derivedRightKeyName = derivedRightKeyName.substr(pos+1);
+            }
             if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
                     rightDefinition = joinDefinition;
             }
-
+            // could also be left child's source name
+            if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
+                leftDefinition = joinDefinition;
+            }
         }
 
         if (leftDefinition == rightDefinition){
@@ -1361,6 +1394,7 @@ namespace NES::Optimizer {
     float JoinOrderOptimizationRule::getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition) {
         // Extract names of the join partners and check if this combination has a unique selectivity.
         // Mind the order is VERY important here.
+        /*
         size_t pos = joinDefinition->getLeftJoinKey()->getFieldName().find("cep_leftkey"); // test, was find('+') before
         std::string derivedLeftKeyName = joinDefinition->getLeftJoinKey()->getFieldName().substr(0, pos);
         while(derivedLeftKeyName.find('_') != std::string::npos){
@@ -1369,6 +1403,21 @@ namespace NES::Optimizer {
         }
         pos = joinDefinition->getRightJoinKey()->getFieldName().find("cep_rightkey"); // test, was find('+') before
         std::string derivedRightKeyName = joinDefinition->getRightJoinKey()->getFieldName().substr(0, pos);
+        */
+        //FIXME: Hotfix for custom join+filter
+        size_t pos = joinDefinition->getLeftJoinKey()->getFieldName().find("$key");
+        std::string derivedLeftKeyName = joinDefinition->getLeftJoinKey()->getFieldName().substr(0, pos);
+        // check if there is $ before
+        while(derivedLeftKeyName.find('$') != std::string::npos){
+            pos = derivedLeftKeyName.find_last_of('$');
+            derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
+        }
+        pos = joinDefinition->getRightJoinKey()->getFieldName().find("$key");
+        std::string derivedRightKeyName = joinDefinition->getRightJoinKey()->getFieldName().substr(0, pos);
+        while(derivedRightKeyName.find('$') != std::string::npos){
+            pos = derivedRightKeyName.find_last_of('$');
+            derivedRightKeyName = derivedRightKeyName.substr(pos+1);
+        }
 
         // --- -- - -- - - -- -
 
