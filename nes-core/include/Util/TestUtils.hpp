@@ -118,6 +118,14 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 [[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
 
+[[nodiscard]] std::string disableDistributedWindowingOptimization() {
+    return "--optimizer.performDistributedWindowOptimization=false";
+}
+
+[[nodiscard]] std::string enableThreadLocalWindowing() {
+    return "--queryCompiler.windowingStrategy=THREAD_LOCAL";
+}
+
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags
