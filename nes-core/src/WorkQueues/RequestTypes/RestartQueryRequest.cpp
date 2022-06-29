@@ -17,11 +17,11 @@
 
 namespace NES {
 
-RestartQueryRequest::RestartQueryRequest(QueryId queryId) : Request(queryId) {}
+RestartQueryRequest::RestartQueryRequest(TopologyNodeId nodeId) : Request(0), nodeId(nodeId) {}
 
-RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
-    return std::make_shared<RestartQueryRequest>(RestartQueryRequest(queryId));
+RestartQueryRequestPtr RestartQueryRequest::create(TopologyNodeId nodeId) {
+    return std::make_shared<RestartQueryRequest>(RestartQueryRequest(nodeId));
 }
 
-std::string RestartQueryRequest::toString() { return "RestartQueryRequest { QueryId: " + std::to_string(getQueryId()) + "}"; }
+std::string RestartQueryRequest::toString() { return "RestartQueryRequest { NodeId: " + std::to_string(nodeId) + "}"; }
 }// namespace NES

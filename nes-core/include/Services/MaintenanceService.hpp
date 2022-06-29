@@ -48,9 +48,7 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 class MaintenanceService {
   public:
     MaintenanceService(TopologyPtr topology,
-                       QueryCatalogServicePtr queryCatalogService,
-                       RequestQueuePtr queryRequestQueue,
-                       GlobalExecutionPlanPtr globalExecutionPlan);
+                       RequestQueuePtr queryRequestQueue);
 
     ~MaintenanceService();
 
@@ -64,9 +62,7 @@ class MaintenanceService {
 
   private:
     TopologyPtr topology;
-    QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
-    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
 }// namespace NES::Experimental

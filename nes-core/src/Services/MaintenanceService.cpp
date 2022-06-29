@@ -53,16 +53,6 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     // We may get into a situation that two threads concurrently update content for a query that you are interested in.
     // I propose that you create only a request and rest of it is handled by Request Processor service.
 
-    //check if topology has corresponding execution node
-    if (!globalExecutionPlan->checkIfExecutionNodeExists(nodeId)) {
-        NES_DEBUG("MaintenanceService: No ExecutionNode for TopologyNodeID: "
-                  << nodeId << ". Node can be taken down for maintenance immediately");
-        topology->findNodeWithId(nodeId)->setMaintenanceFlag(true);
-        result.first = true;
-        result.second = "No ExecutionNode for TopologyNode with ID: " + std::to_string(nodeId)
-            + ". Node can be taken down for maintenance immediately";
-        return result;
-    }
     //check if valid Migration Type
     if (!MigrationType::isValidMigrationType(type)) {
         NES_DEBUG(
@@ -75,26 +65,18 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
               "Buffering)";
         return result;
     }
-    //get keys of map
-    auto map = globalExecutionPlan->getExecutionNodeByNodeId(nodeId)->getAllQuerySubPlans();
-    std::vector<uint64_t> queryIds;
-    for (auto it : map) {
-        queryIds.push_back(it.first);
-    }
-    //for each query on node, create migration request
-    for (auto queryId : queryIds) {
+
+    //create MigrateQueryRequest
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
         if (type == MigrationType::Value::RESTART) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Restarting, "");
-            queryRequestQueue->add(RestartQueryRequest::create(queryId));
+            queryRequestQueue->add(RestartQueryRequest::create(nodeId));
         } else {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Migrating, "");
-            queryRequestQueue->add(MigrateQueryRequest::create(queryId, nodeId, type));
+            queryRequestQueue->add(MigrateQueryRequest::create(nodeId, type));
         }
-    }
+
     result.first = true;
     result.second =
-        "Successfully submitted Query Migration Requests for all queryIdAndCatalogEntryMapping on Topology Node with ID: "
+        "Successfully submitted Query Migration Requests for Topology Node with ID: "
         + std::to_string(nodeId);
     return result;
 }

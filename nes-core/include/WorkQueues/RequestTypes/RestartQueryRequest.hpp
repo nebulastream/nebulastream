@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RESTARTQUERYREQUEST_HPP_
 #define NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RESTARTQUERYREQUEST_HPP_
 
+#include "Topology/TopologyNodeId.hpp"
 #include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
@@ -33,12 +34,13 @@ class RestartQueryRequest : public Request {
      * @param queryId : the id of query to be restarted
      * @return shared pointer to the instance of restart query request
      */
-    static RestartQueryRequestPtr create(QueryId queryId);
+    static RestartQueryRequestPtr create(TopologyNodeId nodeId);
 
     std::string toString() override;
 
   private:
-    explicit RestartQueryRequest(QueryId queryId);
+    explicit RestartQueryRequest(TopologyNodeId nodeId);
+    TopologyNodeId  nodeId;
 };
 }// namespace NES
 #endif// NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RESTARTQUERYREQUEST_HPP_

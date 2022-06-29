@@ -126,9 +126,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     udfCatalog = Catalogs::UdfCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
-                                                                                 queryCatalogService,
-                                                                                 queryRequestQueue,
-                                                                                 globalExecutionPlan);
+                                                                                 queryRequestQueue);
     locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
 
     monitoringService =
