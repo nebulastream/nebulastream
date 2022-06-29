@@ -46,7 +46,7 @@ DistributeWindowRulePtr DistributeWindowRule::create(Configurations::OptimizerCo
 
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeWindowRule: Apply DistributeWindowRule.");
-    NES_INFO("DistributeWindowRule::apply: plan before replace " << queryPlan->toString());
+    NES_INFO("DistributeWindowRule::apply: plan before replace \n" << queryPlan->toString());
     if (!performDistributedWindowOptimization) {
         return queryPlan;
     }
@@ -70,7 +70,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");
     }
-    NES_DEBUG("DistributeWindowRule::apply: plan after replace " << queryPlan->toString());
+    NES_DEBUG("DistributeWindowRule::apply: plan after replace \n" << queryPlan->toString());
     return queryPlan;
 }
 
