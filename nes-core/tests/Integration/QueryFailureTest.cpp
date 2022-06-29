@@ -217,7 +217,6 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
 
     QueryId queryId =
         queryService->addQueryRequest("", query.getQueryPlan(), "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
