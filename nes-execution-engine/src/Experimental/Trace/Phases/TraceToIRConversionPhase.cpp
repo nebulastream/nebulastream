@@ -47,6 +47,7 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::proces
                                                             returnType);
     functionOperation->addFunctionBasicBlock(rootIrBlock);
     ir->addRootOperation(functionOperation);
+    ir->setIsSCF(isSCF);
     return ir;
 }
 
@@ -227,9 +228,14 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     currentIrBlock->addOperation(ifOperation);
 
     // find control-flow merge block for if
-    auto controlFlowMergeBlock = findControlFlowMerge(trueCaseBlock, scope);
-    NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlock->getIdentifier());
-    ifOperation->setMergeBlock(controlFlowMergeBlock);
+    auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
+    auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
+    // isCF = !isCF && (controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier());
+    if(controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier()) {
+        isSCF = false;
+    }
+    NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
+    ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
 IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(IR::BasicBlockPtr currentBlock,

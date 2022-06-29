@@ -88,7 +88,7 @@ TEST_F(IfExecutionTest, ifConditionTest) {
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 43);
@@ -117,7 +117,7 @@ TEST_F(IfExecutionTest, ifThenElseConditionTest) {
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 85);
@@ -148,7 +148,7 @@ TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);

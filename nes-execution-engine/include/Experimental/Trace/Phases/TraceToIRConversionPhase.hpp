@@ -75,6 +75,7 @@ class TraceToIRConversionPhase {
       private:
         std::shared_ptr<ExecutionTrace> trace;
         std::shared_ptr<IR::NESIR> ir;
+        bool isSCF = true;
         std::unordered_map<uint32_t, IR::BasicBlockPtr> blockMap;
         IR::BasicBlockPtr findControlFlowMerge(IR::BasicBlockPtr currentBlock, int32_t targetScope);
     };
