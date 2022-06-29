@@ -961,7 +961,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
+TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
