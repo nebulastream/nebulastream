@@ -19,9 +19,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <memory>
 
-namespace NES::Experimental {
-
-class ExpressionNode;
+namespace NES {
 
 class ExpressionItem;
 using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
@@ -29,7 +27,7 @@ using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 /**
  * @brief
 **/
-ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, ExpressionNodePtr arguments...);
+ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs);
 
 }// namespace NES::Experimental
 

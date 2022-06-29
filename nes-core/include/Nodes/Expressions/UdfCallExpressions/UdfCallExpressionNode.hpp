@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-//TODO Change to UDF_ENABLED? since it will also be implemented for other languages
+//For now use PYTHON_UDF_ENABLED since only Python will be supported for now
+//In the future can be extended to something like UDF_ENABLED to cover more programming languages
 #ifdef PYTHON_UDF_ENABLED
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
@@ -20,11 +21,12 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
 
-namespace NES::Experimental {
+namespace NES {
 
 class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<NES::ConstantValueExpressionNode>;
+using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
 /**
  * @brief
@@ -33,21 +35,16 @@ class UdfCallExpressionNode : public ExpressionNode {
   public:
     UdfCallExpressionNode();
     explicit UdfCallExpressionNode(UdfCallExpressionNode* other);
-    ~UdfCallExpressionNode() override = default;
+    ~UdfCallExpressionNode() = default;
 
     /**
-     * @brief UDF calls always need to start with the UDF name that has to be called.
-     * Additionally, a call can have 0 or more function arguments. To solve this, create
-     * is defined as a variadic function (taking a variable number of arguments)
-     * Calling a UDF would look like: CALL(funcName, Arg_1, ..., Arg_n)
-     * @tparam Args
-     * @param udfName
-     * @param functionArguments
-     * @return
+     * @brief a function call needs the name of a udf and can take 0 or more function arguments.
+     * @param udfName name of the udf
+     * @param functionArguments 0 or more function arguments
+     * @return a UdfCallExpressionNode
      */
-    template<typename... Args>
     static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
-                                    Args... functionArguments);
+                                    std::vector<ExpressionNodePtr> functionArguments);
     /**
     * @brief determine the stamp of the Udf call by checking the return type of the function
      * An error is thrown when no UDF descriptor is set.
@@ -62,7 +59,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param udfName name of the UDF that needs to be called
      * @param functionArguments function arguments for the UDF
      */
-    void setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments);
+    void setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArgs);
 
     /**
      * @return the name of the UDF as a ConstantValueExpressionNode
@@ -72,7 +69,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     /**
      * @return a UdfArgumentsNode containing all function arguments passed to the UDF
      */
-    ExpressionNodePtr getFunctionArgumentsNode();
+    std::vector<ExpressionNodePtr> getFunctionArguments();
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -86,14 +83,15 @@ class UdfCallExpressionNode : public ExpressionNode {
      * set the UdfDescriptor manually to retrieve the return type.
      * @param pyUdfDescriptor The (python) udf descriptor
      */
-    void setPythonUdfDescriptorPtr(const PythonUdfDescriptorPtr& pyUdfDescriptor);
+    void setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor);
 
   private:
     /**
      * For now we keep a PythonUdfDescriptorPtr for a minimal working example. As soon as
      * support for other languages will be added we can use the base class UdfDescriptor instead.
      */
-    PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
+    Catalogs::PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
+    std::vector<ExpressionNodePtr> functionArguments;
 };
 
 }// namespace NES::Experimental

@@ -16,30 +16,27 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfArgumentsNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <utility>
 
-namespace NES::Experimental {
+namespace NES {
+
+UdfCallExpressionNode::UdfCallExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 UdfCallExpressionNode::UdfCallExpressionNode(UdfCallExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getUdfName()->copy());
-    addChildWithEqual(getFunctionArgumentsNode()->copy());
 }
 
-template<typename... Args>
 ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
-                                            Args... functionArguments) {
+                                                std::vector<ExpressionNodePtr> functionArgs) {
     auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>();
-    std::vector<ExpressionNodePtr> arguments({functionArguments...});
-    udfExpressionNode->setChildren(udfName, arguments);
+    udfExpressionNode->setChildren(udfName, std::move(functionArgs));
     return udfExpressionNode;
 }
 
-void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments) {
+void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArgs) {
     addChild(udfName);
-    auto functionArgsNode = UdfArgumentsNode::create(std::move(functionArguments));
-    addChild(functionArgsNode);
+    functionArguments = std::move(functionArgs);
 }
 
 void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
@@ -60,7 +57,12 @@ void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
 
 std::string UdfCallExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "CALL(" << children[0]->toString() << "," << children[1]->toString() << ")";
+    ss << "CALL(" << children[0]->toString() << ",";
+    ss << "Arguments(";
+    for (const auto& argument : functionArguments) {
+        ss << argument->getStamp() << ",";
+    }
+    ss << ")";
     return ss.str();
 }
 
@@ -69,12 +71,13 @@ ExpressionNodePtr UdfCallExpressionNode::copy() {
 }
 
 ExpressionNodePtr UdfCallExpressionNode::getUdfName() {
-    return children[0]->as<NES::ConstantValueExpressionNode>();
+    return children[0]->as<ConstantValueExpressionNode>();
 }
 
-ExpressionNodePtr UdfCallExpressionNode::getFunctionArgumentsNode() {
-    return children[1]->as<UdfArgumentsNode>();
+std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() {
+    return functionArguments;
 }
+
 void UdfCallExpressionNode::setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor) {
     pythonUdfDescriptorPtr = pyUdfDescriptor;
 }

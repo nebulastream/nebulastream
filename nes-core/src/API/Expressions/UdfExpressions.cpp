@@ -13,20 +13,19 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/UdfExpressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <utility>
 
-namespace NES::Experimental {
+namespace NES {
 
-ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, ExpressionNodePtr arguments...) {
+ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
         NES_ERROR("UDF name has to be a ConstantValueExpression but it was a " + udfNameExpression->toString());
     }
-    auto udfNameConstantValueExpression = udfNameExpression->as<NES::ConstantValueExpressionNode>();
-    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(arguments));
+    auto udfNameConstantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
+    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArgs));
 }
 
 }// namespace NES::Experimental
