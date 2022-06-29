@@ -39,12 +39,12 @@ Value<Any> SumFunction::lower(std::unique_ptr<AggregationState>& state) {
     return sumState->currentSum;
 }
 std::unique_ptr<AggregationState> SumFunction::loadState(Value<MemRef>& ref) {
-    auto value = load<Integer>(ref);
+    auto value = ref.load<Integer>();
     return std::make_unique<SumState>(value);
 }
 void SumFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) {
     auto sumState = (SumState*) state.get();
-    store(ref, sumState->currentSum);
+    ref.store(sumState->currentSum);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

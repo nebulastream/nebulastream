@@ -45,7 +45,7 @@ Record RecordBuffer::read(Value<Integer> recordIndex) {
         auto fieldOffset = tupleSize * recordIndex + fieldSize;
         auto fieldAddress = bufferAddress + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
-        auto value = load<Integer>(memRef);
+        auto value = memRef.load<Integer>();
         fieldValues.emplace_back(value);
     }
     return Record(fieldValues);
@@ -60,7 +60,7 @@ void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
         auto fieldAddress = bufferAddress + fieldOffset;
         auto value = rec.read(i).as<Integer>();
         auto memRef = fieldAddress.as<MemRef>();
-        store<Integer>(memRef, value);
+        memRef.store(value);
     }
 }
 void RecordBuffer::setNumRecords(Value<Integer> value) {

@@ -101,7 +101,12 @@ SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experi
     // evaluate the function for the first time
     auto resultRef = function();
     Operation result = Operation(RETURN);
-    result.input.emplace_back(resultRef);
+    if(resultRef.type != IR::Operations::VOID){
+        result.input.emplace_back(resultRef);
+        result.result = resultRef;
+    }else{
+        result.result = resultRef;
+    }
     tracCtx->trace(result);
     uint64_t iterations = 1;
     // for each control-flow split in the function we will have recorded an execution path in inflightExecutionPaths.
@@ -120,7 +125,12 @@ SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experi
         // evaluate function
         auto resultRef = function();
         Operation result = Operation(RETURN);
-        result.input.emplace_back(resultRef);
+        if(resultRef.type != IR::Operations::VOID){
+            result.input.emplace_back(resultRef);
+            result.result = resultRef;
+        }else{
+            result.result = resultRef;
+        }
         tracCtx->trace(result);
         iterations++;
         if (iterations > MAX_ITERATIONS) {

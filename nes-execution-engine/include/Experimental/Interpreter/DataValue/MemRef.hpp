@@ -22,25 +22,29 @@ class MemRef : public Any {
   public:
     const static Kind type = Kind::IntegerValue;
 
-    MemRef(int64_t value) : Any(type), value(value){};
+    MemRef(int8_t* value) : Any(type), value(value){};
     MemRef(MemRef&& a) : MemRef(a.value) {}
     MemRef(MemRef& a) : MemRef(a.value) {}
-    MemRef(Integer& a) : MemRef(a.value) {}
     std::unique_ptr<Any> copy() override { return std::make_unique<MemRef>(this->value); }
+
     std::unique_ptr<MemRef> add(std::unique_ptr<MemRef>& otherValue) const {
-        return std::make_unique<MemRef>(value + otherValue->value);
+        auto val1 = value + (int8_t)*otherValue->value;
+        return std::make_unique<MemRef>(val1);
     };
     ~MemRef() {}
 
-    int64_t getValue() { return value; }
+    void* getValue() { return value; }
+
     template<class ResultType>
-    std::unique_ptr<ResultType> load() { return std::make_unique<Integer>(value); }
+    std::unique_ptr<ResultType> load() {
+        return std::make_unique<Integer>(0);
+    }
 
     template<class ValueType>
     void store(ValueType value) { std::make_unique<Integer>(value); }
 
     IR::Operations::PrimitiveStamp getType() override { return IR::Operations::INT8PTR; }
-    const int64_t value;
+    int8_t* value;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

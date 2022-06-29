@@ -52,6 +52,7 @@ class Value : BaseValue {
     };
 
     explicit Value(int64_t value) : Value(std::make_unique<Integer>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    explicit Value(int8_t* value) : Value(std::make_unique<MemRef>(value)) { TraceOperation(Trace::CONST, *this, *this); };
     explicit Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceOperation(Trace::CONST, *this, *this); };
 
     // copy constructor
@@ -92,6 +93,30 @@ class Value : BaseValue {
         }
         return false;
     };
+
+    template<typename ResultType, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
+    auto load() {
+        std::unique_ptr<ResultType> result;
+        if (Trace::isInSymbolicExecution()) {
+            result = std::make_unique<ResultType>();
+        } else {
+            result = ((MemRef*) this->value.get())->load<ResultType>();
+        }
+        auto resultValue = Value<ResultType>(std::move(result));
+        TraceOperation(Trace::OpCode::LOAD, *this, resultValue);
+        return resultValue;
+    }
+
+    template<typename InputValue, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
+    auto store(Value<InputValue> value) {
+        if (!Trace::isInSymbolicExecution()) {
+            this->value->store(value);
+        }
+        if (auto* ctx = Trace::getThreadLocalTraceContext()) {
+            auto operation = Trace::Operation(Trace::STORE, {ref, value.ref});
+            ctx->trace(operation);
+        }
+    }
 
     template<class T>
     auto as() {
@@ -415,32 +440,6 @@ auto inline operator||(const LHS& left, const RHS& right) {
     TraceOperation(Trace::OpCode::OR, left, right, resValue);
     return resValue;
 };
-
-template<class Type>
-auto load(Value<MemRef>& ref) {
-    if (Trace::isInSymbolicExecution()) {
-        auto value = std::make_unique<Type>();
-        auto resValue = Value<Type>(std::move(value));
-        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
-        return resValue;
-    } else {
-        auto value = ref.value->load<Type>();
-        auto resValue = Value<Type>(std::move(value));
-        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
-        return resValue;
-    }
-}
-
-template<class Type>
-void store(Value<MemRef>& ref, Value<Type>& value) {
-    if (!Trace::isInSymbolicExecution()) {
-        ref.value->store(value);
-    }
-    if (auto* ctx = Trace::getThreadLocalTraceContext()) {
-        auto operation = Trace::Operation(Trace::STORE, {ref.ref, value.ref});
-        ctx->trace(operation);
-    }
-}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 

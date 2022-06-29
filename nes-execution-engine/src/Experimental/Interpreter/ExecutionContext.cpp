@@ -32,7 +32,7 @@ void* allocateBufferProxy(void* workerContext) {
 Value<MemRef> allocateBufferProxyWrapper(Value<MemRef>& workerContext) {
     auto workerContextPtr = (void*) workerContext.value->getValue();
     auto res = allocateBufferProxy(workerContextPtr);
-    return Value<MemRef>(std::make_unique<MemRef>((int64_t) res));
+    return Value<MemRef>(std::make_unique<MemRef>((int8_t*) res));
 }
 
 void emitBufferProxy(void* pipelineContext, void* tupleBuffer) {

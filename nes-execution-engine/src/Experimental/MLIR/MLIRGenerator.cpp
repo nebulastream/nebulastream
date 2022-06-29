@@ -637,7 +637,10 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperatio
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame) {
     printf("LoadOp.\n");
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
-    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), address);
+    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+                                                          mlir::LLVM::LLVMPointerType::get(getMLIRType(loadOp->getStamp())),
+                                                          address);
+    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), bitcast);
     frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
 }
 
@@ -763,9 +766,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivOperation> d
 // No recursion. Dependencies. Does NOT require addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame) {
     printf("StoreOp\n");
-    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"),
-                                         frame.getValue(storeOp->getValue()->getIdentifier()),
-                                         frame.getValue(storeOp->getAddress()->getIdentifier()));
+    auto value = frame.getValue(storeOp->getValue()->getIdentifier());
+    auto address = frame.getValue(storeOp->getAddress()->getIdentifier());
+    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+                                                          mlir::LLVM::LLVMPointerType::get(value.getType()),
+                                                          address);
+    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"), value, bitcast);
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.

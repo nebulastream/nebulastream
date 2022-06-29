@@ -98,7 +98,7 @@ auto transformReturn(Arg argument) {
         return Value<Integer>(std::make_unique<Integer>(argument));
     }
     if constexpr (std::is_same<Arg, void*>::value) {
-        return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
+        return Value<MemRef>(std::make_unique<MemRef>((int8_t*) argument));
     }
     if constexpr (std::is_same<Arg, uint8_t*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
@@ -114,7 +114,7 @@ auto createDefault() {
         return Value<Integer>(std::make_unique<Integer>(0));
     }
     if constexpr (std::is_same<R, void*>::value) {
-        return Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
+        return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     }
 }
 

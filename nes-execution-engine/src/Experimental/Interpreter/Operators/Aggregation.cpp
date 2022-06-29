@@ -35,9 +35,7 @@ Aggregation::Aggregation(std::vector<std::shared_ptr<AggregationFunction>> aggre
 void Aggregation::setup(ExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalAggregationState>();
     auto state = aggregationFunctions[0]->createState();
-    auto address = std::addressof(*state.get());
-    auto value = (int64_t) address;
-    auto val = Value<MemRef>(std::make_unique<MemRef>(value));
+    auto val = Value<MemRef>(std::make_unique<MemRef>((int8_t*)state.get()));
     val.ref = Trace::ValueRef(INT32_MAX, 10, IR::Operations::INT8PTR);
 
     globalState->threadLocalAggregationSlots.push_back(val);

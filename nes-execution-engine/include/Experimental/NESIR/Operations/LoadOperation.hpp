@@ -20,7 +20,7 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address);
+    explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address,  PrimitiveStamp type);
     ~LoadOperation() override = default;
     OperationPtr getAddress();
     std::string toString() override;

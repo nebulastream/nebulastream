@@ -39,7 +39,7 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::proces
     auto rootIrBlock = processBlock(0, rootBlock);
 
     auto& returnOperation = trace->getBlock(trace->returnRef->blockId).operations.back();
-    auto returnType = std::get<ValueRef>(returnOperation.input[0]).type;
+    auto returnType = std::get<ValueRef>(returnOperation.result).type;
     auto functionOperation =
         std::make_shared<IR::Operations::FunctionOperation>("execute",
                                                             /*argumentTypes*/ std::vector<IR::Operations::PrimitiveStamp>{},
@@ -56,8 +56,7 @@ IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(in
     std::vector<std::shared_ptr<IR::Operations::BasicBlockArgument>> blockArguments;
     for (auto& arg : block.arguments) {
         auto argumentIdentifier = createValueIdentifier(arg);
-        auto blockArgument =
-            std::make_shared<IR::Operations::BasicBlockArgument>(argumentIdentifier, IR::Operations::PrimitiveStamp::INT64);
+        auto blockArgument = std::make_shared<IR::Operations::BasicBlockArgument>(argumentIdentifier, arg.type);
         blockArguments.emplace_back(blockArgument);
         blockFrame.setValue(argumentIdentifier, blockArgument);
     }
@@ -136,7 +135,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
         };
         case ASSIGN: break;
         case RETURN: {
-            if (std::get<ValueRef>(operation.input[0]).type == IR::Operations::VOID) {
+            if (std::get<ValueRef>(operation.result).type == IR::Operations::VOID) {
                 auto operation = std::make_shared<IR::Operations::ReturnOperation>();
                 currentIrBlock->addOperation(operation);
             } else {
@@ -399,7 +398,8 @@ void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t,
     //currentBlock->addOperation(constOperation);
     auto address = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto loadOperation = std::make_shared<IR::Operations::LoadOperation>(resultIdentifier, address);
+    auto resultType = std::get<ValueRef>(operation.result).type;
+    auto loadOperation = std::make_shared<IR::Operations::LoadOperation>(resultIdentifier, address, resultType);
     frame.setValue(resultIdentifier, loadOperation);
     currentBlock->addOperation(loadOperation);
 }

@@ -32,10 +32,11 @@ std::unique_ptr<Any> AddOp(const std::unique_ptr<Left>& leftExp, const std::uniq
         auto rightValue = cast<Integer>(rightExp);
         return leftValue->add(rightValue);
     } else if (instanceOf<MemRef>(leftExp) && instanceOf<Integer>(rightExp)) {
-        auto leftValue = cast<MemRef>(leftExp);
-        std::unique_ptr<Integer> rightValue = cast<Integer>(rightExp);
-        auto rightMemRef = std::make_unique<MemRef>(*rightValue);
-        return leftValue->add(rightMemRef);
+       // auto leftValue = cast<MemRef>(leftExp);
+        //std::unique_ptr<Integer> rightValue = cast<Integer>(rightExp);
+        //auto rightMemRef = std::make_unique<MemRef>(*rightValue);
+        //return leftValue->add(rightMemRef);
+       return cast<MemRef>(leftExp);;
     }
 
     NES_THROW_RUNTIME_ERROR("no matching execution");
