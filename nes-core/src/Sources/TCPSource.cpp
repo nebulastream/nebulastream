@@ -12,10 +12,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Sources/TCPSource.hpp>
+#include <API/AttributeField.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Sources/TCPSource.hpp>
+#include <chrono>
+#include <cstring>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 #include <arpa/inet.h>
-#include <stdio.h>
 #include <unistd.h> // For read
 #include <sys/socket.h> // For socket functions
 #include <netinet/in.h> // For sockaddr_in
@@ -25,15 +35,15 @@ namespace NES {
 TCPSource::TCPSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     const TCPSourceTypePtr& tcpSourceType,
+                     TCPSourceTypePtr tcpSourceType,
                      OperatorId operatorId,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
                      GatheringMode::Value gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
-                 bufferManager,
-                 queryManager,
+                 std::move(bufferManager),
+                 std::move(queryManager),
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
@@ -60,41 +70,31 @@ std::string TCPSource::toString() const {
 }
 
 bool TCPSource::connected() {
+    NES_TRACE("Trying to create socket.");
     sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+    NES_TRACE("Socket created with " << sockfd);
     if (sockfd == -1) {
         NES_ERROR("Failed to create socket. errno: " << errno);
         connection = -1;
         return false;
     }
+    NES_TRACE("Created socket");
 
     // Listen to port 9999 on any address
-    sockaddr_in sockaddr;
-    sockaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
-    sockaddr.sin_addr.s_addr = INADDR_ANY;
-    sockaddr.sin_port =
+    struct sockaddr_in servaddr;
+    servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
+    servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
+    servaddr.sin_port =
         htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
 
-    if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
-        NES_ERROR("Failed to bind to port " << sourceConfig->getSocketPort()->getValue() << " errno: " << errno);
-        connection = -1;
-        return false;
-    }
-
-    // Start listening. Hold at most 10 connections in the queue
-    if (listen(sockfd, 10) < 0) {
-        NES_ERROR("Failed to listen on socket. errno: " << errno);
-        connection = -1;
-        return false;
-    }
-
-    // Grab a connection from the queue
-    auto addrlen = sizeof(sockaddr);
-    connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
+    connection = connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     if (connection < 0) {
-        NES_ERROR("Failed to grab connection. errno: " << errno);
+        NES_ERROR("Connection with server failed: " << errno);
         connection = -1;
         return false;
     }
+
+    NES_TRACE("Connected to server.");
     return true;
 }
 
