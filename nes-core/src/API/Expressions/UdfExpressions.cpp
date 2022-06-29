@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef PYTHON_UDF_ENABLED
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
@@ -29,3 +29,4 @@ ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNode
 }
 
 }// namespace NES::Experimental
+#endif// PYTHON_UDF_ENABLED
