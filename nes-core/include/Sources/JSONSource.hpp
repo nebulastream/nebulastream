@@ -24,7 +24,6 @@ class JSONSource : public DataSource {
                         GatheringMode::Value gatheringMode);
 
     std::optional<Runtime::TupleBuffer> receiveData() override;
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
     std::string toString() const override;
     SourceType getType() const override;
 
@@ -32,6 +31,11 @@ class JSONSource : public DataSource {
      * @brief Get file path for the JSON file
      */
     std::string getFilePath() const;
+
+    /**
+     * @brieg Fill Buffer with JSON data from file
+     */
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer);
 
     /**
      * @brief getter for source config
@@ -44,10 +48,12 @@ class JSONSource : public DataSource {
 
   private:
     JSONParserPtr inputParser;
+    simdjson::padded_string json;
+    simdjson::ondemand::document_stream documentStream;
     std::vector<PhysicalTypePtr> physicalTypes;
     JSONSourceTypePtr jsonSourceType;
     std::string filePath;
-    JSONFormat jsonFormat;
+    uint32_t numBuffersToProcess;
 };
 using JSONSourcePtr = std::shared_ptr<JSONSource>;
 }//namespace NES

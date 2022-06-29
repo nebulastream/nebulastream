@@ -65,9 +65,10 @@ class JSONSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
 
     /**
-     * @brief Get format of JSON file
+     * @brief Get number of buffers to read
+     * @see nes-core/include/Sources/DataSource.hpp
      */
-    [[nodiscard]] JSONFormat getJSONFormat() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumBuffersToProcess() const;
 
     /**
      * @brief Set file path, needed for JSONSource
@@ -75,9 +76,10 @@ class JSONSourceType : public PhysicalSourceType {
     void setFilePath(std::string filePath);
 
     /**
-     * @brief Set format of JSON file to be read
+     * @brief Set number of buffers to read
+     * @see nes-core/include/Sources/DataSource.hpp
      */
-    void setJSONFormat(JSONFormat jsonFormat);
+    void setNumBuffersToProcess(uint32_t numBuffersToProcess);
 
   private:
     /**
@@ -95,7 +97,7 @@ class JSONSourceType : public PhysicalSourceType {
      */
     JSONSourceType();
     Configurations::StringConfigOption filePath;
-    Configurations::EnumOption<JSONFormat> jsonFormat;
+    Configurations::IntConfigOption numBuffersToProcess;
 };
 }// namespace NES
 

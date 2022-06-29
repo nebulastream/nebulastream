@@ -1993,37 +1993,22 @@ class JSONSourceProxy : public JSONSource {
                      gatheringMode){};
 
   private:
-    FRIEND_TEST(SourceTest, testJSONSource);
+    FRIEND_TEST(SourceTest, testJSONSourceRegion);
 };
 
-TEST_F(SourceTest, testJSONSource) { // TODO remove
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "example.json";
-    JSONSourceTypePtr sourceConfig = JSONSourceType::create();
-    sourceConfig->setFilePath(filePath);
-
-    JSONSourceProxy jsonSource(this->schema,
-                               this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(),
-                               sourceConfig,
-                               this->operatorId,
-                               this->originId,
-                               this->numSourceLocalBuffersDefault,
-                               GatheringMode::INTERVAL_MODE);
-    std::tuple<int64_t, std::string> tuple = jsonSource.parse();
-    EXPECT_EQ(get<0>(tuple), int64_t(1));
-    EXPECT_EQ(get<1>(tuple), "value");
-}
 
 TEST_F(SourceTest, testJSONSourceRegion) {
     SchemaPtr schemaRegion = Schema::create() // TODO move to setup method
-        ->addField("R_REGIONKEY", INT8)
-        ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
-        ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
+        ->addField("R_REGIONKEY", INT64)
+        ->addField("R_NAME", CHAR) // TODO string
+        //->addField("R_NAME", DataTypeFactory::createFixedChar(16))
+        ->addField("R_COMMENT", CHAR);
+        //->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
 
     std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.json";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
     sourceConfig->setFilePath(filePath);
-    sourceConfig->setJSONFormat(JSON);
+    sourceConfig->setNumBuffersToProcess(0);
 
     JSONSourceProxy jsonSource(schemaRegion,
                                this->nodeEngine->getBufferManager(),
@@ -2033,12 +2018,12 @@ TEST_F(SourceTest, testJSONSourceRegion) {
                                this->originId,
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::INTERVAL_MODE);
-    jsonSource.parse();
-}
 
-TEST_F(SourceTest, testJSONSourceRegionND) {
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.ndjson";
-    // TODO
+    auto buf = this->GetEmptyBuffer();
+    std::shared_ptr<Runtime::MemoryLayouts::ColumnLayout> layoutPtr =
+        Runtime::MemoryLayouts::ColumnLayout::create(schemaRegion, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    jsonSource.fillBuffer(buffer);
 }
 
 }// namespace NES

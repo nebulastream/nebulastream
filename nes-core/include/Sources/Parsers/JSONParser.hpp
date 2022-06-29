@@ -47,15 +47,17 @@ class JSONParser : public Parser {
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema) override;
 
-    bool writeInputTupleToTupleBuffer(simdjson::ondemand::document_reference doc,
-                                                  uint64_t tupleCount,
-                                                  Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                                  const SchemaPtr& schema);
+    static bool writeFieldValueToTupleBuffer(uint64_t tupleIndex,
+                                             uint64_t fieldIndex,
+                                             DataTypePtr dataType,
+                                             std::string jsonKey,
+                                             simdjson::simdjson_result<simdjson::ondemand::document_reference> doc,
+                                             Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+
   private:
     uint64_t numberOfSchemaFields;
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
-
 };
 }// namespace NES
 #endif// NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

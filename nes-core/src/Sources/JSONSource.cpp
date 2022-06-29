@@ -1,5 +1,6 @@
 
 #ifdef ENABLE_SIMDJSON_BUILD
+#include "Common/DataTypes/DataType.hpp"
 #include "Sources/Parsers/JSONParser.hpp"
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -25,7 +26,8 @@ JSONSource::JSONSource(SchemaPtr schema,
                  originId,
                  numSourceLocalBuffers,
                  gatheringMode),
-      jsonSourceType(jsonSourceType), filePath(jsonSourceType->getFilePath()->getValue()) {
+      jsonSourceType(jsonSourceType), filePath(jsonSourceType->getFilePath()->getValue()),
+      numBuffersToProcess(jsonSourceType->getNumBuffersToProcess()->getValue()) {
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema->fields) {
@@ -33,9 +35,18 @@ JSONSource::JSONSource(SchemaPtr schema,
         physicalTypes.push_back(physicalField);
     }
     this->inputParser = std::make_shared<JSONParser>(physicalTypes);
+
+    json = simdjson::padded_string::load(filePath);
+    auto error = parser.iterate_many(json).get(documentStream);
+    if (error) {
+        // TODO
+        NES_ERROR("Error reading JSON file")
+        throw std::logic_error(error_message(error));
+    }
 }
 
 std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
+    // TODO verify (is copy and paste from CSVSource)
     NES_TRACE("JSONSource::receiveData called on " << operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
@@ -45,16 +56,42 @@ std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
         return std::nullopt;
     }
     return buffer.getBuffer();
-    ;
 }
 
 void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    simdjson::ondemand::document_stream docs = parser.iterate_many(filePath);
-    uint64_t tupleCount = 0;
-    for (auto doc : docs) {
-        simdjson::ondemand::document_reference docRef = doc.value();
-        inputParser->writeInputTupleToTupleBuffer(docRef, tupleCount, buffer, schema); // TODO don't have to pass schema each time
-        tupleCount++;
+    if (numBuffersToProcess == 0) {
+        // read source until source (file) ends
+        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+        std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
+        auto i = documentStream.begin();
+        uint64_t tupleIndex = 0;
+        size_t count{0};
+        for (; i != documentStream.end(); ++i) {
+            auto doc = *i;
+            if (!doc.error()) {
+                for (uint64_t fieldIndex = 0; fieldIndex < 3; fieldIndex++) {
+                    DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
+                    std::string jsonKey = schema->fields[fieldIndex]->getName();
+                    bool addedTuple =
+                        inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, dataType, jsonKey, doc, buffer);
+                    if (addedTuple)
+                        buffer.setNumberOfTuples(tupleIndex + 1);
+                }
+                count++;
+            } else {
+                NES_ERROR("got broken document at " << i.current_index());
+                throw std::logic_error(error_message(doc.error()));
+            }
+            tupleIndex++;
+        }
+        std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
+        // TODO: verify that tuples were actually written (iterate through buffer?)
+        //Runtime::MemoryLayouts::DynamicTupleBuffer::TupleIterator it = buffer.begin();
+        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+    } else {
+        NES_ERROR("Logic not yet implemented")
+        throw std::invalid_argument("numBuffersToProcess must be 0");
+        // TODO
     }
 }
 
@@ -65,8 +102,8 @@ std::string JSONSource::toString() const {
     return ss.str();
 }
 
+std::string JSONSource::getFilePath() const { return filePath; }
 SourceType JSONSource::getType() const { return JSON_SOURCE; }
-
 const JSONSourceTypePtr& JSONSource::getSourceConfig() const { return jsonSourceType; }
 
 }// namespace NES

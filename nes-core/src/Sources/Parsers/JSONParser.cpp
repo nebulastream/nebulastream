@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "API/AttributeField.hpp"
+#include "Common/DataTypes/DataType.hpp"
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -56,21 +58,55 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             return false;
         }
 
-        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        Parser::writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
     }
     return true;
 }
 
-bool JSONParser::writeInputTupleToTupleBuffer(simdjson::ondemand::document_reference doc,
-                                               uint64_t tupleCount,
-                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                               const SchemaPtr& schema) {
-    // TODO
-    /*
-     * for field in schema
-     *      auto val = doc.next()
-     *      writeIntoTupleBuffer<field.type>(val)
-     */
+bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
+                                              uint64_t fieldIndex,
+                                              DataTypePtr dataType,
+                                              std::string jsonKey,
+                                              simdjson::simdjson_result<simdjson::ondemand::document_reference> valueResult,
+                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+    if (dataType->isBoolean()) {
+        bool value = valueResult[jsonKey];
+        tupleBuffer[tupleIndex][fieldIndex].write<bool>(value);
+    } else if (dataType->isChar()) {
+        std::string_view value = valueResult[jsonKey];
+        std::string str = {value.begin(), value.end()};
+        char c = str.at(0);
+        tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
+    } else if (dataType->isCharArray()) {
+        // TODO
+        NES_ERROR("Invalid DataType: " << dataType);
+        throw std::logic_error("DataType string/char array not supported");
+    } else if (dataType->isFloat()) {// TODO safe?
+        double value = valueResult[jsonKey];
+        tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
+    } else if (dataType->isInteger()) {
+        int64_t value = valueResult[jsonKey];
+        tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
+    } else if (dataType->isNumeric()) {
+        simdjson::ondemand::number number = valueResult.get_number();
+        simdjson::ondemand::number_type numberType = number.get_number_type();
+        if (numberType == simdjson::ondemand::number_type::signed_integer) {
+            int64_t value = valueResult[jsonKey];
+            tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
+        } else if (numberType == simdjson::ondemand::number_type::unsigned_integer) {
+            uint64_t value = valueResult[jsonKey];
+            tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
+        } else if (numberType == simdjson::ondemand::number_type::floating_point_number) {
+            double value = valueResult[jsonKey];
+            tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
+        }
+    } else if (dataType->isUndefined()) {
+        NES_ERROR("Invalid data type")
+        throw std::invalid_argument("Data type is undefined");
+    } else {
+        NES_ERROR("Invalid DataType: " << dataType);
+        throw std::invalid_argument("Invalid DataType: " + dataType->toString());
+    }
     return true;
 }
 

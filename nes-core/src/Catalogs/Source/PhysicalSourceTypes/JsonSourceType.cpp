@@ -31,7 +31,10 @@ JSONSourceType::JSONSourceType()
     : PhysicalSourceType(JSON_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
-                                                                        "file path, needed for: JSONSource")) {
+                                                                        "file path, needed for: JSONSource")),
+      numBuffersToProcess(Configurations::ConfigurationOption<std::uint32_t>::create(Configurations::FILE_PATH_CONFIG,
+                                                                                     0,
+                                                                                     "file path, needed for: JSONSource")) {
     NES_INFO("JSONSourceTypeConfig: Init source config object with default values.");
 }
 
@@ -47,19 +50,22 @@ std::string JSONSourceType::toString() {
     std::stringstream ss;
     ss << "JSONSource Type => {\n";
     ss << Configurations::FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
-    ss << Configurations::JSON_FORMAT + ":" + jsonFormat->toStringNameCurrentValue();
     ss << "\n}";
     return ss.str();
 }
 
-JSONFormat JSONSourceType::getJSONFormat() const { return jsonFormat; }
-
 Configurations::StringConfigOption JSONSourceType::getFilePath() const { return filePath; }
+Configurations::IntConfigOption JSONSourceType::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
 void JSONSourceType::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
-void JSONSourceType::setJSONFormat(JSONFormat jsonFormat) { jsonFormat->setValue(jsonFormat); }
+void JSONSourceType::setNumBuffersToProcess(uint32_t numBuffersToProcessValue) {
+    numBuffersToProcess->setValue(numBuffersToProcessValue);
+}
 
-void JSONSourceType::reset() { setFilePath(filePath->getDefaultValue()); }
+void JSONSourceType::reset() {
+    setFilePath(filePath->getDefaultValue());
+    setNumBuffersToProcess(numBuffersToProcess->getDefaultValue());
+}
 
 }// namespace NES
