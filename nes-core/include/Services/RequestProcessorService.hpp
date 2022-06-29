@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
 
+#include <Phases/QueryMigrationPhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>

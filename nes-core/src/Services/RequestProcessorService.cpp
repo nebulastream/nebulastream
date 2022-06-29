@@ -101,7 +101,7 @@ void RequestProcessorService::start() {
 
             try {
                 if(requests[0]->instanceOf<Experimental::MigrateQueryRequest>()){
-                    queryMigrationPhase->execute();
+                    queryMigrationPhase->execute(requests[0]->as<Experimental::MigrateQueryRequest>());
                 }
                 else {
                     NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
