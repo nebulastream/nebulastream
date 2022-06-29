@@ -446,6 +446,10 @@ add_executable(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlaceme
 target_link_libraries(ilp-placement-test nes-tests)
 add_test(NAME ilp-placement-test COMMAND ilp-placement-test)
 
+add_executable(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
+target_link_libraries(nemo-placement-test nes-tests)
+add_test(NAME nemo-placement-test COMMAND nemo-placement-test)
+
 ### Thread Naming Test ###
 add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
 target_link_libraries(global-execution-plan-tests nes-tests)

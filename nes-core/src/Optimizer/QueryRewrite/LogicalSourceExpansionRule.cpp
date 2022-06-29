@@ -41,7 +41,7 @@ LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(SourceCatalogPt
 }
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO("LogicalSourceExpansionRule: Apply Logical source expansion rule for the query " << queryPlan->toString());
+    NES_INFO("LogicalSourceExpansionRule: Plan before \n" << queryPlan->toString());
 
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
@@ -143,7 +143,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_DEBUG("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule plan=" << queryPlan->toString());
+    NES_DEBUG("LogicalSourceExpansionRule: Plan after \n" << queryPlan->toString());
     return queryPlan;
 }
 
