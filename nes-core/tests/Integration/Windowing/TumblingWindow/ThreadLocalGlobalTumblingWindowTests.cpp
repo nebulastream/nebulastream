@@ -69,6 +69,13 @@ struct InputValue {
     uint64_t timestamp;
 };
 
+struct MultipleInputValues {
+    uint64_t value3;
+    uint64_t value2;
+    uint64_t value;
+    uint64_t timestamp;
+};
+
 struct GlobalOutput {
     uint64_t start;
     uint64_t end;
@@ -128,6 +135,25 @@ struct GlobalOutputMultiKeys {
     }
 };
 
+struct GlobalOutputMultiAggSameKey {
+    uint64_t start;
+    uint64_t end;
+    uint64_t value1;
+    uint64_t value2;
+    uint64_t value3;
+    uint64_t value4;
+    bool operator==(const GlobalOutputMultiAggSameKey& rhs) const {
+        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3 &&
+            value4 == rhs.value4;
+    }
+    bool operator!=(const GlobalOutputMultiAggSameKey& rhs) const { return !(rhs == *this); }
+    friend ostream& operator<<(ostream& os, const GlobalOutputMultiAggSameKey& keys) {
+        os << "start: " << keys.start << " end: " << keys.end << " value1: " << keys.value1 << " value2: " << keys.value2 <<
+            " value3:" << keys.value3 << " value4:" << keys.value4;
+        return os;
+    }
+};
+
 PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t numberOfKeys = 1) {
     return LambdaSourceType::create(
         [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
@@ -169,6 +195,32 @@ class DataGeneratorMultiKey {
   private:
     uint64_t numberOfBuffers;
     uint64_t numberOfKeys;
+    std::atomic_uint64_t counter = 0;
+};
+
+class DataGeneratorMultiValue {
+  public:
+    DataGeneratorMultiValue(uint64_t numberOfBuffers) : numberOfBuffers(numberOfBuffers){};
+    PhysicalSourceTypePtr getSource() {
+        return LambdaSourceType::create(
+            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+                auto inputValue = (MultipleInputValues*) buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+                    inputValue[i].value = 1;
+                    inputValue[i].value2 = 1;
+                    inputValue[i].value3 = 1;
+                    inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
+                }
+                counter++;
+                NES_DEBUG("numberOfTuplesToProduce: " << numberOfTuplesToProduce)
+                buffer.setNumberOfTuples(numberOfTuplesToProduce);
+            },
+            numberOfBuffers,
+            0,
+            GatheringMode ::INTERVAL_MODE);
+    }
+  private:
+    uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
 
@@ -526,6 +578,96 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
                                                               {16000, 17000, 1000, 1000, 1, 1, 1}};
     std::vector<GlobalOutputMultiAgg> actualGlobalOutput =
         testHarness.getOutput<GlobalOutputMultiAgg>(expectedGlobalOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
+    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+}
+
+TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+            .apply(
+                Avg(Attribute("value"))->as(Attribute("avg_value_3")),
+                Avg(Attribute("value"))->as(Attribute("avg_value_2")),
+                Avg(Attribute("value"))->as(Attribute("avg_value_1")),
+                Count()->as(Attribute("count_value"))
+                ))";
+    auto dg = DataGenerator(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
+                                                                  {1000, 2000, 1, 1, 1, 1000},
+                                                                  {2000, 3000, 1, 1, 1, 1000},
+                                                                  {3000, 4000, 1, 1, 1, 1000},
+                                                                  {4000, 5000, 1, 1, 1, 1000},
+                                                                  {5000, 6000, 1, 1, 1, 1000},
+                                                                  {6000, 7000, 1, 1, 1, 1000},
+                                                                  {7000, 8000, 1, 1, 1, 1000},
+                                                                  {8000, 9000, 1, 1, 1, 1000},
+                                                                  {9000, 10000, 1, 1, 1, 1000},
+                                                                  {10000, 11000, 1, 1, 1, 1000},
+                                                                  {11000, 12000, 1, 1, 1, 1000},
+                                                                  {12000, 13000, 1, 1, 1, 1000},
+                                                                  {13000, 14000, 1, 1, 1, 1000},
+                                                                  {14000, 15000, 1, 1, 1, 1000},
+                                                                  {15000, 16000, 1, 1, 1, 1000},
+                                                                  {16000, 17000, 1, 1, 1, 1000}};
+    std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
+        testHarness.getOutput<GlobalOutputMultiAggSameKey>(expectedGlobalOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
+    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+}
+
+TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCountInFront) {
+    auto testSchema = Schema::create()
+                          ->addField("value3", DataTypeFactory::createUInt64())
+                          ->addField("value2", DataTypeFactory::createUInt64())
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(MultipleInputValues), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+            .apply(
+                Avg(Attribute("value"))->as(Attribute("avg_value_1")),
+                Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
+                Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
+                Count()->as(Attribute("count_value"))
+                ))";
+    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput =
+        {{0, 1000, 1, 1, 1, 1000},
+         {1000, 2000, 1, 1, 1, 1000},
+         {2000, 3000, 1, 1, 1, 1000},
+         {3000, 4000, 1, 1, 1, 1000},
+         {4000, 5000, 1, 1, 1, 1000},
+         {5000, 6000, 1, 1, 1, 1000},
+         {6000, 7000, 1, 1, 1, 1000},
+         {7000, 8000, 1, 1, 1, 1000},
+         {8000, 9000, 1, 1, 1, 1000},
+         {9000, 10000, 1, 1, 1, 1000},
+         {10000, 11000, 1, 1, 1, 1000},
+         {11000, 12000, 1, 1, 1, 1000},
+         {12000, 13000, 1, 1, 1, 800}};
+    auto dg = DataGeneratorMultiValue(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                       .addLogicalSource("window", testSchema)
+                                       .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
+        testHarness.getOutput<GlobalOutputMultiAggSameKey>(expectedGlobalOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
     ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
