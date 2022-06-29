@@ -84,7 +84,6 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NES_DEBUG("query=" << query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
@@ -134,7 +133,6 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query1);
     QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
