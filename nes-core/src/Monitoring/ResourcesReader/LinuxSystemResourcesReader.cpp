@@ -396,9 +396,9 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
 
 uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
     auto now = std::chrono::system_clock::now();
-    auto now_s = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto now_s = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_s.time_since_epoch();
-    auto value = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     uint64_t duration = value.count();
     return duration;
 }

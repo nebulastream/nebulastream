@@ -66,6 +66,8 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
         NES_TRACE("MonitoringSource::Buffer content: " << buffer.toString(schema));
     }
 
+    std::this_thread::sleep_for(waitTime);
+
     return buf;
 }
 
