@@ -188,7 +188,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     QuerySubPlanId querySubPlanId;
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
-    std::function<void(Runtime::TupleBuffer&)> updateWatermarkLambda;
+    std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint32_t buffersPerEpoch;

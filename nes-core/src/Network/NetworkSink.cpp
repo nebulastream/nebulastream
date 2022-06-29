@@ -49,6 +49,14 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
+        };
+    }
+    else {
+        insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {};
+    }
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
@@ -57,9 +65,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-            workerContext.insertIntoStorage(nesPartition, inputBuffer);
-        }
+        insertIntoStorageCallback(inputBuffer, workerContext);
         return success;
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);

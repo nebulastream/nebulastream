@@ -29,12 +29,12 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
     : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkLambda = [this](Runtime::TupleBuffer& inputBuffer) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
     }
     else {
-        updateWatermarkLambda = [](Runtime::TupleBuffer&) {};
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {};
     }
 }
 
@@ -43,7 +43,7 @@ NullOutputSink::~NullOutputSink() = default;
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    updateWatermarkLambda(inputBuffer);
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 
