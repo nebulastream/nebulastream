@@ -355,7 +355,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::disableDistributedWindowingOptimization()});
+                                                    TestUtils::setDistributedWindowChildThresholdMax(),
+                                                    TestUtils::setDistributedWindowCombinerThresholdMax()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -363,7 +364,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               ":\"Schema::create()->addField(createField(\\\"Time\\\",UINT64))->addField(createField(\\\"Dist\\\",UINT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Press\\\",FLOAT64))->"
               "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->" // 5th col.
               "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
               "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
               "addField(createField(\\\"MMDD\\\",FLOAT64))->"
@@ -371,8 +372,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"
+              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT64))->" // 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->" // 14th col.
               "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
@@ -394,7 +395,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(1),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(3),
                                           TestUtils::sourceGatheringInterval(1),
                                           TestUtils::enableThreadLocalWindowing()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -420,9 +421,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
+    // TODO: issue for ktm$ktm$ktm$ktm in header
     string expectedContent =
-        "window$start,window$end,ktm$Dist:INTEGER,ktm$ABS_Front_Wheel_Press:(Float)\n"
-        "1543620000000,0,0,0,0,0,0.1,9.09,14.54,0.2,-0.5,-0.8,14.3,1.9,0,0,0,27.7,27,0,13.1608002,48.0966673,410.85\n";
+        "ktm$start:INTEGER,ktm$end:INTEGER,ktm$ktm$ktm$ktm$avg_value_1:(Float),ktm$ktm$ktm$ktm$avg_value_2:(Float),ktm$ktm$ktm$ktm$avg_value_3:(Float),count_value:INTEGER\n"
+        "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
