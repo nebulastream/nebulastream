@@ -36,8 +36,7 @@ ExpressionNodePtr STWithinExpressionNode::create(const GeographyFieldsAccessExpr
 bool STWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STWithinExpressionNode>()) {
         auto otherNode = rhs->as<STWithinExpressionNode>();
-        return getPoint()->equal(otherNode->getPoint())
-            && getShape()->equal(otherNode->getShape());
+        return getPoint()->equal(otherNode->getPoint()) && getShape()->equal(otherNode->getShape());
     }
     return false;
 }
@@ -48,8 +47,7 @@ std::string STWithinExpressionNode::toString() const {
     return ss.str();
 }
 
-void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                         ShapeExpressionNodePtr const& shapeExpression) {
+void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& shapeExpression) {
     addChildWithEqual(point);
     addChildWithEqual(shapeExpression);
 }
@@ -80,8 +78,8 @@ void STWithinExpressionNode::inferStamp(SchemaPtr schema) {
     if (!point->getStamp()->isFloat() || !validShape) {
         throw std::logic_error(
             "STWithinExpressionNode: Error during stamp inference. AccessType need to be Float and ShapeType needs to be"
-            " Polygon or Rectangle but the Point access type was: " + point->getStamp()->toString() + ", and the shape was: "
-            + shape->toString());
+            " Polygon or Rectangle but the Point access type was: "
+            + point->getStamp()->toString() + ", and the shape was: " + shape->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

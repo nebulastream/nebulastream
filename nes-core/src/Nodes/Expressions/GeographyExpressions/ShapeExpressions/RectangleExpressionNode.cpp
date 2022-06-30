@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
-RectangleExpressionNode::RectangleExpressionNode(RectangleExpressionNode* other)
-    : ShapeExpressionNode(other->type) {
+RectangleExpressionNode::RectangleExpressionNode(RectangleExpressionNode* other) : ShapeExpressionNode(other->type) {
     latitudeLow = other->getLongitudeLow();
     longitudeLow = other->getLongitudeLow();
     latitudeHigh = other->getLongitudeHigh();
@@ -29,38 +28,28 @@ RectangleExpressionNode::RectangleExpressionNode(double latitudeLow,
                                                  double longitudeLow,
                                                  double latitudeHigh,
                                                  double longitudeHigh)
-    : ShapeExpressionNode(Rectangle),
-      latitudeLow(latitudeLow),
-      longitudeLow(longitudeLow),
-      latitudeHigh(latitudeHigh),
+    : ShapeExpressionNode(Rectangle), latitudeLow(latitudeLow), longitudeLow(longitudeLow), latitudeHigh(latitudeHigh),
       longitudeHigh(longitudeHigh) {}
 
-ShapeExpressionNodePtr RectangleExpressionNode::create(double latitudeLow,
-                                                       double longitudeLow,
-                                                       double latitudeHigh,
-                                                       double longitudeHigh) {
-    auto rectangleNode = std::make_shared<RectangleExpressionNode>(latitudeLow,
-                                                                   longitudeLow,
-                                                                   latitudeHigh,
-                                                                   longitudeHigh);
+ShapeExpressionNodePtr
+RectangleExpressionNode::create(double latitudeLow, double longitudeLow, double latitudeHigh, double longitudeHigh) {
+    auto rectangleNode = std::make_shared<RectangleExpressionNode>(latitudeLow, longitudeLow, latitudeHigh, longitudeHigh);
     return rectangleNode;
 }
 
 bool RectangleExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<RectangleExpressionNode>()) {
         auto otherNode = rhs->as<RectangleExpressionNode>();
-        return getLatitudeLow() == otherNode->getLatitudeLow()
-            && getLongitudeLow() == otherNode->getLongitudeLow()
-            && getLatitudeHigh() == otherNode->getLatitudeHigh()
-            && getLongitudeHigh() == otherNode->getLongitudeHigh();
+        return getLatitudeLow() == otherNode->getLatitudeLow() && getLongitudeLow() == otherNode->getLongitudeLow()
+            && getLatitudeHigh() == otherNode->getLatitudeHigh() && getLongitudeHigh() == otherNode->getLongitudeHigh();
     }
     return false;
 }
 
 std::string RectangleExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "RECTANGLE(lat_low: " << latitudeLow << ", lon_low: " << longitudeLow
-       << ", lat_high: " << latitudeHigh << ", lon_high: " << longitudeHigh << ")";
+    ss << "RECTANGLE(lat_low: " << latitudeLow << ", lon_low: " << longitudeLow << ", lat_high: " << latitudeHigh
+       << ", lon_high: " << longitudeHigh << ")";
     return ss.str();
 }
 

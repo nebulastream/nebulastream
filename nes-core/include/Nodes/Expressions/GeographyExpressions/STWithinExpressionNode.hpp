@@ -48,8 +48,7 @@ class STWithinExpressionNode : public ExpressionNode {
      * be the longitude.
      * @param shape represents either a polygon or a rectangle.
      */
-    static ExpressionNodePtr create(GeographyFieldsAccessExpressionNodePtr const& point,
-                                    ShapeExpressionNodePtr const& shape);
+    static ExpressionNodePtr create(GeographyFieldsAccessExpressionNodePtr const& point, ShapeExpressionNodePtr const& shape);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -57,8 +56,7 @@ class STWithinExpressionNode : public ExpressionNode {
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point,
-                     ShapeExpressionNodePtr const& shape);
+    void setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& shape);
 
     /**
      * @brief gets the point (or the left child).

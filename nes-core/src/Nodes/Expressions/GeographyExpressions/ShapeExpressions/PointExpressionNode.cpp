@@ -12,25 +12,20 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
-PointExpressionNode::PointExpressionNode(PointExpressionNode* other)
-    : ShapeExpressionNode(other->type) {
+PointExpressionNode::PointExpressionNode(PointExpressionNode* other) : ShapeExpressionNode(other->type) {
     latitude = other->getLongitude();
     longitude = other->getLongitude();
 }
 
-PointExpressionNode::PointExpressionNode(double latitude,
-                                         double longitude)
-    : ShapeExpressionNode(Point),
-      latitude(latitude),
-      longitude(longitude) {}
+PointExpressionNode::PointExpressionNode(double latitude, double longitude)
+    : ShapeExpressionNode(Point), latitude(latitude), longitude(longitude) {}
 
-ShapeExpressionNodePtr PointExpressionNode::create(double latitude,
-                                                   double longitude) {
+ShapeExpressionNodePtr PointExpressionNode::create(double latitude, double longitude) {
     auto pointNode = std::make_shared<PointExpressionNode>(latitude, longitude);
     return pointNode;
 }
@@ -38,8 +33,7 @@ ShapeExpressionNodePtr PointExpressionNode::create(double latitude,
 bool PointExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<PointExpressionNode>()) {
         auto otherNode = rhs->as<PointExpressionNode>();
-        return getLatitude() == otherNode->getLatitude()
-            && getLongitude() == otherNode->getLongitude();
+        return getLatitude() == otherNode->getLatitude() && getLongitude() == otherNode->getLongitude();
     }
     return false;
 }
@@ -54,8 +48,6 @@ double PointExpressionNode::getLatitude() const { return latitude; }
 
 double PointExpressionNode::getLongitude() const { return longitude; }
 
-ShapeExpressionNodePtr PointExpressionNode::copy() {
-    return std::make_shared<PointExpressionNode>(PointExpressionNode(this));
-}
+ShapeExpressionNodePtr PointExpressionNode::copy() { return std::make_shared<PointExpressionNode>(PointExpressionNode(this)); }
 
 }// namespace NES

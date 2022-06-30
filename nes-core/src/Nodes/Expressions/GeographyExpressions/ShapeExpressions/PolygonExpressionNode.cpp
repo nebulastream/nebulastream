@@ -14,19 +14,17 @@
 
 #include <iterator>
 
-#include <Nodes/Node.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
-PolygonExpressionNode::PolygonExpressionNode(PolygonExpressionNode* other)
-    : ShapeExpressionNode(other->type) {
+PolygonExpressionNode::PolygonExpressionNode(PolygonExpressionNode* other) : ShapeExpressionNode(other->type) {
     coords = other->coords;
 }
 
 PolygonExpressionNode::PolygonExpressionNode(std::initializer_list<double> coords)
-    : ShapeExpressionNode(Polygon),
-      coords(coords) {}
+    : ShapeExpressionNode(Polygon), coords(coords) {}
 
 ShapeExpressionNodePtr PolygonExpressionNode::create(std::initializer_list<double> coords) {
     auto polygonNode = std::make_shared<PolygonExpressionNode>(coords);
@@ -45,9 +43,8 @@ std::string PolygonExpressionNode::toString() const {
     std::stringstream ss;
 
     ss << "POLYGON(";
-    if(!coords.empty()) {
-        std::copy(coords.begin(), coords.end()-1,
-                  std::ostream_iterator<double>(ss, ", "));
+    if (!coords.empty()) {
+        std::copy(coords.begin(), coords.end() - 1, std::ostream_iterator<double>(ss, ", "));
         ss << coords.back();
     }
     ss << ")";

@@ -23,7 +23,7 @@ namespace NES {
 class ShapeExpressionNode;
 using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
 
-enum ShapeType {Point, Circle, Rectangle, Polygon};
+enum ShapeType { Point, Circle, Rectangle, Polygon };
 
 /**
  * @brief this indicates an expression which is a parameter or a GeographicExpression

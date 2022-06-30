@@ -37,8 +37,7 @@ ExpressionNodePtr STKnnExpressionNode::create(const GeographyFieldsAccessExpress
 bool STKnnExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STKnnExpressionNode>()) {
         auto otherNode = rhs->as<STKnnExpressionNode>();
-        return getPoint()->equal(otherNode->getPoint())
-            && getQueryPoint()->equal(otherNode->getQueryPoint())
+        return getPoint()->equal(otherNode->getPoint()) && getQueryPoint()->equal(otherNode->getQueryPoint())
             && getK()->equal(otherNode->getK());
     }
     return false;
@@ -89,18 +88,16 @@ void STKnnExpressionNode::inferStamp(SchemaPtr schema) {
     k->inferStamp(schema);
 
     if (!point->getStamp()->isFloat() || shapeType != Point || !k->getStamp()->isNumeric()) {
-        throw std::logic_error(
-            "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float for AttributeAccess,"
-            "ShapeType should be Point, and K should numeric but Point was: " + point->getStamp()->toString() +
-            ", QueryPoint was: " + queryPoint->toString() + ", and the k was: " + k->getStamp()->toString());
+        throw std::logic_error("ST_KnnExpressionNode: Error during stamp inference. Types need to be Float for AttributeAccess,"
+                               "ShapeType should be Point, and K should numeric but Point was: "
+                               + point->getStamp()->toString() + ", QueryPoint was: " + queryPoint->toString()
+                               + ", and the k was: " + k->getStamp()->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();
     NES_TRACE("ST_KnnExpressionNode: The following stamp was assigned: " << toString());
 }
 
-ExpressionNodePtr STKnnExpressionNode::copy() {
-    return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this));
-}
+ExpressionNodePtr STKnnExpressionNode::copy() { return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this)); }
 
 }// namespace NES

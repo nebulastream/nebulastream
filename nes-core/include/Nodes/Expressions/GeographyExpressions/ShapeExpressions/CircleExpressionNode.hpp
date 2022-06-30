@@ -15,8 +15,8 @@
 #ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_CIRCLEEXPRESSIONNODE_HPP_
 #define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_CIRCLEEXPRESSIONNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
 
@@ -40,9 +40,7 @@ using CircleExpressionNodePtr = std::shared_ptr<CircleExpressionNode>;
 class CircleExpressionNode : public ShapeExpressionNode {
   public:
     explicit CircleExpressionNode(CircleExpressionNode* other);
-    explicit CircleExpressionNode(double latitude,
-                                  double longitude,
-                                  double radius);
+    explicit CircleExpressionNode(double latitude, double longitude, double radius);
     ~CircleExpressionNode() = default;
 
     /**
@@ -51,9 +49,7 @@ class CircleExpressionNode : public ShapeExpressionNode {
      * @param longitude is the longitude of the center of the circle.
      * @param radius represents the radius of the circle in meters.
      */
-    static ShapeExpressionNodePtr create(double latitude,
-                                         double longitude,
-                                         double radius);
+    static ShapeExpressionNodePtr create(double latitude, double longitude, double radius);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;

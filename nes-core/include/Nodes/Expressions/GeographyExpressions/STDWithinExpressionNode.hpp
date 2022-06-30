@@ -16,8 +16,8 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STDWITHINEXPRESSIONNODE_HPP_
 
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 
 namespace NES {
 
@@ -61,8 +61,7 @@ class STDWithinExpressionNode : public ExpressionNode {
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point,
-                     ShapeExpressionNodePtr const& circle);
+    void setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& circle);
 
     /**
      * @brief gets the point.
