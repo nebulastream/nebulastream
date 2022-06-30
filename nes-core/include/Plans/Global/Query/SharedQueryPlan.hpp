@@ -16,8 +16,8 @@
 #define NES_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
 #include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Util/SharedQueryPlanStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
 #include <set>
 #include <vector>

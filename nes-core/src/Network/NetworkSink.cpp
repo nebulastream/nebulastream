@@ -54,7 +54,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) { 
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         nodeEngine->getBufferStorage()->insertBuffer(queryId, nesPartition.getPartitionId(), inputBuffer);
     }
     if (channel) {

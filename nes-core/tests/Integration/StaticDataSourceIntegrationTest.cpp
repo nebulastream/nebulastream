@@ -1864,9 +1864,9 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             std::string queryString = queryLogic + querySink;
 
             QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
-                                                                       "BottomUp",
-                                                                       FaultToleranceType::NONE,
-                                                                       LineageType::IN_MEMORY);
+                                                                            "BottomUp",
+                                                                            FaultToleranceType::NONE,
+                                                                            LineageType::IN_MEMORY);
             EXPECT_NE(queryId, INVALID_QUERY_ID);
             auto globalQueryPlan = crd->getGlobalQueryPlan();
             EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

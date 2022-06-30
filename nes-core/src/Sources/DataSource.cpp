@@ -173,7 +173,8 @@ bool DataSource::fail() {
         // it may happen that the source failed prior of sending its eos
         std::unique_lock lock(startStopMutex);// do not call stop if holding this mutex
         auto self = shared_from_base<DataSource>();
-        NES_DEBUG("Source " << operatorId << " has already injected failure? " << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
+        NES_DEBUG("Source " << operatorId << " has already injected failure? "
+                            << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         if (!this->endOfStreamSent) {
             endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
             queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);

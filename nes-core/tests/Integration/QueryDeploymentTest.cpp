@@ -1129,7 +1129,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
     EXPECT_THROW(
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY),
-                 InvalidQueryException);
+        InvalidQueryException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
