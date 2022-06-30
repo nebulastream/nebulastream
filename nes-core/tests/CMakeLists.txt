@@ -162,11 +162,6 @@ add_nes_integration_test(source-tests "UnitTests/Source/SourceTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
 
-### TCP Tests ###
-add_executable(tcp-source-tests "UnitTests/Source/TCPSourceTest.cpp" UnitTests/Source/TCPSourceTest.cpp)
-target_link_libraries(tcp-source-tests nes-tests)
-add_test(NAME tcp-source-tests COMMAND tcp-source-tests)
-
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaTest.cpp")

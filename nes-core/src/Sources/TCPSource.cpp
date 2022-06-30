@@ -168,11 +168,10 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             char* bufferSizeFromSocket = new char[4];
             uint8_t readSocket = read(sockfd, bufferSizeFromSocket, 4);
             NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSizeFromSocket);
-            if (readSocket != 0) {
+            if (readSocket != 0){
                 bufferSize = std::stoi(bufferSizeFromSocket);
                 NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSize);
             }
-            delete[] bufferSizeFromSocket;
         } else {
             bufferSize = sourceConfig->getSocketBufferSize()->getValue();
         }
@@ -192,7 +191,6 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             tupleCount++;
         }
-        delete[] buffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
