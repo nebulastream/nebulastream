@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace NES{
+namespace NES {
 
 class RequestType {
   public:
@@ -31,14 +31,7 @@ class RequestType {
      * Migrate: Migrate query.
      * Update: Update running query.
      */
-    enum Value : uint8_t {
-        Add = 0,
-        Stop,
-        Restart,
-        Fail,
-        Migrate,
-        Update
-    };
+    enum Value : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update };
 
     /**
      * @brief Get query status from string
@@ -53,9 +46,8 @@ class RequestType {
      * @return string representation of query status
      */
     static std::string toString(const Value queryStatus);
-
 };
 
-}
+}// namespace NES
 
 #endif//NES_REQUESTTYPE_HPP

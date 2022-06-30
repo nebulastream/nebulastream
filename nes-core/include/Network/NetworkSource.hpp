@@ -71,7 +71,6 @@ class NetworkSource : public DataSource {
      */
     bool stop(Runtime::QueryTerminationType = Runtime::QueryTerminationType::Graceful) final;
 
-
     /**
      * @brief This method is overridden here to manage failures of NetworkSource.
      * It de-registers the source on the NetworkManager
