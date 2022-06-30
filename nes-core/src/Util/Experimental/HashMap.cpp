@@ -73,7 +73,8 @@ Hashmap::Entry* Hashmap::allocateNewEntry() {
 //                                              + std::to_string(bufferManager->getNumOfPooledBuffers()));
 //        }
         // set entries to zero
-        memset(buffer->getBuffer(), 0, buffer->getBufferSize());
+        memset(buffer.getBuffer(), 0, buffer.getBufferSize());
+//        memset(buffer->getBuffer(), 0, buffer->getBufferSize());
 //        (*storageBuffers).emplace_back(buffer.value());
         (*storageBuffers).emplace_back(buffer);
     }
