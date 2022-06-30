@@ -66,17 +66,14 @@ std::unique_ptr<std::vector<Runtime::TupleBuffer>> Hashmap::extractEntries() { r
 std::unique_ptr<std::vector<Runtime::TupleBuffer>>& Hashmap::getEntries() { return storageBuffers; };
 Hashmap::Entry* Hashmap::allocateNewEntry() {
     if (currentSize % entriesPerBuffer == 0) {
-//        auto buffer = bufferManager->getBufferNoBlocking();
-        auto buffer = bufferManager->getBufferBlocking();
-//        if (!buffer.has_value()) {
-//            NES_THROW_RUNTIME_ERROR("BufferManager is empty. Size "
-//                                              + std::to_string(bufferManager->getNumOfPooledBuffers()));
-//        }
+        auto buffer = bufferManager->getBufferNoBlocking();
+        if (!buffer.has_value()) {
+            NES_THROW_RUNTIME_ERROR("BufferManager is empty. Size "
+                                              + std::to_string(bufferManager->getNumOfPooledBuffers()));
+        }
         // set entries to zero
-        memset(buffer.getBuffer(), 0, buffer.getBufferSize());
-//        memset(buffer->getBuffer(), 0, buffer->getBufferSize());
-//        (*storageBuffers).emplace_back(buffer.value());
-        (*storageBuffers).emplace_back(buffer);
+        memset(buffer->getBuffer(), 0, buffer->getBufferSize());
+        (*storageBuffers).emplace_back(buffer.value());
     }
     auto buffer = getBufferForEntry(currentSize);
     buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
