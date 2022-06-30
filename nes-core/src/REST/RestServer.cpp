@@ -55,8 +55,9 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port) {}
 
-bool RestServer::start() {
-#ifdef NES_USE_OATPP
+
+
+bool RestServer::startWithOatpp() {
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     //restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
@@ -78,10 +79,6 @@ bool RestServer::start() {
         return false;
     }
     return true;
-
-#else
-    return RestServer::startWithRestSDK();
-#endif
 }
 
 bool RestServer::startWithRestSDK(){
@@ -115,7 +112,6 @@ bool RestServer::startWithRestSDK(){
     return true;
 }
 
-
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
     auto task = restEngine->shutdown();
@@ -134,7 +130,7 @@ void RestServer::run() {
     /* Get router component */
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
-    /* Create MyController and add all of its endpoints to router */
+    /* Create testController and add all of its endpoints to router */
     auto testController = std::make_shared<TestController>();
     router->addController(testController);
 
@@ -153,4 +149,5 @@ void RestServer::run() {
     /* Run server */
     server.run();
 }
+
 }// namespace NES

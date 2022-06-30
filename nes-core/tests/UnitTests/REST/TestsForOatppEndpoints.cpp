@@ -1,6 +1,16 @@
 #include <REST/testsForOatpp/TestControllerTest.hpp>
 #include <iostream>
 
+class TestsForOatppEndpoints : public Testing::NESBaseTest {
+  public:
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TestsForOatppEndpoints.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup TestsForOatppEndpoints class.");
+    }
+
+    static void TearDownTestCase() { NES_INFO("Tear down TestsForOatppEndpoints test class."); }
+};
+
 void runTests() {
 
     OATPP_RUN_TEST(TestControllerTest);
@@ -10,8 +20,7 @@ void runTests() {
 
 }
 
-int main() {
-
+TEST_F(TestsForOatppEndpoints, testControllerSimpleTest) {
     oatpp::base::Environment::init();
 
     runTests();
