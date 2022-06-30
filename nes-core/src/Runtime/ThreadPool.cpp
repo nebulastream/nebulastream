@@ -130,7 +130,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
                 }
             }
 #endif
-            localBufferManager = bufferManagers[queueIdx];
+            localBufferManager = bufferManagers[0];
 
             barrier->wait();
             NES_ASSERT(localBufferManager, "localBufferManager is null");
