@@ -108,6 +108,11 @@ std::string escapeJson(const std::string& str);
 std::string trim(std::string s);
 
 /**
+ * @brief removes leading and trailing characters of trimFor
+ */
+std::string trim(std::string s, char trimFor);
+
+/**
  * @brief Checks if a string ends with a given string.
  * @param fullString
  * @param ending

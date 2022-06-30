@@ -32,13 +32,10 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema) {
-    NES_TRACE("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
-
+    NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount: " << tupleCount);
     std::vector<std::string> helperToken;
-
     // extract values as strings from MQTT message - should be improved with JSON library
     auto parsedJSONObject = web::json::value::parse(jsonTuple);
-
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
     for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {
@@ -47,12 +44,13 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
+            NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field: " << schemaKeys[fieldIndex]);
             jsonValue = parsedJSONObject.at(schemaKeys[fieldIndex]).serialize();
         } catch (web::json::json_exception& jsonException) {
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
-
+        jsonValue = Util::trim(jsonValue, '"');
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
     }
     return true;

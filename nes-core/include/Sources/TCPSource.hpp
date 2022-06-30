@@ -17,19 +17,31 @@ limitations under the License.
 
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Sources/Parsers/Parser.hpp>
 #include <Sources/DataSource.hpp>
 
 namespace NES {
 
-class TupleBuffer;
+class Parser;
+using ParserPtr = std::shared_ptr<Parser>;
 
 /**
- * @brief source to recieve data via TCP connection
+ * @brief source to receive data via TCP connection
  */
 class TCPSource : public DataSource {
 
   public:
+    /**
+     * @brief consturctor of TCP Source
+     * @param schema
+     * @param bufferManager
+     * @param queryManager
+     * @param tcpSourceType points at current TCPSourceType config object, look at same named file for info
+     * @param operatorId
+     * @param originId
+     * @param numSourceLocalBuffers
+     * @param gatheringMode
+     * @param executableSuccessors
+     */
     explicit TCPSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
@@ -42,16 +54,29 @@ class TCPSource : public DataSource {
 
     ~TCPSource() override;
 
+    /**
+     * @brief override the receiveData method for the csv source
+     * @return returns a buffer if available
+     */
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
-    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+    /**
+     *  @brief method to fill the buffer with tuples
+     *  @param buffer to be filled
+     */
+    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
 
+    /**
+     * @brief override the toString method for the csv source
+     * @return returns string describing the binary source
+     */
     std::string toString() const override;
 
+    /**
+     * @brief Get source type
+     * @return source type
+     */
     SourceType getType() const override;
-
-  private:
-    TCPSource() = delete;
 
     /**
      * @brief method to connect tcp using the host and port specified before
@@ -60,21 +85,16 @@ class TCPSource : public DataSource {
      */
     bool connected();
 
-    /**
-     * @brief method to make sure tcp is disconnected
-     * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
-     * @return bool indicating if connection could be established
-     */
-    bool disconnect();
+  private:
+    TCPSource() = delete;
 
     std::vector<PhysicalTypePtr> physicalTypes;
-    std::shared_ptr<Parser> inputParser;
-    int connection;
+    ParserPtr inputParser;
+    int connection = -1;
     uint64_t tupleSize;
-    int sock = 0;
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
-    int sockfd;
+    int sockfd = -1;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES

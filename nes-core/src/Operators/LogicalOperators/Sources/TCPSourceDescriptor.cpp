@@ -14,19 +14,28 @@ limitations under the License.
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <utility>
 
 namespace NES {
 
-SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig) {
-    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig)));
+TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema,
+                                         TCPSourceTypePtr tcpSourceType,
+                                         std::string logicalSourceName,
+                                         std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), tcpSourceType(std::move(tcpSourceType)) {}
+
+SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema,
+                                                TCPSourceTypePtr sourceConfig,
+                                                std::string logicalSourceName,
+                                                std::string physicalSourceName) {
+    return std::make_shared<TCPSourceDescriptor>(
+        TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName, physicalSourceName));
 }
 
-TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
-    : SourceDescriptor(std::move(schema)), tcpSourceType(std::move(tcpSourceType)) {}
+SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig) {
+    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), "", ""));
+}
 
-TCPSourceTypePtr TCPSourceDescriptor::getSourceConfigPtr() const { return tcpSourceType; }
+TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const { return tcpSourceType; }
 
 std::string TCPSourceDescriptor::toString() { return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")"; }
 

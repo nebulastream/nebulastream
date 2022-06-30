@@ -34,6 +34,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -47,6 +48,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <Util/TestUtils.hpp>
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
@@ -342,6 +344,31 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
+};
+
+class TCPSourceProxy : public TCPSource {
+  public:
+    TCPSourceProxy(SchemaPtr schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   TCPSourceTypePtr sourceConfig,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : TCPSource(schema,
+                    bufferManager,
+                    queryManager,
+                    sourceConfig,
+                    operatorId,
+                    0,
+                    numSourceLocalBuffers,
+                    GatheringMode::INTERVAL_MODE,
+                    successors){};
+
+  private:
+    FRIEND_TEST(SourceTest, TCPSourceInit);
+    FRIEND_TEST(SourceTest, TCPSourceReadCSVData);
+    FRIEND_TEST(SourceTest, TCPSourceReadJSONData);
 };
 
 class GeneratorSourceProxy : public GeneratorSource {
@@ -1652,6 +1679,127 @@ TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
     ASSERT_NEAR(content->positive_with_decimal, 9.09, 0.01);
     ASSERT_NEAR(content->negative_with_decimal, -0.5, 0.01);
     ASSERT_NEAR(content->longer_precision_decimal, 13.1608002, 0.01);
+}
+
+/**
+ * Tests basic set up of TCP source
+ */
+TEST_F(SourceTest, TCPSourceInit) {
+
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+
+    TCPSourceProxy tcpDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    SUCCEED();
+}
+
+/**
+ * Test if schema and TCP source information are the same
+ */
+TEST_F(SourceTest, TCPSourcePrint) {
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+
+    sourceConfig->setSocketHost("127.0.0.1");
+    sourceConfig->setSocketPort(5000);
+    sourceConfig->setSocketDomainViaString("AF_INET");
+    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
+
+    TCPSourceProxy tcpDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    std::string expected =
+        "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
+        "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
+        "2\nsocketType: 1\nsocketBufferSize: 0\nflushIntervalMS: -1\ninputFormat: 1\n}";
+
+    EXPECT_EQ(tcpDataSource.toString(), expected);
+}
+/**
+ * @brief Tests csv schema with given buffer size. The tests requires an external TCPServer. We used a simple Python TCP
+ * Server that sends "42,0.5,hello" five times via socket
+ */
+TEST_F(SourceTest, DISABLED_TCPSourceReadCSVData) {
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    sourceConfig->setSocketPort(9000);
+    sourceConfig->setSocketHost("127.0.0.1");
+    sourceConfig->setSocketDomainViaString("AF_INET");
+    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
+    sourceConfig->setSocketBufferSize(12);
+    sourceConfig->setFlushIntervalMS(2000);
+    sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
+
+    auto tcpSchema = Schema::create()
+                         ->addField("id", UINT32)
+                         ->addField("value", FLOAT32)
+                         ->addField("name", DataTypeFactory::createFixedChar(8));
+
+    TCPSourceProxy tcpDataSource(tcpSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    auto buf = this->GetEmptyBuffer();
+    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 0u);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+        Runtime::MemoryLayouts::RowLayout::create(tcpSchema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    bool connection = tcpDataSource.connected();
+    EXPECT_EQ(connection, true);
+    tcpDataSource.fillBuffer(buffer);
+    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
+    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
+}
+/**
+ * @brief tests JSON schema. We also obtain the size of the buffer from the server. We again used an external TCP Python Server
+ * that sends {'id': '42', 'value': '0.5', 'name': 'hello'} this JSON 5 times
+ */
+TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    sourceConfig->setSocketPort(9000);
+    sourceConfig->setSocketHost("127.0.0.1");
+    sourceConfig->setSocketDomainViaString("AF_INET");
+    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
+    sourceConfig->setSocketBufferSize(0);
+    sourceConfig->setFlushIntervalMS(2000);
+    sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
+
+    auto tcpSchema = Schema::create()
+                         ->addField("id", UINT8)
+                         ->addField("value", FLOAT32)
+                         ->addField("name", DataTypeFactory::createFixedChar(8));
+
+    TCPSourceProxy tcpDataSource(tcpSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    auto buf = this->GetEmptyBuffer();
+    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 0u);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+        Runtime::MemoryLayouts::RowLayout::create(tcpSchema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    bool connection = tcpDataSource.connected();
+    EXPECT_EQ(connection, true);
+    tcpDataSource.fillBuffer(buffer);
+    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
+    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
 }
 
 TEST_F(SourceTest, testGeneratorSourceGetType) {

@@ -45,6 +45,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
+        NES_TRACE("Current value is: " << values[j]);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, false, schema, tupleCount);
     }
     return true;

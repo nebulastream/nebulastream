@@ -108,6 +108,19 @@ message SerializablePhysicalSourceType{
     InputFormat inputFormat = 8;
   }
 
+    /**
+    The serializable wrapper for the mqtt source config object
+    */
+    message SerializableTCPSourceType{
+      string socketHost = 1;
+      uint32 socketPort = 2;
+      uint32 socketDomain = 3;
+      uint32 socketType = 4;
+      uint32 socketBufferSize = 5;
+      float flushIntervalMS = 6;
+      InputFormat inputFormat = 7;
+    }
+
   /**
   The serializable wrapper for the kafka source config object
   */
@@ -209,6 +222,11 @@ message SerializableOperator{
     }
 
     message SerializableMQTTSourceDescriptor {
+      SerializablePhysicalSourceType physicalSourceType = 1;
+      SerializableSchema sourceSchema = 2;
+    }
+
+    message SerializableTCPSourceDescriptor {
       SerializablePhysicalSourceType physicalSourceType = 1;
       SerializableSchema sourceSchema = 2;
     }
