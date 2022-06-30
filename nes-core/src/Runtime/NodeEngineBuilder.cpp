@@ -116,20 +116,24 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto numberOfQueues = workerConfiguration->numberOfQueues.getValue();
 
         //create one buffer manager per queue
-        if (numberOfQueues == 1) {
-            bufferManagers.push_back(
-                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-                                                hardwareManager->getGlobalAllocator()));
-        } else {
-            for (auto i = 0u; i < numberOfQueues; ++i) {
-                bufferManagers.push_back(std::make_shared<BufferManager>(
-                    workerConfiguration->bufferSizeInBytes.getValue(),
-                    //if we run in static with multiple queues, we divide the whole buffer manager among the queues
-                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues,
-                    hardwareManager->getGlobalAllocator()));
-            }
-        }
+        bufferManagers.push_back(
+            std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
+                                            workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+//                                            hardwareManager->getGlobalAllocator()));
+//        if (numberOfQueues == 1) {
+//            bufferManagers.push_back(
+//                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
+//                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+//                                                hardwareManager->getGlobalAllocator()));
+//        } else {
+//            for (auto i = 0u; i < numberOfQueues; ++i) {
+//                bufferManagers.push_back(std::make_shared<BufferManager>(
+//                    workerConfiguration->bufferSizeInBytes.getValue(),
+//                    //if we run in static with multiple queues, we divide the whole buffer manager among the queues
+//                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues,
+//                    hardwareManager->getGlobalAllocator()));
+//            }
+//        }
 
         if (bufferManagers.empty()) {
             NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
