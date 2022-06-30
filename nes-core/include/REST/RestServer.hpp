@@ -95,10 +95,10 @@ class RestServer {
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 
     /**
-   * @brief method to start the rest server
+   * @brief method to start the rest server with Oatpp
    * @return bool indicating success
    */
-    bool start();
+    bool startWithOatpp();
 
     /**
    * @brief method to start the rest server with SDK

@@ -161,6 +161,7 @@ class RestEngine {
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
     Experimental::MaintenanceControllerPtr maintenanceController;
+    LocationControllerPtr locationController;
 #else
 #endif
 };
