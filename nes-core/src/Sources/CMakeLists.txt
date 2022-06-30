@@ -44,3 +44,8 @@ if(NES_USE_MQTT)
             MQTTSource.cpp
     )
 endif()
+if(NES_USE_PARQUET)
+     add_source_files(nes-core
+             ParquetSource.cpp
+     )
+endif()

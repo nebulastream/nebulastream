@@ -27,3 +27,8 @@ add_source_files(nes-core
         MaterializedViewSourceType.cpp
         StaticDataSourceType.cpp
         )
+if(NES_USE_PARQUET)
+    add_source_files(nes-core
+            ParquetSourceType.cpp
+            )
+endif()
