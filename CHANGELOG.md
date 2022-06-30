@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.56](https://github.com/nebulastream/nebulastream/tree/v0.2.56) (2022-06-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.55...v0.2.56)
+
+#### Spatial Query Processing 🌇
+
+- \[Feature\] Convert ConstantExpressions to ShapeExpressionNodes in GeographyExpressions [\#2851](https://github.com/nebulastream/nebulastream/issues/2851)
+
 ## [v0.2.55](https://github.com/nebulastream/nebulastream/tree/v0.2.55) (2022-06-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.54...v0.2.55)
