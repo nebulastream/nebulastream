@@ -280,6 +280,7 @@ const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
+const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string SOCKET_TYPE_CONFIG = "socketType";
 
 //Runtine configuration
