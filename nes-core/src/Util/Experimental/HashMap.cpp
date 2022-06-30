@@ -68,8 +68,8 @@ Hashmap::Entry* Hashmap::allocateNewEntry() {
     if (currentSize % entriesPerBuffer == 0) {
         auto buffer = bufferManager->getBufferNoBlocking();
         if (!buffer.has_value()) {
-            //     throw Compiler::CompilerException("BufferManager is empty. Size "
-            //                                     + std::to_string(bufferManager->getNumOfPooledBuffers()));
+            throw Compiler::CompilerException("BufferManager is empty. Size "
+                                              + std::to_string(bufferManager->getNumOfPooledBuffers()));
         }
         // set entries to zero
         memset(buffer->getBuffer(), 0, buffer->getBufferSize());
