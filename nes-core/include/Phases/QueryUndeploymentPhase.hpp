@@ -76,7 +76,9 @@ class QueryUndeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus::Value sharedQueryPlanStatus);
+    bool stopQuery(QueryId queryId,
+                   const std::vector<ExecutionNodePtr>& executionNodes,
+                   SharedQueryPlanStatus::Value sharedQueryPlanStatus);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

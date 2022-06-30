@@ -309,7 +309,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
-
         return true;
     }
     NES_DEBUG("NesCoordinator: already stopped");
