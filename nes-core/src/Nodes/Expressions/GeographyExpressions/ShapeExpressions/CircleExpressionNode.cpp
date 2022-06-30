@@ -12,29 +12,21 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
-CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other)
-    : ShapeExpressionNode(other->type) {
+CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other) : ShapeExpressionNode(other->type) {
     latitude = other->getLongitude();
     longitude = other->getLongitude();
     radius = other->getRadius();
 }
 
-CircleExpressionNode::CircleExpressionNode(double latitude,
-                                           double longitude,
-                                           double radius)
-    : ShapeExpressionNode(Circle),
-      latitude(latitude),
-      longitude(longitude),
-      radius(radius) {}
+CircleExpressionNode::CircleExpressionNode(double latitude, double longitude, double radius)
+    : ShapeExpressionNode(Circle), latitude(latitude), longitude(longitude), radius(radius) {}
 
-ShapeExpressionNodePtr CircleExpressionNode::create(double latitude,
-                                                    double longitude,
-                                                    double radius) {
+ShapeExpressionNodePtr CircleExpressionNode::create(double latitude, double longitude, double radius) {
     auto circleNode = std::make_shared<CircleExpressionNode>(latitude, longitude, radius);
     return circleNode;
 }
@@ -42,8 +34,7 @@ ShapeExpressionNodePtr CircleExpressionNode::create(double latitude,
 bool CircleExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<CircleExpressionNode>()) {
         auto otherNode = rhs->as<CircleExpressionNode>();
-        return getLatitude() == otherNode->getLatitude()
-            && getLongitude() == otherNode->getLongitude()
+        return getLatitude() == otherNode->getLatitude() && getLongitude() == otherNode->getLongitude()
             && getRadius() == otherNode->getRadius();
     }
     return false;
@@ -61,8 +52,6 @@ double CircleExpressionNode::getLongitude() const { return longitude; }
 
 double CircleExpressionNode::getRadius() const { return radius; }
 
-ShapeExpressionNodePtr CircleExpressionNode::copy() {
-    return std::make_shared<CircleExpressionNode>(CircleExpressionNode(this));
-}
+ShapeExpressionNodePtr CircleExpressionNode::copy() { return std::make_shared<CircleExpressionNode>(CircleExpressionNode(this)); }
 
 }// namespace NES

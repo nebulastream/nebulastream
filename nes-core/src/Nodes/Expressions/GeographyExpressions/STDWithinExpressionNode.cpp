@@ -35,8 +35,7 @@ ExpressionNodePtr STDWithinExpressionNode::create(GeographyFieldsAccessExpressio
 bool STDWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STDWithinExpressionNode>()) {
         auto otherAndNode = rhs->as<STDWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint())
-            && getCircle()->equal(otherAndNode->getCircle());
+        return getPoint()->equal(otherAndNode->getPoint()) && getCircle()->equal(otherAndNode->getCircle());
     }
     return false;
 }
@@ -47,8 +46,7 @@ std::string STDWithinExpressionNode::toString() const {
     return ss.str();
 }
 
-void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                          ShapeExpressionNodePtr const& circle) {
+void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& circle) {
     addChildWithEqual(point);
     addChildWithEqual(circle);
 }
@@ -77,7 +75,8 @@ void STDWithinExpressionNode::inferStamp(SchemaPtr schema) {
     if (!point->getStamp()->isFloat() || shapeType != Circle) {
         throw std::logic_error(
             "ST_DWithinExpressionNode: Error during type inference. AccessTypes need to be Float and shape type needs"
-            "to be Circle but Point was:" + point->getStamp()->toString() + ", shape was: " + circle->toString());
+            "to be Circle but Point was:"
+            + point->getStamp()->toString() + ", shape was: " + circle->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

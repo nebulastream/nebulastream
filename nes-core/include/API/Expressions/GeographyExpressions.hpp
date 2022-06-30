@@ -44,9 +44,7 @@ using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
  *           *          *
  *               *  *
  */
-ShapeExpressionNodePtr CIRCLE(double latitude,
-                              double longitude,
-                              double radius);
+ShapeExpressionNodePtr CIRCLE(double latitude, double longitude, double radius);
 
 /**
  * @brief Defines a point shape. A user can define a point as follows:
@@ -54,8 +52,7 @@ ShapeExpressionNodePtr CIRCLE(double latitude,
  * @param latitude defines the latitude of the point.
  * @param longitude defines the longitude of the point.
  */
-ShapeExpressionNodePtr POINT(double latitude,
-                             double longitude);
+ShapeExpressionNodePtr POINT(double latitude, double longitude);
 
 /**
  * @brief Defines a rectangle shape. A user can define a rectangle as follows:
@@ -75,10 +72,7 @@ ShapeExpressionNodePtr POINT(double latitude,
  * south-west (latitudeLow,  o-----------------o
  *             longitudeLow)
 */
-ShapeExpressionNodePtr RECTANGLE(double latitudeLow,
-                                 double longitudeLow,
-                                 double latitudeHigh,
-                                 double longitudeHigh);
+ShapeExpressionNodePtr RECTANGLE(double latitudeLow, double longitudeLow, double latitudeHigh, double longitudeHigh);
 
 /**
  * @brief Defines a polygon shape. The user can define a polygon as follows:
@@ -116,9 +110,8 @@ ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords);
  *
  * @throws InvalidArgumentException when one of the arguments is invalid.
  */
-ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
-                            const ExpressionItem& longitude,
-                            const ShapeExpressionNodePtr& shapeExpression);
+ExpressionNodePtr
+ST_WITHIN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ShapeExpressionNodePtr& shapeExpression);
 
 /**
  * @brief This expression represents ST_DWithin predicate, where ST stands for Spatial
@@ -143,9 +136,8 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
  *
  * @throws InvalidArgumentException when one of the arguments is invalid.
  */
-ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
-                             const ExpressionItem& longitude,
-                             const ShapeExpressionNodePtr& shapeExpression);
+ExpressionNodePtr
+ST_DWITHIN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ShapeExpressionNodePtr& shapeExpression);
 
 /**
  * @brief This node represents ST_KNN predicate, where ST stands for Spatial Type and

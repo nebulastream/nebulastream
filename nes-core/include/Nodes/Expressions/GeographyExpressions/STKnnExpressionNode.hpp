@@ -62,9 +62,7 @@ class STKnnExpressionNode : public ExpressionNode {
      * @param queryPoint represents the query point (shape type should be point).
      * @param k represents the value for parameter k in the query.
      */
-    void setChildren(ExpressionNodePtr const& point,
-                     ShapeExpressionNodePtr const& queryPoint,
-                     ExpressionNodePtr const& k);
+    void setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& queryPoint, ExpressionNodePtr const& k);
 
     /**
      * @brief gets the point.

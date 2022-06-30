@@ -15,8 +15,8 @@
 #ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_POINTEXPRESSIONNODE_HPP_
 #define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_POINTEXPRESSIONNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
 
@@ -30,8 +30,7 @@ using PointExpressionNodePtr = std::shared_ptr<PointExpressionNode>;
 class PointExpressionNode : public ShapeExpressionNode {
   public:
     explicit PointExpressionNode(PointExpressionNode* other);
-    explicit PointExpressionNode(double latitude,
-                                 double longitude);
+    explicit PointExpressionNode(double latitude, double longitude);
     ~PointExpressionNode() = default;
 
     /**
@@ -39,8 +38,7 @@ class PointExpressionNode : public ShapeExpressionNode {
      * @param latitude is the latitude.
      * @param longitude is the longitude.
      */
-    static ShapeExpressionNodePtr create(double latitude,
-                                         double longitude);
+    static ShapeExpressionNodePtr create(double latitude, double longitude);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;

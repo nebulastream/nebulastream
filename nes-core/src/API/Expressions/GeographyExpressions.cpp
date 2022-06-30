@@ -17,45 +17,29 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 
 namespace NES {
 
-ShapeExpressionNodePtr CIRCLE(double latitude,
-                              double longitude,
-                              double distance) {
-    return CircleExpressionNode::create(latitude,
-                                        longitude,
-                                        distance);
+ShapeExpressionNodePtr CIRCLE(double latitude, double longitude, double distance) {
+    return CircleExpressionNode::create(latitude, longitude, distance);
 }
 
-ShapeExpressionNodePtr POINT(double latitude,
-                             double longitude) {
-    return PointExpressionNode::create(latitude,
-                                       longitude);
+ShapeExpressionNodePtr POINT(double latitude, double longitude) { return PointExpressionNode::create(latitude, longitude); }
+
+ShapeExpressionNodePtr RECTANGLE(double latitudeLow, double longitudeLow, double latitudeHigh, double longitudeHigh) {
+    return RectangleExpressionNode::create(latitudeLow, longitudeLow, latitudeHigh, longitudeHigh);
 }
 
-ShapeExpressionNodePtr RECTANGLE(double latitudeLow,
-                                 double longitudeLow,
-                                 double latitudeHigh,
-                                 double longitudeHigh) {
-    return RectangleExpressionNode::create(latitudeLow,
-                                           longitudeLow,
-                                           latitudeHigh,
-                                           longitudeHigh);
-}
-
-ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords) {
-    return PolygonExpressionNode::create(coords);
-}
+ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords) { return PolygonExpressionNode::create(coords); }
 
 ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
                             const ExpressionItem& longitudeFieldName,
@@ -63,14 +47,16 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
     // GeographyFieldsAccessExpressionNode for latitude and longitude fields
     auto latitudeExpression = latitudeFieldName.getExpressionNode();
     if (!latitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_WITHIN): latitude has to be an FieldAccessExpression but it was a " + latitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_WITHIN): latitude has to be an FieldAccessExpression but it was a "
+                  + latitudeExpression->toString());
         throw InvalidArgumentException("latitudeExpression", latitudeExpression->toString());
     }
     auto latitudeAccess = latitudeExpression->as<FieldAccessExpressionNode>();
 
     auto longitudeExpression = longitudeFieldName.getExpressionNode();
     if (!longitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_WITHIN): latitude has to be an FieldAccessExpression but it was a " + longitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_WITHIN): latitude has to be an FieldAccessExpression but it was a "
+                  + longitudeExpression->toString());
         throw InvalidArgumentException("longitudeExpression", longitudeExpression->toString());
     }
     auto longitudeAccess = longitudeExpression->as<FieldAccessExpressionNode>();
@@ -78,12 +64,13 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
     auto geographyFieldsAccess = GeographyFieldsAccessExpressionNode::create(latitudeAccess, longitudeAccess);
 
     auto shapeType = shapeExpression->getShapeType();
-    if(shapeType != Circle && shapeType != Polygon && shapeType != Rectangle) {
-        NES_ERROR("Spatial Query(ST_WITHIN): Shape has to be a Circle, Polygon or a Rectangle but it was a " + shapeExpression->toString());
+    if (shapeType != Circle && shapeType != Polygon && shapeType != Rectangle) {
+        NES_ERROR("Spatial Query(ST_WITHIN): Shape has to be a Circle, Polygon or a Rectangle but it was a "
+                  + shapeExpression->toString());
         throw InvalidArgumentException("shapeExpression", shapeExpression->toString());
     }
 
-    if(shapeType == Polygon || shapeType == Rectangle){
+    if (shapeType == Polygon || shapeType == Rectangle) {
         return STWithinExpressionNode::create(std::move(geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>()),
                                               std::move(shapeExpression));
     }
@@ -100,14 +87,16 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitudeFieldName,
     // GeographyFieldsAccessExpressionNode for latitude and longitude fields
     auto latitudeExpression = latitudeFieldName.getExpressionNode();
     if (!latitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_DWITHIN): latitude has to be an FieldAccessExpression but it was a " + latitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_DWITHIN): latitude has to be an FieldAccessExpression but it was a "
+                  + latitudeExpression->toString());
         throw InvalidArgumentException("latitudeExpression", latitudeExpression->toString());
     }
     auto latitudeAccess = latitudeExpression->as<FieldAccessExpressionNode>();
 
     auto longitudeExpression = longitudeFieldName.getExpressionNode();
     if (!longitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_DWITHIN): latitude has to be an FieldAccessExpression but it was a " + longitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_DWITHIN): latitude has to be an FieldAccessExpression but it was a "
+                  + longitudeExpression->toString());
         throw InvalidArgumentException("longitudeExpression", longitudeExpression->toString());
     }
     auto longitudeAccess = longitudeExpression->as<FieldAccessExpressionNode>();
@@ -135,14 +124,16 @@ ExpressionNodePtr ST_KNN(const ExpressionItem& latitudeFieldName,
     // GeographyFieldsAccessExpressionNode for latitude and longitude fields
     auto latitudeExpression = latitudeFieldName.getExpressionNode();
     if (!latitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_KNN): latitude has to be an FieldAccessExpression but it was a " + latitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_KNN): latitude has to be an FieldAccessExpression but it was a "
+                  + latitudeExpression->toString());
         throw InvalidArgumentException("latitudeExpression", latitudeExpression->toString());
     }
     auto latitudeAccess = latitudeExpression->as<FieldAccessExpressionNode>();
 
     auto longitudeExpression = longitudeFieldName.getExpressionNode();
     if (!longitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_KNN): latitude has to be an FieldAccessExpression but it was a " + longitudeExpression->toString());
+        NES_ERROR("Spatial Query(ST_KNN): latitude has to be an FieldAccessExpression but it was a "
+                  + longitudeExpression->toString());
         throw InvalidArgumentException("longitudeExpression", longitudeExpression->toString());
     }
     auto longitudeAccess = longitudeExpression->as<FieldAccessExpressionNode>();
@@ -159,7 +150,8 @@ ExpressionNodePtr ST_KNN(const ExpressionItem& latitudeFieldName,
     // ConstantValueExpressionNode for the parameter k
     auto kExpression = k.getExpressionNode();
     if (!kExpression->instanceOf<ConstantValueExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_KNN): the parameter k has to be an ConstantValueExpression but it was a " + kExpression->toString());
+        NES_ERROR("Spatial Query(ST_KNN): the parameter k has to be an ConstantValueExpression but it was a "
+                  + kExpression->toString());
         throw InvalidArgumentException("kExpression", kExpression->toString());
     }
     auto kConstantValueExpressionNode = kExpression->as<ConstantValueExpressionNode>();

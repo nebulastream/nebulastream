@@ -15,8 +15,8 @@
 #ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_RECTANGLEEXPRESSIONNODE_HPP_
 #define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_RECTANGLEEXPRESSIONNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
 
@@ -37,10 +37,7 @@ using RectangleExpressionNodePtr = std::shared_ptr<RectangleExpressionNode>;
 class RectangleExpressionNode : public ShapeExpressionNode {
   public:
     explicit RectangleExpressionNode(RectangleExpressionNode* other);
-    explicit RectangleExpressionNode(double latitudeLow,
-                                     double longitudeLow,
-                                     double latitudeHigh,
-                                     double longitudeHigh);
+    explicit RectangleExpressionNode(double latitudeLow, double longitudeLow, double latitudeHigh, double longitudeHigh);
     ~RectangleExpressionNode() = default;
 
     /**
@@ -50,10 +47,7 @@ class RectangleExpressionNode : public ShapeExpressionNode {
      * @param latitudeHigh is the latitude value of north-east point of the rectangle.
      * @param longitudeHigh is the longitude value of north-east point of the rectangle.
      */
-    static ShapeExpressionNodePtr create(double latitudeLow,
-                                         double longitudeLow,
-                                         double latitudeHigh,
-                                         double longitudeHigh);
+    static ShapeExpressionNodePtr create(double latitudeLow, double longitudeLow, double latitudeHigh, double longitudeHigh);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;
