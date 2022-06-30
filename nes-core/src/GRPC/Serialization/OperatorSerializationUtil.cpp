@@ -37,6 +37,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
@@ -1055,6 +1056,40 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
 #endif
+    else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
+        // serialize TCP source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
+        auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
+        //init serializable source config
+        auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
+        serializedPhysicalSourceType->set_sourcetype(tcpSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
+        //init serializable tcp source config
+        auto tcpSerializedSourceConfig = SerializablePhysicalSourceType_SerializableTCPSourceType();
+        tcpSerializedSourceConfig.set_sockethost(tcpSourceDescriptor->getSourceConfig()->getSocketHost()->getValue());
+        tcpSerializedSourceConfig.set_socketport(tcpSourceDescriptor->getSourceConfig()->getSocketPort()->getValue());
+        tcpSerializedSourceConfig.set_socketdomain(tcpSourceDescriptor->getSourceConfig()->getSocketDomain()->getValue());
+        tcpSerializedSourceConfig.set_sockettype(tcpSourceDescriptor->getSourceConfig()->getSocketType()->getValue());
+        tcpSerializedSourceConfig.set_socketbuffersize(tcpSourceDescriptor->getSourceConfig()->getSocketBufferSize()->getValue());
+        tcpSerializedSourceConfig.set_flushintervalms(
+            tcpSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
+        switch (tcpSourceDescriptor->getSourceConfig()->getInputFormat()->getValue()) {
+            case Configurations::JSON:
+                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
+                break;
+            case Configurations::CSV:
+                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
+                break;
+        }
+        serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(tcpSerializedSourceConfig);
+        //init serializable tcp source descriptor
+        auto tcpSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
+        tcpSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedPhysicalSourceType);
+        // serialize source schema
+        SchemaSerializationUtil::serializeSchema(tcpSourceDescriptor->getSchema(),
+                                                 tcpSerializedSourceDescriptor.mutable_sourceschema());
+        sourceDetails->mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
+    }
     else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         // serialize network source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -1236,6 +1271,30 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     }
 #endif
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor>()) {
+        // de-serialize tcp source descriptor
+        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as TCPSourceDescriptor");
+        auto* tcpSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
+        serializedSourceDescriptor.UnpackTo(tcpSerializedSourceDescriptor);
+        // de-serialize source schema
+        auto schema = SchemaSerializationUtil::deserializeSchema(tcpSerializedSourceDescriptor->release_sourceschema());
+        auto sourceConfig = TCPSourceType::create();
+        auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
+        tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
+        sourceConfig->setSocketHost(tcpSourceConfig->sockethost());
+        sourceConfig->setSocketPort(tcpSourceConfig->socketport());
+        sourceConfig->setSocketDomain(tcpSourceConfig->socketdomain());
+        sourceConfig->setSocketType(tcpSourceConfig->sockettype());
+        sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
+        sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
+        if (tcpSourceConfig->inputformat() == 0) {
+            sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
+        } else {
+            sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
+        }
+        auto ret = TCPSourceDescriptor::create(schema, sourceConfig);
+        return ret;
+    }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor>()) {
         // de-serialize zmq source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as monitoringSourceDescriptor");

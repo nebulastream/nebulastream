@@ -136,6 +136,34 @@ class TCPSourceType : public PhysicalSourceType {
      */
     void setInputFormat(Configurations::InputFormat inputFormatValue);
 
+    /**
+     * @brief Get the input data format given as Configuration::InputFormat
+     * @return inputFormatValue
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<Configurations::InputFormat>> getInputFormat() const;
+
+    /**
+     * @brief Sets the size of the socketBuffer. If 0 we assume that the size is send in an extra message before each tuple
+     * @param socketBufferSize
+     */
+    void setSocketBufferSize(uint32_t socketBufferSize);
+
+    /**
+     * @brief Get the socketBufferSize
+     * @return socketBufferSize
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketBufferSize() const;
+
+    /**
+     * @brief Get tupleBuffer flush interval in milliseconds
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<float>> getFlushIntervalMS() const;
+
+    /**
+     * @brief Set tupleBuffer flush interval in milliseconds
+     */
+    void setFlushIntervalMS(float flushIntervalMs);
+
   private:
     /**
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
@@ -158,6 +186,8 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption socketPort;
     Configurations::IntConfigOption socketDomain;
     Configurations::IntConfigOption socketType;
+    Configurations::IntConfigOption socketBufferSize;
+    Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
 };
 }// namespace NES

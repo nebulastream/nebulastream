@@ -50,5 +50,6 @@ class CSVParser : public Parser {
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::string delimiter;
 };
+
 }// namespace NES
 #endif// NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

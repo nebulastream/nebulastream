@@ -65,6 +65,12 @@ std::string Util::trim(std::string str) {
     return str;
 }
 
+std::string Util::trim(std::string str, char trimFor) {
+    // remove all trimFor characters from left and right
+    str.erase(std::remove(str.begin(), str.end(), trimFor), str.end());
+    return str;
+}
+
 std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {

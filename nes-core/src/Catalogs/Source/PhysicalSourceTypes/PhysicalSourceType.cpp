@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include "Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp"
-#include <Util/Logger/Logger.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
 namespace NES {
 

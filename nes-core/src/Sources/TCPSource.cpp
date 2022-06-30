@@ -13,22 +13,27 @@ limitations under the License.
 */
 
 #include <API/AttributeField.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Sources/DataSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/JSONParser.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <Sources/TCPSource.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
+#include <netinet/in.h>// For sockaddr_in
 #include <sstream>
 #include <string>
+#include <sys/socket.h>// For socket functions
+#include <unistd.h>    // For read
 #include <utility>
 #include <vector>
-#include <arpa/inet.h>
-#include <unistd.h> // For read
-#include <sys/socket.h> // For socket functions
-#include <netinet/in.h> // For sockaddr_in
 
 namespace NES {
 
@@ -51,13 +56,39 @@ TCPSource::TCPSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
+
+    //init physical types
+    std::vector<std::string> schemaKeys;
+    std::string fieldName;
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+
+    //Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
+    //Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+        fieldName = field->getName();
+        NES_TRACE("TCPSOURCE:: Schema keys are: " << fieldName);
+        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
+    }
+
+    switch (sourceConfig->getInputFormat()->getValue()) {
+        case Configurations::InputFormat::JSON:
+            inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
+            break;
+        case Configurations::InputFormat::CSV:
+            inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
+            break;
+    }
 }
 
 TCPSource::~TCPSource() {
-    NES_DEBUG("TCPSource::~TCPSource()");
+    NES_DEBUG("TCPSource::~TCPSource() with connection: " << connection);
     // Close the connections
-    ::close(connection);
-    ::close(sockfd);
+    if (connection == 0) {
+        ::close(connection);
+        ::close(sockfd);
+    }
     NES_DEBUG("TCPSource::~TCPSource  " << this << ": Destroy TCP Source");
 }
 
@@ -70,37 +101,41 @@ std::string TCPSource::toString() const {
 }
 
 bool TCPSource::connected() {
-    NES_TRACE("Trying to create socket.");
-    sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
-    NES_TRACE("Socket created with " << sockfd);
+    NES_TRACE("TCPSource::connected: Trying to create socket.");
+    if (sockfd < 0) {
+        sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+        NES_TRACE("Socket created with " << sockfd);
+    }
     if (sockfd == -1) {
-        NES_ERROR("Failed to create socket. errno: " << errno);
+        NES_ERROR("TCPSource::connected: Failed to create socket.");
         connection = -1;
         return false;
     }
     NES_TRACE("Created socket");
 
-    // Listen to port 9999 on any address
     struct sockaddr_in servaddr;
     servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
     servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
     servaddr.sin_port =
         htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
 
-    connection = connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     if (connection < 0) {
-        NES_ERROR("Connection with server failed: " << errno);
+        NES_TRACE("Try connecting to server: " << sourceConfig->getSocketHost()->getValue() << ":"
+                                               << sourceConfig->getSocketPort()->getValue());
+        connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
+    }
+    if (connection < 0) {
+        NES_ERROR("TCPSource::connected: Connection with server failed. ");
         connection = -1;
         return false;
     }
 
-    NES_TRACE("Connected to server.");
+    NES_TRACE("TCPSource::connected: Connected to server.");
     return true;
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
-    //todo: something is wrong with allocate buffer
     auto buffer = allocateBuffer();
     if (connected()) {
         if (!fillBuffer(buffer)) {
@@ -121,17 +156,52 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
+    auto flushIntervalTimerStart = std::chrono::system_clock::now();
+    bool flushIntervalPassed = false;
+    while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
 
-    while (tupleCount < tuplesThisPass){
-        char* buffer = new char[tupleBuffer.getBuffer().getBufferSize()];
-        //Todo: what buffer size to choose and how to convert the buffer to
-        read(sock, buffer, tupleBuffer.getBuffer().getBufferSize());
-        NES_TRACE("Client consume message: '" << buffer << "'");
+        uint32_t bufferSize = 0;
+        if (sourceConfig->getSocketBufferSize()->getValue() == 0) {
+            NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
+            char* bufferSizeFromSocket = new char[4];
+            uint8_t readSocket = read(sockfd, bufferSizeFromSocket, 4);
+            NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSizeFromSocket);
+            if (readSocket != 0){
+                bufferSize = std::stoi(bufferSizeFromSocket);
+                NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSize);
+            }
+        } else {
+            bufferSize = sourceConfig->getSocketBufferSize()->getValue();
+        }
 
-        inputParser->writeInputTupleToTupleBuffer(buffer, tupleCount, tupleBuffer, schema);
+        char* buffer = new char[bufferSize];
+        uint8_t socketClosed = read(sockfd, buffer, bufferSize);
+
+        if (socketClosed != 0) {
+            NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buffer << "'");
+            if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
+                std::string buf(buffer);
+                buf = (buf).substr(0, buf.rfind("}") + 1);
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
+            } else {
+                inputParser->writeInputTupleToTupleBuffer(buffer, tupleCount, tupleBuffer, schema);
+            }
+            tupleCount++;
+        }
+        // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
+        // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
+        // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
+        if ((sourceConfig->getFlushIntervalMS()->getValue() > 0 && tupleCount > 0
+             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
+                     .count()
+                 >= sourceConfig->getFlushIntervalMS()->getValue())) {
+            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            flushIntervalPassed = true;
+        }
     }
 
     tupleBuffer.setNumberOfTuples(tupleCount);
