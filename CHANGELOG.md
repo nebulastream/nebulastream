@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.55](https://github.com/nebulastream/nebulastream/tree/v0.2.55) (2022-06-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.54...v0.2.55)
+
+### Miscellaneous Issues ✌️
+
+- Handle failing of a distributed query when one operator fails [\#2585](https://github.com/nebulastream/nebulastream/issues/2585)
+
 ## [v0.2.54](https://github.com/nebulastream/nebulastream/tree/v0.2.54) (2022-06-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.53...v0.2.54)
