@@ -45,12 +45,12 @@ bool Node::addChildWithEqual(const NodePtr& newNode) {
 
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Adding node to its self so will skip add child operation.");
+        NES_ERROR("Node: Adding node to its self so will skip add child operation.");
         return false;
     }
     // checks if current new node is not part of children
     if (vectorContainsTheNode(children, newNode)) {
-        NES_DEBUG("Node: the node is already part of its children so skip add chld operation.");
+        NES_ERROR("Node: the node is already part of its children so skip add chld operation.");
         return false;
     }
     // add the node to the children
@@ -278,6 +278,25 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
     NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
 
     return false;
+}
+
+bool Node::replicate() {
+    NodePtr newNode = std::shared_ptr<Node>();
+    bool success = true;
+
+    for (const NodePtr& child : children) {
+        if (!newNode->addChild(child)) {
+            success = false;
+        }
+    }
+
+    for (const NodePtr& parent : parents) {
+        if (!newNode->addParent(parent)) {
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {

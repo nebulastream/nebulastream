@@ -85,7 +85,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     static void TearDownTestCase() { std::cout << "Tear down NemoPlacementTest test class." << std::endl; }
 
     void setupTopologyAndSourceCatalog(uint64_t depth) {
-        uint64_t nodesPerNode = 5;
+        uint64_t nodesPerNode = 2;
         uint64_t resources = 10;
         uint64_t nodeId = 1;
         std::vector<TopologyNodePtr> nodes;
@@ -124,9 +124,9 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         uint64_t childrenIdx = pow(nodesPerNode, depth) - pow(nodesPerNode, depth-1);
 
         for (uint16_t i = 2; i < nodes.size(); i++) {
-            //if (i < childrenIdx) {
-            //    continue ;
-            //}
+            if (i < childrenIdx) {
+                continue ;
+            }
 
             CSVSourceTypePtr csvSourceType = CSVSourceType::create();
             csvSourceType->setGatheringInterval(0);
@@ -159,7 +159,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
 /* Test query placement with bottom up strategy  */
 TEST_F(NemoPlacementTest, testPlacingQueryWithBottomUpStrategy) {
-    setupTopologyAndSourceCatalog(2);
+    setupTopologyAndSourceCatalog(3);
 
     Query query = Query::from("car")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))

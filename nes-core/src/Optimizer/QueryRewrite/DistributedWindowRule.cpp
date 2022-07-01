@@ -143,9 +143,11 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     UnaryOperatorNodePtr finalComputationAssigner = windowComputationOperator;
     NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
 
+    NES_DEBUG("DistributedWindowRule: Plan before " << queryPlan->toString());
+
     //add merger
     UnaryOperatorNodePtr mergerAssigner;
-    if (finalComputationAssigner->getChildren().size() >= windowDistributionCombinerThreshold) {
+    if (finalComputationAssigner->getChildren().size() >= 2) {
         auto sliceCombinerWindowAggregation = windowAggregation[0]->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
@@ -169,20 +171,44 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
-        auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
-        finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
 
-        mergerAssigner = sliceOp;
-        windowChildren = mergerAssigner->getChildren();
+        uint64_t replicationFac = (finalComputationAssigner->getChildren().size() / 2) + 1;
+        NES_DEBUG("DistributedWindowRule: Replicating slice merger with " << replicationFac);
+        auto childrenChunks = Util::partition(finalComputationAssigner->getChildren(), replicationFac);
+        finalComputationAssigner->removeChildren();
+
+        for (auto newChildren : childrenChunks) {
+            auto repSliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
+
+            repSliceOp->removeChildren();
+            for (auto newChild : newChildren) {
+                repSliceOp->addChild(newChild);
+                NES_DEBUG("DistributedWindowRule: Adding child " << newChild);
+            }
+            finalComputationAssigner->addChild(repSliceOp);
+            addSlicer(repSliceOp->getChildren(), logicalWindowOperator);
+        }
     }
+    NES_DEBUG("DistributedWindowRule: Plan before " << queryPlan->toString());
+}
+
+void DistributeWindowRule::addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator) {
+    auto oldWindowDef = logicalWindowOperator->getWindowDefinition();
+    auto triggerPolicy = oldWindowDef->getTriggerPolicy();
+    auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowType = oldWindowDef->getWindowType();
+    auto windowAggregation = oldWindowDef->getWindowAggregation();
+    auto keyField = oldWindowDef->getKeys();
+    auto allowedLateness = oldWindowDef->getAllowedLateness();
 
     //adding slicer
+    Windowing::LogicalWindowDefinitionPtr windowDef;
     for (auto& child : windowChildren) {
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
-        auto sliceCreationWindowAggregation = windowAggregation[0]->copy();
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
+        auto sliceCreationWindowAggregation = windowAggregation[0]->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
