@@ -68,7 +68,7 @@ Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Integer>(); }
 
 TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
     int64_t valI = 42;
-    Value<> tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*)&valI));
+    Value<> tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&tempPara]() {
@@ -96,7 +96,7 @@ void storeFunction(Value<MemRef> ptr) {
 
 TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     int64_t valI = 42;
-    auto tempPara = Value<MemRef>((int8_t*)&valI);
+    auto tempPara = Value<MemRef>((int8_t*) &valI);
     tempPara.load<Integer>();
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
@@ -116,6 +116,39 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
     function(&valI);
     ASSERT_EQ(valI, 43);
+}
+
+Value<Integer> memScan(Value<MemRef> ptr, Value<Integer> size) {
+    Value<Integer> sum = 0;
+    for (auto i = Value(0); i < size; i = i + 1) {
+        auto value = ptr.load<Integer>();
+        sum = sum + value;
+    }
+    return sum;
+}
+
+TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
+    auto memPtr = Value<MemRef>(nullptr);
+    memPtr.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
+    auto size = Value<Integer>(0);
+    size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT64);
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+        return memScan(memPtr, size);
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
+
+    auto array = new int64_t[]{1, 1, 1, 1, 1, 1, 1};
+    ASSERT_EQ(function(7, array), 7);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
