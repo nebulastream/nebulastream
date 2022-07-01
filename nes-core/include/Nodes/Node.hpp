@@ -96,6 +96,14 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return
      */
     bool replace(NodePtr newNode);
+
+    /**
+     * Replicates the node and assigns all parents and children to the new node as well.
+     * @param node
+     * @return true if success, else false
+     */
+    bool replicate();
+
     /**
      * @brief swap given old node by new node
      * @param newNode the node to mount at oldNode parents instead of oldNode

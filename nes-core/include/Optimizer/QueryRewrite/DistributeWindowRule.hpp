@@ -99,6 +99,9 @@ class DistributeWindowRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
+    void addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator);
+
+  private:
     explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
     void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
