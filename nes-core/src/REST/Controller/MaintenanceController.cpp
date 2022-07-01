@@ -18,7 +18,7 @@
 namespace NES::Experimental {
 
 MaintenanceController::MaintenanceController(MaintenanceServicePtr maintenanceService) : maintenanceService{maintenanceService} {}
-#ifndef NES_USE_OATPP
+
 void MaintenanceController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
     if (path[1] == "mark") {
         NES_DEBUG("MaintenanceController: handlePost -mark: REST received request to mark node for maintenance "
@@ -72,6 +72,5 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
         resourceNotFoundImpl(request);
     }
 }
-#endif
 
 }//namespace NES::Experimental

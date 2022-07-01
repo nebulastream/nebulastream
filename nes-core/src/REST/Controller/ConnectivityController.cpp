@@ -17,8 +17,8 @@
 
 namespace NES {
 
-ConnectivityController::ConnectivityController() = default;
-#ifndef NES_USE_OATPP
+ConnectivityController::ConnectivityController(){};
+
 void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     if (path[1] == "check") {
         web::json::value result{};
@@ -28,6 +28,4 @@ void ConnectivityController::handleGet(const std::vector<utility::string_t>& pat
         resourceNotFoundImpl(message);
     }
 }
-#endif
-
 }// namespace NES

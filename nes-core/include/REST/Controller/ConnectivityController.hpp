@@ -23,7 +23,6 @@ namespace NES {
 
 class ConnectivityController : public BaseController {
 
-#ifndef NES_USE_OATPP
   public:
     explicit ConnectivityController();
 
@@ -34,9 +33,7 @@ class ConnectivityController : public BaseController {
      * @param message : the user message
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
-#endif
 };
-
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 }// namespace NES
 #endif// NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_

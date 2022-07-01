@@ -26,7 +26,7 @@ class TopologyController : public BaseController {
     explicit TopologyController(TopologyPtr topology);
 
     ~TopologyController() = default;
-#ifndef NES_USE_OATPP
+
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
@@ -48,9 +48,7 @@ class TopologyController : public BaseController {
       * @return JSON representation of the Topology
       */
     web::json::value getTopologyAsJson(TopologyPtr root);
-#endif
     TopologyPtr topology;
-
 };
 
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;

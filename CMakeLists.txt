@@ -157,12 +157,6 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
 
-#use Oatpp rest server
-if (CMAKE_NES_USE_OATPP)
-    message("Using Oatpp as REST framework")
-    add_compile_definitions(NES_USE_OATPP)
-endif()
-
 get_directory_property(MYDEFS COMPILE_DEFINITIONS)
 message( STATUS "Compile defs contain: " ${MYDEFS} )
 
@@ -386,8 +380,8 @@ endif ()
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
-#find_package(cpprestsdk CONFIG REQUIRED)
-#set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
+find_package(cpprestsdk CONFIG REQUIRED)
+set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
 #Oatpp REST SDK
 find_package(oatpp REQUIRED)

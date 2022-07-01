@@ -29,7 +29,6 @@ class MonitoringController : public BaseController {
   public:
     explicit MonitoringController(MonitoringServicePtr mService, Runtime::BufferManagerPtr bufferManager);
 
-#ifndef NES_USE_OATPP
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
@@ -43,7 +42,7 @@ class MonitoringController : public BaseController {
      * @param message : the user message
      */
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
-#endif
+
   private:
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;

@@ -84,7 +84,7 @@ bool RestServer::startWithOatpp() {
 bool RestServer::startWithRestSDK(){
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
-    //restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
+    restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
         auto task = restEngine->accept();

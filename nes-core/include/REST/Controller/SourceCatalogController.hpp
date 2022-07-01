@@ -26,11 +26,9 @@ class SourceCatalogController : public BaseController {
 
   public:
     explicit SourceCatalogController(SourceCatalogPtr sourceCatalog);
-#ifndef NES_USE_OATPP
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
-#endif
   private:
     SourceCatalogPtr sourceCatalog;
 };

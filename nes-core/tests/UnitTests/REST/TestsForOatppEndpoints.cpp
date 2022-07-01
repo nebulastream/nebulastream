@@ -1,7 +1,9 @@
-#include <REST/FilesForOatppTesting/TestControllerTest.hpp>
+#include "../../util/TestControllerTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
+#include <string>
 
-class TestsForOatppEndpoints : public Testing::NESBaseTest {
+class TestsForOatppEndpoints : public NES::Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TestsForOatppEndpoints.log", NES::LogLevel::LOG_DEBUG);
@@ -35,5 +37,4 @@ TEST_F(TestsForOatppEndpoints, testControllerSimpleTest) {
 
     oatpp::base::Environment::destroy();
 */
-    return 0;
 }

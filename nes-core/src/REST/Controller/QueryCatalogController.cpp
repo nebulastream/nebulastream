@@ -32,7 +32,7 @@ QueryCatalogController::QueryCatalogController(QueryCatalogServicePtr queryCatal
       globalQueryPlan(std::move(globalQueryPlan)) {
     NES_DEBUG("QueryCatalogController()");
 }
-#ifndef NES_USE_OATPP
+
 void QueryCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
@@ -190,5 +190,5 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         resourceNotFoundImpl(request);
     }
 }
-#endif
+
 }// namespace NES

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifndef NES_USE_OATPP
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
 #include <cpprest/json.h>
 
@@ -41,4 +40,3 @@ std::string Iterator::dataJson() {
 }
 
 }// namespace NES
-#endif
