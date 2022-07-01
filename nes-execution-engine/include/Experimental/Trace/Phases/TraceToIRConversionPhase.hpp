@@ -67,7 +67,7 @@ class TraceToIRConversionPhase {
         void processLoad(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processStore(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        bool isBlockInLoop(int32_t scope, uint32_t parentBlock, uint32_t currentBlock);
+        bool isBlockInLoop(uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
         void createBlockArguments(ValueFrame& frame, IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);
         std::string createValueIdentifier(InputVariant val);

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/BasicTypes.hpp"
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
@@ -26,6 +27,7 @@
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
 
@@ -174,11 +176,14 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
         return;
     }
     auto targetBlock = trace->getBlock(blockRef.block);
+    // Problem:
+    // trueCaseBlock = trace->getBlock(get<BlockRef>(operation.input[0]))
+    // targetBlock   = get<BlockRef>(operation.input[0])
 
     // check if we jump to a loop head:
     if (targetBlock.operations.back().op == CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
-        if (isBlockInLoop(scope, targetBlock.blockId, trueCaseBlockRef.block)) {
+        if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
             NES_DEBUG("1. found loop");
             auto loopOperator = std::make_shared<IR::Operations::LoopOperation>(IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<IR::Operations::DefaultLoopInfo>());
@@ -231,8 +236,10 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
     auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
     // isCF = !isCF && (controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier());
-    if(controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier()) {
-        isSCF = false;
+    if(controlFlowMergeBlockFalseCase) {
+        if(controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier()) {
+            isSCF = false;
+        }
     }
     NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
     ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
@@ -258,7 +265,9 @@ IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlow
             return resultFromFalseBranch;
         }
     }
-
+    if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::ReturnOp) {
+        return nullptr;
+    }
     NES_NOT_IMPLEMENTED();
 }
 
@@ -448,22 +457,24 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     currentBlock->addOperation(proxyCallOperation);
 }
 
-bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(int32_t scope,
-                                                                  uint32_t parentBlockId,
+bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t parentBlockId,
                                                                   uint32_t currentBlockId) {
     if (currentBlockId == parentBlockId) {
         return true;
+    }
+    if(currentBlockId == UINT32_MAX) {
+        currentBlockId = parentBlockId;
     }
     auto currentBlock = trace->getBlock(currentBlockId);
     auto& terminationOp = currentBlock.operations.back();
     if (terminationOp.op == CMP) {
         auto trueCaseBlockRef = get<BlockRef>(terminationOp.input[0]);
         auto falseCaseBlockRef = get<BlockRef>(terminationOp.input[1]);
-        return isBlockInLoop(scope, parentBlockId, trueCaseBlockRef.block)
-            || isBlockInLoop(scope, parentBlockId, falseCaseBlockRef.block);
+        return isBlockInLoop(parentBlockId, trueCaseBlockRef.block)
+            || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
     } else if (terminationOp.op == JMP) {
         auto target = get<BlockRef>(terminationOp.input[0]);
-        return isBlockInLoop(scope, parentBlockId, target.block);
+        return isBlockInLoop(parentBlockId, target.block);
     }
     return false;
 }
