@@ -20,7 +20,7 @@
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
-#include <REST/Controller/TestController.hpp>
+#include <REST/OatppController/TestController.hpp>
 #include <REST/AppComponent.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>

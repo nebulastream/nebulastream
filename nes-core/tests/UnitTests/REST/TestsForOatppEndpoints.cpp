@@ -1,4 +1,4 @@
-#include <REST/testsForOatpp/TestControllerTest.hpp>
+#include <REST/FilesForOatppTesting/TestControllerTest.hpp>
 #include <iostream>
 
 class TestsForOatppEndpoints : public Testing::NESBaseTest {
