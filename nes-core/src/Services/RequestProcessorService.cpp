@@ -77,7 +77,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     cfg.set("model", false);
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
-    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                                               queryCatalogService,
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,

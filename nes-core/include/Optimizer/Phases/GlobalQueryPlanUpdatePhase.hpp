@@ -48,6 +48,9 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -89,7 +92,8 @@ class GlobalQueryPlanUpdatePhase {
      * @param optimizerConfiguration: configuration for the optimizer
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
-    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogServicePtr queryCatalogService,
+    static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
+                                                QueryCatalogServicePtr queryCatalogService,
                                                 SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
@@ -104,13 +108,15 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& nesRequests);
 
   private:
-    explicit GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr queryCatalogService,
+    explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
+                                        QueryCatalogServicePtr queryCatalogService,
                                         const SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::OptimizerConfiguration optimizerConfiguration,
                                         const Catalogs::UdfCatalogPtr& udfCatalog);
 
+    TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
