@@ -231,11 +231,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               locationService);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
-#ifdef NES_USE_OATPP
+
+        //TODO: Florentina please define a configuration flag to call one or the other
         restServer->startWithOatpp();//this call is blocking
-#else
+
         restServer->startWithRestSDK();//this call is blocking
-#endif
+
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));
 

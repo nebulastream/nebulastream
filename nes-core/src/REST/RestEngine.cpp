@@ -53,7 +53,6 @@ RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
     locationController = std::make_shared<LocationController>(locationService);
 }
 
-#ifndef NES_USE_OATPP
 void RestEngine::initRestOpHandlers() {
     _listener.support(web::http::methods::GET, [this](auto&& PH1) {
         handleGet(std::forward<decltype(PH1)>(PH1));
@@ -250,7 +249,4 @@ void RestEngine::returnDefaultUnknownEndpointResponse(web::http::http_request re
     response["detail"] = web::json::value::string("Unknown endpoint");
     BaseController::errorMessageImpl(request, response);
 }
-#else
-#endif
-
 }// namespace NES

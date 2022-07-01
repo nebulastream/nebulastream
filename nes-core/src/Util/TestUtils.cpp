@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifndef NES_USE_OATPP
 #include <Util/TestUtils.hpp>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
@@ -296,4 +295,3 @@ web::json::value TestUtils::getTopology(uint64_t restPort) {
 }
 
 }// namespace NES
-#endif

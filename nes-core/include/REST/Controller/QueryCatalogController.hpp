@@ -34,9 +34,8 @@ class QueryCatalogController : public BaseController {
                            NesCoordinatorWeakPtr coordinator,
                            GlobalQueryPlanPtr globalQueryPlan);
 
-#ifndef NES_USE_OATPP
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
-#endif
+
   private:
     QueryCatalogServicePtr queryCatalogService;
     NesCoordinatorWeakPtr coordinator;

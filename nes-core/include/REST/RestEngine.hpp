@@ -109,7 +109,6 @@ class RestEngine {
                const Runtime::BufferManagerPtr bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationService);
 
-#ifndef NES_USE_OATPP
     void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
     void handleDelete(web::http::http_request request);
@@ -162,8 +161,6 @@ class RestEngine {
     UdfCatalogControllerPtr udfCatalogController;
     Experimental::MaintenanceControllerPtr maintenanceController;
     LocationControllerPtr locationController;
-#else
-#endif
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

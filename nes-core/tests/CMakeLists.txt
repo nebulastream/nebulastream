@@ -552,7 +552,7 @@ target_link_libraries(timer-test nes-tests)
 add_test(NAME timer-test COMMAND timer-test)
 
 ### Adaptive Source Tests ###
-add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp" UnitTests/REST/Controller/TestControllerTest.cpp UnitTests/REST/TestsForOatppEndpoints.cpp)
+add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
 target_link_libraries(adaptive-sensor-tests nes-tests)
 add_test(NAME adaptive-sensor-tests COMMAND adaptive-sensor-tests)
 
@@ -779,9 +779,10 @@ if (USE_S2)
 endif ()
 
 ### Tests for Oatpp ###
-add_executable(tests-for-oatpp-endpoints "UnitTests/REST/TestsForOatppEndpoints.cpp")
-target_link_libraries(tests-for-oatpp-endpoints)
-add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
+#TODO: florentina please enable this after identifying how to properly test the /hello endpoint
+#add_executable(tests-for-oatpp-endpoints "UnitTests/REST/TestsForOatppEndpoints.cpp")
+#target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp)
+#add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
 
 
 #------------------------------- # E2E Test Suite --------------------------------

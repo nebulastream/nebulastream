@@ -34,7 +34,6 @@ class UdfCatalogController : public BaseController {
 
     explicit UdfCatalogController(UdfCatalogPtr udfCatalog) : udfCatalog(std::move(udfCatalog)) {}
 
-#ifndef NES_USE_OATPP
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request);
@@ -68,8 +67,6 @@ class UdfCatalogController : public BaseController {
     void handleGetUdfDescriptor(web::http::http_request& request);
 
     void handleListUdfs(web::http::http_request& request);
-#endif
-
 
     UdfCatalogPtr udfCatalog;
 };

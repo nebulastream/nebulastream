@@ -18,7 +18,7 @@
 #include <cpprest/http_msg.h>
 
 namespace NES {
-#ifndef NES_USE_OATPP
+
 void BaseController::handleGet(const std::vector<utility::string_t>&, web::http::http_request& request) {
     RestEngine::returnDefaultNotImplementedReply(web::http::methods::GET, request);
 }
@@ -196,6 +196,4 @@ void BaseController::handleException(const web::http::http_request& message, con
         this->internalServerErrorImpl(message);
     }
 }
-#else
-#endif
 }// namespace NES

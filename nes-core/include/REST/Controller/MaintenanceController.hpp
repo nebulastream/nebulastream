@@ -35,9 +35,7 @@ class MaintenanceController : public BaseController {
      * @param paths : the url of the rest request
      * @param message : the user message
      */
-#ifndef NES_USE_OATPP
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
-#endif
 
   private:
     MaintenanceServicePtr maintenanceService;

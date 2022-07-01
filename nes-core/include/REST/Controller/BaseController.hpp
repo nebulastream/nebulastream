@@ -16,9 +16,7 @@
 #define NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
 
 #include <REST/CpprestForwardedRefs.hpp>
-#ifndef NES_USE_OATPP
 #include <cpprest/http_msg.h>
-#endif
 #include <map>
 #include <string>
 #include <vector>
@@ -37,7 +35,6 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-#ifndef NES_USE_OATPP
     virtual void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
@@ -149,8 +146,6 @@ class BaseController {
      * @return a map containing parameter keys and values
      */
     static std::map<utility::string_t, utility::string_t> getParameters(web::http::http_request& request);
-#else
-#endif
 };
 }// namespace NES
 #endif// NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
