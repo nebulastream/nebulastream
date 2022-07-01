@@ -27,6 +27,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -36,13 +37,14 @@
 
 namespace NES::Optimizer {
 
-GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr queryCatalogService,
+GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
+                                                       QueryCatalogServicePtr queryCatalogService,
                                                        const SourceCatalogPtr& sourceCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                        const Catalogs::UdfCatalogPtr& udfCatalog)
-    : queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
+    : topology(topology), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -56,19 +58,20 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr qu
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     originIdInferencePhase = OriginIdInferencePhase::create();
-    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
+    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
 
 GlobalQueryPlanUpdatePhasePtr
-GlobalQueryPlanUpdatePhase::create(QueryCatalogServicePtr queryCatalogService,
+GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
+                                   QueryCatalogServicePtr queryCatalogService,
                                    SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
-                                   const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   Catalogs::UdfCatalogPtr udfCatalog) {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalogService),
+                                   const Configurations::OptimizerConfiguration optimizerConfiguration, Catalogs::UdfCatalogPtr udfCatalog) {
+    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
+                                                                                   std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),

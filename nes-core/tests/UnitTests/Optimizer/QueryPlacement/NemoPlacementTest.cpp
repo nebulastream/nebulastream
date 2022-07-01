@@ -178,7 +178,7 @@ TEST_F(NemoPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     typeInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
