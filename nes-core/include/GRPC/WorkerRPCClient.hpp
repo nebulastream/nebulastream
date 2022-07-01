@@ -37,11 +37,11 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Monitoring{
-    class MonitoringPlan;
+namespace Monitoring {
+class MonitoringPlan;
 
-    class MonitoringPlan;
-    using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+class MonitoringPlan;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 }// namespace Monitoring
 
 class QueryPlan;

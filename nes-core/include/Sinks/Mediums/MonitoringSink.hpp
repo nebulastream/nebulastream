@@ -23,9 +23,9 @@
 
 namespace NES {
 
-namespace Monitoring{
-    class AbstractMetricStore;
-    using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+namespace Monitoring {
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 }// namespace Monitoring
 
 class Metric;

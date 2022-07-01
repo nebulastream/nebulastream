@@ -32,26 +32,26 @@ NES::SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
     NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
+                                ->addField(prefix + "node_id", BasicType::UINT64)
 
-                           ->addField(prefix + "name", BasicType::UINT64)
-                           ->addField(prefix + "rBytes", BasicType::UINT64)
-                           ->addField(prefix + "rPackets", BasicType::UINT64)
-                           ->addField(prefix + "rErrs", BasicType::UINT64)
-                           ->addField(prefix + "rDrop", BasicType::UINT64)
-                           ->addField(prefix + "rFifo", BasicType::UINT64)
-                           ->addField(prefix + "rFrame", BasicType::UINT64)
-                           ->addField(prefix + "rCompressed", BasicType::UINT64)
-                           ->addField(prefix + "rMulticast", BasicType::UINT64)
+                                ->addField(prefix + "name", BasicType::UINT64)
+                                ->addField(prefix + "rBytes", BasicType::UINT64)
+                                ->addField(prefix + "rPackets", BasicType::UINT64)
+                                ->addField(prefix + "rErrs", BasicType::UINT64)
+                                ->addField(prefix + "rDrop", BasicType::UINT64)
+                                ->addField(prefix + "rFifo", BasicType::UINT64)
+                                ->addField(prefix + "rFrame", BasicType::UINT64)
+                                ->addField(prefix + "rCompressed", BasicType::UINT64)
+                                ->addField(prefix + "rMulticast", BasicType::UINT64)
 
-                           ->addField(prefix + "tBytes", BasicType::UINT64)
-                           ->addField(prefix + "tPackets", BasicType::UINT64)
-                           ->addField(prefix + "tErrs", BasicType::UINT64)
-                           ->addField(prefix + "tDrop", BasicType::UINT64)
-                           ->addField(prefix + "tFifo", BasicType::UINT64)
-                           ->addField(prefix + "tColls", BasicType::UINT64)
-                           ->addField(prefix + "tCarrier", BasicType::UINT64)
-                           ->addField(prefix + "tCompressed", BasicType::UINT64);
+                                ->addField(prefix + "tBytes", BasicType::UINT64)
+                                ->addField(prefix + "tPackets", BasicType::UINT64)
+                                ->addField(prefix + "tErrs", BasicType::UINT64)
+                                ->addField(prefix + "tDrop", BasicType::UINT64)
+                                ->addField(prefix + "tFifo", BasicType::UINT64)
+                                ->addField(prefix + "tColls", BasicType::UINT64)
+                                ->addField(prefix + "tCarrier", BasicType::UINT64)
+                                ->addField(prefix + "tCompressed", BasicType::UINT64);
 
     return schema;
 }

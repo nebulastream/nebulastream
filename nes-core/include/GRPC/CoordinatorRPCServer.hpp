@@ -38,9 +38,9 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-namespace Monitoring{
-    class MonitoringManager;
-    using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
+namespace Monitoring {
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 
 class ReplicationService;

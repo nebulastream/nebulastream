@@ -223,7 +223,8 @@ class MetricValidator {
         Monitoring::TimestampMetricPtr pairedNetworkMetric = metricVec->at(0);
         Monitoring::MetricPtr retMetric = pairedNetworkMetric->second;
 
-        NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": " << Monitoring::MetricUtils::toJson(storedMetrics));
+        NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": "
+                                                           << Monitoring::MetricUtils::toJson(storedMetrics));
         if (retMetric->getMetricType() != expectedType) {
             NES_ERROR("MetricValidator: MetricType is not as expected " << toString(retMetric->getMetricType())
                                                                         << " != " << toString(expectedType));

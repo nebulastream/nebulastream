@@ -27,30 +27,30 @@ namespace NES {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Monitoring{
-    class MonitoringPlan;
-    using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+namespace Monitoring {
+class MonitoringPlan;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
-    class AbstractSystemResourcesReader;
-    using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
+class AbstractSystemResourcesReader;
+using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-    class Metric;
-    using MetricPtr = std::shared_ptr<Metric>;
+class Metric;
+using MetricPtr = std::shared_ptr<Metric>;
 
-    class AbstractMetricStore;
-    using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 
-    class MonitoringCatalog;
-    using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
+class MonitoringCatalog;
+using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
 
-    class MonitoringManager;
-    using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
-    using TimestampMetricPtr = std::shared_ptr<std::pair<uint64_t, MetricPtr>>;
-    using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>;
+using TimestampMetricPtr = std::shared_ptr<std::pair<uint64_t, MetricPtr>>;
+using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>;
 
-    class MetricCollector;
-    using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
+class MetricCollector;
+using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 }//namespace Monitoring
 }// namespace NES
 
