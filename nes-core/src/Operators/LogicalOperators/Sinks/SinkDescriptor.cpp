@@ -21,6 +21,8 @@ SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t n
 
 FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
+void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { faultToleranceType = faultTolerance; }
+
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
 }// namespace NES

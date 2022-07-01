@@ -43,10 +43,19 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
 }
 
 ZmqSink::~ZmqSink() {
@@ -151,9 +160,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             }
         }
     }
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

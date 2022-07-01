@@ -41,9 +41,18 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       metricStore(metricStore), collectorType(collectorType) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
 }
 
 MonitoringSink::~MonitoringSink() = default;
@@ -70,9 +79,7 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
         metricStore->addMetrics(nodeId, std::move(parsedMetric));
     }
 
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
 
     return true;
 }

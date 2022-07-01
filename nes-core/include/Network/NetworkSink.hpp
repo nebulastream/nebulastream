@@ -138,6 +138,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
+    std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
 };
 
 }// namespace Network

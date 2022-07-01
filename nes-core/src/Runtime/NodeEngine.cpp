@@ -46,7 +46,6 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
-                       BufferStoragePtr&& bufferStorage,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
@@ -59,9 +58,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        uint64_t numberOfBuffersPerWorker,
                        bool sourceSharing)
     : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
-      bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
-      queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
-      stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
+      bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
       materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
@@ -395,8 +393,6 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
 }
 
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
-
-BufferStoragePtr NodeEngine::getBufferStorage() { return bufferStorage; }
 
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 

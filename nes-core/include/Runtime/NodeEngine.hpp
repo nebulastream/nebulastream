@@ -20,7 +20,6 @@
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -186,14 +185,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
 
     /**
-    * @brief getter of buffer storage
-    * @return stateManager
-    */
-    BufferStoragePtr getBufferStorage();
-
-    /**
     * @brief getter of state manager
-    * @return bufferStorage
+    * @return stateManager
     */
     StateManagerPtr getStateManager();
 
@@ -343,7 +336,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
-                        BufferStoragePtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,

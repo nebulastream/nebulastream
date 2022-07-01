@@ -136,6 +136,22 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
+void NetworkSource::onEvent(Runtime::BaseEvent& event) {
+    NES_DEBUG("NetworkSource: received an event");
+    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto queryId = epochEvent->queryIdValue();
+        auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
+        if (success) {
+            NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
+        } else {
+
+            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch " << epochBarrier << " queryId " << queryId);
+        }
+    }
+}
+
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSource: reconfigure() called " << nesPartition.toString());
     NES::DataSource::reconfigure(task, workerContext);
@@ -236,12 +252,6 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     } else {
         NES_WARNING("Ignoring forceful EoS on " << nesPartition);
     }
-}
-
-void NetworkSource::onEvent(Runtime::BaseEvent&) {
-    NES_WARNING("NetworkSource::onEvent(event) called. Can not send Event upstream in network without the WorkerContext."
-                " operatorId: "
-                << this->operatorId);
 }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {

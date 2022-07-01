@@ -31,8 +31,18 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
                  queryId,
                  parentPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
-      view(std::move(view)){};
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+      view(std::move(view)) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
+};
 
 // It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
 void MaterializedViewSink::shutdown() { view->clear(); }
@@ -41,9 +51,7 @@ bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime:
     NES_INFO("MaterializedViewSink::writeData");
     bool ret = view->writeData(inputBuffer);
     ++sentBuffer;
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
     return ret;
 }
 

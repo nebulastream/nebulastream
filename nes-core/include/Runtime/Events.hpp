@@ -59,6 +59,21 @@ class BaseEvent {
     EventType eventType;
 };
 
+struct PropagateEpochEvent {
+    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp, uint64_t queryId)
+        : type(type), timestamp(timestamp), queryId(queryId) {}
+
+    Runtime::EventType getEventType() const { return type; }
+
+    uint64_t timestampValue() const { return timestamp; }
+
+    uint64_t queryIdValue() const { return queryId; }
+
+    Runtime::EventType type;
+    uint64_t timestamp;
+    uint64_t queryId;
+};
+
 /**
  * @brief This class shall be used to define custom events with user-supplied data
  */

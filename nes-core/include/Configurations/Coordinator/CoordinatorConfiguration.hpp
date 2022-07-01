@@ -106,6 +106,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                                          "Number buffers in source local buffer pool."};
 
     /**
+      * @brief Number of buffers per epoch
+      */
+    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
+
+    /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
@@ -160,6 +165,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &numberOfBuffersInGlobalBufferManager,
                 &numberOfBuffersPerWorker,
                 &numberOfBuffersInSourceLocalBufferPool,
+                &numberOfBuffersPerEpoch,
                 &bufferSizeInBytes,
                 &numWorkerThreads,
                 &enableQueryReconfiguration,

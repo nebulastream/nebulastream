@@ -30,10 +30,7 @@ class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
     Runtime::BufferStoragePtr bufferStorage;
 
   protected:
-    virtual void SetUp() {
-        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
-        bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    }
+    virtual void SetUp() { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1); }
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("BufferStorageTest.log", NES::LogLevel::LOG_DEBUG); }
 };
@@ -44,10 +41,12 @@ class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
 */
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     for (size_t i = 0; i < buffersInserted; i++) {
+        Network::NesPartition nesPartition = Network::NesPartition(i, i, i, i);
+        bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
         auto buffer = bufferManager->getUnpooledBuffer(16384);
-        bufferStorage->insertBuffer(i, i, buffer.value());
+        bufferStorage->insertBuffer(nesPartition, buffer.value());
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
-        ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
+        ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), oneBuffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
 }
@@ -57,16 +56,17 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
      * The queue is then checked to be sorted to be exact to have the biggest watermark value at the top.
 */
 TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    Network::NesPartition nesPartition = Network::NesPartition(0, 0, 0, 0);
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
     for (int i = buffersInserted - 1; i >= 0; i--) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
         buffer->setWatermark(i);
-        bufferStorage->insertBuffer(0, 0, buffer.value());
+        bufferStorage->insertBuffer(nesPartition, buffer.value());
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
     for (uint64_t i = 0; i < buffersInserted - 1; i++) {
-        bufferStorage->trimBuffer(0, i + 1);
-        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0, 0)->getWatermark(), i + 1);
+        bufferStorage->trimBuffer(nesPartition, i + 1);
+        ASSERT_EQ(bufferStorage->getTopElementFromQueue(nesPartition)->getWatermark(), i + 1);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
 }
@@ -75,51 +75,58 @@ TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
      * @brief test checks that if trimming is called on an empty buffer it doesn't cause an error
 */
 TEST_F(BufferStorageTest, emptyBufferCheck) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    ASSERT_EQ(bufferStorage->trimBuffer(0, 0), false);
+    Network::NesPartition nesPartition = Network::NesPartition(0, 0, 0, 0);
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
+    ASSERT_EQ(bufferStorage->trimBuffer(nesPartition, 0), false);
 }
 
 /**
      * @brief test tries to delete non existing element
 */
-TEST_F(BufferStorageTest, trimmingOfNonExistingQueryId) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    for (int i = buffersInserted - 1; i >= 0; i--) {
+TEST_F(BufferStorageTest, trimmingOfNonExistingNesPartition) {
+    Network::NesPartition nesPartition = Network::NesPartition(0, 0, 0, 0);
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
+    for (int i = buffersInserted - 1; i > 0; i--) {
+        Network::NesPartition nesPartition = Network::NesPartition(i, i, i, i);
+        auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
         auto buffer = bufferManager->getUnpooledBuffer(16384);
         buffer->setWatermark(i);
-        bufferStorage->insertBuffer(0, 0, buffer.value());
+        bufferStorage->insertBuffer(nesPartition, buffer.value());
     }
-    ASSERT_EQ(bufferStorage->trimBuffer(2, buffersInserted + buffersInserted), false);
+    ASSERT_EQ(bufferStorage->trimBuffer(nesPartition, buffersInserted + buffersInserted), false);
 }
 
 /**
      * @brief test inserts one buffer and deletes it
 */
 TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    Network::NesPartition nesPartition = Network::NesPartition(0, 0, 0, 0);
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     buffer->setWatermark(0);
-    bufferStorage->insertBuffer(0, 0, buffer.value());
+    bufferStorage->insertBuffer(nesPartition, buffer.value());
     ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
-    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), oneBuffer);
-    bufferStorage->trimBuffer(0, 1);
-    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), emptyBuffer);
+    ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), oneBuffer);
+    bufferStorage->trimBuffer(nesPartition, 1);
+    ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), emptyBuffer);
 }
 
 /**
      * @brief test inserts buffersInserted buffers in different queues and deletes them.
 */
 TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     for (size_t i = 0; i < buffersInserted; i++) {
+        Network::NesPartition nesPartition = Network::NesPartition(i, i, i, i);
+        auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
         auto buffer = bufferManager->getUnpooledBuffer(16384);
-        bufferStorage->insertBuffer(i, i, buffer.value());
-        ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
+        bufferStorage->insertBuffer(nesPartition, buffer.value());
+        ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), oneBuffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
     for (size_t i = 0; i < buffersInserted; i++) {
-        bufferStorage->trimBuffer(i, i + 1);
-        ASSERT_EQ(bufferStorage->getQueueSize(i, i), emptyBuffer);
+        Network::NesPartition nesPartition = Network::NesPartition(i, i, i, i);
+        bufferStorage->trimBuffer(nesPartition, i + 1);
+        ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), emptyBuffer);
     }
 }
 
@@ -128,60 +135,16 @@ TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
      * the deleted buffers are smaller that passed timestamp.
 */
 TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    Network::NesPartition nesPartition = Network::NesPartition(0, 0, 0, 0);
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>(nesPartition);
     for (size_t i = 0; i < buffersInserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
         buffer->setWatermark(i);
-        bufferStorage->insertBuffer(0, 0, buffer.value());
-        ASSERT_EQ(bufferStorage->getQueueSize(0, 0), i + 1);
+        bufferStorage->insertBuffer(nesPartition, buffer.value());
+        ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), i + 1);
     }
-    bufferStorage->trimBuffer(0, buffersInserted - 1);
-    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), oneBuffer);
+    bufferStorage->trimBuffer(nesPartition, buffersInserted - 1);
+    ASSERT_EQ(bufferStorage->getQueueSize(nesPartition), oneBuffer);
 }
 
-/**
-     * @brief test inserts buffers in different queues concurrently.
-*/
-TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
-    std::vector<std::thread> t;
-    for (uint32_t i = 0; i < buffersInserted; i++) {
-        t.emplace_back([bufferStorage, buffer, i]() {
-            bufferStorage->insertBuffer(i, i, buffer.value());
-            ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
-        });
-    }
-    for (auto& thread : t) {
-        thread.join();
-    }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
-}
-
-/**
-     * @brief test inserts buffersInserted buffers in different queues and deletes four of them concurrently.
-*/
-TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    std::vector<std::thread> t;
-    for (uint64_t i = 0; i < numberOfThreads; i++) {
-        auto buffer = bufferManager->getUnpooledBuffer(16384);
-        buffer->setWatermark(i);
-        t.emplace_back([bufferStorage, buffer, i]() {
-            for (uint64_t j = 0; j < buffersInserted; j++) {
-                if (j && j % 4 == 0) {
-                    bufferStorage->trimBuffer(0, j + 1);
-                    NES_INFO("Trim Buffer with watermark " << j + 1);
-                } else {
-                    bufferStorage->insertBuffer(0, i, buffer.value());
-                    NES_INFO("Insert Buffer:" << i << "watermark" << buffer.value().getWatermark());
-                }
-            }
-        });
-    }
-    for (auto& thread : t) {
-        thread.join();
-    }
-    ASSERT_EQ(bufferStorage->getStorageSize(), emptyBuffer);
-}
 }// namespace NES

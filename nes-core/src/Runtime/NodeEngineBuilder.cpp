@@ -77,11 +77,6 @@ NodeEngineBuilder& NodeEngineBuilder::setStateManager(StateManagerPtr stateManag
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setBufferStorage(BufferStoragePtr bufferStorage) {
-    this->bufferStorage = bufferStorage;
-    return *this;
-}
-
 NodeEngineBuilder& NodeEngineBuilder::setMaterializedViewManager(
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager) {
     this->materializedViewManager = materializedViewManager;
@@ -142,6 +137,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager) {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
+            auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration->numberOfBuffersPerEpoch.getValue());
             std::vector<uint64_t> workerToCoreMappingVec =
                 Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
             switch (workerConfiguration->queryManagerMode.getValue()) {
@@ -152,6 +148,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                          numOfThreads,
                                                                          hardwareManager,
                                                                          stateManager,
+                                                                         numberOfBuffersPerEpoch,
                                                                          workerToCoreMappingVec);
                     break;
                 }
@@ -163,6 +160,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                  numOfThreads,
                                                                  hardwareManager,
                                                                  stateManager,
+                                                                 numberOfBuffersPerEpoch,
                                                                  workerToCoreMappingVec,
                                                                  workerConfiguration->numberOfQueues.getValue(),
                                                                  workerConfiguration->numberOfThreadsPerQueue.getValue());
@@ -173,7 +171,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 }
             }
         }
-        auto bufferStorage = (!this->bufferStorage) ? std::make_shared<BufferStorage>() : this->bufferStorage;
         auto materializedViewManager = (!this->materializedViewManager)
             ? std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>()
             : this->materializedViewManager;
@@ -190,11 +187,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!stateManager) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager",
-                                               NES::collectAndPrintStacktrace());
-        }
-        if (!bufferStorage) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating BufferStorage");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating BufferStorage",
                                                NES::collectAndPrintStacktrace());
         }
         if (!materializedViewManager) {
@@ -231,7 +223,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(hardwareManager),
             std::move(bufferManagers),
             std::move(queryManager),
-            std::move(bufferStorage),
             [this](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(engine->getNodeEngineId(),
                                                        this->workerConfiguration->localWorkerIp.getValue(),

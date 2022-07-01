@@ -85,7 +85,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
       numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring),
+      numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -205,6 +206,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->numberOfBuffersPerWorker = numberOfBuffersPerWorker;
         workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
+        workerConfig->numberOfBuffersPerEpoch = numberOfBuffersPerEpoch;
     }
     auto workerConfigCopy = workerConfig;
     worker =

@@ -86,13 +86,6 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
 
     /**
-     * setter used to pass buffer storage to NodeEngineBuilder. Optional
-     * @param bufferStorage
-     * @return NodeEngineBuilder&
-     */
-    NodeEngineBuilder& setBufferStorage(BufferStoragePtr bufferStorage);
-
-    /**
      * setter used to pass a materialized view manager to NodeEngineBuilder. Optional
      * @param materializedViewManager
      * @return NodeEngineBuilder&
@@ -137,7 +130,6 @@ class NodeEngineBuilder {
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
     StateManagerPtr stateManager;
-    BufferStoragePtr bufferStorage;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
     Compiler::JITCompilerPtr jitCompiler;

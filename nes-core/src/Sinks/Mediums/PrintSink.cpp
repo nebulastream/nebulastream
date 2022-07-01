@@ -35,8 +35,18 @@ PrintSink::PrintSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
-      outputStream(pOutputStream) {}
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+      outputStream(pOutputStream) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
+}
 
 PrintSink::~PrintSink() = default;
 
@@ -82,9 +92,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         NES_TRACE("PrintSink::getData: write buffer str= " << ret);
         outputStream << ret << std::endl;
     }
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 
