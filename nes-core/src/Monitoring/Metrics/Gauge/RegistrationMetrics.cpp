@@ -48,17 +48,17 @@ RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& 
 
 NES::SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
+                                ->addField(prefix + "node_id", BasicType::UINT64)
 
-                           ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
+                                ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
 
-                           ->addField(prefix + "cpuCoreNum", BasicType::UINT64)
-                           ->addField(prefix + "totalCPUJiffies", BasicType::UINT64)
-                           ->addField(prefix + "cpuPeriodUS", BasicType::INT64)
-                           ->addField(prefix + "cpuQuotaUS", BasicType::INT64)
+                                ->addField(prefix + "cpuCoreNum", BasicType::UINT64)
+                                ->addField(prefix + "totalCPUJiffies", BasicType::UINT64)
+                                ->addField(prefix + "cpuPeriodUS", BasicType::INT64)
+                                ->addField(prefix + "cpuQuotaUS", BasicType::INT64)
 
-                           ->addField(prefix + "isMoving", BasicType::BOOLEAN)
-                           ->addField(prefix + "hasBattery", BasicType::BOOLEAN);
+                                ->addField(prefix + "isMoving", BasicType::BOOLEAN)
+                                ->addField(prefix + "hasBattery", BasicType::BOOLEAN);
 
     return schema;
 }

@@ -33,6 +33,8 @@ bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const& other) { return ot
 
 Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType() const { return collectorType; }
 
-void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType collectorType) { this->collectorType = collectorType; }
+void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType collectorType) {
+    this->collectorType = collectorType;
+}
 
 }// namespace NES

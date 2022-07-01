@@ -28,9 +28,9 @@ using grpc::Status;
 
 namespace NES {
 
-namespace Monitoring{
-    class MonitoringAgent;
-    using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+namespace Monitoring {
+class MonitoringAgent;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 }// namespace Monitoring
 
 namespace Spatial::Mobility::Experimental {

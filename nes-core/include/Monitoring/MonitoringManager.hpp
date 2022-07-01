@@ -45,7 +45,7 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-namespace Monitoring{
+namespace Monitoring {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
@@ -54,7 +54,6 @@ using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
-
 
 /**
 * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.

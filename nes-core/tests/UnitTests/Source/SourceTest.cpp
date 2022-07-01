@@ -1936,7 +1936,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>(
+        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -1953,7 +1954,8 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>(
+        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -1981,7 +1983,8 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>({Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>(
+        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 

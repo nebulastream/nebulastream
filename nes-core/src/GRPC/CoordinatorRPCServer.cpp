@@ -57,7 +57,8 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     }
 
     auto registrationMetrics =
-        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()), Monitoring::MetricType::RegistrationMetric);
+        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()),
+                                             Monitoring::MetricType::RegistrationMetric);
     registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = id;
     monitoringManager->addMonitoringData(id, registrationMetrics);
 

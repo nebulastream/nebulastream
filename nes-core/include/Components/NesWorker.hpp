@@ -49,12 +49,12 @@ class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
-namespace Monitoring{
-    class MonitoringAgent;
-    using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+namespace Monitoring {
+class MonitoringAgent;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-    class AbstractMetricStore;
-    using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 }// namespace Monitoring
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";

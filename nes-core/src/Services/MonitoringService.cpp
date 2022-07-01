@@ -70,7 +70,8 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId());
     Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
-    metricsJson[std::to_string(root->getId())]["registration"] = Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+    metricsJson[std::to_string(root->getId())]["registration"] =
+        Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
 
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 
@@ -80,7 +81,8 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
 
         Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
-        metricsJson[std::to_string(tNode->getId())]["registration"] = Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+        metricsJson[std::to_string(tNode->getId())]["registration"] =
+            Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 

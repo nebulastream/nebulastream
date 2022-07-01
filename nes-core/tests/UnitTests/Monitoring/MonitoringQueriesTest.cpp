@@ -85,15 +85,20 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
     }
 
     std::string createQueryString(std::string logicalStream, std::string metricCollectorString) {
-        std::string query = R"(Query::from("%LOGS%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
+        std::string query =
+            R"(Query::from("%LOGS%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%LOGS%"), logicalStream);
         query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorString);
         return query;
     }
 
-    void runMetricsQueryTest(uint64_t workerCnt, Monitoring::MetricCollectorType collectorType, SchemaPtr schema, Monitoring::MetricType expectedType) {
+    void runMetricsQueryTest(uint64_t workerCnt,
+                             Monitoring::MetricCollectorType collectorType,
+                             SchemaPtr schema,
+                             Monitoring::MetricType expectedType) {
         std::vector<NesWorkerPtr> workers;
-        Monitoring::MetricType retMetricType = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
+        Monitoring::MetricType retMetricType =
+            Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
         ASSERT_EQ(retMetricType, expectedType);
         MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
         std::string metricCollectorStr = NES::Monitoring::toString(collectorType);

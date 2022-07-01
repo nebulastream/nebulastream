@@ -345,8 +345,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case MONITORING_SOURCE: {
             auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
-            return MonitoringSourceDescriptor::create(monitoringSourceType->getWaitTime(),
-                                                      Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
+            return MonitoringSourceDescriptor::create(
+                monitoringSourceType->getWaitTime(),
+                Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
         }
         case BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();

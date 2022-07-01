@@ -44,9 +44,9 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Monitoring{
-    class AbstractMetricStore;
-    using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+namespace Monitoring {
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 }//namespace Monitoring
 
 namespace Runtime {

@@ -32,8 +32,8 @@ namespace NES {
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Monitoring{
-    class RegistrationMetrics;
+namespace Monitoring {
+class RegistrationMetrics;
 }// namespace Monitoring
 
 namespace Spatial::Index::Experimental {
