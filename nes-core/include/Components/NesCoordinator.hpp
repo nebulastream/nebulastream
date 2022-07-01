@@ -265,6 +265,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    uint64_t numberOfBuffersPerEpoch;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

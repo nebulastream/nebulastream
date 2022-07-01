@@ -472,6 +472,32 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
+bool AbstractQueryManager::addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier) {
+    std::unique_lock lock(queryMutex);
+    auto qeps = sourceToQEPMapping.find(source->getOperatorId());
+    if (qeps != sourceToQEPMapping.end()) {
+        //post reconfiguration message to the executable query plans with an epoch barrier to trim buffer storages
+        for (auto qep : qeps->second) {
+            auto sinks = qep->getSinks();
+            for (auto sink : sinks) {
+                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                    auto newReconf = ReconfigurationMessage(queryId,
+                                                            qep->getQuerySubPlanId(),
+                                                            Runtime::ReconfigurationType::PropagateEpoch,
+                                                            sink,
+                                                            std::make_any<uint64_t>(epochBarrier));
+                    addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
+                }
+            }
+            return true;
+        }
+
+    } else {
+        NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no query execution plans were found");
+    }
+    return false;
+}
+
 bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
     std::unique_lock queryLock(queryMutex);
     NES_DEBUG("AbstractQueryManager: AbstractQueryManager::addEndOfStream for source operator "

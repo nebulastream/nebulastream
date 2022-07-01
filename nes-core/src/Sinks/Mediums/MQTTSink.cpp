@@ -50,7 +50,14 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    bool asynchronousClient,
                    FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
+    : SinkMedium(std::move(sinkFormat),
+                 nodeEngine,
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
@@ -64,6 +71,15 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
 
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
     NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
+
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
 }
 
 MQTTSink::~MQTTSink() NES_NOEXCEPT(false) {
@@ -112,9 +128,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
         return false;
     }
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

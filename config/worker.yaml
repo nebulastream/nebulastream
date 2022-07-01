@@ -53,6 +53,10 @@
 # Enable monitoring
 #enableMonitoring: false
 
+# Set the number of buffers per epoch
+# numberOfBuffersPerEpoch: 100
+
+
 queryCompiler:
   # Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]
   #queryCompilerCompilationStrategy: OPTIMIZE

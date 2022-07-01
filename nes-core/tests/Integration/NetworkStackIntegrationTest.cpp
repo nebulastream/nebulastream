@@ -198,8 +198,8 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                                            0,
                                                                            1,
                                                                            hwManager,
-                                                                           stateManager);
-        auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+                                                                           stateManager,
+                                                                           100);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
                                                    hostname,
@@ -219,7 +219,6 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                   std::move(hwManager),
                                                   std::move(bufferManagers),
                                                   std::move(queryManager),
-                                                  std::move(bufferStorage),
                                                   std::move(networkManagerCreator),
                                                   std::move(partitionManager),
                                                   std::move(compiler),
@@ -258,7 +257,6 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
-                                  Runtime::BufferStoragePtr&& bufferStorage,
                                   std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& queryCompiler,
@@ -269,7 +267,6 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryManager),
-                         std::move(bufferStorage),
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),

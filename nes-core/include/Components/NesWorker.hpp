@@ -188,7 +188,17 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool notifyErrors(uint64_t workerId, std::string errorMsg);
 
+    /**
+     * @brief Method to get worker id
+     * @return worker id
+    */
     uint64_t getWorkerId();
+
+    /**
+     * @brief Method to get numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+    */
+    uint64_t getNumberOfBuffersPerEpoch();
 
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
@@ -261,6 +271,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
     uint32_t parentId;
+    uint64_t numberOfBuffersPerEpoch;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

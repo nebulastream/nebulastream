@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -39,7 +40,8 @@ FileSink::FileSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins) {
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -54,6 +56,15 @@ FileSink::FileSink(SinkFormatPtr format,
     }
     NES_ASSERT(outputFile.is_open(), "file is not open");
     NES_ASSERT(outputFile.good(), "file not good");
+
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
 }
 
 FileSink::~FileSink() {
@@ -123,9 +134,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     outputFile.flush();
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermark(inputBuffer);
-    }
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

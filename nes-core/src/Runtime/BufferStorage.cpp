@@ -19,60 +19,52 @@
 
 namespace NES::Runtime {
 
-void BufferStorage::insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    std::unique_lock<std::mutex> lock(mutex);
-    auto iterator = this->buffers.find(queryId);
-    if (iterator == this->buffers.end()) {
-        auto queue = TupleBufferPriorityQueue();
-        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId
-                                                               << " into buffer storage");
-        queue.push(buffer);
-        this->buffers[queryId] = std::make_shared<BufferStorageUnit>(nesPartitionId, queue);
-    } else {
-        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId
-                                                               << " into buffer storage");
-        iterator->second->insert(nesPartitionId, buffer);
-    }
+BufferStorage::BufferStorage(Network::NesPartition nesPartitionId) {
+    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
 }
 
-bool BufferStorage::trimBuffer(QueryId queryId, uint64_t timestamp) {
-    std::unique_lock<std::mutex> lock(mutex);
-    NES_TRACE("BufferStorage: Trying to delete tuple with query id " << queryId << " and timestamp " << timestamp);
-    auto iteratorQueryId = this->buffers.find(queryId);
-    if (iteratorQueryId != this->buffers.end()) {
-        return iteratorQueryId->second->trim(timestamp);
+void BufferStorage::insertBuffer(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
+    storage[nesPartition].push(buffer);
+}
+
+bool BufferStorage::trimBuffer(Network::NesPartition nesPartition, uint64_t timestamp) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        if (!iteratorPartitionId->second.empty()) {
+            while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
+                NES_TRACE("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
+                iteratorPartitionId->second.pop();
+            }
+            return true;
+        }
     }
     return false;
 }
 
 size_t BufferStorage::getStorageSize() const {
-    std::unique_lock<std::mutex> lock(mutex);
     size_t size = 0;
-    for (auto& iteratorQueryId : buffers) {
-        size += iteratorQueryId.second->getSize();
+    for (auto& iteratorPartition : storage) {
+        size += iteratorPartition.second.size();
     }
     return size;
 }
 
-size_t BufferStorage::getQueueSize(QueryId queryId, Network::PartitionId nesPartitionId) const {
-    std::unique_lock<std::mutex> lock(mutex);
-    auto iteratorQueryId = this->buffers.find(queryId);
-    if (iteratorQueryId == this->buffers.end()) {
-        NES_ERROR("BufferStorage: No queue with query id " << queryId << "was found");
-        return 0;
+size_t BufferStorage::getQueueSize(Network::NesPartition nesPartition) const {
+    auto iteratorPartition = storage.find(nesPartition);
+    if (iteratorPartition != storage.end()) {
+        return iteratorPartition->second.size();
     } else {
-        return iteratorQueryId->second->getQueueSize(nesPartitionId);
+        return 0;
     }
 }
 
-std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue(QueryId queryId, Network::PartitionId nesPartitionId) const {
-    std::unique_lock<std::mutex> lock(mutex);
-    auto iteratorQueryId = this->buffers.find(queryId);
-    if (iteratorQueryId == this->buffers.end()) {
-        NES_ERROR("BufferStorage: No queue with query id " << queryId << "was found");
+std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue(Network::NesPartition nesPartition) const {
+    auto iteratorQueryId = this->storage.find(nesPartition);
+    if (iteratorQueryId == this->storage.end()) {
+        NES_ERROR("BufferStorage: No queue with nesPartition " << nesPartition << "was found");
         return std::optional<TupleBuffer>();
     } else {
-        return iteratorQueryId->second->getTopElementFromQueue(nesPartitionId);
+        return iteratorQueryId->second.top();
     }
 }
 

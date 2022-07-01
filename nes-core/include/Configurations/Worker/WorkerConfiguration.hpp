@@ -221,6 +221,12 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption numberOfThreadsPerQueue = {NUMBER_OF_THREAD_PER_QUEUE, 0, "Number of threads per processing queue."};
 
     /**
+     * @brief Number of buffers per epoch
+     * Set trimming frequency fro upstream backup
+     */
+    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
+
+    /**
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
      *      - Dynamic: only one queue overall
@@ -265,6 +271,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &locationSourceConfig,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
+                &numberOfBuffersPerEpoch,
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,

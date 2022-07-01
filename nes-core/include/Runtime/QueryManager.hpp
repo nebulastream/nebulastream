@@ -83,6 +83,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   uint16_t numThreads,
                                   HardwareManagerPtr hardwareManager,
                                   const StateManagerPtr& stateManager,
+                                  uint64_t numberOfBuffersPerEpoch,
                                   std::vector<uint64_t> workerToCoreMapping = {});
 
     virtual ~AbstractQueryManager() NES_NOEXCEPT(false) override;
@@ -245,6 +246,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
     /**
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
+    uint64_t getNumberOfBuffersPerEpoch() const;
+
+    /**
      * @brief This method informs the QueryManager that a source has failed
      * @param source the failed source
      * @param errorMessage the reason of the feature
@@ -271,6 +278,15 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @return true if it went through
      */
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
+
+    /**
+      * @brief Triggers an epoch propagation for all network sinks
+      * @param source the source for which to trigger the soft end of stream
+      * @param queryId
+      * @param epochBarrier timestamp that should be trimmed in the storage
+      * @return true if successful
+      */
+    bool addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier);
 
     /**
      * @return true if thread pool is running
@@ -428,6 +444,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
     StateManagerPtr stateManager;
+
+    uint64_t numberOfBuffersPerEpoch;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
@@ -441,6 +459,7 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
                                  const StateManagerPtr& stateManager,
+                                 uint64_t numberOfBuffersPerEpoch,
                                  std::vector<uint64_t> workerToCoreMapping = {});
 
     void destroy() override;
@@ -480,6 +499,12 @@ class DynamicQueryManager : public AbstractQueryManager {
     void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
+
+    /**
+      * @brief Returns the numberOfBuffersPerEpoch
+      * @return numberOfBuffersPerEpoch
+      */
+    uint64_t getNumberOfBuffersPerEpoch() const;
 
   private:
     /**
@@ -537,6 +562,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
                                     uint16_t numThreads,
                                     HardwareManagerPtr hardwareManager,
                                     const StateManagerPtr& stateManager,
+                                    uint64_t numberOfBuffersPerEpoch,
                                     std::vector<uint64_t> workerToCoreMapping = {},
                                     uint64_t numberOfQueues = 1,
                                     uint64_t numberOfThreadsPerQueue = 1);
@@ -564,6 +590,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
+
+    /**
+      * @brief Returns the numberOfBuffersPerEpoch
+      * @return numberOfBuffersPerEpoch
+      */
+    uint64_t getNumberOfBuffersPerEpoch() const;
 
   protected:
     /**

@@ -29,86 +29,27 @@ struct BufferSorter : public std::greater<TupleBuffer> {
 
 using TupleBufferPriorityQueue = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>;
 
-/**
- * @brief The Buffer Storage Unit class encapsulates a nesPartitionId and a sorted queue of TupleBuffers
- */
-class BufferStorageUnit {
-  public:
-    /**
-     * @brief Constructor, which creates map of nes partition id to sorted queue of tuple buffers
-     * @return buffer storage unit
-     */
-    BufferStorageUnit(Network::PartitionId nesPartitionId, TupleBufferPriorityQueue queue) {
-        nesPartitionToTupleBufferQueueMapping[nesPartitionId] = std::move(queue);
-    }
-
-    /**
-     * @brief inserts buffer for a given nes partition id
-     * @param nesPartitionId destination id
-     * @param buffer tuple buffer
-     */
-    void insert(Network::PartitionId nesPartitionId, TupleBuffer buffer);
-
-    /**
-     * @brief trims all tuple buffers smaller than a given timetsamp
-     * @param timestamp
-     * @return success
-     */
-    bool trim(uint64_t timestamp);
-
-    /**
-     * @brief Return current storage size
-     * @return Current storage size
-     */
-    size_t getSize() const;
-
-    /**
-     * @brief Return the size of queue with a given nes partition id
-     * @param nesPartitionId destination id
-     * @return Given queue size
-     */
-    size_t getQueueSize(Network::PartitionId nesPartitionId) const;
-
-    /**
-     * @brief Return top element of the queue
-     * @param nesPartitionId destination id
-     * @return buffer storage unit
-     */
-    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(Network::PartitionId nesPartitionId) const;
-
-  private:
-    mutable std::mutex mutex;
-    std::unordered_map<Network::PartitionId, TupleBufferPriorityQueue> nesPartitionToTupleBufferQueueMapping;
-};
-
-using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
-
-/**
- * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
- */
 class BufferStorage : public AbstractBufferStorage {
 
   public:
     /**
      * @brief Constructor, which creates a buffer storage
      */
-    BufferStorage() = default;
+    BufferStorage(Network::NesPartition nesPartitionId);
 
     /**
-     * @brief Inserts a tuple buffer for a given nes partition id and query id
-     * @param queryId id of the pipeline
-     * @param nesPartitionId destination id
+     * @brief Inserts a tuple buffer for a given nes partition
+     * @param nesPartition destination
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer bufferPtr) override;
+    void insertBuffer(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer bufferPtr) override;
 
     /**
      * @brief Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
-     * @param queryId id of current query
+     * @param NesPartition destination
      * @param timestamp max timestamp of current epoch
-     * @return true in case of a success trimming
      */
-    bool trimBuffer(QueryId queryId, uint64_t timestamp) override;
+    bool trimBuffer(Network::NesPartition nesPartition, uint64_t timestamp) override;
 
     /**
      * @brief Return current storage size
@@ -117,23 +58,21 @@ class BufferStorage : public AbstractBufferStorage {
     size_t getStorageSize() const override;
 
     /**
-     * @brief Return the size of queue with a given queue id and nes partition id
-     * @param queryId id of the pipeline
-     * @param nesPartitionId destination id
+     * @brief Return the size of queue with a given  nes partition
+     * @param nesPartitionId destination
      * @return Given queue size
      */
-    size_t getQueueSize(QueryId queryId, Network::PartitionId nesPartitionId) const;
+    size_t getQueueSize(Network::NesPartition nesPartition) const;
 
     /**
      * @brief Return top element of the queue
-     * @param queryId id of the pipeline
-     * @param nesPartitionId destination id
+     * @param nesPartition destination
      * @return buffer storage unit
      */
-    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(QueryId queryId, Network::PartitionId nesPartitionId) const;
+    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(Network::NesPartition nesPartition) const;
 
   private:
-    std::unordered_map<QueryId, BufferStorageUnitPtr> buffers;
+    std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>> storage;
     mutable std::mutex mutex;
 };
 

@@ -15,11 +15,15 @@
 #ifndef NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 #define NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkForwardRefs.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 
 namespace NES::Runtime {
@@ -45,6 +49,7 @@ class WorkerContext {
     LocalBufferPoolPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
+    BufferStoragePtr bufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -107,6 +112,26 @@ class WorkerContext {
     void storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
+      * @brief This method creates a network storage for a thread
+      * @param nesPartitionId partition
+      */
+    void createStorage(Network::NesPartition nesPartition);
+
+    /**
+      * @brief This method inserts a tuple buffer into the storage
+      * @param nesPartition partition
+      * @param TupleBuffer tuple buffer
+      */
+    void insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer);
+
+    /**
+      * @brief This method deletes a tuple buffer from the storage
+      * @param nesPartition partition
+      * @param timestamp timestamp
+      */
+    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+
+    /**
      * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
      * @param type the termination type
@@ -140,6 +165,12 @@ class WorkerContext {
      * @return an output channel
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(Network::OperatorId ownerId);
+
+    /**
+    * @brief getter of buffer storage
+    * @return bufferStorage
+    */
+    BufferStoragePtr getBufferStorage();
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

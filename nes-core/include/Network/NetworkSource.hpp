@@ -17,7 +17,9 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/NodeLocation.hpp>
+#include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
@@ -51,6 +53,12 @@ class NetworkSource : public DataSource {
      * @return returns string describing the network source
      */
     std::string toString() const override;
+
+    /**
+      * @brief This method is called once an event is triggered for the current source
+      * @param event
+      */
+    void onEvent(Runtime::BaseEvent& event) override;
 
     /**
      * @brief Get source type
@@ -97,13 +105,6 @@ class NetworkSource : public DataSource {
      * @param message the reconfiguration message
      */
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
-
-    /**
-     * @brief API method called upon receiving an event (from downstream).
-     * @warning Can not send event upstream across network, when being called without worker context.
-     * @param event
-     */
-    void onEvent(Runtime::BaseEvent& event) override;
 
     /**
      * @brief API method called upon receiving an event, send event further upstream via Network Channel.

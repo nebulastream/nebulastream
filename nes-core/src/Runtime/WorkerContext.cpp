@@ -61,6 +61,18 @@ void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::Network
     dataChannels[id] = std::move(channel);
 }
 
+void WorkerContext::createStorage(Network::NesPartition nesPartition) {
+    this->bufferStorage = std::make_shared<BufferStorage>(nesPartition);
+}
+
+void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
+    bufferStorage->insertBuffer(nesPartition, buffer);
+}
+
+void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
+    bufferStorage->trimBuffer(nesPartition, timestamp);
+}
+
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
