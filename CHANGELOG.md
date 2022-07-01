@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.57](https://github.com/nebulastream/nebulastream/tree/v0.2.57) (2022-07-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.56...v0.2.57)
+
+#### Monitoring 🚥
+
+- Create Monitoring Namespace NES:Monitoring [\#1991](https://github.com/nebulastream/nebulastream/issues/1991)
+
 ## [v0.2.56](https://github.com/nebulastream/nebulastream/tree/v0.2.56) (2022-06-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.55...v0.2.56)
