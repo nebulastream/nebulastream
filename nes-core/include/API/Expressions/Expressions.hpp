@@ -95,5 +95,11 @@ ExpressionItem Attribute(std::string name);
  */
 ExpressionItem Attribute(std::string name, BasicType type);
 
+/**
+ * @brief WHEN(condition,value) allows to only return the value expression of condition is met.
+ * @param conditionExp, valueExp
+ */
+ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionNodePtr valueExp);
+
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

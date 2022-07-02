@@ -19,6 +19,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 namespace NES {
@@ -92,6 +93,10 @@ ExpressionItem Attribute(std::string fieldName) {
 
 ExpressionItem Attribute(std::string fieldName, BasicType type) {
     return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
+}
+
+ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionNodePtr valueExp) {
+    return WhenExpressionNode::create(std::move(conditionExp), std::move(valueExp));
 }
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() const { return expression; }

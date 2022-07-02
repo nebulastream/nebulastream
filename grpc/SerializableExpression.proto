@@ -45,6 +45,10 @@ message SerializableExpression {
     FieldAccessExpression field = 1;
     SerializableExpression assignment = 2;
   }
+  message WhenExpression{
+      SerializableExpression left = 1;
+      SerializableExpression right = 2;
+  }
   message AndExpression{
     SerializableExpression left = 1;
     SerializableExpression right = 2;

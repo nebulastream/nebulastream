@@ -19,6 +19,7 @@ add_source_files(nes-core
         UnaryExpressionNode.cpp
         FieldAssignmentExpressionNode.cpp
         FieldRenameExpressionNode.cpp
+        WhenExpressionNode.cpp
 )
 add_subdirectory(LogicalExpressions)
 add_subdirectory(ArithmeticalExpressions)
