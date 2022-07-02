@@ -247,10 +247,11 @@ class TestHarness {
      * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
-                                                         const CSVSourceTypePtr& csvSourceType,
-                                                         uint64_t parentId) {
-        auto workerConfiguration = WorkerConfiguration::create();
+    TestHarness&
+    attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
+                                            const CSVSourceTypePtr& csvSourceType,
+                                            uint64_t parentId,
+                                            WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
         workerConfiguration->physicalSources.add(physicalSource);
@@ -281,9 +282,8 @@ class TestHarness {
      * @param parentId id of the Test Harness worker to connect
      * Note: The parent id can not be greater than the current testharness worker id
      */
-    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
-
-        auto workerConfiguration = WorkerConfiguration::create();
+    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId,
+                                            WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
         workerConfiguration->parentId = parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
@@ -294,9 +294,9 @@ class TestHarness {
     /**
      * @brief add non source worker
      */
-    TestHarness& attachWorkerToCoordinator() {
+    TestHarness& attachWorkerToCoordinator(WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
         //We are assuming coordinator will start with id 1
-        return attachWorkerToWorkerWithId(1);
+        return attachWorkerToWorkerWithId(1, workerConfiguration);
     }
 
     uint64_t getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
@@ -394,14 +394,13 @@ class TestHarness {
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
-    TestHarness& setupTopology() {
+    TestHarness& setupTopology(CoordinatorConfigurationPtr coordinatorConfiguration = CoordinatorConfiguration::create()) {
 
         if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
 
         //Start Coordinator
-        auto coordinatorConfiguration = CoordinatorConfiguration::create();
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
