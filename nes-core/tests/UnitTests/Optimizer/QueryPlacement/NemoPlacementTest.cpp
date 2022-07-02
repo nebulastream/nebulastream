@@ -177,8 +177,11 @@ TEST_F(NemoPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
+    auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.distributedWindowChildThreshold = 1;
+    optimizerConfig.distributedWindowCombinerThreshold = 1;
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -193,6 +196,8 @@ TEST_F(NemoPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: " << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan " << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: shared plan " << sharedQueryPlan->getQueryPlan()->toString());
 
     //EXPECT_EQ(executionNodes.size(), 3UL);
 }

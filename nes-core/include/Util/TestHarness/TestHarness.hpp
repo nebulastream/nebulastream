@@ -544,6 +544,10 @@ class TestHarness {
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
+        NES_DEBUG("TestHarness: ExecutedQueryPlan: "
+                  << queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+        queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
+
         for (const auto& worker : testHarnessWorkerConfigurations) {
             worker->getNesWorker()->stop(false);
         }
@@ -560,6 +564,8 @@ class TestHarness {
         }
         return nesCoordinator->getTopology();
     };
+
+    const QueryPlanPtr& getQueryPlan() const { return queryPlan; }
 
   private:
     std::string getNextPhysicalSourceName() {
@@ -587,6 +593,7 @@ class TestHarness {
     bool validationDone;
     bool topologySetupDone;
     std::filesystem::path testHarnessResourcePath;
+    QueryPlanPtr queryPlan;
 };
 }// namespace NES
 

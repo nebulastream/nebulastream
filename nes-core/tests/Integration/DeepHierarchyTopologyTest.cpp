@@ -477,6 +477,9 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
+    uint64_t workerNo = 10;
+    std::vector<WorkerConfigurationPtr> workerConfigs;
+
     struct Test {
         uint64_t id;
         uint64_t value;
@@ -495,24 +498,37 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
+    auto coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(1);
+    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(1);
+
+    for (uint64_t i = 0; i < workerNo; i++) {
+        auto workerConfig = WorkerConfiguration::create();
+        workerConfig->queryCompiler.windowingStrategy.setValue(
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::DEFAULT);
+        workerConfigs.emplace_back(workerConfig);
+    }
+
+    uint64_t i = 0;
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
-                                  .attachWorkerToCoordinator()  // id=2
-                                  .attachWorkerToWorkerWithId(2)// id=3
-                                  .attachWorkerToWorkerWithId(2)// id=4
-                                  .attachWorkerToCoordinator()  // id=5
-                                  .attachWorkerToWorkerWithId(5)// id=6
-                                  .attachWorkerToWorkerWithId(5)// id=7
+                                  .attachWorkerToCoordinator(workerConfigs[i++])    // id=2
+                                  .attachWorkerToWorkerWithId(2, workerConfigs[i++])// id=3
+                                  .attachWorkerToWorkerWithId(2, workerConfigs[i++])// id=4
+                                  .attachWorkerToCoordinator(workerConfigs[i++])    // id=5
+                                  .attachWorkerToWorkerWithId(5, workerConfigs[i++])// id=6
+                                  .attachWorkerToWorkerWithId(5, workerConfigs[i++])// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 3, workerConfigs[i++])// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 4, workerConfigs[i++])// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6, workerConfigs[i++])// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7, workerConfigs[i++])// id=11
                                   .validate()
-                                  .setupTopology();
+                                  .setupTopology(coordinatorConfig);
+    ASSERT_EQ(i, workerConfigs.size());
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -539,6 +555,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+
+    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+    // check that the new window op "CENTRALWINDOW" is in use
+    ASSERT_TRUE(queryPlan->toString().find("WindowComputationOperator") != std::string::npos);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -638,6 +658,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNewWindowOperator) {
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+
+    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+    // check that the new window op "CENTRALWINDOW" is in use
+    ASSERT_TRUE(queryPlan->toString().find("CENTRALWINDOW") != std::string::npos);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
