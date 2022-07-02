@@ -35,6 +35,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
@@ -113,7 +114,16 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         serializeExpression(whenExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
         serializeExpression(whenExpressionNode->getRight(), serializedExpressionNode.mutable_right());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
-
+    } else if (expression->instanceOf<CaseExpressionNode>()) {
+        // serialize case expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize case expression " << expression->toString() << ".");
+        auto caseExpressionNode = expression->as<CaseExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_CaseExpression();
+        for (auto elem : caseExpressionNode->getLeft()) {
+            serializeExpression(elem, serializedExpressionNode.add_left());
+        }
+        serializeExpression(caseExpressionNode->getRight(), serializedExpressionNode.mutable_right());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else if (expression->instanceOf<GeographyExpressionNode>()) {
         // serialize geography expression node
         serializeGeographyExpressions(expression, serializedExpression);
@@ -189,13 +199,28 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(),
                                                                       fieldAssignmentExpression);
         } else if (serializedExpression->details().Is<SerializableExpression_WhenExpression>()) {
-            // de-serialize ADD expression node.
+            // de-serialize WHEN expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as When expression node.");
             auto serializedExpressionNode = SerializableExpression_WhenExpression();
             serializedExpression->details().UnpackTo(&serializedExpressionNode);
             auto left = deserializeExpression(serializedExpressionNode.release_left());
             auto right = deserializeExpression(serializedExpressionNode.release_right());
-            return AddExpressionNode::create(left, right);
+            return WhenExpressionNode::create(left, right);
+        } else if ( serializedExpression->details().Is<SerializableExpression_CaseExpression>()) {
+            // de-serialize CASE expression node.
+            NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Case expression node.");
+            auto serializedExpressionNode = SerializableExpression_CaseExpression();
+            serializedExpression->details().UnpackTo(&serializedExpressionNode);
+            std::vector<ExpressionNodePtr> leftExps;
+
+            //todo: deserialization might be possible more efficiently
+            for (int i = 0; i < serializedExpressionNode.left_size(); i++){
+                auto leftNode = serializedExpressionNode.left(i);
+                leftExps.push_back(deserializeExpression(&leftNode));
+            }
+            auto right = deserializeExpression(serializedExpressionNode.release_right());
+            return CaseExpressionNode::create(leftExps, right);
+
         } else {
             NES_FATAL_ERROR("ExpressionSerializationUtil: could not de-serialize this expression");
         }

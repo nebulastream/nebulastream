@@ -101,5 +101,12 @@ ExpressionItem Attribute(std::string name, BasicType type);
  */
 ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionNodePtr valueExp);
 
+/**
+ * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value)
+ * allows to return the value of the first WHEN expression from the list of which the condition is met, or the value of the second expression.
+ * @param conditionExp, valueExp
+ */
+ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionNodePtr valueExp);
+
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
