@@ -34,6 +34,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
@@ -104,6 +105,15 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(),
                             serializedFieldAssignmentExpression.mutable_assignment());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
+    } else if (expression->instanceOf<WhenExpressionNode>()) {
+        // serialize when expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize when expression " << expression->toString() << ".");
+        auto whenExpressionNode = expression->as<WhenExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_WhenExpression();
+        serializeExpression(whenExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
+        serializeExpression(whenExpressionNode->getRight(), serializedExpressionNode.mutable_right());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+
     } else if (expression->instanceOf<GeographyExpressionNode>()) {
         // serialize geography expression node
         serializeGeographyExpressions(expression, serializedExpression);
@@ -178,6 +188,14 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(),
                                                                       fieldAssignmentExpression);
+        } else if (serializedExpression->details().Is<SerializableExpression_WhenExpression>()) {
+            // de-serialize ADD expression node.
+            NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as When expression node.");
+            auto serializedExpressionNode = SerializableExpression_WhenExpression();
+            serializedExpression->details().UnpackTo(&serializedExpressionNode);
+            auto left = deserializeExpression(serializedExpressionNode.release_left());
+            auto right = deserializeExpression(serializedExpressionNode.release_right());
+            return AddExpressionNode::create(left, right);
         } else {
             NES_FATAL_ERROR("ExpressionSerializationUtil: could not de-serialize this expression");
         }
