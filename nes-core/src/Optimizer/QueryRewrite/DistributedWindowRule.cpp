@@ -147,7 +147,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     //add merger
     UnaryOperatorNodePtr mergerAssigner;
-    if (finalComputationAssigner->getChildren().size() >= 2) {
+    if (finalComputationAssigner->getChildren().size() >= windowDistributionCombinerThreshold) {
         auto sliceCombinerWindowAggregation = windowAggregation[0]->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
