@@ -49,6 +49,10 @@ message SerializableExpression {
       SerializableExpression left = 1;
       SerializableExpression right = 2;
   }
+  message CaseExpression{
+    repeated SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
   message AndExpression{
     SerializableExpression left = 1;
     SerializableExpression right = 2;

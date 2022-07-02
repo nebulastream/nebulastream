@@ -21,9 +21,9 @@ WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode
 WhenExpressionNode::WhenExpressionNode(WhenExpressionNode* other) : BinaryExpressionNode(other){}
 
 ExpressionNodePtr WhenExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto addNode = std::make_shared<WhenExpressionNode>(left->getStamp());
-    addNode->setChildren(left, right);
-    return addNode;
+    auto whenNode = std::make_shared<WhenExpressionNode>(left->getStamp());
+    whenNode->setChildren(left, right);
+    return whenNode;
 }
 
 void WhenExpressionNode::inferStamp(SchemaPtr schema) {
