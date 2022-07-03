@@ -246,4 +246,78 @@ TEST_F(IfExecutionTest, ifElseIfCondition) {
     ASSERT_EQ(function(), 23);
 }
 
+Value<> deeplyNestedIfElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(5);
+    if (iw < 8) {
+        if (iw > 6) {
+            iw = iw + 10;
+        } else {
+            if (iw < 6) {
+                if (iw == 5) {
+                    iw = iw + 5;
+                }
+            } 
+        }
+    }
+    else {
+        iw = iw + 20;
+    } 
+   return iw = iw + 2;
+}
+
+TEST_F(IfExecutionTest, deeplyNestedIfElseCondition) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return deeplyNestedIfElseCondition();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    // Todo print fails
+    // std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 12);
+}
+
+Value<> deeplyNestedIfElseIfCondition() {
+    Value value = Value(1);
+    Value iw = Value(5);
+    if (iw < 8) {
+            iw = iw + 10;
+    }
+    else {    
+        if (iw == 5) {
+            iw = iw + 5;
+        } else if (iw == 4) {
+            iw = iw + 4;
+        }
+    } 
+   return iw = iw + 2;
+}
+
+TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return deeplyNestedIfElseIfCondition();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    // Todo print fails
+    // std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 12);
+}
+
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

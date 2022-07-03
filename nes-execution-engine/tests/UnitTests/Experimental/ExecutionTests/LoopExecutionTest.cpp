@@ -114,4 +114,202 @@ TEST_F(LoopExecutionTest, sumLoopTestCF) {
     ASSERT_EQ(function(), 101);
 }
 
+Value<> ifSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            agg = agg + 10;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, ifSumLoopTest) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return ifSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 51);
+}
+
+Value<> ifElseSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            agg = agg + 10;
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return ifElseSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 56);
+}
+
+Value<> elseOnlySumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return elseOnlySumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
+Value<> nestedIfSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+                agg = agg + 10;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 41);
+}
+
+Value<> nestedIfElseSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+                agg = agg + 10;
+            } else {
+                agg = agg + 100;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfElseSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 146);
+}
+
+Value<> nestedElseOnlySumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+            } else {
+                agg = agg + 100;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
+
+TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedElseOnlySumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
