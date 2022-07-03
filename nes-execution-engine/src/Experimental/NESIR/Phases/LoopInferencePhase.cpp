@@ -60,7 +60,7 @@ LoopInferencePhase::Context::isCountedLoop(BasicBlockPtr preLoopBlock) {
     }
 
     auto upperBound = compareOperation->getRightInput();
-    if (upperBound->getOperationType() != Operations::Operation::ConstIntOp) {
+    if (upperBound->getOperationType() != Operations::Operation::ConstIntOp && upperBound->getOperationType() != Operations::Operation::BasicBlockArgument) {
         return nullptr;
     }
 

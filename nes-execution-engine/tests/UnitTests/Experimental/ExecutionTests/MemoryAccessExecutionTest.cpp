@@ -121,7 +121,8 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
 Value<Integer> memScan(Value<MemRef> ptr, Value<Integer> size) {
     Value<Integer> sum = 0;
     for (auto i = Value(0); i < size; i = i + 1) {
-        auto value = ptr.load<Integer>();
+        auto address = ptr + i * 8;
+        auto value = address.as<MemRef>().load<Integer>();
         sum = sum + value;
     }
     return sum;
@@ -147,8 +148,8 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
 
-    auto array = new int64_t[]{1, 1, 1, 1, 1, 1, 1};
-    ASSERT_EQ(function(7, array), 7);
+    auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
+    ASSERT_EQ(function(7, array), 28);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

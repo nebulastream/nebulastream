@@ -137,6 +137,8 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     execution = ssaCreationPhase.apply(std::move(execution));
     std::cout << *execution.get() << std::endl;
     auto ir = irCreationPhase.apply(execution);
+    //std::cout << ir->toString() << std::endl;
+    //ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};

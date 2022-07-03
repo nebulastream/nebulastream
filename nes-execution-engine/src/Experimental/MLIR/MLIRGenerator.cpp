@@ -679,10 +679,19 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOpera
 //==-- ARITHMETIC OPERATIONS --==//
 //==---------------------------==//
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addOp, ValueFrame& frame) {
+
     auto leftInput = frame.getValue(addOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOp->getRightInput()->getIdentifier());
-    if (addOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
-        || addOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
+    if (addOp->getLeftInput()->getStamp() == IR::Operations::INT8PTR) {
+        // if we add something to a ptr we have to use a llvm getelementptr
+        mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(getNameLoc("fieldAccess"),
+                                                                        mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
+                                                                        leftInput,
+                                                                        mlir::ArrayRef<mlir::Value>({rightInput}));
+        frame.setValue(addOp->getIdentifier(), elementAddress);
+
+    } else if (addOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
+               || addOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
 
         auto mlirAddOp = builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
                                                              leftInput.getType(),
