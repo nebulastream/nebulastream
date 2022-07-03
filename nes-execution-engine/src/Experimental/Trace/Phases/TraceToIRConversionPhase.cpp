@@ -234,8 +234,8 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
 
     // find control-flow merge block for if
     auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
-    //auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
-    // isCF = !isCF && (controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier());
+    auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
+    //isCF = !isCF && (controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier());
     if(controlFlowMergeBlockFalseCase) {
         if(controlFlowMergeBlockTrueCase->getIdentifier() != controlFlowMergeBlockFalseCase->getIdentifier()) {
             isSCF = false;
