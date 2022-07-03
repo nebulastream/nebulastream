@@ -9,6 +9,11 @@ target_link_libraries(execution-engine-if-execution-test
         nes-execution-engine)
 add_test(NAME execution-engine-expression-if-test COMMAND execution-engine-if-execution-test)
 
+add_executable(execution-engine-type-execution-test "TypeExecutionTest.cpp")
+target_link_libraries(execution-engine-type-execution-test
+        nes-execution-engine)
+add_test(NAME execution-engine-type-execution-test COMMAND execution-engine-type-execution-test)
+
 add_executable(execution-engine-loop-execution-test "LoopExecutionTest.cpp")
 target_link_libraries(execution-engine-loop-execution-test
         nes-execution-engine)

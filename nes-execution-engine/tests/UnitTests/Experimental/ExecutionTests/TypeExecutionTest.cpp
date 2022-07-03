@@ -38,6 +38,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -66,19 +67,16 @@ class IfExecutionTest : public testing::Test {
 
 };
 
-
-Value<> ifThenCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (value == 42) {
-        iw = iw + 1;
-    }
-    return iw + 42;
+Value<> negativeIntegerTest() {
+    Value four = Value(4);
+    Value five = Value(5);
+    Value minusOne = four - five;
+    return minusOne;
 }
 
-TEST_F(IfExecutionTest, ifConditionTest) {
+TEST_F(IfExecutionTest, negativeIntegerTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return ifThenCondition();
+        return negativeIntegerTest();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -91,23 +89,23 @@ TEST_F(IfExecutionTest, ifConditionTest) {
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 43);
+    ASSERT_EQ(function(), -1);
 }
 
-Value<> ifThenElseCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (value == 42) {
-        iw = iw + 1;
-    } else {
-        iw = iw + 42;
-    }
-    return iw + 42;
+Value<> unsignedIntegerTest() {
+    uint32_t four = 4;
+    uint32_t five = 4;
+    // Value unsignedFour = Value(four);
+    // Value unsignedFive = Value(five);
+    // Value minusOne = unsignedFour - unsignedFive;
+    // return minusOne;
+    return four;
 }
 
-TEST_F(IfExecutionTest, ifThenElseConditionTest) {
+// We should be able to create Values with unsigned ints, but currently we cannot.
+TEST_F(IfExecutionTest, DISABLED_unsignedIntegerTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-       return ifThenElseCondition();
+        return unsignedIntegerTest();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -117,28 +115,75 @@ TEST_F(IfExecutionTest, ifThenElseConditionTest) {
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 85);
+    ASSERT_EQ(function(), UINT32_MAX);
 }
 
-Value<> nestedIfThenElseCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (value == 42) {
+Value<> boolCompareTest() {
+    Value iw = Value(true);
+    if(iw == false) {
+        return iw + 41;
     } else {
-        if (iw == 8) {
-        } else {
-            iw = iw + 2;
-        }
+        return iw;
     }
-   return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
+// Should return 1, but returns 41 (Value(true) in interpreted as 0).
+TEST_F(IfExecutionTest, DISABLED_boolCompareTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return nestedIfThenElseCondition();
+        return boolCompareTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
+Value<> floatTest() {
+    // Value iw = Value(1.3);
+    // return iw;
+    return Value(1);
+}
+
+// Above approach, to return a float Value, does not work.
+TEST_F(IfExecutionTest, DISABLED_floatTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return floatTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
+Value<> mixBoolAndIntTest() {
+    Value boolValue = Value(true);
+    Value intValue = Value(4);
+    return boolValue + intValue;
+}
+
+// Should return 5, but returns 4. Could extend to check for bool-int edge cases
+TEST_F(IfExecutionTest, DISABLED_mixBoolAndIntTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return mixBoolAndIntTest();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -152,173 +197,6 @@ TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
-}
-
-Value<> nestedIfNoElseCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (value == 42) {
-        iw = iw + 4;
-    } else {
-        iw = iw + 9;
-        if (iw == 8) {
-            iw + 14;
-        }
-    }
-   return iw = iw + 2;
-}
-
-TEST_F(IfExecutionTest, nestedIFThenNoElse) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return nestedIfNoElseCondition();
-    });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 12);
-}
-
-Value<> doubleIfCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (iw == 8) {
-        // iw = iw + 14;
-    }
-    if (iw == 1) {
-        iw = iw + 20;
-    } 
-   return iw = iw + 2;
-}
-
-TEST_F(IfExecutionTest, doubleIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return doubleIfCondition();
-    });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 23);
-}
-
-Value<> ifElseIfCondition() {
-    Value value = Value(1);
-    Value iw = Value(1);
-    if (iw == 8) {
-        iw = iw + 14;
-    }
-    else if (iw == 1) {
-        iw = iw + 20;
-    } 
-   return iw = iw + 2;
-}
-
-TEST_F(IfExecutionTest, ifElseIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return ifElseIfCondition();
-    });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 23);
-}
-
-Value<> deeplyNestedIfElseCondition() {
-    Value value = Value(1);
-    Value iw = Value(5);
-    if (iw < 8) {
-        if (iw > 6) {
-            iw = iw + 10;
-        } else {
-            if (iw < 6) {
-                if (iw == 5) {
-                    iw = iw + 5;
-                }
-            } 
-        }
-    }
-    else {
-        iw = iw + 20;
-    } 
-   return iw = iw + 2;
-}
-
-TEST_F(IfExecutionTest, deeplyNestedIfElseCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return deeplyNestedIfElseCondition();
-    });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    // Todo print fails
-    // std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 12);
-}
-
-Value<> deeplyNestedIfElseIfCondition() {
-    Value value = Value(1);
-    Value iw = Value(5);
-    if (iw < 8) {
-            iw = iw + 10;
-    }
-    else {    
-        if (iw == 5) {
-            iw = iw + 5;
-        } else if (iw == 4) {
-            iw = iw + 4;
-        }
-    } 
-   return iw = iw + 2;
-}
-
-// Currently fails, because an empty block (Block 7) is created, during trace building.
-TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return deeplyNestedIfElseIfCondition();
-    });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    // Todo print fails
-    // std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 12);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
