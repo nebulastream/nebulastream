@@ -12,16 +12,11 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
-
-class GlobalAggregationState : public OperatorState {
-  public:
-    GlobalAggregationState() {}
-    std::vector<Value<MemRef>> threadLocalAggregationSlots;
-};
 
 class ThreadLocalAggregationState : public OperatorState {
   public:
@@ -34,12 +29,9 @@ Aggregation::Aggregation(std::vector<std::shared_ptr<AggregationFunction>> aggre
 
 void Aggregation::setup(ExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalAggregationState>();
-    auto state = aggregationFunctions[0]->createState();
-    auto val = Value<MemRef>(std::make_unique<MemRef>((int8_t*)state.get()));
-    val.ref = Trace::ValueRef(INT32_MAX, 10, IR::Operations::INT8PTR);
-
-    globalState->threadLocalAggregationSlots.push_back(val);
-    executionCtx.setGlobalOperatorState(this, std::move(globalState));
+    auto state = aggregationFunctions[0]->createGlobalState();
+    globalState->threadLocalAggregationSlots.emplace_back(std::move(state));
+    executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
 }
 
 void Aggregation::open(ExecutionContext& executionCtx, RecordBuffer&) const {
@@ -57,16 +49,29 @@ void Aggregation::execute(ExecutionContext& executionCtx, Record& record) const 
     }
 }
 
+void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t threadId){
+    auto gas = (GlobalAggregationState*)globalAggregationState;
+    return gas->threadLocalAggregationSlots[threadId].get();
+}
+
 void Aggregation::close(ExecutionContext& executionCtx, RecordBuffer&) const {
     auto localAggregationState = (ThreadLocalAggregationState*) executionCtx.getLocalState(this);
+
+    auto pipelineContext = executionCtx.getPipelineContext();
+    auto globalOperatorState = pipelineContext.getGlobalOperatorState(this);
+    auto threadLocalAggregationState =
+        FunctionCall<>("getThreadLocalAggregationState", getThreadLocalAggregationStateProxy,
+                       globalOperatorState, executionCtx.getWorkerContext().getWorkerId());
+
+    auto function = aggregationFunctions[0];
+    auto state = function->loadState(threadLocalAggregationState);
+    function->combine(state, localAggregationState->contexts[0]);
+    function->storeState(threadLocalAggregationState, state);
+    /*
     auto globalAggregationState = (GlobalAggregationState*) executionCtx.getGlobalState(this);
     for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
-        auto function = aggregationFunctions[aggIndex];
-        auto& stateRef = globalAggregationState->threadLocalAggregationSlots[0];
-        auto state = function->loadState(stateRef);
-        function->combine(state, localAggregationState->contexts[aggIndex]);
-        function->storeState(stateRef, state);
-    }
+
+    }*/
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

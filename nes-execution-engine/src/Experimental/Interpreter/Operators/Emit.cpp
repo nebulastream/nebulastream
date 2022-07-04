@@ -28,7 +28,7 @@ class EmitState : public OperatorState {
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
     // initialize state variable and create new buffer
-    auto resultBufferRef = ctx.allocateBuffer();
+    auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
     auto resultBuffer = RecordBuffer(resultMemoryLayout, resultBufferRef);
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
@@ -42,8 +42,8 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     // emit buffer if it reached the maximal capacity
     if (outputIndex >= maxRecordsPerBuffer) {
         resultBuffer.setNumRecords(emitState->outputIndex);
-        ctx.emitBuffer(resultBuffer);
-        auto resultBufferRef = ctx.allocateBuffer();
+        ctx.getPipelineContext().emitBuffer(resultBuffer);
+        auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultMemoryLayout, resultBufferRef);
         emitState->outputIndex = 0;
     }
@@ -54,7 +54,7 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     resultBuffer.setNumRecords(emitState->outputIndex);
-    ctx.emitBuffer(resultBuffer);
+    ctx.getPipelineContext().emitBuffer(resultBuffer);
 }
 
 Emit::Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout)

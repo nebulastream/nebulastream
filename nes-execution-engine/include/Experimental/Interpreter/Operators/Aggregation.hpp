@@ -15,10 +15,19 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
+#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class AggregationFunction;
+class AggregationState;
+
+class GlobalAggregationState : public OperatorState {
+  public:
+    GlobalAggregationState() {}
+    std::vector<std::unique_ptr<AggregationState>> threadLocalAggregationSlots;
+};
+
 class Aggregation : public ExecutableOperator {
   public:
     Aggregation(std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions);

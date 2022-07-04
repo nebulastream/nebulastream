@@ -35,7 +35,7 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-    { T::type } -> std::convertible_to<TypeCastable::Kind>;
+    { T::type } ->  std::convertible_to<TypeCastable::Kind>;
 };
 
 template<class X, class Y>
