@@ -55,6 +55,11 @@ DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
     return output;
 }
 
+DiskMetrics AbstractSystemResourcesReader::readDiskStatsBA01() {
+    DiskMetrics output{};
+    return output;
+}
+
 uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
     uint64_t output{};
     return output;

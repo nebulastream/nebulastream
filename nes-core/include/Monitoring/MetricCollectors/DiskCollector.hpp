@@ -27,6 +27,8 @@ class DiskCollector : public MetricCollector {
   public:
     explicit DiskCollector();
 
+    explicit DiskCollector(int test);
+
     /**
      * @brief Returns the type of metric collector
      * @return the metric collector type
@@ -51,6 +53,9 @@ class DiskCollector : public MetricCollector {
      * @return The metrics object
      */
     const MetricPtr readMetric() const override;
+
+    const MetricPtr readMetricBA01() const;
+
 
   private:
     AbstractSystemResourcesReaderPtr resourceReader;

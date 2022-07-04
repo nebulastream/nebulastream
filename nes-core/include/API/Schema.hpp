@@ -136,12 +136,6 @@ class Schema {
     [[nodiscard]] uint64_t getSize() const;
 
     /**
-     * @brief Returns the number of bytes all fields in this schema occupy.
-     * @return uint64_t
-     */
-    [[nodiscard]] uint64_t getSchemaSizeInBytes() const;
-
-    /**
      * @brief Checks if two Schemas are equal to each other.
      * @param schema
      * @param considerOrder takes into account if the order of fields in a schema matter.
@@ -218,6 +212,12 @@ class Schema {
     void setLayoutType(MemoryLayoutType layoutType);
 
     std::vector<AttributeFieldPtr> fields;
+
+    /**
+     * @brief Returns the number of bytes all fields in this schema occupy.
+     * @return uint64_t
+     */
+    [[nodiscard]] uint64_t getSchemaSizeInBytes() const;
 
   private:
     MemoryLayoutType layoutType;

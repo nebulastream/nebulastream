@@ -30,9 +30,16 @@ DiskCollector::DiskCollector()
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
+DiskCollector::DiskCollector(int test)
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(DiskMetrics::getSchemaBA01("")) {
+    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
+    std::cout << test;
+}
+
 MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }
 
-bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {       //in den Tuppelbuffer werden die Metriken geschrieben
     try {
         DiskMetrics measuredVal = resourceReader->readDiskStats();
         measuredVal.nodeId = getNodeId();
@@ -48,6 +55,12 @@ SchemaPtr DiskCollector::getSchema() { return schema; }
 
 const MetricPtr DiskCollector::readMetric() const {
     DiskMetrics metrics = resourceReader->readDiskStats();
+    metrics.nodeId = getNodeId();
+    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
+}
+
+const MetricPtr DiskCollector::readMetricBA01() const {
+    DiskMetrics metrics = resourceReader->readDiskStatsBA01();
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }

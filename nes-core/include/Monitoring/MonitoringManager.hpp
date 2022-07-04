@@ -104,7 +104,7 @@ class MonitoringManager {
 
     /**
      * @brief Register a monitoring plan for given nodes.
-     * @param nodeId
+     * @param nodeIdmonitoringPlan
      * @param monitoringPlan
      * @return True, if successful, else false
     */

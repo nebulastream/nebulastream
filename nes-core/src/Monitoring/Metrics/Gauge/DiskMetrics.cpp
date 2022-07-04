@@ -25,6 +25,24 @@ namespace NES {
 
 DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
+DiskMetrics::DiskMetrics(int test) : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0) {
+    std::cout << test;
+}
+
+//Konstruktor der nen Schema hat mit den gewünschten Metriken
+//
+
+SchemaPtr DiskMetrics::getSchemaBA01(const std::string& prefix) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "F_BSIZE", BasicType::UINT64)
+                           ->addField(prefix + "F_FRSIZE", BasicType::UINT64)
+                           ->addField(prefix + "F_BLOCKS", BasicType::UINT64)
+                           ->addField(prefix + "F_BFREE", BasicType::UINT64);
+    return schema;
+}
+
+
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
@@ -36,7 +54,7 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {                 //auch dynamisch machen
     auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
@@ -56,7 +74,7 @@ void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {                  //auch dynamisch
     auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 

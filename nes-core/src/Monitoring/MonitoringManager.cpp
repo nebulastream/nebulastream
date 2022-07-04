@@ -43,7 +43,7 @@
 #include <utility>
 
 namespace NES {
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,                                       //C
                                      TopologyPtr topology,
                                      QueryServicePtr queryService,
                                      QueryCatalogServicePtr catalogService)
@@ -68,7 +68,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring),
-      monitoringCollectors(MonitoringPlan::defaultCollectors()) {
+      monitoringCollectors(MonitoringPlan::defaultCollectors()) {           //defaultplan ändern zu individuellen
     this->queryService = queryService;
     this->catalogService = catalogService;
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));
@@ -181,17 +181,17 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {
+bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
     if (enableMonitoring) {
-        for (auto collectorType : monitoringCollectors) {
+        for (auto collectorType : monitoringCollectors) {   //Collectoren erzeugen die Logicalstreams;
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
             std::string logicalSourceName = NES::toString(metricType);
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
-            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
-        }
+            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));             //hier wird der Logicalstream erzeugt
+        }                                                                                                                //feste Schema, jeder MetricCollector hat ein festes Schema
         return true;
     }
     NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
