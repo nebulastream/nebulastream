@@ -14,6 +14,8 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -24,16 +26,27 @@
 #include <utility>
 namespace NES::Optimizer {
 
-TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
+const SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { return sourceCatalog; }
+
+const UdfCatalogPtr& TypeInferencePhaseContext::getUdfCatalog() const { return udfCatalog; }
+
+TypeInferencePhaseContext::TypeInferencePhaseContext(const SourceCatalogPtr& sourceCatalog, const UdfCatalogPtr& udfCatalog)
+    : sourceCatalog(sourceCatalog), udfCatalog(udfCatalog) {}
+
+TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(udfCatalog) {
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhasePtr TypeInferencePhase::create(SourceCatalogPtr sourceCatalog) {
-    return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
+TypeInferencePhasePtr TypeInferencePhase::create(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog) {
+    return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     try {
+
+        auto typeInferencePhaseContext = TypeInferencePhaseContext(sourceCatalog, udfCatalog);
+
         // first we have to check if all source operators have a correct source descriptors
         auto sources = queryPlan->getSourceOperators();
 
@@ -65,11 +78,12 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                                                                                      << " with schema: " << schema->toString());
             }
         }
+
         // now we have to infer the input and output schemas for the whole query.
         // to this end we call at each sink the infer method to propagate the schemata across the whole query.
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
-            if (!sink->inferSchema()) {
+            if (!sink->inferSchema(typeInferencePhaseContext)) {
                 throw log4cxx::helpers::Exception("TypeInferencePhase: Failed!");
             }
         }

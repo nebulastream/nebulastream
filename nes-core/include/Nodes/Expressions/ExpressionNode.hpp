@@ -18,6 +18,10 @@
 #include <memory>
 namespace NES {
 
+namespace Optimizer{
+class TypeInferencePhaseContext;
+}
+
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
@@ -49,7 +53,7 @@ class ExpressionNode : public Node {
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */
-    virtual void inferStamp(SchemaPtr schema);
+    virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema);
 
     /**
      * @brief returns the stamp as the data type which is produced by this expression.

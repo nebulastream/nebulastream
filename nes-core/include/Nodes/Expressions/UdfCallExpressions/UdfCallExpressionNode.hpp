@@ -49,7 +49,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     * @brief determine the stamp of the Udf call by checking the return type of the function
      * An error is thrown when no UDF descriptor is set.
     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
 
     std::string toString() const override;
 
