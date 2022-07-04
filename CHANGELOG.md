@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.58](https://github.com/nebulastream/nebulastream/tree/v0.2.58) (2022-07-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.57...v0.2.58)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Sending wrong Query Plan operators via rest [\#2850](https://github.com/nebulastream/nebulastream/issues/2850)
+
 ## [v0.2.57](https://github.com/nebulastream/nebulastream/tree/v0.2.57) (2022-07-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.56...v0.2.57)
