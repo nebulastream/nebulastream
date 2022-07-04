@@ -233,8 +233,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
         if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
-            edge["source"] =
-                web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
+            edge["source"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
         } else {
             edge["source"] =
                 web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
