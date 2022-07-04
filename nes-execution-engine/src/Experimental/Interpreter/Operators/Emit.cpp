@@ -26,14 +26,14 @@ class EmitState : public OperatorState {
     RecordBuffer resultBuffer;
 };
 
-void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::open(RuntimeExecutionContext& ctx, RecordBuffer&) const {
     // initialize state variable and create new buffer
     auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
     auto resultBuffer = RecordBuffer(resultMemoryLayout, resultBufferRef);
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
+void Emit::execute(RuntimeExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
@@ -49,7 +49,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     }
 }
 
-void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::close(RuntimeExecutionContext& ctx, RecordBuffer&) const {
     // emit current buffer and set the number of records
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;

@@ -37,7 +37,10 @@ SymbolicExecutionContext* initThreadSymbolicExecutionContext() {
  * @brief Checks if the symbolic execution context is initialized.
  * @return boolean
  */
-bool isInSymbolicExecution() { return threadLocalSymbolicExecutionContext != nullptr; }
+bool isInSymbolicExecution() {
+    return threadLocalSymbolicExecutionContext != nullptr; }
+void disableSymbolicExecution() {
+    threadLocalSymbolicExecutionContext = nullptr; }
 
 /**
  * @brief Returns the symbolic execution context.

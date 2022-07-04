@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Common/DataTypes/BasicTypes.hpp"
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>

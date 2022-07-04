@@ -21,7 +21,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Selection : public ExecutableOperator {
   public:
     Selection(ExpressionPtr expression) : expression(expression){};
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void execute(RuntimeExecutionContext& ctx, Record& record) const override;
 
   private:
     const ExpressionPtr expression;

@@ -21,9 +21,9 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Emit : public ExecutableOperator {
   public:
     Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout);
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void execute(RuntimeExecutionContext& ctx, Record& record) const override;
+    void close(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
   private:
     const uint64_t maxRecordsPerBuffer = 10;
     const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;

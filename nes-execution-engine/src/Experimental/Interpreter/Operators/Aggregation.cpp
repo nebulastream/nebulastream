@@ -27,14 +27,15 @@ class ThreadLocalAggregationState : public OperatorState {
 Aggregation::Aggregation(std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions)
     : aggregationFunctions(aggregationFunctions) {}
 
-void Aggregation::setup(ExecutionContext& executionCtx) const {
+void Aggregation::setup(RuntimeExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalAggregationState>();
     auto state = aggregationFunctions[0]->createGlobalState();
     globalState->threadLocalAggregationSlots.emplace_back(std::move(state));
     executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
+    Operator::setup(executionCtx);
 }
 
-void Aggregation::open(ExecutionContext& executionCtx, RecordBuffer&) const {
+void Aggregation::open(RuntimeExecutionContext& executionCtx, RecordBuffer&) const {
     auto threadLocalState = std::make_unique<ThreadLocalAggregationState>();
     for (auto aggregationFunction : aggregationFunctions) {
         threadLocalState->contexts.push_back(aggregationFunction->createState());
@@ -42,7 +43,7 @@ void Aggregation::open(ExecutionContext& executionCtx, RecordBuffer&) const {
     executionCtx.setLocalOperatorState(this, std::move(threadLocalState));
 }
 
-void Aggregation::execute(ExecutionContext& executionCtx, Record& record) const {
+void Aggregation::execute(RuntimeExecutionContext& executionCtx, Record& record) const {
     auto aggregationState = (ThreadLocalAggregationState*) executionCtx.getLocalState(this);
     for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
         aggregationFunctions[aggIndex]->liftCombine(aggregationState->contexts[aggIndex], record);
@@ -54,7 +55,7 @@ void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t
     return gas->threadLocalAggregationSlots[threadId].get();
 }
 
-void Aggregation::close(ExecutionContext& executionCtx, RecordBuffer&) const {
+void Aggregation::close(RuntimeExecutionContext& executionCtx, RecordBuffer&) const {
     auto localAggregationState = (ThreadLocalAggregationState*) executionCtx.getLocalState(this);
 
     auto pipelineContext = executionCtx.getPipelineContext();

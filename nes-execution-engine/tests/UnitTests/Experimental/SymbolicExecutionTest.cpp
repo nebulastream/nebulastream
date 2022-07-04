@@ -700,7 +700,7 @@ TEST_F(SymbolicExecutionTest, emitQueryTest) {
     memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
     wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);
@@ -742,7 +742,7 @@ TEST_F(SymbolicExecutionTest, selectionQueryTest) {
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
     wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);

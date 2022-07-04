@@ -16,22 +16,22 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/Runtime/ExecutionContext.hpp>
+#include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void ExecutionContext::setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
+void RuntimeExecutionContext::setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
     localStateMap.insert(std::make_pair(op, std::move(state)));
 }
 
-void ExecutionContext::setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
+void RuntimeExecutionContext::setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
     globalStateMap.insert(std::make_pair(op, std::move(state)));
 }
 
-OperatorState* ExecutionContext::getLocalState(const Operator* op) {
+OperatorState* RuntimeExecutionContext::getLocalState(const Operator* op) {
     auto& value = localStateMap[op];
     return value.get();
 }
@@ -42,23 +42,23 @@ OperatorState* ExecutionContext::getLocalState(const Operator* op) {
 //}
 
 void* getWorkerContextProxy(void* executionContextPtr) {
-    auto executionContext = (Runtime::Execution::ExecutionContext*) executionContextPtr;
+    auto executionContext = (Runtime::Execution::RuntimeExecutionContext*) executionContextPtr;
     return executionContext->getWorkerContext();
 }
 
-WorkerContext ExecutionContext::getWorkerContext() {
+WorkerContext RuntimeExecutionContext::getWorkerContext() {
     auto workerContextRef = FunctionCall<>("getWorkerContext", getWorkerContextProxy, executionContext);
     return WorkerContext(workerContextRef);
 }
 
-ExecutionContext::ExecutionContext(Value<MemRef> executionContext) : executionContext(executionContext) {}
+RuntimeExecutionContext::RuntimeExecutionContext(Value<MemRef> executionContext) : executionContext(executionContext) {}
 
 void* getPipelineContextProxy(void* executionContextPtr) {
-    auto executionContext = (Runtime::Execution::ExecutionContext*) executionContextPtr;
+    auto executionContext = (Runtime::Execution::RuntimeExecutionContext*) executionContextPtr;
     return executionContext->getPipelineContext();
 }
 
-PipelineContext ExecutionContext::getPipelineContext() {
+PipelineContext RuntimeExecutionContext::getPipelineContext() {
     auto pipelineContextRef = FunctionCall<>("getPipelineContext", getPipelineContextProxy, executionContext);
     return PipelineContext(pipelineContextRef);
 }

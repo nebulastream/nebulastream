@@ -17,7 +17,7 @@
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer

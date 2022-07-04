@@ -649,7 +649,7 @@ TEST_F(TraceTest, emitQueryTest) {
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
     wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);
@@ -691,7 +691,7 @@ TEST_F(TraceTest, selectionQueryTest) {
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
     wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);

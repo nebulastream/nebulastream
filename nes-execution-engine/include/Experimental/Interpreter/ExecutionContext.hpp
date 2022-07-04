@@ -30,9 +30,9 @@ class OperatorState {
   public:
     virtual ~OperatorState() = default;
 };
-class ExecutionContext {
+class RuntimeExecutionContext {
   public:
-    ExecutionContext(Value<MemRef> executionContext);
+    RuntimeExecutionContext(Value<MemRef> executionContext);
     void setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
     void setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(const Operator* op);

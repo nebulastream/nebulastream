@@ -13,6 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
+#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
+#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
@@ -28,11 +31,8 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Runtime/ExecutionContext.hpp>
-#include <Experimental/Runtime/PipelineContext.hpp>
-#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
-#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
+#include <Experimental/Runtime/RuntimeExecutionContext.hpp>
+#include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -106,7 +106,7 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
     memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
     wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX);
 
     auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);
@@ -139,13 +139,13 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
-    auto runtimePipelineContext = std::make_shared<Runtime::Execution::PipelineContext>();
+    auto runtimePipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    auto runtimeExecutionContext = Runtime::Execution::ExecutionContext(runtimeWorkerContext.get(), runtimePipelineContext.get());
+    auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(runtimeWorkerContext.get(), runtimePipelineContext.get());
     auto runtimeExecutionContextRef = Value<MemRef>(std::make_unique<MemRef>(MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Trace::ValueRef(INT32_MAX, 3, IR::Operations::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(runtimeExecutionContextRef);
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(runtimeExecutionContextRef);
 
     aggregation->setup(executionContext);
 
@@ -201,6 +201,7 @@ TEST_F(QueryExecutionTest, aggQueryTest2) {
     auto executionEngine = CompilationBasedPipelineExecutionEngine();
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
+
     auto executablePipeline = executionEngine.compile(pipeline);
 
     auto buffer = bm->getBufferBlocking();
@@ -209,7 +210,7 @@ TEST_F(QueryExecutionTest, aggQueryTest2) {
         dynamicBuffer[i]["f1"].write((uint64_t) 1);
     }
     dynamicBuffer.setNumberOfTuples(10);
-
+    executablePipeline->setup();
     //function((void*) &runtimeExecutionContext, std::addressof(buffer));
     executablePipeline->execute(*runtimeWorkerContext, buffer);
     //ASSERT_EQ(sumState->sum, (int64_t) 10);

@@ -31,10 +31,10 @@ class GlobalAggregationState : public OperatorState {
 class Aggregation : public ExecutableOperator {
   public:
     Aggregation(std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions);
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void setup(RuntimeExecutionContext& executionCtx) const override;
+    void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void execute(RuntimeExecutionContext& ctx, Record& record) const override;
   private:
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
 };

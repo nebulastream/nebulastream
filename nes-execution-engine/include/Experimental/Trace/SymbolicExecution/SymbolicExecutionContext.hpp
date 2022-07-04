@@ -68,6 +68,7 @@ class SymbolicExecutionContext {
  */
 SymbolicExecutionContext* getThreadLocalSymbolicExecutionContext();
 SymbolicExecutionContext* initThreadSymbolicExecutionContext();
+void disableSymbolicExecution();
 /**
  * @brief Indicates if the symbolic execution is active.
  * @return true if execution is symbolic
@@ -84,10 +85,12 @@ void initThreadLocalTraceContext();
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunctionSymbolically(const Functor func) {
     auto symbolicExecution = initThreadSymbolicExecutionContext();
-    return symbolicExecution->apply([&func] {
+    auto result = symbolicExecution->apply([&func] {
         func();
         return createNextRef(IR::Operations::VOID);
     });
+    disableSymbolicExecution();
+    return result;
 }
 
 template<typename Functor>
@@ -97,6 +100,7 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functo
         auto res = func();
         return res.ref;
     });
+    disableSymbolicExecution();
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Trace

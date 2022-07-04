@@ -222,6 +222,7 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
             auto proxyFunctionsIR =
                 llvm::parseIRFile("/home/rudi/mlir/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
+
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
             llvmIRModule->print(llvm::errs(), nullptr);

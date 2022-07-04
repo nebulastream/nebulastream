@@ -2,7 +2,7 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/Runtime/PipelineContext.hpp>
+#include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -10,7 +10,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
 void emitBufferProxy(void* pipelineContext, void* tupleBuffer) {
-    auto* pc = (Runtime::Execution::PipelineContext*) pipelineContext;
+    auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
     pc->dispatchBuffer(*tb);
     delete tb;
@@ -22,13 +22,13 @@ void PipelineContext::emitBuffer(const RecordBuffer& rb) {
 
 void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState) {
     // this should not be called during trace.
-    auto ctx = (Runtime::Execution::PipelineContext*) pipelineContextRef.value->value;
+    auto ctx = (Runtime::Execution::RuntimePipelineContext*) pipelineContextRef.value->value;
     auto tag = ctx->registerGlobalOperatorState(std::move(operatorState));
     this->operatorIndexMap[operatorPtr] = tag;
 }
 
 void* getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
-    auto* pc = (Runtime::Execution::PipelineContext*) pipelineContext;
+    auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     return pc->getGlobalOperatorState(tag);
 }
 

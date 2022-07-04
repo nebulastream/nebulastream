@@ -13,6 +13,6 @@
 
 
 add_source_files(nes-execution-engine
-        PipelineContext.cpp
-        ExecutionContext.cpp
+        RuntimePipelineContext.cpp
+        RuntimeExecutionContext.cpp
         )

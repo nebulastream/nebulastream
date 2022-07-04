@@ -1,5 +1,5 @@
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_PIPELINECONTEXT_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_PIPELINECONTEXT_HPP_
+#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
+#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
 #include <Runtime/TupleBuffer.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <memory>
@@ -10,12 +10,12 @@ namespace NES::Runtime::Execution {
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the Runtime.
  * Via the context, the compile code is able to allocate new TupleBuffers and to emit tuple buffers to the Runtime.
  */
-class PipelineContext : public std::enable_shared_from_this<PipelineContext> {
+class RuntimePipelineContext : public std::enable_shared_from_this<RuntimePipelineContext> {
   public:
     using OperatorStateTag = uint32_t;
-    PipelineContext::OperatorStateTag
+    RuntimePipelineContext::OperatorStateTag
     registerGlobalOperatorState(std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState);
-    ExecutionEngine::Experimental::Interpreter::OperatorState* getGlobalOperatorState(PipelineContext::OperatorStateTag tag);
+    __attribute__((always_inline)) ExecutionEngine::Experimental::Interpreter::OperatorState* getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag);
     void dispatchBuffer(Runtime::TupleBuffer& tb);
 
   private:
@@ -24,4 +24,4 @@ class PipelineContext : public std::enable_shared_from_this<PipelineContext> {
 
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_PIPELINECONTEXT_HPP_
+#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
