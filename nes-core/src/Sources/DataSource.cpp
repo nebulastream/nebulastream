@@ -39,6 +39,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include "Runtime/RuntimeForwardRefs.hpp"
 #include <utility>
 using namespace std::string_literals;
 namespace NES {
@@ -48,7 +49,7 @@ std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExec
 }
 
 void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
-    successorModifyMutex.lock();
+    std::unique_lock lock(successorModifyMutex);
     for (auto& pipe : newPipelines) {
         executableSuccessors.push_back(pipe);
     }
@@ -98,14 +99,24 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
+    std::unique_lock lock(successorModifyMutex);
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         //find the queue to which this sources pushes
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
-            NES_DEBUG("push task for queueid=" << queueId << " successor=" << &successor);
-            queryManager->addWorkForNextPipeline(buffer, successor, queueId++);
+            //            NES_DEBUG("push task for queueid=" << queueId << " successor=" << &successor);
+            if (auto nextPipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&successor); nextPipeline) {
+                if (!(*nextPipeline)->isRunning()) {
+
+                    // we ignore task if the pipeline is not running anymore.
+                    NES_WARNING(
+                        "emitWork: Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
+                } else {
+                    queryManager->addWorkForNextPipeline(buffer, successor, queueId++);
+                }
+            }
         }
     }
 }
@@ -285,6 +296,20 @@ void DataSource::close() {
 }
 
 void DataSource::runningRoutine() {
+    std::string filename = "/tmp/startFile";
+    if (std::filesystem::exists(filename.c_str())) {
+        bool success = std::filesystem::remove(filename.c_str());
+    }
+
+    while (true) {
+        if (std::filesystem::exists(filename)) {
+            std::cout << "file exists now" << std::endl;
+            break;
+        }
+        sleep(1);
+        std::cout << "file NOT exists < " << std::endl;
+    }
+
     try {
         if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
