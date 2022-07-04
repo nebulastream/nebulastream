@@ -26,12 +26,25 @@ class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class TypeInferencePhaseContext {
+  public:
+    TypeInferencePhaseContext(const SourceCatalogPtr& sourceCatalog, const UdfCatalogPtr& udfCatalog);
+    const SourceCatalogPtr& getSourceCatalog() const;
+    const UdfCatalogPtr& getUdfCatalog() const;
+
+  private:
+    const SourceCatalogPtr sourceCatalog;
+    const UdfCatalogPtr udfCatalog;
+};
 
 /**
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
@@ -43,7 +56,7 @@ class TypeInferencePhase {
      * @brief Factory method to create a type inference phase.
      * @return TypeInferencePhasePtr
      */
-    static TypeInferencePhasePtr create(SourceCatalogPtr sourceCatalog);
+    static TypeInferencePhasePtr create(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -65,8 +78,9 @@ class TypeInferencePhase {
      * @return SourceDescriptorPtr
      */
     SourceDescriptorPtr createSourceDescriptor(std::string sourceName);
-    explicit TypeInferencePhase(SourceCatalogPtr sourceCatalog);
+    explicit TypeInferencePhase(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog);
     SourceCatalogPtr sourceCatalog;
+    UdfCatalogPtr udfCatalog;
 };
 }// namespace NES::Optimizer
 

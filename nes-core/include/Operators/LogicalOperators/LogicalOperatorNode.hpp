@@ -27,6 +27,7 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
+class TypeInferencePhaseContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 }// namespace NES::Optimizer
@@ -89,7 +90,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
-    virtual bool inferSchema() = 0;
+    virtual bool inferSchema(const Optimizer::TypeInferencePhaseContext& ctx) = 0;
 
   protected:
     Optimizer::QuerySignaturePtr z3Signature;

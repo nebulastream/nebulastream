@@ -17,6 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <utility>
 
 namespace NES {
@@ -39,20 +40,21 @@ void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::v
     functionArguments = std::move(functionArgs);
 }
 
-void UdfCallExpressionNode::inferStamp(SchemaPtr schema) {
+void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
     auto left = getUdfName();
-    left->inferStamp(schema);
-
+    left->inferStamp(ctx, schema);
+    ctx.getUdfCatalog()->
     if (!left->getStamp()->isCharArray()) {
         throw std::logic_error(
             "UdfCallExpressionNode: Error during stamp inference. Type needs to be Text but Left was:"
             + left->getStamp()->toString());
     }
-    if (pythonUdfDescriptorPtr == nullptr)
-        throw std::logic_error(
-            "UdfCallExpressionNode: Error during stamp inference. No UdfDescriptor was set");
-    else
+    if (pythonUdfDescriptorPtr == nullptr) {
+        throw std::logic_error("UdfCallExpressionNode: Error during stamp inference. No UdfDescriptor was set");
+    }
+    else {
         stamp = pythonUdfDescriptorPtr->getReturnType();
+    }
 }
 
 std::string UdfCallExpressionNode::toString() const {
