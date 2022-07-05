@@ -2000,10 +2000,8 @@ class JSONSourceProxy : public JSONSource {
 TEST_F(SourceTest, testJSONSourceRegion) {
     SchemaPtr schemaRegion = Schema::create() // TODO move to setup method
         ->addField("R_REGIONKEY", INT64)
-        ->addField("R_NAME", CHAR) // TODO string
-        //->addField("R_NAME", DataTypeFactory::createFixedChar(16))
-        ->addField("R_COMMENT", CHAR);
-        //->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
+        ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
+        ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
 
     std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.json";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();

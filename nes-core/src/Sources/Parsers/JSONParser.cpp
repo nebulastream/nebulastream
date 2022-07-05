@@ -78,9 +78,19 @@ bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
         char c = str.at(0);
         tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
     } else if (dataType->isCharArray()) {
-        // TODO
-        NES_ERROR("Invalid DataType: " << dataType);
-        throw std::logic_error("DataType string/char array not supported");
+        // TODO one cast to rule them all?
+        std::string_view value = valueResult[jsonKey];
+        const char* p = std::string(value).c_str();
+        std::cout << "char*: " << p << std::endl;
+        size_t len = strlen(p); // TODO must be as specified in schema
+        std::cout << "len: " << len << std::endl;
+        char charArray[len];
+        strcpy(charArray, p);
+        std::cout << "char[]: " << charArray << std::endl;
+        tupleBuffer[tupleIndex][fieldIndex].write<const char*>(charArray);// TODO @Dimitrios
+        //tupleBuffer[tupleIndex][fieldIndex].write<char []>(charArray);
+        //NES_ERROR("Invalid DataType: " << dataType);
+        //throw std::logic_error("DataType string/char array not supported");
     } else if (dataType->isFloat()) {// TODO safe?
         double value = valueResult[jsonKey];
         tupleBuffer[tupleIndex][fieldIndex].write<double>(value);

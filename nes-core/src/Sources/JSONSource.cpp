@@ -85,8 +85,11 @@ void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) 
             tupleIndex++;
         }
         std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
-        // TODO: verify that tuples were actually written (iterate through buffer?)
-        //Runtime::MemoryLayouts::DynamicTupleBuffer::TupleIterator it = buffer.begin();
+        int j = 1;
+        for (auto tuple : buffer) {
+            std::cout << "Tuple " << j << ": " << tuple.toString(schema) <<std::endl;
+            j++;
+        }
         std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
     } else {
         NES_ERROR("Logic not yet implemented")
