@@ -28,7 +28,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
-    statisticsFile.open("latency" + std::to_string(queueId) + ".csv", std::ios::out);
+    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
     statisticsFile << "latency\n";
 }
 
