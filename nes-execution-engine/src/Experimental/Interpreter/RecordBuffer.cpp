@@ -11,8 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/Record.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operations/AddOp.hpp>
 #include <Experimental/Interpreter/Operations/AndOp.hpp>
@@ -24,26 +22,29 @@
 #include <Experimental/Interpreter/Operations/OrOp.hpp>
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
 #include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Experimental/Interpreter/Record.hpp>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-RecordBuffer::RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> tupleBufferRef)
-    : memoryLayout(memoryLayout), tupleBufferRef(tupleBufferRef) {}
+RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
 Value<Integer> RecordBuffer::getNumRecords() {
-    return FunctionCall<>("TupleBuffer.getNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples, tupleBufferRef);
+    return FunctionCall<>("TupleBuffer.getNumberOfTuples",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
+                          tupleBufferRef);
 }
 
-Record RecordBuffer::read(Value<Integer> recordIndex) {
+Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<Integer> recordIndex) {
     // read all fields
     // TODO add support for columnar layout
-    auto fieldSizes = memoryLayout->getFieldSizes();
-    auto tupleSize = memoryLayout->getTupleSize();
-    auto bufferAddress = getBuffer();
+    auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
+    auto tupleSize = rowLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;
-    for (auto fieldSize : fieldSizes) {
-        auto fieldOffset = tupleSize * recordIndex + fieldSize;
-        auto fieldAddress = bufferAddress + fieldOffset;
+    for (auto fieldOffset : rowLayout->getFieldOffSets()) {
+        auto offset = tupleSize * recordIndex + fieldOffset ;
+        auto fieldAddress = bufferAddress + offset;
         auto memRef = fieldAddress.as<MemRef>();
         auto value = memRef.load<Integer>();
         fieldValues.emplace_back(value);
@@ -51,7 +52,7 @@ Record RecordBuffer::read(Value<Integer> recordIndex) {
     return Record(fieldValues);
 }
 
-void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
+void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<Integer> recordIndex, Record& rec) {
     auto fieldSizes = memoryLayout->getFieldSizes();
     auto tupleSize = memoryLayout->getTupleSize();
     auto bufferAddress = getBuffer();
@@ -64,7 +65,10 @@ void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
     }
 }
 void RecordBuffer::setNumRecords(Value<Integer> value) {
-    FunctionCall<>("TupleBuffer.setNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
+    FunctionCall<>("TupleBuffer.setNumberOfTuples",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
+                   tupleBufferRef,
+                   value);
 }
 Value<MemRef> RecordBuffer::getBuffer() {
     return FunctionCall<>("TupleBuffer.getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);

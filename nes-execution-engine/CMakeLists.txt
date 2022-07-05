@@ -14,14 +14,21 @@
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(../cmake/LLVMIRUtil.cmake)
-add_library(nes-runtime /home/pgrulich/projects/nes/nebulastream/nes-execution-engine/src/Experimental/Interpreter/PipelineContext.cpp /home/pgrulich/projects/nes/nebulastream/nes-execution-engine/src/Experimental/Runtime/RuntimePipelineContext.cpp)
+
+add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
 target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_include_directories(nes-runtime PUBLIC /home/pgrulich/projects/nes/nebulastream/nes-core/include)
-target_include_directories(nes-runtime PUBLIC /home/pgrulich/projects/nes/nebulastream/nes-common/include)
+target_link_libraries(nes-runtime PUBLIC nes)
+target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
 set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-llvmir_attach_bc_target(qux_bc nes-runtime)
-llvmir_attach_link_target(bar_llvmlink qux_bc)
-llvmir_attach_opt_pass_target(bar_llvmlink_opt bar_llvmlink --inline -S -O3)
+llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
+llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
+llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link --inline -S -O3)
+get_property(fancy_lib_location TARGET nes-runtime_opt PROPERTY LOCATION)
+message (STATUS "fancy_lib_location == ${fancy_lib_location}")
+get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
+get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
+message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
 # Set Sources and Headers
 add_subdirectory(src)

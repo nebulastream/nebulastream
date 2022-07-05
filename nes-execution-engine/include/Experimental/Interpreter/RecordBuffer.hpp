@@ -26,15 +26,12 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Record;
 class RecordBuffer {
   public:
-    explicit RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> tupleBufferRef);
+    explicit RecordBuffer(Value<MemRef> tupleBufferRef);
     ~RecordBuffer() = default;
-    Record read(Value<Integer> recordIndex);
+    Record read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<Integer> recordIndex);
     Value<Integer> getNumRecords();
     Value<MemRef> getBuffer();
-    void write(Value<Integer> recordIndex, Record& record);
-
-  private:
-    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<Integer> recordIndex, Record& record);
 
   public:
     Value<MemRef> tupleBufferRef;

@@ -26,4 +26,6 @@ void ExecutablePipeline::setup() {
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
 }
 
+std::shared_ptr<Runtime::Execution::RuntimePipelineContext> ExecutablePipeline::getExecutionContext() { return executionContext; }
+
 }// namespace NES::ExecutionEngine::Experimental

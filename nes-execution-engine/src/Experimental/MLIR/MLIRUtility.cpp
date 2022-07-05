@@ -225,14 +225,14 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
 
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::errs(), nullptr);
+            llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     } else {
         printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-             llvmIRModule->print(llvm::errs(), nullptr);
+             llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     }
@@ -281,7 +281,7 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
     printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
         auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
         auto optimizedModule = optPipeline(llvmIRModule);
-        llvmIRModule->print(llvm::errs(), nullptr);
+        llvmIRModule->print(llvm::outs(), nullptr);
         return optimizedModule;
     };
 
