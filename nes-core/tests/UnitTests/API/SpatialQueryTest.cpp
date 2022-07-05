@@ -14,8 +14,6 @@
 
 #include <gtest/gtest.h>
 #include <API/QueryAPI.hpp>
-//#include <API/Schema.hpp>
-//#include <Catalogs/Source/LogicalSource.hpp>
 #include <NesBaseTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
