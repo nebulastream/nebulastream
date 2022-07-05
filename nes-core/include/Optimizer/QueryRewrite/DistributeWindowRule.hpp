@@ -28,6 +28,12 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class WindowOperatorNode;
 using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 
+class WatermarkAssignerLogicalOperatorNode;
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -94,15 +100,17 @@ class DistributeWindowRule : public BaseRewriteRule {
      * @param windowDistributionCombinerThreshold The number of child nodes from which on we will introduce combiner
      * @return DistributeWindowRulePtr
      */
-    static DistributeWindowRulePtr create(Configurations::OptimizerConfiguration configuration);
+    static DistributeWindowRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topologyNode);
     virtual ~DistributeWindowRule() = default;
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
     void addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator);
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
+    getMergerNodes(OperatorNodePtr operatorNode);
 
   private:
-    explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration);
+    explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
     void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
 
@@ -111,6 +119,7 @@ class DistributeWindowRule : public BaseRewriteRule {
     uint64_t windowDistributionChildrenThreshold;
     // The number of child nodes from which on we will introduce combiner
     uint64_t windowDistributionCombinerThreshold;
+    TopologyPtr topology;
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_

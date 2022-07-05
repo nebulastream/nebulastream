@@ -339,6 +339,8 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::string getNodeSourceLocation();
 
+    friend std::ostream& operator<<(std::ostream& os, const NodePtr& node);
+
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes

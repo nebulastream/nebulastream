@@ -197,7 +197,7 @@ TEST_F(NemoPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: " << topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan " << globalExecutionPlan->getAsString());
-    NES_DEBUG("NemoPlacementTest: shared plan " << sharedQueryPlan->getQueryPlan()->toString());
+    NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
     //EXPECT_EQ(executionNodes.size(), 3UL);
 }

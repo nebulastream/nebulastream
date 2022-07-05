@@ -690,4 +690,6 @@ std::vector<std::string> Node::toMultilineString() {
     return lines;
 }
 
+std::ostream& operator<<(std::ostream& os, const NodePtr& node) { return os << node->toString(); }
+
 }// namespace NES
