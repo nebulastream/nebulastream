@@ -24,6 +24,7 @@
 #include <memory>
 #include <queue>
 #include <unordered_map>
+#include <fstream>
 
 namespace NES::Runtime {
 
@@ -55,6 +56,8 @@ class WorkerContext {
     ///queue of tuple buffers that were processed by the thread
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
 
+    std::ofstream statisticsFile;
+
   public:
     explicit WorkerContext(uint32_t workerId,
                            const BufferManagerPtr& bufferManager,
@@ -74,6 +77,8 @@ class WorkerContext {
      * @return std::shared_ptr<AbstractBufferProvider>
      */
     std::shared_ptr<AbstractBufferProvider> getBufferProvider();
+
+    void printStatistics(Runtime::TupleBuffer& inputBuffer);
 
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
