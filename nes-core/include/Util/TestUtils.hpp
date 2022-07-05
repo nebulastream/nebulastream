@@ -118,6 +118,7 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 [[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
 
+// 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
     return "--optimizer.performDistributedWindowOptimization=false";
 }
