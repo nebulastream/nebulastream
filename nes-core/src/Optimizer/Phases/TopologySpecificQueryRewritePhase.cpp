@@ -35,7 +35,7 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr
     : topology(topology) {
     logicalSourceExpansionRule =
         LogicalSourceExpansionRule::create(std::move(sourceCatalog), configuration.performOnlySourceOperatorExpansion);
-    distributeWindowRule = DistributeWindowRule::create(configuration);
+    distributeWindowRule = DistributeWindowRule::create(configuration, topology);
     distributeJoinRule = DistributeJoinRule::create();
 }
 

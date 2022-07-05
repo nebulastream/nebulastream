@@ -18,19 +18,23 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <iterator>
 
 namespace NES::Optimizer {
 
-DistributeWindowRule::DistributeWindowRule(Configurations::OptimizerConfiguration configuration)
+DistributeWindowRule::DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology)
     : performDistributedWindowOptimization(configuration.performDistributedWindowOptimization),
       windowDistributionChildrenThreshold(configuration.distributedWindowChildThreshold),
-      windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold) {
+      windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold), topology(topology) {
     if (performDistributedWindowOptimization) {
         NES_DEBUG("Create DistributeWindowRule with distributedWindowChildThreshold: " << windowDistributionChildrenThreshold
                                                                                        << " distributedWindowCombinerThreshold: "
@@ -40,8 +44,9 @@ DistributeWindowRule::DistributeWindowRule(Configurations::OptimizerConfiguratio
     }
 };
 
-DistributeWindowRulePtr DistributeWindowRule::create(Configurations::OptimizerConfiguration configuration) {
-    return std::make_shared<DistributeWindowRule>(DistributeWindowRule(configuration));
+DistributeWindowRulePtr DistributeWindowRule::create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology) {
+    NES_ASSERT(topology != nullptr, "DistributedWindowRule: Topology is null");
+    return std::make_shared<DistributeWindowRule>(DistributeWindowRule(configuration, topology));
 }
 
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
@@ -64,7 +69,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 createDistributedWindowOperator(windowOp, queryPlan);
             } else {
                 createCentralWindowOperator(windowOp);
-                NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
+                NES_DEBUG("DistributeWindowRule::apply: central op \n" << queryPlan->toString());
             }
         }
     } else {
@@ -84,112 +89,34 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator,
+void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp,
                                                            const QueryPlanPtr& queryPlan) {
-    // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
-    // and n SliceCreationOperators.
-    // To this end, we have to a the window definitions in the following way:
-    // The SliceCreation consumes input and outputs data in the schema: {startTs, endTs, keyField, value}
-    // The WindowComputation consumes that schema and outputs data in: {startTs, endTs, keyField, outputAggField}
-    // First we prepare the final WindowComputation operator:
+    NES_DEBUG("DistributeWindowRule::apply: introduce new distributed window operator for window " << windowOp << " "
+                                                                                               << windowOp->toString());
+    auto parents = windowOp->getParents();
+    auto mergerNodes = getMergerNodes(windowOp);
+    windowOp->removeChildren();
+    windowOp->removeAllParent();
 
-    //if window has more than 4 edges, we introduce a combiner
+    for (auto parent: parents) {
+        parent->removeChildren();
 
-    NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window "
-              << logicalWindowOperator << " << logicalWindowOperator->toString()");
-    auto windowDefinition = logicalWindowOperator->getWindowDefinition();
-    auto triggerPolicy = windowDefinition->getTriggerPolicy();
-    auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    auto keyField = windowDefinition->getKeys();
-    auto allowedLateness = windowDefinition->getAllowedLateness();
-    // For the final window computation we have to change copy aggregation function and manipulate the fields we want to aggregate.
-    auto windowComputationAggregation = windowAggregation[0]->copy();
-    //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
+        for (auto mergerPair: mergerNodes) {
+            auto nodeId = mergerPair.first;
+            auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
+            newWindowOp->setInputSchema(windowOp->getInputSchema());
+            newWindowOp->setOutputSchema(windowOp->getOutputSchema());
+            newWindowOp->addProperty(NES::Optimizer::PINNED_NODE_ID, nodeId);
+            NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
 
-    Windowing::LogicalWindowDefinitionPtr windowDef;
-    if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
-                                                               {windowComputationAggregation},
-                                                               windowType,
-                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
-                                                               triggerActionComplete,
-                                                               allowedLateness);
-
-    } else {
-        windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
-                                                               windowType,
-                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
-                                                               triggerActionComplete,
-                                                               allowedLateness);
-    }
-    NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
-
-    auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
-
-    //replace logical window op with window computation operator
-    NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString()
-                                                      << " old node=" << logicalWindowOperator->toString());
-    if (!logicalWindowOperator->replace(windowComputationOperator)) {
-        NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
-    }
-
-    auto windowChildren = windowComputationOperator->getChildren();
-
-    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
-    UnaryOperatorNodePtr finalComputationAssigner = windowComputationOperator;
-    NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
-
-    NES_DEBUG("DistributedWindowRule: Plan before " << queryPlan->toString());
-
-    //add merger
-    UnaryOperatorNodePtr mergerAssigner;
-    if (finalComputationAssigner->getChildren().size() >= windowDistributionCombinerThreshold) {
-        auto sliceCombinerWindowAggregation = windowAggregation[0]->copy();
-
-        if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-            windowDef =
-                Windowing::LogicalWindowDefinition::create(keyField,
-                                                           {sliceCombinerWindowAggregation},
-                                                           windowType,
-                                                           Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
-                                                           Windowing::SliceAggregationTriggerActionDescriptor::create(),
-                                                           allowedLateness);
-
-        } else {
-            windowDef =
-                Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
-                                                           windowType,
-                                                           Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
-                                                           Windowing::SliceAggregationTriggerActionDescriptor::create(),
-                                                           allowedLateness);
-        }
-        NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
-                  << windowDef->toString());
-
-        uint64_t replicationFac = (finalComputationAssigner->getChildren().size() / 2) + 1;
-        NES_DEBUG("DistributedWindowRule: Replicating slice merger with " << replicationFac);
-        auto childrenChunks = Util::partition(finalComputationAssigner->getChildren(), replicationFac);
-        finalComputationAssigner->removeChildren();
-
-        for (auto newChildren : childrenChunks) {
-            auto repSliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
-
-            repSliceOp->removeChildren();
-            for (auto newChild : newChildren) {
-                repSliceOp->addChild(newChild);
-                NES_DEBUG("DistributedWindowRule: Adding child " << newChild);
+            auto children = mergerPair.second;
+            for (auto source: children) {
+                parent->addChild(newWindowOp);
+                newWindowOp->addChild(source);
             }
-            finalComputationAssigner->addChild(repSliceOp);
-            addSlicer(repSliceOp->getChildren(), logicalWindowOperator);
         }
     }
-    NES_DEBUG("DistributedWindowRule: Plan before " << queryPlan->toString());
+    NES_DEBUG("DistributedWindowRule: Plan after \n" << queryPlan->toString());
 }
 
 void DistributeWindowRule::addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator) {
@@ -232,6 +159,38 @@ void DistributeWindowRule::addSlicer(std::vector<NodePtr> windowChildren, const 
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
+}
+
+std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
+DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode) {
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> nodeCount;
+    for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
+        if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_NODE_ID)) {
+            auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_NODE_ID));
+            //auto operatorId = child->as_if<OperatorNode>()->getId();
+            TopologyNodePtr node = topology->findNodeWithId(nodeId);
+            for (auto& parent : node->getParents()) {
+                auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());
+
+                // get the watermark parent
+                WatermarkAssignerLogicalOperatorNodePtr watermark;
+                for (auto ancestor : child->getAndFlattenAllAncestors()) {
+                    if (ancestor->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+                        watermark = ancestor->as_if<WatermarkAssignerLogicalOperatorNode>();
+                        break;
+                    }
+                }
+                NES_ASSERT(watermark != nullptr, "DistributedWindowRule: Window source does not contain a watermark");
+
+                if (nodeCount.contains(parentId)) {
+                    nodeCount[parentId].emplace_back(watermark);
+                } else {
+                    nodeCount[parentId] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{watermark};
+                }
+            }
+        }
+    }
+    return nodeCount;
 }
 
 }// namespace NES::Optimizer
