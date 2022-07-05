@@ -36,6 +36,8 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
     else {
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {};
     }
+    statisticsFile.open("latency.csv", std::ios::out);
+    statisticsFile << "latency\n";
 }
 
 NullOutputSink::~NullOutputSink() = default;
@@ -44,6 +46,12 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     updateWatermarkCallback(inputBuffer);
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
+    statisticsFile.flush();
     return true;
 }
 

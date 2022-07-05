@@ -80,6 +80,7 @@ class NullOutputSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
+    std::ofstream statisticsFile;
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES
