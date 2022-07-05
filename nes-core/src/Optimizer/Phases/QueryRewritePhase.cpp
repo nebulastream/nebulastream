@@ -47,7 +47,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     }
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = joinOrderOptimizationRule->apply(duplicateQueryPlan);
+    //duplicateQueryPlan = joinOrderOptimizationRule->apply(duplicateQueryPlan);
     return filterPushDownRule->apply(duplicateQueryPlan);
 }
 

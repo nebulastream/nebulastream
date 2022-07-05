@@ -229,12 +229,13 @@ TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
     // Hardcode sequences as cartesian products with filter
     // SEQ(Q;V;PM10)
     TEST_F(JoinOrderOptimizationRuleTest, threeSeqPatternPlain){
-        auto quantity = Query::from("Quantity").map(Attribute("key") = 1);
-        auto velocity = Query::from("Velocity").map(Attribute("key") = 1);
-        auto pm10 = Query::from("PM10").map(Attribute("key") = 1);
-        //auto pm25 = Query::from("PM25").map(Attribute("key") = 1);
-        //auto temperature = Query::from("Temperature").map(Attribute("key") = 1);
-        //auto humidity = Query::from("Humidity").map(Attribute("key") = 1)
+        auto quantity = Query::from("Quantity");
+        auto velocity = Query::from("Velocity");
+        auto pm10 = Query::from("PM10");
+        //auto pm25 = Query::from("PM25");
+        //auto temperature = Query::from("Temperature");
+        //auto humidity = Query::from("Humidity");
+        auto sink = FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE");
 
         // Q;V
         auto query = quantity.joinWith(velocity).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key"))
@@ -244,12 +245,133 @@ TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
         //Q;V;PM10
         query = query.joinWith(pm10).where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
-                    .filter(Attribute("Velocity$ts") < Attribute("PM10$ts")).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"));
+                    .filter(Attribute("Velocity$ts") < Attribute("PM10$ts")).sink(sink);
 
         // STRING Equivalent
-       // 'Query::from("Quantity").map(Attribute("key") = 1).joinWith(Query::from("Velocity").map(Attribute("key") = 1)).where(Attribute("key")).equalsTo(Attribute("key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5))).filter(Attribute("Quantity$ts") < Attribute("Velocity$ts")).joinWith(Query::from("PM10").map(Attribute("key") = 1)).where(Attribute("Quantity$key")).equalsTo(Attribute("key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5))).filter(Attribute("Velocity$ts") < Attribute("PM10$ts")).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"));'
+        // query: 'Query::from("Quantity").joinWith(Query::from("Velocity").where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key")).window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(5))).filter(Attribute("Quantity$ts") < Attribute("Velocity$ts")).joinWith(Query::from("PM10").where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5))).filter(Attribute("Velocity$ts") < Attribute("PM10$ts")).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"));'
 
         NES_DEBUG(query.getQueryPlan()->toString());
+
+        //TumblingWindow::of(EventTime())
+
+        auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+        auto queryPlan = joinOrderOptimizationRule->apply(query.getQueryPlan());
+        EXPECT_TRUE(1 == (2-1));
+
+
+    }
+
+    // Hardcode sequences as cartesian products with filter
+    // SEQ(Q;V;PM10;PM25)
+    TEST_F(JoinOrderOptimizationRuleTest, fourSeqPatternPlain){
+        auto quantity = Query::from("Quantity");
+        auto velocity = Query::from("Velocity");
+        auto pm10 = Query::from("PM10");
+        auto pm25 = Query::from("PM25");
+        //auto temperature = Query::from("Temperature");
+        //auto humidity = Query::from("Humidity");
+        auto sink = FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE");
+
+        // Q;V
+        auto query = quantity.joinWith(velocity).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key"))
+                         .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                         .filter(Attribute("Quantity$ts") < Attribute("Velocity$ts"));
+
+        //Q;V;PM10
+        query = query.joinWith(pm10).where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key"))
+                    .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("Velocity$ts") < Attribute("PM10$ts"));
+
+        // Q;V;PM10;PM25
+        query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("PM25$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("PM10$ts") < Attribute("PM25$ts")).sink(sink);
+
+        NES_DEBUG(query.getQueryPlan()->toString());
+
+        auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+        auto queryPlan = joinOrderOptimizationRule->apply(query.getQueryPlan());
+        EXPECT_TRUE(1 == (2-1));
+
+
+    }
+
+    // Hardcode sequences as cartesian products with filter
+    // SEQ(Q;V;PM10;PM25;T)
+    TEST_F(JoinOrderOptimizationRuleTest, fiveSeqPatternPlain){
+        auto quantity = Query::from("Quantity");
+        auto velocity = Query::from("Velocity");
+        auto pm10 = Query::from("PM10");
+        auto pm25 = Query::from("PM25");
+        auto temperature = Query::from("Temperature");
+        //auto humidity = Query::from("Humidity");
+        auto sink = FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE");
+
+        // Q;V
+        auto query = quantity.joinWith(velocity).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key"))
+                         .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                         .filter(Attribute("Quantity$ts") < Attribute("Velocity$ts"));
+
+        //Q;V;PM10
+        query = query.joinWith(pm10).where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key"))
+                    .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("Velocity$ts") < Attribute("PM10$ts"));
+
+        // Q;V;PM10;PM25
+        query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("PM25$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("PM10$ts") < Attribute("PM25$ts")).sink(sink);
+
+        // Q;V;PM10;PM25;T
+        query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("Temperature$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("PM25$ts") < Attribute("Temperature$ts")).sink(sink);
+
+
+        NES_DEBUG(query.getQueryPlan()->toString());
+
+        //TumblingWindow::of(EventTime())
+
+        auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+        auto queryPlan = joinOrderOptimizationRule->apply(query.getQueryPlan());
+        EXPECT_TRUE(1 == (2-1));
+
+
+    }
+
+    // Hardcode sequences as cartesian products with filter
+    // SEQ(Q;V;PM10;PM25;T)
+    TEST_F(JoinOrderOptimizationRuleTest, sixSeqPatternPlain){
+        auto quantity = Query::from("Quantity");
+        auto velocity = Query::from("Velocity");
+        auto pm10 = Query::from("PM10");
+        auto pm25 = Query::from("PM25");
+        auto temperature = Query::from("Temperature");
+        auto humidity = Query::from("Humidity");
+        auto sink = FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE");
+
+        // Q;V
+        auto query = quantity.joinWith(velocity).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key"))
+                         .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                         .filter(Attribute("Quantity$ts") < Attribute("Velocity$ts"));
+
+        //Q;V;PM10
+        query = query.joinWith(pm10).where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key"))
+                    .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("Velocity$ts") < Attribute("PM10$ts"));
+
+        // Q;V;PM10;PM25
+        query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("PM25$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("PM10$ts") < Attribute("PM25$ts")).sink(sink);
+
+        // Q;V;PM10;PM25;T
+        query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("Temperature$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                    .filter(Attribute("PM25$ts") < Attribute("Temperature$ts")).sink(sink);
+
+         // Q;V;PM10;PM25;T;H
+         query = query.joinWith(pm25).where(Attribute("Quantitiy$key")).equalsTo(Attribute("Humidity$key")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                            .filter(Attribute("Temperature$ts") < Attribute("Humidity$ts")).sink(sink);
+
+        NES_DEBUG(query.getQueryPlan()->toString());
+
+        //TumblingWindow::of(EventTime())
 
         auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
         auto queryPlan = joinOrderOptimizationRule->apply(query.getQueryPlan());
