@@ -300,6 +300,11 @@ add_executable(query-tests "UnitTests/API/QueryTest.cpp")
 target_link_libraries(query-tests nes-tests)
 add_test(NAME query-tests COMMAND query-tests)
 
+# SpatialQueryTest
+add_executable(spatial-query-tests "UnitTests/API/SpatialQueryTest.cpp")
+target_link_libraries(spatial-query-tests nes-tests)
+add_test(NAME spatial-query-tests COMMAND spatial-query-tests)
+
 # QueryPlanIteratorTest
 add_executable(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
 target_link_libraries(queryplan-util-iterator-test nes-tests)

@@ -104,12 +104,13 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitudeFieldName,
     auto geographyFieldsAccess = GeographyFieldsAccessExpressionNode::create(latitudeAccess, longitudeAccess);
     auto geographyPointAccess = geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>();
 
-    auto circle = shapeExpression->as<CircleExpressionNode>();
-    if (!circle->instanceOf<CircleExpressionNode>()) {
-        NES_ERROR("Spatial Query(ST_DWITHIN): Shape has to be a CircleExpression but it was a " + circle->toString());
+    auto shapeType = shapeExpression->getShapeType();
+    if (shapeType != Circle) {
+        NES_ERROR("Spatial Query(ST_DWITHIN): Shape has to be a CircleExpression but it was a " + shapeExpression->toString());
         throw InvalidArgumentException("shapeExpression", shapeExpression->toString());
     }
 
+    auto circle = shapeExpression->as<CircleExpressionNode>();
     return STDWithinExpressionNode::create(std::move(geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>()),
                                            std::move(circle));
 }
