@@ -2003,7 +2003,7 @@ TEST_F(SourceTest, testJSONSourceRegion) {
         ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
         ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
 
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.json";
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region.json";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
     sourceConfig->setFilePath(filePath);
     sourceConfig->setNumBuffersToProcess(0);
