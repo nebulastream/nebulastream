@@ -385,7 +385,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -398,7 +398,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::numberOfTuplesToProducePerBuffer(3),
                                           TestUtils::sourceGatheringInterval(1),
                                           TestUtils::enableThreadLocalWindowing()});
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";

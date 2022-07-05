@@ -60,7 +60,11 @@ class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTe
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
         workerConfiguration->queryCompiler.compilationStrategy =
             QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+        this->numberOfGeneratedBuffers = 100;
     }
+
+  protected:
+    uint64_t numberOfGeneratedBuffers;
 };
 
 struct InputValue {
@@ -72,7 +76,7 @@ struct InputValue {
 struct MultipleInputValues {
     uint64_t value3;
     uint64_t value2;
-    uint64_t value;
+    uint64_t value1;
     uint64_t timestamp;
 };
 
@@ -206,7 +210,7 @@ class DataGeneratorMultiValue {
             [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 auto inputValue = (MultipleInputValues*) buffer.getBuffer();
                 for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-                    inputValue[i].value = 1;
+                    inputValue[i].value1 = 1;
                     inputValue[i].value2 = 1;
                     inputValue[i].value3 = 1;
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
@@ -582,6 +586,15 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
+/**
+ * @brief: This test replicates the angle-turning query from KTM in Elegant.
+ * The average of 3 readings on top of a motorcycle are used to determine
+ * how "dangerously" someone drives. The count is work-around meta-info about
+ * the duration of the dangerous behavior.
+ *
+ * In this case, we emulate that by using multi-averages on top of one value
+ * and the line count. We then calculate and compare them against each window.
+ */
 TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
@@ -598,7 +611,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
                 Avg(Attribute("value"))->as(Attribute("avg_value_1")),
                 Count()->as(Attribute("count_value"))
                 ))";
-    auto dg = DataGenerator(100);
+    auto dg = DataGenerator(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
@@ -624,15 +637,24 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
                                                                   {16000, 17000, 1, 1, 1, 1000}};
     std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
         testHarness.getOutput<GlobalOutputMultiAggSameKey>(expectedGlobalOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+    EXPECT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
+    EXPECT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCountInFront) {
+/**
+ * @brief: This test replicates the angle-turning query from KTM in Elegant.
+ * The average of 3 readings on top of a motorcycle are used to determine
+ * how "dangerously" someone drives. The count is work-around meta-info about
+ * the duration of the dangerous behavior.
+ *
+ * In this case, we emulate that by using multiple values
+ * and the line count. We then calculate and compare them against each window.
+ */
+TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value3", DataTypeFactory::createUInt64())
                           ->addField("value2", DataTypeFactory::createUInt64())
-                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("value1", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(MultipleInputValues), testSchema->getSchemaSizeInBytes());
@@ -640,7 +662,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
         R"(Query::from("window")
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
             .apply(
-                Avg(Attribute("value"))->as(Attribute("avg_value_1")),
+                Avg(Attribute("value1"))->as(Attribute("avg_value_1")),
                 Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
                 Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
                 Count()->as(Attribute("count_value"))
@@ -659,7 +681,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
          {10000, 11000, 1, 1, 1, 1000},
          {11000, 12000, 1, 1, 1, 1000},
          {12000, 13000, 1, 1, 1, 800}};
-    auto dg = DataGeneratorMultiValue(100);
+    auto dg = DataGeneratorMultiValue(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                        .addLogicalSource("window", testSchema)
                                        .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
