@@ -54,10 +54,10 @@ then
       fi
     else
       # If build was successful we execute the tests
-      # timeout after 70 minutes
+      # timeout after 240 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 70m make test_debug
+      timeout 240m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
