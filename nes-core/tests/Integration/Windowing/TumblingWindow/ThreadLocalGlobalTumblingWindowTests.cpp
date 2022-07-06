@@ -147,13 +147,13 @@ struct GlobalOutputMultiAggSameKey {
     uint64_t value3;
     uint64_t value4;
     bool operator==(const GlobalOutputMultiAggSameKey& rhs) const {
-        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3 &&
-            value4 == rhs.value4;
+        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3
+            && value4 == rhs.value4;
     }
     bool operator!=(const GlobalOutputMultiAggSameKey& rhs) const { return !(rhs == *this); }
     friend ostream& operator<<(ostream& os, const GlobalOutputMultiAggSameKey& keys) {
-        os << "start: " << keys.start << " end: " << keys.end << " value1: " << keys.value1 << " value2: " << keys.value2 <<
-            " value3:" << keys.value3 << " value4:" << keys.value4;
+        os << "start: " << keys.start << " end: " << keys.end << " value1: " << keys.value1 << " value2: " << keys.value2
+           << " value3:" << keys.value3 << " value4:" << keys.value4;
         return os;
     }
 };
@@ -223,6 +223,7 @@ class DataGeneratorMultiValue {
             0,
             GatheringMode ::INTERVAL_MODE);
     }
+
   private:
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
@@ -619,22 +620,22 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
     std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
-                                                                  {1000, 2000, 1, 1, 1, 1000},
-                                                                  {2000, 3000, 1, 1, 1, 1000},
-                                                                  {3000, 4000, 1, 1, 1, 1000},
-                                                                  {4000, 5000, 1, 1, 1, 1000},
-                                                                  {5000, 6000, 1, 1, 1, 1000},
-                                                                  {6000, 7000, 1, 1, 1, 1000},
-                                                                  {7000, 8000, 1, 1, 1, 1000},
-                                                                  {8000, 9000, 1, 1, 1, 1000},
-                                                                  {9000, 10000, 1, 1, 1, 1000},
-                                                                  {10000, 11000, 1, 1, 1, 1000},
-                                                                  {11000, 12000, 1, 1, 1, 1000},
-                                                                  {12000, 13000, 1, 1, 1, 1000},
-                                                                  {13000, 14000, 1, 1, 1, 1000},
-                                                                  {14000, 15000, 1, 1, 1, 1000},
-                                                                  {15000, 16000, 1, 1, 1, 1000},
-                                                                  {16000, 17000, 1, 1, 1, 1000}};
+                                                                     {1000, 2000, 1, 1, 1, 1000},
+                                                                     {2000, 3000, 1, 1, 1, 1000},
+                                                                     {3000, 4000, 1, 1, 1, 1000},
+                                                                     {4000, 5000, 1, 1, 1, 1000},
+                                                                     {5000, 6000, 1, 1, 1, 1000},
+                                                                     {6000, 7000, 1, 1, 1, 1000},
+                                                                     {7000, 8000, 1, 1, 1, 1000},
+                                                                     {8000, 9000, 1, 1, 1, 1000},
+                                                                     {9000, 10000, 1, 1, 1, 1000},
+                                                                     {10000, 11000, 1, 1, 1, 1000},
+                                                                     {11000, 12000, 1, 1, 1, 1000},
+                                                                     {12000, 13000, 1, 1, 1, 1000},
+                                                                     {13000, 14000, 1, 1, 1, 1000},
+                                                                     {14000, 15000, 1, 1, 1, 1000},
+                                                                     {15000, 16000, 1, 1, 1, 1000},
+                                                                     {16000, 17000, 1, 1, 1, 1000}};
     std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
         testHarness.getOutput<GlobalOutputMultiAggSameKey>(expectedGlobalOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
     EXPECT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
@@ -667,24 +668,23 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultipl
                 Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
                 Count()->as(Attribute("count_value"))
                 ))";
-    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput =
-        {{0, 1000, 1, 1, 1, 1000},
-         {1000, 2000, 1, 1, 1, 1000},
-         {2000, 3000, 1, 1, 1, 1000},
-         {3000, 4000, 1, 1, 1, 1000},
-         {4000, 5000, 1, 1, 1, 1000},
-         {5000, 6000, 1, 1, 1, 1000},
-         {6000, 7000, 1, 1, 1, 1000},
-         {7000, 8000, 1, 1, 1, 1000},
-         {8000, 9000, 1, 1, 1, 1000},
-         {9000, 10000, 1, 1, 1, 1000},
-         {10000, 11000, 1, 1, 1, 1000},
-         {11000, 12000, 1, 1, 1, 1000},
-         {12000, 13000, 1, 1, 1, 800}};
+    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
+                                                                     {1000, 2000, 1, 1, 1, 1000},
+                                                                     {2000, 3000, 1, 1, 1, 1000},
+                                                                     {3000, 4000, 1, 1, 1, 1000},
+                                                                     {4000, 5000, 1, 1, 1, 1000},
+                                                                     {5000, 6000, 1, 1, 1, 1000},
+                                                                     {6000, 7000, 1, 1, 1, 1000},
+                                                                     {7000, 8000, 1, 1, 1, 1000},
+                                                                     {8000, 9000, 1, 1, 1, 1000},
+                                                                     {9000, 10000, 1, 1, 1, 1000},
+                                                                     {10000, 11000, 1, 1, 1, 1000},
+                                                                     {11000, 12000, 1, 1, 1, 1000},
+                                                                     {12000, 13000, 1, 1, 1, 800}};
     auto dg = DataGeneratorMultiValue(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                       .addLogicalSource("window", testSchema)
-                                       .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
