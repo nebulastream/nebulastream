@@ -45,6 +45,7 @@ void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& b
 void readFromBuffer(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+//void readFromBufferBA02(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 /**
  * @brief class specific asJson()
@@ -129,6 +130,10 @@ class Metric {
         return x.self->readFromBufferConcept(buf, tupleIndex);
     }
 
+//    friend void readFromBufferBA02(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
+//        return x.self->readFromBufferConceptBA02(buf, tupleIndex, schema);
+//    }
+
   private:
     /**
      * @brief Abstract superclass that represents the conceptual features of a metric
@@ -152,6 +157,9 @@ class Metric {
          * @brief The deserialize concept to enable polymorphism across different metrics to make them deserializable.
         */
         virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t tupleIndex) = 0;
+
+//        virtual void readFromBufferConceptBA02(Runtime::TupleBuffer&, uint64_t tupleIndex, SchemaPtr schema) = 0;
+
     };
 
     /**
@@ -173,6 +181,10 @@ class Metric {
         void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
             readFromBuffer(data, buf, tupleIndex);
         }
+
+//        void readFromBufferConceptBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) override {
+//            readFromBufferBA02(data, buf, tupleIndex, schema);
+//        }
 
         T data;
     };

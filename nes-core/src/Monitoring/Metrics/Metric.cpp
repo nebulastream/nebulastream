@@ -43,6 +43,10 @@ void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, 
     readFromBuffer(*metrics, buf, tupleIndex);
 }
 
+//void readFromBufferBA02(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
+//    readFromBufferBA02(*metrics, buf, tupleIndex, schema);
+//}
+
 web::json::value asJson(uint64_t intMetric) {
     web::json::value metricsJson{};
     metricsJson["intMetric"] = intMetric;
