@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "API/Schema.hpp"
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -19,6 +20,7 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <iostream>
 
 namespace NES {
 AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(AbstractReader) {}
@@ -56,6 +58,12 @@ DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
 }
 
 DiskMetrics AbstractSystemResourcesReader::readDiskStatsBA01() {
+    DiskMetrics output{};
+    return output;
+}
+
+DiskMetrics AbstractSystemResourcesReader::readDiskStatsBA02(NES::Schema schema) {
+    std::cout << std::to_string(schema.getSize());          //Überflüssig nur um Schema zu nutzen
     DiskMetrics output{};
     return output;
 }

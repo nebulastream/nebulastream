@@ -19,8 +19,11 @@
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-
 #include <Util/Logger/Logger.hpp>
+
+//NEUNEUNEUNEUNEU
+#include <string>
+#include <list>
 
 namespace NES {
 
@@ -35,6 +38,12 @@ DiskCollector::DiskCollector(int test)
       schema(DiskMetrics::getSchemaBA01("")) {
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
     std::cout << test;
+}
+
+DiskCollector::DiskCollector(std::list<std::string> configuredMetrics)
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(DiskMetrics::getSchemaBA02("", configuredMetrics)) {
+    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
 MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }
@@ -61,6 +70,12 @@ const MetricPtr DiskCollector::readMetric() const {
 
 const MetricPtr DiskCollector::readMetricBA01() const {
     DiskMetrics metrics = resourceReader->readDiskStatsBA01();
+    metrics.nodeId = getNodeId();
+    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
+}
+
+const MetricPtr DiskCollector::readMetricBA02(Schema schema) const {
+    DiskMetrics metrics = resourceReader->readDiskStatsBA02(schema);
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }

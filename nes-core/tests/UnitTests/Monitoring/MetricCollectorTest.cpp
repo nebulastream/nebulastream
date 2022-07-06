@@ -183,6 +183,31 @@ TEST_F(MetricCollectorTest, tempTest) {
     std::cout << "just another step";
 }
 
+TEST_F(MetricCollectorTest, testDiskCollectorBA02) {
+    std::list<std::string> configuredMetrics {"F_BSIZE", "F_FRSIZE", "F_BAVAIL"};
+    configuredMetrics.sort();           // the Schema always has the same sequence of metrics; NodeId always at spot 1
+
+    auto diskCollector = DiskCollector(configuredMetrics);       //Construct DiskCollector
+    diskCollector.setNodeId(nodeId);            //Set NodeId to right Value
+    MetricPtr diskMetric = diskCollector.readMetricBA02(diskCollector.getSchema());
+    DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
+    ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
+    auto bufferSize = diskCollector.getSchema()->getSchemaSizeInBytes();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();        //init Buffer to fill
+    writeToBufferBA02(typedMetric, tupleBuffer, 0, diskCollector.getSchema());         // write Values to Buffer
+
+    ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
+
+    MetricPtr parsedMetric = std::make_shared<Metric>(DiskMetrics{});
+    //readFromBufferBA02(parsedMetric, tupleBuffer, 0, diskCollector.getSchema());
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+    ASSERT_EQ(typedMetric, parsedMetric->getValue<DiskMetrics>());
+    ASSERT_EQ(parsedMetric->getValue<DiskMetrics>().nodeId, nodeId);
+    ASSERT_EQ(typedMetric.nodeId, nodeId);
+}
+
 TEST_F(MetricCollectorTest, testDiskCollectorBA01) {
     auto diskCollector = DiskCollector(0);       //Construct DiskCollector
     diskCollector.setNodeId(nodeId);            //Set NodeId to right Value

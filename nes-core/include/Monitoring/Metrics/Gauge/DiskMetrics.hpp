@@ -18,6 +18,10 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+//NEUNEUNEUNEUNEU
+#include <string>
+#include <list>
+
 namespace NES {
 
 /**
@@ -37,6 +41,8 @@ class DiskMetrics {
 
     static SchemaPtr getSchemaBA01(const std::string& prefix);
 
+    static SchemaPtr getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics);
+
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
      * @param buf the tuple buffer
@@ -44,12 +50,16 @@ class DiskMetrics {
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
+    void writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const;
+
     /**
      * @brief Parses a metrics objects from a TupleBuffer..
      * @param buf the tuple buffer
      * @param the tuple index indicating the location of the tuple
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
+    void readFromBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
     /**
      * @brief Returns the metrics as json
@@ -78,6 +88,8 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 */
 void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
+void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+
 /**
  * @brief Parses metrics objects from a given Schema and TupleBuffer.
  * @param the metrics
@@ -85,6 +97,8 @@ void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64
  * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
+void readFromBufferBA02(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 /**
  * @brief Parses the metric to JSON

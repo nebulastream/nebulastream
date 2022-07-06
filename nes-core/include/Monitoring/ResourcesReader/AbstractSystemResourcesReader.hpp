@@ -16,6 +16,7 @@
 #define NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
+#include <API/Schema.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -78,6 +79,8 @@ class AbstractSystemResourcesReader {
     virtual DiskMetrics readDiskStats();
 
     virtual DiskMetrics readDiskStatsBA01();
+
+    virtual DiskMetrics readDiskStatsBA02(NES::Schema schema);
 
     /**
     * @brief This methods reads network statistics for each interface and returns a wrapper object containing this information.

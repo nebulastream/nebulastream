@@ -16,6 +16,7 @@
 #define NES_INCLUDE_MONITORING_UTIL_SYSTEM_RESOURCES_READER_HPP_
 
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <API/Schema.hpp>
 
 namespace NES {
 
@@ -61,6 +62,8 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     DiskMetrics readDiskStats() override;
 
     DiskMetrics readDiskStatsBA01() override;
+
+    DiskMetrics readDiskStatsBA02(Schema schema) override;
 
     /**
     * @brief This methods reads network statistics from /proc/net/dev and returns them for each interface in a
