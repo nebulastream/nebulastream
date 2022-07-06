@@ -28,6 +28,7 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
 # parallel test
 if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestParallelism=${NesTestParallelism}; fi
+if [ -z "${NesBuildParallelism}" ]; then NesBuildParallelism="8"; else NesBuildParallelism=${NesBuildParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
 echo "Test Parallelism=$NesTestParallelism"
@@ -38,7 +39,8 @@ then
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MLIR=1 -DNES_USE_MQTT=1 -DNES_TEST_PARALLELISM=$NesTestParallelism ..
-    make -j4
+    make -j$NesBuildParallelism
+
     # Check if build was successful
     errorCode=$?
     if [ $errorCode -ne 0 ];
