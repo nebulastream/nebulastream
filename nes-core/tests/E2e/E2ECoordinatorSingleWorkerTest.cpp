@@ -364,7 +364,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               ":\"Schema::create()->addField(createField(\\\"Time\\\",UINT64))->addField(createField(\\\"Dist\\\",UINT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Press\\\",FLOAT64))->"
               "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->" // 5th col.
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
               "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
               "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
               "addField(createField(\\\"MMDD\\\",FLOAT64))->"
@@ -372,8 +372,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT64))->" // 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->" // 14th col.
+              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT64))->"// 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
               "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
@@ -422,9 +422,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     // 2885: issue for ktm$ktm$ktm$ktm in header
-    string expectedContent =
-        "ktm$start:INTEGER,ktm$end:INTEGER,ktm$ktm$ktm$ktm$avg_value_1:(Float),ktm$ktm$ktm$ktm$avg_value_2:(Float),ktm$ktm$ktm$ktm$avg_value_3:(Float),count_value:INTEGER\n"
-        "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
+    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$ktm$ktm$ktm$avg_value_1:(Float),ktm$ktm$ktm$ktm$avg_value_2:("
+                             "Float),ktm$ktm$ktm$ktm$avg_value_3:(Float),count_value:INTEGER\n"
+                             "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
