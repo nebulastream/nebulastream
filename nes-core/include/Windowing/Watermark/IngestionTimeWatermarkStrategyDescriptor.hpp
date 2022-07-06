@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_WATERMARK_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 
 namespace NES::Windowing {
 

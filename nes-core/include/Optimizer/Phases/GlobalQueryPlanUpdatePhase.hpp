@@ -31,6 +31,11 @@ namespace Configurations {
 class OptimizerConfiguration;
 }
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
 class Request;
 using NESRequestPtr = std::shared_ptr<Request>;
 
@@ -88,7 +93,8 @@ class GlobalQueryPlanUpdatePhase {
                                                 SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                const Configurations::OptimizerConfiguration optimizerConfiguration);
+                                                const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                                Catalogs::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -102,7 +108,8 @@ class GlobalQueryPlanUpdatePhase {
                                         const SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        const Configurations::OptimizerConfiguration optimizerConfiguration);
+                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                        const Catalogs::UdfCatalogPtr& udfCatalog);
 
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;

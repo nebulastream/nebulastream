@@ -24,6 +24,11 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -48,14 +53,14 @@ class SemanticQueryValidation {
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks);
+    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks);
+    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UdfCatalogPtr& udfCatalog);
 
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
@@ -101,6 +106,7 @@ class SemanticQueryValidation {
 
     SourceCatalogPtr sourceCatalog;
     bool performAdvanceChecks;
+    Catalogs::UdfCatalogPtr udfCatalog;
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;

@@ -33,11 +33,13 @@
 using namespace std::string_literals;
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks)
-    : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks) {}
+SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks) {
-    return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks);
+SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog,
+                                                           bool advanceChecks,
+                                                           const Catalogs::UdfCatalogPtr& udfCatalog) {
+    return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks, udfCatalog);
 }
 
 void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
@@ -57,7 +59,7 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
     physicalSourceValidityCheck(queryPlan, sourceCatalog);
 
     try {
-        auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+        auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
         typeInferencePhase->execute(queryPlan);
     } catch (std::exception& e) {
         std::string errorMessage = e.what();

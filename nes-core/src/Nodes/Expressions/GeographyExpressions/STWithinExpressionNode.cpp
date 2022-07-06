@@ -66,11 +66,11 @@ ShapeExpressionNodePtr STWithinExpressionNode::getShape() const {
     return children[1]->as<ShapeExpressionNode>();
 }
 
-void STWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) {
+void STWithinExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
     auto shape = getShape();
-    point->inferStamp(ctx, schema);
+    point->inferStamp(schema);
     auto shapeType = shape->getShapeType();
     auto validShape = (shapeType == Rectangle) || (shapeType == Polygon);
 

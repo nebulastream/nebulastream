@@ -19,6 +19,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Exceptions/UdfException.hpp>
 #include <utility>
 
 namespace NES {
@@ -46,15 +47,14 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
     auto left = getUdfNameNode();
     left->inferStamp(ctx, schema);
     if (!left->getStamp()->isCharArray()) {
-        throw std::logic_error(
-            "UdfCallExpressionNode: Error during stamp inference. Type needs to be Text but Left was:"
+        throw UdfException(
+            "UdfCallExpressionNode: Error during stamp inference. Function name needs to be Text but was:"
             + left->getStamp()->toString());
     }
-
-    setPythonUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::PythonUdfDescriptor>(
-        ctx.getUdfCatalog()->getUdfDescriptor(getUdfName())));
+    auto pythonUdfDescriptor = ctx.getUdfCatalog()->getUdfDescriptor(getUdfName());
+    setPythonUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::PythonUdfDescriptor>(pythonUdfDescriptor));
     if (pythonUdfDescriptorPtr == nullptr) {
-        throw std::logic_error("UdfCallExpressionNode: Error during stamp inference. No UdfDescriptor was set");
+        throw UdfException("UdfCallExpressionNode: Error during stamp/return type inference. No UdfDescriptor was set");
     }
     else {
         stamp = pythonUdfDescriptorPtr->getReturnType();

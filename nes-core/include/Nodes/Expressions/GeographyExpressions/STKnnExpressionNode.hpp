@@ -83,7 +83,7 @@ class STKnnExpressionNode : public ExpressionNode {
      * @brief Infers the stamp of the ST_KNN expression node.
      * @param schema the current schema.
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

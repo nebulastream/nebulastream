@@ -41,7 +41,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

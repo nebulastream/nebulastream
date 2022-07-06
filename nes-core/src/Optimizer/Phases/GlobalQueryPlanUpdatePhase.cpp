@@ -40,11 +40,12 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr qu
                                                        const SourceCatalogPtr& sourceCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
-                                                       const Configurations::OptimizerConfiguration optimizerConfiguration)
+                                                       const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                                       const Catalogs::UdfCatalogPtr& udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
-    typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
     //then apply special rewrite rules for improving the match identification
     bool applyRulesImprovingSharingIdentification =
@@ -65,12 +66,14 @@ GlobalQueryPlanUpdatePhase::create(QueryCatalogServicePtr queryCatalogService,
                                    SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
-                                   const Configurations::OptimizerConfiguration optimizerConfiguration) {
+                                   const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                   Catalogs::UdfCatalogPtr udfCatalog) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
-                                                                                   optimizerConfiguration));
+                                                                                   optimizerConfiguration,
+                                                                                   std::move(udfCatalog)));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {
