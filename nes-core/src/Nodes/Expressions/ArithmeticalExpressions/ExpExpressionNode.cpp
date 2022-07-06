@@ -31,9 +31,9 @@ ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const& child) {
     return expNode;
 }
 
-void ExpExpressionNode::inferStamp(SchemaPtr schema) {
+void ExpExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+    ArithmeticalUnaryExpressionNode::inferStamp(ctx, schema);
 
     // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
     stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());

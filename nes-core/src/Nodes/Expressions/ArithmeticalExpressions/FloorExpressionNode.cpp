@@ -31,9 +31,9 @@ ExpressionNodePtr FloorExpressionNode::create(ExpressionNodePtr const& child) {
     return floorNode;
 }
 
-void FloorExpressionNode::inferStamp(SchemaPtr schema) {
+void FloorExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+    ArithmeticalUnaryExpressionNode::inferStamp(ctx, schema);
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
