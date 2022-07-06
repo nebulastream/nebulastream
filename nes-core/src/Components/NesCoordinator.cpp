@@ -116,7 +116,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   workerRpcClient,
                                                   queryRequestQueue,
                                                   this->coordinatorConfiguration->optimizer,
-                                                  this->coordinatorConfiguration->enableQueryReconfiguration);
+                                                  this->coordinatorConfiguration->enableQueryReconfiguration,
+                                                  udfCatalog);
 
     queryService = std::make_shared<QueryService>(queryCatalogService,
                                                   queryRequestQueue,

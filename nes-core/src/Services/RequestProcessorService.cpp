@@ -56,13 +56,14 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                 bool queryReconfiguration)
+                                                 bool queryReconfiguration,
+                                                 const UdfCatalogPtr& udfCatalog)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan),
-      globalExecutionPlan(globalExecutionPlan) {
+      globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog) {
 
     NES_DEBUG("QueryRequestProcessorService()");
-    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                  topology,
                                                                  typeInferencePhase,
@@ -79,7 +80,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
-                                                                               optimizerConfiguration);
+                                                                               optimizerConfiguration,
+                                                                               udfCatalog);
 }
 
 void RequestProcessorService::start() {

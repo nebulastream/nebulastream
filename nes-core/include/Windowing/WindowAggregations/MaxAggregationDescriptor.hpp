@@ -39,7 +39,7 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema);
+    void inferStamp(SchemaPtr schema) override;
 
     WindowAggregationPtr copy() override;
     MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);

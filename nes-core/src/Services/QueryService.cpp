@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -39,13 +40,15 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            RequestQueuePtr queryRequestQueue,
                            SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
-                           Configurations::OptimizerConfiguration optimizerConfiguration)
+                           Configurations::OptimizerConfiguration optimizerConfiguration,
+                           const Catalogs::UdfCatalogPtr& udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(std::move(sourceCatalog),
-                                                                         optimizerConfiguration.performAdvanceSemanticValidation);
+                                                                         optimizerConfiguration.performAdvanceSemanticValidation,
+                                                                         udfCatalog);
 }
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,

@@ -83,7 +83,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         // to this end we call at each sink the infer method to propagate the schemata across the whole query.
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
-            if (!sink->inferSchema(typeInferencePhaseContext)) {
+            if (!sink->inferSchema()) {
                 throw log4cxx::helpers::Exception("TypeInferencePhase: Failed!");
             }
         }

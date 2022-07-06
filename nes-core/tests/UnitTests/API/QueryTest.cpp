@@ -297,6 +297,7 @@ TEST_F(QueryTest, windowAggregationWithAs) {
                      .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
                      .sink(PrintSinkDescriptor::create());
 
+    UdfCatalogPtr udfCatalog = std::make_shared<UdfCatalog>();
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

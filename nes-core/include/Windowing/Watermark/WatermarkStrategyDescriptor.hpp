@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGYDESCRIPTOR_HPP_
 
 #include <memory>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 
 namespace NES {
 class Schema;

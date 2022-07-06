@@ -53,6 +53,8 @@ class ExpressionNode : public Node {
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */
+    virtual void inferStamp(SchemaPtr schema);
+
     virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema);
 
     /**

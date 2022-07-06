@@ -17,6 +17,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 
 namespace NES::Windowing {
 /**

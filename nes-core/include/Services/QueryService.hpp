@@ -46,6 +46,11 @@ using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
  */
@@ -56,7 +61,8 @@ class QueryService {
                           RequestQueuePtr queryRequestQueue,
                           SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
-                          Configurations::OptimizerConfiguration optimizerConfiguration);
+                          Configurations::OptimizerConfiguration optimizerConfiguration,
+                          const Catalogs::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

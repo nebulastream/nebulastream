@@ -25,6 +25,13 @@ DataTypePtr ExpressionNode::getStamp() const { return stamp; }
 
 void ExpressionNode::setStamp(DataTypePtr stamp) { this->stamp = std::move(stamp); }
 
+void ExpressionNode::inferStamp(SchemaPtr schema) {
+    // infer stamp on all children nodes
+    for (const auto& node : children) {
+        node->as<ExpressionNode>()->inferStamp(schema);
+    }
+}
+
 void ExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
     // infer stamp on all children nodes
     for (const auto& node : children) {

@@ -71,6 +71,11 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queryIdAndCatalogEntryMapping requests.
  */
@@ -84,7 +89,8 @@ class RequestProcessorService {
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                     bool queryReconfiguration);
+                                     bool queryReconfiguration,
+                                     const Catalogs::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -116,6 +122,7 @@ class RequestProcessorService {
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
+    Catalogs::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif// NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

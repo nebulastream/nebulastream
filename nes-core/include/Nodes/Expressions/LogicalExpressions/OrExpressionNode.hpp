@@ -35,7 +35,7 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
      * We assume that both children of an OR expression are predicates.
      * @param schema the current schema.
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
