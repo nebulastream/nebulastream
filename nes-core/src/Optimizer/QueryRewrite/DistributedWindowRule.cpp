@@ -28,6 +28,7 @@
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <iterator>
+#include <vector>
 
 namespace NES::Optimizer {
 
@@ -64,8 +65,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
 
-            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
-                && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
+            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold) {
                 createDistributedWindowOperator(windowOp, queryPlan);
             } else {
                 createCentralWindowOperator(windowOp);
@@ -89,19 +89,18 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp,
-                                                           const QueryPlanPtr& queryPlan) {
+void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan) {
     NES_DEBUG("DistributeWindowRule::apply: introduce new distributed window operator for window " << windowOp << " "
-                                                                                               << windowOp->toString());
+                                                                                                   << windowOp->toString());
     auto parents = windowOp->getParents();
-    auto mergerNodes = getMergerNodes(windowOp);
+    auto mergerNodes = getMergerNodes(windowOp, windowDistributionCombinerThreshold);
     windowOp->removeChildren();
     windowOp->removeAllParent();
 
-    for (auto parent: parents) {
+    for (auto parent : parents) {
         parent->removeChildren();
 
-        for (auto mergerPair: mergerNodes) {
+        for (auto mergerPair : mergerNodes) {
             auto nodeId = mergerPair.first;
             auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
             newWindowOp->setInputSchema(windowOp->getInputSchema());
@@ -110,7 +109,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
             NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
 
             auto children = mergerPair.second;
-            for (auto source: children) {
+            for (auto source : children) {
                 parent->addChild(newWindowOp);
                 newWindowOp->addChild(source);
             }
@@ -162,8 +161,8 @@ void DistributeWindowRule::addSlicer(std::vector<NodePtr> windowChildren, const 
 }
 
 std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
-DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode) {
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> nodeCount;
+DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold) {
+    std::unordered_map<uint64_t, std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>> nodePlacement;
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
         if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_NODE_ID)) {
             auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_NODE_ID));
@@ -182,15 +181,53 @@ DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode) {
                 }
                 NES_ASSERT(watermark != nullptr, "DistributedWindowRule: Window source does not contain a watermark");
 
-                if (nodeCount.contains(parentId)) {
-                    nodeCount[parentId].emplace_back(watermark);
+                auto newPair = std::make_pair(node, watermark);
+                if (nodePlacement.contains(parentId)) {
+                    nodePlacement[parentId].emplace_back(newPair);
                 } else {
-                    nodeCount[parentId] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{watermark};
+                    nodePlacement[parentId] =
+                        std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>{newPair};
                 }
             }
         }
     }
-    return nodeCount;
+    auto sinkNodes = operatorNode->getAllRootNodes();
+    std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>> rootOperators;
+    auto rootId = topology->getRoot()->getId();
+
+    if (nodePlacement.contains(rootId)) {
+        rootOperators = nodePlacement[rootId];
+    } else {
+        nodePlacement[rootId] = rootOperators;
+    }
+
+    // add windows under the threshold to the root
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> output;
+    for (auto plcmnt : nodePlacement) {
+        if (plcmnt.second.size() < combinerThreshold) {
+            // resolve the placement
+            for (auto pairs : plcmnt.second) {
+                output[pairs.first->getId()] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{pairs.second};
+            }
+        } else {
+            // add to output
+            if (plcmnt.second.size() > 1) {
+                auto addedNodes = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{};
+                for (auto pairs : plcmnt.second) {
+                    addedNodes.emplace_back(pairs.second);
+                }
+                output[plcmnt.first] = addedNodes;
+            } else {
+                // place at the root of topology if there is no shared parent
+                if (output.contains(rootId)) {
+                    output[rootId].emplace_back(plcmnt.second[0].second);
+                } else {
+                    output[rootId] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{plcmnt.second[0].second};
+                }
+            }
+        }
+    }
+    return output;
 }
 
 }// namespace NES::Optimizer
