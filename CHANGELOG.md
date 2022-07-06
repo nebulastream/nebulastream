@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.59](https://github.com/nebulastream/nebulastream/tree/v0.2.59) (2022-07-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.58...v0.2.59)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Add tests for KTM use case [\#2871](https://github.com/nebulastream/nebulastream/issues/2871)
+
 ## [v0.2.58](https://github.com/nebulastream/nebulastream/tree/v0.2.58) (2022-07-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.57...v0.2.58)
