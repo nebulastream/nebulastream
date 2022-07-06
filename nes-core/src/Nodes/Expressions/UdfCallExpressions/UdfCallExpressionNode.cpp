@@ -13,11 +13,12 @@
 */
 #ifdef PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUdfDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
 #include <utility>
 
 namespace NES {
@@ -25,30 +26,33 @@ namespace NES {
 UdfCallExpressionNode::UdfCallExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 UdfCallExpressionNode::UdfCallExpressionNode(UdfCallExpressionNode* other) : ExpressionNode(other) {
-    addChildWithEqual(getUdfName()->copy());
+    addChildWithEqual(getUdfNameNode()->copy());
 }
 
-ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
+ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfFunctionName,
                                                 std::vector<ExpressionNodePtr> functionArgs) {
     auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>();
-    udfExpressionNode->setChildren(udfName, std::move(functionArgs));
+    udfExpressionNode->setChildren(udfFunctionName, std::move(functionArgs));
+    udfExpressionNode->setUdfName(udfFunctionName);
     return udfExpressionNode;
 }
 
-void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArgs) {
-    addChild(udfName);
+void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs) {
+    addChild(udfFunctionName);
     functionArguments = std::move(functionArgs);
 }
 
 void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
-    auto left = getUdfName();
+    auto left = getUdfNameNode();
     left->inferStamp(ctx, schema);
-    ctx.getUdfCatalog()->
     if (!left->getStamp()->isCharArray()) {
         throw std::logic_error(
             "UdfCallExpressionNode: Error during stamp inference. Type needs to be Text but Left was:"
             + left->getStamp()->toString());
     }
+
+    setPythonUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::PythonUdfDescriptor>(
+        ctx.getUdfCatalog()->getUdfDescriptor(getUdfName())));
     if (pythonUdfDescriptorPtr == nullptr) {
         throw std::logic_error("UdfCallExpressionNode: Error during stamp inference. No UdfDescriptor was set");
     }
@@ -72,7 +76,7 @@ ExpressionNodePtr UdfCallExpressionNode::copy() {
     return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this));
 }
 
-ExpressionNodePtr UdfCallExpressionNode::getUdfName() {
+ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() {
     return children[0]->as<ConstantValueExpressionNode>();
 }
 
@@ -82,6 +86,13 @@ std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() {
 
 void UdfCallExpressionNode::setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor) {
     pythonUdfDescriptorPtr = pyUdfDescriptor;
+}
+void UdfCallExpressionNode::setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName) {
+    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfFunctionName->getConstantValue());
+    udfName = constantValue->value;
+}
+const std::string& UdfCallExpressionNode::getUdfName() const {
+    return udfName;
 }
 
 }// namespace NES::Experimental

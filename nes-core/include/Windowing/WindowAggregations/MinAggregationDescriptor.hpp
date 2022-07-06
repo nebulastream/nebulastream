@@ -35,7 +35,7 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
  * @brief Infers the stamp of the expression given the current schema.
  * @param SchemaPtr
  */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
     WindowAggregationPtr copy() override;
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;

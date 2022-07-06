@@ -43,7 +43,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param functionArguments 0 or more function arguments
      * @return a UdfCallExpressionNode
      */
-    static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
+    static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfFunctionName,
                                     std::vector<ExpressionNodePtr> functionArguments);
     /**
     * @brief determine the stamp of the Udf call by checking the return type of the function
@@ -59,12 +59,12 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param udfName name of the UDF that needs to be called
      * @param functionArguments function arguments for the UDF
      */
-    void setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArgs);
+    void setChildren(const ExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs);
 
     /**
      * @return the name of the UDF as a ConstantValueExpressionNode
      */
-    ExpressionNodePtr getUdfName();
+    ExpressionNodePtr getUdfNameNode();
 
     /**
      * @return a UdfArgumentsNode containing all function arguments passed to the UDF
@@ -84,6 +84,8 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param pyUdfDescriptor The (python) udf descriptor
      */
     void setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor);
+    void setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName);
+    const std::string& getUdfName() const;
 
   private:
     /**
@@ -92,6 +94,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      */
     Catalogs::PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
     std::vector<ExpressionNodePtr> functionArguments;
+    std::string udfName;
 };
 
 }// namespace NES::Experimental

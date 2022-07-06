@@ -37,7 +37,7 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
      * We assume that the children of this expression is a predicate.
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

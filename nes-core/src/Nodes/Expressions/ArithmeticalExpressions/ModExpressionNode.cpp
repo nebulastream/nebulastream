@@ -30,8 +30,8 @@ ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const
     return addNode;
 }
 
-void ModExpressionNode::inferStamp(SchemaPtr schema) {
-    ArithmeticalBinaryExpressionNode::inferStamp(schema);
+void ModExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) {
+    ArithmeticalBinaryExpressionNode::inferStamp(ctx, schema);
 
     if (stamp->isInteger()) {
         // we know that both children must have been Integer, too
@@ -89,7 +89,7 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
 
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, newLowerBound, newUpperBound);
     }
-    // do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferStamp(schema);)
+    // do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferStamp(ctx, schema);)
 }
 
 bool ModExpressionNode::equal(NodePtr const& rhs) const {

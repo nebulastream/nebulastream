@@ -51,7 +51,7 @@ class FieldAccessExpressionNode : public ExpressionNode {
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

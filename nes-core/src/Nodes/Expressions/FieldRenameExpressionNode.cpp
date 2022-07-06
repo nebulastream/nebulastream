@@ -49,10 +49,10 @@ std::string FieldRenameExpressionNode::toString() const {
     return "FieldRenameExpression(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
+void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext &ctx, SchemaPtr schema) {
 
     auto originalFieldName = getOriginalField();
-    originalFieldName->inferStamp(schema);
+    originalFieldName->inferStamp(ctx, schema);
     auto fieldName = originalFieldName->getFieldName();
     auto fieldAttribute = schema->hasFieldName(fieldName);
     //Detect if user has added attribute name separator
