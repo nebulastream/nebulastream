@@ -107,51 +107,11 @@ jobs:
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="16" -eNesTestParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
-
-  build-x64-linux-parallel:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [ validateTrigger ]
-    timeout-minutes: 120
-    continue-on-error: true
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
-      #TODO: 2268 remove the environment variable to allow test execution on arm server
-      - name: Run build and test
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          docker run --name ${{ github.run_id }}_build_parallel -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" -eNesTestParallelism="16" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: docker cleanup build
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-        run: |
-          docker rm -f ${{ github.run_id }}_build_parallel
-      - name: docker cleanup test
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-        run: |
-          docker rm -f ${{ github.run_id }}_test_parallel
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -236,7 +196,7 @@ jobs:
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
-    needs: [ build-x64-linux, build-arm64-linux, build-x64-macos, build-x64-linux-parallel ]
+    needs: [ build-x64-linux, build-arm64-linux, build-x64-macos ]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
