@@ -107,7 +107,7 @@ class DistributeWindowRule : public BaseRewriteRule {
   private:
     void addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator);
     std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
-    getMergerNodes(OperatorNodePtr operatorNode);
+    getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold);
 
   private:
     explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);

@@ -499,8 +499,8 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     csvSourceType->setNumberOfBuffersToProduce(3);
 
     auto coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(1);
-    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(1);
+    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(0);
+    coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(1000);
 
     for (uint64_t i = 0; i < workerNo; i++) {
         auto workerConfig = WorkerConfiguration::create();
