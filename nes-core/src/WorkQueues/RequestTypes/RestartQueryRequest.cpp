@@ -17,11 +17,12 @@
 
 namespace NES {
 
-RestartQueryRequest::RestartQueryRequest(QueryId queryId) : Request(queryId) {}
+RestartQueryRequest::RestartQueryRequest(QueryId queryId) :queryId(queryId) {}
 
 RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
     return std::make_shared<RestartQueryRequest>(RestartQueryRequest(queryId));
 }
 
-std::string RestartQueryRequest::toString() { return "RestartQueryRequest { QueryId: " + std::to_string(getQueryId()) + "}"; }
+std::string RestartQueryRequest::toString() { return "RestartQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
+QueryId RestartQueryRequest::getQueryId() const { return queryId; }
 }// namespace NES

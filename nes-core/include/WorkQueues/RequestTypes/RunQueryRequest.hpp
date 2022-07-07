@@ -55,6 +55,8 @@ class RunQueryRequest : public Request {
 
     std::string toString() override;
 
+    uint64_t getQueryId();
+
   private:
     explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value queryPlacementStrategy);
     QueryPlanPtr queryPlan;

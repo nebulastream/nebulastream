@@ -37,8 +37,12 @@ class RestartQueryRequest : public Request {
 
     std::string toString() override;
 
+    QueryId getQueryId() const;
+
   private:
     explicit RestartQueryRequest(QueryId queryId);
+
+    QueryId queryId;
 };
 }// namespace NES
 #endif// NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RESTARTQUERYREQUEST_HPP_

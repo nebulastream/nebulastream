@@ -27,15 +27,7 @@ namespace NES {
 class Request : public std::enable_shared_from_this<Request> {
 
   public:
-    explicit Request(QueryId queryId);
-
     virtual ~Request() = default;
-
-    /**
-     * @brief Get the query id to stop
-     * @return query id to stop
-     */
-    QueryId getQueryId() const;
 
     /**
      * @brief Checks if the current node is of type RequestType
@@ -64,9 +56,6 @@ class Request : public std::enable_shared_from_this<Request> {
     }
 
     virtual std::string toString() = 0;
-
-  private:
-    QueryId queryId;
 };
 }// namespace NES
 

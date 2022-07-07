@@ -221,7 +221,8 @@ void RequestProcessorService::start() {
                 //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
                 for (const auto& queryRequest : requests) {
                     if (queryRequest->instanceOf<StopQueryRequest>()) {
-                        auto queryId = queryRequest->getQueryId();
+                        auto stopQueryRequest = queryRequest->as<StopQueryRequest>();
+                        auto queryId = stopQueryRequest->getQueryId();
                         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
                     } else if (queryRequest->instanceOf<FailQueryRequest>()) {
                         auto failQueryRequest = queryRequest->as<FailQueryRequest>();
