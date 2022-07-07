@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <API/QueryAPI.hpp>
-#include <NesBaseTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <NesBaseTest.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 
