@@ -147,23 +147,24 @@ void RequestProcessorService::start() {
                                 }
 
                                 //Update the shared query plan as deployed
-                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+                                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
 
-                            // 3.3. Check if the shared query plan was updated after addition or removal of operators
+                                // 3.3. Check if the shared query plan was updated after addition or removal of operators
                             } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
 
-                                NES_DEBUG("QueryProcessingService: Shared Query Plan is non empty and an older version is already "
-                                      "running.");
+                                NES_DEBUG(
+                                    "QueryProcessingService: Shared Query Plan is non empty and an older version is already "
+                                    "running.");
 
                                 //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                            bool undeploymentSuccessful =
-                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
-                            if (!undeploymentSuccessful) {
-                                throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                 + std::to_string(sharedQueryId));
-                            }
+                                bool undeploymentSuccessful =
+                                    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+                                if (!undeploymentSuccessful) {
+                                    throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                     + std::to_string(sharedQueryId));
+                                }
 
-                            //3.3.2. Perform placement of updated shared query plan
+                                //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
                                 NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
@@ -188,51 +189,52 @@ void RequestProcessorService::start() {
 
                                 // 3.4. Check if the shared query plan is empty and already running
                             } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
-                                   || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
+                                       || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
 
-                            NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
-                                      "running.");
+                                NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
+                                          "running.");
 
                                 //3.4.1. Undeploy the running shared query plan
                                 bool undeploymentSuccessful =
-                                queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
+                                    queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
                                 if (!undeploymentSuccessful) {
                                     throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                      + std::to_string(sharedQueryId));
                                 }
 
-                            //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
-                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                                //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
+                                for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                                }
                             }
-                        }
 
                         } else {
                             //Yet another cool feature under development
                         }
                     }
 
-                        //Remove all query plans that are either stopped or failed
-                        globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
+                    //Remove all query plans that are either stopped or failed
+                    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 
-                //FIXME: This is a work-around for an edge case. To reproduce this:
-                // 1. The query merging feature is enabled.
-                // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
-                // Expected Result:
-                //  - Query status of the removed query is marked as stopped.
-                // Actual Result:
-                //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
-                for (const auto& queryRequest : requests) {
-                    if (queryRequest->instanceOf<StopQueryRequest>()) {
-                        auto queryId = queryRequest->getQueryId();
-                        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
-                    } else if (queryRequest->instanceOf<FailQueryRequest>()) {
-                        auto failQueryRequest = queryRequest->as<FailQueryRequest>();
-                        auto sharedQueryPlanId = failQueryRequest->getQueryId();
-                        auto failureReason = failQueryRequest->getFailureReason();
-                        auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
-                        for (const auto& queryId : queryIds) {
-                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, failureReason);
+                    //FIXME: This is a work-around for an edge case. To reproduce this:
+                    // 1. The query merging feature is enabled.
+                    // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
+                    // Expected Result:
+                    //  - Query status of the removed query is marked as stopped.
+                    // Actual Result:
+                    //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
+                    for (const auto& queryRequest : requests) {
+                        if (queryRequest->instanceOf<StopQueryRequest>()) {
+                            auto queryId = queryRequest->getQueryId();
+                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                        } else if (queryRequest->instanceOf<FailQueryRequest>()) {
+                            auto failQueryRequest = queryRequest->as<FailQueryRequest>();
+                            auto sharedQueryPlanId = failQueryRequest->getQueryId();
+                            auto failureReason = failQueryRequest->getFailureReason();
+                            auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
+                            for (const auto& queryId : queryIds) {
+                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, failureReason);
+                            }
                         }
                     }
                 }
