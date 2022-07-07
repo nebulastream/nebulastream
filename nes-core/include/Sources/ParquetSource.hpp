@@ -11,13 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef ENABLE_PARQUET_BUILD
+
 #ifndef NES_NES_CORE_INCLUDE_SOURCES_PARQUETSOURCE_HPP_
 #define NES_NES_CORE_INCLUDE_SOURCES_PARQUETSOURCE_HPP_
+#ifdef ENABLE_PARQUET_BUILD
 #include <Catalogs/Source/PhysicalSourceTypes/ParquetSourceType.hpp>
 #include <Sources/DataSource.hpp>
 #include <arrow/io/file.h>
 #include <parquet/stream_reader.h>
+
 namespace NES {
 
 /**
