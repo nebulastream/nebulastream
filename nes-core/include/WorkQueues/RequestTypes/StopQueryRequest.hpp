@@ -39,8 +39,11 @@ class StopQueryRequest : public Request {
 
     ~StopQueryRequest() override = default;
 
+    QueryId getQueryId() const;
+
   private:
     explicit StopQueryRequest(QueryId queryId);
+    QueryId queryId;
 };
 }// namespace NES
 

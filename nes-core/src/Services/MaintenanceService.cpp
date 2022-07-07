@@ -89,7 +89,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
             queryRequestQueue->add(RestartQueryRequest::create(queryId));
         } else {
             queryCatalogService->updateQueryStatus(queryId, QueryStatus::Migrating, "");
-            queryRequestQueue->add(MigrateQueryRequest::create(queryId, nodeId, type));
+            queryRequestQueue->add(MigrateQueryRequest::create(nodeId, type));
         }
     }
     result.first = true;

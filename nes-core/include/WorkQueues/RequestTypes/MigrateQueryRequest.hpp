@@ -31,7 +31,7 @@ typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
 class MigrateQueryRequest : public Request {
 
   public:
-    static MigrateQueryRequestPtr create(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType);
+    static MigrateQueryRequestPtr create(TopologyNodeId nodeId, MigrationType::Value migrationType);
 
     std::string toString() override;
 
@@ -48,7 +48,7 @@ class MigrateQueryRequest : public Request {
     TopologyNodeId getTopologyNode();
 
   private:
-    explicit MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType);
+    explicit MigrateQueryRequest(TopologyNodeId nodeId, MigrationType::Value migrationType);
 
     TopologyNodeId nodeId;
     MigrationType::Value migrationType;
