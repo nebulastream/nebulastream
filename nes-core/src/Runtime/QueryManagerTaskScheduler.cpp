@@ -281,7 +281,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
 
         auto now =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
 
         statistics->setTimestampFirstProcessedTask(now, true);
@@ -291,7 +291,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         auto creation = task.getBufferRef().getCreationTimestamp();
         auto diff = now - creation;
         //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
-        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
+        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past now=" << now << " creation=" << creation);
         statistics->incLatencySum(diff);
 
         for (auto& bufferManager : bufferManagers) {
