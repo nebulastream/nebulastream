@@ -40,9 +40,9 @@ WorkerContext::~WorkerContext() {
 
 void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto now = std::chrono::system_clock::now();
-    auto now_ms = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
-    auto value = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     statisticsFile << value.count() << ",";
     statisticsFile << inputBuffer.getWatermark() << ",";
     statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
