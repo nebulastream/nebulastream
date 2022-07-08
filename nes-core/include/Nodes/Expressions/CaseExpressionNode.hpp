@@ -17,8 +17,8 @@ limitations under the License.
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
         /**
-* @brief A case expression represents expressions with multiple children from which the first existing one is evaluated.
-*/
+         * @brief A case expression represents expressions with multiple children from which the first existing one is evaluated.
+         */
         class CaseExpressionNode : public ExpressionNode {
           public:
             explicit CaseExpressionNode(DataTypePtr stamp);
@@ -26,23 +26,27 @@ namespace NES {
 
             /**
             * @brief Create a new Case expression
+            * @param whenExps : a vector of when expression nodes.
+            * @param defaultExp : the expression to select, if no when expression evaluates to a value
             */
-            static ExpressionNodePtr create(std::vector<ExpressionNodePtr> const& left, ExpressionNodePtr const& right);
+            static ExpressionNodePtr create(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp);
 
             /**
             * @brief set the children nodes of this expression.
+            * @param whenExps : a vector of when expression nodes.
+            * @param defaultExp : the expression to select, if no when expression evaluates to a value
             */
-            void setChildren(std::vector<ExpressionNodePtr> const& left, ExpressionNodePtr const& right);
+            void setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp);
 
             /**
-            * @brief gets the vector of left children.
+            * @brief gets the vector of when-children.
             */
-            std::vector<ExpressionNodePtr> getLeft() const;
+            std::vector<ExpressionNodePtr> getWhenChildren() const;
 
             /**
-             * @brief gets the right children.
+             * @brief gets the default child.
              */
-            ExpressionNodePtr getRight() const;
+            ExpressionNodePtr getDefaultExp() const;
 
             /**
              * @brief Infers the stamp of this expression node.
