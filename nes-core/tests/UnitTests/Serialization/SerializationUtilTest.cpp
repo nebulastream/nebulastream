@@ -40,6 +40,8 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/CaseExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
@@ -477,6 +479,18 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
     }
     {
         auto expression = SqrtExpressionNode::create(f1);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = CaseExpressionNode::create({f1,f2}, f2);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = WhenExpressionNode::create(f1, f2);
         auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
         EXPECT_TRUE(expression->equal(deserializedExpression));

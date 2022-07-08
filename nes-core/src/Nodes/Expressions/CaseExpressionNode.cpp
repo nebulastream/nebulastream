@@ -19,72 +19,74 @@ namespace NES {
         CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
         CaseExpressionNode::CaseExpressionNode(CaseExpressionNode* other) : ExpressionNode(other) {
-            for (auto leftItr = getLeft().begin(); leftItr != getLeft().end(); ++leftItr) {
-                addChildWithEqual(leftItr->get()->copy());
+            //todo: is this really not meant to get the children of the other one?
+            auto otherWhenChildren = getWhenChildren();
+            for (auto & whenItr : otherWhenChildren) {
+                addChildWithEqual(whenItr->copy());
             }
 
-            addChildWithEqual(getRight()->copy());
+            addChildWithEqual(getDefaultExp()->copy());
         }
 
-        ExpressionNodePtr CaseExpressionNode::create(std::vector<ExpressionNodePtr> const& left, const ExpressionNodePtr& right) {
-            auto caseNode = std::make_shared<CaseExpressionNode>(right->getStamp());
-            caseNode->setChildren(left,right);
+        ExpressionNodePtr CaseExpressionNode::create(std::vector<ExpressionNodePtr> const& whenExps, const ExpressionNodePtr& defaultExp) {
+            auto caseNode = std::make_shared<CaseExpressionNode>(defaultExp->getStamp());
+            caseNode->setChildren(whenExps, defaultExp);
             return caseNode;
         }
 
         void CaseExpressionNode::inferStamp(SchemaPtr schema) {
-            auto left = getLeft();
-            auto right = getRight();
-            right->inferStamp(schema);
-            if (right->getStamp()->isUndefined()){
+            auto whenChildren = getWhenChildren();
+            auto defaultExp = getDefaultExp();
+            defaultExp->inferStamp(schema);
+            if (defaultExp->getStamp()->isUndefined()){
                 throw std::logic_error(
                     "CaseExpressionNode: Error during stamp inference. Right type must be defined, but was:"
-                    + right->getStamp()->toString()
+                    + defaultExp->getStamp()->toString()
                 );
             }
 
-            for (auto elem : left){
+            for (auto elem : whenChildren){
                 elem->inferStamp(schema);
-                //all elements must have same stamp as right value
-                if (!right->getStamp()->isEquals(elem->getStamp())) {
+                //all elements must have same stamp as defaultExp value
+                if (!defaultExp->getStamp()->isEquals(elem->getStamp())) {
                     throw std::logic_error(
                         "CaseExpressionNode: Error during stamp inference."
-                        "All elements must have same stamp as right default value, but element " + elem->toString() + " has:"
+                        "All elements must have same stamp as defaultExp default value, but element " + elem->toString() + " has:"
                         + elem->getStamp()->toString() + "."
-                        "Right was: " + right->getStamp()->toString()
+                        "Right was: " + defaultExp->getStamp()->toString()
                     );
                 }
             }
 
-            stamp = right->getStamp();
+            stamp = defaultExp->getStamp();
             NES_TRACE("CaseExpressionNode: we assigned the following stamp: " << stamp->toString());
         }
 
-        void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& left, ExpressionNodePtr const& right) {
-            for (auto elem : left){
+        void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp) {
+            for (auto elem : whenExps){
                 addChildWithEqual(elem);
             };
-            addChildWithEqual(right);
+            addChildWithEqual(defaultExp);
         }
 
-        std::vector<ExpressionNodePtr> CaseExpressionNode::getLeft() const {
-            if (children.size() <= 1) {
+        std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
+            if (children.size() < 2) {
                 NES_FATAL_ERROR("A case expression always should have at least two children, but it had: " << children.size());
             }
             //todo: maybe replace by vector slicing
-            std::vector<ExpressionNodePtr> leftChildren;
-            for ( auto elem : children){
-                leftChildren.push_back(elem->as<ExpressionNode>());
+            std::vector<ExpressionNodePtr> whenChildren;
+            for ( auto whenIter = children.begin(); whenIter != children.end() -1; ++whenIter){
+                whenChildren.push_back(whenIter->get()->as<ExpressionNode>());
             };
 
-            return leftChildren;
+            return whenChildren;
         }
 
-        ExpressionNodePtr CaseExpressionNode::getRight() const {
+        ExpressionNodePtr CaseExpressionNode::getDefaultExp() const {
             if (children.size() <= 1) {
                 NES_FATAL_ERROR("A case expression always should have at least two children, but it had: " << children.size());
             }
-            return (*children.end())->as<ExpressionNode>();
+            return (*(children.end()-1))->as<ExpressionNode>();
         }
 
         bool CaseExpressionNode::equal(NodePtr const& rhs) const {
@@ -106,11 +108,11 @@ namespace NES {
         std::string CaseExpressionNode::toString() const {
             std::stringstream ss;
             ss << "CASE({";
-            std::vector<ExpressionNodePtr> left = getLeft();
+            std::vector<ExpressionNodePtr> left = getWhenChildren();
             for (std::size_t i = 0; i < left.size()-1; i++){
-                ss << left[i]->toString() << ",";
+                ss << left.at(i)->toString() << ",";
             }
-            ss << (*left.end())->toString() << "}," << getRight()->toString();
+            ss << (*(left.end()-1))->toString() << "}," << getDefaultExp()->toString();
 
             return ss.str();
         }
