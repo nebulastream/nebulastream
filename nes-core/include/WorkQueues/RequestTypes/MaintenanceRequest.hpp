@@ -1,7 +1,3 @@
-//
-// Created by balint on 08.07.22.
-//
-
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
-#define NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
 
+#ifndef NES_MIGRATEQUERYREQUEST_HPP
+#define NES_MIGRATEQUERYREQUEST_HPP
 #include <Phases/MigrationType.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
@@ -26,16 +22,16 @@
 
 namespace NES::Experimental {
 
-class MigrateQueryRequest;
-typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
+class MaintenanceRequest;
+typedef std::shared_ptr<MaintenanceRequest> MigrateQueryRequestPtr;
 
 /**
      * @breif this request is used to migrate a query sub plan
      */
-class MigrateQueryRequest : public Request {
+class MaintenanceRequest : public Request {
 
   public:
-    static MigrateQueryRequestPtr create(QueryId queryId, MigrationType::Value migrationType);
+    static MigrateQueryRequestPtr create(TopologyNodeId nodeId, MigrationType::Value migrationType);
 
     std::string toString() override;
 
@@ -49,12 +45,12 @@ class MigrateQueryRequest : public Request {
          * @brief gets the topology node on which the query can be found
          * @return topology node id
          */
-    TopologyNodeId getQueryId();
+    TopologyNodeId getTopologyNode();
 
   private:
-    explicit MigrateQueryRequest(QueryId queryId, MigrationType::Value migrationType);
+    explicit MaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value migrationType);
 
-    QueryId queryId;
+    TopologyNodeId nodeId;
     MigrationType::Value migrationType;
 };
 }// namespace NES::Experimental
