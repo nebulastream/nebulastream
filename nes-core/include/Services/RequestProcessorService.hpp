@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
 
+#include <Phases/QueryMigrationPhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
@@ -115,6 +116,7 @@ class RequestProcessorService {
     QueryCatalogServicePtr queryCatalogService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Experimental::QueryMigrationPhasePtr queryMigrationPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;

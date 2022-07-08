@@ -1,3 +1,7 @@
+//
+// Created by balint on 08.07.22.
+//
+
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -11,24 +15,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
-#include <string>
-
-namespace NES::Experimental {
-
-MigrateQueryRequestPtr MigrateQueryRequest::create(TopologyNodeId nodeId, MigrationType::Value migrationType) {
-    return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(nodeId, migrationType));
+NES::Experimental::MigrateQueryRequestPtr
+NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experimental::MigrationType::Value migrationType) {
+    return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId, migrationType));
 }
 
-MigrateQueryRequest::MigrateQueryRequest(TopologyNodeId nodeId, MigrationType::Value migrationType)
-    :nodeId(nodeId), migrationType(migrationType){};
+NES::Experimental::MigrateQueryRequest::MigrateQueryRequest(NES::QueryId queryId,
+                                                            NES::Experimental::MigrationType::Value migrationType)
+    : queryId(queryId), migrationType(migrationType){}
 
-MigrationType::Value MigrateQueryRequest::getMigrationType() { return migrationType; }
-
-std::string MigrateQueryRequest::toString() {
-    return "MigrateQueryRequest { Topology Node: " + std::to_string(nodeId)
+std::string NES::Experimental::MigrateQueryRequest::toString() {
+    return "QueryMigrationRequest { Query Id: " + std::to_string(queryId)
         + ", withBuffer: " + std::to_string(migrationType) + "}";
 }
-TopologyNodeId MigrateQueryRequest::getTopologyNode() { return nodeId; }
-}// namespace NES::Experimental
+NES::Experimental::MigrationType::Value NES::Experimental::MigrateQueryRequest::getMigrationType() {
+    return migrationType;
+}
+NES::QueryId NES::Experimental::MigrateQueryRequest::getQueryId() { return queryId; }
+
