@@ -32,7 +32,7 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
     * @return true if schema was correctly inferred
     */
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
 
     /**
      * @brief infers the origin id from the child operator.

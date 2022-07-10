@@ -31,7 +31,7 @@ class SliceMergingOperator : public WindowOperatorNode {
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     OperatorNodePtr copy() override;
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
     void inferStringSignature() override;
 };
 

@@ -41,7 +41,7 @@ class RenameSourceOperatorNode : public LogicalUnaryOperatorNode {
     * @brief infers the input and out schema of this operator depending on its child.
     * @return true if schema was correctly inferred
     */
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
     std::string getNewSourceName();

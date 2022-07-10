@@ -42,9 +42,9 @@ Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::
     return batchJoinDefinition;
 }
 
-bool BatchJoinLogicalOperatorNode::inferSchema() {
+bool BatchJoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
 
-    if (!LogicalBinaryOperatorNode::inferSchema()) {
+    if (!LogicalBinaryOperatorNode::inferSchema(ctx)) {
         return false;
     }
 
@@ -64,7 +64,7 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
         if ((*itr)->hasFieldName(buildJoinKeyName)) {
             leftInputSchema->copyFields(*itr);
-            buildJoinKey->inferStamp(leftInputSchema);
+            buildJoinKey->inferStamp(ctx, leftInputSchema);
             //remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -78,7 +78,7 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     for (auto& schema : distinctSchemas) {
         if (schema->hasFieldName(probeJoinKeyName)) {
             rightInputSchema->copyFields(schema);
-            probeJoinKey->inferStamp(rightInputSchema);
+            probeJoinKey->inferStamp(ctx, rightInputSchema);
         }
     }
 

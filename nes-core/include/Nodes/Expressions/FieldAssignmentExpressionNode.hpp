@@ -48,7 +48,7 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
      */
     ExpressionNodePtr getAssignment() const;
 
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

@@ -41,7 +41,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           const Catalogs::UdfCatalogPtr& udfCatalog)
+                           Catalogs::UdfCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG("QueryService()");

@@ -36,7 +36,7 @@ class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
          * @comment More general: We set upperbound = max(abs(lowerbound_of_divisor), abs(upperbound_of_divisor)) and the lowerbound to the negation of the same maxiumum. This follows the mathematical definition and implementation in C.
          * @param schema: the current schema.
          */
-    void inferStamp(SchemaPtr schema) final;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) final;
 
     /**
         * @brief Create a deep copy of this expression node.

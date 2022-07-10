@@ -45,7 +45,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
      * @brief Returns the result schema of a source operator, which is defined by the source descriptor.
      * @return SchemaPtr
      */
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;

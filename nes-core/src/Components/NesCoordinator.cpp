@@ -123,7 +123,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   queryRequestQueue,
                                                   sourceCatalog,
                                                   queryParsingService,
-                                                  this->coordinatorConfiguration->optimizer);
+                                                  this->coordinatorConfiguration->optimizer,
+                                                  udfCatalog);
 
     udfCatalog = Catalogs::UdfCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,

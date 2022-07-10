@@ -30,11 +30,11 @@ const SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { re
 
 const UdfCatalogPtr& TypeInferencePhaseContext::getUdfCatalog() const { return udfCatalog; }
 
-TypeInferencePhaseContext::TypeInferencePhaseContext(const SourceCatalogPtr& sourceCatalog, const UdfCatalogPtr& udfCatalog)
-    : sourceCatalog(sourceCatalog), udfCatalog(udfCatalog) {}
+TypeInferencePhaseContext::TypeInferencePhaseContext(SourceCatalogPtr  sourceCatalog, UdfCatalogPtr  udfCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
 TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(udfCatalog) {
+    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {
     NES_DEBUG("TypeInferencePhase()");
 }
 
@@ -83,7 +83,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         // to this end we call at each sink the infer method to propagate the schemata across the whole query.
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
-            if (!sink->inferSchema()) {
+            if (!sink->inferSchema(typeInferencePhaseContext)) {
                 throw log4cxx::helpers::Exception("TypeInferencePhase: Failed!");
             }
         }

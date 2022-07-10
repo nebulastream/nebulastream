@@ -62,7 +62,7 @@ class QueryService {
                           SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          const Catalogs::UdfCatalogPtr& udfCatalog);
+                          Catalogs::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

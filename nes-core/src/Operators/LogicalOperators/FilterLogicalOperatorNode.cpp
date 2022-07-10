@@ -41,11 +41,11 @@ std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool FilterLogicalOperatorNode::inferSchema() {
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
+bool FilterLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
+    if (!LogicalUnaryOperatorNode::inferSchema(ctx)) {
         return false;
     }
-    predicate->inferStamp(inputSchema);
+    predicate->inferStamp(ctx, inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
