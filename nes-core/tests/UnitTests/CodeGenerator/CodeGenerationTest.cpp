@@ -35,6 +35,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/TernaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
@@ -245,6 +246,19 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         auto compareWithOne = IFStatement(VarRefStatement(varDeclJ), VarRefStatement(varDeclI));
         EXPECT_EQ(compareWithOne.getCode()->code_, "if(j){\ni;\n\n}\n");
+
+        auto ternStatement = TernaryOperatorStatement(
+                                        *BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP, VarRefStatement(varDeclJ)).copy(),
+                                        *VarRefStatement(varDeclI).copy(),
+                                        *TernaryOperatorStatement(
+                 *BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP, VarRefStatement(varDeclJ)).copy(),
+                 *VarRefStatement(varDeclI).copy(),
+                 *VarRefStatement(varDeclJ).copy()
+                     ).copy()
+                                );
+
+        EXPECT_EQ(ternStatement.getCode()->code_, "i>j?i:i>j?i:j");
+
     }
 
     {

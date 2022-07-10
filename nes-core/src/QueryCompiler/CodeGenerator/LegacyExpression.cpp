@@ -16,6 +16,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/TernaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
@@ -126,6 +127,104 @@ BinaryOperatorType Predicate::getOperatorType() const { return op; }
 LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 LegacyExpressionPtr Predicate::getRight() const { return right; }
+
+WhenPredicate::WhenPredicate(const LegacyExpressionPtr& left,
+                             const LegacyExpressionPtr& right)
+    : left(left), right(right) {}
+
+LegacyExpressionPtr WhenPredicate::copy() const {return  std::make_shared<WhenPredicate>(*this);}
+
+ExpressionStatementPtr WhenPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+    NES_INFO("LegacyWhenPredicate: This predicate generates code, but it should never generate code on its own. The code will just return the right expression.")
+    return TernaryOperatorStatement(
+               *(left->generateCode(code, recordHandler)),
+               *(right->generateCode(code, recordHandler)),
+               *(right->generateCode(code, recordHandler))
+               ).copy();
+}
+
+LegacyExpressionPtr WhenPredicate::getLeft() const { return left; }
+LegacyExpressionPtr WhenPredicate::getRight() const { return right; }
+
+std::string WhenPredicate::toString() const {
+    std::stringstream stream;
+    stream << left->toString() << " ? " << right->toString();
+    return stream.str();
+}
+
+bool WhenPredicate::equals(const LegacyExpression& _rhs) const {
+    try {
+        auto rhs = dynamic_cast<const WhenPredicate&>(_rhs);
+        if ((left == nullptr && rhs.getLeft() == nullptr) || (left->equals(*rhs.getRight().get()))) {
+            if ((right == nullptr && rhs.getRight() == nullptr) || (right->equals(*rhs.getRight().get()))) {
+                return true;
+            }
+        }
+        return false;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
+CasePredicate::CasePredicate(const std::vector<LegacyExpressionPtr>& whenExprs, const LegacyExpressionPtr& defautlExpr)
+    : whenExprs(whenExprs), defautlExpr(defautlExpr) {}
+
+LegacyExpressionPtr CasePredicate::copy() const {return std::make_shared<CasePredicate>(*this);}
+
+ExpressionStatementPtr CasePredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+    try {
+        auto lastWhen = dynamic_pointer_cast<const WhenPredicate>(*(whenExprs.end()-1));
+        //generate base expression from last when and default
+        ExpressionStatementPtr curBaseExpr = TernaryOperatorStatement(
+                                *(lastWhen->getLeft()->generateCode(code, recordHandler)),
+                                *(lastWhen->getRight()->generateCode(code, recordHandler)),
+                                *(defautlExpr->generateCode(code, recordHandler))
+                            ).copy();
+
+        //add other when expressions in front of base expression
+        for (auto whenExpIt = (whenExprs.rbegin()+1); whenExpIt != whenExprs.rend(); ++whenExpIt) {
+            auto whenExpPtr = std::dynamic_pointer_cast<const WhenPredicate>(*(whenExpIt));
+            ExpressionStatementPtr tmpExpr = TernaryOperatorStatement(
+                                *(whenExpPtr->getLeft()->generateCode(code, recordHandler)),
+                                *(whenExpPtr->getRight()->generateCode(code, recordHandler)),
+                                *curBaseExpr
+                            ).copy();
+            curBaseExpr = tmpExpr;
+        }
+        NES_DEBUG("CasePredicate: Generating code for expression " << this->toString() << "\nIt looks like: " << curBaseExpr->getCode()->code_)
+        return curBaseExpr;
+    } catch (const std::bad_cast& e) {
+        NES_FATAL_ERROR("CasePredicate: Could not cast when expressions to generate code for them.");
+    }
+
+    return nullptr;
+}
+
+std::vector<LegacyExpressionPtr> CasePredicate::getWhenExprs() const { return whenExprs;}
+
+LegacyExpressionPtr CasePredicate::getDefaultExpr() const { return defautlExpr; }
+
+std::string CasePredicate::toString() const {
+    std::stringstream stream;
+    for (auto whenExp : whenExprs) {
+        stream << whenExp->toString() << " : ";
+    }
+    stream << defautlExpr->toString();
+    return stream.str();
+}
+
+bool CasePredicate::equals(const LegacyExpression& _rhs) const {
+    try {
+        auto rhs = dynamic_cast<const CasePredicate&>(_rhs);
+        if(whenExprs.size() == rhs.getWhenExprs().size() && defautlExpr->equals(*rhs.getDefaultExpr().get())){
+            NES_DEBUG("CasePredicate: Equals in this legacy predicate only checks for same number of when cases and whether or not the default expression is equal.")
+            return true;
+        }
+        return false;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
 
 UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op, const LegacyExpressionPtr& child, bool bracket)
     : op(op), child(child), bracket(bracket) {}

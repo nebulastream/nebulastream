@@ -99,14 +99,17 @@ ExpressionItem Attribute(std::string name, BasicType type);
  * @brief WHEN(condition,value) allows to only return the value expression of condition is met.
  * @param conditionExp, valueExp
  */
-ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionNodePtr valueExp);
-
+ExpressionNodePtr WHEN(const ExpressionNodePtr& conditionExp, const ExpressionNodePtr& valueExp);
+ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionNodePtr valueExp);
+ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionItem valueExp);
+ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp);
 /**
  * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value)
  * allows to return the value of the first WHEN expression from the list of which the condition is met, or the value of the second expression.
  * @param conditionExp, valueExp
  */
 ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionNodePtr valueExp);
+ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem valueExp);
 
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
