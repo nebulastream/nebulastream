@@ -40,9 +40,9 @@ ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const& child) {
     return equals;
 }
 
-void NegateExpressionNode::inferStamp(SchemaPtr schema) {
+void NegateExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
     // delegate stamp inference of children
-    ExpressionNode::inferStamp(schema);
+    ExpressionNode::inferStamp(ctx, schema);
     // check if children stamp is correct
     if (!child()->isPredicate()) {
         throw std::logic_error("Negate Expression Node: the stamp of child must be boolean, but was: "

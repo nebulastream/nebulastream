@@ -31,9 +31,9 @@ ExpressionNodePtr Log10ExpressionNode::create(ExpressionNodePtr const& child) {
     return log10Node;
 }
 
-void Log10ExpressionNode::inferStamp(SchemaPtr schema) {
+void Log10ExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+    ArithmeticalUnaryExpressionNode::inferStamp(ctx, schema);
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {

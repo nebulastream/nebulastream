@@ -47,7 +47,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
     * @throws Exception the predicate expression has to return a boolean.
     * @return true if schema was correctly inferred
     */
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
 

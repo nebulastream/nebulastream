@@ -51,6 +51,7 @@ namespace NES {
 
 class TypeInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
+    UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TypeInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -87,7 +88,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(plan);
 
     // we just access the old references
@@ -119,7 +120,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -145,7 +146,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(sink);
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -158,7 +159,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto plan = query.getQueryPlan();
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -185,7 +186,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
     auto plan = query.getQueryPlan();
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -220,7 +221,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce);
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -248,7 +249,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce);
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -270,7 +271,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     plan->appendOperatorAsNewRoot(sink);
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
     NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
@@ -296,7 +297,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -342,7 +343,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
@@ -397,7 +398,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -450,7 +451,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -504,7 +505,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -562,7 +563,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -610,7 +611,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -673,7 +674,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto mergeOperator = plan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -744,7 +745,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -831,7 +832,7 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -911,7 +912,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
@@ -970,7 +971,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
                      .apply(Sum(Attribute("default_logical2$f3")))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -1021,7 +1022,8 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
@@ -1037,14 +1039,14 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
             LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }
     joinOp->replace(batchJoinOp);
-    ASSERT_TRUE(batchJoinOp->inferSchema());
+    ASSERT_TRUE(batchJoinOp->inferSchema(typeInferencePhaseContext));
 
     for (auto wmaOp : queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>()) {
         ASSERT_TRUE(wmaOp->removeAndJoinParentAndChildren());
     }
 
     // after cutting the wmaOps, infer schema of the operator tree again
-    ASSERT_TRUE(queryPlan->getSinkOperators()[0]->inferSchema());
+    ASSERT_TRUE(queryPlan->getSinkOperators()[0]->inferSchema(typeInferencePhaseContext));
 
     auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
@@ -1089,7 +1091,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
                      .equalsTo(Attribute("id2"))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
@@ -1146,7 +1148,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto joinOperators = plan->getOperatorByType<JoinLogicalOperatorNode>();
@@ -1272,7 +1274,7 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
                                  .orWith(Query::from("QnV3").filter(Attribute("quantity") > 7)))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto sink = resultPlan->getSinkOperators()[0];
@@ -1312,7 +1314,7 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto sink = resultPlan->getSinkOperators()[0];
@@ -1366,7 +1368,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto sink = resultPlan->getSinkOperators()[0];
@@ -1418,7 +1420,7 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto sink = resultPlan->getSinkOperators()[0];

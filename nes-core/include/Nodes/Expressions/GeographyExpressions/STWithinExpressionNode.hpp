@@ -72,7 +72,7 @@ class STWithinExpressionNode : public ExpressionNode {
      * @brief Infers the stamp of the STWITHIN expression node.
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

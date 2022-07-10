@@ -30,7 +30,7 @@ class ExpExpressionNode final : public ArithmeticalUnaryExpressionNode {
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;
 
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

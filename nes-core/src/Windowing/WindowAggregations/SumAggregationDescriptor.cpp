@@ -44,9 +44,9 @@ WindowAggregationPtr SumAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(SchemaPtr schema) {
+void SumAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(schema);
+    onField->inferStamp(ctx, schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

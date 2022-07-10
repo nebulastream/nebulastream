@@ -39,7 +39,7 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-void CountAggregationDescriptor::inferStamp(SchemaPtr) {
+void CountAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr) {
     // a count aggregation is always on an uint 64
     asField->setStamp(DataTypeFactory::createUInt64());
 }

@@ -37,14 +37,14 @@ bool MapLogicalOperatorNode::equal(NodePtr const& rhs) const {
     return false;
 };
 
-bool MapLogicalOperatorNode::inferSchema() {
+bool MapLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
     // infer the default input and output schema
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema(ctx)) {
         return false;
     }
 
     // use the default input schema to calculate the out schema of this operator.
-    mapExpression->inferStamp(getInputSchema());
+    mapExpression->inferStamp(ctx, getInputSchema());
 
     auto assignedField = mapExpression->getField();
     std::string fieldName = assignedField->getFieldName();

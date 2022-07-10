@@ -42,9 +42,9 @@ std::string JoinLogicalOperatorNode::toString() const {
 
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
-bool JoinLogicalOperatorNode::inferSchema() {
+bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
 
-    if (!LogicalBinaryOperatorNode::inferSchema()) {
+    if (!LogicalBinaryOperatorNode::inferSchema(ctx)) {
         return false;
     }
 
@@ -71,7 +71,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
         }
         if (fieldExistsInSchema) {
             leftInputSchema->copyFields(*itr);
-            leftJoinKey->inferStamp(leftInputSchema);
+            leftJoinKey->inferStamp(ctx, leftInputSchema);
             //remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -95,7 +95,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
     }
     if (fieldExistsInSchema) {
         rightInputSchema->copyFields(distinctSchemas[0]);
-        rightJoinKey->inferStamp(rightInputSchema);
+        rightJoinKey->inferStamp(ctx, rightInputSchema);
     }
     distinctSchemas.clear();
 

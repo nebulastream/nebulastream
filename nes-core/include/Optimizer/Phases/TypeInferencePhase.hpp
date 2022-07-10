@@ -38,7 +38,7 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class TypeInferencePhaseContext {
   public:
-    TypeInferencePhaseContext(const SourceCatalogPtr& sourceCatalog, const UdfCatalogPtr& udfCatalog);
+    TypeInferencePhaseContext(SourceCatalogPtr  sourceCatalog, UdfCatalogPtr  udfCatalog);
     [[nodiscard]] const SourceCatalogPtr& getSourceCatalog() const;
     [[nodiscard]] const UdfCatalogPtr& getUdfCatalog() const;
 

@@ -20,6 +20,10 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -41,6 +45,11 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 
   public:
     SchemaPtr schema;
+    std::shared_ptr<QueryParsingService> queryParsingService;
+    std::shared_ptr<Compiler::JITCompiler> jitCompiler;
+    SourceCatalogPtr sourceCatalog;
+    UdfCatalogPtr udfCatalog;
+    std::shared_ptr<Optimizer::TypeInferencePhaseContext> typeInferencePhaseContext;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -50,6 +59,12 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        udfCatalog = Catalogs::UdfCatalog::create();
+        typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);
     }
 
@@ -61,11 +76,10 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 };
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     ExpressionNodePtr predicate = Attribute("value") == 40;
-    predicate->inferStamp(schema);
+    predicate->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -75,13 +89,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -91,14 +105,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
     ExpressionNodePtr predicate2 = 40 == Attribute("value");
-    predicate2->inferStamp(schema);
+    predicate2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -108,13 +121,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -124,12 +137,11 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -139,13 +151,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -160,9 +172,9 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 && Attribute("value") == 40;
-    predicate2->inferStamp(schema);
+    predicate2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -172,13 +184,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -193,9 +205,9 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 + 40 && Attribute("id") >= 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 && Attribute("value") == 80;
-    predicate2->inferStamp(schema);
+    predicate2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -205,13 +217,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -226,9 +238,9 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
     ExpressionNodePtr predicate2 = Attribute("id") == 40;
-    predicate2->inferStamp(schema);
+    predicate2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -238,13 +250,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -259,9 +271,9 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
-    predicate1->inferStamp(schema);
+    predicate1->inferStamp(*typeInferencePhaseContext, schema);
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 or Attribute("value") == 40;
-    predicate2->inferStamp(schema);
+    predicate2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -271,12 +283,12 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -290,7 +302,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
-    expression->inferStamp(schema);
+    expression->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -300,13 +312,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -330,13 +342,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -362,7 +374,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     logicalOperator11->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
-    logicalOperator12->inferSchema();
+    logicalOperator12->inferSchema(*typeInferencePhaseContext);
     logicalOperator12->inferZ3Signature(context);
     auto sig1 = logicalOperator12->getZ3Signature();
 
@@ -370,7 +382,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator22->addChild(logicalOperator21);
-    logicalOperator22->inferSchema();
+    logicalOperator22->inferSchema(*typeInferencePhaseContext);
     logicalOperator22->inferZ3Signature(context);
     auto sig2 = logicalOperator22->getZ3Signature();
 
@@ -384,9 +396,9 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
-    expression1->inferStamp(schema);
+    expression1->inferStamp(*typeInferencePhaseContext, schema);
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
-    expression2->inferStamp(schema);
+    expression2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -398,7 +410,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     logicalOperator11->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
-    logicalOperator12->inferSchema();
+    logicalOperator12->inferSchema(*typeInferencePhaseContext);
     logicalOperator12->inferZ3Signature(context);
     auto sig1 = logicalOperator12->getZ3Signature();
 
@@ -406,7 +418,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator22->addChild(logicalOperator21);
-    logicalOperator22->inferSchema();
+    logicalOperator22->inferSchema(*typeInferencePhaseContext);
     logicalOperator22->inferZ3Signature(context);
     auto sig2 = logicalOperator22->getZ3Signature();
 
@@ -420,9 +432,9 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
-    expression1->inferStamp(schema);
+    expression1->inferStamp(*typeInferencePhaseContext, schema);
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = 50;
-    expression2->inferStamp(schema);
+    expression2->inferStamp(*typeInferencePhaseContext, schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
@@ -432,13 +444,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -456,12 +468,12 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
 
     //Create source operator
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -481,12 +493,12 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
 
     //Create source
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
-    logicalOperator1->inferSchema();
+    logicalOperator1->inferSchema(*typeInferencePhaseContext);
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
-    logicalOperator2->inferSchema();
+    logicalOperator2->inferSchema(*typeInferencePhaseContext);
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
 
@@ -511,13 +523,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
-    projectionOperator1->inferSchema();
+    projectionOperator1->inferSchema(*typeInferencePhaseContext);
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
-    projectionOperator2->inferSchema();
+    projectionOperator2->inferSchema(*typeInferencePhaseContext);
     projectionOperator2->inferZ3Signature(context);
     auto sig2 = projectionOperator2->getZ3Signature();
 
@@ -542,13 +554,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
-    projectionOperator1->inferSchema();
+    projectionOperator1->inferSchema(*typeInferencePhaseContext);
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
-    projectionOperator2->inferSchema();
+    projectionOperator2->inferSchema(*typeInferencePhaseContext);
     projectionOperator2->inferZ3Signature(context);
     auto sig2 = projectionOperator2->getZ3Signature();
 
@@ -572,13 +584,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
-    projectionOperator1->inferSchema();
+    projectionOperator1->inferSchema(*typeInferencePhaseContext);
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
-    projectionOperator2->inferSchema();
+    projectionOperator2->inferSchema(*typeInferencePhaseContext);
     projectionOperator2->inferZ3Signature(context);
     auto sig2 = projectionOperator2->getZ3Signature();
 
@@ -607,13 +619,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
-    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSchema(*typeInferencePhaseContext);
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
-    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSchema(*typeInferencePhaseContext);
     watermarkOperator2->inferZ3Signature(context);
     auto sig2 = watermarkOperator2->getZ3Signature();
 
@@ -638,13 +650,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
-    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSchema(*typeInferencePhaseContext);
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
-    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSchema(*typeInferencePhaseContext);
     watermarkOperator2->inferZ3Signature(context);
     auto sig2 = watermarkOperator2->getZ3Signature();
 
@@ -671,13 +683,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
-    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSchema(*typeInferencePhaseContext);
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
-    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSchema(*typeInferencePhaseContext);
     watermarkOperator2->inferZ3Signature(context);
     auto sig2 = watermarkOperator2->getZ3Signature();
 
@@ -706,13 +718,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
-    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSchema(*typeInferencePhaseContext);
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
-    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSchema(*typeInferencePhaseContext);
     watermarkOperator2->inferZ3Signature(context);
     auto sig2 = watermarkOperator2->getZ3Signature();
 
@@ -741,13 +753,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
-    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSchema(*typeInferencePhaseContext);
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
-    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSchema(*typeInferencePhaseContext);
     watermarkOperator2->inferZ3Signature(context);
     auto sig2 = watermarkOperator2->getZ3Signature();
 

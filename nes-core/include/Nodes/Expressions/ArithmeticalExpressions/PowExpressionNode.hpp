@@ -37,7 +37,7 @@ class PowExpressionNode final : public ArithmeticalBinaryExpressionNode {
      * @comment E.g. SQL Server has a very unintuitive behaviour of always returning the datatype of the base (Int/Float). C++ always returns a float. We decide to return a float, except when both base and exponent are an Integer; and we set high bounds as POWER is an exponential function.
      * @param schema: the current schema.
      */
-    void inferStamp(SchemaPtr schema) final;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) final;
 
     /**
     * @brief Create a deep copy of this expression node.

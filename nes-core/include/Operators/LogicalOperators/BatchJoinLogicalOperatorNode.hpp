@@ -40,7 +40,7 @@ class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     //infer schema of two child operators
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;

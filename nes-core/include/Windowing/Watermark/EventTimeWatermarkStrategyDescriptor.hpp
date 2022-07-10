@@ -37,7 +37,7 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     std::string toString() override;
 
-    bool inferStamp(SchemaPtr schema) override;
+    bool inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
 
   private:
     // Field where the watermark should be retrieved

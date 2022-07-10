@@ -13,7 +13,9 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <API/Schema.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -25,6 +27,8 @@
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -35,7 +39,23 @@ namespace NES {
 
 class ExpressionNodeTest : public Testing::NESBaseTest {
   public:
-    static void SetUpTestCase() { setupLogging(); }
+    std::shared_ptr<QueryParsingService> queryParsingService;
+    std::shared_ptr<Compiler::JITCompiler> jitCompiler;
+    SourceCatalogPtr sourceCatalog;
+    UdfCatalogPtr udfCatalog;
+
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        udfCatalog = Catalogs::UdfCatalog::create();
+    }
+
+    static void SetUpTestCase() {
+        setupLogging();
+    }
 
   protected:
     static void setupLogging() {
@@ -64,6 +84,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
 }
 
 TEST_F(ExpressionNodeTest, attributeStampInference) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$f1", INT8);
 
     auto attribute = Attribute("f1").getExpressionNode();
@@ -71,7 +92,7 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
     EXPECT_TRUE(attribute->getStamp()->isUndefined());
 
     // infer stamp using schema
-    attribute->inferStamp(schema);
+    attribute->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(attribute->getStamp()->isEquals(DataTypeFactory::createInt8()));
 
     // test inference with undefined attribute
@@ -79,10 +100,11 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
     EXPECT_TRUE(notValidAttribute->getStamp()->isUndefined());
     // we expect that this call throws an exception
-    ASSERT_ANY_THROW(notValidAttribute->inferStamp(schema));
+    ASSERT_ANY_THROW(notValidAttribute->inferStamp(typeInferencePhaseContext, schema));
 }
 
 TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
                       ->addField("test$f1", INT8)
                       ->addField("test$f2", INT64)
@@ -91,26 +113,27 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
 
     auto addExpression = Attribute("f1") + 10;
     EXPECT_TRUE(addExpression->getStamp()->isUndefined());
-    addExpression->inferStamp(schema);
+    addExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 
     auto mulExpression = Attribute("f2") * 10;
     EXPECT_TRUE(mulExpression->getStamp()->isUndefined());
-    mulExpression->inferStamp(schema);
+    mulExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
 
     auto increment = Attribute("f3")++;
     EXPECT_TRUE(increment->getStamp()->isUndefined());
-    increment->inferStamp(schema);
+    increment->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(FLOAT64)));
 
     // We expect that you can't increment an array
     auto incrementArray = Attribute("f4")++;
     EXPECT_TRUE(incrementArray->getStamp()->isUndefined());
-    ASSERT_ANY_THROW(incrementArray->inferStamp(schema));
+    ASSERT_ANY_THROW(incrementArray->inferStamp(typeInferencePhaseContext, schema));
 }
 
 TEST_F(ExpressionNodeTest, inferPredicateTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
                       ->addField("test$f1", INT8)
                       ->addField("test$f2", INT64)
@@ -118,34 +141,35 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto equalsExpression = Attribute("f1") == 10;
-    equalsExpression->inferStamp(schema);
+    equalsExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(equalsExpression->isPredicate());
 
     auto lessExpression = Attribute("f2") < 10;
-    lessExpression->inferStamp(schema);
+    lessExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(lessExpression->isPredicate());
 
     auto negateBoolean = !Attribute("f3");
-    negateBoolean->inferStamp(schema);
+    negateBoolean->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(negateBoolean->isPredicate());
 
     // you cant negate non boolean.
     auto negateInteger = !Attribute("f1");
-    ASSERT_ANY_THROW(negateInteger->inferStamp(schema));
+    ASSERT_ANY_THROW(negateInteger->inferStamp(typeInferencePhaseContext, schema));
 
     auto andExpression = Attribute("f3") && true;
-    andExpression->inferStamp(schema);
+    andExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(andExpression->isPredicate());
 
     auto orExpression = Attribute("f3") || Attribute("f3");
-    orExpression->inferStamp(schema);
+    orExpression->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(orExpression->isPredicate());
     // you cant make a logical expression between non boolean.
     auto orIntegerExpression = Attribute("f1") || Attribute("f2");
-    ASSERT_ANY_THROW(negateInteger->inferStamp(schema));
+    ASSERT_ANY_THROW(negateInteger->inferStamp(typeInferencePhaseContext, schema));
 }
 
 TEST_F(ExpressionNodeTest, inferAssertionTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
                       ->addField("test$f1", INT8)
                       ->addField("test$f2", INT64)
@@ -153,15 +177,16 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
-    assertion->inferStamp(schema);
+    assertion->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT8)));
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
 
     auto multiplicationNode = Attribute("left") * Attribute("right");
-    multiplicationNode->inferStamp(schema);
+    multiplicationNode->inferStamp(typeInferencePhaseContext, schema);
     ASSERT_TRUE(multiplicationNode->getStamp()->isInteger());
     auto intStamp = DataType::as<Integer>(multiplicationNode->getStamp());
     int bits = intStamp->getBits();
@@ -177,10 +202,11 @@ TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (integers)
  */
 TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
-    moduloNode->inferStamp(schema);
+    moduloNode->inferStamp(typeInferencePhaseContext, schema);
     ASSERT_TRUE(moduloNode->getStamp()->isInteger());
 
     auto intStamp = DataType::as<Integer>(moduloNode->getStamp());
@@ -201,10 +227,11 @@ TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (float)
  */
 TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", FLOAT32);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
-    moduloNode->inferStamp(schema);
+    moduloNode->inferStamp(typeInferencePhaseContext, schema);
     ASSERT_TRUE(moduloNode->getStamp()->isFloat());
 
     auto floatStamp = DataType::as<Float>(moduloNode->getStamp());
