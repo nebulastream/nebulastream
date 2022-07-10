@@ -33,4 +33,5 @@ add_source_files(nes-core
         ContinueStatement.cpp
         CommentStatement.cpp
         StdOutStatement.cpp
+        TernaryOperatorStatement.cpp
 )

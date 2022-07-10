@@ -29,6 +29,8 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -74,6 +76,22 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto stamp = fieldReadExpression->getStamp();
         NES_DEBUG("TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
+    } else if (expression->instanceOf<WhenExpressionNode>()) {
+        auto whenExpression = expression->as<WhenExpressionNode>();
+        auto legacyLeft = transformExpression(whenExpression->getLeft());
+        auto legacyRight = transformExpression(whenExpression->getRight());
+        NES_DEBUG("TranslateToLegacyPhase: Translate WhenExpressionNode: " << whenExpression->toString());
+        return WhenPredicate(legacyLeft, legacyRight).copy();
+    } else if (expression->instanceOf<CaseExpressionNode>()) {
+        auto caseExpressionNode = expression->as<CaseExpressionNode>();
+        std::vector<LegacyExpressionPtr> whenExprs;
+        for (const auto& elem : caseExpressionNode->getWhenChildren()) {
+            whenExprs.push_back(transformExpression(elem));
+        }
+        auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
+        NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
+        return CasePredicate(whenExprs,legacyDefault).copy();
+
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();

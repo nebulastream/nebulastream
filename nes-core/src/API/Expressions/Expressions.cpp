@@ -96,12 +96,25 @@ ExpressionItem Attribute(std::string fieldName, BasicType type) {
     return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
-ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionNodePtr valueExp) {
+ExpressionNodePtr WHEN(const ExpressionNodePtr& conditionExp, const ExpressionNodePtr& valueExp) {
     return WhenExpressionNode::create(std::move(conditionExp), std::move(valueExp));
+}
+
+ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionNodePtr valueExp) {
+    return WHEN(conditionExp.getExpressionNode(), std::move(valueExp));
+}
+ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionItem valueExp) {
+    return WHEN(std::move(conditionExp), valueExp.getExpressionNode());
+}
+ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp) {
+    return WHEN(conditionExp.getExpressionNode(), valueExp.getExpressionNode());
 }
 
 ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionNodePtr valueExp) {
     return CaseExpressionNode::create(std::move(whenExpressions), std::move(valueExp));
+}
+ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem valueExp) {
+    return CASE(std::move(whenExpressions), valueExp.getExpressionNode());
 }
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() const { return expression; }

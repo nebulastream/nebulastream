@@ -65,6 +65,47 @@ class Predicate : public LegacyExpression {
     std::string functionCallOverload;
 };
 
+/**
+ * @brief A legacy implementation of the when expression to get it into the codegenerator.
+ */
+class WhenPredicate: public LegacyExpression {
+  public:
+    WhenPredicate(LegacyExpressionPtr const& left,
+              LegacyExpressionPtr const& right);
+
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] LegacyExpressionPtr getLeft() const;
+    [[nodiscard]] LegacyExpressionPtr getRight() const;
+
+  private:
+    WhenPredicate() = default;
+    LegacyExpressionPtr left;
+    LegacyExpressionPtr right;
+};
+
+/**
+ * @brief A legacy implementation of the case expression to get it into the codegenerator.
+ */
+class CasePredicate: public LegacyExpression {
+  public:
+    CasePredicate(const std::vector<LegacyExpressionPtr>& whenExprs, const LegacyExpressionPtr& defautlExpr);
+
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] std::vector<LegacyExpressionPtr> getWhenExprs() const;
+    [[nodiscard]] LegacyExpressionPtr getDefaultExpr() const;
+
+  private:
+    CasePredicate() = default;
+    std::vector<LegacyExpressionPtr> whenExprs;
+    LegacyExpressionPtr defautlExpr;
+};
+
 class UnaryPredicate : public LegacyExpression {
   public:
     UnaryPredicate(UnaryOperatorType const& op, LegacyExpressionPtr const& child, bool bracket = true);
