@@ -7,7 +7,8 @@
 class MyControllerTest : public oatpp::test::UnitTest {
   public:
 
-    MyControllerTest() : UnitTest("TEST[MyControllerTest]" /* Test TAG for logs */){}
+    MyControllerTest();
+    virtual ~MyControllerTest();
     void onRun() override;
 
 };
