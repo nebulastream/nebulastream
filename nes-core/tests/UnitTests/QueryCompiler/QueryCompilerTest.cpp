@@ -70,6 +70,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
+    UdfCatalogPtr udfCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryCompilerTest test class.");
@@ -80,6 +81,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -140,7 +142,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -186,7 +188,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -236,7 +238,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
     queryPlan = inferOriginPhase->execute(queryPlan);
@@ -288,7 +290,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
     queryPlan = inferOriginPhase->execute(queryPlan);
@@ -336,7 +338,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
                       .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     EXPECT_TRUE(!sourceOperators.empty());
@@ -401,7 +403,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto sourceDescriptor2 = sourceOperators[1]->getSourceDescriptor();
     sourceDescriptor2->setPhysicalSourceName("x1");
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -450,7 +452,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     EXPECT_TRUE(!sourceOperators.empty());

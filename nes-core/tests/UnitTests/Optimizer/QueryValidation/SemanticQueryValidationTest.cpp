@@ -58,7 +58,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
-        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
         QueryPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
         semanticQueryValidation->validate(filterQuery->getQueryPlan());
@@ -177,7 +177,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
 
     auto query = Query::from("default_logical")
                      .project(Attribute("id").as("new_id"), Attribute("value"))
@@ -200,7 +200,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
 
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
 
     auto query = Query::from("default_logical")
                      .map(Attribute("value") = Attribute("value") + 2)
@@ -216,7 +216,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     NES_INFO("Invalid projection test");
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
 
     auto subQuery = Query::from("default_logical");
     auto query = Query::from("default_logical")

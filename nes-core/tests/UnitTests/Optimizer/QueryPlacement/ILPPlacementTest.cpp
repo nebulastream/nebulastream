@@ -243,7 +243,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -302,7 +302,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -365,7 +365,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,

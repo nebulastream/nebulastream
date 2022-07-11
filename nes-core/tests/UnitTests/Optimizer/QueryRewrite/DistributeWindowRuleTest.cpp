@@ -162,7 +162,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
@@ -194,7 +194,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);

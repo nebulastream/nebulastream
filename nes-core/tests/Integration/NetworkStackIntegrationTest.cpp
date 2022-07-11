@@ -514,7 +514,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
         auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
 
-        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         queryPlan->setQueryId(i);
         queryPlan->setQuerySubPlanId(subPlanId++);
@@ -864,7 +864,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     queryPlan->setQueryId(0);
     queryPlan->setQuerySubPlanId(0);
