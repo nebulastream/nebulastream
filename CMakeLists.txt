@@ -435,7 +435,7 @@ if (NES_USE_MQTT)
 endif (NES_USE_MQTT)
 
 if(NES_USE_PARQUET)
-    find_package(Arrow REQUIRED)
+    find_package(Arrow CONFIG REQUIRED)
     message("Enabling Parquet build")
     add_compile_definitions(ENABLE_PARQUET_BUILD)
 endif()
