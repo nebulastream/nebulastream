@@ -63,7 +63,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
-    auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, nullptr);
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto signatureInferencePhase =
         SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);

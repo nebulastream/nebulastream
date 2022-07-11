@@ -19,6 +19,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -54,11 +55,13 @@ class QueryControllerTest : public Testing::NESBaseTest {
         QueryParsingServicePtr queryParsingService = QueryParsingService::create(jitCompilerBuilder.build());
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         Configurations::OptimizerConfiguration optimizerConfiguration = OptimizerConfiguration();
+        Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
         QueryServicePtr queryService = std::make_shared<QueryService>(queryCatalogService,
                                                                       queryRequestQueue,
                                                                       sourceCatalog,
                                                                       queryParsingService,
-                                                                      optimizerConfiguration);
+                                                                      optimizerConfiguration,
+                                                                      udfCatalog);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
         queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
     };

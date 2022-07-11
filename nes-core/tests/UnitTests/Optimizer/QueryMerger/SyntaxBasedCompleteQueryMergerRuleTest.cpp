@@ -638,7 +638,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -693,7 +693,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 

@@ -77,7 +77,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
@@ -105,7 +105,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
@@ -136,7 +136,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWith
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();

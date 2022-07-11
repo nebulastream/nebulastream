@@ -311,7 +311,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -382,7 +382,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("value")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -452,7 +452,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -525,7 +525,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("asd")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         FAIL();
@@ -540,7 +540,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     // creating query plan
     auto query = TestQuery::from(testSchema).project(Attribute("asd")).sink(DummySink::create());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
 
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -588,7 +588,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     Optimizer::DistributeWindowRulePtr distributeWindowRule =
         Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
@@ -666,7 +666,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     query.sink(DummySink::create());
 
     bool success = false;
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     } catch (...) {
@@ -707,7 +707,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 
             auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
-            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
 
             auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
         },
@@ -755,7 +755,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     SchemaPtr ptr = testSchema->copy();
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();

@@ -238,7 +238,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
     plan = typeInference->execute(plan);
 
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);

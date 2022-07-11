@@ -60,7 +60,7 @@ class OriginIdInferencePhaseTest : public testing::Test {
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
         auto optimizerConfiguration = OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = false;
         topologySpecificQueryRewritePhase =

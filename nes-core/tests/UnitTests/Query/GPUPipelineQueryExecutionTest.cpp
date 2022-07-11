@@ -402,7 +402,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("value") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
@@ -478,7 +478,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
@@ -558,7 +558,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
