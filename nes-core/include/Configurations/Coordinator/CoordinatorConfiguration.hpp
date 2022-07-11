@@ -152,6 +152,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
+    /**
+     * @brief Configuration of Server Type
+     * set true if type of server should be oatpp
+     */
+    BoolOption serverTypeOatpp = {SERVERTYPE_OATPP, false, "set True, when you want to use the oatpp framework."};
+
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
   private:
@@ -174,7 +180,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &configPath,
                 &optimizer,
                 &logicalSources,
-                &coordinatorHealthCheckWaitTime};
+                &coordinatorHealthCheckWaitTime,
+                &serverTypeOatpp};
     }
 };
 

@@ -1,7 +1,7 @@
-#include <REST/testsForOatpp/TestControllerTest.hpp>
-#include <REST/testsForOatpp/TestController.hpp>
-#include <REST/testsForOatpp/MyApiTestClient.hpp>
-#include <REST/TestComponent.hpp>
+#include <tests/util/TestControllerTest.hpp>
+#include <REST/OatppController/TestController.hpp>
+#include <REST/FilesForOatppTesting/MyApiTestClient.hpp>
+#include <REST/FilesForOatppTesting/TestComponent.hpp>
 
 #include <oatpp/web/client/HttpRequestExecutor.hpp>
 
@@ -31,7 +31,7 @@ void TestControllerTest::onRun() {
         auto requestExecutor = oatpp::web::client::HttpRequestExecutor::createShared(clientConnectionProvider);
 
         /* Create Test API client */
-        auto client = TestApiTestClient::createShared(requestExecutor, objectMapper);
+        auto client = MyApiTestClient::createShared(requestExecutor, objectMapper);
 
         /* Call server API */
         /* Call hello endpoint of TestController */

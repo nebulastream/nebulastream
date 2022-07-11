@@ -190,6 +190,7 @@ const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
+const std::string SERVERTYPE_OATPP = "serverTypeOatpp";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
