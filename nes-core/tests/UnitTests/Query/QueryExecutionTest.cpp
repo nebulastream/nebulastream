@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 // clang-format: on
 #include "../../util/DummySink.hpp"
-#include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include "../../util/TestSink.hpp"
@@ -25,22 +24,17 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -50,10 +44,10 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -99,8 +93,15 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+        
+        // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+        Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
+        auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -365,7 +366,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                              .project(Attribute("id"), Attribute("one"), Attribute("value"))
                              .sink(testSinkDescriptor);
 
-            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+            //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
             auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
             auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -443,7 +444,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -560,7 +561,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                      .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(4)))
                      .sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -750,7 +751,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                      .equalsTo(Attribute("id2"))
                      .sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -886,7 +887,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                               && ABS(1 - Attribute("id")) == ABS(Attribute("id") - 1))
                      .sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -1504,7 +1505,7 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter

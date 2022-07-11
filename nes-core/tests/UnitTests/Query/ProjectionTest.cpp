@@ -15,17 +15,17 @@
 #include "gtest/gtest.h"
 
 #include "../../util/DummySink.hpp"
-#include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestSink.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
@@ -34,14 +34,12 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <future>
 #include <iostream>
 #include <utility>
 
@@ -58,6 +56,8 @@ using Runtime::TupleBuffer;
 
 class ProjectionTest : public Testing::NESBaseTest {
   public:
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("ProjectionTest: Setup QueryCatalogServiceTest test class.");
@@ -104,6 +104,13 @@ class ProjectionTest : public Testing::NESBaseTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
+        // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+        Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
+        auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     /* Will be called before a test is executed. */
@@ -311,7 +318,6 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -452,7 +458,6 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -525,7 +530,6 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("asd")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         FAIL();
@@ -540,7 +544,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     // creating query plan
     auto query = TestQuery::from(testSchema).project(Attribute("asd")).sink(DummySink::create());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    
 
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -588,7 +592,6 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     Optimizer::DistributeWindowRulePtr distributeWindowRule =
         Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
@@ -666,7 +669,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     query.sink(DummySink::create());
 
     bool success = false;
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     } catch (...) {
@@ -707,7 +710,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 
             auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
-            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+            
 
             auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
         },
@@ -755,7 +758,6 @@ TEST_F(ProjectionTest, mergeQuery) {
     SchemaPtr ptr = testSchema->copy();
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
