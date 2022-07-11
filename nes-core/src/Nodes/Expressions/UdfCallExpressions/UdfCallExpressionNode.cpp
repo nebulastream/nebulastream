@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef PYTHON_UDF_ENABLED
-#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
+
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
@@ -51,13 +50,13 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
             "UdfCallExpressionNode: Error during stamp inference. Function name needs to be Text but was:"
             + left->getStamp()->toString());
     }
-    auto pythonUdfDescriptor = ctx.getUdfCatalog()->getUdfDescriptor(getUdfName());
-    setPythonUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::PythonUdfDescriptor>(pythonUdfDescriptor));
-    if (pythonUdfDescriptorPtr == nullptr) {
+    auto udfDescriptor = ctx.getUdfCatalog()->getUdfDescriptor(getUdfName());
+    setUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::UdfDescriptor>(udfDescriptor));
+    if (udfDescriptorPtr == nullptr) {
         throw UdfException("UdfCallExpressionNode: Error during stamp/return type inference. No UdfDescriptor was set");
     }
     else {
-        stamp = pythonUdfDescriptorPtr->getReturnType();
+        stamp = udfDescriptorPtr->getReturnType();
     }
 }
 
@@ -84,8 +83,8 @@ std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() {
     return functionArguments;
 }
 
-void UdfCallExpressionNode::setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor) {
-    pythonUdfDescriptorPtr = pyUdfDescriptor;
+void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor) {
+    udfDescriptorPtr = udfDescriptor;
 }
 void UdfCallExpressionNode::setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName) {
     auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfFunctionName->getConstantValue());
@@ -96,4 +95,3 @@ const std::string& UdfCallExpressionNode::getUdfName() const {
 }
 
 }// namespace NES::Experimental
-#endif

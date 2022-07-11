@@ -12,16 +12,13 @@
     limitations under the License.
 */
 
-//For now use PYTHON_UDF_ENABLED since only Python will be supported for now
-//In the future can be extended to something like UDF_ENABLED to cover more programming languages
-#ifdef PYTHON_UDF_ENABLED
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
 
 namespace NES {
 
@@ -83,7 +80,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * set the UdfDescriptor manually to retrieve the return type.
      * @param pyUdfDescriptor The (python) udf descriptor
      */
-    void setPythonUdfDescriptorPtr(const Catalogs::PythonUdfDescriptorPtr& pyUdfDescriptor);
+    void setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor);
     void setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName);
     const std::string& getUdfName() const;
 
@@ -92,7 +89,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * For now we keep a PythonUdfDescriptorPtr for a minimal working example. As soon as
      * support for other languages will be added we can use the base class UdfDescriptor instead.
      */
-    Catalogs::PythonUdfDescriptorPtr pythonUdfDescriptorPtr;
+    Catalogs::UdfDescriptorPtr udfDescriptorPtr;
     std::vector<ExpressionNodePtr> functionArguments;
     std::string udfName;
 };
@@ -100,4 +97,3 @@ class UdfCallExpressionNode : public ExpressionNode {
 }// namespace NES::Experimental
 
 #endif//NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
-#endif// PYTHON_UDF_ENABLED

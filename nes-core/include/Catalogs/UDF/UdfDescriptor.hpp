@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 #define NES_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 
+#include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <string>
 #include <utility>
@@ -36,6 +37,12 @@ class UdfDescriptor {
  */
     [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
+    /**
+    * @brief Return the number of arguments for the UDF.
+    * @return The name of the UDF method.
+    */
+    [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
+
     template<class UdfDescriptor>
     static std::shared_ptr<UdfDescriptor> as(UdfDescriptorPtr ptr) {
         return std::dynamic_pointer_cast<UdfDescriptor>(ptr);
@@ -43,6 +50,7 @@ class UdfDescriptor {
 
   private:
     const std::string methodName;
+    const DataTypePtr returnType;
 };
 }// namespace NES::Catalogs
 #endif
