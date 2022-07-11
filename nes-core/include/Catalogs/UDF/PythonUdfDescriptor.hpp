@@ -39,12 +39,6 @@ class PythonUdfDescriptor : public UdfDescriptor {
  */
     [[nodiscard]] int getNumberOfArgs() const { return numberOfArgs; }
 
-    /**
- * @brief Return the number of arguments for the UDF.
- * @return The name of the UDF method.
- */
-    [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
-
   private:
     const int numberOfArgs;
     const DataTypePtr returnType;
