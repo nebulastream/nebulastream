@@ -28,6 +28,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -282,6 +283,17 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
         auto sqrtExpressionNode = expression->as<SqrtExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_SqrtExpression();
         serializeExpression(sqrtExpressionNode->child(), serializedExpressionNode.mutable_child());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<CreateTensorExpressionNode>()) {
+        // serialize sqrt expression node.
+        NES_TRACE(
+            "ExpressionSerializationUtil:: serialize CREATETENSOR arithmetical expression to SerializableExpression_CreateTensorExpression");
+        auto createTensorExpressionNode = expression->as<CreateTensorExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_SqrtExpression();
+        for (auto child : createTensorExpressionNode->children()) {
+
+        }
+        //serializeExpression(sqrtExpressionNode->child(), serializedExpressionNode.mutable_child());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: "

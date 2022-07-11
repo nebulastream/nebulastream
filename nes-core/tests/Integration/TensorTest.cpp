@@ -392,8 +392,8 @@ TEST_F(TensorTest, testCreateVectorSimpleFieldsMatrixInSchema) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-// Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(TensorTest, testDeployOneWorkerWithMQTTSourceConfig) {
+// Disabled because MQTT broker and message script are needed
+TEST_F(TensorTest, testMixedSchemaVectorMatrixCubeViaMQTT) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -408,8 +408,8 @@ TEST_F(TensorTest, testDeployOneWorkerWithMQTTSourceConfig) {
     //register logical source qnv
     SchemaPtr schema = Schema::create()
                            ->addField("vector", DataTypeFactory::createTensor({6}, "UINT8", "DENSE"))
-                           ->addField("matrix", DataTypeFactory::createTensor({2,4}, "UINT8", "DENSE"))
-                           ->addField("cube", DataTypeFactory::createTensor({2,2,3}, "UINT8", "DENSE"));
+                           ->addField("matrix", DataTypeFactory::createTensor({2, 4}, "UINT8", "DENSE"))
+                           ->addField("cube", DataTypeFactory::createTensor({2, 2, 3}, "UINT8", "DENSE"));
 
     crd->getSourceCatalogService()->registerLogicalSource("stream", schema);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
@@ -435,7 +435,74 @@ TEST_F(TensorTest, testDeployOneWorkerWithMQTTSourceConfig) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").sink(FileSinkDescriptor::create(")"
+    string query =
+        R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    sleep(2);
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+}
+
+TEST_F(TensorTest, testCreateTensorMapOperator) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    //register logical source qnv
+    auto schema = Schema::create()
+                      ->addField("DurationMonth", FLOAT64)
+                      ->addField("CreditAmount", FLOAT64)
+                      ->addField("score", FLOAT64)
+                      ->addField("age25", INT8)
+                      ->addField("DurationMonth_1", FLOAT64)
+                      ->addField("CreditAmount_1", FLOAT64)
+                      ->addField("score_1", FLOAT64)
+                      ->addField("age25_1", INT8);
+
+    crd->getSourceCatalogService()->registerLogicalSource("stream", schema);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->coordinatorPort = port;
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "GermanCreditAge25short.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setSkipHeader(true);
+    auto physicalSource = PhysicalSource::create("stream", "test_stream", csvSourceType);
+    wrkConf->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query =
+        R"(Query::from("stream").map(Attribute("tensorField") = CREATETENSOR({Attribute("DurationMonth"), Attribute("score"), Attribute("age25"), Attribute("CreditAmount_1")},{4},"DENSE")).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);

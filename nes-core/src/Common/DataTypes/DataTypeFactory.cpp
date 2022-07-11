@@ -88,7 +88,8 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
     return std::make_shared<ArrayType>(length, component);
 }
 
-DataTypePtr DataTypeFactory::createTensor(std::vector<std::size_t> shape, const std::string component, std::string tensorType) {
+DataTypePtr
+DataTypeFactory::createTensor(const std::vector<std::size_t> shape, const std::string component, const std::string tensorType) {
 
     DataTypePtr dataType;
 
@@ -117,6 +118,12 @@ DataTypePtr DataTypeFactory::createTensor(std::vector<std::size_t> shape, const 
     TensorMemoryFormat tensorMemoryFormat = NES::Util::convertStringToTensorMemoryFormat(tensorType);
 
     return std::make_shared<TensorType>(shape, dataType, tensorMemoryFormat);
+}
+
+DataTypePtr DataTypeFactory::createTensor(const std::vector<std::size_t> shape,
+                                          const DataTypePtr component,
+                                          const TensorMemoryFormat tensorType) {
+    return std::make_shared<TensorType>(shape, component, tensorType);
 }
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }

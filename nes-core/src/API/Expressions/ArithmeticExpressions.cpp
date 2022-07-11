@@ -29,7 +29,9 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <utility>
 namespace NES {
 
@@ -209,5 +211,16 @@ ExpressionNodePtr operator++(ExpressionItem exp, int) { return exp.getExpression
 ExpressionNodePtr operator--(ExpressionItem exp) { return --exp.getExpressionNode(); }
 
 ExpressionNodePtr operator--(ExpressionItem exp, int) { return exp.getExpressionNode()--; }
+
+/**
+ * @brief Defines the creation of a tensor
+ */
+ExpressionNodePtr CREATETENSOR(std::vector<ExpressionItem> exp, std::vector<size_t> shape, std::string tensorType) {
+    std::vector<ExpressionNodePtr> expressionNodes;
+    for (auto item : exp) {
+        expressionNodes.push_back(item.getExpressionNode());
+    }
+    return CreateTensorExpressionNode::create(expressionNodes, shape, Util::convertStringToTensorMemoryFormat(tensorType));
+}
 
 }// namespace NES

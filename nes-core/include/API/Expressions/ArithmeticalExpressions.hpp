@@ -16,6 +16,7 @@
 #define NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
 
 #include <memory>
+#include <vector>
 
 namespace NES {
 
@@ -96,5 +97,6 @@ ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
+ExpressionNodePtr CREATETENSOR(std::vector<ExpressionItem> exp, std::vector<size_t> shape, std::string tensorType);
 }// namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_

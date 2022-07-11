@@ -130,6 +130,11 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     auto incrementArray = Attribute("f4")++;
     EXPECT_TRUE(incrementArray->getStamp()->isUndefined());
     ASSERT_ANY_THROW(incrementArray->inferStamp(typeInferencePhaseContext, schema));
+
+    auto createTensorExpression = CREATETENSOR({Attribute("f1"), Attribute("f2"), Attribute("f3")},{3},"DENSE");
+    EXPECT_TRUE(createTensorExpression->getStamp()->isUndefined());
+    createTensorExpression->inferStamp(schema);
+    EXPECT_TRUE(createTensorExpression->getStamp()->isEquals(DataTypeFactory::createTensor({3}, "FLOAT64", "DENSE")));
 }
 
 TEST_F(ExpressionNodeTest, inferPredicateTest) {
@@ -179,6 +184,11 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(typeInferencePhaseContext, schema);
     EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT8)));
+
+    auto createTensorExpression = Attribute("f5") = CREATETENSOR({Attribute("f1"), Attribute("f2")},{2},"DENSE");
+    createTensorExpression->inferStamp(schema);
+    EXPECT_TRUE(createTensorExpression->getField()->getStamp()->isEquals(DataTypeFactory::createTensor({2}, "INT64", "DENSE")));
+    ASSERT_FALSE(createTensorExpression->getField()->getStamp()->isNumeric());
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {

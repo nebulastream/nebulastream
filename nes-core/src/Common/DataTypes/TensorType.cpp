@@ -15,6 +15,7 @@ limitations under the License.
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/TensorType.hpp>
 #include <iostream>
+#include <sstream>
 
 namespace NES {
 
@@ -29,6 +30,14 @@ bool TensorType::isEquals(DataTypePtr otherDataType) {
 
 DataTypePtr TensorType::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
 
-std::string TensorType::toString() { return "Tensor"; }
+std::string TensorType::toString() {
+    std::stringstream ss;
+    ss << "Tensor(";
+    for (auto dim : shape) {
+        ss << dim << ", ";
+    }
+    ss << ")";
+    return ss.str();
+}
 
 }// namespace NES
