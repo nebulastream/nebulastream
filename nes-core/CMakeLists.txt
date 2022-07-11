@@ -67,7 +67,6 @@ target_include_directories(nes PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 
-
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach (dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")

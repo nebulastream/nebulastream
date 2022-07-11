@@ -1,11 +1,14 @@
-#include <nes-core/tests/UnitTests/REST/OatppTests/MyControllerTest.hpp>
 #include <REST/OatppController/TestController.hpp>
 #include <../../tests/UnitTests/REST/OatppTests/MyApiTestClient.hpp>
 #include <../../tests/UnitTests/REST/OatppTests/TestComponent.hpp>
+#include <../../tests/UnitTests/REST/OatppTests/MyControllerTest.hpp>
 
-#include "oatpp/web/client/HttpRequestExecutor.hpp"
+#include <oatpp/web/client/HttpRequestExecutor.hpp>
+#include <oatpp-test/web/ClientServerTestRunner.hpp>
 
-#include "oatpp-test/web/ClientServerTestRunner.hpp"
+
+MyControllerTest::MyControllerTest() : UnitTest("TEST[MyControllerTest]" /* Test TAG for logs */){};
+MyControllerTest::~MyControllerTest() = default;
 
 void MyControllerTest::onRun() {
 
@@ -15,7 +18,7 @@ void MyControllerTest::onRun() {
     /* Create client-server test runner */
     oatpp::test::web::ClientServerTestRunner runner;
 
-    /* Add MyController endpoints to the router of the test server */
+    /* Add TestController endpoints to the router of the test server */
     runner.addController(std::make_shared<TestController>());
 
     /* Run test */
