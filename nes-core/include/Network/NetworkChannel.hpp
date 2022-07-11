@@ -71,6 +71,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
      * @param nesPartition the remote nes partition to connect to
      * @param protocol the protocol implementation
      * @param bufferManager the buffer manager
+     * @param highWaterMark the max number of buffers the channel takes before blocking
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error
      * @return the network channel or nullptr on error
@@ -80,6 +81,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     NesPartition nesPartition,
                                     ExchangeProtocol& protocol,
                                     Runtime::BufferManagerPtr bufferManager,
+                                    int highWaterMark,
                                     std::chrono::milliseconds waitTime,
                                     uint8_t retryTimes);
 };
@@ -125,6 +127,8 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
      * @param address the ip address of the remote server
      * @param nesPartition the remote nes partition to connect to
      * @param protocol the protocol implementation
+     * @param bufferManager the buffer manager
+     * @param highWaterMark the max number of buffers the channel takes before blocking
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error
      * @return the network channel or nullptr on error
@@ -134,6 +138,7 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
                                              NesPartition nesPartition,
                                              ExchangeProtocol& protocol,
                                              Runtime::BufferManagerPtr bufferManager,
+                                             int highWaterMark,
                                              std::chrono::milliseconds waitTime,
                                              uint8_t retryTimes);
 };

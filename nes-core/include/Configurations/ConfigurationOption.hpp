@@ -35,6 +35,7 @@ namespace Configurations {
 enum InputFormat { JSON, CSV };
 
 /**
+ * NOTE: this is not related to the network stack at all. Do not mix it up.
  * @brief Decide how a message size is obtained:
  * TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator between them, tupleSeperator needs to be set
  * USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, socketBufferSize needs to be set
@@ -211,6 +212,7 @@ const std::string WORKER_CONFIG = "worker";
 const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SERVER_TYPE = "restServerType";
+const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";

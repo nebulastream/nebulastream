@@ -24,6 +24,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <chrono>
 
 namespace NES::Network {
 
@@ -38,6 +39,7 @@ class NetworkManager {
      * @param hostname
      * @param port
      * @param exchangeProtocol
+     * @param senderHighWatermark
      * @param numServerThread
      * @return the shared_ptr object
      */
@@ -46,6 +48,7 @@ class NetworkManager {
                                     uint16_t port,
                                     Network::ExchangeProtocol&& exchangeProtocol,
                                     const Runtime::BufferManagerPtr& bufferManager,
+                                    int senderHighWatermark = -1,
                                     uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -55,6 +58,7 @@ class NetworkManager {
      * @param port
      * @param exchangeProtocol
      * @param bufferManager
+     * @param senderHighWatermark
      * @param numServerThread
      */
     explicit NetworkManager(uint64_t nodeEngineId,
@@ -62,6 +66,7 @@ class NetworkManager {
                             uint16_t port,
                             ExchangeProtocol&& exchangeProtocol,
                             const Runtime::BufferManagerPtr& bufferManager,
+                            int senderHighWatermark,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -173,6 +178,7 @@ class NetworkManager {
     ZmqServerPtr server;
     ExchangeProtocol exchangeProtocol;
     PartitionManagerPtr partitionManager{nullptr};
+    int senderHighWatermark;
 };
 
 }// namespace NES::Network

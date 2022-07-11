@@ -25,9 +25,11 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
+                               int senderHighWatermark,
                                uint16_t numServerThread)
     : nodeLocation(), server(std::make_unique<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
-      exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()) {
+      exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()),
+      senderHighWatermark(senderHighWatermark) {
 
     if (bool const success = server->start(); success) {
         nodeLocation = NodeLocation(nodeEngineId, hostname, server->getServerPort());
@@ -44,12 +46,14 @@ NetworkManagerPtr NetworkManager::create(uint64_t nodeEngineId,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,
                                          const Runtime::BufferManagerPtr& bufferManager,
+                                         int senderHighWatermark,
                                          uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(nodeEngineId,
                                             hostname,
                                             port,
                                             std::move(exchangeProtocol),
                                             bufferManager,
+                                            senderHighWatermark,
                                             numServerThread);
 }
 
@@ -98,6 +102,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   nesPartition,
                                   exchangeProtocol,
                                   std::move(bufferManager),
+                                  senderHighWatermark,
                                   waitTime,
                                   retryTimes);
 }
@@ -113,6 +118,7 @@ EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(con
                                            nesPartition,
                                            exchangeProtocol,
                                            std::move(bufferManager),
+                                           senderHighWatermark,
                                            waitTime,
                                            retryTimes);
 }
