@@ -216,6 +216,16 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
+### MQTT Tests ###
+if (NES_USE_PARQUET)
+    add_executable(parquet-source-tests "UnitTests/Source/ParquetSourceTest.cpp" UnitTests/Source/ParquetSourceTest.cpp)
+    target_link_libraries(parquet-source-tests nes-tests)
+    add_test(NAME parquet-source-tests COMMAND parquet-source-tests)
+    #add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
+    #target_link_libraries(mqtt-sink-tests nes-tests)
+    #add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
+endif (NES_USE_PARQUET)
+
 
 ### Row Layout Tests ###
 add_executable(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")

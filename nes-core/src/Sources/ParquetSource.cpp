@@ -13,7 +13,8 @@
 */
 #ifdef ENABLE_PARQUET_BUILD
 #include <Sources/ParquetSource.hpp>
-#endif
+#include <Sources/ParquetStaticVariables.hpp>
+
 NES::ParquetSource::ParquetSource(NES::SchemaPtr schema,
                                   NES::Runtime::BufferManagerPtr bufferManager,
                                   NES::Runtime::QueryManagerPtr queryManager,
@@ -66,9 +67,15 @@ void NES::ParquetSource::fillBuffer(NES::Runtime::MemoryLayouts::DynamicTupleBuf
         tuplesToGenerate = numberOfTuplesToProducePerBuffer;
         NES_ASSERT2_FMT(tuplesToGenerate * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
+
+
+
     uint64_t generatedTuples = 0;
     while (generatedTuples < tuplesToGenerate && !reader.eof()) {
-        //get Data
+        reader >> string >> uint64 >> parquet::EndRow;
+        generatedTuples++;
+        //for()
+        //buffer[generatedTuples][0].write<uint64_t>(year);
     }
 
 }
@@ -82,3 +89,4 @@ std::string NES::ParquetSource::getFilePath() const { return filePath; }
 uint64_t NES::ParquetSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
 const NES::ParquetSourceTypePtr& NES::ParquetSource::getSourceConfig() const { return parquetSourceType; }
+#endif
