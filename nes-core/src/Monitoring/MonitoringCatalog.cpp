@@ -33,7 +33,7 @@ MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricTy
     return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
 }
 
-MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
+MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {      //MonitoringPlanPtr übergeben und den Collectoren die entsprechenden Schemas geben
     NES_DEBUG("MonitoringCatalog: Init default catalog");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics(

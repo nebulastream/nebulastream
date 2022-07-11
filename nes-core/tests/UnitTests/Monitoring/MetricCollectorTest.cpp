@@ -184,10 +184,10 @@ TEST_F(MetricCollectorTest, tempTest) {
 }
 
 TEST_F(MetricCollectorTest, testDiskCollectorBA02) {
-    std::list<std::string> configuredMetrics {"F_BSIZE", "F_FRSIZE", "F_BAVAIL"};
-    configuredMetrics.sort();           // the Schema always has the same sequence of metrics; NodeId always at spot 1
+    std::list<std::string> configuredMetrics {"F_BAVAIL", "F_FRSIZE", "F_BSIZE"};
+    //configuredMetrics.sort();           // the Schema always has the same sequence of metrics; NodeId always at spot 1
 
-    auto diskCollector = DiskCollector(configuredMetrics);       //Construct DiskCollector
+    auto diskCollector = DiskCollector(configuredMetrics);       //Schema übergeben
     diskCollector.setNodeId(nodeId);            //Set NodeId to right Value
     MetricPtr diskMetric = diskCollector.readMetricBA02(diskCollector.getSchema());
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
@@ -203,8 +203,11 @@ TEST_F(MetricCollectorTest, testDiskCollectorBA02) {
     DiskMetrics parsedMetric = diskMetric->getValue<DiskMetrics>();
     readFromBufferBA02(parsedMetric, tupleBuffer, 0, diskCollector.getSchema());
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+    //create Assert_EQ Schema von parsedMetric und configuriertes Schema
+    //create Assert_EQ nur die Werte vom gewünschten Schema wurden ausgelesen
     ASSERT_EQ(typedMetric, parsedMetric);
     ASSERT_EQ(typedMetric.nodeId, nodeId);
+    NES_INFO("MetricCollectorTest DiskMetrics Dynamisch: " << sizeof(parsedMetric));
 }
 
 TEST_F(MetricCollectorTest, testDiskCollectorBA01) {

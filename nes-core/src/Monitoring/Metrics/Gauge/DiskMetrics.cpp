@@ -29,6 +29,9 @@ DiskMetrics::DiskMetrics(int test) : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0
     std::cout << test;
 }
 
+//DiskMetrics::DiskMetrics(Schema schema) : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0) {
+//    std::cout << test;
+//}
 //Konstruktor der nen Schema hat mit den gewünschten Metriken
 
 SchemaPtr DiskMetrics::getSchemaBA01(const std::string& prefix) {
@@ -44,6 +47,7 @@ SchemaPtr DiskMetrics::getSchemaBA01(const std::string& prefix) {
 SchemaPtr DiskMetrics::getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64);
+
     for (const auto& metric : configuredMetrics) {
        if (metric == "F_BSIZE") {
                 schema->addField(prefix + "F_BSIZE", BasicType::UINT64);

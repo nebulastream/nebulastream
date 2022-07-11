@@ -40,7 +40,7 @@ DiskCollector::DiskCollector(int test)
     std::cout << test;
 }
 
-DiskCollector::DiskCollector(std::list<std::string> configuredMetrics)
+DiskCollector::DiskCollector(std::list<std::string> configuredMetrics)          //Schema für Diskcollector übergeben
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(DiskMetrics::getSchemaBA02("", configuredMetrics)) {
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
