@@ -242,6 +242,11 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
+
+    /* Network specific settings */
+
+    IntOption senderHighwatermark = {SENDER_HIGH_WATERMARK, 8, "Number of tuple buffers allowed in one network channel before blocking transfer."};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,

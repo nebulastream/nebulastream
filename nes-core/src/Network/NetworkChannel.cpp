@@ -28,6 +28,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         NesPartition nesPartition,
                                         ExchangeProtocol& protocol,
                                         Runtime::BufferManagerPtr bufferManager,
+                                        int highWaterMark,
                                         std::chrono::milliseconds waitTime,
                                         uint8_t retryTimes) {
     // TODO create issue to make the network channel allocation async
@@ -47,13 +48,16 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         const int rcvtimeo = DEFAULT_RCVTIMEO_VALUE;
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
-        NES_DEBUG(channelName << ": Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.set(zmq::sockopt::linger, linger);
         // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
         // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
         // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
         zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
-
+        // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
+        // until more space is available
+        if (highWaterMark > 0) {
+            zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
+        }
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
@@ -164,6 +168,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          NesPartition nesPartition,
                                          ExchangeProtocol& protocol,
                                          Runtime::BufferManagerPtr bufferManager,
+                                         int highWaterMark,
                                          std::chrono::milliseconds waitTime,
                                          uint8_t retryTimes) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
@@ -171,6 +176,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                                         nesPartition,
                                                         protocol,
                                                         bufferManager,
+                                                        highWaterMark,
                                                         waitTime,
                                                         retryTimes);
 }
@@ -195,6 +201,7 @@ EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::
                                                            NesPartition nesPartition,
                                                            ExchangeProtocol& protocol,
                                                            Runtime::BufferManagerPtr bufferManager,
+                                                           int highWaterMark,
                                                            std::chrono::milliseconds waitTime,
                                                            uint8_t retryTimes) {
     return detail::createNetworkChannel<EventOnlyNetworkChannel>(zmqContext,
@@ -202,6 +209,7 @@ EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::
                                                                  nesPartition,
                                                                  protocol,
                                                                  bufferManager,
+                                                                 highWaterMark,
                                                                  waitTime,
                                                                  retryTimes);
 }

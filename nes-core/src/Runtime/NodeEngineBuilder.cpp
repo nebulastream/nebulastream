@@ -229,6 +229,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                        this->workerConfiguration->dataPort.getValue(),
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(),
+                                                       this->workerConfiguration->senderHighwatermark.getValue(),
                                                        this->workerConfiguration->numWorkerThreads.getValue());
             },
             std::move(partitionManager),

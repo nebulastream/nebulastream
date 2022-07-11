@@ -282,11 +282,11 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed, maxExpectedConnections));
-        auto netManagerReceiver = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr, 8);
+        auto netManagerReceiver = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr, 4, 8);
 
         auto dummyProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         auto senderPort = getAvailablePort();
-        auto netManagerSender = NetworkManager::create(0, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgr, 2);
+        auto netManagerSender = NetworkManager::create(0, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgr, 4, 2);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
