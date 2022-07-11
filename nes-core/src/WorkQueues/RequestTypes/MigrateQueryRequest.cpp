@@ -1,7 +1,3 @@
-//
-// Created by balint on 08.07.22.
-//
-
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 NES::Experimental::MigrateQueryRequestPtr
 NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experimental::MigrationType::Value migrationType) {

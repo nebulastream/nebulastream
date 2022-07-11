@@ -32,10 +32,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
   public:
     NES::Experimental::MaintenanceServicePtr maintenanceService;
     TopologyPtr topology;
-    GlobalExecutionPlanPtr executionPlan;
     RequestQueuePtr nesRequestQueue;
-    QueryCatalogPtr queryCatalog;
-    QueryCatalogServicePtr queryCatalogService;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup MaintenanceService test class." << std::endl; }
@@ -45,9 +42,8 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup MaintenanceService test case." << std::endl;
         topology = Topology::create();
-        queryCatalog = std::make_shared<QueryCatalog>();
-        queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-        executionPlan = GlobalExecutionPlan::create();
+        TopologyNodePtr root = TopologyNode::create(id,ip, grpcPort, dataPort,resources);
+        topology->setAsRoot(root);
         nesRequestQueue = std::make_shared<RequestQueue>(1);
         maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
                                                                                      nesRequestQueue);
@@ -66,12 +62,9 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
     uint64_t id = 1;
 };
 
-//TODO: refactor test since MaintenanceService got refactored
-TEST_F(MaintenanceServiceTest, DISABLED_testMaintenanceService) {
+TEST_F(MaintenanceServiceTest, testMaintenanceService) {
 
     //Prepare
-    TopologyNodePtr node = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
-    topology->setAsRoot(node);
     auto nonExistentType = NES::Experimental::MigrationType::Value(4);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
@@ -80,23 +73,21 @@ TEST_F(MaintenanceServiceTest, DISABLED_testMaintenanceService) {
     EXPECT_EQ(info1, "No Topology Node with ID 0");
     //test pass no such Execution Node
     auto [result2, info2] = maintenanceService->submitMaintenanceRequest(id, nonExistentType);
-    EXPECT_TRUE(result2);
+    EXPECT_FALSE(result2);
     EXPECT_EQ(info2,
-              "No ExecutionNode for TopologyNode with ID: " + std::to_string(id)
-                  + ". Node can be taken down for maintenance immediately");
-    //add execution node
-    executionPlan->addExecutionNode(ExecutionNode::createExecutionNode(node));
-    //test no such MigrationType
-    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, nonExistentType);
-    EXPECT_FALSE(result3);
-    EXPECT_EQ(info3,
               "MigrationType: " + std::to_string(nonExistentType)
                   + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
                     "Buffering)");
-    //pass valid TopologyNodeID with corresponding ExecutionNode and valid MigrationType
-    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::RESTART);
+    //test RESTART migration type behavior
+    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::RESTART);
+    EXPECT_FALSE(result3);
+    EXPECT_EQ(info3,
+              "RESTART currently not supported. Will be added in future");
+    //test pass valid MigrationType and topology node
+    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
     EXPECT_TRUE(result4);
     EXPECT_EQ(info4,
-              "Successfully submitted Query Migration Requests for all queryIdAndCatalogEntryMapping on Topology Node with ID: "
+              "Successfully submitted Query Migration Requests for Topology Node with ID: "
                   + std::to_string(id));
+
 }
