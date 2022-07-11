@@ -64,8 +64,8 @@ bool RestServer::startWithOatpp() {
     try {
         oatpp::base::Environment::init();
         /* Run App */
+        NES_DEBUG("start RestServer with OATPP");
         run();
-        NES_DEBUG("RestServer: after waitForUserInterrupt");
         RestServerInterruptHandler::waitForUserInterrupt();
         /* Destroy oatpp Environment */
         oatpp::base::Environment::destroy();
