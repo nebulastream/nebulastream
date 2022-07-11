@@ -780,7 +780,7 @@ endif ()
 
 ### Tests for Oatpp ###
 #TODO: florentina please enable this after identifying how to properly test the /hello endpoint
-add_executable(tests-for-oatpp-endpoints "UnitTests/REST/TestsForOatppEndpoints.cpp")
+add_executable(tests-for-oatpp-endpoints "UnitTests/REST/OatppTests/TestsForOatppEndpoints.cpp")
 target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp)
 add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
 
