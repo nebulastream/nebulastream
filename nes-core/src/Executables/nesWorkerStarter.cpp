@@ -20,7 +20,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -71,24 +70,8 @@ int main(int argc, char** argv) {
 
         NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
-        NesWorkerPtr nesWorker;
-        if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
-            auto mobilityConfiguration =
-                std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
-            if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
-                mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->mobilityConfigPath.getValue());
-            }
-
-            NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-            if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
-                NES_INFO("Found mobility configuration with settings: " << std::endl << mobilityConfiguration->toString());
-            }
-            nesWorker =
-                std::make_shared<NesWorker>(std::move(workerConfiguration), std::move(mobilityConfiguration));
-        } else {
-            nesWorker =
-                std::make_shared<NesWorker>(std::move(workerConfiguration));
-        }
+        NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
         NES_INFO("Starting worker");

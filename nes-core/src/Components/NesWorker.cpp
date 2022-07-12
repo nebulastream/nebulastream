@@ -56,18 +56,19 @@ namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
-      metricStore(metricStore), parentId(workerConfig->parentId) {
+      metricStore(metricStore), parentId(workerConfig->parentId), mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(workerConfig->mobilityConfiguration)) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
 }
-
+/*
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
                      NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig)
     : NesWorker(std::shared_ptr(workerConfig)) {
     this->mobilityConfig = std::move(mobilityConfig);
 }
+ */
 
 NesWorker::~NesWorker() { stop(true); }
 
