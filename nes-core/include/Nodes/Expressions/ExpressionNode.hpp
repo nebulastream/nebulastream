@@ -18,7 +18,7 @@
 #include <memory>
 namespace NES {
 
-namespace Optimizer{
+namespace Optimizer {
 class TypeInferencePhaseContext;
 }
 
