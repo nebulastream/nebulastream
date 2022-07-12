@@ -16,11 +16,15 @@
 #define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGYDESCRIPTOR_HPP_
 
 #include <memory>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
 
 namespace NES {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
+
+namespace Optimizer {
+class TypeInferencePhaseContext;
+}
+
 }// namespace NES
 
 namespace NES::Windowing {

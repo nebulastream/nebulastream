@@ -36,7 +36,7 @@ namespace NES {
 
 class QueryControllerTest : public Testing::NESBaseTest {
   public:
-    //use of TestCase to refer to a group of logically connected tests is depreceated
+    //use of TestCase to refer to a group of logically connected tests is deprecated
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryControllerTest test class.");
