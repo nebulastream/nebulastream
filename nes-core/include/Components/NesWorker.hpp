@@ -86,16 +86,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
     /**
-     * @brief constructor used for mobile nodes accepting a mobility config as second parameter
-     * @param workerConfig
-     * @param mobilityConfig
-     */
-     /*
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
-                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
-                         */
-
-    /**
      * @brief default dtor
      */
     ~NesWorker();

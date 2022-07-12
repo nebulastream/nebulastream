@@ -50,69 +50,68 @@ namespace Mobility::Experimental {
      * @brief runs at worker side and sends periodic updates about location and reconnect predictions to the coordinator. Also
      * allows to trigger a change of the workers parent (reconnect)
      */
-    class ReconnectConfigurator {
-      public:
-        /**
-         * Constructor
-         * @param worker The worker to which this instance belongs
-         * @param coordinatorRpcClient This workers rpc client for communicating with the coordinator
-         * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
-         */
-        explicit ReconnectConfigurator(NesWorker& worker,
-            CoordinatorRPCCLientPtr coordinatorRpcClient, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
+class ReconnectConfigurator {
+  public:
+    /**
+     * Constructor
+     * @param worker The worker to which this instance belongs
+     * @param coordinatorRpcClient This workers rpc client for communicating with the coordinator
+     * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
+     */
+    explicit ReconnectConfigurator(NesWorker& worker,
+        CoordinatorRPCCLientPtr coordinatorRpcClient, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
 
-        /**
-         * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
-         * and if so, send the new location and the time it was recorded to the coordinator and safe it as the last transmitted position
-         */
-        void checkThresholdAndSendLocationUpdate();
+    /**
+     * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
+     * and if so, send the new location and the time it was recorded to the coordinator and safe it as the last transmitted position
+     */
+    void checkThresholdAndSendLocationUpdate();
 
-        /**
-         * @brief keep the coordinator updated about this devices position by periodically calling checkThresholdAndSendLocationUpdate()
-         */
-        void periodicallySendLocationUpdates();
+    /**
+     * @brief keep the coordinator updated about this devices position by periodically calling checkThresholdAndSendLocationUpdate()
+     */
+    void periodicallySendLocationUpdates();
 
-        /**
-         * tell the thread which executes periodicallySendLocationUpdates() to exit the update loop and stop execution
-         * @return true if the thread was running, false if no such thread was running
-         */
-        bool stopPeriodicUpdating();
+    /**
+     * tell the thread which executes periodicallySendLocationUpdates() to exit the update loop and stop execution
+     * @return true if the thread was running, false if no such thread was running
+     */
+    bool stopPeriodicUpdating();
 
-        /**
-         * @brief inform the ReconnectConfigurator about the latest scheduled reconnect. If the supplied reconnect data differs
-         * from the previous prediction, it will be sent to the coordinator and also saved as a member of this object
-         * @param scheduledReconnect : an optional containing a tuple made up of the id of the expected new parent, the expected
-         * Location where the reconnect will happen, and the expected time of the reconnect. Or nullopt in case no prediction
-         * exists.
-         * @return true if the the supplied prediction differed from the previous prediction. false if the value did not change
-         * and therefore no update was sent to the coordinator
-         */
-        bool updateScheduledReconnect(const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect);
+    /**
+     * @brief inform the ReconnectConfigurator about the latest scheduled reconnect. If the supplied reconnect data differs
+     * from the previous prediction, it will be sent to the coordinator and also saved as a member of this object
+     * @param scheduledReconnect : an optional containing a tuple made up of the id of the expected new parent, the expected
+     * Location where the reconnect will happen, and the expected time of the reconnect. Or nullopt in case no prediction
+     * exists.
+     * @return true if the the supplied prediction differed from the previous prediction. false if the value did not change
+     * and therefore no update was sent to the coordinator
+     */
+    bool updateScheduledReconnect(const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect);
 
-        /**
-         * @brief change the mobile workers position in the topology by giving it a new parent
-         * @param oldParent : the mobile workers old parent
-         * @param newParent : the mobile workers new parent
-         * @return true if the parents were successfully exchanged
-         */
-         //TODO #2864: buffer data until reconnect is finished
-        bool reconnect(uint64_t oldParent, uint64_t newParent);
+    /**
+     * @brief change the mobile workers position in the topology by giving it a new parent
+     * @param oldParent : the mobile workers old parent
+     * @param newParent : the mobile workers new parent
+     * @return true if the parents were successfully exchanged
+     */
+     //TODO #2864: buffer data until reconnect is finished
+    bool reconnect(uint64_t oldParent, uint64_t newParent);
 
-      private:
-        std::atomic<bool> sendUpdates{};
-        std::recursive_mutex reconnectConfigMutex;
-        NesWorker& worker;
-        CoordinatorRPCCLientPtr coordinatorRpcClient;
-        std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> lastTransmittedReconnectPrediction;
+  private:
+    std::atomic<bool> sendUpdates{};
+    std::recursive_mutex reconnectConfigMutex;
+    NesWorker& worker;
+    CoordinatorRPCCLientPtr coordinatorRpcClient;
+    std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> lastTransmittedReconnectPrediction;
 #ifdef S2DEF
-        S2Point lastTransmittedLocation;
-        S1Angle locationUpdateThreshold;
+    S2Point lastTransmittedLocation;
+    S1Angle locationUpdateThreshold;
 #endif
-        uint64_t locationUpdateInterval;
-        std::shared_ptr<std::thread> sendLocationUpdateThread;
-
-    };
-    using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+    uint64_t locationUpdateInterval;
+    std::shared_ptr<std::thread> sendLocationUpdateThread;
+};
+using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 }
 }
 }

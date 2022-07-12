@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_WORKERMOBILITYCONFIGURATION_H
-#define NES_WORKERMOBILITYCONFIGURATION_H
+#ifndef NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
+#define NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
 
 
 #include <Configurations/BaseConfiguration.hpp>
@@ -103,7 +103,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * @brief the distance in meters which a device has to move before it informs the coordinator about the location change
      */
     UIntOption sendDevicePositionUpdateThreshold = {SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
-                                                    10,
+                                                    100,
                                                     "The distance in meters after which the device will report it's new position in meters"};
 
     /**
@@ -154,4 +154,4 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 };
 }
 }
-#endif//NES_WORKERMOBILITYCONFIGURATION_H
+#endif//NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H

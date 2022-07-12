@@ -195,12 +195,7 @@ bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t r
     std::unique_lock lock(locationIndexMutex);
     if (mobileNodes.contains(mobileWorkerId)) {
         NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << mobileWorkerId)
-        if (reconnectLocation.isValid()) {
-            NES_DEBUG("New reconnect prediction: id=" << reconnectNodeId << " location=" << reconnectLocation.toString()
-                                                      << " time=" << reconnectTime)
-        } else {
-            NES_DEBUG("reconnect location is nullptr, overwriting previously scheduled connect with empty connect")
-        }
+        NES_DEBUG("New reconnect prediction: id=" << reconnectNodeId << " location=" << reconnectLocation.toString() << " time=" << reconnectTime)
         reconnectPredictionMap[mobileWorkerId] = {reconnectNodeId, reconnectLocation, reconnectTime};
         return true;
     }

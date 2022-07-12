@@ -40,6 +40,6 @@ LocationFactory::createFromString(std::string, std::map<std::string, std::string
     if (!configString.empty() && configString != "\n") {
         return ::NES::Spatial::Index::Experimental::Location::fromString(configString);
     }
-    return {200, 200};
+    return {};
 }
 }//namespace NES::Configurations::Spatial::Index::Experimental

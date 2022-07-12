@@ -133,11 +133,9 @@ class LocationProvider {
      * @brief construct a mobile workers location provider. The supplied worker mobility configuration will be used to determine
      * which subclass of LocationProvider should be used. This function is experimental.
      * @param workerConfig : this workers WorkerConfiguration
-     * @param mobilityConfig : this worker Mobility configuration
      * @return a smart pointer to an object of the LocationProvider class or one of its subclasses
      */
-    static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig,
-                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
+    static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig);
 
     /**
      * @brief get the last known location of the device

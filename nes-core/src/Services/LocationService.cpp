@@ -95,7 +95,7 @@ bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t
    if (locationIndex->updatePredictedReconnect(mobileWorkerId, reconnectNodeId, location, time)) {
        return true;
    } else if (topology->findNodeWithId(reconnectNodeId)) {
-       NES_DEBUG("node exists but is not a mobile node")
+       NES_WARNING("node exists but is not a mobile node")
    }
    return false;
 }

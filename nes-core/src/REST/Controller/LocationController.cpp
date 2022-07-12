@@ -19,9 +19,9 @@
 
 namespace NES {
 
-const std::string kAllMobileLocationsRequestString = "allMobile";
-const std::string kNodeIdParamString = "nodeId";
-const std::string kSingleNodeReconnectInfoRequestString = "reconnectSchedule";
+const std::string allMobileLocationsRequestString = "allMobile";
+const std::string nodeIdParamString = "nodeId";
+const std::string singleNodeReconnectInfoRequestString = "reconnectSchedule";
 
 LocationController::LocationController(Spatial::Index::Experimental::LocationServicePtr locationService)
     : locationService(std::move(locationService)) {
@@ -53,13 +53,13 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
 
     //get the locations of all mobile nodes
     if (path.size() > 1 && path.size() < 3) {
-        if (path[1] == kAllMobileLocationsRequestString) {
+        if (path[1] == allMobileLocationsRequestString) {
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
             successMessageImpl(message, locationsJson);
             return;
         }
-        if (path[1] == kSingleNodeReconnectInfoRequestString) {
+        if (path[1] == singleNodeReconnectInfoRequestString) {
             auto nodeIdOpt = getNodeIdFromURIParameter(parameters, message);
             if (!nodeIdOpt.has_value()) {
                 return;
@@ -83,7 +83,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
 
 std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
                                                                       const web::http::http_request& httpRequest) {
-    auto const idParameter = parameters.find(kNodeIdParamString);
+    auto const idParameter = parameters.find(nodeIdParamString);
     if (idParameter == parameters.end()) {
         NES_ERROR("LocationController: Unable to find nodeId parameter in the GET request");
         web::json::value errorResponse{};

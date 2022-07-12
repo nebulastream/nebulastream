@@ -448,12 +448,12 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& adress) {
-    NES_DEBUG("WorkerRPCClient: Requesting location from " << adress)
+Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& address) {
+    NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
     GetLocationReply reply;
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, request, &reply);
@@ -464,28 +464,36 @@ Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::s
     return {};
 }
 
-NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& adress) {
-    NES_DEBUG("WorkerRPCClient: requesting reconnect schedule from" << adress)
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& address) {
+    NES_DEBUG("WorkerRPCClient: requesting reconnect schedule from" << address)
     ClientContext context;
     GetReconnectScheduleRequest request;
     GetReconnectScheduleReply reply;
 
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetReconnectSchedule(&context, request, &reply);
 
+    //check if the reply contained a schedule
     if (reply.has_schedule()) {
         const auto& schedule = reply.schedule();
+        //get start and enpoint of the predicted trajectory line
         auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
         auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
+
+        //get the position of the device when at the moment of the last node index update
         auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
+
+        //iterate of the vector of reconnects and get all planned reconnects
         auto vec = std::make_shared<std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::Location, Timestamp>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
             auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
             vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>(reconnectData.id(), loc, reconnectData.time()));
         }
+
+        //construct a schedule from the received data
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(
             start, end, lastUpdatePosition, vec);
     }

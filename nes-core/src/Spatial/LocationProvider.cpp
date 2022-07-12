@@ -75,29 +75,21 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProvider::getCurrent
     return {Index::Experimental::Location(), 0};
 }
 
-LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig,
-                               NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig) {
-    if (!mobilityConfig) {
-        if (workerConfig->spatialType.getValue() == Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
-            NES_WARNING("Worker spatial type is set to mobile but there is no mobility config. Using default config")
-        }
-        mobilityConfig = std::make_shared<Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
-    }
-
+LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig) {
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
 
-    switch (mobilityConfig->locationProviderType.getValue()) {
+    switch (workerConfig->mobilityConfiguration.locationProviderType.getValue()) {
         case NES::Spatial::Mobility::Experimental::LocationProviderType::BASE:
             locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->spatialType,
                                                                                                         workerConfig->locationCoordinates);
             NES_INFO("creating base location provider")
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::CSV:
-            if (mobilityConfig->locationProviderConfig.getValue().empty()) {
+            if (workerConfig->mobilityConfiguration.locationProviderConfig.getValue().empty()) {
                 NES_FATAL_ERROR("cannot create csv location provider if no provider config is set")
                 exit(EXIT_FAILURE);
             }
-            locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(mobilityConfig->locationProviderConfig);
+            locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(workerConfig->mobilityConfiguration.locationProviderConfig);
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::INVALID:
             NES_FATAL_ERROR("Trying to create location provider but provider type is invalid")
