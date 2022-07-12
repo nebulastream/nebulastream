@@ -440,7 +440,7 @@ if(NES_USE_PARQUET)
     find_package(Parquet CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} ${PARQUET_LIBRARIES})
     find_package(Arrow CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} ${ARROW_LIBRARIES})
+    set(LIBRARIES ${LIBRARIES} ${ARROW_LIBRARIES} unofficial::brotli::brotlicommon unofficial::brotli::brotlidec unofficial::brotli::brotlienc lz4 snappy)
     add_compile_definitions(ENABLE_PARQUET_BUILD)
 endif()
 
