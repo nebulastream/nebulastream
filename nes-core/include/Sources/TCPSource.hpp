@@ -32,15 +32,17 @@ class TCPSource : public DataSource {
   public:
     /**
      * @brief consturctor of TCP Source
-     * @param schema
-     * @param bufferManager
-     * @param queryManager
+     * @param schema of this data source
+     * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
+     * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
+     * They are also subject to reference counting.
+     * @param queryManager comes with functionality to manage the queries
      * @param tcpSourceType points at current TCPSourceType config object, look at same named file for info
-     * @param operatorId
-     * @param originId
-     * @param numSourceLocalBuffers
-     * @param gatheringMode
-     * @param executableSuccessors
+     * @param operatorId represents a locally running query execution plan
+     * @param originId represents an origin
+     * @param numSourceLocalBuffers number of local source buffers
+     * @param gatheringMode the gathering mode used
+     * @param executableSuccessors executable operators coming after this source
      */
     explicit TCPSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,

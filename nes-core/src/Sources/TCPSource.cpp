@@ -136,20 +136,22 @@ bool TCPSource::connected() {
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
-    auto buffer = allocateBuffer();
     if (connected()) {
-        if (!fillBuffer(buffer)) {
+        auto buffer = allocateBuffer();
+        try {
+            fillBuffer(buffer);
+        } catch (std::exception e){
             NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer.");
             return std::nullopt;
         }
+        if (buffer.getNumberOfTuples() == 0) {
+            return std::nullopt;
+        }
+        return buffer.getBuffer();
     } else {
         NES_ERROR("TCPSource::receiveData: Not connected!");
-        return std::nullopt;
     }
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
-    }
-    return buffer.getBuffer();
+    return std::nullopt;
 }
 
 bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {

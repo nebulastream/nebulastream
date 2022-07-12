@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 
 #include <Monitoring/Util/MetricUtils.hpp>
@@ -281,6 +282,17 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                                                  numSourceLocalBuffers,
                                                                                  successors,
                                                                                  std::move(view));
+    } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
+        auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
+        return createTCPSource(tcpSourceDescriptor->getSchema(),
+                               bufferManager,
+                               queryManager,
+                               tcpSourceDescriptor->getSourceConfig(),
+                               operatorId,
+                               originId,
+                               numSourceLocalBuffers,
+                               successors);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
