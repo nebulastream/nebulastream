@@ -289,11 +289,11 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
         NES_TRACE(
             "ExpressionSerializationUtil:: serialize CREATETENSOR arithmetical expression to SerializableExpression_CreateTensorExpression");
         auto createTensorExpressionNode = expression->as<CreateTensorExpressionNode>();
-        auto serializedExpressionNode = SerializableExpression_SqrtExpression();
-        for (auto child : createTensorExpressionNode->children()) {
-
-        }
-        //serializeExpression(sqrtExpressionNode->child(), serializedExpressionNode.mutable_child());
+        auto serializedExpressionNode = SerializableExpression_CreateTensorExpression();
+        SerializableExpression* tensorFields = {createTensorExpressionNode->children().begin(), createTensorExpressionNode->children().end()};
+        serializeExpression({createTensorExpressionNode->children().begin(), createTensorExpressionNode->children().end()}, *serializedExpressionNode.mutable_children());
+        *serializedExpressionNode.mutable_children() =
+        serializeExpression(sqrtExpressionNode->child(), *serializedExpressionNode.mutable_children());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: "

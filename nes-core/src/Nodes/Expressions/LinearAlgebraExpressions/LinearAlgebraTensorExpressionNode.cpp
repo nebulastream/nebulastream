@@ -18,23 +18,23 @@
 
 namespace NES {
 
-ArithmeticalMultiExpressionNode::ArithmeticalMultiExpressionNode(DataTypePtr stamp)
+LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr stamp)
     : MultiExpressionNode(std::move(stamp)), ArithmeticalExpressionNode() {}
-ArithmeticalMultiExpressionNode::ArithmeticalMultiExpressionNode(ArithmeticalMultiExpressionNode* other)
+LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other)
     : MultiExpressionNode(other) {}
 
-ArithmeticalMultiExpressionNode::ArithmeticalMultiExpressionNode(DataTypePtr stamp,
+LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr stamp,
                                                                  std::vector<size_t> shape,
                                                                  TensorMemoryFormat tensorType)
     : MultiExpressionNode(std::move(stamp)), ArithmeticalExpressionNode(), shape(shape),
       tensorType(tensorType) {}
-ArithmeticalMultiExpressionNode::ArithmeticalMultiExpressionNode(ArithmeticalMultiExpressionNode* other,
+LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other,
                                                                  std::vector<size_t> shape,
                                                                  TensorMemoryFormat tensorType)
     : MultiExpressionNode(other), shape(shape), tensorType(tensorType) {}
 
 //Todo: When tensor we need to indicate that it's a tensor
-void ArithmeticalMultiExpressionNode::inferStamp(SchemaPtr schema) {
+void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
     bool firstSkipped = false;
     std::shared_ptr<ExpressionNode> previousChild;
     std::shared_ptr<DataType> commonStamp;
@@ -66,9 +66,9 @@ void ArithmeticalMultiExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
 }
 
-bool ArithmeticalMultiExpressionNode::equal(const NodePtr& rhs) const {
-    if (rhs->instanceOf<ArithmeticalMultiExpressionNode>()) {
-        auto otherAddNode = rhs->as<ArithmeticalMultiExpressionNode>();
+bool LinearAlgebraTensorExpressionNode::equal(const NodePtr& rhs) const {
+    if (rhs->instanceOf<LinearAlgebraTensorExpressionNode>()) {
+        auto otherAddNode = rhs->as<LinearAlgebraTensorExpressionNode>();
         bool equals = MultiExpressionNode::children().size() == otherAddNode->children().size();
         for (unsigned i = 0; i < MultiExpressionNode::children().size(); i++) {
             equals = MultiExpressionNode::children()[i]->equal(otherAddNode->children()[i]);
@@ -78,6 +78,6 @@ bool ArithmeticalMultiExpressionNode::equal(const NodePtr& rhs) const {
     return false;
 }
 
-std::string ArithmeticalMultiExpressionNode::toString() const { return "ArithmeticalMultiExpression()"; }
+std::string LinearAlgebraTensorExpressionNode::toString() const { return "ArithmeticalMultiExpression()"; }
 
 }// namespace NES

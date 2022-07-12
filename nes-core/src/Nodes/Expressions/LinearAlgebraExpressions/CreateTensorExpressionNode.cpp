@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp>
+#include "Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp"
+#include "Common/DataTypes/DataType.hpp"
+#include "Common/DataTypes/DataTypeFactory.hpp"
 
 namespace NES {
 
 CreateTensorExpressionNode::CreateTensorExpressionNode(DataTypePtr stamp,
                                                        const std::vector<size_t> shape,
                                                        const TensorMemoryFormat tensorType)
-    : ArithmeticalMultiExpressionNode(std::move(stamp), shape, tensorType) {}
+    : LinearAlgebraTensorExpressionNode(std::move(stamp), shape, tensorType) {}
 
 CreateTensorExpressionNode::CreateTensorExpressionNode(CreateTensorExpressionNode* other,
                                                        const std::vector<size_t> shape,
                                                        const TensorMemoryFormat tensorType)
-    : ArithmeticalMultiExpressionNode(other, shape, tensorType) {}
+    : LinearAlgebraTensorExpressionNode(other, shape, tensorType) {}
 
 ExpressionNodePtr CreateTensorExpressionNode::create(std::vector<ExpressionNodePtr> const expressionNodes,
                                                      const std::vector<size_t> shape,

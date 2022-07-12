@@ -21,7 +21,7 @@ namespace NES {
 /**
  * @brief This node represents an arithmetical expression with multiple children
  */
-class ArithmeticalMultiExpressionNode : public MultiExpressionNode, public ArithmeticalExpressionNode {
+class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public ArithmeticalExpressionNode {
 
   public:
     /**
@@ -35,12 +35,12 @@ class ArithmeticalMultiExpressionNode : public MultiExpressionNode, public Arith
     [[nodiscard]] std::string toString() const override;
 
   protected:
-    explicit ArithmeticalMultiExpressionNode(DataTypePtr stamp);
-    explicit ArithmeticalMultiExpressionNode(ArithmeticalMultiExpressionNode* other);
+    explicit LinearAlgebraTensorExpressionNode(DataTypePtr stamp);
+    explicit LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other);
 
-    explicit ArithmeticalMultiExpressionNode(DataTypePtr stamp, std::vector<size_t> shape, TensorMemoryFormat tensorType);
-    explicit ArithmeticalMultiExpressionNode(ArithmeticalMultiExpressionNode* other, std::vector<size_t> shape, TensorMemoryFormat tensorType);
-    ~ArithmeticalMultiExpressionNode() noexcept override = default;
+    explicit LinearAlgebraTensorExpressionNode(DataTypePtr stamp, std::vector<size_t> shape, TensorMemoryFormat tensorType);
+    explicit LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other, std::vector<size_t> shape, TensorMemoryFormat tensorType);
+    ~LinearAlgebraTensorExpressionNode() noexcept override = default;
 
   private:
 

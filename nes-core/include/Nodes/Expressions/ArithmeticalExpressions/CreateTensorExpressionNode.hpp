@@ -21,7 +21,7 @@ namespace NES {
 /**
  * @brief This node represents a tensor creation expression.
  */
-class CreateTensorExpressionNode final : public ArithmeticalMultiExpressionNode {
+class CreateTensorExpressionNode final : public LinearAlgebraTensorExpressionNode {
   public:
     explicit CreateTensorExpressionNode(DataTypePtr stamp, const std::vector<size_t> shape, const TensorMemoryFormat tensorType);
     ~CreateTensorExpressionNode() noexcept final = default;

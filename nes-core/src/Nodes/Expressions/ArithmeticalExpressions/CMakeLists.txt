@@ -14,11 +14,9 @@
 add_source_files(nes-core
         ArithmeticalUnaryExpressionNode.cpp
         ArithmeticalBinaryExpressionNode.cpp
-        ArithmeticalMultiExpressionNode.cpp
         AbsExpressionNode.cpp
         AddExpressionNode.cpp
         CeilExpressionNode.cpp
-        CreateTensorExpressionNode.cpp
         DivExpressionNode.cpp
         ExpExpressionNode.cpp
         FloorExpressionNode.cpp
