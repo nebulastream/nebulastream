@@ -46,8 +46,18 @@ using LocationPtr = std::shared_ptr<Location>;
 }
 
 namespace Mobility::Experimental {
+    /**
+     * @brief runs at worker side and sends periodic updates about location and reconnect predictions to the coordinator. Also
+     * allows to trigger a change of the workers parent (reconnect)
+     */
     class ReconnectConfigurator {
       public:
+        /**
+         * Constructor
+         * @param worker The worker to which this instance belongs
+         * @param coordinatorRpcClient This workers rpc client for communicating with the coordinator
+         * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
+         */
         explicit ReconnectConfigurator(NesWorker& worker,
             CoordinatorRPCCLientPtr coordinatorRpcClient, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
 

@@ -18,7 +18,7 @@
 #include <string>
 namespace NES::Spatial::Mobility::Experimental {
 enum class LocationProviderType {
-    BASE = 0,  // no location provider
+    BASE = 0,  // base class of location provider used for workers without a location and for field nodes
     CSV = 1,   //simulate location with coordinates read from csv
     INVALID = 2//the supplied configuration does not represent a valid provider type
 };

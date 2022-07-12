@@ -71,16 +71,24 @@ int main(int argc, char** argv) {
 
         NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
-        auto mobilityConfiguration = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+        NesWorkerPtr nesWorker;
         if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
-            mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->mobilityConfigPath.getValue());
-        }
+            auto mobilityConfiguration =
+                std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+            if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
+                mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->mobilityConfigPath.getValue());
+            }
 
-        NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-        if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
-            NES_INFO("Found mobility configuration with settings: " << std::endl << mobilityConfiguration->toString());
+            NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+            if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
+                NES_INFO("Found mobility configuration with settings: " << std::endl << mobilityConfiguration->toString());
+            }
+            nesWorker =
+                std::make_shared<NesWorker>(std::move(workerConfiguration), std::move(mobilityConfiguration));
+        } else {
+            nesWorker =
+                std::make_shared<NesWorker>(std::move(workerConfiguration));
         }
-        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration), std::move(mobilityConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
         NES_INFO("Starting worker");

@@ -11,22 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_S2CONVERSION_HPP
-#define NES_S2CONVERSION_HPP
-
 #ifdef S2DEF
 #include <Common/Location.hpp>
 #include <s2/s2point.h>
 #include <s2/s2latlng.h>
-namespace NES::Spatial::Index::Experimental {
-S2Point locationToS2Point(Location location) {
-    return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
-}
+#include <Util/Experimental/S2Utilities.hpp>
+namespace NES::Spatial::Util {
 
-Location s2pointToLocation(S2Point point) {
-    S2LatLng latLng(point);
-    return {latLng.lat().degrees(), latLng.lng().degrees()};
-}
+    S2Point S2Utilities::locationToS2Point(Index::Experimental::Location location) {
+        return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
+    }
+
+    Index::Experimental::Location S2Utilities::s2pointToLocation(S2Point point) {
+        S2LatLng latLng(point);
+        return {latLng.lat().degrees(), latLng.lng().degrees()};
+    }
 }
 #endif
-#endif//NES_S2CONVERSION_HPP

@@ -168,13 +168,13 @@ void LocationIndex::addMobileNode(TopologyNodePtr node) {
     mobileNodes.insert({node->getId(), node});
 }
 
-std::vector<std::pair<uint64_t, Location>> LocationIndex::getAllMobileNodeLocations() {
-    std::vector<std::pair<uint64_t, Location>> loccationVector;
+std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLocations() {
+    std::vector<std::pair<uint64_t, LocationPtr>> loccationVector;
     std::unique_lock lock(locationIndexMutex);
     loccationVector.reserve(mobileNodes.size());
     for (const auto& [nodeId, topologyNode] : mobileNodes) {
-        Location location = topologyNode->getCoordinates();
-        if (location.isValid()) {
+        auto location = std::make_shared<Location>(topologyNode->getCoordinates());
+        if (location->isValid()) {
             loccationVector.emplace_back(nodeId, location);
         }
     }

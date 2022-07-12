@@ -15,7 +15,6 @@
 #include <iostream>
 
 #include <../util/NesBaseTest.hpp>
-#include <Util/Experimental/WorkerSpatialType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -23,20 +22,21 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/LocationIndex.hpp>
 #include <Spatial/LocationProvider.hpp>
 #include <Spatial/LocationProviderCSV.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
+#include <Spatial/TrajectoryPredictor.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/S2Utilities.hpp>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
-#include <Spatial/TrajectoryPredictor.hpp>
-#include <Spatial/ReconnectSchedule.hpp>
-#include <Util/Experimental/S2Conversion.hpp>
 
 using std::map;
 using std::string;
@@ -557,7 +557,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         currNode->setFixedCoordinates(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()));
-        nodeIndex.Add(NES::Spatial::Index::Experimental::locationToS2Point(currNode->getCoordinates()), currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()), currNode->getId());
         idCount++;
     }
 
@@ -616,7 +616,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
             query.mutable_options()->set_max_distance(
                 S2Earth::MetersToAngle(mobilityConfiguration1->nodeInfoDownloadRadius.getValue()));
             S2ClosestPointQuery<int>::PointTarget target(
-                NES::Spatial::Index::Experimental::locationToS2Point(*indexUpdatePosition));
+                NES::Spatial::Util::S2Utilities::locationToS2Point(*indexUpdatePosition));
             auto closestNodeList = query.FindClosestPoints(&target);
             EXPECT_GT(closestNodeList.size(), 1);
             if (closestNodeList.size(), wrk1->getTrajectoryPredictor()->getSizeOfSpatialIndex()) {
@@ -634,7 +634,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         }
                         break;
                     }
-                    EXPECT_TRUE(S2::ApproxEquals(NES::Spatial::Index::Experimental::locationToS2Point(loc), result.point()));
+                    EXPECT_TRUE(S2::ApproxEquals(NES::Spatial::Util::S2Utilities::locationToS2Point(loc), result.point()));
                 }
             } else {
                 auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
@@ -661,10 +661,10 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
             lastPredictedPathRetrievalTime = getTimestamp();
             if (pathStart && pathEnd) {
                 if (pathStart->isValid() && pathEnd->isValid()) {
-                    auto startPoint = NES::Spatial::Index::Experimental::locationToS2Point(*pathStart);
-                    auto endPoint = NES::Spatial::Index::Experimental::locationToS2Point(*pathEnd);
+                    auto startPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStart);
+                    auto endPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEnd);
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
-                    auto pathCurrentPosToWayPoint = S2Polyline(std::vector({NES::Spatial::Index::Experimental::locationToS2Point(workerLocation.first), NES::Spatial::Index::Experimental::locationToS2Point(nextWaypoint.first)}));
+                    auto pathCurrentPosToWayPoint = S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(workerLocation.first), NES::Spatial::Util::S2Utilities::locationToS2Point(nextWaypoint.first)}));
                     waypointCovered[waypointCounter] = lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
                 }
             }
@@ -674,8 +674,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         auto pathEndNew = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getPathEnd();
         if (pathStartNew && pathEndNew) {
             if (pathStartNew->isValid() && pathEndNew->isValid()) {
-                auto startPointNew = NES::Spatial::Index::Experimental::locationToS2Point(*pathStartNew);
-                auto endPointNew = NES::Spatial::Index::Experimental::locationToS2Point(*pathEndNew);
+                auto startPointNew = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStartNew);
+                auto endPointNew = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEndNew);
                 auto pathNew = S2Polyline(std::vector({startPointNew, endPointNew}));
 
                 //if we once covered the waypoint, we expect the path not to change until the waypoint is reached
@@ -722,8 +722,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                 NES_DEBUG("worker reconnected")
                 if (predictedReconnect) {
                     auto predictedPoint =
-                        NES::Spatial::Index::Experimental::locationToS2Point(get<1>(predictedReconnect.value()));
-                    auto actualPoint = NES::Spatial::Index::Experimental::locationToS2Point(get<0>(updatedLastReconnect));
+                        NES::Spatial::Util::S2Utilities::locationToS2Point(get<1>(predictedReconnect.value()));
+                    auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(get<0>(updatedLastReconnect));
                     EXPECT_TRUE(S2::ApproxEquals(predictedPoint, actualPoint, allowedReconnectPositionPredictionError));
                     EXPECT_NE(get<2>(predictedReconnect.value()),  0);
                     EXPECT_NE(get<1>(updatedLastReconnect), 0);

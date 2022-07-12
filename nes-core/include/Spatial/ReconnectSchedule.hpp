@@ -23,8 +23,19 @@ using LocationPtr = std::shared_ptr<Location>;
 
 namespace NES::Spatial::Mobility::Experimental {
 
+/**
+ * @brief contains a prediction about a mobile devices trajectory and the reconnects as they are expected to happen
+ */
 class ReconnectSchedule {
   public:
+    /**
+     * Constructor
+     * @param pathBeginning the starting point of the predicted path
+     * @param pathEnd the endpoint of the predicted path
+     * @param lastIndexUpdatePosition the device position at the moment when the info in the local index of field node positions
+     * was downloaded from the coordinator
+     * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
+     */
     ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector);

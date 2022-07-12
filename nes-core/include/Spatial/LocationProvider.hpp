@@ -61,8 +61,19 @@ using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
+/**
+ * @brief this class is the worker-side interface to access all location related information. It is allows querying for the fixed
+ * position of a field node or the current position of a mobile node as well as making calls to the coordinator in order to
+ * download field node spatial data to a mobile worker. To allow querying for the position of a mobile device, the class needs to
+ * be subclassed to integrate with the device specific interfaces
+ */
 class LocationProvider {
   public:
+    /**
+     * Constructor
+     * @param spatialType the type of worker: NO_LOCATION, FIELD_NODE (fixed location), MOBILE_NODE or INVALID
+     * @param fieldNodeLoc the fixed location if this worker is a field node. Will be ignored if the spatial type is not FIELD_NODE
+     */
     explicit LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc);
 
     /**
