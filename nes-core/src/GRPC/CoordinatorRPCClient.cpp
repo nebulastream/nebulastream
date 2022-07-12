@@ -622,8 +622,9 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     reconnectPoint->set_time(get<2>(scheduledReconnect));
 
     coordinatorStub->SendScheduledReconnect(&context, request, &reply);
-    return true;
+    return reply.success();
 }
+
 bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, std::pair<Spatial::Index::Experimental::Location, Timestamp> locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
@@ -637,6 +638,6 @@ bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, std::pair<Spatial
 
     request.set_time(locationUpdate.second);
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
-    return true;
+    return reply.success();
 }
 }// namespace NES

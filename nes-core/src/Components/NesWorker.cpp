@@ -62,13 +62,6 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
 }
-/*
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
-                     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig)
-    : NesWorker(std::shared_ptr(workerConfig)) {
-    this->mobilityConfig = std::move(mobilityConfig);
-}
- */
 
 NesWorker::~NesWorker() { stop(true); }
 
@@ -159,7 +152,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                             << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
-    locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig, mobilityConfig);
+    locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
     if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
         NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
         trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider, mobilityConfig, parentId);

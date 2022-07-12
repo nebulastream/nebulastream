@@ -48,7 +48,7 @@ service CoordinatorRPCService {
   // queries for all field nodes within a specified radius around the supplied coordinates
   rpc GetNodesInRange (GetNodesInRangeRequest) returns (GetNodesInRangeReply) {}
 
-  //inform the coordinator about the a scheduled reconnect
+  //inform the coordinator about the scheduled reconnect
   rpc SendScheduledReconnect (SendScheduledReconnectRequest) returns (SendScheduledReconnectReply) {}
 
   //lets a mobile device inform the coordinator about its current location
@@ -197,7 +197,9 @@ message SendScheduledReconnectRequest {
   ReconnectPoint reconnect = 2;
 }
 
-message SendScheduledReconnectReply {}
+message SendScheduledReconnectReply {
+  bool success = 1;
+}
 
 message LocationUpdateRequest {
   uint64 id = 1;
@@ -205,7 +207,9 @@ message LocationUpdateRequest {
   uint64 time = 3;
 }
 
-message LocationUpdateReply {}
+message LocationUpdateReply {
+  bool success = 1;
+}
 
 message SerializableRegistrationMetrics{
   uint64 totalMemoryBytes = 1;

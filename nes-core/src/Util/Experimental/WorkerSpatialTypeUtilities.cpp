@@ -28,14 +28,17 @@ Index::Experimental::WorkerSpatialType WorkerSpatialTypeUtilities::stringToWorke
 }
 
 Index::Experimental::WorkerSpatialType WorkerSpatialTypeUtilities::protobufEnumToWorkerSpatialType(SpatialType spatialType) {
-    if (spatialType == SpatialType::NO_LOCATION) {
-        return Index::Experimental::WorkerSpatialType::NO_LOCATION;
-    }
-    if (spatialType == SpatialType::FIELD_NODE ) {
-        return Index::Experimental::WorkerSpatialType::FIELD_NODE;
-    }
-    if (spatialType == SpatialType::MOBILE_NODE) {
-        return Index::Experimental::WorkerSpatialType::MOBILE_NODE;
+    switch (spatialType) {
+        case SpatialType::NO_LOCATION:
+            return Index::Experimental::WorkerSpatialType::NO_LOCATION;
+        case SpatialType::FIELD_NODE:
+            return Index::Experimental::WorkerSpatialType::FIELD_NODE;
+        case SpatialType::MOBILE_NODE:
+            return Index::Experimental::WorkerSpatialType::MOBILE_NODE;
+        case SpatialType_INT_MIN_SENTINEL_DO_NOT_USE_:
+            return Index::Experimental::WorkerSpatialType::INVALID;
+        case SpatialType_INT_MAX_SENTINEL_DO_NOT_USE_:
+            return Index::Experimental::WorkerSpatialType::INVALID;
     }
     return Index::Experimental::WorkerSpatialType::INVALID;
 }

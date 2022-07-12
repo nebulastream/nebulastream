@@ -201,16 +201,17 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
         NES_DEBUG("WorkerRPCServer: trajectory planner not set")
         return Status::CANCELLED;
     }
+    //obtain the current schedule form the trajectory predictor
     auto schedule = trajectoryPredictor->getReconnectSchedule();
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
 
+    //if a predicted path was calculated, insert its start and endpoint into the message to be sent
     auto startLoc = schedule->getPathStart();
     if (startLoc) {
         Coordinates* startCoord = scheduleMsg->mutable_pathstart();
         startCoord->set_lat(startLoc->getLatitude());
         startCoord->set_lng(startLoc->getLongitude());
     }
-
     auto endLoc = schedule->getPathEnd();
     if (endLoc) {
         Coordinates* endCoord = scheduleMsg->mutable_pathend();
@@ -218,6 +219,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
         endCoord->set_lng(endLoc->getLongitude());
     }
 
+    //if the device downloaded nodes to the local index, insert the location of the device at the time of the update into the message
     auto updateLocation = schedule->getLastIndexUpdatePosition();
     if (updateLocation) {
         Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
@@ -225,6 +227,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
         updateCoordinates->set_lng(updateLocation->getLongitude());
     }
 
+    //insert the predicted reconnects into the message (if there are any)
     for (auto elem : *(schedule->getReconnectVector())) {
         ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
         reconnectPoint->set_id(std::get<0>(elem));

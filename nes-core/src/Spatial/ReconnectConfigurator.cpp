@@ -82,11 +82,13 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThresholdAndSendLocationUpdate() {
     auto locProvider = worker.getLocationProvider();
     if (locProvider) {
+        //get the devices current location
         auto currentLocationTuple = locProvider->getCurrentLocation();
         auto currentLocation = currentLocationTuple.first;
         S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
         std::unique_lock lock(reconnectConfigMutex);
+        //check if we moved further than the threshold. if so, tell the coordinator about the devices new position
         if (S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold) {
             NES_DEBUG("device has moved further then threshold, sending location")
             coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentLocationTuple);
@@ -98,14 +100,18 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
 }
 
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySendLocationUpdates() {
+    //get the devices current location
     auto currentLocationTuple = worker.getLocationProvider()->getCurrentLocation();
     auto currentLocation = currentLocationTuple.first;
     S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
+
     NES_DEBUG("transmitting initial location")
     coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentLocationTuple);
     std::unique_lock lock(reconnectConfigMutex);
     lastTransmittedLocation = currentPoint;
     lock.unlock();
+
+    //start periodically pulling location updates and inform coordinator about location changes
     while (sendUpdates) {
         checkThresholdAndSendLocationUpdate();
         std::this_thread::sleep_for(std::chrono::milliseconds(locationUpdateInterval));

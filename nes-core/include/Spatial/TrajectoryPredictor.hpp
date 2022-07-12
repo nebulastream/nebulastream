@@ -126,7 +126,7 @@ class TrajectoryPredictor {
 
     /**
      * @brief return the predicted next reconnect of the device
-     * @return and optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
+     * @return an optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
      * nullopt if no reconnect has been calculated
      */
     std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> getNextPredictedReconnect();
@@ -155,7 +155,7 @@ class TrajectoryPredictor {
     void scheduleReconnects();
 
     /**
-     * @brief check if the device has moved closer than the threshold to the edge of the area covered by by the current local
+     * @brief check if the device has moved closer than the threshold to the edge of the area covered by the current local
      * spatial index. If so download new node data around the current location
      * @param currentLocation : the current location of the mobile device
      * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
@@ -202,10 +202,8 @@ class TrajectoryPredictor {
     S1Angle reconnectSearchRadius;
     S1Angle coveredRadiusWithoutThreshold;
     S1Angle defaultCoverageRadiusAngle;
-#endif
 
     //prediction data
-#ifdef S2DEF
     S2Point currentParentLocation;
     S2PolylinePtr trajectoryLine;
     std::unordered_map<uint64_t, S2Point> fieldNodeMap;
@@ -219,7 +217,5 @@ class TrajectoryPredictor {
     double allowedSpeedDifferenceFactor;
     std::tuple<Index::Experimental::Location, Timestamp> devicePositionTupleAtLastReconnect;
 };
-
 }
-
 #endif//NES_TRAJECTORYPREDICTOR_HPP

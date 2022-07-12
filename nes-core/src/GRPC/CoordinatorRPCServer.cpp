@@ -340,7 +340,6 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
-    (void) reply;
     const ReconnectPoint& reconnectPoint = request->reconnect();
     NES::Spatial::Index::Experimental::Location location;
     if (reconnectPoint.has_coord()) {
@@ -349,7 +348,9 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
     } else {
         NES_DEBUG("incoming request did not contain coordinates")
     }
-    if (locationService->updatePredictedReconnect(request->deviceid(), reconnectPoint.id(), location, reconnectPoint.time())) {
+    bool success = locationService->updatePredictedReconnect(request->deviceid(), reconnectPoint.id(), location, reconnectPoint.time());
+    reply->set_success(success);
+    if (success) {
         return Status::OK;
     }
     return Status::CANCELLED;
@@ -357,9 +358,9 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
-    (void) reply;
     auto coordinates = request->coord();
     NES_DEBUG("Coordinator received location update from node with id " << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS " << request->time());
     //todo #2862: update coordinator trajectory prediction
+    reply->set_success(true);
     return Status::OK;
 }
