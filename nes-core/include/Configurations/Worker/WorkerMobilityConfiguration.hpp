@@ -33,6 +33,8 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 
 class WorkerMobilityConfiguration : public BaseConfiguration {
   public:
+    WorkerMobilityConfiguration() : BaseConfiguration(){};
+    WorkerMobilityConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
     /**
      * @brief Factory function for a worker config
      */

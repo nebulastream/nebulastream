@@ -90,8 +90,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param workerConfig
      * @param mobilityConfig
      */
+     /*
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
                          NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
+                         */
 
     /**
      * @brief default dtor

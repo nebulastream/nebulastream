@@ -21,6 +21,7 @@
 #include <Configurations/Worker/LocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
 #include <map>
 #include <string>
@@ -187,7 +188,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief specifies the path to a yaml file containing a mobility configuration
      */
-    StringOption mobilityConfigPath = {MOBILITY_CONFIG_PATH_CONFIG, "", "the configuration data for the location wrapper class"};
+     Spatial::Mobility::Experimental::WorkerMobilityConfiguration mobilityConfiguration = {
+        MOBILITY_CONFIG_CONFIG, "the configuration data for the location wrapper class"};
 
     /**
      * @brief Configuration yaml path.
@@ -259,7 +261,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &physicalSources,
                 &locationCoordinates,
                 &spatialType,
-                &mobilityConfigPath,
+                &mobilityConfiguration,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,

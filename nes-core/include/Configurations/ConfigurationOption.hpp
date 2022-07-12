@@ -202,7 +202,7 @@ const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
-const std::string MOBILITY_CONFIG_PATH_CONFIG = "mobilityConfigPath";
+const std::string MOBILITY_CONFIG_CONFIG = "mobility";
 const std::string SPATIAL_TYPE_CONFIG = "spatialType";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";

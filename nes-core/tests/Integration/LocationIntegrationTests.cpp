@@ -208,9 +208,10 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
-    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    //wrkConf1->mobilityConfiguration = mobilityConfiguration1;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
 
@@ -314,9 +315,9 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
-    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
@@ -423,9 +424,9 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->rpcPort = rpcPortWrk1;
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
-    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
 
@@ -566,16 +567,16 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     wrkConf1->parentId.setValue(10006);
-    mobilityConfiguration1->nodeInfoDownloadRadius.setValue(20000);
-    mobilityConfiguration1->nodeIndexUpdateThreshold.setValue(5000);
-    mobilityConfiguration1->pathPredictionUpdateInterval.setValue(10);
-    mobilityConfiguration1->locationBufferSaveRate.setValue(1);
-    mobilityConfiguration1->pathPredictionLength.setValue(40000);
-    mobilityConfiguration1->defaultCoverageRadius.setValue(5000);
-    mobilityConfiguration1->sendLocationUpdateInterval.setValue(1000);
-    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), mobilityConfiguration1);
+    wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
+    wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
+    wrkConf1->mobilityConfiguration.pathPredictionUpdateInterval.setValue(10);
+    wrkConf1->mobilityConfiguration.locationBufferSaveRate.setValue(1);
+    wrkConf1->mobilityConfiguration.pathPredictionLength.setValue(40000);
+    wrkConf1->mobilityConfiguration.defaultCoverageRadius.setValue(5000);
+    wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     if (wrk1->getWorkerConfiguration()->parentId.getValue() != 0) {
         NES_INFO("start with dedicated parent=" << wrk1->getWorkerConfiguration()->parentId.getValue());
         wrk1->setWithParent(wrk1->getWorkerConfiguration()->parentId.getValue());
