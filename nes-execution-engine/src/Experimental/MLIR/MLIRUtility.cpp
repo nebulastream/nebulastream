@@ -37,6 +37,7 @@
 #include <mlir/Parser.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+#include <mlir/Target/LLVMIR/Dialect/NVVM/NVVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
 #include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
 #include <mlir/Transforms/Passes.h>
@@ -218,6 +219,7 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    mlir::registerNVVMDialectTranslation(*module->getContext());
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
@@ -280,6 +282,7 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    mlir::registerNVVMDialectTranslation(*module->getContext());
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
