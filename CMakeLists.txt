@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v18-simdjson)
+set(VCPKG_BINARY_VERSION v18-arrow)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -435,8 +435,12 @@ if (NES_USE_MQTT)
 endif (NES_USE_MQTT)
 
 if(NES_USE_PARQUET)
-    find_package(Parquet REQUIRED)
-    message("Enabling Parquet build")
+    find_package(Thrift CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} ${THRIFT_LIBRARIES})
+    find_package(Parquet CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} ${PARQUET_LIBRARIES})
+    find_package(Arrow CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} ${ARROW_LIBRARIES})
     add_compile_definitions(ENABLE_PARQUET_BUILD)
 endif()
 
