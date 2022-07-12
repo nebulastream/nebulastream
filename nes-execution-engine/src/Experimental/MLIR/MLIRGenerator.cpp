@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/MLIR/YieldOperation.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
@@ -33,8 +34,10 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <memory>
 #include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/GPU/GPUDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMTypes.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/SCF/SCF.h>
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
@@ -45,6 +48,7 @@
 #include <mlir/IR/Operation.h>
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/IR/TypeRange.h>
+#include <mlir/IR/Types.h>
 #include <mlir/IR/Value.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Parser.h>
@@ -486,6 +490,96 @@ void MLIRGenerator::generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopO
     }
 }
 
+void MLIRGenerator::generateGPUCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp,
+                                           MLIRGenerator::ValueFrame& frame) {
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
+    auto loopInfo = std::dynamic_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
+    auto mlirLowerBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("lowerBound"),
+                                                                    builder->getIndexType(),
+                                                                    frame.getValue(loopInfo->lowerBound.lock()->getIdentifier()));
+
+    auto mlirUpperBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("upperBound"),
+                                                                    builder->getIndexType(),
+                                                                    frame.getValue(loopInfo->upperBound.lock()->getIdentifier()));
+    auto mlirStepSize = builder->create<mlir::arith::IndexCastOp>(getNameLoc("stepSize"),
+                                                                  builder->getIndexType(),
+                                                                  frame.getValue(loopInfo->stepSize.lock()->getIdentifier()));
+    std::vector<mlir::Value> iteratorArgs{};
+    for (auto argument : loopInfo->loopInitialIteratorArguments) {
+        iteratorArgs.emplace_back(frame.getValue(argument->getIdentifier()));
+    }
+
+    mlir::Value constOne = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constOne"), 1);
+    mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
+
+    mlir::Value dummyResultConstant = getConstInt("const", 64, 1);// dummy, just to let it compiles
+    auto memref = builder->create<mlir::memref::AllocOp>(getNameLoc("memrefAllocOp"),
+                                                         mlir::MemRefType::get({1}, getMLIRType(IR::Operations::INT64)));
+    mlir::SmallVector<mlir::Value, 1> indice;
+    indice.push_back(constZero);
+
+    builder->create<mlir::memref::StoreOp>(getNameLoc("memrefStoreOp"), dummyResultConstant, memref, indice);
+
+    auto cast = builder->create<mlir::memref::CastOp>(getNameLoc("cast"),
+                                                      memref,
+                                                      mlir::UnrankedMemRefType::get(getMLIRType(IR::Operations::INT64), 0));
+    auto hostRegister = builder->create<mlir::gpu::HostRegisterOp>(getNameLoc("hostRegister"), cast);
+
+    mlir::Value gridSizeX = constOne;
+    mlir::Value gridSizeY = constOne;
+    mlir::Value gridSizeZ = constOne;
+    mlir::Value blockSizeX = mlirUpperBound;
+    mlir::Value blockSizeY = mlirUpperBound;
+    mlir::Value blockSizeZ = mlirUpperBound;
+
+    auto launchOp = builder->create<mlir::gpu::LaunchOp>(getNameLoc("forLoop"),
+                                                         gridSizeX,
+                                                         gridSizeY,
+                                                         gridSizeZ,
+                                                         blockSizeX,
+                                                         blockSizeY,
+                                                         blockSizeZ);
+
+    builder->setInsertionPointToStart(&launchOp.body().front());
+
+    // generate loop body
+    {
+        auto loopBodyBlock = loopInfo->loopBodyBlock;
+        loopBodyBlock->popOperation();
+
+        auto loopBodyArguments = loopBodyBlock->getArguments();
+        ValueFrame loopBodyFrame;
+        //        for (uint64_t i = 0; i < loopInfo->loopBodyIteratorArguments.size(); i++) {
+        //
+        //            loopBodyFrame.setValue(loopInfo->loopBodyIteratorArguments[i]->getIdentifier(), iteratorArgs[i]);
+        //        }
+        loopBodyFrame.setValue(loopInfo->loopBodyIteratorArguments[0]->getIdentifier(), memref);
+
+        generateMLIR(loopBodyBlock, loopBodyFrame);
+    }
+
+    builder->setInsertionPointToEnd(&launchOp.body().back());
+    builder->create<mlir::gpu::TerminatorOp>(getNameLoc("forLoop"), llvm::None);
+
+    // store the result back
+
+    // generate loop merge block
+    builder->restoreInsertionPoint(parentBlockInsertionPoint);
+    auto loadOp = builder->create<mlir::memref::LoadOp>(getNameLoc("loadOp"), memref, indice);
+
+    {
+        auto loopEndBlock = loopInfo->loopEndBlock;
+        auto loopEndArguments = loopEndBlock->getArguments();
+        ValueFrame loopBodyFrame;
+        //        for (uint64_t i = 0; i < loopEndArguments.size(); i++) {
+        //            loopBodyFrame.setValue(loopEndArguments[i]->getIdentifier(), dummyResultConstant);
+        //        }
+        loopBodyFrame.setValue(loopEndArguments[0]->getIdentifier(), loadOp);
+
+        generateMLIR(loopEndBlock, loopBodyFrame);
+    }
+}
+
 void MLIRGenerator::generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
     this->useSCF = false;
     std::vector<mlir::Value> mlirTargetBlockArguments;
@@ -500,7 +594,8 @@ void MLIRGenerator::generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOp
 // Recursion. No dependencies. Does NOT require addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
     if (loopOp->getLoopInfo()->isCountedLoop()) {
-        generateSCFCountedLoop(loopOp, frame);
+        //                generateSCFCountedLoop(loopOp, frame);
+        generateGPUCountedLoop(loopOp, frame);
         return;
     } else {
         generateCFDefaultLoop(loopOp, frame);
@@ -702,8 +797,22 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> a
     } else {
         if (!inductionVars.contains(addOp->getLeftInput()->getIdentifier())) {
             if (!frame.contains(addOp->getIdentifier())) {
-                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
-                frame.setValue(addOp->getIdentifier(), mlirAddOp);
+                //                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+                //                frame.setValue(addOp->getIdentifier(), mlirAddOp);
+
+                // TODO 2853: add an if statement
+                auto mlirReduceOp = builder->create<mlir::gpu::AllReduceOp>(
+                    getNameLoc("binOpResult"),
+                    getMLIRType(IR::Operations::INT64),
+                    rightInput,
+                    mlir::gpu::AllReduceOperationAttr::get(context, mlir::gpu::AllReduceOperation::ADD));
+                mlir::SmallVector<mlir::Value, 1> indice;
+                mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
+                indice.push_back(constZero);
+
+                builder->create<mlir::memref::StoreOp>(getNameLoc("memrefStoreOp"), mlirReduceOp, leftInput, indice);
+
+                frame.setValue(addOp->getIdentifier(), mlirReduceOp);
             } else {
                 auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
                 frame.setValue(addOp->getIdentifier(), mlirAddOp);

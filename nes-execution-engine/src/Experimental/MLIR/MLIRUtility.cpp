@@ -26,6 +26,9 @@
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/SCF.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
+#include <mlir/Dialect/GPU/GPUDialect.h>
+#include <mlir/Dialect/Affine/IR/AffineOps.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/IR/BuiltinOps.h>
@@ -165,6 +168,10 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::gpu::GPUDialect>();
+    context.loadDialect<mlir::AffineDialect>();
+    context.loadDialect<mlir::memref::MemRefDialect>();
+
     //    context.loadDialect<>()
     // Generate MLIR for the sample NESAbstraction or load from file.
     if (debugFromFile) {

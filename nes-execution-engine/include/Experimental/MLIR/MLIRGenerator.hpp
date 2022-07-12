@@ -134,6 +134,7 @@ class MLIRGenerator {
 
     void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
     void generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
+    void generateGPUCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
     void generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
 
     /**
