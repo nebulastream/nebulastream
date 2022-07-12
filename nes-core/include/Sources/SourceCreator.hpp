@@ -399,15 +399,19 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 /**
- * @brief function to create a lambda source
- * @param schema of the data source
- * @param bufferManager
- * @param queryManager
- * @param number of buffers that should be produced
- * @param frequency when to gather the next buffer
- * @param generationFunction
- * @param operatorId
- * @return a const data source pointer */
+ * function to create a TCP source
+ * @param schema of this data source
+ * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
+ * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
+ * They are also subject to reference counting.
+ * @param queryManager comes with functionality to manage the queries
+ * @param tcpSourceType see TCPSourceType.hpp for information on this object
+ * @param operatorId represents a locally running query execution plan
+ * @param originId represents an origin
+ * @param numSourceLocalBuffers number of local source buffers
+ * @param successors executable operators coming after this source
+ * @return
+ */
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const Runtime::BufferManagerPtr& bufferManager,
                               const Runtime::QueryManagerPtr& queryManager,

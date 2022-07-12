@@ -1242,11 +1242,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setQos(mqttSourceConfig->qos());
         sourceConfig->setCleanSession(mqttSourceConfig->cleansession());
         sourceConfig->setFlushIntervalMS(mqttSourceConfig->flushintervalms());
-        if (mqttSourceConfig->inputformat() == 0) {
-            sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
-        } else {
-            sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
-        }
+        sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(mqttSourceConfig->inputformat()));
         auto ret = MQTTSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }
@@ -1287,11 +1283,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setSocketType(tcpSourceConfig->sockettype());
         sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
         sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
-        if (tcpSourceConfig->inputformat() == 0) {
-            sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
-        } else {
-            sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
-        }
+        sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()));
         auto ret = TCPSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }
