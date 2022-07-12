@@ -13,12 +13,14 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <API/Schema.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -27,8 +29,8 @@
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -42,7 +44,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     SourceCatalogPtr sourceCatalog;
-    UdfCatalogPtr udfCatalog;
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
