@@ -65,7 +65,7 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
     web::json::value locMapJson = web::json::value::array();
     size_t count = 0;
     for (const auto& [nodeId, location] : nodeVector) {
-        web::json::value nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
+        web::json::value nodeInfo = convertNodeLocationInfoToJson(nodeId, *location);
         locMapJson[count] = web::json::value(nodeInfo);
         ++count;
     }

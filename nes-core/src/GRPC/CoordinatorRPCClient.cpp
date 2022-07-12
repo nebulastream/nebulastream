@@ -28,6 +28,7 @@
 #include <log4cxx/helpers/exception.h>
 #include <optional>
 #include <string>
+#include <Util/Experimental/WorkerSpatialTypeUtilities.hpp>
 namespace NES {
 
 namespace detail {
@@ -392,7 +393,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.set_spatialtype(toProtobufEnum(spatialType));
+    request.set_spatialtype(Spatial::Util::WorkerSpatialTypeUtilities::toProtobufEnum(spatialType));
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     Coordinates* pCoordinates = request.mutable_coordinates();

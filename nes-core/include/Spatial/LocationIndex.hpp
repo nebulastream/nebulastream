@@ -111,7 +111,7 @@ class LocationIndex {
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, Location>> getAllMobileNodeLocations();
+    std::vector<std::pair<uint64_t, LocationPtr>> getAllMobileNodeLocations();
 
     /**
      * Experimental
@@ -123,7 +123,7 @@ class LocationIndex {
      * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
      * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
      * @param reconnectNodeId : The id of the expected new parent after the next reconnect
-     * @param reconnectLocation : The expected location at which the device will reconnect
+     * @param reconnectLocation : The location where the mobile device is expected to be at the time of reconnect
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */

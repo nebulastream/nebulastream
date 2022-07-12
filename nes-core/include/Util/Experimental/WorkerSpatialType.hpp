@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
-#define NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
+#ifndef NES_UTIL_EXPERIMENTAL_WORKERSPATIALTYPE_HPP
+#define NES_UTIL_EXPERIMENTAL_WORKERSPATIALTYPE_HPP
 #include <string>
 #include <WorkerLocation.grpc.pb.h>
 
@@ -27,16 +27,6 @@ enum class WorkerSpatialType {
     MOBILE_NODE = 2, //the worker runs on a mobile device which might change its location anytime
     INVALID = 3 //no valid worker type
 };
-
-WorkerSpatialType stringToWorkerSpatialType(std::string spatialTypeString);
-
-WorkerSpatialType protobufEnumToWorkerSpatialType(SpatialType spatielType);
-
-std::string toString(WorkerSpatialType spatialType);
-
-SpatialType toProtobufEnum(WorkerSpatialType spatialType);
-
-
 }
 
-#endif//NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
+#endif//NES_UTIL_EXPERIMENTAL_WORKERSPATIALTYPE_HPP

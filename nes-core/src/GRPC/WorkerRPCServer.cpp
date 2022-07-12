@@ -205,19 +205,25 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
 
     auto startLoc = schedule->getPathStart();
-    Coordinates* startCoord = scheduleMsg->mutable_pathstart();
-    startCoord->set_lat(startLoc->getLatitude());
-    startCoord->set_lng(startLoc->getLongitude());
+    if (startLoc) {
+        Coordinates* startCoord = scheduleMsg->mutable_pathstart();
+        startCoord->set_lat(startLoc->getLatitude());
+        startCoord->set_lng(startLoc->getLongitude());
+    }
 
     auto endLoc = schedule->getPathEnd();
-    Coordinates* endCoord = scheduleMsg->mutable_pathend();
-    endCoord->set_lat(endLoc->getLatitude());
-    endCoord->set_lng(endLoc->getLongitude());
+    if (endLoc) {
+        Coordinates* endCoord = scheduleMsg->mutable_pathend();
+        endCoord->set_lat(endLoc->getLatitude());
+        endCoord->set_lng(endLoc->getLongitude());
+    }
 
     auto updateLocation = schedule->getLastIndexUpdatePosition();
-    Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
-    updateCoordinates->set_lat(updateLocation->getLatitude());
-    updateCoordinates->set_lng(updateLocation->getLongitude());
+    if (updateLocation) {
+        Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
+        updateCoordinates->set_lat(updateLocation->getLatitude());
+        updateCoordinates->set_lng(updateLocation->getLongitude());
+    }
 
     for (auto elem : *(schedule->getReconnectVector())) {
         ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();

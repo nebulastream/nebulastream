@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 #include <Util/Experimental/WorkerSpatialType.hpp>
+#include <Util/Experimental/WorkerSpatialTypeUtilities.hpp>
+
 
 namespace NES {
 
@@ -203,7 +205,7 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
                 currentNodeJsonValue["location"] = web::json::value::null();
             }
         }
-        currentNodeJsonValue["spatialType"] = web::json::value::string(toString(currentNode->getSpatialType()));
+        currentNodeJsonValue["spatialType"] = web::json::value::string(Spatial::Util::WorkerSpatialTypeUtilities::toString(currentNode->getSpatialType()));
 
         for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node
