@@ -490,9 +490,14 @@ namespace NES::Optimizer {
         AbstractJoinPlanOperatorPtr leftOperator = plan->getLeftChild();
         AbstractJoinPlanOperatorPtr rightOperator = plan->getRightChild();
 
-        // Operator Cost : Cardinality after Join
-        plan->setOperatorCosts((leftOperator->getCardinality() * rightOperator->getCardinality()) * plan->getSelectivity());
-        plan->setCardinality(plan->getOperatorCosts());
+        // Operator Cost : Input Access cost + Predicate Evaluation Cost + Output Tuple Generation cost
+        float inputCardinalities = leftOperator->getCardinality() + rightOperator->getCardinality();
+        float predicateEvaluation = inputCardinalities * 0.25 * plan->getNumberOfPredicates();
+        float outputCardinality = leftOperator->getCardinality() * rightOperator->getCardinality() * plan->getSelectivity();
+        float operatorCost = inputCardinalities + predicateEvaluation + outputCardinality;
+
+        plan->setOperatorCosts(operatorCost);
+        plan->setCardinality(outputCardinality);
 
         // CumulativeCosts : OP Cost + children's cumulative costs.
         plan->setCumulativeCosts(plan->getOperatorCosts() + leftOperator->getCumulativeCosts() + rightOperator->getCumulativeCosts());
@@ -585,6 +590,7 @@ namespace NES::Optimizer {
 
         // This is the overall filterPredicate
         ExpressionNodePtr totalFilterPredicate;
+        int numberOfPredicates = 1;
 
         // check if all leftPostions are in front or in rear
         bool isAllRear = rightPositions[rightPositions.size() - 1] < leftPositions[0];
@@ -649,6 +655,7 @@ namespace NES::Optimizer {
 
             // add complete predicate
             totalFilterPredicate = lowerLocalFilterPredicate && upperLocalFilterPredicate;
+            numberOfPredicates++;
 
         } else{
             // left and rightPositions are mixed up, we need to iterate over both lists and construct filterpredicates.
@@ -702,6 +709,7 @@ namespace NES::Optimizer {
                     } else {
                         totalFilterPredicate = localFilterPredicate;
                     }
+                    numberOfPredicates++;
                 } else {
                     // newPosition is inbetween. but only partially. The exact location needs to be found now.
                     std::vector<int> neighbours = getNeighbours(newPosition, rightPositions);
@@ -740,6 +748,9 @@ namespace NES::Optimizer {
                     } else {
                         totalFilterPredicate = lowerLocalFilterPredicate && upperLocalFilterPredicate;
                     }
+                    // Added two new predicates
+                    numberOfPredicates = numberOfPredicates + 2;
+
                     // Add newPosition to rightPositions
                     rightPositions.push_back(newPosition);
                     std::sort(rightPositions.begin(), rightPositions.end());// programm this in a less lazy way maybe ;)
@@ -755,7 +766,8 @@ namespace NES::Optimizer {
                                                                                                           rightChild,
                                                                                                           joinDefinition,
                                                                                                           totalSelectivity,
-                                                                                                        totalFilterPredicate));
+                                                                                                        totalFilterPredicate,
+                                                                                                        numberOfPredicates));
     }
 
     bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved,

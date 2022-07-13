@@ -39,7 +39,8 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
                                      AbstractJoinPlanOperatorPtr rightChild,
                                      Join::LogicalJoinDefinitionPtr joinPredicate,
                                      float selectivity,
-                                     ExpressionNodePtr filterPredicate = nullptr);
+                                     ExpressionNodePtr filterPredicate = nullptr,
+                                     int numberOfPredicates = 1);
 
             /**
              * @brief - constructor for building an AbstractJoinPlanOperator from a source (OptimizerPlanOperator
@@ -75,8 +76,10 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
           private:
             /**
       * Cost issued by this operator
-      * This is usually the output cardinality of, e.g., a join.
-      * Sum of operators input sizes.
+      * This cost is the CPU cost of three things:
+             * 1. Access cost of input tuples C_i
+             * 2. Predicate evaluation cost (proportional with factor 0.25) to C_i, and multiplied by the number of multi-class predicates
+             * 3. Output tuple generation cost C_o
       */
             long double operatorCosts;
 
@@ -87,7 +90,8 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
             long double cumulativeCosts;
 
             /**
-      * source cardinality, i.e. size of tuples in window // or if joined the output cardinality of this join.
+      * source cardinality, i.e. size of tuples in window
+      * or if joined the output cardinality of this window join.
       */
             long double cardinality;
 
@@ -96,6 +100,17 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
              * If the AJPO is only an extended source, it can be a nullptr
              */
             ExpressionNodePtr predicate;
+
+            /**
+             * In some cases, joins/sequences apply to multiple number of predicates at the same time.
+             * For these cases, the cost of evaluating the predicate is higher
+             * This int reflects the number predicates for this join operation
+             */
+            int numberOfPredicates;
+
+          public:
+            int getNumberOfPredicates() const;
+            void setNumberOfPredicates(int numberOfPredicates);
 
           public:
             float getSelectivity() const;

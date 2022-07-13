@@ -19,10 +19,12 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(AbstractJoinPlanOperator
                                                         AbstractJoinPlanOperatorPtr rightChild,
                                                         Join::LogicalJoinDefinitionPtr joinPredicate,
                                                         float selectivity,
-                                                        ExpressionNodePtr filterPredicate){
+                                                        ExpressionNodePtr filterPredicate,
+                                                        int numberOfPredicates){
         this->leftChild = leftChild;
         this->rightChild = rightChild;
         this->joinPredicate = joinPredicate;
+        this->numberOfPredicates = numberOfPredicates;
         this->selectivity = selectivity;
         this->predicate = filterPredicate;
     }
@@ -33,6 +35,7 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
     this->joinPredicate = nullptr;
     this->selectivity = 1;
     this->predicate = nullptr;
+    this->numberOfPredicates = 0;
     this->setSourceNode(source->getSourceNode());
     this->setId(source->getId());
     this->setCardinality(Optimizer::JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(source));
@@ -105,4 +108,8 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
     const NES::ExpressionNodePtr& NES::AbstractJoinPlanOperator::getPredicate() const { return predicate; }
     void NES::AbstractJoinPlanOperator::setPredicate(const NES::ExpressionNodePtr& predicate) {
         AbstractJoinPlanOperator::predicate = predicate;
+    }
+    int NES::AbstractJoinPlanOperator::getNumberOfPredicates() const { return numberOfPredicates; }
+    void NES::AbstractJoinPlanOperator::setNumberOfPredicates(int numberOfPredicates) {
+        AbstractJoinPlanOperator::numberOfPredicates = numberOfPredicates;
     }

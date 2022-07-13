@@ -33,6 +33,12 @@ limitations under the License.
 #include <Topology/TopologyNode.hpp>
 #include <iostream>
 #include <API/Query.hpp>
+
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/TestUtils.hpp>
 // clang-format on
 
 using namespace NES;
@@ -201,6 +207,30 @@ TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
 
     // Q2 -- will probably not be optimized as it is a Cartesian product
     TEST_F(JoinOrderOptimizationRuleTest, conjunctionPattern){
+        auto quantity = Query::from("Quantity");
+        auto velocity = Query::from("Velocity");
+        auto pm10 = Query::from("PM10");
+        //auto pm25 = Query::from("PM25");
+        //auto temperature = Query::from("Temperature");
+        //auto humidity = Query::from("Humidity");
+        auto sink = FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE");
+
+        // Q;V
+        auto query = quantity.joinWith(velocity).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key"))
+                         .window(SlidingWindow::of(EventTime(Attribute("ts")),Minutes(5), Minutes(1)));
+
+        //Q;V;PM10
+        query = query.joinWith(pm10).where(Attribute("Quantity$key")).equalsTo(Attribute("PM10$key"))
+                    .window(SlidingWindow::of(EventTime(Attribute("ts")),Minutes(5), Minutes(1)))
+                    .sink(sink);
+
+        auto x = query.getQueryPlan();
+
+        // string
+        //Query::from("Quantity").joinWith(Query::from("Velocity")).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key")).window(SlidingWindow::of(EventTime(Attribute("ts")),Minutes(5), Minutes(1))).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"))
+         //   Query::from("Quantity").joinWith(Query::from("Velocity")).where(Attribute("Quantity$key")).equalsTo(Attribute("Velocity$key")).window(SlidingWindow::of(EventTime(Attribute("ts")),Minutes(5), Minutes(1))).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"))
+
+        Query::from("Quantitiy").andWith(Query::from("Velocity")).window(SlidingWindow::of(EventTime(Attribute("ts")),Minutes(5), Minutes(1))).sink(FileSinkDescriptor::create("sequenceSixSources.csv", "CSV_FORMAT", "OVERWRITE"));
 
         EXPECT_TRUE(1 == (2-1));
     }
@@ -208,6 +238,11 @@ TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
     // Q3 // will not be optimized as this is a union
     TEST_F(JoinOrderOptimizationRuleTest, disjunctionPattern){
 
+        auto query = Query::from("window1")
+            .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+                             .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Seconds(1),Milliseconds(500)));
+
+        NES_DEBUG(query.getQueryPlan())
         EXPECT_TRUE(1 == (2-1));
     }
 
@@ -379,3 +414,4 @@ TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
 
 
     }
+
