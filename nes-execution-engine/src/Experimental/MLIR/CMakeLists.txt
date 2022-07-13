@@ -15,6 +15,6 @@ add_source_files(nes-execution-engine
         MLIRUtility.cpp
         MLIRGenerator.cpp
         YieldOperation.cpp
-#        SerializeToCubinPass.cpp
+        SerializeToCubinPass.cpp
 #        NESAbstractionToMLIR.cpp
 )

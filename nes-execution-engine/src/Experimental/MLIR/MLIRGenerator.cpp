@@ -509,18 +509,12 @@ void MLIRGenerator::generateGPUCountedLoop(std::shared_ptr<IR::Operations::LoopO
         iteratorArgs.emplace_back(frame.getValue(argument->getIdentifier()));
     }
 
-    mlir::Value initialValue = getConstInt("initialValueConst", 32, 1);
+    mlir::Value initialValue = getConstInt("initialValueConst", 64, 1);
 
     // prepare a memref to store the result of computation in the kernel
     auto kernelResultMemref =
         builder->create<mlir::memref::AllocOp>(getNameLoc("memrefAllocOp"),
                                                mlir::MemRefType::get({1}, getMLIRType(IR::Operations::INT32)));
-
-    // Initiate 'kernelResultMemref' with 'initialValue'
-    mlir::SmallVector<mlir::Value, 1> indice;
-    mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
-    indice.push_back(constZero);
-    builder->create<mlir::memref::StoreOp>(getNameLoc("memrefStoreOp"), initialValue, kernelResultMemref, indice);
 
     // Make 'kernelResultMemref' accessible from the GPU
     auto cast = builder->create<mlir::memref::CastOp>(getNameLoc("cast"),
@@ -570,11 +564,19 @@ void MLIRGenerator::generateGPUCountedLoop(std::shared_ptr<IR::Operations::LoopO
     builder->create<mlir::gpu::TerminatorOp>(getNameLoc("gpuTerminator"), llvm::None);
 
 
-    // generate loop merge block
+
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
     // store the result back
+    mlir::SmallVector<mlir::Value, 1> indice;
+    mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
+    indice.push_back(constZero);
     auto loadOp = builder->create<mlir::memref::LoadOp>(getNameLoc("loadOp"), kernelResultMemref, indice);
-    auto finalResult = builder->create<mlir::LLVM::ZExtOp>(getNameLoc("zext"), getMLIRType(IR::Operations::INT64), loadOp);
+    auto extended = builder->create<mlir::LLVM::ZExtOp>(getNameLoc("zext"), getMLIRType(IR::Operations::INT64), loadOp);
+
+    // TODO 2853: Think again about this workaround, do we have to pass the initial value to the body of the loop?
+    auto finalResult = builder->create<mlir::LLVM::AddOp>(getNameLoc("addWithInitial"), initialValue, extended);
+
+    // generate loop merge block
     {
         auto loopEndBlock = loopInfo->loopEndBlock;
         auto loopEndArguments = loopEndBlock->getArguments();
@@ -786,8 +788,9 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOpera
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addOp, ValueFrame& frame) {
 
     auto leftInput = frame.getValue(addOp->getLeftInput()->getIdentifier());
-//    auto originalRightInput = frame.getValue(addOp->getRightInput()->getIdentifier());
-        mlir::Value rightInput = getConstInt("rightInput", 32, 10);
+    //TODO 2853: only do the following TruncOp for GPU loop
+    auto originalRightInput = frame.getValue(addOp->getRightInput()->getIdentifier());
+    mlir::Value rightInput = builder->create<mlir::LLVM::TruncOp>(getNameLoc("truncRightInput"), getMLIRType(IR::Operations::INT32), originalRightInput);
 
     if (addOp->getLeftInput()->getStamp() == IR::Operations::INT8PTR) {
         // if we add something to a ptr we have to use a llvm getelementptr
@@ -813,18 +816,18 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> a
 //                 frame.setValue(addOp->getIdentifier(), mlirAddOp);
 
                 // TODO 2853: add an if statement
-                auto mlirReduceOp = builder->create<mlir::gpu::AllReduceOp>(
-                    getNameLoc("binOpResult"),
-                    getMLIRType(IR::Operations::INT32),
-                    rightInput,
-                    mlir::gpu::AllReduceOperationAttr::get(context, mlir::gpu::AllReduceOperation::ADD));
-                mlir::SmallVector<mlir::Value, 1> indice;
-                mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
-                indice.push_back(constZero);
-
-                builder->create<mlir::memref::StoreOp>(getNameLoc("memrefStoreOp"), mlirReduceOp, leftInput, indice);
-
-                frame.setValue(addOp->getIdentifier(), mlirReduceOp);
+//                auto mlirReduceOp = builder->create<mlir::gpu::AllReduceOp>(
+//                    getNameLoc("binOpResult"),
+//                    getMLIRType(IR::Operations::INT32),
+//                    rightInput,
+//                    mlir::gpu::AllReduceOperationAttr::get(context, mlir::gpu::AllReduceOperation::ADD));
+//                mlir::SmallVector<mlir::Value, 1> indice;
+//                mlir::Value constZero = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constZero"), 0);
+//                indice.push_back(constZero);
+//
+//                builder->create<mlir::memref::StoreOp>(getNameLoc("memrefStoreOp"), mlirReduceOp, leftInput, indice);
+//
+//                frame.setValue(addOp->getIdentifier(), mlirReduceOp);
             } else {
                 auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
                 frame.setValue(addOp->getIdentifier(), mlirAddOp);

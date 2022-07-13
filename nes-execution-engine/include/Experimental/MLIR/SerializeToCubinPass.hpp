@@ -6,20 +6,6 @@
 #include <mlir/Pass/Pass.h>
 #include <mlir/Target/LLVMIR/Dialect/NVVM/NVVMToLLVMIRTranslation.h>
 
-static void emitCudaError(const llvm::Twine& expr, const char* buffer, CUresult result, mlir::Location loc) {
-    const char* error;
-    cuGetErrorString(result, &error);
-    emitError(loc, expr.concat(" failed with error code ").concat(llvm::Twine{error}).concat("[").concat(buffer).concat("]"));
-}
-
-#define RETURN_ON_CUDA_ERROR(expr)                                                                                               \
-    do {                                                                                                                         \
-        if (auto status = (expr)) {                                                                                              \
-            emitCudaError(#expr, jitErrorBuffer, status, loc);                                                                   \
-            return {};                                                                                                           \
-        }                                                                                                                        \
-    } while (false)
-
 namespace NES::ExecutionEngine::Experimental::MLIR {
 class SerializeToCubinPass : public mlir::PassWrapper<SerializeToCubinPass, mlir::gpu::SerializeToBlobPass> {
   public:

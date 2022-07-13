@@ -43,6 +43,10 @@
 #include <mlir/Transforms/Passes.h>
 #include <string>
 #include <utility>
+#include <mlir/Pass/Pass.h>
+#include <mlir/Dialect/GPU/Passes.h>
+#include <mlir/InitAllPasses.h>
+#include <Experimental/MLIR/SerializeToCubinPass.hpp>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
@@ -196,12 +200,18 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     // Todo encapsulate print and pass functionality
     // Todo #54 establish proper optimization pipeline (acknowledge debugging)
     // Apply any generic pass manager command line options and run the pipeline.
+//    mlir::PassManager passManager(&context);
+//    applyPassManagerCLOptions(passManager);
+//    passManager.addPass(mlir::createInlinerPass());
+//    passManager.addPass(mlir::createLowerToCFGPass());
+//    passManager.addPass(mlir::createLowerToLLVMPass());
     mlir::PassManager passManager(&context);
-    applyPassManagerCLOptions(passManager);
-    passManager.addPass(mlir::createInlinerPass());
-    passManager.addPass(mlir::createLowerToCFGPass());
-    passManager.addPass(mlir::createLowerToLLVMPass());
-
+    passManager.addPass(mlir::createGpuKernelOutliningPass());
+    auto &kernelPm = passManager.nest<mlir::gpu::GPUModuleOp>();
+    kernelPm.addPass(mlir::createStripDebugInfoPass());
+    kernelPm.addPass(mlir::createLowerGpuOpsToNVVMOpsPass());
+    kernelPm.addPass(std::make_unique<SerializeToCubinPass>());
+    passManager.addPass(mlir::createGpuToLLVMConversionPass());
     if (mlir::failed(passManager.run(*module))) {
         return 1;
     }
@@ -280,6 +290,13 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
+//    LLVMInitializeNVPTXTarget();
+//    LLVMInitializeNVPTXTargetInfo();
+//    LLVMInitializeNVPTXTargetMC();
+//    LLVMInitializeNVPTXAsmPrinter();
+
+    mlir::registerMLIRContextCLOptions();
+    mlir::registerPassManagerCLOptions();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerNVVMDialectTranslation(*module->getContext());

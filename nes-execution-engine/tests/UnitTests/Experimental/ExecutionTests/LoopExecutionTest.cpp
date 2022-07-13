@@ -89,7 +89,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
-//    auto engine = mlirUtility->prepareEngine();
+    auto engine = mlirUtility->prepareEngine();
 //    auto function = (int64_t(*)()) engine->lookup("execute").get();
 //    ASSERT_EQ(function(), 101);
 }
