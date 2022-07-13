@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Common/Location.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TimeMeasurement.hpp>
+#include "Spatial/Mobility/LocationProviderCSV.hpp"
+#include "Common/Location.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TimeMeasurement.hpp"
 #include <fstream>
 #include <iostream>
 #ifdef S2DEF

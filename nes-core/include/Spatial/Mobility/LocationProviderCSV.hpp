@@ -14,7 +14,7 @@
 
 #ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
 #define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
-#include <Spatial/LocationProvider.hpp>
+#include "LocationProvider.hpp"
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {

@@ -15,15 +15,15 @@
 #ifndef NES_TRAJECTORYPREDICTOR_HPP
 #define NES_TRAJECTORYPREDICTOR_HPP
 
-#include <Common/Location.hpp>
-#include <Util/TimeMeasurement.hpp>
+#include "Common/Location.hpp"
+#include "Util/TimeMeasurement.hpp"
+#include <atomic>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
 #include <vector>
-#include <atomic>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>

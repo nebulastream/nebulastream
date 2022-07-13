@@ -14,13 +14,13 @@
 #ifndef NES_RECONNECTCONFIGURATOR_HPP
 #define NES_RECONNECTCONFIGURATOR_HPP
 
-#include <memory>
-#include <optional>
-#include <Util/TimeMeasurement.hpp>
-#include <thread>
+#include "Common/Location.hpp"
+#include "Util/TimeMeasurement.hpp"
 #include <atomic>
+#include <memory>
 #include <mutex>
-#include <Common/Location.hpp>
+#include <optional>
+#include <thread>
 
 #ifdef S2DEF
 #include <s2/s2point.h>

@@ -14,12 +14,12 @@
 #ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
 #define NES_GEOLOCATION_LOCATIONSERVICE_HPP
 
-#include <Util/Experimental/LocationProviderType.hpp>
+#include "Common/Location.hpp"
+#include "Util/Experimental/LocationProviderType.hpp"
+#include "Util/Experimental/WorkerSpatialType.hpp"
+#include "Util/TimeMeasurement.hpp"
 #include <memory>
 #include <vector>
-#include <Util/TimeMeasurement.hpp>
-#include <Util/Experimental/WorkerSpatialType.hpp>
-#include <Common/Location.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>

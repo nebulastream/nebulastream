@@ -13,8 +13,8 @@
 */
 #ifndef NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP
 #define NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP
+#include "Util/TimeMeasurement.hpp"
 #include <memory>
-#include <Util/TimeMeasurement.hpp>
 #include <vector>
 namespace NES::Spatial::Index::Experimental {
 class Location;
