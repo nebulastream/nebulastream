@@ -2024,4 +2024,39 @@ TEST_F(SourceTest, testJSONSourceRegion) {
     jsonSource.fillBuffer(buffer);
 }
 
+TEST_F(SourceTest, testJSONSourceBasicTypes) {
+    SchemaPtr schemaBasicTypes = Schema::create()// TODO move to setup method
+                                 ->addField("boolean_p", BOOLEAN)
+                                 ->addField("boolean_n", BOOLEAN)
+                                 ->addField("char", CHAR)
+                                 ->addField("char_array", DataTypeFactory::createFixedChar(8))
+                                 ->addField("float_p", FLOAT64)
+                                 ->addField("float_n", FLOAT64)
+                                 ->addField("int_p", INT16)
+                                 ->addField("int_n", INT32)
+                                 ->addField("signed_int_p", INT64)
+                                 ->addField("signed_int_n", INT64)
+                                 ->addField("unsigned_int", UINT64);
+
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/basic_types.json";
+    JSONSourceTypePtr sourceConfig = JSONSourceType::create();
+    sourceConfig->setFilePath(filePath);
+    sourceConfig->setNumBuffersToProcess(0);
+
+    JSONSourceProxy jsonSource(schemaBasicTypes,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               sourceConfig,
+                               this->operatorId,
+                               this->originId,
+                               this->numSourceLocalBuffersDefault,
+                               GatheringMode::INTERVAL_MODE);
+
+    auto buf = this->GetEmptyBuffer();
+    std::shared_ptr<Runtime::MemoryLayouts::ColumnLayout> layoutPtr =
+        Runtime::MemoryLayouts::ColumnLayout::create(schemaBasicTypes, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    jsonSource.fillBuffer(buffer);
+}
+
 }// namespace NES

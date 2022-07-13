@@ -1,0 +1,13 @@
+{
+  "boolean_p": true,
+  "boolean_n": false,
+  "char": "a",
+  "char_array": "abcdef",
+  "float_p": 3.14159,
+  "float_n": -3.14159,
+  "int_p": 42,
+  "int_n": -42,
+  "signed_int_p": 9223372036854775807,
+  "signed_int_n": -9223372036854775808,
+  "unsigned_int": 18446744073709551615
+}

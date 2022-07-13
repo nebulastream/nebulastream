@@ -61,15 +61,13 @@ std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
 void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     if (numBuffersToProcess == 0) {
         // read source until source (file) ends
-        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
-        std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
         auto i = documentStream.begin();
         uint64_t tupleIndex = 0;
         size_t count{0};
         for (; i != documentStream.end(); ++i) {
             auto doc = *i;
             if (!doc.error()) {
-                for (uint64_t fieldIndex = 0; fieldIndex < 3; fieldIndex++) {
+                for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
                     DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
                     std::string jsonKey = schema->fields[fieldIndex]->getName();
                     bool addedTuple =
@@ -84,6 +82,7 @@ void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) 
             }
             tupleIndex++;
         }
+        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
         std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
         int j = 1;
         for (auto tuple : buffer) {

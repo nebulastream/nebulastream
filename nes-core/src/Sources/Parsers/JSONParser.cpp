@@ -15,6 +15,7 @@
 #include "API/AttributeField.hpp"
 #include "Common/DataTypes/DataType.hpp"
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -69,54 +70,64 @@ bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                                               std::string jsonKey,
                                               simdjson::simdjson_result<simdjson::ondemand::document_reference> valueResult,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
-    if (dataType->isBoolean()) {
-        bool value = valueResult[jsonKey];
-        tupleBuffer[tupleIndex][fieldIndex].write<bool>(value);
-    } else if (dataType->isChar()) {
-        std::string_view value = valueResult[jsonKey];
-        std::string str = {value.begin(), value.end()};
-        char c = str.at(0);
-        tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
-    } else if (dataType->isCharArray()) {
-        // TODO one cast to rule them all?
-        std::string_view value = valueResult[jsonKey];
-        const char* p = std::string(value).c_str();
-        std::cout << "char*: " << p << std::endl;
-        size_t len = strlen(p); // TODO must be as specified in schema
-        std::cout << "len: " << len << std::endl;
-        char charArray[len];
-        strcpy(charArray, p);
-        std::cout << "char[]: " << charArray << std::endl;
-        tupleBuffer[tupleIndex][fieldIndex].write<const char*>(charArray);// TODO @Dimitrios
-        //tupleBuffer[tupleIndex][fieldIndex].write<char []>(charArray);
-        //NES_ERROR("Invalid DataType: " << dataType);
-        //throw std::logic_error("DataType string/char array not supported");
-    } else if (dataType->isFloat()) {// TODO safe?
-        double value = valueResult[jsonKey];
-        tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
-    } else if (dataType->isInteger()) {
-        int64_t value = valueResult[jsonKey];
-        tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
-    } else if (dataType->isNumeric()) {
-        simdjson::ondemand::number number = valueResult.get_number();
-        simdjson::ondemand::number_type numberType = number.get_number_type();
-        if (numberType == simdjson::ondemand::number_type::signed_integer) {
-            int64_t value = valueResult[jsonKey];
-            tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
-        } else if (numberType == simdjson::ondemand::number_type::unsigned_integer) {
-            uint64_t value = valueResult[jsonKey];
-            tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
-        } else if (numberType == simdjson::ondemand::number_type::floating_point_number) {
-            double value = valueResult[jsonKey];
-            tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
+    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+    if (physicalType->isBasicType()){
+        auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(dataType); // TODO is NULL
+        BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType; // TODO SIGSEV
+        switch (nativeType) {
+            case BasicPhysicalType::UINT_8: break;
+            case BasicPhysicalType::UINT_16: break;
+            case BasicPhysicalType::UINT_32: break;
+            case BasicPhysicalType::UINT_64: {
+                uint64_t value = valueResult[jsonKey];
+                tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
+            }
+            case BasicPhysicalType::INT_16: {
+                int64_t value64 = valueResult[jsonKey];
+                int16_t value16 = static_cast<int16_t>(value64); // TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<int16_t>(value16);
+            }
+            case BasicPhysicalType::INT_32: {
+                int32_t value = valueResult[jsonKey];
+                tupleBuffer[tupleIndex][fieldIndex].write<int32_t>(value);
+            }
+            case BasicPhysicalType::INT_64: {
+                int64_t value = valueResult[jsonKey];
+                tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
+            }
+            case BasicPhysicalType::FLOAT: break;
+            case BasicPhysicalType::DOUBLE: {
+                double value = valueResult[jsonKey];
+                tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
+            }
+            case BasicPhysicalType::CHAR: {
+                std::string_view value = valueResult[jsonKey];
+                std::string str = {value.begin(), value.end()};
+                char c = str.at(0);
+                tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
+            }
+            case BasicPhysicalType::BOOLEAN: {
+                bool value = valueResult[jsonKey];
+                tupleBuffer[tupleIndex][fieldIndex].write<bool>(value);
+            }
+            case BasicPhysicalType::INT_8: break;
         }
-    } else if (dataType->isUndefined()) {
-        NES_ERROR("Invalid data type")
-        throw std::invalid_argument("Data type is undefined");
     } else {
-        NES_ERROR("Invalid DataType: " << dataType);
-        throw std::invalid_argument("Invalid DataType: " + dataType->toString());
+        if (dataType->isCharArray()){
+            std::string_view value = valueResult[jsonKey];
+            std::string str = {value.begin(), value.end()};
+            const char* c_str = str.c_str();
+            char* valueRead = tupleBuffer[tupleIndex][fieldIndex].read<char*>();
+            strcpy(valueRead, c_str);
+        }else if (dataType->isUndefined()) {
+            NES_ERROR("Invalid data type")
+            throw std::invalid_argument("Data type is undefined");
+        } else {
+            NES_ERROR("Invalid DataType: " << dataType);
+            throw std::invalid_argument("Invalid DataType: " + dataType->toString());
+        }
     }
+
     return true;
 }
 
