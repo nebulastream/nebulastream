@@ -19,7 +19,7 @@
 namespace NES::Spatial::Index::Experimental {
 
 /**
- * this enum defines different types workers can have regarding their spacial information
+ * this enum defines different types workers can have regarding their spatial information
  */
 enum class WorkerSpatialType {
     NO_LOCATION = 0, //the worker does not have a known location
