@@ -59,7 +59,7 @@ class ReconnectConfigurator;
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 
 /**
- * this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
+ * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
  */
 class TrajectoryPredictor {
