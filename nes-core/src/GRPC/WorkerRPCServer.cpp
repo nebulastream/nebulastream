@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include "Spatial/Mobility/LocationProvider.hpp"
+#include "Spatial/Mobility/ReconnectSchedule.hpp"
+#include "Spatial/Mobility/TrajectoryPredictor.hpp"
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Spatial/LocationProvider.hpp>
-#include <Spatial/ReconnectSchedule.hpp>
-#include <Spatial/TrajectoryPredictor.hpp>
 #include <cpprest/json.h>
 #include <utility>
 

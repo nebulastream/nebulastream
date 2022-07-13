@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <GRPC/CoordinatorRPCClient.hpp>
-#include <Spatial/LocationProvider.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
-#include <Util/Experimental/WorkerSpatialType.hpp>
+#include "Spatial/Mobility/LocationProvider.hpp"
+#include "Configurations/Worker/WorkerConfiguration.hpp"
+#include "Configurations/Worker/WorkerMobilityConfiguration.hpp"
+#include "GRPC/CoordinatorRPCClient.hpp"
+#include "Spatial/Mobility/LocationProviderCSV.hpp"
+#include "Util/Experimental/LocationProviderType.hpp"
+#include "Util/Experimental/WorkerSpatialType.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Spatial::Mobility::Experimental {
 

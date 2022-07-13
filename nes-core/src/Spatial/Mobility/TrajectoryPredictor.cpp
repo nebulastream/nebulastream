@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Common/Location.hpp>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
-#include <Spatial/LocationProvider.hpp>
-#include <Spatial/ReconnectConfigurator.hpp>
-#include <Spatial/ReconnectSchedule.hpp>
-#include <Spatial/TrajectoryPredictor.hpp>
-#include <Util/Experimental/S2Utilities.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TimeMeasurement.hpp>
+#include "Spatial/Mobility/TrajectoryPredictor.hpp"
+#include "Common/Location.hpp"
+#include "Configurations/Worker/WorkerMobilityConfiguration.hpp"
+#include "Spatial/Mobility/LocationProvider.hpp"
+#include "Spatial/Mobility/ReconnectConfigurator.hpp"
+#include "Spatial/Mobility/ReconnectSchedule.hpp"
+#include "Util/Experimental/S2Utilities.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TimeMeasurement.hpp"
 #include <stdexcept>
 #include <utility>
 

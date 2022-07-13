@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include "Spatial/Mobility/LocationProvider.hpp"
+#include "Spatial/Mobility/LocationProviderCSV.hpp"
+#include "Spatial/Mobility/ReconnectConfigurator.hpp"
+#include "Spatial/Mobility/TrajectoryPredictor.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
@@ -30,8 +34,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/LocationProvider.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
+#include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -41,9 +44,6 @@
 #include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Util/Experimental/LocationProviderType.hpp>
-#include <Spatial/TrajectoryPredictor.hpp>
-#include <Spatial/ReconnectConfigurator.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 

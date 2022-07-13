@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/LocationProviderCSV.hpp>
+#include "Spatial/Mobility/TrajectoryPredictor.hpp"
+#include "Spatial/Mobility/LocationProviderCSV.hpp"
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <thread>
-#include <Spatial/TrajectoryPredictor.hpp>
 
 #ifdef S2DEF
 #include <s2/s2point.h>

@@ -14,6 +14,10 @@
 
 #include <iostream>
 
+#include "Spatial/Mobility/LocationProvider.hpp"
+#include "Spatial/Mobility/LocationProviderCSV.hpp"
+#include "Spatial/Mobility/ReconnectSchedule.hpp"
+#include "Spatial/Mobility/TrajectoryPredictor.hpp"
 #include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -26,10 +30,6 @@
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/LocationIndex.hpp>
-#include <Spatial/LocationProvider.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
-#include <Spatial/ReconnectSchedule.hpp>
-#include <Spatial/TrajectoryPredictor.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/S2Utilities.hpp>

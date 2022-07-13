@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include "Spatial/Mobility/ReconnectSchedule.hpp"
 #include <Common/Location.hpp>
 #include <Services/LocationService.hpp>
 #include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <cpprest/json.h>
-#include <Spatial/ReconnectSchedule.hpp>
-#include <utility>
 #include <Util/Experimental/WorkerSpatialType.hpp>
+#include <cpprest/json.h>
+#include <utility>
 
 namespace NES::Spatial::Index::Experimental {
 LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology){};
