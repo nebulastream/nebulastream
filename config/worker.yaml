@@ -154,20 +154,21 @@
       #password:
 
 #mobility:
+  # Set the radius within which the device should download information about field node positions
   #nodeInfoDownloadRadius: 20000
-
+  # Set the distance threshold to the outer edge of the radius which will trigger downloading new node info
   #nodeIndexUpdateThreshold: 5000
-
+  # Set the interval in which the path prediction should be recalculated
   #pathPredictionUpdateInterval: 10
-
+  # Set after how many checks for location changes a new location should be saved to the buffer
   #locationBufferSaveRate: 1
-
+  # Set the length of the path prediction
   #pathPredictionLength: 40000
-
+  # Set the radius in around a field node within which the connection is expected to be reasonably fast
   #defaultCoverageRadius: 5000
-
+  # Set the interval in which location updates should be sent to the coordinator
   #sendLocationUpdateInterval: 1000
-
+  # Set the path to the config file for the location provider
   #locationProviderConfig: "tests/test_data/testLocationsSlow2.csv"
-
+  # Set the type of location provider
   #locationProviderType: "CSV"
