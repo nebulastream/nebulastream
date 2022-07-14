@@ -27,19 +27,19 @@ namespace NES {
 class ParquetSourceTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup CircularBufferTest test class." << std::endl; }
+    static void SetUpTestCase() { std::cout << "Setup ParquetSource test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("CircularBufferTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup CircularBufferTest test case." << std::endl;
+        NES::Logger::setupLogging("ParquetSourceTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup ParquetSourceTest test case." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down CircularBufferTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down ParquetSourceTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down CircularBufferTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down ParquetSourceTest test class." << std::endl; }
 
 };
 
@@ -50,12 +50,12 @@ TEST_F(ParquetSourceTest, proofOfConcept) {
         infile,
         arrow::io::ReadableFile::Open("/home/balint/Documents/Uni/Masters/2_SEM/BDSPRO/testData.parquet"));
 
-    parquet::StreamReader reader = parquet::StreamReader(parquet::ParquetFileReader::Open(infile));
+    auto descriptor= infile->file_descriptor();
 
+    parquet::StreamReader reader = parquet::StreamReader(parquet::ParquetFileReader::Open(infile));
     reader >> string >> uint64 >> parquet::EndRow;
 
-
-
+     std::cout << string << uint64;
 }
 }
 #endif

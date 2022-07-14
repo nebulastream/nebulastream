@@ -19,5 +19,18 @@
 #define NES_NES_CORE_INCLUDE_SOURCES_PARQUETSTATICVARIABLES_HPP_
 #include <string>
 static std::string string = "";
+static uint8_t uint8 = 0;
+static uint16_t uint16 = 0;
+static uint32_t uint32 = 0;
 static uint64_t uint64 = 0;
+
+static int8_t int8 = 0;
+static int16_t int16 = 0;
+static int32_t int32 = 0;
+static int64_t int64 =0;
+
+static bool boolean = false;
+
+static float floatType = 0.0;
+static double doubleType = 0.0;
 #endif//NES_NES_CORE_INCLUDE_SOURCES_PARQUETSTATICVARIABLES_HPP_
