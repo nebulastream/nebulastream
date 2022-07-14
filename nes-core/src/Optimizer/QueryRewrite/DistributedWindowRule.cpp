@@ -204,7 +204,7 @@ DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t comb
     // add windows under the threshold to the root
     std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> output;
     for (auto plcmnt : nodePlacement) {
-        if (plcmnt.second.size() < combinerThreshold) {
+        if (plcmnt.second.size() <= combinerThreshold) {
             // resolve the placement
             for (auto pairs : plcmnt.second) {
                 output[pairs.first->getId()] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{pairs.second};
