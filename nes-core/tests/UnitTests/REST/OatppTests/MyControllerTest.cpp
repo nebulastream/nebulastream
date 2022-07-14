@@ -1,14 +1,12 @@
+#include <../../tests/UnitTests/REST/OatppTests/MyControllerTest.hpp>
+#include <oatpp/web/client/HttpRequestExecutor.hpp>
+#include <oatpp-test/web/ClientServerTestRunner.hpp>
 #include <REST/OatppController/TestController.hpp>
 #include <../../tests/UnitTests/REST/OatppTests/MyApiTestClient.hpp>
 #include <../../tests/UnitTests/REST/OatppTests/TestComponent.hpp>
-#include <../../tests/UnitTests/REST/OatppTests/MyControllerTest.hpp>
-
-#include <oatpp/web/client/HttpRequestExecutor.hpp>
-#include <oatpp-test/web/ClientServerTestRunner.hpp>
-
+#include <iostream>
 
 MyControllerTest::MyControllerTest() : UnitTest("TEST[MyControllerTest]" /* Test TAG for logs */){};
-MyControllerTest::~MyControllerTest() = default;
 
 void MyControllerTest::onRun() {
 
@@ -23,7 +21,7 @@ void MyControllerTest::onRun() {
 
     /* Run test */
     runner.run(
-        [this, &runner] {
+        [ ] {
             /* Get client connection provider for Api Client */
             OATPP_COMPONENT(std::shared_ptr<oatpp::network::ClientConnectionProvider>, clientConnectionProvider);
 
@@ -48,7 +46,7 @@ void MyControllerTest::onRun() {
 
             /* Assert that received message is as expected */
             OATPP_ASSERT(message);
-            OATPP_ASSERT(message->statusCode->getValue() == 200);
+            OATPP_ASSERT(message->statusCode == 200);
             OATPP_ASSERT(message->message == "Hello World!");
         },
         std::chrono::minutes(10) /* test timeout */);

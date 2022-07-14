@@ -385,7 +385,7 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_inter
 
 #Oatpp REST SDK
 find_package(oatpp REQUIRED)
-set(LIBRARIES ${LIBRARIES} oatpp::oatpp)
+set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
 
 # Eigen3 linear alg library
 find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
