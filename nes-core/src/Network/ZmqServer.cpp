@@ -54,7 +54,7 @@ class UlimitNumFdChanger {
     int oldSoftNumFileLimit;
     int oldHardNumFileLimit;
 };
-static UlimitNumFdChanger ulimitChanger;
+//static UlimitNumFdChanger ulimitChanger;
 }// namespace detail
 
 ZmqServer::ZmqServer(std::string hostname,
@@ -77,8 +77,8 @@ bool ZmqServer::start() {
     std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
-    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads, MAX_ZMQ_SOCKET);
-    NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
+    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
+    // NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, startPromise]() {
         setThreadName("zmq-router");
         routerLoop(numHandlerThreads, startPromise);
