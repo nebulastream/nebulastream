@@ -167,4 +167,28 @@ TEST_F(CircularBufferTest, popOnEmpty) {
     EXPECT_EQ(val, 0);
 }
 
+TEST_F(CircularBufferTest, copyArrayIntoBuffer) {
+    CircularBuffer<char> circularBuffer(10);
+    char buf[3] = {'a', 'b', 'c'};
+    char buf1[3] = {'d', 'e', 'c'};
+    char buf2[3] = {'f', 'g', 'c'};
+    circularBuffer.push(buf, 3);
+    circularBuffer.push(buf1, 3);
+    circularBuffer.push(buf2, 3);
+    EXPECT_EQ(circularBuffer.size(), 9u);
+    EXPECT_EQ(circularBuffer.at(0), 'c');
+    EXPECT_EQ(circularBuffer.at(1), 'g');
+    EXPECT_EQ(circularBuffer.at(2), 'f');
+    EXPECT_EQ(circularBuffer.at(3), 'c');
+    EXPECT_EQ(circularBuffer.at(4), 'e');
+    EXPECT_EQ(circularBuffer.at(5), 'd');
+    EXPECT_EQ(circularBuffer.at(6), 'c');
+    EXPECT_EQ(circularBuffer.at(7), 'b');
+    EXPECT_EQ(circularBuffer.at(8), 'a');
+    char poppedValues[3];
+    circularBuffer.popValues(poppedValues, 3);
+    EXPECT_EQ(poppedValues[0], 'a');
+}
+//TODO: implement search method in circular buffer that returns # of elems to pop until delimiter 0x03 reached
+
 }// namespace NES

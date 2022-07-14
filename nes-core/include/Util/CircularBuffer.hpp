@@ -174,6 +174,13 @@ class CircularBuffer {
         front_() = std::move(value);
     }
 
+    template<bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
+    void push(T values[], uint size) noexcept(std::is_nothrow_move_assignable<T>::value) {
+        for (uint64_t i = 0; i < size; ++i) {
+            push(values[i]);
+        }
+    }
+
     template<typename... Args>
     void emplace(Args&&... args) noexcept(
         std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value) {
@@ -193,6 +200,13 @@ class CircularBuffer {
         auto& elt = back_();
         decrementSize();
         return std::move(elt);
+    }
+
+    T* popValues(T* temp, uint64_t numberOfValuesToPop) {
+        for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
+            temp[i] = pop();
+        }
+        return temp;
     }
 
   private:
@@ -222,10 +236,20 @@ class CircularBuffer {
         head = (head + maxSize - 1) % maxSize;
         ++currentSize;
     }
+    void decrementHeadIncSizeByGivenSize(size_t decrement) noexcept {
+        head = (head + maxSize - decrement) % maxSize;
+        currentSize += decrement;
+    }
+    void incrementHeadDecrSizeByGivenSize(size_t increment) noexcept {
+        head = (head + increment) % maxSize;
+        currentSize -= increment;
+    }
     void incrementSize() noexcept { ++currentSize; }
     void decrementSize() noexcept { --currentSize; }
     void incrementHead() noexcept { head = (head + 1) % maxSize; }
     void decrementHead() noexcept { head = (head + maxSize - 1) % maxSize; }
+    void incrementHeadByGivenSize(size_t increment) noexcept { head = (head + maxSize - increment) % maxSize; }
+    void decrementHeadByGivenSize(size_t decrement) noexcept { head = (head + maxSize - decrement) % maxSize; }
 
 };// class CircularBuffer
 }// namespace NES
