@@ -24,8 +24,10 @@ limitations under the License.
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -185,10 +187,40 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
             }
         }
     }
+
+    template<typename T>
+    static void verifyChildrenOfType(std::vector<QueryPlanPtr>& querySubPlans, uint64_t expectedSubPlanSize = 1) {
+        ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
+        for (auto& querySubPlan : querySubPlans) {
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            auto children = actualRootOperator->getChildren();
+            for (const auto& child : children) {
+                ASSERT_TRUE(child->instanceOf<T>());
+            }
+        }
+    }
+
+    template<typename T>
+    static void verifySourceOperators(std::vector<QueryPlanPtr>& querySubPlans,
+                                      uint64_t expectedSubPlanSize,
+                                      uint64_t expectedSourceOperatorSize) {
+        ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
+        auto querySubPlan = querySubPlans[0];
+        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
+        ASSERT_EQ(sourceOperators.size(), expectedSourceOperatorSize);
+        for (const auto& sourceOperator : sourceOperators) {
+            EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
+            auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperatorNode>()->getSourceDescriptor();
+            ASSERT_TRUE(sourceDescriptor->instanceOf<T>());
+        }
+    }
 };
 
 /* Test query placement with bottom up strategy  */
-TEST_F(NemoPlacementTest, testNemoPlacementFlatTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.distributedWindowChildThreshold = 0;
@@ -199,40 +231,50 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopology) {
 
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    NES_DEBUG("NemoPlacementTest: topology: " << topology->toString());
-    NES_DEBUG("NemoPlacementTest: query plan " << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 11u);
     for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-            std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
-            ASSERT_EQ(sourceOperators.size(), 10u);
-            for (const auto& sourceOperator : sourceOperators) {
-                EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
-                auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperatorNode>()->getSourceDescriptor();
-                ASSERT_TRUE(sourceDescriptor->instanceOf<NES::Network::NetworkSourceDescriptor>());
-            }
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
         } else {
-            EXPECT_TRUE(executionNode->getId() >= 2 && executionNode->getId() <= 11);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<CentralWindowOperator>());
-            }
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
+}
+
+/* Test query placement with bottom up strategy  */
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
+    setupTopologyAndSourceCatalog(2, 10, 10);
+    auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.distributedWindowChildThreshold = 0;
+    optimizerConfig.distributedWindowCombinerThreshold = 0;
+
+    //run the placement
+    runNemoPlacement(optimizerConfig);
+
+    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 11u);
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        if (executionNode->getId() == 1u) {
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
+        } else {
+            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
         }
     }
 }
@@ -240,87 +282,126 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopology) {
 TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
     setupTopologyAndSourceCatalog(3, 10, 10);
 
-    Query query = Query::from("car")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-                      .apply(Count()->as(Attribute("count_value")))
-                      .sink(NullOutputSinkDescriptor::create());
-    auto testQueryPlan = query.getQueryPlan();
-
-    // Prepare the placement
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
-
-    // Execute optimization phases prior to placement
-    testQueryPlan = typeInferencePhase->execute(testQueryPlan);
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
-
     auto optimizerConfig = Configurations::OptimizerConfiguration();
-    optimizerConfig.distributedWindowChildThreshold = 1;
-    optimizerConfig.distributedWindowCombinerThreshold = 1;
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
-    topologySpecificQueryRewrite->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
+    optimizerConfig.distributedWindowChildThreshold = 0;
+    optimizerConfig.distributedWindowCombinerThreshold = 0;
 
-    assignDataModificationFactor(testQueryPlan);
+    //run the placement
+    runNemoPlacement(optimizerConfig);
 
-    // Execute the placement
-    auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
-
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    NES_DEBUG("NemoPlacementTest: topology: " << topology->toString());
-    NES_DEBUG("NemoPlacementTest: query plan " << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
-    //EXPECT_EQ(executionNodes.size(), 3UL);
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 111u);
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        if (executionNode->getId() == 1u) {
+            //coordinator
+            NES_DEBUG("NemoPlacementTest: Testing Coordinator");
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans, 1);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
+        } else if (executionNode->getId() >= 2u && executionNode->getId() <= 11u) {
+            //intermediate nodes
+            NES_DEBUG("NemoPlacementTest: Testing 1st level of the tree");
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
+        } else {
+            //leaves
+            NES_DEBUG("NemoPlacementTest: Testing leaves of the tree");
+            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
 }
 
 TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
     setupTopologyAndSourceCatalog(4, 2, 1);
 
-    Query query = Query::from("car")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-                      .apply(Count()->as(Attribute("count_value")))
-                      .sink(NullOutputSinkDescriptor::create());
-    auto testQueryPlan = query.getQueryPlan();
+    auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.distributedWindowChildThreshold = 0;
+    optimizerConfig.distributedWindowCombinerThreshold = 0;
 
-    // Prepare the placement
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    //run the placement
+    runNemoPlacement(optimizerConfig);
 
-    // Execute optimization phases prior to placement
-    testQueryPlan = typeInferencePhase->execute(testQueryPlan);
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
+    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 11u);
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        if (executionNode->getId() == 1u) {
+            //coordinator
+            NES_DEBUG("NemoPlacementTest: Testing Coordinator");
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 4);
+        } else if (executionNode->getId() >= 2u && executionNode->getId() <= 3u) {
+            //intermediate nodes
+            NES_DEBUG("NemoPlacementTest: Testing 1st level of the tree");
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans, 2);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 2, 1);
+        } else if (executionNode->getId() >= 4u && executionNode->getId() <= 7u) {
+            //intermediate nodes
+            NES_DEBUG("NemoPlacementTest: Testing 2nd level of the tree");
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 1);
+        } else {
+            //leaves
+            NES_DEBUG("NemoPlacementTest: Testing leaves of the tree");
+            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
+}
+
+TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
+    setupTopologyAndSourceCatalog(4, 3, 3);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.distributedWindowChildThreshold = 0;
-    optimizerConfig.distributedWindowCombinerThreshold = 1;
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
-    topologySpecificQueryRewrite->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
+    optimizerConfig.distributedWindowCombinerThreshold = 0;
 
-    assignDataModificationFactor(testQueryPlan);
+    //run the placement
+    runNemoPlacement(optimizerConfig);
 
-    // Execute the placement
-    auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
-
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    NES_DEBUG("NemoPlacementTest: topology: " << topology->toString());
-    NES_DEBUG("NemoPlacementTest: query plan " << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
-    //EXPECT_EQ(executionNodes.size(), 3UL);
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 40u);
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        if (executionNode->getId() == 1u) {
+            //coordinator
+            NES_DEBUG("NemoPlacementTest: Testing Coordinator");
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 9);
+        } else if (executionNode->getId() >= 2u && executionNode->getId() <= 4u) {
+            //intermediate nodes
+            NES_DEBUG("NemoPlacementTest: Testing 1st level of the tree");
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans, 3);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 3, 1);
+        } else if (executionNode->getId() >= 5u && executionNode->getId() <= 13u) {
+            //intermediate nodes
+            NES_DEBUG("NemoPlacementTest: Testing 2nd level of the tree");
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 3);
+        } else {
+            //leaves
+            NES_DEBUG("NemoPlacementTest: Testing leaves of the tree");
+            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
 }
