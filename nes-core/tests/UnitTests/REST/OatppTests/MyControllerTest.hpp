@@ -8,7 +8,7 @@ class MyControllerTest : public oatpp::test::UnitTest {
   public:
 
     MyControllerTest();
-    virtual ~MyControllerTest();
+
     void onRun() override;
 
 };

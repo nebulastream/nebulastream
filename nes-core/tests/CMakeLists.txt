@@ -779,11 +779,13 @@ if (USE_S2)
 endif ()
 
 ### Tests for Oatpp ###
-#TODO: florentina please enable this after identifying how to properly test the /hello endpoint
-add_executable(tests-for-oatpp-endpoints "UnitTests/REST/OatppTests/TestsForOatppEndpoints.cpp")
-target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp)
+add_executable(tests-for-oatpp-endpoints "UnitTests/REST/OatppTests/TestsForOatppEndpoints.cpp"  "UnitTests/REST/OatppTests/MyControllerTest.cpp")
+target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp oatpp::oatpp-test)
 add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
 
+add_executable(tests-for-oatpp-endpoints-more "UnitTests/REST/OatppTests/MyControllerTest.cpp")
+target_link_libraries(tests-for-oatpp-endpoints-more nes-tests oatpp::oatpp oatpp::oatpp-test)
+add_test(NAME tests-for-oatpp-endpoints-more COMMAND tests-for-oatpp-endpoints-more)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###

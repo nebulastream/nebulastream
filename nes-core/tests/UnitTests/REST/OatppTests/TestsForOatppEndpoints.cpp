@@ -46,7 +46,7 @@ void runTests() {
     // OATPP_RUN_TEST(MyAnotherTest);
 }
 
-TEST_F(TestsForOatppEndpoints, testStartServerWithOatpp) {
+TEST_F(TestsForOatppEndpoints, DISABLED_testStartServerWithOatpp) {
 
     /* start Coordinator */
     auto coordinator = createAndStartCoordinator();
@@ -54,26 +54,13 @@ TEST_F(TestsForOatppEndpoints, testStartServerWithOatpp) {
     NES_INFO("Server started successfully with Oatpp");
 }
 
-TEST_F(TestsForOatppEndpoints, DISABLED_testControllerSimpleTest) {
-
-    // start Coordinator
-    // auto coordinator = createAndStartCoordinator();
+TEST_F(TestsForOatppEndpoints, testControllerSimpleTest) {
 
     oatpp::base::Environment::init();
-
     runTests();
-/*
-    // Print how much objects were created during app running, and what have left-probably leaked
-    // Disable object counting for release builds using '-D OATPP_DISABLE_ENV_OBJECT_COUNTERS' flag for better performance
-    std::cout << "\nEnvironment:\n";
-    std::cout << "objectsCount = " << oatpp::base::Environment::getObjectsCount() << "\n";
-    std::cout << "objectsCreated = " << oatpp::base::Environment::getObjectsCreated() << "\n\n";
-
-    OATPP_ASSERT(oatpp::base::Environment::getObjectsCount() == 0);
-*/
     oatpp::base::Environment::destroy();
 
 }
 
-}
+} //namespace NES
 
