@@ -18,6 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/CircularBuffer.hpp>
 
 namespace NES {
 
@@ -100,6 +101,7 @@ class TCPSource : public DataSource {
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
+    CircularBuffer<char> buffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES

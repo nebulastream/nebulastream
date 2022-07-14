@@ -54,7 +54,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
+      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), buffer(this->bufferManager->getBufferSize()) {
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 
     //init physical types
@@ -134,17 +134,17 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
     open();
     if (connection != -1) {
-        auto buffer = allocateBuffer();
+        auto tupleBuffer = allocateBuffer();
         try {
-            fillBuffer(buffer);
-        } catch (std::exception e) {
+            fillBuffer(tupleBuffer);
+        } catch (std::exception e){
             NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer.");
             return std::nullopt;
         }
-        if (buffer.getNumberOfTuples() == 0) {
+        if (tupleBuffer.getNumberOfTuples() == 0) {
             return std::nullopt;
         }
-        return buffer.getBuffer();
+        return tupleBuffer.getBuffer();
     } else {
         NES_ERROR("TCPSource::receiveData: Not connected!");
     }
@@ -172,14 +172,25 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 bufferSize = std::stoi(bufferSizeFromSocket);
                 NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSize);
             }
+            delete [] bufferSizeFromSocket;
         } else {
             bufferSize = sourceConfig->getSocketBufferSize()->getValue();
         }
 
-        char* buffer = new char[bufferSize];
-        uint8_t socketClosed = read(sockfd, buffer, bufferSize);
+        //todo: 1. obtain as much data as was send
+        //todo: 2. check that we only input a tuple at the time
+        //todo: 3. use terminal character to obtain tuple separation
+        //todo: 4. give buffer same size as tuple buffer
+        //todo: 5. make flush possible
+        //todo: 6. make sure buffer retains non complete tuples for next round
+        int16_t sendBytes;
+        /*if (!buffer.full()) {
+            char buf[buffer.capacity()];
+            sendBytes = read(sockfd, buf, buffer.capacity());
+            buffer.push(buf, sendBytes);
+        }
 
-        if (socketClosed != 0) {
+        if (sendBytes != 0 && sendBytes != -1) {
             NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buffer << "'");
             if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
                 std::string buf(buffer);
@@ -190,7 +201,9 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 inputParser->writeInputTupleToTupleBuffer(buffer, tupleCount, tupleBuffer, schema);
             }
             tupleCount++;
+        }*/
         }
+        delete [] buffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
