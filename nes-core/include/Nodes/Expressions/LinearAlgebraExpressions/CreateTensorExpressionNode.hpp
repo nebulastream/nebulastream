@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CREATETENSOREXPRESSIONNODE_HPP
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CREATETENSOREXPRESSIONNODE_HPP
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalMultiExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraTensorExpressionNode.hpp>
 
 namespace NES {
 
@@ -47,4 +47,4 @@ class CreateTensorExpressionNode final : public LinearAlgebraTensorExpressionNod
 };
 
 }// namespace NES
-#endif//NES_CREATETENSOREXPRESSIONNODE_HPP
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CREATETENSOREXPRESSIONNODE_HPP

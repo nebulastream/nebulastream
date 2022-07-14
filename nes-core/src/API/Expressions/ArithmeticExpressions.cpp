@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp"
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -29,7 +30,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>

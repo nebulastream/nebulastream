@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include "Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraTensorExpressionNode.hpp"
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalMultiExpressionNode.hpp>
 
 namespace NES {
 

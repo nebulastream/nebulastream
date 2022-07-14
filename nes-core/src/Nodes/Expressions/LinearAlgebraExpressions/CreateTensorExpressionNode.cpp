@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nodes/Expressions/ArithmeticalExpressions/CreateTensorExpressionNode.hpp"
+#include "Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp"
 #include "Common/DataTypes/DataType.hpp"
 #include "Common/DataTypes/DataTypeFactory.hpp"
 

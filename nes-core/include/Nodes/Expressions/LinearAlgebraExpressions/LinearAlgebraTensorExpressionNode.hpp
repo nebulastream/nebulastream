@@ -14,14 +14,14 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULTIEXPRESSIONNODE_HPP
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULTIEXPRESSIONNODE_HPP
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-#include <Nodes/Expressions/MultiExpressionNode.hpp>
 #include <Common/DataTypes/TensorType.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraExpressionNode.hpp>
+#include <Nodes/Expressions/MultiExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an arithmetical expression with multiple children
  */
-class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public ArithmeticalExpressionNode {
+class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public LinearAlgebraExpressionNode {
 
   public:
     /**

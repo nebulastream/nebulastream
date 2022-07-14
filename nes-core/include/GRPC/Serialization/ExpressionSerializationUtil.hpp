@@ -50,8 +50,11 @@ class ExpressionSerializationUtil {
     static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
     static void serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                  SerializableExpression* serializedExpression);
+    static void serializeLinearAlgebraExpressions(const ExpressionNodePtr& expression,
+                                                 SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
+    static ExpressionNodePtr deserializeLinearAlgebraExpressions(SerializableExpression* serializedExpression);
 };
 }// namespace NES
 
