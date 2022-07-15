@@ -14,9 +14,7 @@
 class MyApiTestClient : public oatpp::web::client::ApiClient {
 
     API_CLIENT_INIT(MyApiTestClient)
-
     API_CALL("GET", "/hello", getHello)
-
 
     // TODO - add more client API calls here
 

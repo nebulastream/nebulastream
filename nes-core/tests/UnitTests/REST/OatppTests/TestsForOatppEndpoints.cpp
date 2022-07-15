@@ -1,4 +1,3 @@
-//#include "../../../../../cmake-build-debug/nes-dependencies-vOatpp-cpprestsdk-x64-linux-nes/installed/x64-linux-nes/include/oatpp-1.3.0/oatpp/oatpp/web/client/ApiClient.hpp"
 #include <NesBaseTest.hpp>
 #include <iostream>
 #include <oatpp/network/tcp/client/ConnectionProvider.hpp>
@@ -63,4 +62,3 @@ TEST_F(TestsForOatppEndpoints, testControllerSimpleTest) {
 }
 
 } //namespace NES
-

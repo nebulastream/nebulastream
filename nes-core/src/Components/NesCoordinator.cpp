@@ -232,7 +232,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
 
-        //TODO: Florentina please define a configuration flag to call one or the other
         if (this->coordinatorConfiguration->serverTypeOatpp == true){
             NES_DEBUG("NesCoordinator::startCoordinatorRESTServerOATPP: ready");
             restServer->startWithOatpp();//this call is blocking
