@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.61](https://github.com/nebulastream/nebulastream/tree/v0.2.61) (2022-07-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.60...v0.2.61)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Unable to start NebulaStream on AWS instances [\#2899](https://github.com/nebulastream/nebulastream/issues/2899)
+
+#### Fault Tolerance
+
+- Speed up Upstream Backup [\#2798](https://github.com/nebulastream/nebulastream/issues/2798)
+
 ## [v0.2.60](https://github.com/nebulastream/nebulastream/tree/v0.2.60) (2022-07-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.59...v0.2.60)
