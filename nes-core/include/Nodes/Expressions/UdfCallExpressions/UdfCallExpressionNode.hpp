@@ -26,7 +26,7 @@ class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
 /**
- * @brief
+ * @brief This node represents a CALL expression, for calling user-defined functions
  */
 class UdfCallExpressionNode : public ExpressionNode {
   public:

@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef PYTHON_UDF_ENABLED
 #ifndef NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 #define NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 
@@ -25,11 +24,10 @@ class ExpressionItem;
 using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 
 /**
- * @brief
+ * @brief Defines a UDF call operation.
 **/
 ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs);
 
 }// namespace NES::Experimental
 
 #endif//NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
-#endif// PYTHON_UDF_ENABLED
