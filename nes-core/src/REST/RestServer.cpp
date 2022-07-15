@@ -55,21 +55,16 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port) {}
 
-
-
 bool RestServer::startWithOatpp() {
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
-    //restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         oatpp::base::Environment::init();
         /* Run App */
         NES_DEBUG("start RestServer with OATPP");
         run();
-        RestServerInterruptHandler::waitForUserInterrupt();
         /* Destroy oatpp Environment */
         oatpp::base::Environment::destroy();
-        restEngine.reset();
 
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
