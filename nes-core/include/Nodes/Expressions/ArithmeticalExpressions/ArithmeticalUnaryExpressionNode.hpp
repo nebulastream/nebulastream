@@ -22,7 +22,7 @@ namespace NES {
  */
 class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public ArithmeticalExpressionNode {
   public:
-    virtual /**
+    /**
      * @brief Infers the stamp of this arithmetical expression node.
      * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
      * @param schema the current schema.

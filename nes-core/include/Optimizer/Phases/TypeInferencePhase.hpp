@@ -36,10 +36,25 @@ namespace NES::Optimizer {
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
+/**
+ * @brief this class is passed to the inferStamp functions of ExpressionNodes. It is especially
+ * needed for UDF call expressions so the return type can be inferred by accessing a UdfDescriptor
+ * via the UdfCatalog.
+ */
 class TypeInferencePhaseContext {
   public:
     TypeInferencePhaseContext(SourceCatalogPtr  sourceCatalog, UdfCatalogPtr  udfCatalog);
+
+    /**
+     * Retrieve the source catalog
+     * @return pointer to the source catalog
+     */
     [[nodiscard]] const SourceCatalogPtr& getSourceCatalog() const;
+
+    /**
+     * Return the UdfCatalog that is used for type inference
+     * @return pointer to the udf catalog
+     */
     [[nodiscard]] const UdfCatalogPtr& getUdfCatalog() const;
 
   private:
