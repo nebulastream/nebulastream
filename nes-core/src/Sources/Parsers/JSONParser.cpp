@@ -69,7 +69,6 @@ void JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                                               const SchemaPtr& schema,
                                               simdjson::simdjson_result<simdjson::ondemand::document_reference> valueResult,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
-    // TODO void
     DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
     std::string jsonKey = schema->fields[fieldIndex]->getName();
     PhysicalTypePtr physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
@@ -77,15 +76,35 @@ void JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
         BasicPhysicalTypePtr basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType;
         switch (nativeType) {
-            case BasicPhysicalType::UINT_8: break;
-            case BasicPhysicalType::UINT_16: break;
-            case BasicPhysicalType::UINT_32: break;
+            case BasicPhysicalType::UINT_8: {
+                uint64_t value64 = valueResult[jsonKey];
+                uint8_t value8 = static_cast<uint8_t>(value64);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<uint8_t>(value8);
+                break;
+            }
+            case BasicPhysicalType::UINT_16: {
+                uint64_t value64 = valueResult[jsonKey];
+                uint16_t value16 = static_cast<uint16_t>(value64);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<uint16_t>(value16);
+                break;
+            }
+            case BasicPhysicalType::UINT_32: {
+                uint64_t value64 = valueResult[jsonKey];
+                uint32_t value32 = static_cast<uint32_t>(value64);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<uint32_t>(value32);
+                break;
+            }
             case BasicPhysicalType::UINT_64: {
                 uint64_t value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
                 break;
             }
-            case BasicPhysicalType::INT_8: break;
+            case BasicPhysicalType::INT_8: {
+                int64_t value64 = valueResult[jsonKey];
+                int8_t value8 = static_cast<int8_t>(value64);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<int8_t>(value8);
+                break;
+            }
             case BasicPhysicalType::INT_16: {
                 int64_t value64 = valueResult[jsonKey];
                 int16_t value16 = static_cast<int16_t>(value64);// TODO safe?
@@ -103,7 +122,12 @@ void JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                 tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
                 break;
             }
-            case BasicPhysicalType::FLOAT: break;
+            case BasicPhysicalType::FLOAT: {
+                double valueD = valueResult[jsonKey];
+                float valueF = static_cast<float>(valueD);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<float>(valueF);
+                break;
+            }
             case BasicPhysicalType::DOUBLE: {
                 double value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
