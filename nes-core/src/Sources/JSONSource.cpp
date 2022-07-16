@@ -72,8 +72,8 @@ void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) 
                     std::string jsonKey = schema->fields[fieldIndex]->getName();
                     inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, doc, buffer);
                 }
-                buffer.setNumberOfTuples(tupleIndex + 1);
                 tupleIndex++;
+                buffer.setNumberOfTuples(tupleIndex);
             } else {
                 NES_ERROR("got broken document at " << i.current_index());
                 throw std::logic_error(error_message(doc.error()));

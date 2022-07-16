@@ -1993,16 +1993,17 @@ class JSONSourceProxy : public JSONSource {
                      gatheringMode){};
 
   private:
-    FRIEND_TEST(SourceTest, testJSONSourceRegion);
+    FRIEND_TEST(SourceTest, testJSONSourceNewLineDelimited);
+    FRIEND_TEST(SourceTest, testJSONSourceBasicTypes);
 };
 
-TEST_F(SourceTest, testJSONSourceRegion) {
+TEST_F(SourceTest, testJSONSourceNewLineDelimited) {
     SchemaPtr schemaRegion = Schema::create()// TODO move to setup method
-                                 ->addField("R_REGIONKEY", INT64)
+                                 ->addField("R_REGIONKEY", INT8)
                                  ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
                                  ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
 
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region.json";
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region.ndjson";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
     sourceConfig->setFilePath(filePath);
     sourceConfig->setNumBuffersToProcess(0);
@@ -2021,6 +2022,46 @@ TEST_F(SourceTest, testJSONSourceRegion) {
         Runtime::MemoryLayouts::ColumnLayout::create(schemaRegion, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     jsonSource.fillBuffer(buffer);
+
+    EXPECT_EQ(buffer.getBuffer().getNumberOfTuples(), 4);
+
+    Runtime::MemoryLayouts::DynamicTuple america = buffer[0];
+    Runtime::MemoryLayouts::DynamicTuple asia = buffer[1];
+    Runtime::MemoryLayouts::DynamicTuple europe = buffer[2];
+    Runtime::MemoryLayouts::DynamicTuple middleEast = buffer[3];
+
+    EXPECT_EQ(america[0].toString(), "1");
+    auto s = america[1].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "AMERICA");
+    s = america[2].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "hs use ironic, even requests. s");
+
+    EXPECT_EQ(asia[0].toString(), "2");
+    s = asia[1].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "ASIA");
+    s = asia[2].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "ges. thinly even pinto beans ca");
+
+    EXPECT_EQ(europe[0].toString(), "3");
+    s = europe[1].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "EUROPE");
+    s = europe[2].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "ly final courts cajole furiously final excuse");
+
+    EXPECT_EQ(middleEast[0].toString(), "4");
+    s = middleEast[1].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "MIDDLE EAST");
+    s = middleEast[2].toString();
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end()); // remove null characters
+    EXPECT_EQ(s, "uickly special accounts cajole carefully blithely close requests. carefully final asymptotes haggle furiousl");
+
 }
 
 TEST_F(SourceTest, testJSONSourceBasicTypes) {
