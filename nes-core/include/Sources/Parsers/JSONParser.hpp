@@ -47,12 +47,11 @@ class JSONParser : public Parser {
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema) override;
 
-    static bool writeFieldValueToTupleBuffer(uint64_t tupleIndex,
-                                             uint64_t fieldIndex,
-                                             DataTypePtr dataType,
-                                             std::string jsonKey,
-                                             simdjson::simdjson_result<simdjson::ondemand::document_reference> doc,
-                                             Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+    void writeFieldValueToTupleBuffer(uint64_t tupleIndex,
+                                      uint64_t fieldIndex,
+                                      const SchemaPtr& schema,
+                                      simdjson::simdjson_result<simdjson::ondemand::document_reference> doc,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
 
   private:
     uint64_t numberOfSchemaFields;

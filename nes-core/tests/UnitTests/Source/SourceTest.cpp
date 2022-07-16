@@ -1996,12 +1996,11 @@ class JSONSourceProxy : public JSONSource {
     FRIEND_TEST(SourceTest, testJSONSourceRegion);
 };
 
-
 TEST_F(SourceTest, testJSONSourceRegion) {
-    SchemaPtr schemaRegion = Schema::create() // TODO move to setup method
-        ->addField("R_REGIONKEY", INT64)
-        ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
-        ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
+    SchemaPtr schemaRegion = Schema::create()// TODO move to setup method
+                                 ->addField("R_REGIONKEY", INT64)
+                                 ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
+                                 ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
 
     std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region.json";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
@@ -2026,17 +2025,17 @@ TEST_F(SourceTest, testJSONSourceRegion) {
 
 TEST_F(SourceTest, testJSONSourceBasicTypes) {
     SchemaPtr schemaBasicTypes = Schema::create()// TODO move to setup method
-                                 ->addField("boolean_p", BOOLEAN)
-                                 ->addField("boolean_n", BOOLEAN)
-                                 ->addField("char", CHAR)
-                                 ->addField("char_array", DataTypeFactory::createFixedChar(8))
-                                 ->addField("float_p", FLOAT64)
-                                 ->addField("float_n", FLOAT64)
-                                 ->addField("int_p", INT16)
-                                 ->addField("int_n", INT32)
-                                 ->addField("signed_int_p", INT64)
-                                 ->addField("signed_int_n", INT64)
-                                 ->addField("unsigned_int", UINT64);
+                                     ->addField("boolean_p", BOOLEAN)
+                                     ->addField("boolean_n", BOOLEAN)
+                                     ->addField("char", CHAR)
+                                     ->addField("char_array", DataTypeFactory::createFixedChar(8))
+                                     ->addField("float_p", FLOAT64)
+                                     ->addField("float_n", FLOAT64)
+                                     ->addField("int_p", INT16)
+                                     ->addField("int_n", INT32)
+                                     ->addField("signed_int_p", INT64)
+                                     ->addField("signed_int_n", INT64)
+                                     ->addField("unsigned_int", UINT64);
 
     std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/basic_types.json";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
@@ -2057,6 +2056,22 @@ TEST_F(SourceTest, testJSONSourceBasicTypes) {
         Runtime::MemoryLayouts::ColumnLayout::create(schemaBasicTypes, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     jsonSource.fillBuffer(buffer);
+
+    EXPECT_EQ(buffer.getBuffer().getNumberOfTuples(), 1);
+
+    Runtime::MemoryLayouts::DynamicTuple tuple = buffer[0];
+    // TODO? compare with actual data type instead of string
+    EXPECT_EQ(tuple[0].toString(), "1");// 1 == true
+    EXPECT_EQ(tuple[1].toString(), "0");// 0 == false
+    EXPECT_EQ(tuple[2].toString(), "a");
+    EXPECT_EQ(tuple[3].toString().substr(0, 6), "abcdef");// ignore null termination
+    EXPECT_EQ(tuple[4].toString(), "3.141590");           // TODO why is there an extra 0?
+    EXPECT_EQ(tuple[5].toString(), "-3.141590");          // TODO why is there an extra 0?
+    EXPECT_EQ(tuple[6].toString(), "42");
+    EXPECT_EQ(tuple[7].toString(), "-42");
+    EXPECT_EQ(tuple[8].toString(), "9223372036854775807");
+    EXPECT_EQ(tuple[9].toString(), "-9223372036854775808");
+    EXPECT_EQ(tuple[10].toString(), "18446744073709551615");
 }
 
 }// namespace NES

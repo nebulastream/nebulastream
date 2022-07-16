@@ -6,6 +6,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/JSONSource.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <iostream>
 #include <simdjson.h>
 
@@ -63,33 +64,21 @@ void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) 
         // read source until source (file) ends
         auto i = documentStream.begin();
         uint64_t tupleIndex = 0;
-        size_t count{0};
         for (; i != documentStream.end(); ++i) {
             auto doc = *i;
             if (!doc.error()) {
                 for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
                     DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
                     std::string jsonKey = schema->fields[fieldIndex]->getName();
-                    bool addedTuple =
-                        inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, dataType, jsonKey, doc, buffer);
-                    if (addedTuple)
-                        buffer.setNumberOfTuples(tupleIndex + 1);
+                    inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, doc, buffer);
                 }
-                count++;
+                buffer.setNumberOfTuples(tupleIndex + 1);
+                tupleIndex++;
             } else {
                 NES_ERROR("got broken document at " << i.current_index());
                 throw std::logic_error(error_message(doc.error()));
             }
-            tupleIndex++;
         }
-        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
-        std::cout << "#Tuples in Buffer: " << buffer.getBuffer().getNumberOfTuples() << std::endl;
-        int j = 1;
-        for (auto tuple : buffer) {
-            std::cout << "Tuple " << j << ": " << tuple.toString(schema) <<std::endl;
-            j++;
-        }
-        std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
     } else {
         NES_ERROR("Logic not yet implemented")
         throw std::invalid_argument("numBuffersToProcess must be 0");

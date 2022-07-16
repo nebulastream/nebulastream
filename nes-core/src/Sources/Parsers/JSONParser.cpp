@@ -64,16 +64,18 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     return true;
 }
 
-bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
+void JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                                               uint64_t fieldIndex,
-                                              DataTypePtr dataType,
-                                              std::string jsonKey,
+                                              const SchemaPtr& schema,
                                               simdjson::simdjson_result<simdjson::ondemand::document_reference> valueResult,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
-    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-    if (physicalType->isBasicType()){
-        auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(dataType); // TODO is NULL
-        BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType; // TODO SIGSEV
+    // TODO void
+    DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
+    std::string jsonKey = schema->fields[fieldIndex]->getName();
+    PhysicalTypePtr physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+    if (physicalType->isBasicType()) {
+        BasicPhysicalTypePtr basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+        BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType;
         switch (nativeType) {
             case BasicPhysicalType::UINT_8: break;
             case BasicPhysicalType::UINT_16: break;
@@ -81,45 +83,53 @@ bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
             case BasicPhysicalType::UINT_64: {
                 uint64_t value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
+                break;
             }
+            case BasicPhysicalType::INT_8: break;
             case BasicPhysicalType::INT_16: {
                 int64_t value64 = valueResult[jsonKey];
-                int16_t value16 = static_cast<int16_t>(value64); // TODO safe?
+                int16_t value16 = static_cast<int16_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<int16_t>(value16);
+                break;
             }
             case BasicPhysicalType::INT_32: {
-                int32_t value = valueResult[jsonKey];
-                tupleBuffer[tupleIndex][fieldIndex].write<int32_t>(value);
+                int64_t value64 = valueResult[jsonKey];
+                int32_t value32 = static_cast<int32_t>(value64);// TODO safe?
+                tupleBuffer[tupleIndex][fieldIndex].write<int32_t>(value32);
+                break;
             }
             case BasicPhysicalType::INT_64: {
                 int64_t value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
+                break;
             }
             case BasicPhysicalType::FLOAT: break;
             case BasicPhysicalType::DOUBLE: {
                 double value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
+                break;
             }
             case BasicPhysicalType::CHAR: {
                 std::string_view value = valueResult[jsonKey];
                 std::string str = {value.begin(), value.end()};
                 char c = str.at(0);
                 tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
+                break;
             }
             case BasicPhysicalType::BOOLEAN: {
                 bool value = valueResult[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<bool>(value);
+                break;
             }
-            case BasicPhysicalType::INT_8: break;
         }
     } else {
-        if (dataType->isCharArray()){
+        if (dataType->isCharArray()) {
             std::string_view value = valueResult[jsonKey];
             std::string str = {value.begin(), value.end()};
             const char* c_str = str.c_str();
             char* valueRead = tupleBuffer[tupleIndex][fieldIndex].read<char*>();
             strcpy(valueRead, c_str);
-        }else if (dataType->isUndefined()) {
+        } else if (dataType->isUndefined()) {
             NES_ERROR("Invalid data type")
             throw std::invalid_argument("Data type is undefined");
         } else {
@@ -127,8 +137,6 @@ bool JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
             throw std::invalid_argument("Invalid DataType: " + dataType->toString());
         }
     }
-
-    return true;
 }
 
 }// namespace NES
