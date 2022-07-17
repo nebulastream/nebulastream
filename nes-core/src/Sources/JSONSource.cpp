@@ -1,4 +1,3 @@
-
 #ifdef ENABLE_SIMDJSON_BUILD
 #include "Common/DataTypes/DataType.hpp"
 #include "Sources/Parsers/JSONParser.hpp"
@@ -60,29 +59,39 @@ std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
 }
 
 void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    if (numBuffersToProcess == 0) {
-        // read source until source (file) ends
-        auto i = documentStream.begin();
-        uint64_t tupleIndex = 0;
-        for (; i != documentStream.end(); ++i) {
-            auto doc = *i;
-            if (!doc.error()) {
-                for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
-                    DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
-                    std::string jsonKey = schema->fields[fieldIndex]->getName();
-                    inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, doc, buffer);
+    uint64_t numOverwrites = 1;
+    auto i = documentStream.begin();
+    uint64_t tupleIndex = 0;
+    for (; i != documentStream.end(); ++i) {
+        auto doc = *i;
+        if (!doc.error()) {
+            if (tupleIndex >= buffer.getCapacity()) {
+                if (numBuffersToProcess == 0) {
+                    // read source until buffer is full
+                    NES_INFO("Buffer is full but there are still tuples left.")
+                    return;
+                } else if (numBuffersToProcess == 1) {
+                    // read source until source ends and overwrite current buffer content
+                    NES_INFO("Overwriting buffer (" << numOverwrites << ")")
+                    numOverwrites++;
+                    tupleIndex = 0;
+                } else {
+                    NES_ERROR("Logic not yet implemented")
+                    throw std::invalid_argument("numBuffersToProcess must be 0 or 1");
+                    // TODO
                 }
-                tupleIndex++;
-                buffer.setNumberOfTuples(tupleIndex);
-            } else {
-                NES_ERROR("got broken document at " << i.current_index());
-                throw std::logic_error(error_message(doc.error()));
             }
+            for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
+                DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
+                std::string jsonKey = schema->fields[fieldIndex]->getName();
+                inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, doc, buffer);
+            }
+            tupleIndex++;
+            buffer.setNumberOfTuples(tupleIndex);
+        } else {
+            NES_ERROR("got broken document at " << i.current_index());
+            throw std::logic_error(error_message(doc.error()));
         }
-    } else {
-        NES_ERROR("Logic not yet implemented")
-        throw std::invalid_argument("numBuffersToProcess must be 0");
-        // TODO
     }
 }
 
