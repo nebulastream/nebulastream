@@ -19,6 +19,7 @@
 #include <Sources/DataSource.hpp>
 #include <arrow/io/file.h>
 #include <parquet/stream_reader.h>
+#include <Sources/Parsers/ParquetParser.hpp>
 
 namespace NES {
 
@@ -89,11 +90,11 @@ class ParquetSource : public DataSource {
 
   private:
     ParquetSourceTypePtr parquetSourceType;
-    parquet::StreamReader reader;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
     std::vector<PhysicalTypePtr> physicalTypes;
     std::string filePath;
+    ParquetParserPtr parquetParser;
 
 };
 

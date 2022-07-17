@@ -29,6 +29,8 @@ class ParquetSourceType : public PhysicalSourceType {
 
     static ParquetSourceTypePtr create(std::map<std::string,std::string> sourceConfig);
 
+    static ParquetSourceTypePtr create();
+
     /**
      * @brief creates a string representation of the source
      * @return

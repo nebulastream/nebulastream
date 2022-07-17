@@ -14,15 +14,15 @@
 #ifdef ENABLE_PARQUET_BUILD
 #include <Sources/ParquetSource.hpp>
 #include <Sources/ParquetStaticVariables.hpp>
-
-NES::ParquetSource::ParquetSource(NES::SchemaPtr schema,
-                                  NES::Runtime::BufferManagerPtr bufferManager,
-                                  NES::Runtime::QueryManagerPtr queryManager,
-                                  NES::ParquetSourceTypePtr parquetSourceType,
+namespace NES {
+ParquetSource::ParquetSource(SchemaPtr schema,
+                                  Runtime::BufferManagerPtr bufferManager,
+                                  Runtime::QueryManagerPtr queryManager,
+                                  ParquetSourceTypePtr parquetSourceType,
                                   OperatorId operatorId,
-                                  NES::OriginId originId,
+                                  OriginId originId,
                                   size_t numSourceLocalBuffers,
-                                  NES::GatheringMode::Value gatheringMode,
+                                  GatheringMode::Value gatheringMode,
                                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -32,18 +32,19 @@ NES::ParquetSource::ParquetSource(NES::SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(successors)),
-      parquetSourceType(parquetSourceType), numberOfTuplesToProducePerBuffer(parquetSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      parquetSourceType(parquetSourceType),
+      numberOfTuplesToProducePerBuffer(parquetSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
       filePath(parquetSourceType->getFilePath()->getValue()) {
     this->numBuffersToProcess = parquetSourceType->getNumberOfBuffersToProduce()->getValue();
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     std::shared_ptr<arrow::io::ReadableFile> infile;
 
-    PARQUET_ASSIGN_OR_THROW(
-        infile,
-        arrow::io::ReadableFile::Open(filePath));
+    PARQUET_ASSIGN_OR_THROW(infile, arrow::io::ReadableFile::Open(filePath));
 
-    this->reader = parquet::StreamReader(parquet::ParquetFileReader::Open(infile));
+    auto reader = parquet::StreamReader(parquet::ParquetFileReader::Open(infile));
+
+    parquetParser = std::make_shared<ParquetParser>(physicalTypes, std::move(reader), schema);
 }
 std::optional<NES::Runtime::TupleBuffer> NES::ParquetSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on " << operatorId);
@@ -57,7 +58,6 @@ std::optional<NES::Runtime::TupleBuffer> NES::ParquetSource::receiveData() {
     return buffer.getBuffer();
 }
 
-
 void NES::ParquetSource::fillBuffer(NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     uint64_t tuplesToGenerate = 0;
     //fill buffer maximally
@@ -68,19 +68,20 @@ void NES::ParquetSource::fillBuffer(NES::Runtime::MemoryLayouts::DynamicTupleBuf
         NES_ASSERT2_FMT(tuplesToGenerate * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
 
-
-
     uint64_t generatedTuples = 0;
-    while (generatedTuples < tuplesToGenerate && !reader.eof()) {
-        reader >> string >> uint64 >> parquet::EndRow;
-        generatedTuples++;
-        //for()
-        //buffer[generatedTuples][0].write<uint64_t>(year);
+    while (generatedTuples < tuplesToGenerate) {
+       bool success = parquetParser->writeToTupleBuffer(generatedTuples,buffer);
+       if(success){
+           generatedTuples++;
+           buffer.setNumberOfTuples(generatedTuples);
+       }
+       else {
+           break;
+       }
     }
-
 }
 
-std::string NES::ParquetSource::toString() const { return std::string("TODO"); }; //TODO
+std::string NES::ParquetSource::toString() const { return std::string("TODO"); };
 
 NES::SourceType NES::ParquetSource::getType() const { return NES::PARQUET_SOURCE; }
 
@@ -89,4 +90,5 @@ std::string NES::ParquetSource::getFilePath() const { return filePath; }
 uint64_t NES::ParquetSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
 const NES::ParquetSourceTypePtr& NES::ParquetSource::getSourceConfig() const { return parquetSourceType; }
+}//namespace NES
 #endif

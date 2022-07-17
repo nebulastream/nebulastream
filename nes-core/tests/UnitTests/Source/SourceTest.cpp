@@ -47,6 +47,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
+#include <Sources/ParquetSource.hpp>
 #include <Util/TestUtils.hpp>
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
@@ -437,6 +438,31 @@ class MonitoringSourceProxy : public MonitoringSource {
                            numSourceLocalBuffers,
                            successors){};
 };
+#ifdef ENABLE_PARQUET_BUILD
+class ParquetSourceProxy : public ParquetSource {
+  public:
+    ParquetSourceProxy(SchemaPtr schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   ParquetSourceTypePtr sourceConfig,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : ParquetSource(schema,
+                    bufferManager,
+                    queryManager,
+                    sourceConfig,
+                    operatorId,
+                    0,
+                    numSourceLocalBuffers,
+                    GatheringMode::INTERVAL_MODE,
+                    successors){};
+
+  private:
+    FRIEND_TEST(SourceTest, testParquetSourceSingleRowOfData);
+    FRIEND_TEST(SourceTest, testParquetSourceFillBufferFullFileOnLoop);
+};
+#endif
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
@@ -487,6 +513,8 @@ class SourceTest : public Testing::NESBaseTest {
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
         this->path_to_decimals_file = std::string(TEST_DATA_DIRECTORY) + "decimals.csv";
+        this->path_to_parquet_file_small = std::string(TEST_DATA_DIRECTORY) + "parquet-small.parquet";
+        this->path_to_parquet_file_big = std::string(TEST_DATA_DIRECTORY) + "parquet-big.parquet";
         this->schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -511,6 +539,12 @@ class SourceTest : public Testing::NESBaseTest {
                                    ->addField("positive_with_decimal", FLOAT32)
                                    ->addField("negative_with_decimal", FLOAT32)
                                    ->addField("longer_precision_decimal", FLOAT32);
+        this->parquetSchema = Schema::create()
+                                  ->addField("uint-16",UINT16)
+                                  ->addField("double", FLOAT64)
+                                  ->addField("string", DataTypeFactory::createFixedChar(16))
+                                  ->addField("boolean", BOOLEAN)
+                                  ->addField("uint-32", UINT32);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -572,8 +606,8 @@ class SourceTest : public Testing::NESBaseTest {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
-    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file;
-    SchemaPtr schema, lambdaSchema, decimalsSchema;
+    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file,  path_to_parquet_file_small,path_to_parquet_file_big;
+    SchemaPtr schema, lambdaSchema, decimalsSchema, parquetSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
         numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
@@ -2010,4 +2044,69 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
 
+TEST_F(SourceTest, testParquetSourceFillBufferFullFileOnLoop){
+    // Full pass: 52 tuples in a buffer, 2*52 = 104 in total
+    // file is 52 + 48 but it loops, so 1st: 52, 2nd: also 52
+    // expectedNumberOfBuffers set 0 in c-tor, looping
+    ParquetSourceTypePtr sourceConfig = ParquetSourceType::create();
+    sourceConfig->setFilePath(this->path_to_parquet_file_big);
+    NES_DEBUG(this->path_to_parquet_file_big);
+    sourceConfig->setNumberOfBuffersToProduce(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+
+
+    ParquetSourceProxy parquetDataSource(this->parquetSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+        Runtime::MemoryLayouts::RowLayout::create(parquetSchema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    while (parquetDataSource.getNumberOfGeneratedBuffers() < 5) {
+        parquetDataSource.fillBuffer(buffer);
+    }
+//    ASSERT_FALSE(csvDataSource.fileEnded);
+//    ASSERT_TRUE(csvDataSource.loopOnFile);
+//    auto buf = this->GetEmptyBuffer();
+//    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+//        Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+//    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+//    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
+//        csvDataSource.fillBuffer(buffer);
+//    }
+//    EXPECT_FALSE(csvDataSource.fileEnded);
+//    EXPECT_TRUE(csvDataSource.loopOnFile);
+//    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
+//    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
+}
+
+TEST_F(SourceTest, testParquetSourceSingleRowOfData){
+    ParquetSourceTypePtr sourceConfig = ParquetSourceType::create();
+    sourceConfig->setFilePath(this->path_to_parquet_file_small);
+    sourceConfig->setNumberOfBuffersToProduce(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+
+
+    ParquetSourceProxy parquetDataSource(this->parquetSchema,
+                                         this->nodeEngine->getBufferManager(),
+                                         this->nodeEngine->getQueryManager(),
+                                         sourceConfig,
+                                         this->operatorId,
+                                         this->numSourceLocalBuffersDefault,
+                                         {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+        Runtime::MemoryLayouts::RowLayout::create(parquetSchema, this->nodeEngine->getBufferManager()->getBufferSize());
+    NES_DEBUG(this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+
+    EXPECT_EQ(buffer.getNumberOfTuples(), 1u);
+    NES_DEBUG(buffer.toString(parquetSchema)); //TODO: Bug in printing contents, however the content is written into the TupleBuffer
+
+
+}
 }// namespace NES

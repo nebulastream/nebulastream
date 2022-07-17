@@ -20,6 +20,9 @@ ParquetSourceTypePtr ParquetSourceType::create(std::map<std::string, std::string
     return std::make_shared<ParquetSourceType>(ParquetSourceType(std::move(sourceConfig)));
 }
 
+ParquetSourceTypePtr ParquetSourceType::create() {
+    return std::make_shared<ParquetSourceType>(ParquetSourceType()); }
+
 ParquetSourceType::ParquetSourceType(std::map<std::string, std::string> sourceConfigMap) : ParquetSourceType() {
     NES_INFO("ParquetSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
@@ -37,7 +40,6 @@ ParquetSourceType::ParquetSourceType(std::map<std::string, std::string> sourceCo
             std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
     }
 }
-
 ParquetSourceType::ParquetSourceType() : PhysicalSourceType(PARQUET_SOURCE),
                                          filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                                                            "",
@@ -53,6 +55,7 @@ ParquetSourceType::ParquetSourceType() : PhysicalSourceType(PARQUET_SOURCE),
 {
         NES_INFO("ParquetSourceType: Init source config object with default values.");
 }
+
 void ParquetSourceType::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
 void ParquetSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
@@ -62,7 +65,6 @@ void ParquetSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToPr
 void ParquetSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBufferValue) {
     numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
-
 std::string ParquetSourceType::toString() {
     std::stringstream ss;
     ss << "ParquetSource Type => {\n";

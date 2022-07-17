@@ -48,14 +48,14 @@ TEST_F(ParquetSourceTest, proofOfConcept) {
 
     PARQUET_ASSIGN_OR_THROW(
         infile,
-        arrow::io::ReadableFile::Open("/home/balint/Documents/Uni/Masters/2_SEM/BDSPRO/testData.parquet"));
+        arrow::io::ReadableFile::Open("/home/balint/Documents/Uni/Masters/2_SEM/BDSPRO/MockSingle.parquet"));
 
     auto descriptor= infile->file_descriptor();
 
     parquet::StreamReader reader = parquet::StreamReader(parquet::ParquetFileReader::Open(infile));
-    reader >> string >> uint64 >> parquet::EndRow;
+    reader >> uint16 >> doubleType >> string >> boolean >> uint32 >> parquet::EndRow;
 
-     std::cout << string << uint64;
+     std::cout << uint16 << doubleType << string << boolean << uint32;
 }
 }
 #endif
