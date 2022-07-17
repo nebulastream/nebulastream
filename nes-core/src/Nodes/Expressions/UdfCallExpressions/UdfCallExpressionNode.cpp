@@ -33,12 +33,13 @@ ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNod
                                                 std::vector<ExpressionNodePtr> functionArgs) {
     auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>();
     udfExpressionNode->setChildren(udfFunctionName, std::move(functionArgs));
-    udfExpressionNode->setUdfName(udfFunctionName);
     return udfExpressionNode;
 }
 
-void UdfCallExpressionNode::setChildren(const ExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs) {
+void UdfCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs) {
     addChild(udfFunctionName);
+    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfFunctionName->getConstantValue());
+    udfName = constantValue->value;
     functionArguments = std::move(functionArgs);
 }
 
@@ -55,9 +56,7 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
     if (udfDescriptorPtr == nullptr) {
         throw UdfException("UdfCallExpressionNode: Error during stamp/return type inference. No UdfDescriptor was set");
     }
-    else {
-        stamp = udfDescriptorPtr->getReturnType();
-    }
+    stamp = udfDescriptorPtr->getReturnType();
 }
 
 std::string UdfCallExpressionNode::toString() const {
@@ -86,10 +85,7 @@ std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() {
 void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor) {
     udfDescriptorPtr = udfDescriptor;
 }
-void UdfCallExpressionNode::setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName) {
-    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfFunctionName->getConstantValue());
-    udfName = constantValue->value;
-}
+
 const std::string& UdfCallExpressionNode::getUdfName() const {
     return udfName;
 }
