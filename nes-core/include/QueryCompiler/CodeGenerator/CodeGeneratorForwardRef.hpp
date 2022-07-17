@@ -49,8 +49,8 @@ using CodeGeneratorPtr = std::shared_ptr<CodeGenerator>;
 class TranslateToLegacyExpression;
 using TranslateToLegacyExpressionPtr = std::shared_ptr<TranslateToLegacyExpression>;
 
-class RuntimePipelineContext;
-using PipelineContextPtr = std::shared_ptr<RuntimePipelineContext>;
+class PipelineContext;
+using PipelineContextPtr = std::shared_ptr<PipelineContext>;
 
 class Predicate;
 using PredicatePtr = std::shared_ptr<Predicate>;

@@ -148,8 +148,8 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 namespace QueryCompilation {
 
-class RuntimePipelineContext;
-using PipelineContextPtr = std::shared_ptr<RuntimePipelineContext>;
+class PipelineContext;
+using PipelineContextPtr = std::shared_ptr<PipelineContext>;
 
 class CodeGenerator;
 using CodeGeneratorPtr = std::shared_ptr<CodeGenerator>;

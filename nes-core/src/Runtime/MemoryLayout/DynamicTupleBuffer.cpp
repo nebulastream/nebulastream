@@ -123,7 +123,6 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
     str << "+----------------------------------------------------+";
     return str.str();
 }
-const MemoryLayoutPtr& DynamicTupleBuffer::getMemoryLayout() const { return memoryLayout; }
 
 DynamicTupleBuffer::TupleIterator::TupleIterator(DynamicTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
 

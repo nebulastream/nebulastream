@@ -21,39 +21,39 @@
 #include <memory>
 
 namespace NES::QueryCompilation {
-RuntimePipelineContext::RuntimePipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
+PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
     this->code = std::make_shared<GeneratedCode>();
 }
 
-void RuntimePipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
+void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
-BlockScopeStatementPtr RuntimePipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
-BlockScopeStatementPtr RuntimePipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
+BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
+BlockScopeStatementPtr PipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
 
-bool RuntimePipelineContext::hasNextPipeline() const { return !this->nextPipelines.empty(); }
+bool PipelineContext::hasNextPipeline() const { return !this->nextPipelines.empty(); }
 
-RecordHandlerPtr RuntimePipelineContext::getRecordHandler() { return this->recordHandler; }
+RecordHandlerPtr PipelineContext::getRecordHandler() { return this->recordHandler; }
 
-const std::vector<PipelineContextPtr>& RuntimePipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
+const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
 
-void RuntimePipelineContext::addNextPipeline(const PipelineContextPtr& nextPipeline) { this->nextPipelines.push_back(nextPipeline); }
+void PipelineContext::addNextPipeline(const PipelineContextPtr& nextPipeline) { this->nextPipelines.push_back(nextPipeline); }
 
-SchemaPtr RuntimePipelineContext::getInputSchema() const { return inputSchema; }
+SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 
-SchemaPtr RuntimePipelineContext::getResultSchema() const { return resultSchema; }
+SchemaPtr PipelineContext::getResultSchema() const { return resultSchema; }
 
-PipelineContextPtr RuntimePipelineContext::create() { return std::make_shared<RuntimePipelineContext>(); }
+PipelineContextPtr PipelineContext::create() { return std::make_shared<PipelineContext>(); }
 
-std::vector<BlockScopeStatementPtr> RuntimePipelineContext::getSetupScopes() { return setupScopes; }
+std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() { return setupScopes; }
 
-std::vector<BlockScopeStatementPtr> RuntimePipelineContext::getStartScopes() { return startScopes; }
+std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() { return startScopes; }
 
-int64_t RuntimePipelineContext::registerOperatorHandler(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
+int64_t PipelineContext::registerOperatorHandler(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
     operatorHandlers.emplace_back(operatorHandler);
     return operatorHandlers.size() - 1;
 }
 
-uint64_t RuntimePipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
+uint64_t PipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
     for (auto i{0ul}; i < operatorHandlers.size(); ++i) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;
@@ -63,10 +63,9 @@ uint64_t RuntimePipelineContext::getHandlerIndex(const Runtime::Execution::Opera
     return 0;
 }
 
-bool RuntimePipelineContext::getTuplePassesFiltersIsDeclared() { return this->tuplePassesFiltersIsDeclared; }
+bool PipelineContext::getTuplePassesFiltersIsDeclared() { return this->tuplePassesFiltersIsDeclared; }
 
-void RuntimePipelineContext::setTrueTuplePassesFiltersIsDeclared() { this->tuplePassesFiltersIsDeclared = true; }
+void PipelineContext::setTrueTuplePassesFiltersIsDeclared() { this->tuplePassesFiltersIsDeclared = true; }
 
-std::vector<Runtime::Execution::OperatorHandlerPtr> RuntimePipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
-}
-// namespace NES::QueryCompilation
+std::vector<Runtime::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
+}// namespace NES::QueryCompilation
