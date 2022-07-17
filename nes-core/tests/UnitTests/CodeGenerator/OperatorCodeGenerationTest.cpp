@@ -422,7 +422,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
@@ -474,7 +474,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
 
@@ -533,7 +533,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
     context1->pipelineName = "1";
     auto input_schema = source->getSchema();
 
@@ -557,7 +557,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
     context1->pipelineName = "1";
     auto input_schema = source->getSchema();
 
@@ -582,7 +582,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
@@ -602,7 +602,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
     context1->pipelineName = "1";
     auto input_schema = source->getSchema();
 
@@ -626,7 +626,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
@@ -686,7 +686,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                       ->addField("value", UINT64);
 
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
     context1->pipelineName = "1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
     auto trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -709,7 +709,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(schema, schema, context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
@@ -839,7 +839,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
                       ->addField("value", UINT64);
 
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
     context1->pipelineName = "1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
     auto trigger = OnRecordTriggerPolicyDescription::create();
@@ -879,7 +879,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
@@ -934,7 +934,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1012,7 +1012,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto source =
         createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1089,7 +1089,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto source =
         createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1165,7 +1165,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto source =
         createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::ROW_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1243,7 +1243,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1325,7 +1325,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto pipelineContext1 = QueryCompilation::RuntimePipelineContext::create();
+    auto pipelineContext1 = QueryCompilation::PipelineContext::create();
     pipelineContext1->pipelineName = "1";
     auto input_schema = source->getSchema();
 
@@ -1360,7 +1360,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
 
     pipelineContext1->registerOperatorHandler(joinOperatorHandler);
-    pipelineContext1->arity = QueryCompilation::RuntimePipelineContext::BinaryLeft;
+    pipelineContext1->arity = QueryCompilation::PipelineContext::BinaryLeft;
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
     auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1, 1);
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
@@ -1368,15 +1368,15 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, pipelineContext1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), joinOperatorHandler);
-    auto context3 = QueryCompilation::RuntimePipelineContext::create();
+    auto context3 = QueryCompilation::PipelineContext::create();
     context3->registerOperatorHandler(joinOperatorHandler);
-    context3->arity = QueryCompilation::RuntimePipelineContext::BinaryRight;
+    context3->arity = QueryCompilation::PipelineContext::BinaryRight;
     context3->pipelineName = "3";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
     codeGenerator->generateJoinSetup(joinDef, context3, 1);
@@ -1451,7 +1451,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-        auto context1 = QueryCompilation::RuntimePipelineContext::create();
+        auto context1 = QueryCompilation::PipelineContext::create();
         context1->pipelineName = "1";
         auto input_schema = source->getSchema();
 
@@ -1474,7 +1474,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         /* compile code to pipeline stage */
         auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-        auto context2 = QueryCompilation::RuntimePipelineContext::create();
+        auto context2 = QueryCompilation::PipelineContext::create();
         context2->pipelineName = "1";
         codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
         auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
@@ -1541,7 +1541,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
 
     auto input_schema = source->getSchema();
 
@@ -1564,7 +1564,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
 
@@ -1623,7 +1623,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context1 = QueryCompilation::RuntimePipelineContext::create();
+    auto context1 = QueryCompilation::PipelineContext::create();
 
     auto input_schema = source->getSchema();
 
@@ -1646,7 +1646,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::DEBUG);
 
-    auto context2 = QueryCompilation::RuntimePipelineContext::create();
+    auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::DEBUG);
 
@@ -1697,7 +1697,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
-    auto context = QueryCompilation::RuntimePipelineContext::create();
+    auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);

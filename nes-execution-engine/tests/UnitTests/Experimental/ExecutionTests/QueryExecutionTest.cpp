@@ -129,7 +129,7 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
+auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
     uint64_t linecount = 0;
     std::string line;
@@ -189,7 +189,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer loadLineItemTable(std::shared_ptr<Run
     }
     inFile.close();
     NES_DEBUG("Loading of Lineitem done");
-    return dynamicBuffer;
+    return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
 TEST_F(QueryExecutionTest, aggQueryTest) {
@@ -231,7 +231,7 @@ TEST_F(QueryExecutionTest, tpchQ6) {
     auto lineitemBuffer = loadLineItemTable(bm);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.getMemoryLayout());
+    Scan scan = Scan(lineitemBuffer.first);
     /*
      *   l_shipdate >= date '1994-01-01'
      *   and l_shipdate < date '1995-01-01'
@@ -276,7 +276,7 @@ TEST_F(QueryExecutionTest, tpchQ6) {
 
     executablePipeline->setup();
 
-    auto buffer = lineitemBuffer.getBuffer();
+    auto buffer = lineitemBuffer.second.getBuffer();
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
@@ -294,7 +294,7 @@ TEST_F(QueryExecutionTest, tpchQ6and) {
     auto lineitemBuffer = loadLineItemTable(bm);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.getMemoryLayout());
+    Scan scan = Scan(lineitemBuffer.first);
     /*
      *   l_shipdate >= date '1994-01-01'
      *   and l_shipdate < date '1995-01-01'
@@ -339,7 +339,7 @@ TEST_F(QueryExecutionTest, tpchQ6and) {
 
     executablePipeline->setup();
 
-    auto buffer = lineitemBuffer.getBuffer();
+    auto buffer = lineitemBuffer.second.getBuffer();
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);

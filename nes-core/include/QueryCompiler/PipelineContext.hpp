@@ -23,11 +23,11 @@ namespace QueryCompilation {
  * @brief The Pipeline Context represents the context of one pipeline during code generation.
  * todo it requires a refactoring if we redesign the compiler.
  */
-class RuntimePipelineContext {
+class PipelineContext {
   public:
     enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
 
-    explicit RuntimePipelineContext(PipelineContextArity arity = Unary);
+    explicit PipelineContext(PipelineContextArity arity = Unary);
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
     BlockScopeStatementPtr createSetupScope();

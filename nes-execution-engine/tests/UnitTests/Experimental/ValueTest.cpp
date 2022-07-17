@@ -14,7 +14,6 @@
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operations/AddOp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <cxxabi.h>
@@ -72,13 +71,13 @@ TEST_F(ValueTest, addValueTest) {
     auto x = Value<>(1);
     auto y = Value<>(2);
     auto intZ = y + x;
-    ASSERT_EQ(intZ.as<Integer>().value->value, 3);
+    ASSERT_EQ(intZ.as<Int32>().value->getValue(), 3);
 
     Value<Any> anyZ = y + x;
-    ASSERT_EQ(anyZ.as<Integer>().value->value, 3);
+    ASSERT_EQ(anyZ.as<Int32>().value->getValue(), 3);
 
     anyZ = intZ + intZ;
-    ASSERT_EQ(anyZ.as<Integer>().value->value, 6);
+    ASSERT_EQ(anyZ.as<Int32>().value->getValue(), 6);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

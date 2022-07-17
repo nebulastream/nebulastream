@@ -131,7 +131,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
-        case RuntimePipelineContext::Unary: {
+        case PipelineContext::Unary: {
             // it is assumed that the input item is the first element!
             // so place to front
             // todo remove this assumption
@@ -141,13 +141,13 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                                              << " output=" << outputSchema->toString());
             break;
         }
-        case RuntimePipelineContext::BinaryLeft: {
+        case PipelineContext::BinaryLeft: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
             NES_DEBUG("arity binaryleft generate scan for input=" << inputSchema->toString()
                                                                   << " output=" << outputSchema->toString());
             break;
         }
-        case RuntimePipelineContext::BinaryRight: {
+        case PipelineContext::BinaryRight: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
             NES_DEBUG("arity binaryright generate scan for input=" << inputSchema->toString()
                                                                    << " output=" << outputSchema->toString());
@@ -239,7 +239,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                               (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
-    if (context->arity != RuntimePipelineContext::Unary) {
+    if (context->arity != PipelineContext::Unary) {
         NES_DEBUG("adding in scan for schema=" << inputSchema->toString() << " context=" << context->inputSchema->toString());
     }
 
@@ -385,6 +385,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
 
     auto code = context->code;
     auto tf = getTypeFactory();
+
     // Check if the assignment value is new or if we have to create it
     auto mapExpression = pred->generateCode(code, context->getRecordHandler());
     auto recordHandler = context->getRecordHandler();
@@ -2464,7 +2465,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(
 }
 
 uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) {
-    if (context->arity == RuntimePipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::BinaryLeft) {
         return 0;
     }
 
@@ -2477,7 +2478,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     NES_ASSERT(join->getLeftSourceType() != nullptr && !join->getLeftSourceType()->fields.empty(), "left join type is undefined");
     NES_ASSERT(join->getRightSourceType() != nullptr && !join->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != RuntimePipelineContext::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     auto handlers = context->getOperatorHandlers();
@@ -2804,7 +2805,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     auto tf = getTypeFactory();
 
-    if (context->arity == RuntimePipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::BinaryLeft) {
         auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightSourceType());
         context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
@@ -2821,7 +2822,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                "left join type is undefined");
     NES_ASSERT(joinDef->getRightSourceType() != nullptr && !joinDef->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != RuntimePipelineContext::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
     auto code = context->code;
 
@@ -2845,12 +2846,12 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
-    if (context->arity == RuntimePipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::BinaryLeft) {
         NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
-    } else if (context->arity == RuntimePipelineContext::BinaryRight) {
+    } else if (context->arity == PipelineContext::BinaryRight) {
         NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
@@ -2866,7 +2867,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_");
     auto recordHandler = context->getRecordHandler();
 
-    if (context->arity == RuntimePipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::BinaryLeft) {
         auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
@@ -2921,7 +2922,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
-        if (context->arity == RuntimePipelineContext::BinaryRight) {
+        if (context->arity == PipelineContext::BinaryRight) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
@@ -3006,7 +3007,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                                   << " with code=" << context->code);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == RuntimePipelineContext::BinaryLeft);
+    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
     return true;
 }
 
@@ -4255,17 +4256,17 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     // define param to use in the ctor of pipeline to determine its arity.
     ExpressionStatementPtr arityStatement;
     switch (context->arity) {
-        case RuntimePipelineContext::Unary: {
+        case PipelineContext::Unary: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "Unary")));
             break;
         }
-        case RuntimePipelineContext::BinaryLeft: {
+        case PipelineContext::BinaryLeft: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryLeft")));
             break;
         }
-        case RuntimePipelineContext::BinaryRight: {
+        case PipelineContext::BinaryRight: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryRight")));
             break;
@@ -4318,9 +4319,9 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
         auto compiledCode = result.get().getDynamicObject();
         PipelineStageArity const arity = [&ari = code->arity]() {
             switch (ari) {
-                case RuntimePipelineContext::Unary: return Unary;
-                case RuntimePipelineContext::BinaryLeft: return BinaryLeft;
-                case RuntimePipelineContext::BinaryRight: return BinaryRight;
+                case PipelineContext::Unary: return Unary;
+                case PipelineContext::BinaryLeft: return BinaryLeft;
+                case PipelineContext::BinaryRight: return BinaryRight;
                 default: NES_FATAL_ERROR("Unknown PipelineContext. Terminate.");
             }
         }();
