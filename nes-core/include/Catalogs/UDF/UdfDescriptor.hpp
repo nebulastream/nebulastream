@@ -32,14 +32,14 @@ class UdfDescriptor {
     virtual ~UdfDescriptor() = default;
 
     /**
- * @brief Return the name of the UDF method.
- * @return The name of the UDF method.
- */
+    * @brief Return the name of the UDF method.
+    * @return The name of the UDF method.
+    */
     [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
     /**
-    * @brief Return the number of arguments for the UDF.
-    * @return The name of the UDF method.
+    * @brief Retrieve the return type of the UDF
+    * @return A DataType pointer for the UDF return type
     */
     [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
 

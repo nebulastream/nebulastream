@@ -51,12 +51,12 @@ class UdfCallExpressionNode : public ExpressionNode {
     std::string toString() const override;
 
     /**
-     * @brief The udfName node is set as child[0] and a UdfArgumentsNode is generated which holds the
-     * function arguments and is set as child[1].
+     * @brief The udfName node is set as child[0] and a vector which holds the
+     * function arguments is saved.
      * @param udfName name of the UDF that needs to be called
      * @param functionArguments function arguments for the UDF
      */
-    void setChildren(const ExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs);
+    void setChildren(const ConstantValueExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs);
 
     /**
      * @return the name of the UDF as a ConstantValueExpressionNode
@@ -64,7 +64,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     ExpressionNodePtr getUdfNameNode();
 
     /**
-     * @return a UdfArgumentsNode containing all function arguments passed to the UDF
+     * @return a vector containing all function arguments passed to the UDF
      */
     std::vector<ExpressionNodePtr> getFunctionArguments();
 
@@ -81,14 +81,13 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param pyUdfDescriptor The (python) udf descriptor
      */
     void setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor);
-    void setUdfName(const ConstantValueExpressionNodePtr& udfFunctionName);
+
+    /**
+     * @return a string with the UDF name
+     */
     const std::string& getUdfName() const;
 
   private:
-    /**
-     * For now we keep a PythonUdfDescriptorPtr for a minimal working example. As soon as
-     * support for other languages will be added we can use the base class UdfDescriptor instead.
-     */
     Catalogs::UdfDescriptorPtr udfDescriptorPtr;
     std::vector<ExpressionNodePtr> functionArguments;
     std::string udfName;
