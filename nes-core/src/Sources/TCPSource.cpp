@@ -54,7 +54,8 @@ TCPSource::TCPSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), buffer(this->bufferManager->getBufferSize()) {
+      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)),
+      buffer(this->bufferManager->getBufferSize()) {
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 
     //init physical types
@@ -137,7 +138,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
         auto tupleBuffer = allocateBuffer();
         try {
             fillBuffer(tupleBuffer);
-        } catch (std::exception e){
+        } catch (std::exception e) {
             NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer.");
             return std::nullopt;
         }
@@ -184,24 +185,23 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
         //todo: 5. make flush possible
         //todo: 6. make sure buffer retains non complete tuples for next round
         int16_t sendBytes;
-        /*if (!buffer.full()) {
-            char buf[buffer.capacity()];
-            sendBytes = read(sockfd, buf, buffer.capacity());
+        if (!buffer.full()) {
+            char buf[buffer.capacity() - buffer.size()];
+            sendBytes = read(sockfd, buf, buffer.capacity() - buffer.size());
             buffer.push(buf, sendBytes);
         }
 
-        if (sendBytes != 0 && sendBytes != -1) {
-            NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buffer << "'");
+        uint64_t messageSize = buffer.sizeUntilSearchToken(0x03);
+        char messageBuffer[messageSize];
+        if (messageSize != 0 && buffer.popValuesUntil(messageBuffer, messageSize)) {
+            NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
             if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
-                std::string buf(buffer);
-                buf = (buf).substr(0, buf.rfind("}") + 1);
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
+                inputParser->writeInputTupleToTupleBuffer(messageBuffer, tupleCount, tupleBuffer, schema);
             } else {
-                inputParser->writeInputTupleToTupleBuffer(buffer, tupleCount, tupleBuffer, schema);
+                inputParser->writeInputTupleToTupleBuffer(messageBuffer, tupleCount, tupleBuffer, schema);
             }
             tupleCount++;
-        }*/
         }
         delete [] buffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving

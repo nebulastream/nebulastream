@@ -167,28 +167,24 @@ TEST_F(CircularBufferTest, popOnEmpty) {
     EXPECT_EQ(val, 0);
 }
 
-TEST_F(CircularBufferTest, copyArrayIntoBuffer) {
-    CircularBuffer<char> circularBuffer(10);
-    char buf[3] = {'a', 'b', 'c'};
-    char buf1[3] = {'d', 'e', 'c'};
-    char buf2[3] = {'f', 'g', 'c'};
-    circularBuffer.push(buf, 3);
-    circularBuffer.push(buf1, 3);
-    circularBuffer.push(buf2, 3);
-    EXPECT_EQ(circularBuffer.size(), 9u);
-    EXPECT_EQ(circularBuffer.at(0), 'c');
-    EXPECT_EQ(circularBuffer.at(1), 'g');
-    EXPECT_EQ(circularBuffer.at(2), 'f');
-    EXPECT_EQ(circularBuffer.at(3), 'c');
-    EXPECT_EQ(circularBuffer.at(4), 'e');
-    EXPECT_EQ(circularBuffer.at(5), 'd');
-    EXPECT_EQ(circularBuffer.at(6), 'c');
-    EXPECT_EQ(circularBuffer.at(7), 'b');
-    EXPECT_EQ(circularBuffer.at(8), 'a');
+TEST_F(CircularBufferTest, fillAndRemoveMultipleValues) {
+    CircularBuffer<char> circularBuffer(12);
+    char buf[4] = {'a', 'b', 'c', 0x03};
+    char buf1[4] = {'d', 'e', 'c', 0x03};
+    char buf2[4] = {'f', 'g', 'c', 0x03};
+    circularBuffer.push(buf, 4);
+    circularBuffer.push(buf1, 4);
+    circularBuffer.push(buf2, 4);
+    EXPECT_EQ(circularBuffer.size(), 12u);
     char poppedValues[3];
-    circularBuffer.popValues(poppedValues, 3);
+    char findValue = 0x03;
+    uint64_t places = circularBuffer.sizeUntilSearchToken(findValue);
+    EXPECT_EQ(places, 3u);
+    bool found = circularBuffer.popValuesUntil(poppedValues, findValue);
     EXPECT_EQ(poppedValues[0], 'a');
+    EXPECT_EQ(poppedValues[1], 'b');
+    EXPECT_EQ(poppedValues[2], 'c');
+    EXPECT_TRUE(found);
 }
-//TODO: implement search method in circular buffer that returns # of elems to pop until delimiter 0x03 reached
 
 }// namespace NES

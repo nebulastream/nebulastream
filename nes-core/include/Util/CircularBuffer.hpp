@@ -53,6 +53,11 @@ class CircularBufferIterator {
         return *this;
     }
 
+    CircularBufferIterator& operator--() noexcept {
+        --idx;
+        return *this;
+    }
+
     friend CircularBufferIterator operator-(CircularBufferIterator it, int i) noexcept {
         it -= i;
         return it;
@@ -202,11 +207,37 @@ class CircularBuffer {
         return std::move(elt);
     }
 
-    T* popValues(T* temp, uint64_t numberOfValuesToPop) {
-        for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
-            temp[i] = pop();
+    /**
+     * @brief search from the back (first inputted item) to the front
+     * @token value to search for
+     * @return number of places until first occurrence of token
+     */
+    uint64_t sizeUntilSearchToken(T token) {
+        uint64_t places = 0;
+        for(auto itr = end() - 1; itr != begin() - 1; --itr) {
+            if (*itr == token) {
+                return places;
+            }
+            ++places;
         }
-        return temp;
+        return places;
+    }
+
+    /**
+     * @brief pops and fills temp with all values until the given char value
+     * @param temp char array to be filled
+     * @param popUntil char values to compare to
+     * @return true if value was found, false otherwise
+     */
+    bool popValuesUntil(T* temp, T popUntil) {
+        for (uint64_t i = 0; i < capacity(); ++i) {
+            char popped = pop();
+            if (popped == popUntil){
+                return true;
+            }
+            temp[i] = popped;
+        }
+        return false;
     }
 
   private:
