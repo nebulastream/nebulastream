@@ -28,6 +28,7 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     /**
     * @brief infers the input and out schema of this operator depending on its child.
     * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
+    * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;

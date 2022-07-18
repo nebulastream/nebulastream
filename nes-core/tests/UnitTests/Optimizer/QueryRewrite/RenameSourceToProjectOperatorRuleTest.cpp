@@ -38,7 +38,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
   public:
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
-
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -46,7 +47,10 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32); }
+    void SetUp() override { 
+        schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
+        udfCatalog = Catalogs::UdfCatalog::create();
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case."); }
@@ -77,7 +81,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
@@ -105,7 +109,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
@@ -136,7 +140,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWith
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();

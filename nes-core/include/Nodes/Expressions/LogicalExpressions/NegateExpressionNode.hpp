@@ -35,6 +35,7 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
     /**
      * @brief Infers the stamp of this logical negate expression node.
      * We assume that the children of this expression is a predicate.
+     * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;

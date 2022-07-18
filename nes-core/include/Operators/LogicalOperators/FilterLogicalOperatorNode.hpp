@@ -45,6 +45,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
     /**
     * @brief infers the input and out schema of this operator depending on its child.
     * @throws Exception the predicate expression has to return a boolean.
+    * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;

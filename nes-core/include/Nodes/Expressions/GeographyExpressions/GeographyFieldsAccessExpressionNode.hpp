@@ -54,6 +54,7 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode {
     /**
      * @brief Infers the stamp of this geography fields access expression node.
      * Type inference expects float data types as operands.
+     * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;

@@ -33,6 +33,7 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
     /**
      * @brief Infers the stamp of this logical OR expression node.
      * We assume that both children of an OR expression are predicates.
+     * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;

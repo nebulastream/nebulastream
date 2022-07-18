@@ -90,6 +90,11 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
+    /**
+     * @brief infers the input and out schema of this operator depending on its child.
+     * @param typeInferencePhaseContext needed for stamp inferring
+     * @return true if schema was correctly inferred
+     */
     virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
 
   protected:

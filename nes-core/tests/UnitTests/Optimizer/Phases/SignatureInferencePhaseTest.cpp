@@ -37,10 +37,15 @@ namespace NES::Optimizer {
 
 class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
+    }
+
+    void SetUp() override {
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -63,7 +68,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
-    auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto signatureInferencePhase =
         SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);

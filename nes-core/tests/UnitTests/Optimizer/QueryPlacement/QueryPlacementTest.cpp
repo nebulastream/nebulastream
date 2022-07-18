@@ -64,6 +64,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -75,6 +76,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -118,7 +120,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -199,7 +201,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -409,7 +411,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
@@ -594,7 +596,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     setupTopologyAndSourceCatalog({10, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite =
@@ -696,7 +698,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -995,7 +997,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
@@ -1126,7 +1128,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
@@ -1260,7 +1262,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
@@ -1373,7 +1375,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
