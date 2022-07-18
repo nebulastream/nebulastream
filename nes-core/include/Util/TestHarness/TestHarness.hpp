@@ -431,7 +431,7 @@ class TestHarness {
                 }
                 default: break;
             }
-
+            assert(workerConfiguration->queryCompiler.windowingStrategy.getValue() == QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
             NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 

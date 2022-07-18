@@ -105,14 +105,18 @@ class DistributeWindowRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    void addSlicer(std::vector<NodePtr> windowChildren, const WindowOperatorNodePtr& logicalWindowOperator);
     std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
     getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold);
 
   private:
     explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
-    void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
+    void createDistributedNemoWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
+
+    /**
+     * @deprecated Replaced by createDistributedNemoWindowOperator as it is using the old window operator implementation
+     */
+    void createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
 
     bool performDistributedWindowOptimization;
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
