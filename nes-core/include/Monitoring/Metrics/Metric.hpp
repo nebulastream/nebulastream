@@ -43,9 +43,9 @@ void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& b
  * @return the value
  */
 void readFromBuffer(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-void readFromBufferNEW(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+//void readFromBufferNEW(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-void readFromBufferNEW(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+//void readFromBufferNEW(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 //void readFromBufferNEW(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 

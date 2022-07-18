@@ -18,10 +18,17 @@ numberOfBuffersInGlobalBufferManager: 2048
 numberOfBuffersInSourceLocalBufferPool: 128
 
 # Monitoring Configuration
-monitoringConfiguration:
-  -CPUMetric:
-    metrics: coreNum
-
+monitoringConfiguration: '
+  - cpu:
+    attributes: "coreNum, user, system"
+    sampleRate: 60
+  - disk:
+    attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
+    sampleRate: 50
+  - memory:
+    attributes: "FREE_RAM, FREE_SWAP, TOTAL_RAM"
+    sampleRate: 40
+'
 
 #monitoringConfiguration:
 #  - CPUMetric:

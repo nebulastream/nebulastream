@@ -17,6 +17,8 @@
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <map>
+#include <list>
 
 namespace NES {
 
@@ -82,6 +84,14 @@ class MetricUtils {
      * @return the collector as type
      */
     static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
+
+    /**
+     *
+     * @param rawConfigString The raw string that got parsed from the config Yaml-File
+     * @return a map with the configured metrics types and their attributes
+     */
+
+    static std::map<MetricType, std::list<std::string>> parseMonitoringConfigStringToMap(std::string rawConfigString);
 };
 
 }// namespace NES

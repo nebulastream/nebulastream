@@ -132,4 +132,78 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
+std::map <MetricType, std::list<std::string>> MetricUtils::parseMonitoringConfigStringToMap(std::string rawConfigString) {
+    std::map <MetricType, std::list<std::string>> MonitoringConfigurationMap;
+    std::string delimiter(" - ");
+
+
+    // erase first 1 characters
+    if (rawConfigString.substr(0, 3) == delimiter) {
+        rawConfigString.erase(0, 3);
+    } else {
+        //throw exception
+        std::cout << "String has the wrong format";
+    }
+
+    std::list<std::string> tokenList;
+
+    size_t pos = 0;
+    std::string token;
+    std::list<std::string>::iterator i;
+    i = tokenList.begin();
+    while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
+        token = rawConfigString.substr(0, pos);
+        rawConfigString.erase(0, pos + delimiter.length());
+        tokenList.insert(i, token);
+        ++i;
+    }
+    tokenList.insert(i, rawConfigString);
+
+    std::string metricType;
+    std::string attributes;
+    std::list<std::string> listOfAttributes;
+    std::string sampleRate;
+    std::list<std::string>::iterator j;
+    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
+        delimiter = ": ";
+        pos = i->find(delimiter);
+        metricType = i->substr(0, pos);
+        i->erase(0, pos + delimiter.length());
+
+        delimiter = "attributes: \"";
+        i->erase(0, delimiter.length());
+
+        delimiter = "\" ";
+        pos = i->find(delimiter);
+        attributes = i->substr(0, pos);
+        i->erase(0, pos + delimiter.length());
+
+        delimiter= "sampleRate: ";
+        i->erase(0, delimiter.length());
+
+        delimiter = " ";
+        pos = i->find(delimiter);
+        sampleRate = i->substr(0, pos);
+
+        attributes.insert(0, sampleRate + ", ");
+
+        //Attribute String zu einer Liste parsen
+        delimiter = ", ";
+        j = listOfAttributes.begin();
+        while ((pos = attributes.find(delimiter)) != std::string::npos) {
+            token = attributes.substr(0, pos);
+            attributes.erase(0, pos + delimiter.length());
+            listOfAttributes.insert(j, token);
+            ++j;
+        }
+        listOfAttributes.insert(j, attributes);
+
+        MonitoringConfigurationMap[NES::parse(metricType)] = listOfAttributes;
+        listOfAttributes.clear();
+
+    }
+
+    return MonitoringConfigurationMap;
+}
+
 }// namespace NES

@@ -24,6 +24,7 @@
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <string>
+#include <Monitoring/Util/MetricUtils.hpp>
 
 namespace NES {
 
@@ -92,9 +93,10 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
     workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+    std::map <MetricType, std::list<std::string>> mapMonitoringConfig =
+        MetricUtils::parseMonitoringConfigStringToMap(workerConfigPtr->monitoringConfiguration.getValue());
     std::cout << "Well done!";
 }
-
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
 

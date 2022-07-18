@@ -196,7 +196,7 @@ TEST_F(MetricCollectorTest, testDiskCollectorBA02) {
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
-    MetricPtr parsedMetric1 = std::make_shared<Metric>(DiskMetrics(schema));
+//    MetricPtr parsedMetric1 = std::make_shared<Metric>(DiskMetrics(schema));
 //    Metric::readFromBufferNEW(parsedMetric1, tupleBuffer, 0, diskCollector.getSchema());
     DiskMetrics parsedMetric2;
     readFromBufferNEW(parsedMetric2, tupleBuffer, 0, diskCollector.getSchema());
