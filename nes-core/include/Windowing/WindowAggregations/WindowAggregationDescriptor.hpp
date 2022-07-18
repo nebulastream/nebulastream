@@ -59,7 +59,7 @@ class WindowAggregationDescriptor {
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */
-    virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) = 0;
+    virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) = 0;
 
     /**
     * @brief Creates a deep copy of the window aggregation

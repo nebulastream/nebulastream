@@ -30,9 +30,9 @@ ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, Expre
     return powNode;
 }
 
-void PowExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void PowExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalBinaryExpressionNode::inferStamp(ctx, schema);
+    ArithmeticalBinaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
 
     // Extend range for POW operation:
     if (stamp->isInteger()) {

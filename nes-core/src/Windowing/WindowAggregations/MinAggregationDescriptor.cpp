@@ -48,9 +48,9 @@ DataTypePtr MinAggregationDescriptor::getInputStamp() { return onField->getStamp
 DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
 DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
 
-void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(ctx, schema);
+    onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

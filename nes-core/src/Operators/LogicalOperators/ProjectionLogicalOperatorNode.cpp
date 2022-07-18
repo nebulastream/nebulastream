@@ -47,8 +47,8 @@ std::string ProjectionLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
-    if (!LogicalUnaryOperatorNode::inferSchema(ctx)) {
+bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
     }
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
@@ -57,7 +57,7 @@ bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     for (auto& expression : expressions) {
 
         //Infer schema of the field expression
-        expression->inferStamp(ctx, inputSchema);
+        expression->inferStamp(typeInferencePhaseContext, inputSchema);
 
         // Build the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>()) {

@@ -18,13 +18,13 @@
 
 namespace NES {
 
-ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs) {
+ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArguments) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
         NES_ERROR("UDF name has to be a ConstantValueExpression but it was a " + udfNameExpression->toString());
     }
     auto udfNameConstantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
-    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArgs));
+    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));
 }
 
 }// namespace NES::Experimental

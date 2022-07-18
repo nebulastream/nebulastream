@@ -14,24 +14,16 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 namespace NES::Optimizer {
-
-const SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { return sourceCatalog; }
-
-const UdfCatalogPtr& TypeInferencePhaseContext::getUdfCatalog() const { return udfCatalog; }
-
-TypeInferencePhaseContext::TypeInferencePhaseContext(SourceCatalogPtr  sourceCatalog, UdfCatalogPtr  udfCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
 TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {

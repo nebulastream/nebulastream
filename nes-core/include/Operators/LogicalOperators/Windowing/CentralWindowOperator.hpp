@@ -27,7 +27,7 @@ class CentralWindowOperator : public WindowOperatorNode {
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
     void inferStringSignature() override;
 };
 

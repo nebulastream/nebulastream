@@ -19,7 +19,7 @@ namespace NES {
 LogicalBinaryOperatorNode::LogicalBinaryOperatorNode(OperatorId id)
     : OperatorNode(id), LogicalOperatorNode(id), BinaryOperatorNode(id) {}
 
-bool LogicalBinaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
+bool LogicalBinaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
 
     distinctSchemas.clear();
     //Check the number of child operators
@@ -30,7 +30,7 @@ bool LogicalBinaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
 
     // Infer schema of all child operators
     for (const auto& child : children) {
-        if (!child->as<LogicalOperatorNode>()->inferSchema(ctx)) {
+        if (!child->as<LogicalOperatorNode>()->inferSchema(typeInferencePhaseContext)) {
             NES_ERROR("BinaryOperatorNode: failed inferring the schema of the child operator");
             throw TypeInferenceException("BinaryOperatorNode: failed inferring the schema of the child operator");
         }

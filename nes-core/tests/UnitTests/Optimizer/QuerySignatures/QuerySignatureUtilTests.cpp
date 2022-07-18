@@ -30,7 +30,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>

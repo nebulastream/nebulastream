@@ -38,7 +38,7 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     WindowAggregationPtr copy() override;
 

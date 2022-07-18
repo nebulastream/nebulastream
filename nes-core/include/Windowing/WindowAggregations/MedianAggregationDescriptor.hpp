@@ -37,7 +37,7 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
      */
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     WindowAggregationPtr copy() override;
 

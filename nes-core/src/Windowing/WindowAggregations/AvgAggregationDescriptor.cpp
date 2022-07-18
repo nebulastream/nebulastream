@@ -44,9 +44,9 @@ WindowAggregationPtr AvgAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
-void AvgAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void AvgAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(ctx, schema);
+    onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

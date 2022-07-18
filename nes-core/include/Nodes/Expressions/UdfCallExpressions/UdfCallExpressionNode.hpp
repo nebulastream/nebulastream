@@ -40,13 +40,13 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param functionArguments 0 or more function arguments
      * @return a UdfCallExpressionNode
      */
-    static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfFunctionName,
+    static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
                                     std::vector<ExpressionNodePtr> functionArguments);
     /**
     * @brief determine the stamp of the Udf call by checking the return type of the function
      * An error is thrown when no UDF descriptor is set.
     */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     std::string toString() const override;
 
@@ -56,7 +56,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @param udfName name of the UDF that needs to be called
      * @param functionArguments function arguments for the UDF
      */
-    void setChildren(const ConstantValueExpressionNodePtr& udfFunctionName, std::vector<ExpressionNodePtr> functionArgs);
+    void setChildren(const ConstantValueExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments);
 
     /**
      * @return the name of the UDF as a ConstantValueExpressionNode
@@ -88,7 +88,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     const std::string& getUdfName() const;
 
   private:
-    Catalogs::UdfDescriptorPtr udfDescriptorPtr;
+    Catalogs::UdfDescriptorPtr udfDescriptor;
     std::vector<ExpressionNodePtr> functionArguments;
     std::string udfName;
 };

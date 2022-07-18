@@ -40,7 +40,7 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @throws throws exception if inference was not possible.
      * @return true if inference was possible
      */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
     void inferStringSignature() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;

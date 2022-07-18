@@ -33,8 +33,8 @@ std::string UnionLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool UnionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) {
-    if (!LogicalBinaryOperatorNode::inferSchema(ctx)) {
+bool UnionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+    if (!LogicalBinaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
     }
 

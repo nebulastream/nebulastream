@@ -66,12 +66,12 @@ ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLongitude() const {
     return children[1]->as<FieldAccessExpressionNode>();
 }
 
-void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto left = getLatitude();
     auto right = getLongitude();
-    left->inferStamp(ctx, schema);
-    right->inferStamp(ctx, schema);
+    left->inferStamp(typeInferencePhaseContext, schema);
+    right->inferStamp(typeInferencePhaseContext, schema);
 
     // both sub expressions have to be of type float
     if (!left->getStamp()->isFloat() || !right->getStamp()->isFloat()) {

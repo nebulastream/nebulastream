@@ -29,7 +29,7 @@
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
