@@ -19,21 +19,20 @@
 namespace NES {
 
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr stamp)
-    : MultiExpressionNode(std::move(stamp)), ArithmeticalExpressionNode() {}
+    : MultiExpressionNode(std::move(stamp)), LinearAlgebraExpressionNode() {}
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other)
     : MultiExpressionNode(other) {}
 
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr stamp,
                                                                  std::vector<size_t> shape,
                                                                  TensorMemoryFormat tensorType)
-    : MultiExpressionNode(std::move(stamp)), ArithmeticalExpressionNode(), shape(shape),
+    : MultiExpressionNode(std::move(stamp)), LinearAlgebraExpressionNode(), shape(shape),
       tensorType(tensorType) {}
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other,
                                                                  std::vector<size_t> shape,
                                                                  TensorMemoryFormat tensorType)
     : MultiExpressionNode(other), shape(shape), tensorType(tensorType) {}
 
-//Todo: When tensor we need to indicate that it's a tensor
 void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
     bool firstSkipped = false;
     std::shared_ptr<ExpressionNode> previousChild;
@@ -42,7 +41,7 @@ void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
         child->inferStamp(schema);
         if (!child->getStamp()->isNumeric()) {
             throw std::logic_error(
-                "ArithmeticalBinaryExpressionNode: Error during stamp inference. Type needs to be Numerical but was: "
+                "LinearAlgebraTensorExpressionNode: Error during stamp inference. Type needs to be Numerical but was: "
                 + child->getStamp()->toString());
         }
         if (firstSkipped != false) {
@@ -55,7 +54,7 @@ void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the common stamp is defined
     if (commonStamp->isUndefined()) {
         // the common stamp was not valid -> in this case the common stamp is undefined.
-        throw std::logic_error("ArithmeticalBinaryExpressionNode: " + commonStamp->toString()
+        throw std::logic_error("LinearAlgebraTensorExpressionNode: " + commonStamp->toString()
                                + " is not supported by arithmetical expressions");
     }
     if (!shape.empty()) {
@@ -63,7 +62,7 @@ void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
     } else {
         stamp = commonStamp;
     }
-    NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE("LinearAlgebraTensorExpressionNode: we assigned the following stamp: " << toString());
 }
 
 bool LinearAlgebraTensorExpressionNode::equal(const NodePtr& rhs) const {
@@ -78,6 +77,15 @@ bool LinearAlgebraTensorExpressionNode::equal(const NodePtr& rhs) const {
     return false;
 }
 
-std::string LinearAlgebraTensorExpressionNode::toString() const { return "ArithmeticalMultiExpression()"; }
+std::string LinearAlgebraTensorExpressionNode::toString() const { return "LinearAlgebraTensorExpression()"; }
+
+const std::vector<size_t>& LinearAlgebraTensorExpressionNode::getShape() const { return shape; }
+void LinearAlgebraTensorExpressionNode::setShape(const std::vector<size_t>& shape) {
+    LinearAlgebraTensorExpressionNode::shape = shape;
+}
+TensorMemoryFormat LinearAlgebraTensorExpressionNode::getTensorMemoryFormat() const { return tensorMemoryFormat; }
+void LinearAlgebraTensorExpressionNode::setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat) {
+    LinearAlgebraTensorExpressionNode::tensorMemoryFormat = tensorMemoryFormat;
+}
 
 }// namespace NES

@@ -68,7 +68,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         switch (tensorType->tensorMemoryFormat) {
             case DENSE: memoryType = SerializableDataType_TensorDetails_TensorMemoryType_DENSE; break;
         }
-        serializedTensor.set_tensormemorytype(memoryType);
+        serializedTensor.set_tensormemoryformat(memoryType);
         *serializedTensor.mutable_shape() = {tensorType->shape.begin(), tensorType->shape.end()};
         serializeDataType(tensorType->component, serializedTensor.mutable_componenttype());
         serializedDataType->mutable_details()->PackFrom(serializedTensor);

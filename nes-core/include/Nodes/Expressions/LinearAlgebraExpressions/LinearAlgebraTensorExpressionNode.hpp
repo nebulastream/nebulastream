@@ -34,6 +34,11 @@ class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public Lin
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
+    const std::vector<size_t>& getShape() const;
+    void setShape(const std::vector<size_t>& shape);
+    TensorMemoryFormat getTensorMemoryFormat() const;
+    void setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat);
+
   protected:
     explicit LinearAlgebraTensorExpressionNode(DataTypePtr stamp);
     explicit LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other);
@@ -45,7 +50,7 @@ class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public Lin
   private:
 
     std::vector<size_t> shape = {};
-    TensorMemoryFormat tensorType = DENSE;
+    TensorMemoryFormat tensorMemoryFormat = DENSE;
 
 };
 }// namespace NES

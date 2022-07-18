@@ -37,10 +37,10 @@ message SerializableDataType{
    */
   message TensorDetails{
     // Enum for the tensor type
-    enum TensorMemoryType{
+    enum TensorMemoryFormat{
         DENSE = 0;
     }
-    TensorMemoryType tensorMemoryType = 1;
+    TensorMemoryFormat tensorMemoryFormat = 1;
     SerializableDataType componentType = 2;
     repeated uint64 shape = 3;
   }
