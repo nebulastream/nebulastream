@@ -57,17 +57,6 @@ DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
     return output;
 }
 
-DiskMetrics AbstractSystemResourcesReader::readDiskStatsBA01() {
-    DiskMetrics output{};
-    return output;
-}
-
-DiskMetrics AbstractSystemResourcesReader::readDiskStatsBA02(NES::Schema schema) {
-    std::cout << std::to_string(schema.getSize());          //Überflüssig nur um Schema zu nutzen
-    DiskMetrics output{};
-    return output;
-}
-
 uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
     uint64_t output{};
     return output;

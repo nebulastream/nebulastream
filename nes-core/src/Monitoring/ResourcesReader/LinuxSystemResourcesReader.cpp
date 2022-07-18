@@ -371,65 +371,6 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
     return output;
 }
 
-
-DiskMetrics LinuxSystemResourcesReader::readDiskStatsBA01() {
-    auto output = DiskMetrics(0);                   // hier muss der richtiger Constructer aufgerufen werden
-
-    try {
-        NES_TRACE("LinuxSystemResourcesReader: Reading disk stats.");
-        auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
-
-        int ret = statvfs("/", svfs);
-        if (ret == EFAULT) {
-            NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading disk stats");
-        }
-
-        output.fBsize = svfs->f_bsize;
-        output.fFrsize = svfs->f_frsize;
-        output.fBlocks = svfs->f_blocks;
-        output.fBfree = svfs->f_bfree;
-        free(svfs);
-    } catch (const log4cxx::helpers::RuntimeException& e) {
-        NES_ERROR("LinuxSystemResourcesReader: Error reading disk stats " << e.what());
-    }
-    return output;
-}
-
-DiskMetrics LinuxSystemResourcesReader::readDiskStatsBA02(NES::Schema schema) {
-    auto output = DiskMetrics();                   // hier muss der richtiger Constructer aufgerufen werden
-
-    try {
-        NES_TRACE("LinuxSystemResourcesReader: Reading disk stats.");
-        auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
-
-        int ret = statvfs("/", svfs);
-        if (ret == EFAULT) {
-            NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading disk stats");
-        }
-
-        if (schema.contains("F_BSIZE")) {
-            output.fBsize = svfs->f_bsize;
-        }
-        if (schema.contains("F_FRSIZE")) {
-            output.fFrsize = svfs->f_frsize;
-        }
-        if (schema.contains("F_BLOCKS")) {
-            output.fBlocks = svfs->f_blocks;
-        }
-        if (schema.contains("F_BFREE")) {
-            output.fBfree = svfs->f_bfree;
-        }
-        if (schema.contains("F_BAVAIL")) {
-            output.fBavail = svfs->f_bavail;
-        }
-
-        free(svfs);
-    } catch (const log4cxx::helpers::RuntimeException& e) {
-        NES_ERROR("LinuxSystemResourcesReader: Error reading disk stats " << e.what());
-    }
-    return output;
-}
-
 DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
     DiskMetrics output{};
 

@@ -61,10 +61,6 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     */
     DiskMetrics readDiskStats() override;
 
-    DiskMetrics readDiskStatsBA01() override;
-
-    DiskMetrics readDiskStatsBA02(Schema schema) override;
-
     /**
     * @brief This methods reads network statistics from /proc/net/dev and returns them for each interface in a
     * separate map

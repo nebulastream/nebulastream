@@ -69,6 +69,8 @@ class MetricCollector {
      */
     virtual const MetricPtr readMetric() const = 0;
 
+//    virtual const MetricPtr readMetricBA02(SchemaPtr schema) const = 0;
+
     /**
      * Getter for nodeId
      * @return the nodeId

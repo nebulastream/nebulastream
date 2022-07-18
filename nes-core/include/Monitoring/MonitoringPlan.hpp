@@ -22,6 +22,11 @@
 #include <set>
 #include <string>
 
+//neu
+#include "API/Schema.hpp"
+#include <map>
+#include <list>
+
 namespace NES {
 
 /**
@@ -30,7 +35,12 @@ namespace NES {
 class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics);
     static MonitoringPlanPtr defaultPlan();
+
+    static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
+
+    SchemaPtr getSchema(MetricType metric);
 
     /**
      * @brief Returns the default collectors of the plan.
@@ -73,9 +83,12 @@ class MonitoringPlan {
 
   private:
     explicit MonitoringPlan(const std::set<MetricType>& metrics);
+    explicit MonitoringPlan(const std::map <MetricType, SchemaPtr>& metrics);
 
     //enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
+
+    std::map <MetricType, SchemaPtr> monitoringPlan;
 };
 
 }// namespace NES

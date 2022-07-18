@@ -31,9 +31,9 @@ class DiskCollector : public MetricCollector {
   public:
     explicit DiskCollector();
 
-    explicit DiskCollector(int test);
-
     explicit DiskCollector(std::list<std::string> configuredMetrics);
+
+    explicit DiskCollector(SchemaPtr schema);
 
     /**
      * @brief Returns the type of metric collector
@@ -60,9 +60,7 @@ class DiskCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
-    const MetricPtr readMetricBA01() const;
-
-    const MetricPtr readMetricBA02(Schema schema) const;
+//    const MetricPtr readMetricNEW(SchemaPtr schema) const override;
 
 
   private:

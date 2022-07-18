@@ -26,6 +26,8 @@
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <map>
 #include <string>
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <list>
 
 namespace NES {
 
@@ -237,6 +239,13 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
+    /**
+     * @brief Configuration of Monitoring System
+     */
+//    std::list<std::string> monitoringConfiguration = {MONITORING_CONFIG, "", "The configured monitoring settings"};
+    StringOption monitoringConfiguration = {MONITORING_CONFIG, "", "The configured monitoring settings"};
+    //SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {PHYSICAL_SOURCES, "Physical sources"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,
@@ -268,7 +277,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
-                &configPath};
+                &configPath,
+                &monitoringConfiguration,
+        };
     }
 };
 }// namespace Configurations

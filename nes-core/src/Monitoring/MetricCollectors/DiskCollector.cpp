@@ -33,16 +33,15 @@ DiskCollector::DiskCollector()
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
-DiskCollector::DiskCollector(int test)
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
-      schema(DiskMetrics::getSchemaBA01("")) {
-    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
-    std::cout << test;
-}
-
 DiskCollector::DiskCollector(std::list<std::string> configuredMetrics)          //Schema für Diskcollector übergeben
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(DiskMetrics::getSchemaBA02("", configuredMetrics)) {
+    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
+}
+
+DiskCollector::DiskCollector(SchemaPtr schema)          // Schema direkt an DiskCollector übergeben
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(schema) {
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
@@ -68,16 +67,10 @@ const MetricPtr DiskCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
-const MetricPtr DiskCollector::readMetricBA01() const {
-    DiskMetrics metrics = resourceReader->readDiskStatsBA01();
-    metrics.nodeId = getNodeId();
-    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
-}
-
-const MetricPtr DiskCollector::readMetricBA02(Schema schema) const {
-    DiskMetrics metrics = resourceReader->readDiskStatsBA02(schema);
-    metrics.nodeId = getNodeId();
-    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
-}
+//const MetricPtr DiskCollector::readMetricBA02(Schema schema) const {
+//    DiskMetrics metrics = resourceReader->readDiskStatsBA02(schema);
+//    metrics.nodeId = getNodeId();
+//    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
+//}
 
 }// namespace NES

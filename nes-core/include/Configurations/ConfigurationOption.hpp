@@ -185,6 +185,11 @@ const std::string IS_MOBILE_CONFIG = "isMobile";
 const std::string LOCATION_SOURCE_CONFIG = "locationSourceConfig";
 const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceType";
 
+/**
+ * @brief new to test:
+ */
+const std::string MONITORING_CONFIG = "monitoringConfiguration";
+
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";

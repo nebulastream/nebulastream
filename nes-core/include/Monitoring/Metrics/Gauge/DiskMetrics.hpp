@@ -31,7 +31,8 @@ class DiskMetrics {
   public:
     DiskMetrics();
 
-    DiskMetrics(int test);
+    DiskMetrics(SchemaPtr schema);
+
     /**
      * @brief Returns the schema of the class with a given prefix.
      * @param prefix
@@ -39,9 +40,13 @@ class DiskMetrics {
      */
     static SchemaPtr getSchema(const std::string& prefix);
 
-    static SchemaPtr getSchemaBA01(const std::string& prefix);
-
+    /*
+     * @brief added by Lennart
+     */
     static SchemaPtr getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics);
+    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+    void writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const;
+    void readFromBufferNEW(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -50,16 +55,12 @@ class DiskMetrics {
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
-    void writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const;
-
     /**
      * @brief Parses a metrics objects from a TupleBuffer..
      * @param buf the tuple buffer
      * @param the tuple index indicating the location of the tuple
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-
-    void readFromBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
     /**
      * @brief Returns the metrics as json
@@ -69,6 +70,14 @@ class DiskMetrics {
 
     bool operator==(const DiskMetrics& rhs) const;
     bool operator!=(const DiskMetrics& rhs) const;
+
+    /**
+     * mainly used for testing
+     * @param metricName  Name of the Metric to get the corresponding value back
+     * @return value of the metric
+     */
+
+    uint64_t getValue(std::string metricName);
 
     uint64_t nodeId;
     uint64_t fBsize;
@@ -87,8 +96,8 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
  * @param the tuple index indicating the location of the tuple
 */
 void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-
 void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+
 
 /**
  * @brief Parses metrics objects from a given Schema and TupleBuffer.
@@ -97,8 +106,7 @@ void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, ui
  * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-
-void readFromBufferBA02(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+void readFromBufferNEW(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 /**
  * @brief Parses the metric to JSON

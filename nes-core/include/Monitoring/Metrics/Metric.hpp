@@ -43,9 +43,11 @@ void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& b
  * @return the value
  */
 void readFromBuffer(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBufferNEW(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBufferNEW(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-//void readFromBufferBA02(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+//void readFromBufferNEW(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 /**
  * @brief class specific asJson()
@@ -128,10 +130,10 @@ class Metric {
     */
     friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
         return x.self->readFromBufferConcept(buf, tupleIndex);
-    }
+    }   //Nummer 2
 
-//    friend void readFromBufferBA02(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
-//        return x.self->readFromBufferConceptBA02(buf, tupleIndex, schema);
+//    friend void readFromBufferNEW(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
+//        return x.self->readFromBufferConceptNEW(buf, tupleIndex, schema);
 //    }
 
   private:
@@ -158,7 +160,7 @@ class Metric {
         */
         virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t tupleIndex) = 0;
 
-//        virtual void readFromBufferConceptBA02(Runtime::TupleBuffer&, uint64_t tupleIndex, SchemaPtr schema) = 0;
+//        virtual void readFromBufferConceptNEW(Runtime::TupleBuffer&, uint64_t tupleIndex, SchemaPtr schema) = 0;
 
     };
 
@@ -180,10 +182,10 @@ class Metric {
 
         void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
             readFromBuffer(data, buf, tupleIndex);
-        }
+        }   //Nummer 3
 
-//        void readFromBufferConceptBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) override {
-//            readFromBufferBA02(data, buf, tupleIndex, schema);
+//        void readFromBufferConceptNEW(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) override {
+//            readFromBufferNEW(data, buf, tupleIndex, schema);
 //        }
 
         T data;

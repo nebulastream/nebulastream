@@ -78,10 +78,6 @@ class AbstractSystemResourcesReader {
     */
     virtual DiskMetrics readDiskStats();
 
-    virtual DiskMetrics readDiskStatsBA01();
-
-    virtual DiskMetrics readDiskStatsBA02(NES::Schema schema);
-
     /**
     * @brief This methods reads network statistics for each interface and returns a wrapper object containing this information.
     * @return A NetworkMetricsWrapper object containing the network statistics for each available interface.

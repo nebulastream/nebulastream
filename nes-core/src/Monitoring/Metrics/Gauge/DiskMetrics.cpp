@@ -21,28 +21,34 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
+#include <Monitoring/MonitoringPlan.hpp>
+
 namespace NES {
 
 DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
-DiskMetrics::DiskMetrics(int test) : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0) {
-    std::cout << test;
+DiskMetrics::DiskMetrics(SchemaPtr schema){
+    nodeId = 0;
+    if (schema->contains("F_BSIZE")) {
+        fBsize = 100;
+    }
+    if (schema->contains("F_FRSIZE")) {
+        fFrsize = 100;
+    }
+    if (schema->contains("F_BLOCKS")) {
+        fBlocks = 100;
+    }
+    if (schema->contains("F_BFREE")) {
+        fBfree = 100;
+    }
+    if (schema->contains("F_BAVAIL")) {
+        fBavail = 100;
+    }
 }
 
-//DiskMetrics::DiskMetrics(Schema schema) : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0) {
-//    std::cout << test;
-//}
-//Konstruktor der nen Schema hat mit den gewünschten Metriken
-
-SchemaPtr DiskMetrics::getSchemaBA01(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
-                           ->addField(prefix + "F_BSIZE", BasicType::UINT64)
-                           ->addField(prefix + "F_FRSIZE", BasicType::UINT64)
-                           ->addField(prefix + "F_BLOCKS", BasicType::UINT64)
-                           ->addField(prefix + "F_BFREE", BasicType::UINT64);
-    return schema;
-}
+/**
+ * @brief added by Lennart
+ */
 
 SchemaPtr DiskMetrics::getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
@@ -65,8 +71,6 @@ SchemaPtr DiskMetrics::getSchemaBA02(const std::string& prefix, std::list<std::s
     }
     return schema;
 }
-
-
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
@@ -77,7 +81,27 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
                            ->addField(prefix + "F_BAVAIL", BasicType::UINT64);
     return schema;
 }
+SchemaPtr DiskMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
 
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "F_BSIZE") {
+            schema->addField(prefix + "F_BSIZE", BasicType::UINT64);
+        } else if (metric == "F_FRSIZE") {
+            schema->addField(prefix + "F_FRSIZE", BasicType::UINT64);
+        } else if (metric == "F_BLOCKS") {
+            schema->addField(prefix + "F_BLOCKS", BasicType::UINT64);
+        } else if (metric == "F_BFREE") {
+            schema->addField(prefix + "F_BFREE", BasicType::UINT64);
+        } else if (metric == "F_BAVAIL") {
+            schema->addField(prefix + "F_BAVAIL", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
 void DiskMetrics::writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const {                 //auch dynamisch machen
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
@@ -107,28 +131,7 @@ void DiskMetrics::writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleInd
 
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
-
-void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {                 //auch dynamisch machen
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());
-    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-
-    auto totalSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "DiskMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
-
-    uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
-    buffer[tupleIndex][cnt++].write<uint64_t>(fBsize);
-    buffer[tupleIndex][cnt++].write<uint64_t>(fFrsize);
-    buffer[tupleIndex][cnt++].write<uint64_t>(fBlocks);
-    buffer[tupleIndex][cnt++].write<uint64_t>(fBfree);
-    buffer[tupleIndex][cnt++].write<uint64_t>(fBavail);
-
-    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
-}
-
-void DiskMetrics::readFromBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {                  //auch dynamisch
+void DiskMetrics::readFromBufferNEW(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {                  //auch dynamisch
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
@@ -151,9 +154,64 @@ void DiskMetrics::readFromBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIn
     }
 
 }
+void readFromBufferNEW(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
+    metrics.readFromBufferNEW(buf, tupleIndex, schema);
+}
+void writeToBufferBA02(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
+    metric.writeToBufferBA02(buf, tupleIndex, schema);
+}
+//void DiskMetrics::writeToBufferTemp(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const { // Schema durch Funktion bekommen, oder als Parameter mit übergeben
+//    //SchemaPtr schema = MonitoringPlan::getSchema(MetricType::DiskMetric);
+//    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+//    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+//
+//    auto totalSize = schema->getSchemaSizeInBytes();
+//    NES_ASSERT(totalSize <= buf.getBufferSize(),
+//               "DiskMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+//                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+//
+//    uint64_t cnt = 0;
+//    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);          //NodeId has always to be filled
+//    if (schema->contains("F_BSIZE")) {
+//        buffer[tupleIndex][cnt++].write<uint64_t>(fBsize);
+//    }
+//    if (schema->contains("F_FRSIZE")) {
+//        buffer[tupleIndex][cnt++].write<uint64_t>(fFrsize);
+//    }
+//    if (schema->contains("F_BLOCKS")) {
+//        buffer[tupleIndex][cnt++].write<uint64_t>(fBlocks);
+//    }
+//    if (schema->contains("F_BFREE")) {
+//        buffer[tupleIndex][cnt++].write<uint64_t>(fBfree);
+//    }
+//    if (schema->contains("F_BAVAIL")) {
+//        buffer[tupleIndex][cnt++].write<uint64_t>(fBavail);
+//    }
+//
+//    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
+//}
 
+void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {                 //auch dynamisch machen
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {                  //auch dynamisch
+    auto totalSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "DiskMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
+    uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(fBsize);
+    buffer[tupleIndex][cnt++].write<uint64_t>(fFrsize);
+    buffer[tupleIndex][cnt++].write<uint64_t>(fBlocks);
+    buffer[tupleIndex][cnt++].write<uint64_t>(fBfree);
+    buffer[tupleIndex][cnt++].write<uint64_t>(fBavail);
+
+    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
+}
+
+void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {          //Nummer 5
     auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
@@ -190,14 +248,25 @@ void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_
 
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     metrics.readFromBuffer(buf, tupleIndex);
-}
+}       //Nummer 4
 
-void writeToBufferBA02(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
-    metric.writeToBufferBA02(buf, tupleIndex, schema);
-}
 
-void readFromBufferBA02(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
-    metrics.readFromBufferBA02(buf, tupleIndex, schema);
+uint64_t DiskMetrics::getValue(std::string metricName) {
+    if (metricName == "F_BSIZE") {
+        return fBsize;
+    } else if (metricName == "F_FRSIZE") {
+        return fFrsize;
+    } else if (metricName == "F_BLOCKS") {
+        return fBlocks;
+    } else if (metricName == "F_BFREE") {
+        return fBfree;
+    } else if (metricName == "F_BAVAIL") {
+        return fBavail;
+    } else {
+        NES_DEBUG("Unknown Metricname: " << metricName);
+        //todo: find right exception
+        throw std::exception();
+    }
 }
 
 web::json::value asJson(const DiskMetrics& metrics) { return metrics.toJson(); }

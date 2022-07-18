@@ -12,17 +12,48 @@
     limitations under the License.
 */
 
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <list>
 
 namespace NES {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
+MonitoringPlan::MonitoringPlan(const std::map<MetricType, SchemaPtr>& metrics) : monitoringPlan(metrics) {
+    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
+}
+
 MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
     return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
+}
+
+MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>& monitoringPlan) {
+    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan));
+}
+
+//set the MonitoringPlan for the Yaml Konfiguration
+MonitoringPlanPtr MonitoringPlan::setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml) {
+    std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
+    SchemaPtr schema;
+    if (configuredMetricsYaml.count(CpuMetric) > 0) {
+        //call setSchema Function for the Metric
+        //insert MetricType and Schema into configuredMonitoringPlan
+    } if (configuredMetricsYaml.count(DiskMetric) > 0) {
+        auto it = configuredMetricsYaml.find(DiskMetric);
+        configuredMonitoringPlan.insert(std::pair<MetricType,
+                                                  SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", it->second)));
+    }
+        //do the same for all Metrics
+
+    return MonitoringPlan::create(configuredMonitoringPlan);
+}
+
+SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
+    return monitoringPlan.find(metric)->second;
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
