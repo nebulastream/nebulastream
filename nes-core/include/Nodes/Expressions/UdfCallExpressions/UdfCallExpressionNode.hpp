@@ -43,9 +43,11 @@ class UdfCallExpressionNode : public ExpressionNode {
     static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
                                     std::vector<ExpressionNodePtr> functionArguments);
     /**
-    * @brief determine the stamp of the Udf call by checking the return type of the function
+     * @brief determine the stamp of the Udf call by checking the return type of the function
      * An error is thrown when no UDF descriptor is set.
-    */
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     std::string toString() const override;

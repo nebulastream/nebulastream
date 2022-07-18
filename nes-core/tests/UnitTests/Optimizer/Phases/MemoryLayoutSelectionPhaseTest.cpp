@@ -62,6 +62,8 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
+
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -71,6 +73,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
     static void TearDownTestCase() { NES_INFO("Tear down MemoryLayoutSelectionPhase test class."); }
 
     SchemaPtr testSchema;
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 };
 
 class TestSink : public SinkMedium {
@@ -238,7 +241,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = typeInference->execute(plan);
 
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);

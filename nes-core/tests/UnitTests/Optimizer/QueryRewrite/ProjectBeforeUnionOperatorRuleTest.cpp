@@ -36,7 +36,8 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
   public:
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
-
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectBeforeUnionOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -44,7 +45,10 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32); }
+    void SetUp() override {
+        schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
+        udfCatalog = Catalogs::UdfCatalog::create();
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Setup ProjectBeforeUnionOperatorRuleTest test case."); }
@@ -81,7 +85,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();
@@ -110,7 +114,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();

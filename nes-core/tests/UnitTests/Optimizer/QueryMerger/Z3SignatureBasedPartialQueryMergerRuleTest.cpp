@@ -51,6 +51,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
   public:
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -101,6 +102,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -144,7 +146,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -226,7 +228,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -299,7 +301,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -367,7 +369,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
     queryPlan3 = topologySpecificReWrite->execute(queryPlan3);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
     typeInferencePhase->execute(queryPlan3);
@@ -450,7 +452,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -543,7 +545,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 

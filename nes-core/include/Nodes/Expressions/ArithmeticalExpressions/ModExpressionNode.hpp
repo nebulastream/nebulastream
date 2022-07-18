@@ -34,6 +34,7 @@ class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
          * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to tighten bounds.
          * @comment E.g. if the divisor in the modulo operation is a Int8, we can set the results to be Int8.
          * @comment More general: We set upperbound = max(abs(lowerbound_of_divisor), abs(upperbound_of_divisor)) and the lowerbound to the negation of the same maxiumum. This follows the mathematical definition and implementation in C.
+         * @param typeInferencePhaseContext
          * @param schema: the current schema.
          */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) final;

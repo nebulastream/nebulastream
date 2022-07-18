@@ -48,7 +48,8 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
   public:
     SchemaPtr schema;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
-
+    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -60,6 +61,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -162,7 +164,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
@@ -194,7 +196,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, nullptr)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);

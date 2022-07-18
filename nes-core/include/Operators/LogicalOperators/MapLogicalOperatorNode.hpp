@@ -38,6 +38,7 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
      * 2. the assignment statement creates a new field with an inferred data type.
      * @throws throws exception if inference was not possible.
+     * @param typeInferencePhaseContext needed for stamp inferring
      * @return true if inference was possible
      */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;

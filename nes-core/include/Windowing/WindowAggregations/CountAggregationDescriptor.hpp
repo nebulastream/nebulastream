@@ -35,8 +35,9 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
     /**
-     * @brief Infers the stamp of the expression given the current schema.
-     * @param SchemaPtr
+     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @param typeInferencePhaseContext
+     * @param schema
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 

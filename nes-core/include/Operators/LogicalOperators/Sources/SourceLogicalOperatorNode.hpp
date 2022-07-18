@@ -43,7 +43,8 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
 
     /**
      * @brief Returns the result schema of a source operator, which is defined by the source descriptor.
-     * @return SchemaPtr
+     * @param typeInferencePhaseContext needed for stamp inferring
+     * @return true if schema was correctly inferred
      */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
 

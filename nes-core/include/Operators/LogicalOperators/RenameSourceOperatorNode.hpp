@@ -39,6 +39,7 @@ class RenameSourceOperatorNode : public LogicalUnaryOperatorNode {
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
+    * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;

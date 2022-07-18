@@ -81,6 +81,7 @@ class STKnnExpressionNode : public ExpressionNode {
 
     /**
      * @brief Infers the stamp of the ST_KNN expression node.
+     * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;

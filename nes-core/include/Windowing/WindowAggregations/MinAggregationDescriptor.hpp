@@ -32,9 +32,10 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /**
- * @brief Infers the stamp of the expression given the current schema.
- * @param SchemaPtr
- */
+     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
     WindowAggregationPtr copy() override;
     DataTypePtr getInputStamp() override;

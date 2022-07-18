@@ -25,6 +25,7 @@ class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public Ari
     /**
      * @brief Infers the stamp of this arithmetical expression node.
      * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
+     * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
