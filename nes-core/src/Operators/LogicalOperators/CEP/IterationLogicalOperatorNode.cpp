@@ -43,7 +43,7 @@ std::string IterationLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool IterationLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) { return LogicalUnaryOperatorNode::inferSchema(ctx); }
+bool IterationLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) { return LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext); }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createCEPIterationOperator(minIterations, maxIterations, id);

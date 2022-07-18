@@ -54,9 +54,9 @@ FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
 
 ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const { return getRight(); }
 
-void FieldAssignmentExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void FieldAssignmentExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // infer stamp of assignment expression
-    getAssignment()->inferStamp(ctx, schema);
+    getAssignment()->inferStamp(typeInferencePhaseContext, schema);
 
     // field access
     auto field = getField();

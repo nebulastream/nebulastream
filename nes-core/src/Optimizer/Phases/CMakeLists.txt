@@ -23,4 +23,5 @@ add_source_files(nes-core
         QueryRewritePhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
+        TypeInferencePhaseContext.cpp
 )

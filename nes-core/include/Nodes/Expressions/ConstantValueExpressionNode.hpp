@@ -42,7 +42,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @brief On a constant value expression infer stamp has not to perform any action as its result type is always constant.
      * @param schema
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     /**
      * @brief Creates a string of the value and the type.

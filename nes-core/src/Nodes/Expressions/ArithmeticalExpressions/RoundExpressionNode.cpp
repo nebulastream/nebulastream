@@ -31,9 +31,9 @@ ExpressionNodePtr RoundExpressionNode::create(ExpressionNodePtr const& child) {
     return roundNode;
 }
 
-void RoundExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) {
+void RoundExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(ctx, schema);
+    ArithmeticalUnaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);

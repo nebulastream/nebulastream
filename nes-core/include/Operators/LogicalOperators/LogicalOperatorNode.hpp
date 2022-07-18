@@ -90,7 +90,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
-    virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& ctx) = 0;
+    virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
 
   protected:
     Optimizer::QuerySignaturePtr z3Signature;

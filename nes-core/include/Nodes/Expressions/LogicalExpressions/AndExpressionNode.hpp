@@ -35,7 +35,7 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
      * We assume that both children of an and expression are predicates.
      * @param schema the current schema.
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& ctx, SchemaPtr schema) override;
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

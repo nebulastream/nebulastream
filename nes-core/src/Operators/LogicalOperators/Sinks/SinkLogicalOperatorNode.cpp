@@ -37,7 +37,7 @@ bool SinkLogicalOperatorNode::equal(NodePtr const& rhs) const {
     return false;
 };
 
-bool SinkLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& ctx) { return LogicalUnaryOperatorNode::inferSchema(ctx); }
+bool SinkLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) { return LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext); }
 
 std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
