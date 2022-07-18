@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.62](https://github.com/nebulastream/nebulastream/tree/v0.2.62) (2022-07-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.61...v0.2.62)
+
+### Miscellaneous Issues ✌️
+
+- MLIR: Extend Types and Arithmetic Operations and Logical Comparisons [\#2854](https://github.com/nebulastream/nebulastream/issues/2854)
+
 ## [v0.2.61](https://github.com/nebulastream/nebulastream/tree/v0.2.61) (2022-07-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.60...v0.2.61)
