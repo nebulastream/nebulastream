@@ -499,13 +499,15 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     csvSourceType->setNumberOfBuffersToProduce(3);
 
     auto coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(0);
+    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(1000);
     coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(1);
+    coordinatorConfig->logLevel = LogLevel::LOG_DEBUG;
 
     for (uint64_t i = 0; i < workerNo; i++) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->queryCompiler.windowingStrategy.setValue(
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::DEFAULT);
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
+        workerConfig->logLevel = LogLevel::LOG_DEBUG;
         workerConfigs.emplace_back(workerConfig);
     }
 
@@ -559,7 +561,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
     NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n" << queryPlan->toString());
-    NES_INFO("DeepHierarchyTopologyTest: Input from CSV Source " << TEST_DATA_DIRECTORY <<  "window.csv");
+    NES_INFO("DeepHierarchyTopologyTest: Input from CSV Source " << TEST_DATA_DIRECTORY << "window.csv");
 
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
