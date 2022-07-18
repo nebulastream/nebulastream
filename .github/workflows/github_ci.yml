@@ -67,7 +67,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
-    timeout-minutes: 90
+    timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
