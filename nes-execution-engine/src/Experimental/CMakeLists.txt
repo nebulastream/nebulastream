@@ -12,6 +12,7 @@
 
 add_subdirectory(MLIR)
 add_subdirectory(NESIR)
+add_subdirectory(Flounder)
 add_subdirectory(Interpreter)
 add_subdirectory(Trace)
 add_subdirectory(Utility)

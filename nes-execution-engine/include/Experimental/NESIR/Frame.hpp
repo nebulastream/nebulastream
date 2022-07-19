@@ -32,7 +32,8 @@ class Frame {
         return frameMap.contains(key);
     }
 
-    void setValue(K key, V value) { frameMap[key] = value; }
+    void setValue(K key, V value) { frameMap.emplace(std::make_pair(key,value)); }
+    std::unordered_map<K, V>& getContent() { return frameMap; }
 
   private:
     std::unordered_map<K, V> frameMap;
