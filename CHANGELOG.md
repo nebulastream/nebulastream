@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.63](https://github.com/nebulastream/nebulastream/tree/v0.2.63) (2022-07-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.62...v0.2.63)
+
+### Bug Fixes 🐛
+
+- \[BUG\] increase timeout for arm ci [\#2890](https://github.com/nebulastream/nebulastream/issues/2890)
+
+#### Build Management
+
+- \[Feature\] Enable parallel ci build [\#2893](https://github.com/nebulastream/nebulastream/issues/2893)
+
 ## [v0.2.62](https://github.com/nebulastream/nebulastream/tree/v0.2.62) (2022-07-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.61...v0.2.62)
