@@ -94,6 +94,14 @@ class RestServer {
                const Runtime::BufferManagerPtr& bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 
+
+    /**
+   * @brief method to start the rest server
+     * calls withOatpp or withRestSDK according to bool useOatpp
+   * @return bool indicating success
+   */
+    bool start(bool useOatpp = false);
+
     /**
    * @brief method to start the rest server with Oatpp
    * @return bool indicating success
@@ -106,6 +114,10 @@ class RestServer {
    */
     bool startWithRestSDK();
 
+    /**
+   * @brief method called within startWithOatpp
+   * starts the server with oatpp after initializing controllers, endpoints and necessary components like  connection handler, router.
+   */
     void run();
 
     /**

@@ -768,7 +768,7 @@ add_test(NAME grpc-test COMMAND grpc-test)
 
 ### Query Failure Test
 add_executable(query-failure-test "Integration/QueryFailureTest.cpp")
-target_link_libraries(query-failure-test nes-tests nes-tests)
+target_link_libraries(query-failure-test nes-tests)
 add_test(NAME query-failure-test COMMAND query-failure-test)
 
 ### Location Integration Test ###
@@ -782,10 +782,6 @@ endif ()
 add_executable(tests-for-oatpp-endpoints "UnitTests/REST/OatppTests/TestsForOatppEndpoints.cpp"  "UnitTests/REST/OatppTests/MyControllerTest.cpp")
 target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp oatpp::oatpp-test)
 add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
-
-add_executable(tests-for-oatpp-endpoints-more "UnitTests/REST/OatppTests/MyControllerTest.cpp")
-target_link_libraries(tests-for-oatpp-endpoints-more nes-tests oatpp::oatpp oatpp::oatpp-test)
-add_test(NAME tests-for-oatpp-endpoints-more COMMAND tests-for-oatpp-endpoints-more)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
