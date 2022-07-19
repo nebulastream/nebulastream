@@ -180,7 +180,7 @@ TEST_F(CircularBufferTest, fillAndRemoveMultipleValues) {
     char findValue = 0x03;
     uint64_t places = circularBuffer.sizeUntilSearchToken(findValue);
     EXPECT_EQ(places, 3u);
-    bool found = circularBuffer.popValuesUntil(poppedValues, findValue);
+    bool found = circularBuffer.popGivenNumberOfValues(poppedValues, places, true);
     EXPECT_EQ(poppedValues[0], 'a');
     EXPECT_EQ(poppedValues[1], 'b');
     EXPECT_EQ(poppedValues[2], 'c');

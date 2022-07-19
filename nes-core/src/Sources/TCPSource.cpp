@@ -54,8 +54,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)),
-      buffer(this->bufferManager->getBufferSize()) {
+      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), buffer(2048) {
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 
     //init physical types
@@ -180,20 +179,33 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
         int16_t sendBytes;
         if (!buffer.full()) {
-            void* buf = nullptr;
+            char* buf = new char[buffer.capacity() - buffer.size()];
+            NES_TRACE("TCPSOURCE::fillBuffer: size to fill: " << buffer.capacity() - buffer.size() << ".");
             sendBytes = read(sockfd, buf, buffer.capacity() - buffer.size());
             if (sendBytes != 0 && sendBytes != -1) {
-                buffer.push(reinterpret_cast<char*>(&buf), sendBytes);
+                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: " << sendBytes << ".");
+                NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: " << buf << ".");
+                buffer.push(buf, sendBytes);
             }
         }
 
-        uint64_t messageSize = buffer.sizeUntilSearchToken(0x03);
-        char* messageBuffer = new char [messageSize];
-        if (messageSize != 0 && buffer.popValuesUntil(messageBuffer, messageSize)) {
+        //TODO: reintroduce size reading from buffer and inputting sizes
+        //todo: check if current buffer is robust if only half a message is send
+        //todo: make sure for all possible message sending scenarios buffer is able to work and robust
+
+        uint64_t messageSize = buffer.sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
+        char* messageBuffer = new char[messageSize];
+        NES_TRACE("TCPSOURCE::fillBuffer: Client consume message of size: '" << messageSize << "'");
+        NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << buffer.size() << "'");
+        bool popped = buffer.popGivenNumberOfValues(messageBuffer, messageSize, true);
+        NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared message? '" << popped << "'");
+        if (messageSize != 0 && popped) {
             NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
             if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
-                inputParser->writeInputTupleToTupleBuffer(messageBuffer, tupleCount, tupleBuffer, schema);
+                std::string buf(messageBuffer);
+                buf = (buf).substr(0, buf.rfind("}") + 1);
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
             } else {
                 inputParser->writeInputTupleToTupleBuffer(messageBuffer, tupleCount, tupleBuffer, schema);
             }
