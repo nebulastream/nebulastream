@@ -180,8 +180,8 @@ class CircularBuffer {
     }
 
     template<bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
-    void push(T values[], uint size) noexcept(std::is_nothrow_move_assignable<T>::value) {
-        for (uint64_t i = 0; i < size; ++i) {
+    void push(T values[], size_t size) noexcept(std::is_nothrow_move_assignable<T>::value) {
+        for (size_t i = 0; i < size; ++i) {
             push(values[i]);
         }
     }
@@ -208,9 +208,9 @@ class CircularBuffer {
     }
 
     /**
-     * @brief search from the back (first inputted item) to the front
-     * @token value to search for
-     * @return number of places until first occurrence of token
+     * @brief search from the back (first inputted item) to the front for the given search token
+     * @token to search for
+     * @return number of places until first occurrence of token (place of token not included)
      */
     uint64_t sizeUntilSearchToken(T token) {
         uint64_t places = 0;
@@ -224,18 +224,22 @@ class CircularBuffer {
     }
 
     /**
-     * @brief pops and fills temp with all values until the given char value
-     * @param temp char array to be filled
-     * @param popUntil char values to compare to
-     * @return true if value was found, false otherwise
+     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
+     * @param temp array to fill with popped values
+     * @param numberOfValuesToPop number of values to pop and fill temp with
+     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
+     * @return true if number of values to pop successfully popped, false otherwise
      */
-    bool popValuesUntil(T* temp, T popUntil) {
-        for (uint64_t i = 0; i < capacity(); ++i) {
-            char popped = pop();
-            if (popped == popUntil){
-                return true;
+    bool popGivenNumberOfValues(T* temp, uint64_t numberOfValuesToPop, bool popTextDivider) {
+        if (size() > numberOfValuesToPop) {
+            for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
+                char popped = pop();
+                temp[i] = popped;
             }
-            temp[i] = popped;
+            if (popTextDivider) {
+                pop();
+            }
+            return true;
         }
         return false;
     }

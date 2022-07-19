@@ -1070,7 +1070,9 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         tcpSerializedSourceConfig.set_socketport(tcpSourceDescriptor->getSourceConfig()->getSocketPort()->getValue());
         tcpSerializedSourceConfig.set_socketdomain(tcpSourceDescriptor->getSourceConfig()->getSocketDomain()->getValue());
         tcpSerializedSourceConfig.set_sockettype(tcpSourceDescriptor->getSourceConfig()->getSocketType()->getValue());
-        tcpSerializedSourceConfig.set_socketbuffersize(tcpSourceDescriptor->getSourceConfig()->getSocketBufferSize()->getValue());
+        std::string tupleSeparator;
+        tupleSeparator = tcpSourceDescriptor->getSourceConfig()->getTupleSeparator()->getValue();
+        tcpSerializedSourceConfig.set_tupleseparator(tupleSeparator);
         tcpSerializedSourceConfig.set_flushintervalms(
             tcpSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
         switch (tcpSourceDescriptor->getSourceConfig()->getInputFormat()->getValue()) {
@@ -1281,13 +1283,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setSocketPort(tcpSourceConfig->socketport());
         sourceConfig->setSocketDomain(tcpSourceConfig->socketdomain());
         sourceConfig->setSocketType(tcpSourceConfig->sockettype());
-        sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
         sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
-        if (tcpSourceConfig->inputformat() == 0) {
-            sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
-        } else {
-            sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
-        }
+        sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()));
+        sourceConfig->setTupleSeparator(tcpSourceConfig->tupleseparator().at(0));
         auto ret = TCPSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }

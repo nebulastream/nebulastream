@@ -558,7 +558,7 @@ class SourceTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup SourceTest test class.");
     }
 
@@ -1721,13 +1721,13 @@ TEST_F(SourceTest, TCPSourcePrint) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "2\nsocketType: 1\nsocketBufferSize: 0\nflushIntervalMS: -1\ninputFormat: 1\n}";
+        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: 1\ntupleSeparator: \n\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
 }
 /**
  * @brief Tests csv schema with given buffer size. The tests requires an external TCPServer. We used a simple Python TCP
- * Server that sends "42,0.5,hello" five times via socket
+ * Server that sends "42,0.5,hello\n" five times via socket
  */
 TEST_F(SourceTest, DISABLED_TCPSourceReadCSVData) {
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
@@ -1735,8 +1735,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadCSVData) {
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
-    sourceConfig->setSocketBufferSize(12);
-    sourceConfig->setFlushIntervalMS(2000);
+    sourceConfig->setFlushIntervalMS(100);
     sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
 
     auto tcpSchema = Schema::create()
@@ -1764,7 +1763,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadCSVData) {
 }
 /**
  * @brief tests JSON schema. We also obtain the size of the buffer from the server. We again used an external TCP Python Server
- * that sends {'id': '42', 'value': '0.5', 'name': 'hello'} this JSON 5 times
+ * that sends {'id': '42', 'value': '0.5', 'name': 'hello'}# this JSON 5 times
  */
 TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
@@ -1775,6 +1774,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
     sourceConfig->setSocketBufferSize(59);
     sourceConfig->setFlushIntervalMS(2000);
     sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
+    sourceConfig->setTupleSeparator('#');
 
     auto tcpSchema = Schema::create()
                          ->addField("id", UINT8)

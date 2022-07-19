@@ -143,18 +143,6 @@ class TCPSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<Configurations::InputFormat>> getInputFormat() const;
 
     /**
-     * @brief Sets the size of the socketBuffer. If 0 we assume that the size is send in an extra message before each tuple
-     * @param socketBufferSize
-     */
-    void setSocketBufferSize(uint32_t socketBufferSize);
-
-    /**
-     * @brief Get the socketBufferSize
-     * @return socketBufferSize
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketBufferSize() const;
-
-    /**
      * @brief Get tupleBuffer flush interval in milliseconds
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<float>> getFlushIntervalMS() const;
@@ -163,6 +151,18 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief Set tupleBuffer flush interval in milliseconds
      */
     void setFlushIntervalMS(float flushIntervalMs);
+
+    /**
+     * @brief get message divided for TCPSource
+     * @return message divider
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<char>> getTupleSeparator() const;
+
+    /**
+     * @brief set message divider for TCPSource
+     * @param deviderTokenValue message divider as char
+     */
+    void setTupleSeparator(char dividerTokenValue);
 
   private:
     /**
@@ -186,9 +186,10 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption socketPort;
     Configurations::IntConfigOption socketDomain;
     Configurations::IntConfigOption socketType;
-    Configurations::IntConfigOption socketBufferSize;
     Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
+    Configurations::CharConfigOption tupleSeparator;
+
 };
 }// namespace NES
 #endif//NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP

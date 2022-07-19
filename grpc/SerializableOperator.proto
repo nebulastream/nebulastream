@@ -116,9 +116,9 @@ message SerializablePhysicalSourceType{
       uint32 socketPort = 2;
       uint32 socketDomain = 3;
       uint32 socketType = 4;
-      uint32 socketBufferSize = 5;
       float flushIntervalMS = 6;
       InputFormat inputFormat = 7;
+      string tupleSeparator = 8;
     }
 
   /**

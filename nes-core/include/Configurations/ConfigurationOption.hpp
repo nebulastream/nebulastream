@@ -153,6 +153,7 @@ using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
+using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
 using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode::Value>>;
 
@@ -277,11 +278,12 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
+//TCPSourceType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
-const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string SOCKET_TYPE_CONFIG = "socketType";
+const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 
 //Runtine configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
