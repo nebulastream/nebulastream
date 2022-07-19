@@ -25,7 +25,7 @@ void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const 
     // iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
-    for (Value<UInt64> i = 0ul; i <= numberOfRecords; i = i + 1ul) {
+    for (Value<UInt64> i = 0ul; i < numberOfRecords; i = i + 1ul) {
         auto record = recordBuffer.read(memoryLayout, bufferAddress, i);
         child->execute(ctx, record);
     }
