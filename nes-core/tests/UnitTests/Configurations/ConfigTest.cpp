@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 
@@ -95,6 +96,8 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
     std::map <MetricType, std::list<std::string>> mapMonitoringConfig =
         MetricUtils::parseMonitoringConfigStringToMap(workerConfigPtr->monitoringConfiguration.getValue());
+    web::json::value configurationMonitoringJson{};
+    configurationMonitoringJson = MetricUtils::ConfigMapToJson(mapMonitoringConfig);
     std::cout << "Well done!";
 }
 

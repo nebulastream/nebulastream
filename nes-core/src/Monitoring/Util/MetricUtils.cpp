@@ -206,4 +206,13 @@ std::map <MetricType, std::list<std::string>> MetricUtils::parseMonitoringConfig
     return MonitoringConfigurationMap;
 }
 
+//web::json::value MetricUtils::ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring) {
+//    web::json::value configurationMonitoringJson{};
+//    std::map <MetricType, std::list<std::string>>::iterator i;
+//    for (i = mapConfigurationMonitoring.begin(); i != mapConfigurationMonitoring.end(); i++) {
+//        configurationMonitoringJson[i->first] =  web::jsoi->second;
+//    }
+//    return configurationMonitoringJson;
+//}
+
 }// namespace NES
