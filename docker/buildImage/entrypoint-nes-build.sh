@@ -59,7 +59,7 @@ then
       # timeout after 240 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 240m make test_debug
+      timeout 120m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
