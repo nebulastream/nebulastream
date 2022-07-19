@@ -234,10 +234,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
         if (this->coordinatorConfiguration->serverTypeOatpp == true){
             NES_DEBUG("NesCoordinator::startCoordinatorRESTServerOATPP: ready");
-            restServer->startWithOatpp();//this call is blocking
+            restServer->start(true);//this call is blocking
         }
         else{
-            restServer->startWithRestSDK();//this call is blocking
+            restServer->start(false);//this call is blocking
         }
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));

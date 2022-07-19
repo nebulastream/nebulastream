@@ -55,6 +55,13 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port) {}
 
+bool RestServer::start(bool useOatpp){
+    if (useOatpp == true){
+        return startWithOatpp();
+    }
+    return startWithRestSDK();
+}
+
 bool RestServer::startWithOatpp() {
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
@@ -118,6 +125,7 @@ bool RestServer::stop() {
     }
     return shutdownPromise.get_future().get();
 }
+
 void RestServer::run() {
     /* Register Components in scope of run() method */
     AppComponent components;
