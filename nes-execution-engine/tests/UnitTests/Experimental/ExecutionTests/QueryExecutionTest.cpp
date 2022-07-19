@@ -35,6 +35,8 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -65,6 +67,7 @@ class QueryExecutionTest : public testing::Test {
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
+    std::shared_ptr<ExecutionEngine::Experimental::PipelineCompilerBackend> backend;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -72,7 +75,11 @@ class QueryExecutionTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup QueryExecutionTest test case." << std::endl; }
+    void SetUp() override {
+        std::cout << "Setup QueryExecutionTest test case." << std::endl;
+        //backend = std::make_shared<MLIRPipelineCompilerBackend>();
+        backend = std::make_shared<FlounderPipelineCompilerBackend>();
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "Tear down QueryExecutionTest test case." << std::endl; }
@@ -206,7 +213,7 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     scan.setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
@@ -224,6 +231,77 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 10);
+}
+
+
+TEST_F(QueryExecutionTest, tpchQ6_agg) {
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
+
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+    Scan scan = Scan(lineitemBuffer.first);
+    /*
+     *   l_shipdate >= date '1994-01-01'
+     *   and l_shipdate < date '1995-01-01'
+     */
+    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
+    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
+    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
+    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
+    auto selection1 = std::make_shared<Selection>(lessThanExpression1);
+    scan.setChild(selection1);
+    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
+    auto selection2 = std::make_shared<Selection>(lessThanExpression2);
+    selection1->setChild(selection2);
+
+    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
+    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
+    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
+    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
+    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
+    auto selection3 = std::make_shared<Selection>(lessThanExpression3);
+    selection2->setChild(selection3);
+    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
+    auto selection4 = std::make_shared<Selection>(lessThanExpression4);
+    selection3->setChild(selection4);
+
+    // l_quantity < 24
+    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
+    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
+    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
+    auto selection5 = std::make_shared<Selection>(lessThanExpression5);
+    selection4->setChild(selection5);
+
+    // sum(l_extendedprice)
+    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    selection5->setChild(aggregation);
+
+
+
+
+
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+    auto executablePipeline = executionEngine.compile(pipeline);
+
+    executablePipeline->setup();
+
+    auto buffer = lineitemBuffer.second.getBuffer();
+    Timer timer("QueryExecutionTime");
+    timer.start();
+    executablePipeline->execute(*runtimeWorkerContext, buffer);
+    timer.snapshot("QueryExecutionTime");
+    timer.pause();
+    NES_INFO("QueryExecutionTime: " << timer);
+
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
 
 TEST_F(QueryExecutionTest, tpchQ6) {
@@ -268,7 +346,7 @@ TEST_F(QueryExecutionTest, tpchQ6) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     selection->setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
@@ -331,7 +409,7 @@ TEST_F(QueryExecutionTest, tpchQ6and) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     selection2->setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
