@@ -29,6 +29,15 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}"
 message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
 message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
+ExternalProject_Add(
+        fmt-external
+        GIT_REPOSITORY "https://github.com/fmtlib/fmt"
+        GIT_TAG "8.1.1"
+        PREFIX "lib/fmt"
+        INSTALL_COMMAND cmake -E echo ""
+        CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE -DFMT_TEST=FALSE -DFMT_MASTER_PROJECT=OFF"
+)
+
 # Reducing linked & optimized LLVM IR to Proxy Functions only.
 add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
 set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
@@ -74,6 +83,21 @@ else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+
+target_include_directories(nes-execution-engine PUBLIC
+        $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/src/>
+        $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/src/>)
+
+target_include_directories(nes-execution-engine PUBLIC
+        $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>
+        $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>)
+target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
+target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
+target_link_libraries(nes-execution-engine PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
+
+#target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/fmt/src/fmt-build/libfmt.a)
+
+target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
