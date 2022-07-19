@@ -159,7 +159,7 @@ void SSACreationPhase::SSACreationPhaseContext::makeBlockArgumentsUnique() {
         for (uint64_t argIndex = 0; argIndex < block.arguments.size(); argIndex++) {
             auto argRef = block.arguments[argIndex];
             if (argRef.blockId != block.blockId) {
-                auto newLocalRef = ValueRef(block.blockId, block.operations.size() + blockArgumentMap.size(), argRef.type);
+                auto newLocalRef = ValueRef(block.blockId, block.operations.size() + blockArgumentMap.size() + 100, argRef.type);
                 blockArgumentMap[argRef] = newLocalRef;
                 block.arguments[argIndex] = newLocalRef;
             }

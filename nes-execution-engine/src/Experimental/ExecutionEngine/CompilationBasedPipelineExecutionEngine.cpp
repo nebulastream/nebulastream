@@ -31,6 +31,8 @@
 
 namespace NES::ExecutionEngine::Experimental {
 
+CompilationBasedPipelineExecutionEngine::CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend): PipelineExecutionEngine(), backend(backend) {}
+
 std::shared_ptr<ExecutablePipeline>
 CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) {
     Timer timer("CompilationBasedPipelineExecutionEngine");
@@ -61,17 +63,8 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     timer.snapshot("NESIRGeneration");
     //std::cout << ir->toString() << std::endl;
     //ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
-    timer.snapshot("MLIRGeneration");
-    timer.pause();
-    NES_INFO("CompilationBasedPipelineExecutionEngine TIME: " << timer);
-    auto rx = std::make_shared<ExecutablePipeline>(pipelineContext, physicalOperatorPipeline, std::move(engine));
-    return rx;
+
+    return backend->compile(pipelineContext, physicalOperatorPipeline, ir);
 }
 
 }// namespace NES::ExecutionEngine::Experimental

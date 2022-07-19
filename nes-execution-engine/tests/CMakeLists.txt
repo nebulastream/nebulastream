@@ -101,6 +101,16 @@ add_test(NAME execution-engine-expression-test COMMAND execution-engine-expressi
 
 add_subdirectory(UnitTests/Experimental/ExecutionTests)
 
+add_executable(execution-engine-flounder-test "UnitTests/Experimental/Flounder/FlounderTest.cpp")
+target_link_libraries(execution-engine-flounder-test
+        nes-execution-engine)
+add_test(NAME execution-engine-flounder-test COMMAND execution-engine-flounder-test)
+
+add_executable(execution-engine-flounder-exec-test "UnitTests/Experimental/Flounder/FlounderExpressionExecutionTest.cpp")
+target_link_libraries(execution-engine-flounder-exec-test
+        nes-execution-engine)
+add_test(NAME execution-engine-flounder-exec-test COMMAND execution-engine-flounder-exec-test)
+
 add_subdirectory(UnitTests/Experimental/UtilityTests)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
