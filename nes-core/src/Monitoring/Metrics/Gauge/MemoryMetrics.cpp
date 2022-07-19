@@ -46,6 +46,44 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr MemoryMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "TOTAL_RAM") {
+            schema->addField(prefix + "TOTAL_RAM", BasicType::UINT64);
+        } else if (metric == "TOTAL_SWAP") {
+            schema->addField(prefix + "TOTAL_SWAP", BasicType::UINT64);
+        } else if (metric == "FREE_RAM") {
+            schema->addField(prefix + "FREE_RAM", BasicType::UINT64);
+        } else if (metric == "SHARED_RAM") {
+            schema->addField(prefix + "SHARED_RAM", BasicType::UINT64);
+        } else if (metric == "BUFFER_RAM") {
+            schema->addField(prefix + "BUFFER_RAM", BasicType::UINT64);
+        } else if (metric == "FREE_SWAP") {
+            schema->addField(prefix + "FREE_SWAP", BasicType::UINT64);
+        } else if (metric == "TOTAL_HIGH") {
+            schema->addField(prefix + "TOTAL_HIGH", BasicType::UINT64);
+        } else if (metric == "FREE_HIGH") {
+            schema->addField(prefix + "FREE_HIGH", BasicType::UINT64);
+        } else if (metric == "PROCS") {
+            schema->addField(prefix + "PROCS", BasicType::UINT64);
+        } else if (metric == "MEM_UNIT") {
+            schema->addField(prefix + "MEM_UNIT", BasicType::UINT64);
+        } else if (metric == "LOADS_1MIN") {
+            schema->addField(prefix + "LOADS_1MIN", BasicType::UINT64);
+        } else if (metric == "LOADS_5MIN") {
+            schema->addField(prefix + "LOADS_5MIN", BasicType::UINT64);
+        } else if (metric == "LOADS_15MIN") {
+            schema->addField(prefix + "LOADS_15MIN", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
 void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);

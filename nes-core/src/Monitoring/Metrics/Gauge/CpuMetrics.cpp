@@ -47,6 +47,40 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr CpuMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "coreNum") {
+            schema->addField(prefix + "coreNum", BasicType::UINT64);
+        } else if (metric == "user") {
+            schema->addField(prefix + "user", BasicType::UINT64);
+        } else if (metric == "nice") {
+            schema->addField(prefix + "nice", BasicType::UINT64);
+        } else if (metric == "system") {
+            schema->addField(prefix + "system", BasicType::UINT64);
+        } else if (metric == "idle") {
+            schema->addField(prefix + "idle", BasicType::UINT64);
+        } else if (metric == "iowait") {
+            schema->addField(prefix + "iowait", BasicType::UINT64);
+        } else if (metric == "irq") {
+            schema->addField(prefix + "irq", BasicType::UINT64);
+        } else if (metric == "softirq") {
+            schema->addField(prefix + "softirq", BasicType::UINT64);
+        } else if (metric == "steal") {
+            schema->addField(prefix + "steal", BasicType::UINT64);
+        } else if (metric == "guest") {
+            schema->addField(prefix + "guest", BasicType::UINT64);
+        } else if (metric == "guestnice") {
+            schema->addField(prefix + "guestnice", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);

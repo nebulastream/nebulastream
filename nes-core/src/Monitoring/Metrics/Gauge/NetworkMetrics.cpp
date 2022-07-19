@@ -56,6 +56,52 @@ SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr NetworkMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "name") {
+            schema->addField(prefix + "name", BasicType::UINT64);
+        } else if (metric == "rBytes") {
+            schema->addField(prefix + "rBytes", BasicType::UINT64);
+        } else if (metric == "rPackets") {
+            schema->addField(prefix + "rPackets", BasicType::UINT64);
+        } else if (metric == "rErrs") {
+            schema->addField(prefix + "rErrs", BasicType::UINT64);
+        } else if (metric == "rDrop") {
+            schema->addField(prefix + "rDrop", BasicType::UINT64);
+        } else if (metric == "rFifo") {
+            schema->addField(prefix + "rFifo", BasicType::UINT64);
+        } else if (metric == "rFrame") {
+            schema->addField(prefix + "rFrame", BasicType::UINT64);
+        } else if (metric == "rCompressed") {
+            schema->addField(prefix + "rCompressed", BasicType::UINT64);
+        } else if (metric == "rMulticast") {
+            schema->addField(prefix + "rMulticast", BasicType::UINT64);
+        } else if (metric == "tBytes") {
+            schema->addField(prefix + "tBytes", BasicType::UINT64);
+        } else if (metric == "tPackets") {
+            schema->addField(prefix + "tPackets", BasicType::UINT64);
+        } else if (metric == "tErrs") {
+            schema->addField(prefix + "tErrs", BasicType::UINT64);
+        } else if (metric == "tDrop") {
+            schema->addField(prefix + "tDrop", BasicType::UINT64);
+        } else if (metric == "tFifo") {
+            schema->addField(prefix + "tFifo", BasicType::UINT64);
+        } else if (metric == "tColls") {
+            schema->addField(prefix + "tColls", BasicType::UINT64);
+        } else if (metric == "tCarrier") {
+            schema->addField(prefix + "tCarrier", BasicType::UINT64);
+        } else if (metric == "tCompressed") {
+            schema->addField(prefix + "tCompressed", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
 void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto totalSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
     NES_ASSERT(totalSize <= buf.getBufferSize(),

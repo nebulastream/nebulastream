@@ -63,6 +63,34 @@ SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr RegistrationMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "coreNum") {
+            schema->addField(prefix + "coreNum", BasicType::UINT64);
+        } else if (metric == "totalMemoryBytes") {
+            schema->addField(prefix + "totalMemoryBytes", BasicType::UINT64);
+        } else if (metric == "cpuCoreNum") {
+            schema->addField(prefix + "cpuCoreNum", BasicType::UINT64);
+        } else if (metric == "totalCPUJiffies") {
+            schema->addField(prefix + "totalCPUJiffies", BasicType::UINT64);
+        } else if (metric == "cpuPeriodUS") {
+            schema->addField(prefix + "cpuPeriodUS", BasicType::INT64);
+        } else if (metric == "cpuQuotaUS") {
+            schema->addField(prefix + "cpuQuotaUS", BasicType::INT64);
+        } else if (metric == "isMoving") {
+            schema->addField(prefix + "isMoving", BasicType::BOOLEAN);
+        } else if (metric == "hasBattery") {
+            schema->addField(prefix + "hasBattery", BasicType::BOOLEAN);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
 void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);

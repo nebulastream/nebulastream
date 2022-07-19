@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <list>
 
 namespace NES {
 
@@ -35,6 +36,7 @@ namespace NES {
 class NetworkMetrics {
   public:
     NetworkMetrics();
+    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     /**
      * @brief Returns the schema of the class with a given prefix.

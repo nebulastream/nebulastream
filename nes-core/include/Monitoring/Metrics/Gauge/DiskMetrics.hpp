@@ -45,6 +45,8 @@ class DiskMetrics {
      */
     static SchemaPtr getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics);
     static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+//    static SchemaPtr createSchemaJson(const std::string& prefix, std::vector<std::string>);
+
     void writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const;
     void readFromBufferNEW(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 

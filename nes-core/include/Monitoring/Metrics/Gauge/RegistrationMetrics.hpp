@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <list>
 
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;
@@ -36,6 +37,8 @@ namespace NES {
 class RegistrationMetrics {
   public:
     RegistrationMetrics();
+    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+
     RegistrationMetrics(bool isMoving, bool hasBattery);
     /**
      * Ctor to create a RegistrationMetrics object out of a protobuf message.

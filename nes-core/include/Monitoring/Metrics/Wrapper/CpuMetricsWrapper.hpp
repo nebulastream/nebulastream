@@ -27,6 +27,7 @@ namespace NES {
 class CpuMetricsWrapper {
   public:
     CpuMetricsWrapper() = default;
+    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
     CpuMetricsWrapper(uint64_t nodeId);
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 

@@ -20,8 +20,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
-
 #include <Monitoring/MonitoringPlan.hpp>
+
 
 namespace NES {
 
@@ -102,6 +102,29 @@ SchemaPtr DiskMetrics::createSchema(const std::string& prefix, std::list<std::st
     }
     return schema;
 }
+
+//SchemaPtr DiskMetrics::createSchemaJson(const std::string& prefix, std::vector<std::string> configuredMetrics) {
+//    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+//                           ->addField(prefix + "node_id", BasicType::UINT64);
+//
+//    for (const auto& metric : configuredMetrics) {
+//        if (metric == "F_BSIZE") {
+//            schema->addField(prefix + "F_BSIZE", BasicType::UINT64);
+//        } else if (metric == "F_FRSIZE") {
+//            schema->addField(prefix + "F_FRSIZE", BasicType::UINT64);
+//        } else if (metric == "F_BLOCKS") {
+//            schema->addField(prefix + "F_BLOCKS", BasicType::UINT64);
+//        } else if (metric == "F_BFREE") {
+//            schema->addField(prefix + "F_BFREE", BasicType::UINT64);
+//        } else if (metric == "F_BAVAIL") {
+//            schema->addField(prefix + "F_BAVAIL", BasicType::UINT64);
+//        } else {
+//            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+//        }
+//    }
+//    return schema;
+//}
+
 void DiskMetrics::writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const {                 //auch dynamisch machen
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);

@@ -19,7 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 #include <vector>
-
+#include <list>
 namespace NES {
 
 /**
@@ -37,6 +37,7 @@ namespace NES {
 class CpuMetrics {
   public:
     CpuMetrics();
+    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     /**
      * @brief Returns the schema of the class with a given prefix.

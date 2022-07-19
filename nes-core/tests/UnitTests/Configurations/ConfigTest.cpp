@@ -25,7 +25,10 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <cpprest/json.h>
+#include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 
 namespace NES {
 
@@ -93,11 +96,23 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testWorkerConfigLennart) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
-    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+//    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
     std::map <MetricType, std::list<std::string>> mapMonitoringConfig =
         MetricUtils::parseMonitoringConfigStringToMap(workerConfigPtr->monitoringConfiguration.getValue());
-    web::json::value configurationMonitoringJson{};
-    configurationMonitoringJson = MetricUtils::ConfigMapToJson(mapMonitoringConfig);
+
+    MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchema(mapMonitoringConfig);
+    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::defaultCatalog();
+    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
+    // Json Kram
+//    web::json::value configurationMonitoringJson{};
+//    configurationMonitoringJson = MetricUtils::ConfigMapToJson(mapMonitoringConfig);
+//    web::json::value configurationMonitoringJson02 =
+//        MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
+//    std::string jsonString01 = configurationMonitoringJson.serialize();
+//    std::string jsonString02 = configurationMonitoringJson02.serialize();
+//    ASSERT_EQ(jsonString01, jsonString02);
+//    MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
     std::cout << "Well done!";
 }
 

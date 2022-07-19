@@ -98,7 +98,10 @@ class MetricUtils {
      * @param mapConfigurationMonitoring
      * @return
      */
-//    static web::json::value ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring);
+    static web::json::value ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring);
+
+    static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
+
 };
 
 }// namespace NES

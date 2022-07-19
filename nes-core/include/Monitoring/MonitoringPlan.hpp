@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <cpprest/json.h>
 
 //neu
 #include "API/Schema.hpp"
@@ -39,6 +40,9 @@ class MonitoringPlan {
     static MonitoringPlanPtr defaultPlan();
 
     static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
+
+    static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
+
 
     SchemaPtr getSchema(MetricType metric);
 

@@ -47,6 +47,36 @@ SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr RuntimeMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "coreNum") {
+            schema->addField(prefix + "coreNum", BasicType::UINT64);
+        } else if (metric == "wallTimeNs") {
+            schema->addField(prefix + "wallTimeNs", BasicType::UINT64);
+        } else if (metric == "memoryUsageInBytes") {
+            schema->addField(prefix + "memoryUsageInBytes", BasicType::UINT64);
+        } else if (metric == "cpuLoadInJiffies") {
+            schema->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64);
+        } else if (metric == "blkioBytesRead") {
+            schema->addField(prefix + "blkioBytesRead", BasicType::UINT64);
+        } else if (metric == "blkioBytesWritten") {
+            schema->addField(prefix + "blkioBytesWritten", BasicType::UINT64);
+        } else if (metric == "batteryStatusInPercent") {
+            schema->addField(prefix + "batteryStatusInPercent", BasicType::UINT64);
+        } else if (metric == "latCoord") {
+            schema->addField(prefix + "latCoord", BasicType::UINT64);
+        } else if (metric == "longCoord") {
+            schema->addField(prefix + "longCoord", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
 void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);

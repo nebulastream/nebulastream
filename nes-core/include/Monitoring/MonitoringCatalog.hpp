@@ -43,7 +43,7 @@ class MonitoringCatalog {
      */
     static MonitoringCatalogPtr defaultCatalog();
 
-    //static MonitoringCatalogPtr configuredCatalog(std::multimap<std::string, std::string> catalog);
+    static MonitoringCatalogPtr configuredCatalog(std::multimap<std::string, std::string> catalog);
     /**
      * Get the collector for a specific MetricType
      * @param metricType
