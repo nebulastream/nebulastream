@@ -178,21 +178,17 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             bufferSize = sourceConfig->getSocketBufferSize()->getValue();
         }
 
-        //todo: 1. obtain as much data as was send
-        //todo: 2. check that we only input a tuple at the time
-        //todo: 3. use terminal character to obtain tuple separation
-        //todo: 4. give buffer same size as tuple buffer
-        //todo: 5. make flush possible
-        //todo: 6. make sure buffer retains non complete tuples for next round
         int16_t sendBytes;
         if (!buffer.full()) {
-            char buf[buffer.capacity() - buffer.size()];
+            void* buf = nullptr;
             sendBytes = read(sockfd, buf, buffer.capacity() - buffer.size());
-            buffer.push(buf, sendBytes);
+            if (sendBytes != 0 && sendBytes != -1) {
+                buffer.push(reinterpret_cast<char*>(&buf), sendBytes);
+            }
         }
 
         uint64_t messageSize = buffer.sizeUntilSearchToken(0x03);
-        char messageBuffer[messageSize];
+        char* messageBuffer = new char [messageSize];
         if (messageSize != 0 && buffer.popValuesUntil(messageBuffer, messageSize)) {
             NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
             if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
@@ -203,7 +199,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             tupleCount++;
         }
-        delete [] buffer;
+        delete[] messageBuffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
