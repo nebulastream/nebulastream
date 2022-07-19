@@ -22,12 +22,11 @@ target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebula
 set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
 llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
 llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
-llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
+llvmir_attach_opt_pass_target(nes-nes_runtime_opt.bc nes-runtime_link -S -O3)
 get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
 get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
 message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
 message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
-
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
@@ -51,11 +50,26 @@ if (MLIR_FOUND)
     message(STATUS "mlir_libs: ${mlir_libs}")
     target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs} )
 
+    # Try to combine generation of executable, and executing executable in one step
+    add_executable(llvm-function-reducer "/home/rudi/dima/nebulastream/nes-execution-engine/src/Experimental/Utility/LLVMGetFunctionTest.cpp")
+    target_link_libraries(llvm-function-reducer
+       nes-execution-engine)
+
 else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 
+add_custom_command(OUTPUT "datestamps"
+      COMMAND 
+        execute_process (
+            COMMAND bash -c "date +'%F %T'"
+            OUTPUT_VARIABLE outVar
+        )
+        # file(WRITE "datestamps" "${outVar}")
+      ARGS
+      COMMENT "Test Custom Command"
+      VERBATIM)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
