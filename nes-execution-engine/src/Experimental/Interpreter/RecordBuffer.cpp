@@ -27,7 +27,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
 Value<UInt64> RecordBuffer::getNumRecords() {
-    return FunctionCall<>("TupleBuffer.getNumberOfTuples",
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getNumberOfTuples",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
                           tupleBufferRef);
 }
@@ -106,13 +106,13 @@ void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLay
     }
 }
 void RecordBuffer::setNumRecords(Value<UInt64> value) {
-    FunctionCall<>("TupleBuffer.setNumberOfTuples",
+    FunctionCall<>("NES__Runtime__TupleBuffer__setNumberOfTuples",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
                    tupleBufferRef,
                    value);
 }
 Value<MemRef> RecordBuffer::getBuffer() {
-    return FunctionCall<>("TupleBuffer.getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
