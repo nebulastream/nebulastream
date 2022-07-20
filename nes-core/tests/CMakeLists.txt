@@ -740,6 +740,13 @@ add_test(NAME monitoring-integration-test COMMAND monitoring-integration-test)
 set_tests_properties(monitoring-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
 
+# NemoIntegrationTest
+add_executable(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
+target_link_libraries(nemo-integration-test nes-tests)
+add_test(NAME nemo-integration-test COMMAND nemo-integration-test)
+set_tests_properties(nemo-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(nemo-integration-test nesCoordinator nesWorker)
+
 ### MemorySourceIntegrationTest ###
 add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")
 target_link_libraries(memory-source-integration-test nes-tests)

@@ -431,7 +431,6 @@ class TestHarness {
                 }
                 default: break;
             }
-            assert(workerConfiguration->queryCompiler.windowingStrategy.getValue() == QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
             NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 
@@ -462,7 +461,6 @@ class TestHarness {
                              std::string faultTolerance,
                              std::string lineage,
                              uint64_t testTimeout = 60) {
-
         if (!topologySetupDone || !validationDone) {
             throw Exceptions::RuntimeException(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
