@@ -23,14 +23,14 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 LocationProvider::LocationProvider(Index::Experimental::NodeType spatialType, Index::Experimental::Location fieldNodeLoc) {
-    this->spatialType = spatialType;
+    this->nodeType = spatialType;
     this->fixedLocationCoordinates = fieldNodeLoc;
 }
 
-Index::Experimental::NodeType LocationProvider::getSpatialType() const { return spatialType; };
+Index::Experimental::NodeType LocationProvider::getNodeType() const { return nodeType; };
 
 bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc) {
-    if (spatialType != Index::Experimental::NodeType::FIXED_LOCATION) {
+    if (nodeType != Index::Experimental::NodeType::FIXED_LOCATION) {
         return false;
     }
     fixedLocationCoordinates = geoLoc;
@@ -38,7 +38,7 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
 }
 
 Index::Experimental::Location LocationProvider::getLocation() {
-    switch (spatialType) {
+    switch (nodeType) {
         case Index::Experimental::NodeType::MOBILE_NODE:
             return getCurrentLocation().first;
         case Index::Experimental::NodeType::FIXED_LOCATION:
@@ -80,7 +80,7 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
 
     switch (workerConfig->mobilityConfiguration.locationProviderType.getValue()) {
         case NES::Spatial::Mobility::Experimental::LocationProviderType::BASE:
-            locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->spatialType,
+            locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->nodeSpatialType,
                                                                                                         workerConfig->locationCoordinates);
             NES_INFO("creating base location provider")
             break;

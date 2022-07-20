@@ -184,8 +184,9 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     (void) request;
     NES_DEBUG("WorkerRPCServer received location request")
     if (!locationProvider) {
-        NES_DEBUG("WorkerRPCServer: locationProvider not set")
-        return Status::CANCELLED;
+        NES_DEBUG("WorkerRPCServer: locationProvider not set, node doesn't have known location")
+        //return an empty reply
+        return Status::OK;
     }
     auto loc = locationProvider->getLocation();
     Coordinates* coord = reply->mutable_coord();
