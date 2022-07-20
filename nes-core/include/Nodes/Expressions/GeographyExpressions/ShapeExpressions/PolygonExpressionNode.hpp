@@ -31,6 +31,7 @@ class PolygonExpressionNode : public ShapeExpressionNode {
   public:
     explicit PolygonExpressionNode(PolygonExpressionNode* other);
     explicit PolygonExpressionNode(std::initializer_list<double> coords);
+    explicit PolygonExpressionNode(std::vector<double> coords);
     ~PolygonExpressionNode() = default;
 
     /**
@@ -38,6 +39,12 @@ class PolygonExpressionNode : public ShapeExpressionNode {
      * @param coords are the coordinates of the polygon.
      */
     static ShapeExpressionNodePtr create(std::initializer_list<double> coords);
+
+    /**
+     * @brief Creates a new polygon expression node.
+     * @param coords are the coordinates of the polygon.
+     */
+    static ShapeExpressionNodePtr create(std::vector<double> coords);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const override;

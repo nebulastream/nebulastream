@@ -23,6 +23,7 @@ class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class SerializableExpression;
+class SerializableExpression_GeographyFieldsAccessExpression;
 
 /**
  * @brief The ExpressionSerializationUtil offers functionality to serialize and de-serialize expression nodes to the
@@ -50,8 +51,14 @@ class ExpressionSerializationUtil {
     static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
     static void serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                  SerializableExpression* serializedExpression);
+    static void serializeGeographyExpressions(const ExpressionNodePtr& expression,
+                                              SerializableExpression* serializedExpression);
+    static void serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
+                                                         SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
+    static ExpressionNodePtr deserializeGeographyExpressions(SerializableExpression* serializedExpression);
+    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression)
 };
 }// namespace NES
 

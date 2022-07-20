@@ -17,4 +17,5 @@ add_source_files(nes-core
         SchemaSerializationUtil.cpp
         ExpressionSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
+        ShapeTypeSerializationUtil.cpp
 )
