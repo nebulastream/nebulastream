@@ -31,6 +31,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <chrono>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -1993,9 +1994,48 @@ class JSONSourceProxy : public JSONSource {
                      gatheringMode){};
 
   private:
+    FRIEND_TEST(SourceTest, testJSONSourceBenchmark);
     FRIEND_TEST(SourceTest, testJSONSourceNewLineDelimited);
     FRIEND_TEST(SourceTest, testJSONSourceBasicTypes);
 };
+
+TEST_F(SourceTest, testJSONSourceBenchmark) {
+    SchemaPtr schemaRegion = Schema::create()// TODO move to setup method
+                                 ->addField("R_REGIONKEY", INT8)
+                                 ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
+                                 ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
+
+    /*  File generation:
+     *      content=$(cat tpch_region.json); for i in {1..100000}; do echo "$content" >> tpch_region_100000.ndjson; done
+     *  File size: 10 MB
+     */
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region_100000.ndjson";
+    JSONSourceTypePtr sourceConfig = JSONSourceType::create();
+    sourceConfig->setFilePath(filePath);
+    sourceConfig->setNumBuffersToProcess(1);
+
+    JSONSourceProxy jsonSource(schemaRegion,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               sourceConfig,
+                               this->operatorId,
+                               this->originId,
+                               this->numSourceLocalBuffersDefault,
+                               GatheringMode::INTERVAL_MODE);
+
+    auto buf = this->GetEmptyBuffer();
+    std::shared_ptr<Runtime::MemoryLayouts::ColumnLayout> layoutPtr =
+        Runtime::MemoryLayouts::ColumnLayout::create(schemaRegion, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    jsonSource.fillBuffer(buffer);
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+    std::cout << "Runtime: " << ms_double.count() << " ms" << std::endl;
+    EXPECT_EQ(true, true);
+}
 
 TEST_F(SourceTest, testJSONSourceNewLineDelimited) {
     SchemaPtr schemaRegion = Schema::create()// TODO move to setup method
