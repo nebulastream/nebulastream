@@ -15,12 +15,12 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(../cmake/LLVMIRUtil.cmake)
 
-add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
+add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
 target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nes-runtime PUBLIC nes)
 target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
 set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
+llvmir_attach_bc_target(nes-runtime_bc nes-runtime -O3)
 llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
 llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
 get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
@@ -29,7 +29,7 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}"
 message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
 message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
-# Reducing LLVM IR to Proxy Functions only.
+# Reducing linked & optimized LLVM IR to Proxy Functions only.
 add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/LLVMGetFunctionTest.cpp")
 set_target_properties( generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
 target_link_libraries(generate-proxy-function-ir

@@ -133,7 +133,7 @@ function(llvmir_attach_bc_target)
     ${CURRENT_COMPILE_FLAGS}")
 
     set(CMD_ARGS "-emit-llvm" ${IN_STANDARD_FLAGS} ${IN_LANG_FLAGS}
-      ${IN_COMPILE_OPTIONS} ${CURRENT_COMPILE_FLAGS} ${CURRENT_DEFS}
+      ${IN_COMPILE_OPTIONS} "-O3" ${CURRENT_DEFS}
       ${IN_INCLUDES})
     set(CMAKE_VERBOSE_MAKEFILE on)
     add_custom_command(OUTPUT ${FULL_OUT_LLVMIR_FILE}

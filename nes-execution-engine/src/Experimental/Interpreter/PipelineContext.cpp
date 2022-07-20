@@ -18,12 +18,13 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <cstdint>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
-void emitBufferProxy(void* pipelineContext, void* tupleBuffer) {
+extern "C" __attribute__((always_inline)) void NES__QueryCompiler__PipelineContext__emitBufferProxy(void* pipelineContext, void* tupleBuffer) {
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
     pc->dispatchBuffer(*tb);
@@ -31,7 +32,7 @@ void emitBufferProxy(void* pipelineContext, void* tupleBuffer) {
 }
 
 void PipelineContext::emitBuffer(const RecordBuffer& rb) {
-    FunctionCall<>("emitBuffer", emitBufferProxy, pipelineContextRef, rb.tupleBufferRef);
+    FunctionCall<>("NES__QueryCompiler__PipelineContext__emitBufferProxy", NES__QueryCompiler__PipelineContext__emitBufferProxy, pipelineContextRef, rb.tupleBufferRef);
 }
 
 void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState) {
@@ -41,7 +42,7 @@ void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, s
     this->operatorIndexMap[operatorPtr] = tag;
 }
 
-extern "C" void* getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
+extern "C" __attribute__((always_inline)) void* getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     return pc->getGlobalOperatorState(tag);
 }
