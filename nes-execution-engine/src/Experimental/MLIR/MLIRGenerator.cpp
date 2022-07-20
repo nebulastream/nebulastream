@@ -181,7 +181,6 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
                                                               bool varArgs) {
     // Create function arg & result types (currently only int for result).
     mlir::LLVM::LLVMFunctionType llvmFnType = mlir::LLVM::LLVMFunctionType::get(resultType, argTypes, varArgs);
-    // llvmFnType = LLVM::LLVMFunctionType::get(LLVM::LLVMVoidType::get(context), argTypes, varArgs);
 
     // The InsertionGuard saves the current IP and restores it after scope is left.
     mlir::PatternRewriter::InsertionGuard insertGuard(*builder);
@@ -189,11 +188,14 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
     // Create function in global scope. Return reference.
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
-    jitProxyFunctionSymbols.push_back(name);
-    if (functionPtr == nullptr) {
-        functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
+    //Todo find cleaner way to not add available proxy functions to JIT symbols
+    if(!name.starts_with("NES__")) {
+        jitProxyFunctionSymbols.push_back(name);
+        if (functionPtr == nullptr) {
+            functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
+        }
+        jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
     }
-    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
     return mlir::SymbolRefAttr::get(context, name);
 }
 
@@ -811,11 +813,9 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
     //Todo simplify!!!!
     switch (proxyCallOp->getProxyCallType()) {
         case IR::Operations::Operation::GetDataBuffer: {
-            auto callOperation =
-                builder
-                    ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                           memberFunctions[IR::Operations::Operation::GetDataBuffer],
-                                           frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()))
+            auto callOperation = builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                            memberFunctions[IR::Operations::Operation::GetDataBuffer],
+                                            frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()))
                     .getResult(0);
             frame.setValue(proxyCallOp->getIdentifier(), callOperation);
             break;
@@ -823,21 +823,16 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
         case IR::Operations::Operation::SetNumTuples: {
             std::vector<mlir::Value> operands = {frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()),
                                                  frame.getValue(proxyCallOp->getInputArguments().at(1)->getIdentifier())};
-            frame.setValue(proxyCallOp->getIdentifier(),
-                           builder
-                               ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                      memberFunctions[IR::Operations::Operation::SetNumTuples],
-                                                      operands)
-                               .getResult(0));
+            frame.setValue(proxyCallOp->getIdentifier(), builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                                            memberFunctions[IR::Operations::Operation::SetNumTuples], 
+                                                            operands).getResult(0));
             break;
         }
         case IR::Operations::Operation::GetNumTuples:
-            frame.setValue(proxyCallOp->getIdentifier(),
-                           builder
-                               ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                      memberFunctions[IR::Operations::Operation::GetNumTuples],
-                                                      frame.getValue(proxyCallOp->getInputArguments().at(0)->getIdentifier()))
-                               .getResult(0));
+            frame.setValue(proxyCallOp->getIdentifier(), builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                                            memberFunctions[IR::Operations::Operation::GetNumTuples],
+                                                            frame.getValue(proxyCallOp->getInputArguments()
+                                                            .at(0)->getIdentifier())).getResult(0));
             break;
         default:
             mlir::FlatSymbolRefAttr functionRef;
