@@ -127,230 +127,229 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
     auto mlirUtility = new MLIR::MLIRUtility("", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    mlirUtility->runJit(true);
 }
 
-// auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
-//     std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
-//     uint64_t linecount = 0;
-//     std::string line;
-//     while (std::getline(inFile, line)) {
-//         // using printf() in all tests for consistency
-//         linecount++;
-//     }
-//     NES_DEBUG("LOAD lineitem with " << linecount << " lines");
-//     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
+    std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
+    uint64_t linecount = 0;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        linecount++;
+    }
+    NES_DEBUG("LOAD lineitem with " << linecount << " lines");
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
 
-//     // orderkey
-//     // partkey
-//     // suppkey
-//     // linenumber
-//     schema->addField("l_quantity", BasicType::INT64);
-//     schema->addField("l_extendedprice", BasicType::INT64);
-//     schema->addField("l_discount", BasicType::INT64);
-//     // tax
-//     // returnflag
-//     // linestatus
-//     schema->addField("l_shipdate", BasicType::INT64);
-//     // commitdate
-//     // receiptdate
-//     // shipinstruct
-//     // shipmode
-//     // comment
-//     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
-//     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
-//     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-//     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    // orderkey
+    // partkey
+    // suppkey
+    // linenumber
+    schema->addField("l_quantity", BasicType::INT64);
+    schema->addField("l_extendedprice", BasicType::INT64);
+    schema->addField("l_discount", BasicType::INT64);
+    // tax
+    // returnflag
+    // linestatus
+    schema->addField("l_shipdate", BasicType::INT64);
+    // commitdate
+    // receiptdate
+    // shipinstruct
+    // shipmode
+    // comment
+    auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
+    auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 
-//     inFile.clear();// clear fail and eof bits
-//     inFile.seekg(0, std::ios::beg);
+    inFile.clear();// clear fail and eof bits
+    inFile.seekg(0, std::ios::beg);
 
-//     while (std::getline(inFile, line)) {
-//         // using printf() in all tests for consistency
-//         auto index = dynamicBuffer.getNumberOfTuples();
-//         auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        auto index = dynamicBuffer.getNumberOfTuples();
+        auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
 
-//         auto l_quantityString = strings[4];
-//         int64_t l_quantity = std::stoi(l_quantityString);
-//         dynamicBuffer[index][0].write(l_quantity);
+        auto l_quantityString = strings[4];
+        int64_t l_quantity = std::stoi(l_quantityString);
+        dynamicBuffer[index][0].write(l_quantity);
 
-//         auto l_extendedpriceString = strings[5];
-//         int64_t l_extendedprice = std::stof(l_extendedpriceString) * 100;
-//         dynamicBuffer[index][1].write(l_extendedprice);
+        auto l_extendedpriceString = strings[5];
+        int64_t l_extendedprice = std::stof(l_extendedpriceString) * 100;
+        dynamicBuffer[index][1].write(l_extendedprice);
 
-//         auto l_discountString = strings[6];
-//         int64_t l_discount = std::stof(l_discountString) * 100;
-//         dynamicBuffer[index][2].write(l_discount);
+        auto l_discountString = strings[6];
+        int64_t l_discount = std::stof(l_discountString) * 100;
+        dynamicBuffer[index][2].write(l_discount);
 
-//         auto l_shipdateString = strings[10];
-//         NES::Util::findAndReplaceAll(l_shipdateString, "-", "");
-//         int64_t l_shipdate = std::stoi(l_shipdateString);
-//         dynamicBuffer[index][3].write(l_shipdate);
-//         dynamicBuffer.setNumberOfTuples(index + 1);
-//     }
-//     inFile.close();
-//     NES_DEBUG("Loading of Lineitem done");
-//     return std::make_pair(memoryLayout, dynamicBuffer);
-// }
+        auto l_shipdateString = strings[10];
+        NES::Util::findAndReplaceAll(l_shipdateString, "-", "");
+        int64_t l_shipdate = std::stoi(l_shipdateString);
+        dynamicBuffer[index][3].write(l_shipdate);
+        dynamicBuffer.setNumberOfTuples(index + 1);
+    }
+    inFile.close();
+    NES_DEBUG("Loading of Lineitem done");
+    return std::make_pair(memoryLayout, dynamicBuffer);
+}
 
-// TEST_F(QueryExecutionTest, aggQueryTest) {
-//     auto bm = std::make_shared<Runtime::BufferManager>(100);
-//     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-//     schema->addField("f1", BasicType::UINT64);
-//     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-//     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+TEST_F(QueryExecutionTest, aggQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::UINT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-//     Scan scan = Scan(memoryLayout);
-//     auto aggField = std::make_shared<ReadFieldExpression>(0);
-//     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
-//     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-//     auto aggregation = std::make_shared<Aggregation>(functions);
-//     scan.setChild(aggregation);
+    Scan scan = Scan(memoryLayout);
+    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    scan.setChild(aggregation);
 
-//     auto executionEngine = CompilationBasedPipelineExecutionEngine();
-//     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-//     pipeline->setRootOperator(&scan);
+    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
 
-//     auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine.compile(pipeline);
 
-//     auto buffer = bm->getBufferBlocking();
-//     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-//     for (auto i = 0; i < 10; i++) {
-//         dynamicBuffer[i]["f1"].write((uint64_t) 1);
-//     }
-//     dynamicBuffer.setNumberOfTuples(10);
-//     executablePipeline->setup();
-//     executablePipeline->execute(*runtimeWorkerContext, buffer);
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (auto i = 0; i < 10; i++) {
+        dynamicBuffer[i]["f1"].write((uint64_t) 1);
+    }
+    dynamicBuffer.setNumberOfTuples(10);
+    executablePipeline->setup();
+    executablePipeline->execute(*runtimeWorkerContext, buffer);
 
-//     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-//     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-//     ASSERT_EQ(sumState->sum, (int64_t) 10);
-// }
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+    ASSERT_EQ(sumState->sum, (int64_t) 10);
+}
 
-// TEST_F(QueryExecutionTest, tpchQ6) {
-//     auto bm = std::make_shared<Runtime::BufferManager>(100);
-//     auto lineitemBuffer = loadLineItemTable(bm);
+TEST_F(QueryExecutionTest, tpchQ6) {
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
 
-//     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-//     Scan scan = Scan(lineitemBuffer.first);
-//     /*
-//      *   l_shipdate >= date '1994-01-01'
-//      *   and l_shipdate < date '1995-01-01'
-//      */
-//     auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-//     auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-//     auto readShipdate = std::make_shared<ReadFieldExpression>(3);
-//     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-//     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-//     auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+    Scan scan = Scan(lineitemBuffer.first);
+    /*
+     *   l_shipdate >= date '1994-01-01'
+     *   and l_shipdate < date '1995-01-01'
+     */
+    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
+    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
+    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
+    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
+    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
+    auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
 
-//     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-//     auto readDiscount = std::make_shared<ReadFieldExpression>(2);
-//     auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-//     auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-//     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-//     auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-//     auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
+    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
+    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
+    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
+    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
+    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
+    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
+    auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
 
-//     // l_quantity < 24
-//     auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-//     auto readQuantity = std::make_shared<ReadFieldExpression>(0);
-//     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-//     auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
-//     auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
+    // l_quantity < 24
+    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
+    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
+    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
+    auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
+    auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
 
-//     auto selection = std::make_shared<Selection>(andExpression4);
-//     scan.setChild(selection);
+    auto selection = std::make_shared<Selection>(andExpression4);
+    scan.setChild(selection);
 
-//     // sum(l_extendedprice)
-//     auto aggField = std::make_shared<ReadFieldExpression>(1);
-//     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-//     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-//     auto aggregation = std::make_shared<Aggregation>(functions);
-//     selection->setChild(aggregation);
+    // sum(l_extendedprice)
+    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    selection->setChild(aggregation);
 
-//     auto executionEngine = CompilationBasedPipelineExecutionEngine();
-//     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-//     pipeline->setRootOperator(&scan);
+    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
 
-//     auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine.compile(pipeline);
 
-//     executablePipeline->setup();
+    executablePipeline->setup();
 
-//     auto buffer = lineitemBuffer.second.getBuffer();
-//     Timer timer("QueryExecutionTime");
-//     timer.start();
-//     executablePipeline->execute(*runtimeWorkerContext, buffer);
-//     timer.snapshot("QueryExecutionTime");
-//     timer.pause();
-//     NES_INFO("QueryExecutionTime: " << timer);
+    auto buffer = lineitemBuffer.second.getBuffer();
+    Timer timer("QueryExecutionTime");
+    timer.start();
+    executablePipeline->execute(*runtimeWorkerContext, buffer);
+    timer.snapshot("QueryExecutionTime");
+    timer.pause();
+    NES_INFO("QueryExecutionTime: " << timer);
 
-//     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-//     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-//     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
-// }
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
+}
 
-// TEST_F(QueryExecutionTest, tpchQ6and) {
-//     auto bm = std::make_shared<Runtime::BufferManager>(100);
-//     auto lineitemBuffer = loadLineItemTable(bm);
+TEST_F(QueryExecutionTest, tpchQ6and) {
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
 
-//     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-//     Scan scan = Scan(lineitemBuffer.first);
-//     /*
-//      *   l_shipdate >= date '1994-01-01'
-//      *   and l_shipdate < date '1995-01-01'
-//      */
-//     auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-//     auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-//     auto readShipdate = std::make_shared<ReadFieldExpression>(3);
-//     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-//     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-//     auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
-//     auto selection1 = std::make_shared<Selection>(andExpression);
-//     scan.setChild(selection1);
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+    Scan scan = Scan(lineitemBuffer.first);
+    /*
+     *   l_shipdate >= date '1994-01-01'
+     *   and l_shipdate < date '1995-01-01'
+     */
+    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
+    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
+    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
+    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
+    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
+    auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+    auto selection1 = std::make_shared<Selection>(andExpression);
+    scan.setChild(selection1);
 
-//     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-//     auto readDiscount = std::make_shared<ReadFieldExpression>(2);
-//     auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-//     auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-//     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-//     auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-//     auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
+    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
+    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
+    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
+    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
+    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
+    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
+    auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
 
-//     // l_quantity < 24
-//     auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-//     auto readQuantity = std::make_shared<ReadFieldExpression>(0);
-//     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-//     auto andExpression3 = std::make_shared<AndExpression>(andExpression2, lessThanExpression5);
+    // l_quantity < 24
+    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
+    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
+    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
+    auto andExpression3 = std::make_shared<AndExpression>(andExpression2, lessThanExpression5);
 
-//     auto selection2 = std::make_shared<Selection>(andExpression3);
-//     selection1->setChild(selection2);
-//     // sum(l_extendedprice)
-//     auto aggField = std::make_shared<ReadFieldExpression>(1);
-//     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-//     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-//     auto aggregation = std::make_shared<Aggregation>(functions);
-//     selection2->setChild(aggregation);
+    auto selection2 = std::make_shared<Selection>(andExpression3);
+    selection1->setChild(selection2);
+    // sum(l_extendedprice)
+    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    selection2->setChild(aggregation);
 
-//     auto executionEngine = CompilationBasedPipelineExecutionEngine();
-//     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-//     pipeline->setRootOperator(&scan);
+    auto executionEngine = CompilationBasedPipelineExecutionEngine();
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
 
-//     auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine.compile(pipeline);
 
-//     executablePipeline->setup();
+    executablePipeline->setup();
 
-//     auto buffer = lineitemBuffer.second.getBuffer();
-//     Timer timer("QueryExecutionTime");
-//     timer.start();
-//     executablePipeline->execute(*runtimeWorkerContext, buffer);
-//     timer.snapshot("QueryExecutionTime");
-//     timer.pause();
-//     NES_INFO("QueryExecutionTime: " << timer);
+    auto buffer = lineitemBuffer.second.getBuffer();
+    Timer timer("QueryExecutionTime");
+    timer.start();
+    executablePipeline->execute(*runtimeWorkerContext, buffer);
+    timer.snapshot("QueryExecutionTime");
+    timer.pause();
+    NES_INFO("QueryExecutionTime: " << timer);
 
-//     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-//     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-//     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
-// }
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
+}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
