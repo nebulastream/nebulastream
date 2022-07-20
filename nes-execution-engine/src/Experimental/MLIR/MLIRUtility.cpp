@@ -204,27 +204,14 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     return 0;
 }
 
-/**
- * @brief Takes loaded and lowered MLIR module, jit compiles it and calls 'execute()'
- * @param module: MLIR module that contains the 'execute' function.
- * @return int: 1 if error occurred, else 0
- */
-int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
-    // Initialize LLVM targets.
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
 
-    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
-    mlir::registerLLVMDialectTranslation(*module->getContext());
-
-    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
-    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
-    if (useProxyFunctions) {
+llvm::function_ref<llvm::Error(llvm::Module*)> getOptimizingTransformer(bool linkProxyFunctions) {
+       if (linkProxyFunctions) {
         char tmp[256];
         getcwd(tmp, 256);
         std::cout << "Current working directory: " << tmp << '\n';
         std::cout << "Current root path is: " << std::filesystem::current_path().root_path() << '\n';
-        printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
+        return [](llvm::Module* llvmIRModule) {
             llvm::SMDiagnostic Err;
             //Todo find better way to get the correct path
             // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/ExecutionTests'
@@ -238,13 +225,30 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
             return optimizedModule;
         };
     } else {
-        printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
+        return [](llvm::Module* llvmIRModule) {
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
              llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     }
+}
+
+/**
+ * @brief Takes loaded and lowered MLIR module, jit compiles it and calls 'execute()'
+ * @param module: MLIR module that contains the 'execute' function.
+ * @return int: 1 if error occurred, else 0
+ */
+int MLIRUtility::runJit(bool linkProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
+    // Initialize LLVM targets.
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+
+    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    mlir::registerLLVMDialectTranslation(*module->getContext());
+
+    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
+    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
 
     // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
     auto maybeEngine =
@@ -263,20 +267,20 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     engine->registerSymbols(runtimeSymbolMap);
 
     // Invoke the JIT-compiled function.
-    // int64_t result = 0;
-    // auto invocationResult =
-    //     engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
-    // printf("Result: %ld\n", result);
+    int64_t result = 0;
+    auto invocationResult =
+        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
+    printf("Result: %ld\n", result);
 
-    // if (invocationResult) {
-    //     llvm::errs() << "JIT invocation failed\n";
-    //     return -1;
-    // }
+    if (invocationResult) {
+        llvm::errs() << "JIT invocation failed\n";
+        return -1;
+    }
 
     return (bool) inputBufferPtr + (bool) outputBufferPtr;
 }
 
-std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
+std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions) {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -285,14 +289,8 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
-    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
-
-    printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
-        auto optPipeline = mlir::makeOptimizingTransformer(3, 0, nullptr);
-        auto optimizedModule = optPipeline(llvmIRModule);
-        llvmIRModule->print(llvm::outs(), nullptr);
-        return optimizedModule;
-    };
+    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
+ 
 
     // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
     auto maybeEngine =
@@ -313,16 +311,5 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
     // Invoke the JIT-compiled function.
     int64_t result = 0;
     return std::move(engine);
-    /* auto invocationResult =
-        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
-    printf("Result: %ld\n", result);
-
-    if (invocationResult) {
-        llvm::errs() << "JIT invocation failed\n";
-        return -1;
-    }
-
-    return 0;
-    */
 }
 }// namespace NES::ExecutionEngine::Experimental::MLIR
