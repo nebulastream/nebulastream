@@ -13,6 +13,7 @@
 */
 
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
+#include <GRPC/Serialization/ShapeTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -41,6 +42,16 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
 #include <SerializableExpression.pb.h>
 namespace NES {
 
@@ -92,6 +103,9 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(),
                             serializedFieldAssignmentExpression.mutable_assignment());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
+    } else if (expression->instanceOf<GeographyExpressionNode>()) {
+        // serialize geography expression node
+        serializeGeographyExpressions(expression, serializedExpression);
     } else {
         NES_FATAL_ERROR("ExpressionSerializationUtil: could not serialize this expression: " << expression->toString());
     }
@@ -110,7 +124,11 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
     if (!expressionNodePtr) {
         expressionNodePtr = deserializeArithmeticalExpressions(serializedExpression);
     }
-    // 3. if the expression was not de-serialized try remaining expression types
+    // 3. check if the expression is a geography expression
+    if (!expressionNodePtr) {
+        expressionNodePtr = deserializeGeographyExpressions(serializedExpression);
+    }
+    // 4. if the expression was not de-serialized try remaining expression types
     if (!expressionNodePtr) {
         if (serializedExpression->details().Is<SerializableExpression_ConstantValueExpression>()) {
             // de-serialize constant value expression node.
@@ -366,6 +384,68 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
     }
 }
 
+void ExpressionSerializationUtil::serializeGeographyExpressions(const ExpressionNodePtr& expression,
+                                                                SerializableExpression* serializedExpression) {
+    NES_DEBUG("ExpressionSerializationUtil:: serialize geography expression " << expression->toString());
+    if (expression->instanceOf<STWithinExpressionNode>()) {
+        // serialize st_within expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize ST_WITHIN geography expression to SerializableExpression_ST_WITHINExpression");
+        auto stWithinExpressionNode = expression->as<STWithinExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_ST_WithinExpression();
+        serializeGeographyFieldAccessExpressions(stWithinExpressionNode->getPoint(), serializedExpressionNode.mutable_point());
+        ShapeTypeSerializationUtil::serializeShapeType(stWithinExpressionNode->getShape(), serializedExpressionNode.mutable_shape());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<STDWithinExpressionNode>()) {
+        // serialize st_dwithin expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize ST_DWITHIN geography expression to SerializableExpression_ST_DWITHINExpression");
+        auto stDWithinExpressionNode = expression->as<STDWithinExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_ST_DWithinExpression();
+        serializeGeographyFieldAccessExpressions(stDWithinExpressionNode->getPoint(), serializedExpressionNode.mutable_point());
+        ShapeTypeSerializationUtil::serializeShapeType(stDWithinExpressionNode->getCircle(), serializedExpressionNode.mutable_shape());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<STKnnExpressionNode>()) {
+        // serialize st_knn expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize ST_WITHIN geography expression to SerializableExpression_ST_KNNExpression");
+        auto stKNNExpressionNode = expression->as<STKnnExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_ST_KNNExpression();
+        serializeGeographyFieldAccessExpressions(stKNNExpressionNode->getPoint(), serializedExpressionNode.mutable_point());
+        ShapeTypeSerializationUtil::serializeShapeType(stKNNExpressionNode->getQueryPoint(), serializedExpressionNode.mutable_shape());
+        auto constantKExpression = stKNNExpressionNode->getK();
+        auto constantValueExpression = constantKExpression->as<ConstantValueExpressionNode>();
+        auto value = constantValueExpression->getConstantValue();
+        auto* serializedConstantValue = serializedExpressionNode.mutable_k();
+        DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue->mutable_value());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else {
+        NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this geography expression node: "
+                        << expression->toString());
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+void ExpressionSerializationUtil::serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
+                                                                           SerializableExpression_GeographyFieldsAccessExpression* serializedExpression) {
+    // serialize geography fields accesses expression nodes.
+    NES_TRACE("ExpressionSerializationUtil:: serialize GeographyFieldsAccessExpressionNode geography expression to "
+              "SerializableExpression_GeographyFieldsAccessExpression");
+    auto geographyFieldsAccessExpressionNode = expression->as<GeographyFieldsAccessExpressionNode>();
+
+    auto latitudeExpression = geographyFieldsAccessExpressionNode->getLatitude();
+    auto latitudeFieldAccessExpression = latitudeExpression->as<FieldAccessExpressionNode>();
+    auto longitudeExpression = geographyFieldsAccessExpressionNode->getLongitude();
+    auto longitudeFieldAccessExpression = longitudeExpression->as<FieldAccessExpressionNode>();
+
+    auto* serializedLatitudeFieldAccessExpression = serializedExpression->mutable_latitude();
+    auto* serializedLongitudeFieldAccessExpression = serializedExpression->mutable_longitude();
+
+    serializedLatitudeFieldAccessExpression->set_fieldname(latitudeFieldAccessExpression->getFieldName());
+    DataTypeSerializationUtil::serializeDataType(latitudeFieldAccessExpression->getStamp(),
+                                                 serializedLatitudeFieldAccessExpression->mutable_type());
+    serializedLongitudeFieldAccessExpression->set_fieldname(longitudeFieldAccessExpression->getFieldName());
+    DataTypeSerializationUtil::serializeDataType(longitudeFieldAccessExpression->getStamp(),
+                                                 serializedLongitudeFieldAccessExpression->mutable_type());
+}
+
 ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpressions(SerializableExpression* serializedExpression) {
     if (serializedExpression->details().Is<SerializableExpression_AddExpression>()) {
         // de-serialize ADD expression node.
@@ -544,6 +624,75 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(Ser
         return NegateExpressionNode::create(child);
     }
     return nullptr;
+}
+
+ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyExpressions(SerializableExpression* serializedExpression) {
+    NES_DEBUG("ExpressionSerializationUtil:: de-serialize geography expression" << serializedExpression->details().type_url());
+    if (serializedExpression->details().Is<SerializableExpression_ST_WithinExpression>()) {
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize geography expression as ST_Within expression node.");
+        // de-serialize ST_Within expression node.
+        auto serializedExpressionNode = SerializableExpression_ST_WithinExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+
+        auto serializedGeographyFieldsExpression = serializedExpressionNode.release_point();
+        auto serializedShapeExpression = serializedExpressionNode.release_shape();
+
+        auto geographyExpressionNode = deserializeGeographyFieldAccessExpressions(serializedGeographyFieldsExpression);
+        auto geographyFieldAccessExpressionNode = geographyExpressionNode->as<GeographyFieldsAccessExpressionNode>();
+        auto shapeExpressionNode = ShapeTypeSerializationUtil::deserializeShapeType(serializedShapeExpression);
+
+        return STWithinExpressionNode::create(geographyFieldAccessExpressionNode, shapeExpressionNode);
+    } else if(serializedExpression->details().Is<SerializableExpression_ST_DWithinExpression>()) {
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize geography expression as ST_DWithin expression node.");
+        // de-serialize ST_DWithin expression node.
+        auto serializedExpressionNode = SerializableExpression_ST_DWithinExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+
+        auto serializedGeographyFieldsExpression = serializedExpressionNode.release_point();
+        auto serializedShapeExpression = serializedExpressionNode.release_shape();
+
+        auto geographyExpressionNode = deserializeGeographyFieldAccessExpressions(serializedGeographyFieldsExpression);
+        auto geographyFieldAccessExpressionNode = geographyExpressionNode->as<GeographyFieldsAccessExpressionNode>();
+        auto shapeExpressionNode = ShapeTypeSerializationUtil::deserializeShapeType(serializedShapeExpression);
+
+        return STDWithinExpressionNode::create(geographyFieldAccessExpressionNode, shapeExpressionNode);
+    } else if(serializedExpression->details().Is<SerializableExpression_ST_KNNExpression>()) {
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize geography expression as ST_KNN expression node.");
+        // de-serialize ST_KNN expression node.
+        auto serializedExpressionNode = SerializableExpression_ST_KNNExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+
+        auto serializedGeographyFieldsExpression = serializedExpressionNode.release_point();
+        auto serializedShapeExpression = serializedExpressionNode.release_shape();
+        auto constantK = serializedExpressionNode.release_k();
+
+        auto geographyExpressionNode = deserializeGeographyFieldAccessExpressions(serializedGeographyFieldsExpression);
+        auto geographyFieldAccessExpressionNode = geographyExpressionNode->as<GeographyFieldsAccessExpressionNode>();
+        auto shapeExpressionNode = ShapeTypeSerializationUtil::deserializeShapeType(serializedShapeExpression);
+        auto valueType = DataTypeSerializationUtil::deserializeDataValue(constantK->release_value());
+        auto constantExpressionNode = ConstantValueExpressionNode::create(valueType);
+        auto constantValue = constantExpressionNode->as<ConstantValueExpressionNode>();
+        
+        return STKnnExpressionNode::create(geographyFieldAccessExpressionNode, shapeExpressionNode, constantValue);
+    }
+    return nullptr;
+}
+
+ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression) {
+    // serialize geography fields accesses expression nodes.
+    NES_TRACE("ExpressionSerializationUtil:: de-serialize SerializableExpression_GeographyFieldsAccessExpression"
+              "serialized expression to GeographyFieldsAccessExpressionNode");
+
+    auto latitude = serializedExpression->release_latitude();
+    auto longitude = serializedExpression->release_longitude();
+
+    auto latitudeExpression = FieldAccessExpressionNode::create(latitude->fieldname());
+    auto longitudeExpression = FieldAccessExpressionNode::create(longitude->fieldname());
+
+    auto latitudeFieldAccessExpression = latitudeExpression->as<FieldAccessExpressionNode>();
+    auto longitudeFieldAccessExpression = longitudeExpression->as<FieldAccessExpressionNode>();
+
+    return GeographyFieldsAccessExpressionNode::create(latitudeFieldAccessExpression, longitudeFieldAccessExpression);
 }
 
 }// namespace NES

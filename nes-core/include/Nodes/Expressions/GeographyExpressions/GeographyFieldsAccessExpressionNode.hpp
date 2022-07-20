@@ -14,15 +14,18 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODES_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODES_HPP_
+
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
+
 namespace NES {
 
 /**
  * @brief A geography field access expression represents expressions
  * which accesses two fields, latitude and longitude.
  */
-class GeographyFieldsAccessExpressionNode : public ExpressionNode {
+class GeographyFieldsAccessExpressionNode : public ExpressionNode, public GeographyExpressionNode {
   public:
     explicit GeographyFieldsAccessExpressionNode(DataTypePtr stamp);
 

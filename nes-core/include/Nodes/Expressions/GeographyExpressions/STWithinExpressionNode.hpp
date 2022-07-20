@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STWITHINEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STWITHINEXPRESSIONNODE_HPP_
 
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 
@@ -37,7 +38,7 @@ using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
  * where latitude, and longitude represent the attributes lat/long in the schema, and
  * SHAPE is one of Circle, Rectangle, or Polygon.
  */
-class STWithinExpressionNode : public ExpressionNode {
+class STWithinExpressionNode : public ExpressionNode, public GeographyExpressionNode {
   public:
     STWithinExpressionNode();
     ~STWithinExpressionNode() = default;

@@ -16,6 +16,7 @@
 #define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_SHAPEEXPRESSIONNODE_HPP_
 
 #include <Nodes/Node.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <memory>
 
 namespace NES {
@@ -30,7 +31,7 @@ enum ShapeType { Point, Circle, Rectangle, Polygon };
  * Each expression defines a shape type. A shape type can be either point, circle,
  * rectangle, or a polygon.
  */
-class ShapeExpressionNode : public Node {
+class ShapeExpressionNode : public Node, public GeographyExpressionNode {
 
   public:
     explicit ShapeExpressionNode(ShapeType shapeType);

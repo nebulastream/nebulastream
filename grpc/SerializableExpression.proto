@@ -15,6 +15,7 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableDataType.proto";
+import "SerializableShapeType.proto";
 package NES;
 
 /*
@@ -123,6 +124,24 @@ message SerializableExpression {
     SerializableExpression left = 1;
     SerializableExpression right = 2;
   }
+  message GeographyFieldsAccessExpression{
+    FieldAccessExpression latitude = 1;
+    FieldAccessExpression longitude = 2;
+  }
+  message ST_WithinExpression{
+    GeographyFieldsAccessExpression point = 1;
+    SerializableShapeType shape = 2;
+  }
+  message ST_DWithinExpression{
+    GeographyFieldsAccessExpression point = 1;
+    SerializableShapeType shape = 2;
+  }
+  message ST_KNNExpression{
+    GeographyFieldsAccessExpression point = 1;
+    SerializableShapeType shape = 2;
+    ConstantValueExpression k = 3;
+  }
+
   SerializableDataType stamp = 1;
   google.protobuf.Any details = 2;
   repeated SerializableExpression children = 3;

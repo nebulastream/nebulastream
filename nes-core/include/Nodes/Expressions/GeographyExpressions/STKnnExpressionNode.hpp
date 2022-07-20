@@ -16,6 +16,7 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STKNNEXPRESSIONNODE_HPP_
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 
@@ -35,7 +36,7 @@ using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
  * objects from which to select the "k" nearest neighbors of the query point. For now,
  * this query remains unimplemented.
  */
-class STKnnExpressionNode : public ExpressionNode {
+class STKnnExpressionNode : public ExpressionNode, public GeographyExpressionNode {
   public:
     STKnnExpressionNode();
     ~STKnnExpressionNode() = default;

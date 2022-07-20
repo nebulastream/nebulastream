@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STDWITHINEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STDWITHINEXPRESSIONNODE_HPP_
 
+#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
@@ -41,7 +42,7 @@ using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
  * where lat/lon are latitude and longitude of the query point and the radius defines
 * the distance (in meters) for the ST_DWITHIN predicate .
  */
-class STDWithinExpressionNode : public ExpressionNode {
+class STDWithinExpressionNode : public ExpressionNode, public GeographyExpressionNode {
   public:
     STDWithinExpressionNode();
     ~STDWithinExpressionNode() = default;
