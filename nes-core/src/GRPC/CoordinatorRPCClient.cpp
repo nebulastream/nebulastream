@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/TimeMeasurement.hpp>
-#include <Util/Experimental/WorkerSpatialType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Common/Location.hpp>
@@ -21,14 +19,16 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <fstream>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
 #include <optional>
 #include <string>
-#include <Util/Experimental/WorkerSpatialTypeUtilities.hpp>
 namespace NES {
 
 namespace detail {
@@ -386,14 +386,14 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int16_t numberOfSlots,
                                         const Monitoring::RegistrationMetrics& registrationMetrics,
                                         Spatial::Index::Experimental::Location fixedCoordinates,
-                                        Spatial::Index::Experimental::WorkerSpatialType spatialType) {
+                                        Spatial::Index::Experimental::NodeType spatialType) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.set_spatialtype(Spatial::Util::WorkerSpatialTypeUtilities::toProtobufEnum(spatialType));
+    request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     Coordinates* pCoordinates = request.mutable_coordinates();

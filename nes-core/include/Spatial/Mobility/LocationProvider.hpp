@@ -16,7 +16,7 @@
 
 #include "Common/Location.hpp"
 #include "Util/Experimental/LocationProviderType.hpp"
-#include "Util/Experimental/WorkerSpatialType.hpp"
+#include "Util/Experimental/NodeType.hpp"
 #include "Util/TimeMeasurement.hpp"
 #include <memory>
 #include <vector>
@@ -71,10 +71,10 @@ class LocationProvider {
   public:
     /**
      * Constructor
-     * @param spatialType the type of worker: NO_LOCATION, FIELD_NODE (fixed location), MOBILE_NODE or INVALID
-     * @param fieldNodeLoc the fixed location if this worker is a field node. Will be ignored if the spatial type is not FIELD_NODE
+     * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
+     * @param fieldNodeLoc the fixed location if this worker is a field node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc);
+    explicit LocationProvider(Index::Experimental::NodeType spatialType, Index::Experimental::Location fieldNodeLoc);
 
     /**
      * @brief default destructor
@@ -85,7 +85,7 @@ class LocationProvider {
      * Experimental
      * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
      */
-    [[nodiscard]] Index::Experimental::WorkerSpatialType getSpatialType() const;
+    [[nodiscard]] Index::Experimental::NodeType getSpatialType() const;
 
     /**
      * Experimental
@@ -146,7 +146,7 @@ class LocationProvider {
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::Location fixedLocationCoordinates;
-    Index::Experimental::WorkerSpatialType spatialType;
+    Index::Experimental::NodeType spatialType;
 
     TrajectoryPredictorPtr trajectoryPredictor;
 };

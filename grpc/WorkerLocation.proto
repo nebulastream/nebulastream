@@ -19,9 +19,9 @@ message Coordinates {
   double lng = 2;
 }
 
-enum SpatialType {
+enum NodeType {
   NO_LOCATION = 0;
-  FIELD_NODE = 1;
+  FIXED_LOCATION = 1;
   MOBILE_NODE = 2;
 }
 

@@ -23,10 +23,10 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
+#include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>
-#include <Util/Experimental/WorkerSpatialType.hpp>
 
 using namespace std;
 using namespace NES;
@@ -104,7 +104,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
     uint64_t nodeId =
-        topologyManagerService->registerNode(address, 4000, 5000, 6, NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION, NES::Spatial::Index::Experimental::Location());
+        topologyManagerService->registerNode(address, 4000, 5000, 6, NES::Spatial::Index::Experimental::NodeType::NO_LOCATION, NES::Spatial::Index::Experimental::Location());
     EXPECT_NE(nodeId, 0u);
 
     //setup test

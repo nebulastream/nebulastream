@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#ifndef NES_WORKERSPATIALTYPEUTILITIES_HPP
-#define NES_WORKERSPATIALTYPEUTILITIES_HPP
-#include <Util/Experimental/WorkerSpatialType.hpp>
+#ifndef NES_NODETYPEUTILITIES_HPP
+#define NES_NODETYPEUTILITIES_HPP
+#include <Util/Experimental/NodeType.hpp>
 
 namespace NES::Spatial::Util {
 
-class WorkerSpatialTypeUtilities {
+class NodeTypeUtilities {
   public:
-    static Index::Experimental::WorkerSpatialType stringToWorkerSpatialType(std::string spatialTypeString);
+    static Index::Experimental::NodeType stringToNodeType(const std::string nodeTypeString);
 
-    static Index::Experimental::WorkerSpatialType protobufEnumToWorkerSpatialType(SpatialType spatielType);
+    static Index::Experimental::NodeType protobufEnumToNodeType(NodeType nodeType);
 
-    static std::string toString(Index::Experimental::WorkerSpatialType spatialType);
+    static std::string toString(Index::Experimental::NodeType nodeType);
 
-    static SpatialType toProtobufEnum(Index::Experimental::WorkerSpatialType spatialType);
+    static NodeType toProtobufEnum(Index::Experimental::NodeType nodeType);
 };
 
 }// namespace NES
 
-#endif//NES_WORKERSPATIALTYPEUTILITIES_HPP
+#endif//NES_NODETYPEUTILITIES_HPP

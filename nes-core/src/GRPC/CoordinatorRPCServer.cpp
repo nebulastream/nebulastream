@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
+#include <Common/Location.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/Location.hpp>
-#include <Services/LocationService.hpp>
-#include <Util/Experimental/WorkerSpatialType.hpp>
-#include <Util/Experimental/WorkerSpatialTypeUtilities.hpp>
 
 using namespace NES;
 
@@ -48,7 +48,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
-                                                  NES::Spatial::Util::WorkerSpatialTypeUtilities::protobufEnumToWorkerSpatialType(request->spatialtype()),
+            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
                                                   NES::Spatial::Index::Experimental::Location(request->coordinates()));
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
@@ -57,7 +57,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
-                                                  NES::Spatial::Util::WorkerSpatialTypeUtilities::protobufEnumToWorkerSpatialType(request->spatialtype()),
+            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
                                                   NES::Spatial::Index::Experimental::Location());
     }
 

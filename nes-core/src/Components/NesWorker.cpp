@@ -153,7 +153,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
-    if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
+    if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
         NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
         trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider, mobilityConfig, parentId);
     }
@@ -250,7 +250,7 @@ bool NesWorker::stop(bool) {
             rpcThread->join();
         }
 
-        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
+        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             if (trajectoryPredictor) {
                 trajectoryPredictor->stopReconnectPlanning();
                 NES_DEBUG("triggered stopping of reconnect planner thread");
@@ -303,7 +303,7 @@ bool NesWorker::connect() {
         healthCheckService->startHealthCheck();
 
         locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
-        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
+        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             reconnectConfigurator = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this, coordinatorRpcClient, mobilityConfig);
             trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
         }
