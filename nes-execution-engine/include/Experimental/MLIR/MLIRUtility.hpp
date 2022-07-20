@@ -66,8 +66,8 @@ class MLIRUtility {
      * @param jitAddresses: Memory addresses of external functions, objects, etc.
      * @return int: 1 if error occurred, else 0
      */
-    int runJit(bool useProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
-    std::unique_ptr<mlir::ExecutionEngine> prepareEngine();
+    int runJit(bool linkProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
+    std::unique_ptr<mlir::ExecutionEngine> prepareEngine(bool linkProxyFunctions = false);
 
     /**
      * @brief Can print a module and write it to a file, depending on debugFlags.
