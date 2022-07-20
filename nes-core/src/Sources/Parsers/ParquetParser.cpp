@@ -39,16 +39,16 @@ bool ParquetParser::writeToTupleBuffer(uint64_t tupleCount, Runtime::MemoryLayou
     uint32_t uint32;
     reader >> uint16 >> doubleType >> string >> boolean >> uint32 >> parquet::EndRow;//hardcoded types
     tupleBuffer[tupleCount][0].write<uint16_t>(uint16);
-    auto data1 = tupleBuffer[tupleCount][0].read<uint16_t>();
+    //auto data1 = tupleBuffer[tupleCount][0].read<uint16_t>();
     tupleBuffer[tupleCount][1].write<double>(doubleType);
-    auto data2 = tupleBuffer[tupleCount][1].read<double>();
+    //auto data2 = tupleBuffer[tupleCount][1].read<double>();
     char* value = tupleBuffer[tupleCount][2].read<char*>();
     strcpy(value,string.c_str());
-    auto data3 = tupleBuffer[tupleCount][2].read<char*>();
+    //auto data3 = tupleBuffer[tupleCount][2].read<char*>();
     tupleBuffer[tupleCount][3].write<bool>(boolean);
-    auto data4 = tupleBuffer[tupleCount][3].read<bool>();
+    //auto data4 = tupleBuffer[tupleCount][3].read<bool>();
     tupleBuffer[tupleCount][4].write<uint32_t>(uint32);
-    auto data5 = tupleBuffer[tupleCount][4].read<uint32_t>();
+    //auto data5 = tupleBuffer[tupleCount][4].read<uint32_t>();
     //NES_DEBUG(tupleBuffer.toString(schema));
     return true;
 }

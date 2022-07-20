@@ -2066,9 +2066,19 @@ TEST_F(SourceTest, testParquetSourceFillBufferFullFileOnLoop){
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(parquetSchema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (parquetDataSource.getNumberOfGeneratedBuffers() < 5) {
+    NES_DEBUG(this->nodeEngine->getBufferManager()->getBufferSize());
+    NES_DEBUG(parquetSchema->getSchemaSizeInBytes());
+    auto start = std::chrono::steady_clock::now();
+    while (!parquetDataSource.reachedEof()) {
+        auto start1 = std::chrono::steady_clock::now();
         parquetDataSource.fillBuffer(buffer);
+        auto end1 = std::chrono::steady_clock::now();
+        //NES_DEBUG(std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count());
     }
+    auto end = std::chrono::steady_clock::now();
+   NES_DEBUG("Elapsed time in seconds: "
+         + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(end - start).count()));
+    NES_DEBUG(parquetDataSource.getNumberOfGeneratedTuples());
 //    ASSERT_FALSE(csvDataSource.fileEnded);
 //    ASSERT_TRUE(csvDataSource.loopOnFile);
 //    auto buf = this->GetEmptyBuffer();
@@ -2103,7 +2113,7 @@ TEST_F(SourceTest, testParquetSourceSingleRowOfData){
         Runtime::MemoryLayouts::RowLayout::create(parquetSchema, this->nodeEngine->getBufferManager()->getBufferSize());
     NES_DEBUG(this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-
+    parquetDataSource.fillBuffer(buffer);
     EXPECT_EQ(buffer.getNumberOfTuples(), 1u);
     NES_DEBUG(buffer.toString(parquetSchema)); //TODO: Bug in printing contents, however the content is written into the TupleBuffer
 

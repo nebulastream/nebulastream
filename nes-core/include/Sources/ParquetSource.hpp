@@ -88,6 +88,8 @@ class ParquetSource : public DataSource {
      */
     const ParquetSourceTypePtr& getSourceConfig() const;
 
+    bool reachedEof();
+
   private:
     ParquetSourceTypePtr parquetSourceType;
     uint64_t tupleSize;
@@ -95,6 +97,7 @@ class ParquetSource : public DataSource {
     std::vector<PhysicalTypePtr> physicalTypes;
     std::string filePath;
     ParquetParserPtr parquetParser;
+    bool eof;
 
 };
 

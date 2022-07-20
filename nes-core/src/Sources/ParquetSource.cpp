@@ -59,25 +59,35 @@ std::optional<NES::Runtime::TupleBuffer> NES::ParquetSource::receiveData() {
 }
 
 void NES::ParquetSource::fillBuffer(NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    uint64_t tuplesToGenerate = 0;
-    //fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0) {
-        tuplesToGenerate = buffer.getCapacity();
-    } else {
-        tuplesToGenerate = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(tuplesToGenerate * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
-    }
+    if(!eof) {
+        uint64_t tuplesToGenerate = 0;
+        //fill buffer maximally
+        if (numberOfTuplesToProducePerBuffer == 0) {
+            tuplesToGenerate = buffer.getCapacity();
+            //NES_DEBUG("Fill buffer maximally");
+        } else {
+            tuplesToGenerate = numberOfTuplesToProducePerBuffer;
+            NES_ASSERT2_FMT(tuplesToGenerate * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
+        }
 
-    uint64_t generatedTuples = 0;
-    while (generatedTuples < tuplesToGenerate) {
-       bool success = parquetParser->writeToTupleBuffer(generatedTuples,buffer);
-       if(success){
-           generatedTuples++;
-           buffer.setNumberOfTuples(generatedTuples);
-       }
-       else {
-           break;
-       }
+        uint64_t tuplesGenerated = 0;
+        while (tuplesGenerated <= tuplesToGenerate - 1) {
+            bool success = parquetParser->writeToTupleBuffer(tuplesGenerated, buffer);
+            if (success) {
+                tuplesGenerated++;
+                buffer.setNumberOfTuples(tuplesGenerated);
+                generatedTuples++;
+                //NES_DEBUG(generatedTuples);
+            } else {
+                NES_DEBUG("Failure");
+                eof = true;
+                break;
+            }
+        }
+        if (!eof) {
+            generatedBuffers++;
+            //NES_DEBUG(generatedBuffers);
+        }
     }
 }
 
@@ -90,5 +100,6 @@ std::string NES::ParquetSource::getFilePath() const { return filePath; }
 uint64_t NES::ParquetSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
 const NES::ParquetSourceTypePtr& NES::ParquetSource::getSourceConfig() const { return parquetSourceType; }
+bool ParquetSource::reachedEof() { return eof; }
 }//namespace NES
 #endif
