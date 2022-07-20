@@ -601,9 +601,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
     std::tuple<NES::Spatial::Index::Experimental::Location, Timestamp> lastReconnectPositionAndTime = std::tuple(NES::Spatial::Index::Experimental::Location(), 0);
-    //std::optional<std::tuple<unsigned long, NES::Spatial::Index::Experimental::Location, Timestamp>> predictedReconnect = std::nullopt;
     std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect = std::nullopt;
-    //std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> oldPredictedReconnect = std::nullopt;
     std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect = std::nullopt;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;

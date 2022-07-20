@@ -491,7 +491,6 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
             auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
-            //vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>(reconnectData.reconnectprediction().id(), loc, reconnectData.reconnectprediction().time()));
             vec->push_back(NES::Spatial::Mobility::Experimental::ReconnectPoint {loc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectData.reconnectprediction().id(), reconnectData.reconnectprediction().time()}});
         }
 

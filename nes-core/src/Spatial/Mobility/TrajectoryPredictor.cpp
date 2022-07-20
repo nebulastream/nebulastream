@@ -472,7 +472,6 @@ void TrajectoryPredictor::scheduleReconnects() {
             auto currLatLng = S2LatLng(reconnectLocationOnPath);
             auto currLoc =
                 std::make_shared<Index::Experimental::Location>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
-            //reconnectVector.emplace_back(reconnectParentId, *currLoc, (uint64_t) estimatedReconnectTime);
             reconnectVector.emplace_back(ReconnectPoint {*currLoc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectParentId, (uint64_t) estimatedReconnectTime}});
             NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
             reconnectLocationOnPath = nextReconnectLocationOnPath;
