@@ -58,7 +58,7 @@ class ExpressionSerializationUtil {
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeGeographyExpressions(SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression)
+    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
 };
 }// namespace NES
 
