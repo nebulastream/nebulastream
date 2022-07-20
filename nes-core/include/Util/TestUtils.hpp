@@ -125,10 +125,12 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--optimizer.performDistributedWindowOptimization=false";
 }
 
-[[nodiscard]] std::string setDistributedWindowChildThresholdMax() { return "--optimizer.distributedWindowChildThreshold=100"; }
+[[nodiscard]] std::string setDistributedWindowChildThreshold(uint64_t val) {
+    return "--optimizer.distributedWindowChildThreshold=" + std::to_string(val);
+}
 
-[[nodiscard]] std::string setDistributedWindowCombinerThresholdMax() {
-    return "--optimizer.distributedWindowCombinerThreshold=100";
+[[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val) {
+    return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
 }
 
 [[nodiscard]] std::string enableThreadLocalWindowing() { return "--queryCompiler.windowingStrategy=THREAD_LOCAL"; }
