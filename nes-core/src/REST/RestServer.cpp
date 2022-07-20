@@ -128,7 +128,7 @@ bool RestServer::stop() {
 
 void RestServer::run() {
     /* Register Components in scope of run() method */
-    AppComponent components;
+    AppComponent components(host, port);
 
     /* Get router component */
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);

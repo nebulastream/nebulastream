@@ -39,35 +39,45 @@ limitations under the License.
 class AppComponent {
   public:
 
-    /**
+    AppComponent() = delete;
+
+    AppComponent(std::string host, uint16_t port)
+        :host(host), port(port){
+            NES_INFO("Creating AppComponent");
+        };
+  private:
+    std::string host;
+    uint16_t port;
+
+  public:
+  /**
    *  Create ConnectionProvider component which listens on the port
    */
-    OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([] {
-        return oatpp::network::tcp::server::ConnectionProvider::createShared({"localhost", 8000, oatpp::network::Address::IP_4});
+    OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([&] {
+        return oatpp::network::tcp::server::ConnectionProvider::createShared({host, port, oatpp::network::Address::IP_4});
     }());
-
     /**
    *  Create Router component
    */
+
     OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, httpRouter)([] {
         return oatpp::web::server::HttpRouter::createShared();
     }());
-
     /**
    *  Create ConnectionHandler component which uses Router component to route requests
    */
+
     OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, serverConnectionHandler)([] {
         OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router); // get Router component
         return oatpp::web::server::HttpConnectionHandler::createShared(router);
     }());
-
     /**
    *  Create ObjectMapper component to serialize/deserialize DTOs in Contoller's API
    */
+
     OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::data::mapping::ObjectMapper>, apiObjectMapper)([] {
         return oatpp::parser::json::mapping::ObjectMapper::createShared();
     }());
-
 };
 
 #endif//NES_NES_CORE_INCLUDE_REST_APPCOMPONENT_HPP_
