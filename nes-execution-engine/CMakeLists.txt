@@ -30,7 +30,7 @@ message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
 message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
 # Reducing linked & optimized LLVM IR to Proxy Functions only.
-add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/LLVMGetFunctionTest.cpp")
+add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
 set_target_properties( generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
 target_link_libraries(generate-proxy-function-ir
     nes-execution-engine)
