@@ -17,6 +17,8 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/FileCollector.h>
 #include <llvm/Transforms/IPO/SCCP.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
@@ -40,6 +42,7 @@
 #include <mlir/Transforms/Passes.h>
 #include <string>
 #include <utility>
+#include <filesystem>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
@@ -217,11 +220,16 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
     llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
     if (useProxyFunctions) {
+        char tmp[256];
+        getcwd(tmp, 256);
+        std::cout << "Current working directory: " << tmp << '\n';
+        std::cout << "Current root path is: " << std::filesystem::current_path().root_path() << '\n';
         printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
             llvm::SMDiagnostic Err;
-            //Todo change path
+            //Todo find better way to get the correct path
+            // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/ExecutionTests'
             auto proxyFunctionsIR =
-                llvm::parseIRFile("/home/rudi/mlir/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
+                llvm::parseIRFile("../../../../llvm-ir/nes-runtime_opt/proxiesReduced.ll", Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
 
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
@@ -255,17 +263,17 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     engine->registerSymbols(runtimeSymbolMap);
 
     // Invoke the JIT-compiled function.
-    int64_t result = 0;
-    auto invocationResult =
-        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
-    printf("Result: %ld\n", result);
+    // int64_t result = 0;
+    // auto invocationResult =
+    //     engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
+    // printf("Result: %ld\n", result);
 
-    if (invocationResult) {
-        llvm::errs() << "JIT invocation failed\n";
-        return -1;
-    }
+    // if (invocationResult) {
+    //     llvm::errs() << "JIT invocation failed\n";
+    //     return -1;
+    // }
 
-    return 0;
+    return (bool) inputBufferPtr + (bool) outputBufferPtr;
 }
 
 std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {

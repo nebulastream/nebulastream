@@ -91,7 +91,7 @@ TEST_F(FunctionExecutionTest, addIntFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
@@ -118,7 +118,7 @@ TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
@@ -146,7 +146,7 @@ TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)()) engine->lookup("execute").get();
@@ -175,7 +175,7 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
