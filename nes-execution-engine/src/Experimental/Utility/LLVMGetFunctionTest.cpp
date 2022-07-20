@@ -83,7 +83,13 @@ int main(int argc, char **argv) {
     }
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
-    std::vector<std::string> ExtractFuncs{"getGlobalOperatorStateProxy", "getNumberOfTuples", "setNumberOfTuples"}; //getDataBuffer
+    std::vector<std::string> ExtractFuncs{
+        "getGlobalOperatorStateProxy", 
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__QueryCompiler__PipelineContext__emitBufferProxy"};
+        
     for (size_t i = 0; i != ExtractFuncs.size(); ++i) {
         GlobalValue *GV = LLVMModule->getFunction(ExtractFuncs[i]);
         if (!GV) {
