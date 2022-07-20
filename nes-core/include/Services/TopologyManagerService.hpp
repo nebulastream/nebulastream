@@ -33,7 +33,7 @@ class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
 namespace Spatial::Index::Experimental {
-enum class WorkerSpatialType;
+enum class NodeType;
 }
 
 /**
@@ -59,7 +59,7 @@ class TopologyManagerService {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          NES::Spatial::Index::Experimental::WorkerSpatialType spatialType,
+                          NES::Spatial::Index::Experimental::NodeType spatialType,
                           NES::Spatial::Index::Experimental::Location fixedCoordinates);
 
     /**

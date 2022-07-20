@@ -15,5 +15,5 @@ add_source_files(nes-core
         HashMap.cpp
         LocationProviderType.cpp
         S2Utilities.cpp
-        WorkerSpatialTypeUtilities.cpp
+        NodeTypeUtilities.cpp
 )

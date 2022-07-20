@@ -18,10 +18,10 @@
 #include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/NodeType.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>
-#include <Util/Experimental/WorkerSpatialType.hpp>
 
 namespace NES {
 
@@ -62,7 +62,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        if (nodeToRemove->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE) {
+        if (nodeToRemove->getSpatialType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
             locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
         }
         indexOnNodeIds.erase(idOfNodeToRemove);

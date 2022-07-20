@@ -41,7 +41,7 @@ namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
-enum class WorkerSpatialType;
+enum class NodeType;
 }// namespace Spatial::Index::Experimental
 
 /**
@@ -131,7 +131,7 @@ class CoordinatorRPCClient {
                       int16_t numberOfSlots,
                       const Monitoring::RegistrationMetrics& registrationMetrics,
                       NES::Spatial::Index::Experimental::Location fixedCoordinates,
-                      NES::Spatial::Index::Experimental::WorkerSpatialType spatialType);
+                      NES::Spatial::Index::Experimental::NodeType spatialType);
 
     /**
      * @brief method to check if the coordinator is alive

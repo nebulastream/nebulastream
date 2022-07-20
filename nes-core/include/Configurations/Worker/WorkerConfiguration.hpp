@@ -23,9 +23,9 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
+#include <Util/Experimental/NodeType.hpp>
 #include <map>
 #include <string>
-#include <Util/Experimental/WorkerSpatialType.hpp>
 
 namespace NES {
 
@@ -181,8 +181,8 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify if the worker is running on a mobile device, if it is a field node with a known fixed loction, or if it
      * does not have a known location.
      */
-    EnumOption<NES::Spatial::Index::Experimental::WorkerSpatialType> spatialType = {SPATIAL_TYPE_CONFIG,
-                                                                                    NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION,
+    EnumOption<NES::Spatial::Index::Experimental::NodeType> spatialType = {SPATIAL_TYPE_CONFIG,
+                                                                                    NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
                                                                                     "specifies if the worker has no known location or if it is a field node or mobile node"};
 
     /**

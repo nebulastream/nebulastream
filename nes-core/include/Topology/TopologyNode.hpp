@@ -28,7 +28,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
-enum class WorkerSpatialType;
+enum class NodeType;
 }
 
 namespace Spatial::Mobility::Experimental {
@@ -192,14 +192,14 @@ class TopologyNode : public Node {
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
      * @param workerSpatialType
      */
-    void setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType workerSpatialType);
+    void setSpatialType(NES::Spatial::Index::Experimental::NodeType workerSpatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    NES::Spatial::Index::Experimental::WorkerSpatialType getSpatialType();
+    NES::Spatial::Index::Experimental::NodeType getSpatialType();
 
   private:
     uint64_t id;
@@ -210,7 +210,7 @@ class TopologyNode : public Node {
     uint16_t usedResources;
     bool maintenanceFlag;
     NES::Spatial::Index::Experimental::Location fixedCoordinates;
-    NES::Spatial::Index::Experimental::WorkerSpatialType spatialType;
+    NES::Spatial::Index::Experimental::NodeType spatialType;
 
     /**
      * @brief A field to store a map of node properties

@@ -17,20 +17,20 @@
 #include "GRPC/CoordinatorRPCClient.hpp"
 #include "Spatial/Mobility/LocationProviderCSV.hpp"
 #include "Util/Experimental/LocationProviderType.hpp"
-#include "Util/Experimental/WorkerSpatialType.hpp"
+#include "Util/Experimental/NodeType.hpp"
 #include "Util/Logger/Logger.hpp"
 
 namespace NES::Spatial::Mobility::Experimental {
 
-LocationProvider::LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc) {
+LocationProvider::LocationProvider(Index::Experimental::NodeType spatialType, Index::Experimental::Location fieldNodeLoc) {
     this->spatialType = spatialType;
     this->fixedLocationCoordinates = fieldNodeLoc;
 }
 
-Index::Experimental::WorkerSpatialType LocationProvider::getSpatialType() const { return spatialType; };
+Index::Experimental::NodeType LocationProvider::getSpatialType() const { return spatialType; };
 
 bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc) {
-    if (spatialType != Index::Experimental::WorkerSpatialType::FIELD_NODE) {
+    if (spatialType != Index::Experimental::NodeType::FIXED_LOCATION) {
         return false;
     }
     fixedLocationCoordinates = geoLoc;
@@ -39,13 +39,13 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
 
 Index::Experimental::Location LocationProvider::getLocation() {
     switch (spatialType) {
-        case Index::Experimental::WorkerSpatialType::MOBILE_NODE:
+        case Index::Experimental::NodeType::MOBILE_NODE:
             return getCurrentLocation().first;
-        case Index::Experimental::WorkerSpatialType::FIELD_NODE:
+        case Index::Experimental::NodeType::FIXED_LOCATION:
             return fixedLocationCoordinates;
-        case Index::Experimental::WorkerSpatialType::NO_LOCATION:
+        case Index::Experimental::NodeType::NO_LOCATION:
             return {};
-        case Index::Experimental::WorkerSpatialType::INVALID:
+        case Index::Experimental::NodeType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
             return {};
     }
