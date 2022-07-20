@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Spatial/Mobility/ReconnectConfigurator.hpp"
-#include "Common/Location.hpp"
-#include "Components/NesWorker.hpp"
-#include "Configurations/Worker/WorkerMobilityConfiguration.hpp"
-#include "GRPC/CoordinatorRPCClient.hpp"
-#include "Spatial/Mobility/LocationProviderCSV.hpp"
+#include <Spatial/Mobility/ReconnectConfigurator.hpp>
+#include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
+#include <Components/NesWorker.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
+#include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <utility>
 #ifdef S2DEF
 #include <s2/s2point.h>
@@ -43,19 +44,19 @@ NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurat
 #endif
 };
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateScheduledReconnect(
-    const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect) {
+    const std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction>& scheduledReconnect) {
     bool predictionChanged = false;
     if (scheduledReconnect.has_value()) {
         // the new value represents a valid prediction
-        uint64_t reconnectId = get<0>(scheduledReconnect.value());
-        Timestamp timestamp = get<2>(scheduledReconnect.value());
+        uint64_t reconnectId = scheduledReconnect.value().expectedNewParentId;
+        Timestamp timestamp = scheduledReconnect.value().expectedTime;
         std::unique_lock lock(reconnectConfigMutex);
         if (!lastTransmittedReconnectPrediction.has_value()) {
             // previously there was no prediction. we now inform the coordinator that a prediction exists
             NES_DEBUG("transmitting predicted reconnect point. previous prediction did not exist")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
             predictionChanged = true;
-        } else if (reconnectId != get<0>(lastTransmittedReconnectPrediction.value()) || timestamp != get<2>(lastTransmittedReconnectPrediction.value())) {
+        } else if (reconnectId != lastTransmittedReconnectPrediction.value().expectedNewParentId || timestamp != lastTransmittedReconnectPrediction.value().expectedTime) {
             // there was a previous prediction but its values differ from the current one. Inform coordinator about the new prediciton
             NES_DEBUG("transmitting predicted reconnect point. current prediction differs from previous prediction")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
@@ -66,7 +67,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
         // a previous trajectory led to the calculation of a prediction. But there is no prediction (yet) for the current trajectory
         // inform coordinator, that the old prediction is not valid anymore
         NES_DEBUG("no reconnect point found after recalculation, telling coordinator to discard old reconnect")
-        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), std::tuple<uint64_t, Index::Experimental::Location, Timestamp>(0, {}, 0));
+        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), NES::Spatial::Mobility::Experimental::ReconnectPrediction {0, 0});
         predictionChanged = true;
     }
     lastTransmittedReconnectPrediction = scheduledReconnect;

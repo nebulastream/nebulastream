@@ -46,6 +46,8 @@ using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
+
+
 }// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -57,6 +59,10 @@ using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
 class ReconnectConfigurator;
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+
+struct ReconnectPrediction;
+struct ReconnectPoint;
+
 
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
@@ -129,7 +135,7 @@ class TrajectoryPredictor {
      * @return an optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
      * nullopt if no reconnect has been calculated
      */
-    std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> getNextPredictedReconnect();
+    std::optional<ReconnectPoint> getNextPredictedReconnect();
 
     /**
      * @brief return position and time at which the last reconnect happened
@@ -212,7 +218,7 @@ class TrajectoryPredictor {
 #endif
     uint64_t parentId;
     std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
-    std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> reconnectVector;
+    std::vector<ReconnectPoint> reconnectVector;
     double bufferAverageMovementSpeed;
     double allowedSpeedDifferenceFactor;
     std::tuple<Index::Experimental::Location, Timestamp> devicePositionTupleAtLastReconnect;

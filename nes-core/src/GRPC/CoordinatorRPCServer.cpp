@@ -340,14 +340,8 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
-    const ReconnectPoint& reconnectPoint = request->reconnect();
+    const ReconnectPrediction& reconnectPoint = request->reconnect();
     NES::Spatial::Index::Experimental::Location location;
-    if (reconnectPoint.has_coord()) {
-        const Coordinates& coordinates = reconnectPoint.coord();
-        location = NES::Spatial::Index::Experimental::Location(coordinates.lat(), coordinates.lng());
-    } else {
-        NES_DEBUG("incoming request did not contain coordinates")
-    }
     bool success = locationService->updatePredictedReconnect(request->deviceid(), reconnectPoint.id(), location, reconnectPoint.time());
     reply->set_success(success);
     if (success) {

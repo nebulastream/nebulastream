@@ -14,6 +14,7 @@
 
 #include "Spatial/Mobility/ReconnectSchedule.hpp"
 #include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
 #include <Services/LocationService.hpp>
 #include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
@@ -49,9 +50,9 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     if (schedule->getReconnectVector()) {
         for (auto elem : *(schedule->getReconnectVector())) {
             web::json::value elemJson;
-            elemJson["id"] = std::get<0>(elem);
-            elemJson["reconnectPoint"] = convertLocationToJson(std::get<1>(elem));
-            elemJson["time"] = std::get<2>(elem);
+            elemJson["id"] = elem.reconnectPrediction.expectedNewParentId;
+            elemJson["reconnectPoint"] = convertLocationToJson(elem.predictedReconnectLocation);
+            elemJson["time"] = elem.reconnectPrediction.expectedTime;
             reconnectArray[i] = elemJson;
             i++;
         }

@@ -22,6 +22,8 @@ using LocationPtr = std::shared_ptr<Location>;
 }
 
 namespace NES::Spatial::Mobility::Experimental {
+struct ReconnectPrediction;
+struct ReconnectPoint;
 
 /**
  * @brief contains a prediction about a mobile devices trajectory and the reconnects as they are expected to happen
@@ -38,7 +40,7 @@ class ReconnectSchedule {
      */
     ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
-                      std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector);
+                      std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector);
 
     /**
      * @brief getter function for the start location of the current predicted path
@@ -63,7 +65,7 @@ class ReconnectSchedule {
      * @brief getter function for the vector containing the scheduled reconnects
      * @return a vector containing tuples consisting of expected next parent id, estimated reconnect location, estimated reconnect time
      */
-    [[nodiscard]] std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> getReconnectVector() const;
+    [[nodiscard]] std::shared_ptr<std::vector<ReconnectPoint>> getReconnectVector() const;
 
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
@@ -75,7 +77,7 @@ class ReconnectSchedule {
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;
     Index::Experimental::LocationPtr lastIndexUpdatePosition;
-    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector;
+    std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector;
 };
 }
 
