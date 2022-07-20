@@ -211,7 +211,7 @@ const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
 //worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";
-const std::string SPATIAL_TYPE_CONFIG = "spatialType";
+const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";
 const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
 const std::string LOCATION_BUFFER_SIZE_CONFIG = "locationBufferSize";
 const std::string LOCATION_BUFFER_SAVE_RATE_CONFIG = "locationBufferSaveRate";

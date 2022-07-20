@@ -60,7 +60,7 @@ Getting the execution plan for the user query.
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
-        "nodeType": "node_type",
+        "nodeSpatialType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
         "physicalSourceName": "physical_source_name"
@@ -90,7 +90,7 @@ Get query plan for the user query.
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
-        "nodeType": "node_type"
+        "nodeSpatialType": "node_type"
     }],
 "edges": [{
         "source":"source_operator",    
@@ -115,7 +115,7 @@ To get the NebulaStream topology graph as JSON.
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
-        "nodeType": "node_type",
+        "nodeSpatialType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
         "physicalSourceName": "physical_source_name"

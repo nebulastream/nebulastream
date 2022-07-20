@@ -181,7 +181,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify if the worker is running on a mobile device, if it is a field node with a known fixed loction, or if it
      * does not have a known location.
      */
-    EnumOption<NES::Spatial::Index::Experimental::NodeType> spatialType = {SPATIAL_TYPE_CONFIG,
+    EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {SPATIAL_TYPE_CONFIG,
                                                                                     NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
                                                                                     "specifies if the worker has no known location or if it is a field node or mobile node"};
 
@@ -260,7 +260,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryCompiler,
                 &physicalSources,
                 &locationCoordinates,
-                &spatialType,
+                &nodeSpatialType,
                 &mobilityConfiguration,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,

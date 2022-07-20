@@ -85,7 +85,7 @@ class LocationProvider {
      * Experimental
      * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
      */
-    [[nodiscard]] Index::Experimental::NodeType getSpatialType() const;
+    [[nodiscard]] Index::Experimental::NodeType getNodeType() const;
 
     /**
      * Experimental
@@ -146,7 +146,7 @@ class LocationProvider {
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::Location fixedLocationCoordinates;
-    Index::Experimental::NodeType spatialType;
+    Index::Experimental::NodeType nodeType;
 
     TrajectoryPredictorPtr trajectoryPredictor;
 };

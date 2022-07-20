@@ -176,7 +176,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& query
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
         node["name"] = web::json::value::string(rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
 
-        node["nodeType"] = web::json::value::string(rootOperatorType);
+        node["nodeSpatialType"] = web::json::value::string(rootOperatorType);
 
         nodes.push_back(node);
 
@@ -223,7 +223,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
             node["name"] =
                 web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
         }
-        node["nodeType"] = web::json::value::string(childOPeratorType);
+        node["nodeSpatialType"] = web::json::value::string(childOPeratorType);
 
         // store current node JSON object to the `nodes` JSON array
         nodes.push_back(node);
