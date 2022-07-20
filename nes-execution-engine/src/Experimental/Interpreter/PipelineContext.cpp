@@ -42,7 +42,7 @@ void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, s
     this->operatorIndexMap[operatorPtr] = tag;
 }
 
-extern "C" __attribute__((always_inline)) void* getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
+extern "C" __attribute__((always_inline)) void* NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     return pc->getGlobalOperatorState(tag);
 }
@@ -51,7 +51,7 @@ Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* operatorPt
     auto tag = this->operatorIndexMap[operatorPtr];
     // The tag is assumed to be constant therefore we create a constant string and call the get global operator state function with it.
     auto tagValue = Value<Int32>((int32_t) tag);
-    return FunctionCall<>("getGlobalOperatorStateProxy", getGlobalOperatorStateProxy, pipelineContextRef, tagValue);
+    return FunctionCall<>("NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy, pipelineContextRef, tagValue);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
