@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include "Spatial/Mobility/LocationProvider.hpp"
-#include "Spatial/Mobility/ReconnectSchedule.hpp"
-#include "Spatial/Mobility/TrajectoryPredictor.hpp"
+#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Common/ReconnectPrediction.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
@@ -231,12 +232,13 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     //insert the predicted reconnects into the message (if there are any)
     for (auto elem : *(schedule->getReconnectVector())) {
         ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
-        reconnectPoint->set_id(std::get<0>(elem));
         Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
-        auto loc = std::get<1>(elem);
+        auto loc = elem.predictedReconnectLocation;
         reconnectLocation->set_lat(loc.getLatitude());
         reconnectLocation->set_lng(loc.getLongitude());
-        reconnectPoint->set_time(std::get<2>(elem));
+        auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
+        reconnectPrediction->set_id(elem.reconnectPrediction.expectedNewParentId);
+        reconnectPrediction->set_time(elem.reconnectPrediction.expectedTime);
     }
     return Status::OK;
 }

@@ -14,15 +14,16 @@
 
 #include <iostream>
 
-#include "Spatial/Mobility/LocationProvider.hpp"
-#include "Spatial/Mobility/LocationProviderCSV.hpp"
-#include "Spatial/Mobility/ReconnectSchedule.hpp"
-#include "Spatial/Mobility/TrajectoryPredictor.hpp"
+#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -600,8 +601,10 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
     std::tuple<NES::Spatial::Index::Experimental::Location, Timestamp> lastReconnectPositionAndTime = std::tuple(NES::Spatial::Index::Experimental::Location(), 0);
-    std::optional<std::tuple<unsigned long, NES::Spatial::Index::Experimental::Location, Timestamp>> predictedReconnect = std::nullopt;
-    std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> oldPredictedReconnect = std::nullopt;
+    //std::optional<std::tuple<unsigned long, NES::Spatial::Index::Experimental::Location, Timestamp>> predictedReconnect = std::nullopt;
+    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect = std::nullopt;
+    //std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> oldPredictedReconnect = std::nullopt;
+    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect = std::nullopt;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> checkVectorForCoordinatorPrediction;
@@ -699,13 +702,13 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         if(newPredictedReconnect && (!get<0>(lastReconnectPositionAndTime).isValid()
                             || (get<0>(updatedLastReconnect) == get<0>(lastReconnectPositionAndTime)))) {
                             if ((/*we are still connected to first node*/ !oldPredictedReconnect
-                                 || /*we are reconnected to a new node*/ get<1>(newPredictedReconnect.value()) != get<1>(oldPredictedReconnect.value()))) {
+                                 || /*we are reconnected to a new node*/ newPredictedReconnect.value().predictedReconnectLocation != oldPredictedReconnect.value().predictedReconnectLocation)) {
                                 NES_TRACE("path stabilized after reconnect")
                                 predictedReconnect = newPredictedReconnect;
-                                firstPrediction = get<2>(predictedReconnect.value());
+                                firstPrediction = predictedReconnect.value().reconnectPrediction.expectedTime;
                             }
-                            if (predictedReconnect && get<1>(predictedReconnect.value()) == get<1>(newPredictedReconnect.value())
-                                && get<2>(predictedReconnect.value()) != get<2>(newPredictedReconnect.value())) {
+                            if (predictedReconnect && predictedReconnect.value().predictedReconnectLocation == newPredictedReconnect.value().predictedReconnectLocation
+                                && predictedReconnect.value().reconnectPrediction.expectedTime != newPredictedReconnect.value().reconnectPrediction.expectedTime) {
                                 NES_DEBUG("updating ETA")
                                 predictedReconnect = newPredictedReconnect;
                             }
@@ -723,12 +726,12 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                 NES_DEBUG("worker reconnected")
                 if (predictedReconnect) {
                     auto predictedPoint =
-                        NES::Spatial::Util::S2Utilities::locationToS2Point(get<1>(predictedReconnect.value()));
+                        NES::Spatial::Util::S2Utilities::locationToS2Point(predictedReconnect.value().predictedReconnectLocation);
                     auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(get<0>(updatedLastReconnect));
                     EXPECT_TRUE(S2::ApproxEquals(predictedPoint, actualPoint, allowedReconnectPositionPredictionError));
-                    EXPECT_NE(get<2>(predictedReconnect.value()),  0);
+                    EXPECT_NE(predictedReconnect.value().reconnectPrediction.expectedTime,  0);
                     EXPECT_NE(get<1>(updatedLastReconnect), 0);
-                    EXPECT_LT(abs((long long) get<2>(predictedReconnect.value()) - (long long) get<1>(updatedLastReconnect)),
+                    EXPECT_LT(abs((long long) predictedReconnect.value().reconnectPrediction.expectedTime - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
                     EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
@@ -739,7 +742,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     bool predictedAtCoord = false;
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin(); prediction != checkVectorForCoordinatorPrediction.end(); ++prediction) {
                         NES_DEBUG("comparing prediction to node with id " << get<0>(*prediction))
-                       predictedAtCoord = get<0>(*prediction) == get<0>(predictedReconnect.value());
+                       predictedAtCoord = get<0>(*prediction) == predictedReconnect.value().reconnectPrediction.expectedNewParentId;
                        if (predictedAtCoord) {
                            checkVectorForCoordinatorPrediction.erase(checkVectorForCoordinatorPrediction.begin(), prediction);
                            break;
@@ -747,7 +750,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     }
                     if (!predictedAtCoord) {
                         auto currentPredictionAtCoordinator = crd->getTopology()->getLocationIndex()->getScheduledReconnect(wrk1->getWorkerId());
-                        EXPECT_EQ(get<0>(predictedReconnect.value()), get<0>(currentPredictionAtCoordinator.value()));
+                        EXPECT_EQ(predictedReconnect.value().reconnectPrediction.expectedNewParentId, get<0>(currentPredictionAtCoordinator.value()));
                     }
                     predictedReconnect = std::nullopt;
                     oldPredictedReconnect = predictedReconnect;

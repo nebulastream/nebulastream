@@ -41,8 +41,13 @@ namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
+
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
+
+namespace Spatial::Mobility::Experimental {
+struct ReconnectPrediction;
+}
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
@@ -224,7 +229,7 @@ class CoordinatorRPCClient {
      * and the expected time of the reconnect
      * @return true if the information was succesfully saved at coordinator side
      */
-    bool sendReconnectPrediction(uint64_t nodeId, std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp> scheduledReconnect);
+    bool sendReconnectPrediction(uint64_t nodeId, NES::Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect);
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed

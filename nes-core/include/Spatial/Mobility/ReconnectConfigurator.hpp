@@ -14,8 +14,9 @@
 #ifndef NES_RECONNECTCONFIGURATOR_HPP
 #define NES_RECONNECTCONFIGURATOR_HPP
 
-#include "Common/Location.hpp"
-#include "Util/TimeMeasurement.hpp"
+#include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -87,7 +88,7 @@ class ReconnectConfigurator {
      * @return true if the the supplied prediction differed from the previous prediction. false if the value did not change
      * and therefore no update was sent to the coordinator
      */
-    bool updateScheduledReconnect(const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect);
+    bool updateScheduledReconnect(const std::optional<Mobility::Experimental::ReconnectPrediction>& scheduledReconnect);
 
     /**
      * @brief change the mobile workers position in the topology by giving it a new parent
@@ -103,7 +104,7 @@ class ReconnectConfigurator {
     std::recursive_mutex reconnectConfigMutex;
     NesWorker& worker;
     CoordinatorRPCCLientPtr coordinatorRpcClient;
-    std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> lastTransmittedReconnectPrediction;
+    std::optional<ReconnectPrediction> lastTransmittedReconnectPrediction;
 #ifdef S2DEF
     S2Point lastTransmittedLocation;
     S1Angle locationUpdateThreshold;

@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -606,20 +607,15 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
 }
 
 bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
-    std::tuple<uint64_t, Spatial::Index::Experimental::Location, Timestamp> scheduledReconnect) {
+    Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
     request.set_deviceid(nodeId);
-    ReconnectPoint* reconnectPoint = request.mutable_reconnect();
-    reconnectPoint->set_id(get<0>(scheduledReconnect));
-    if (get<1>(scheduledReconnect).isValid()) {
-        Coordinates* coordinates = reconnectPoint->mutable_coord();
-        coordinates->set_lat(get<1>(scheduledReconnect).getLatitude());
-        coordinates->set_lng(get<1>(scheduledReconnect).getLongitude());
-    }
-    reconnectPoint->set_time(get<2>(scheduledReconnect));
+    ReconnectPrediction* reconnectPoint = request.mutable_reconnect();
+    reconnectPoint->set_id(scheduledReconnect.expectedNewParentId);
+    reconnectPoint->set_time(scheduledReconnect.expectedTime);
 
     coordinatorStub->SendScheduledReconnect(&context, request, &reply);
     return reply.success();

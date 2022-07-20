@@ -37,8 +37,12 @@ message ReconnectSchedule {
   repeated ReconnectPoint reconnectPoints = 4;
 }
 
-message ReconnectPoint {
+message ReconnectPrediction {
   uint64 id = 1;
-  Coordinates coord = 2;
-  uint64 time = 3;
+  uint64 time = 2;
+}
+
+message ReconnectPoint {
+  Coordinates coord = 1;
+  ReconnectPrediction reconnectPrediction = 2;
 }

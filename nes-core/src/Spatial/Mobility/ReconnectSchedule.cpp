@@ -19,7 +19,7 @@ namespace NES::Spatial::Mobility::Experimental {
 ReconnectSchedule::ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning,
                   Index::Experimental::LocationPtr pathEnd,
                                      Index::Experimental::LocationPtr lastIndexUpdatePosition,
-                  std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector)
+                  std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector)
     : pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)), lastIndexUpdatePosition(lastIndexUpdatePosition),
       reconnectVector(std::move(reconnectVector)) {}
 
@@ -31,7 +31,7 @@ Index::Experimental::LocationPtr ReconnectSchedule::getPathEnd() const {
     return pathEnd;
 }
 
-std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> ReconnectSchedule::getReconnectVector() const {
+std::shared_ptr<std::vector<ReconnectPoint>> ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
 }
 
