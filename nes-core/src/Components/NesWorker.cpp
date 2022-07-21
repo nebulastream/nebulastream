@@ -51,7 +51,7 @@ namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
-      metricStore(metricStore) {
+      metricStore(metricStore), parentId(workerConfig->parentId) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -62,12 +62,6 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
 }
 
 NesWorker::~NesWorker() { stop(true); }
-
-bool NesWorker::setWithParent(uint32_t parentId) {
-    withParent = true;
-    this->parentId = std::move(parentId);
-    return true;
-}
 
 void NesWorker::handleRpcs(WorkerRPCServer& service) {
     //TODO: somehow we need this although it is not called at all
@@ -171,12 +165,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
 
-    if (withParent) {
+    if (parentId > 1) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        bool success = addParent(parentId);
+        bool success = replaceParent(1, parentId);
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
+
     if (locationWrapper->isMobileNode()) {
         NES_DEBUG("Creating location source");
         bool success =
