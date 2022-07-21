@@ -193,7 +193,7 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
         currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
         currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
         currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
-        if (currentNode->getSpatialType() != Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        if (currentNode->getSpatialNodeType() != Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             Spatial::Index::Experimental::Location location = currentNode->getCoordinates();
             if (location.isValid()) {
                 auto arrJson = web::json::value::array(2);
@@ -204,7 +204,7 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
                 currentNodeJsonValue["location"] = web::json::value::null();
             }
         }
-        currentNodeJsonValue["nodeSpatialType"] = web::json::value::string(Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialType()));
+        currentNodeJsonValue["nodeType"] = web::json::value::string(Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType()));
 
         for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node

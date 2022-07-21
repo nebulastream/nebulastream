@@ -192,14 +192,14 @@ class TopologyNode : public Node {
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
      * @param workerSpatialType
      */
-    void setSpatialType(NES::Spatial::Index::Experimental::NodeType workerSpatialType);
+    void setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType workerSpatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    NES::Spatial::Index::Experimental::NodeType getSpatialType();
+    NES::Spatial::Index::Experimental::NodeType getSpatialNodeType();
 
   private:
     uint64_t id;

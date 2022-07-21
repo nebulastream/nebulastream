@@ -172,7 +172,7 @@ void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location ge
     fixedCoordinates = geoLoc;
 }
 
-void TopologyNode::setSpatialType(Spatial::Index::Experimental::NodeType workerSpatialType) { this->spatialType = workerSpatialType; }
+void TopologyNode::setSpatialNodeType(Spatial::Index::Experimental::NodeType workerSpatialType) { this->spatialType = workerSpatialType; }
 
-Spatial::Index::Experimental::NodeType TopologyNode::getSpatialType() { return spatialType; }
+Spatial::Index::Experimental::NodeType TopologyNode::getSpatialNodeType() { return spatialType; }
 }// namespace NES

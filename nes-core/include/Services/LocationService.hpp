@@ -17,6 +17,7 @@
 #include <cpprest/json.h>
 #include <memory>
 #include <Util/TimeMeasurement.hpp>
+#include <Common/ReconnectPrediction.hpp>
 
 namespace web::json {
 class value;
@@ -109,7 +110,7 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location location, Timestamp time);
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction);
 
   private:
 
