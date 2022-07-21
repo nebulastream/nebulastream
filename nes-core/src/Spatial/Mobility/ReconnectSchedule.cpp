@@ -16,11 +16,11 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-ReconnectSchedule::ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning,
+ReconnectSchedule::ReconnectSchedule(uint64_t currentParentId, Index::Experimental::LocationPtr pathBeginning,
                   Index::Experimental::LocationPtr pathEnd,
                                      Index::Experimental::LocationPtr lastIndexUpdatePosition,
                   std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector)
-    : pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)), lastIndexUpdatePosition(lastIndexUpdatePosition),
+    : currentParentId(currentParentId), pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)), lastIndexUpdatePosition(lastIndexUpdatePosition),
       reconnectVector(std::move(reconnectVector)) {}
 
 Index::Experimental::LocationPtr ReconnectSchedule::getPathStart() const {
@@ -36,9 +36,11 @@ std::shared_ptr<std::vector<ReconnectPoint>> ReconnectSchedule::getReconnectVect
 }
 
 ReconnectSchedule ReconnectSchedule::Empty() {
-   return {{}, {}, {}, {}};
+   return {0, {}, {}, {}, {}};
 }
 Index::Experimental::LocationPtr ReconnectSchedule::getLastIndexUpdatePosition() const {
     return lastIndexUpdatePosition;
 }
+
+uint64_t ReconnectSchedule::getCurrentParentId() { return currentParentId; }
 }

@@ -38,7 +38,7 @@ class ReconnectSchedule {
      * was downloaded from the coordinator
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
-    ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
+    ReconnectSchedule(uint64_t currentParentId, Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector);
 
@@ -67,6 +67,8 @@ class ReconnectSchedule {
      */
     [[nodiscard]] std::shared_ptr<std::vector<ReconnectPoint>> getReconnectVector() const;
 
+    [[nodiscard]] uint64_t getCurrentParentId();
+
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
      * @return a reconnect schedule with all its members set to nullptr
@@ -74,6 +76,7 @@ class ReconnectSchedule {
     static ReconnectSchedule Empty();
 
   private:
+    uint64_t currentParentId;
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;
     Index::Experimental::LocationPtr lastIndexUpdatePosition;

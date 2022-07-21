@@ -86,13 +86,14 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
         //get the devices current location
         auto currentLocationTuple = locProvider->getCurrentLocation();
         auto currentLocation = currentLocationTuple.first;
-        S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
+        S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
 
         std::unique_lock lock(reconnectConfigMutex);
         //check if we moved further than the threshold. if so, tell the coordinator about the devices new position
         if (S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold) {
             NES_DEBUG("device has moved further then threshold, sending location")
-            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentLocationTuple);
+            //todo: make pointer here
+            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second} );
             lastTransmittedLocation = currentPoint;
         } else {
             NES_DEBUG("device has not moved further than threshold, location will not be transmitted")
@@ -104,10 +105,10 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySe
     //get the devices current location
     auto currentLocationTuple = worker.getLocationProvider()->getCurrentLocation();
     auto currentLocation = currentLocationTuple.first;
-    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
+    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
 
     NES_DEBUG("transmitting initial location")
-    coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentLocationTuple);
+    coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second});
     std::unique_lock lock(reconnectConfigMutex);
     lastTransmittedLocation = currentPoint;
     lock.unlock();

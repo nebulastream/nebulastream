@@ -141,7 +141,7 @@ class TrajectoryPredictor {
      * @brief return position and time at which the last reconnect happened
      * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
      */
-    std::tuple<Index::Experimental::Location, Timestamp> getLastReconnectLocationAndTime();
+    std::pair<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
 
   private:
     /**
@@ -151,7 +151,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the current device position
      * @return true if the trajectory was recalculated, false if the device did not deviate further than the threshold
      */
-    bool updatePredictedPath(const NES::Spatial::Index::Experimental::Location& newPathStart, const NES::Spatial::Index::Experimental::Location& currentLocation);
+    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& newPathStart, const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
 
     /**
      * @brief find the minimal covering set of field nodes covering the predicted path. This represents the reconnect schedule
@@ -166,7 +166,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the current location of the mobile device
      * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
      */
-    bool updateDownloadedNodeIndex(Index::Experimental::Location currentLocation);
+    bool updateDownloadedNodeIndex(Index::Experimental::LocationPtr currentLocation);
 
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
@@ -217,11 +217,11 @@ class TrajectoryPredictor {
     S2PointIndex<uint64_t> fieldNodeIndex;
 #endif
     uint64_t parentId;
-    std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
+    std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
     std::vector<ReconnectPoint> reconnectVector;
     double bufferAverageMovementSpeed;
     double allowedSpeedDifferenceFactor;
-    std::tuple<Index::Experimental::Location, Timestamp> devicePositionTupleAtLastReconnect;
+    std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
 }
 #endif//NES_TRAJECTORYPREDICTOR_HPP

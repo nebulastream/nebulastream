@@ -60,7 +60,7 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     nextWaypoint = waypoints.begin();
 }
 
-std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
+std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -77,7 +77,7 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurr
     //we therefore keep returning the location of the last timestamp, without looking at the request time
     if (nextWaypoint == waypoints.end()) {
         NES_DEBUG("Last waypoint reached, do not interpolate, node will stay in this position for the rest of the simulation");
-        return {prevWaypoint->first, requestTime};
+        return {std::make_shared<Index::Experimental::Location>(prevWaypoint->first), requestTime};
     }
 
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
@@ -105,7 +105,7 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurr
     NES_TRACE("Retrieving s2-interpolated location");
     NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
 
-    return {result, requestTime};
+    return {std::make_shared<Index::Experimental::Location>(result), requestTime};
 #else
     //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
     NES_TRACE("S2 not used, returning most recently passed waypoint from csv")

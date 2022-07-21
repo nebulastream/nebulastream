@@ -31,10 +31,11 @@ message WorkerLocationInfo {
 }
 
 message ReconnectSchedule {
-  Coordinates pathStart = 1;
-  Coordinates pathEnd = 2;
-  Coordinates lastIndexUpdatePosition = 3;
-  repeated ReconnectPoint reconnectPoints = 4;
+  uint64 parentId = 1;
+  Coordinates pathStart = 2;
+  Coordinates pathEnd = 3;
+  Coordinates lastIndexUpdatePosition = 4;
+  repeated ReconnectPoint reconnectPoints = 5;
 }
 
 message ReconnectPrediction {
