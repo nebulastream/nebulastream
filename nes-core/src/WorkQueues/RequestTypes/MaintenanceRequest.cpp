@@ -17,7 +17,7 @@
 
 namespace NES::Experimental {
 
-MigrateQueryRequestPtr MaintenanceRequest::create(TopologyNodeId nodeId, MigrationType::Value migrationType) {
+MaintenanceRequestPtr MaintenanceRequest::create(TopologyNodeId nodeId, MigrationType::Value migrationType) {
     return std::make_shared<MaintenanceRequest>(MaintenanceRequest(nodeId, migrationType));
 }
 
