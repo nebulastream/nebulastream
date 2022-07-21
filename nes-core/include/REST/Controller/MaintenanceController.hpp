@@ -29,7 +29,6 @@ class MaintenanceController : public BaseController {
   public:
     explicit MaintenanceController(MaintenanceServicePtr maintenanceService);
 
-
     /**
      * Handles Post request for marking nodes for maintenance
      * @param paths : the url of the rest request
