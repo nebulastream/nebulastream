@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MIGRATEQUERYREQUEST_HPP
-#define NES_MIGRATEQUERYREQUEST_HPP
+#ifndef NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
+#define NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
 #include <Phases/MigrationType.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
@@ -23,7 +23,7 @@
 namespace NES::Experimental {
 
 class MaintenanceRequest;
-typedef std::shared_ptr<MaintenanceRequest> MigrateQueryRequestPtr;
+typedef std::shared_ptr<MaintenanceRequest> MaintenanceRequestPtr;
 
 /**
      * @breif this request is used to migrate a query sub plan
@@ -31,7 +31,7 @@ typedef std::shared_ptr<MaintenanceRequest> MigrateQueryRequestPtr;
 class MaintenanceRequest : public Request {
 
   public:
-    static MigrateQueryRequestPtr create(TopologyNodeId nodeId, MigrationType::Value migrationType);
+    static MaintenanceRequestPtr create(TopologyNodeId nodeId, MigrationType::Value migrationType);
 
     std::string toString() override;
 
