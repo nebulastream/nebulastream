@@ -234,7 +234,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
         };
     } else {
         return [](llvm::Module* llvmIRModule) {
-            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
+            auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
             llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
