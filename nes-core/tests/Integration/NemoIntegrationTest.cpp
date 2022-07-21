@@ -56,8 +56,11 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
     std::string outputFilePath = "windowOut.csv";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort),
-    TestUtils::enableDebug(), TestUtils::setDistributedWindowChildThreshold(100), TestUtils::setDistributedWindowCombinerThreshold(100)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::setDistributedWindowChildThreshold(100),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -140,8 +143,11 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
     std::string outputFilePath = "windowOut.csv";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(), TestUtils::setDistributedWindowChildThreshold(0), TestUtils::setDistributedWindowCombinerThreshold(100)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::setDistributedWindowChildThreshold(0),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -230,8 +236,11 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
     std::string outputFilePath = "windowOut.csv";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(), TestUtils::setDistributedWindowChildThreshold(0), TestUtils::setDistributedWindowCombinerThreshold(100)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::setDistributedWindowChildThreshold(0),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -255,8 +264,11 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
                                            TestUtils::sourceGatheringInterval(1000),
                                            TestUtils::workerHealthCheckWaitTime(1)});
 
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
+                                           TestUtils::parentId(2),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("CSVSource"),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
