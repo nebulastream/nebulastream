@@ -63,7 +63,7 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
     std::unique_lock lock(locationIndexMutex);
-    if (node->getSpatialType() == NodeType::MOBILE_NODE) {
+    if (node->getSpatialNodeType() == NodeType::MOBILE_NODE) {
         mobileNodes.erase(node->getId());
     }
 #ifdef S2DEF
@@ -191,18 +191,18 @@ size_t LocationIndex::getSizeOfPointIndex() {
 #endif
 }
 
-bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime) {
+bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction) {
     std::unique_lock lock(locationIndexMutex);
     if (mobileNodes.contains(mobileWorkerId)) {
         NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << mobileWorkerId)
-        NES_DEBUG("New reconnect prediction: id=" << reconnectNodeId << " location=" << reconnectLocation.toString() << " time=" << reconnectTime)
-        reconnectPredictionMap[mobileWorkerId] = {reconnectNodeId, reconnectLocation, reconnectTime};
+        NES_DEBUG("New reconnect prediction: id=" << prediction.expectedNewParentId  << " time=" << prediction.expectedTime)
+        reconnectPredictionMap[mobileWorkerId] = prediction;
         return true;
     }
     NES_DEBUG("trying to update reconnect prediction but could not find a mobile node with id " << mobileWorkerId)
     return false;
 }
-std::optional<std::tuple<uint64_t, Location, Timestamp>> LocationIndex::getScheduledReconnect(uint64_t nodeId) {
+std::optional<Mobility::Experimental::ReconnectPrediction> LocationIndex::getScheduledReconnect(uint64_t nodeId) {
    std::unique_lock lock(locationIndexMutex);
    if (reconnectPredictionMap.contains(nodeId)) {
        return reconnectPredictionMap[nodeId];

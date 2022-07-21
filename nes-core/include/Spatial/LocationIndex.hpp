@@ -20,6 +20,7 @@
 #include <Util/TimeMeasurement.hpp>
 #include <mutex>
 #include <Common/Location.hpp>
+#include <Common/ReconnectPrediction.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -127,7 +128,7 @@ class LocationIndex {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime);
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction);
 
     /**
      * @brief get the next scheduled reconnect for a mobile node if there is one saved at the coordinator side
@@ -135,7 +136,7 @@ class LocationIndex {
      * @return an optional containing the id of the expected new parent, the expected location of the reconnect and the expected time
      * of the reconnect. If no record can be found for this id the return value is nullopt.
      */
-    std::optional<std::tuple<uint64_t, Location, Timestamp>> getScheduledReconnect(uint64_t nodeId);
+    std::optional<Mobility::Experimental::ReconnectPrediction> getScheduledReconnect(uint64_t nodeId);
 
   private:
     /**
@@ -152,7 +153,7 @@ class LocationIndex {
 
     // a map containing all registered mobile nodes
     std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
-    std::unordered_map<uint64_t, std::tuple<uint64_t, Location, Timestamp>> reconnectPredictionMap;
+    std::unordered_map<uint64_t, Mobility::Experimental::ReconnectPrediction> reconnectPredictionMap;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;

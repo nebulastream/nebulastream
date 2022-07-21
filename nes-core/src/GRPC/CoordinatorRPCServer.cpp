@@ -341,8 +341,8 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
     const ReconnectPrediction& reconnectPoint = request->reconnect();
-    NES::Spatial::Index::Experimental::Location location;
-    bool success = locationService->updatePredictedReconnect(request->deviceid(), reconnectPoint.id(), location, reconnectPoint.time());
+    const Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
+    bool success = locationService->updatePredictedReconnect(request->deviceid(), prediction);
     reply->set_success(success);
     if (success) {
         return Status::OK;

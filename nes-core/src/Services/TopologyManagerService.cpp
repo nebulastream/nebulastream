@@ -58,7 +58,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-    newTopologyNode->setSpatialType(spatialType);
+    newTopologyNode->setSpatialNodeType(spatialType);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
@@ -75,13 +75,13 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (fixedCoordinates.isValid() && newTopologyNode->getSpatialType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
+    if (fixedCoordinates.isValid() && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
                                                             << fixedCoordinates.getLongitude());
         topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, fixedCoordinates);
     } else {
         NES_DEBUG("added node is a non field node");
-        if (newTopologyNode->getSpatialType() == Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        if (newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             topology->getLocationIndex()->addMobileNode(newTopologyNode);
             NES_DEBUG("added node is a mobile node");
         } else {

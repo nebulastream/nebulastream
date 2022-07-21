@@ -3,12 +3,9 @@
 #define NES_RECONNECTPREDICTION_HPP
 #include <cstdint>
 #include <Util/TimeMeasurement.hpp>
+#include <Common/Location.hpp>
 
 namespace NES::Spatial {
-
-namespace Index::Experimental {
-class Location;
-}
 
 namespace Mobility::Experimental {
 struct ReconnectPrediction {

@@ -36,7 +36,7 @@ web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId)
 
 web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr || nodePtr->getSpatialType() != NodeType::MOBILE_NODE) {
+    if (!nodePtr || nodePtr->getSpatialNodeType() != NodeType::MOBILE_NODE) {
         return web::json::value::null();
     }
     auto schedule = nodePtr->getReconnectSchedule();
@@ -92,10 +92,10 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }
-bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location location, Timestamp time) {
-   if (locationIndex->updatePredictedReconnect(mobileWorkerId, reconnectNodeId, location, time)) {
+bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction) {
+   if (locationIndex->updatePredictedReconnect(mobileWorkerId, prediction)) {
        return true;
-   } else if (topology->findNodeWithId(reconnectNodeId)) {
+   } else if (topology->findNodeWithId(prediction.expectedNewParentId)) {
        NES_WARNING("node exists but is not a mobile node")
    }
    return false;

@@ -76,10 +76,10 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     node2->setFixedCoordinates(13.4, -23);
-    node2->setSpatialType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 #ifdef S2DEF
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setSpatialType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
 #endif
 
     topology->setAsRoot(node1);
@@ -140,12 +140,12 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    node2->setSpatialType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     node2->setFixedCoordinates(13.4, -23);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setSpatialType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
-    node4->setSpatialType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node4->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
