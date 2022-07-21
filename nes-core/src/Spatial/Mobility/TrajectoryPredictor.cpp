@@ -46,7 +46,7 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, c
     coveredRadiusWithoutThreshold = S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
     this->parentId = parentId;
     updatePrediction = false;
-    allowedSpeedDifferenceFactor = 0.00001;
+    speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
     bufferAverageMovementSpeed = 0;
     devicePositionTupleAtLastReconnect = {std::make_shared<Index::Experimental::Location>(Index::Experimental::Location()), 0};
 #else
@@ -297,10 +297,10 @@ bool TrajectoryPredictor::updateAverageMovementSpeed() {
 
     //check if there is a speed difference which surpasses the threshold compared to the previously calculated speed
     //if this is the case, update the value
-    if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * allowedSpeedDifferenceFactor) {
+    if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * speedDifferenceThresholdFactor) {
        bufferAverageMovementSpeed = meanDegreesPerNanosec;
        NES_TRACE("average movement speed was updated to " << bufferAverageMovementSpeed)
-       NES_TRACE("threshhold is " << bufferAverageMovementSpeed * allowedSpeedDifferenceFactor)
+       NES_TRACE("threshhold is " << bufferAverageMovementSpeed * speedDifferenceThresholdFactor)
        return true;
     }
     return false;
