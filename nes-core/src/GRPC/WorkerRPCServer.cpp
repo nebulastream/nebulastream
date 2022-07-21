@@ -230,15 +230,19 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     }
 
     //insert the predicted reconnects into the message (if there are any)
-    for (auto elem : *(schedule->getReconnectVector())) {
-        ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
-        Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
-        auto loc = elem.predictedReconnectLocation;
-        reconnectLocation->set_lat(loc.getLatitude());
-        reconnectLocation->set_lng(loc.getLongitude());
-        auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
-        reconnectPrediction->set_id(elem.reconnectPrediction.expectedNewParentId);
-        reconnectPrediction->set_time(elem.reconnectPrediction.expectedTime);
+    auto reconnectVectorPtr = schedule->getReconnectVector();
+    if (reconnectVectorPtr) {
+        auto reconnectVector = *reconnectVectorPtr;
+        for (auto elem : reconnectVector) {
+            ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
+            Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
+            auto loc = elem.predictedReconnectLocation;
+            reconnectLocation->set_lat(loc.getLatitude());
+            reconnectLocation->set_lng(loc.getLongitude());
+            auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
+            reconnectPrediction->set_id(elem.reconnectPrediction.expectedNewParentId);
+            reconnectPrediction->set_time(elem.reconnectPrediction.expectedTime);
+        }
     }
     return Status::OK;
 }
