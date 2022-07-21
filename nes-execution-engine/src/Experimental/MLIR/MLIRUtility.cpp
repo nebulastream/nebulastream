@@ -205,30 +205,38 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
 }
 
 
-llvm::function_ref<llvm::Error(llvm::Module*)> getOptimizingTransformer(bool linkProxyFunctions) {
+llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransformer(bool linkProxyFunctions) {
        if (linkProxyFunctions) {
-        char tmp[256];
-        getcwd(tmp, 256);
-        std::cout << "Current working directory: " << tmp << '\n';
-        std::cout << "Current root path is: " << std::filesystem::current_path().root_path() << '\n';
-        return [](llvm::Module* llvmIRModule) {
+        return [] (llvm::Module* llvmIRModule) mutable {
             llvm::SMDiagnostic Err;
-            //Todo find better way to get the correct path
-            // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/ExecutionTests'
-            auto proxyFunctionsIR =
-                llvm::parseIRFile("../../../../llvm-ir/nes-runtime_opt/proxiesReduced.ll", Err, llvmIRModule->getContext());
+            //Todo 
+            // 1. Find a way to reliably pass paths as captured parameters to lambda.
+            // -> tried using capture parameter, but every try lead to errors/garage strings
+            // -> moving code into runJit/prepareJit function makes it possible to print correct strings from within lambda
+            // -> BUT: if the string contains "../." or "../.." or "../../", the string is also turned to garbage
+            // 2. find better way to get the correct path
+            // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/Folder/Folder/Folder/CWD'
+            auto proxyFunctionsIR = llvm::parseIRFile("../../../../llvm-ir/nes-runtime_opt/proxiesReduced.ll", 
+                                                      Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
 
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::outs(), nullptr);
+
+            std::string llvmIRString;
+            llvm::raw_string_ostream llvmStringStream(llvmIRString);
+            llvmIRModule->print(llvmStringStream, nullptr);
+
+            auto* basicError = new std::error_code();
+            llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
+            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };
     } else {
         return [](llvm::Module* llvmIRModule) {
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-             llvmIRModule->print(llvm::outs(), nullptr);
+            llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     }
@@ -290,11 +298,11 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
     llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
- 
 
     // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
     auto maybeEngine =
         mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
+
     assert(maybeEngine && "failed to construct an execution engine");
     auto& engine = maybeEngine.get();
 
