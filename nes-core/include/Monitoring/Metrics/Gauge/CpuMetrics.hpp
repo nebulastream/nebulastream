@@ -37,6 +37,7 @@ namespace NES {
 class CpuMetrics {
   public:
     CpuMetrics();
+    CpuMetrics(SchemaPtr schema);
     static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     /**
@@ -44,7 +45,7 @@ class CpuMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static SchemaPtr getDefaultSchema(const std::string& prefix);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -78,6 +79,9 @@ class CpuMetrics {
     bool operator!=(const CpuMetrics& rhs) const;
 
     static std::vector<std::string> getAttributesVector();
+    [[nodiscard]] SchemaPtr getSchema() const;
+    void setSchema(SchemaPtr newSchema);
+    uint64_t getValue(const std::string& metricName) const;
 
     uint64_t nodeId;
     uint64_t coreNum;
@@ -91,6 +95,7 @@ class CpuMetrics {
     uint64_t steal;
     uint64_t guest;
     uint64_t guestnice;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**

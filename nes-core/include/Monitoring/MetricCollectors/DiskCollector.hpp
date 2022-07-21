@@ -31,7 +31,7 @@ class DiskCollector : public MetricCollector {
   public:
     explicit DiskCollector();
 
-    explicit DiskCollector(SchemaPtr schema);
+    explicit DiskCollector(const SchemaPtr& schema);
 
     /**
      * @brief Returns the type of metric collector

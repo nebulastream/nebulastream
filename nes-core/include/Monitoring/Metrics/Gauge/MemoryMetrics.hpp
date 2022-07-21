@@ -29,7 +29,7 @@ class MemoryMetrics {
     MemoryMetrics();
     MemoryMetrics(SchemaPtr schema);
 
-    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+    static SchemaPtr createSchema(const std::string& prefix, const std::list<std::string>& configuredMetrics);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -65,7 +65,7 @@ class MemoryMetrics {
     static std::vector<std::string> getAttributesVector();
     [[nodiscard]] SchemaPtr getSchema() const;
     void setSchema(SchemaPtr newSchema);
-    uint64_t getValue(std::string metricName);
+    uint64_t getValue(const std::string& metricName) const;
 
     uint64_t nodeId;
     uint64_t TOTAL_RAM;

@@ -23,14 +23,19 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 #include <cstring>
+#include <utility>
 
 namespace NES {
 
 CpuMetrics::CpuMetrics()
     : nodeId(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0), guest(0),
-      guestnice(0) {}
+      guestnice(0), schema(getDefaultSchema("")) {}
 
-SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
+CpuMetrics::CpuMetrics(SchemaPtr schema)
+    : nodeId(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0), guest(0),
+      guestnice(0), schema(std::move(schema)) {}
+
+SchemaPtr CpuMetrics::getDefaultSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
                            ->addField(prefix + "coreNum", BasicType::UINT64)
@@ -88,48 +93,95 @@ SchemaPtr CpuMetrics::createSchema(const std::string& prefix, std::list<std::str
 }
 
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(this->schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-    auto totalSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
+    auto totalSize = this->schema->getSchemaSizeInBytes();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
-    buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
-    buffer[tupleIndex][cnt++].write<uint64_t>(user);
-    buffer[tupleIndex][cnt++].write<uint64_t>(nice);
-    buffer[tupleIndex][cnt++].write<uint64_t>(system);
-    buffer[tupleIndex][cnt++].write<uint64_t>(idle);
-    buffer[tupleIndex][cnt++].write<uint64_t>(iowait);
-    buffer[tupleIndex][cnt++].write<uint64_t>(irq);
-    buffer[tupleIndex][cnt++].write<uint64_t>(softirq);
-    buffer[tupleIndex][cnt++].write<uint64_t>(steal);
-    buffer[tupleIndex][cnt++].write<uint64_t>(guest);
-    buffer[tupleIndex][cnt++].write<uint64_t>(guestnice);
+    if (schema->contains("coreNum")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
+    }
+    if (schema->contains("user")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(user);
+    }
+    if (schema->contains("nice")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(nice);
+    }
+    if (schema->contains("system")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(system);
+    }
+    if (schema->contains("idle")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(idle);
+    }
+    if (schema->contains("iowait")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(iowait);
+    }
+    if (schema->contains("irq")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(irq);
+    }
+    if (schema->contains("softirq")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(softirq);
+    }
+    if (schema->contains("steal")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(steal);
+    }
+    if (schema->contains("guest")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(guest);
+    }
+    if (schema->contains("guestnice")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(guestnice);
+    }
 
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
+void CpuMetrics::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
+SchemaPtr CpuMetrics::getSchema() const { return this->schema; }
+
 void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(this->schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
     int cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
-    coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
-    user = buffer[tupleIndex][cnt++].read<uint64_t>();
-    nice = buffer[tupleIndex][cnt++].read<uint64_t>();
-    system = buffer[tupleIndex][cnt++].read<uint64_t>();
-    idle = buffer[tupleIndex][cnt++].read<uint64_t>();
-    iowait = buffer[tupleIndex][cnt++].read<uint64_t>();
-    irq = buffer[tupleIndex][cnt++].read<uint64_t>();
-    softirq = buffer[tupleIndex][cnt++].read<uint64_t>();
-    steal = buffer[tupleIndex][cnt++].read<uint64_t>();
-    guest = buffer[tupleIndex][cnt++].read<uint64_t>();
-    guestnice = buffer[tupleIndex][cnt++].read<uint64_t>();
+    if (schema->contains("coreNum")) {
+        coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("user")) {
+        user = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("nice")) {
+        nice = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("system")) {
+        system = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("idle")) {
+        idle = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("iowait")) {
+        iowait = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("irq")) {
+        irq = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("softirq")) {
+        softirq = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("steal")) {
+        steal = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("guest")) {
+        guest = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("guestnice")) {
+        guestnice = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
@@ -175,5 +227,35 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
 }
 
 web::json::value asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
+
+uint64_t CpuMetrics::getValue(const std::string& metricName) const {
+    if (metricName == "coreNum") {
+        return coreNum;
+    } else if (metricName == "user") {
+        return user;
+    } else if (metricName == "nice") {
+        return nice;
+    } else if (metricName == "system") {
+        return system;
+    } else if (metricName == "idle") {
+        return idle;
+    } else if (metricName == "iowait") {
+        return iowait;
+    } else if (metricName == "irq") {
+        return irq;
+    } else if (metricName == "softirq") {
+        return softirq;
+    } else if (metricName == "steal") {
+        return steal;
+    } else if (metricName == "guest") {
+        return guest;
+    } else if (metricName == "guestnice") {
+        return guestnice;
+    } else {
+        NES_DEBUG("Unknown Metricname: " << metricName);
+        //todo: find right exception
+        throw std::exception();
+    }
+}
 
 }// namespace NES

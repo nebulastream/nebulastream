@@ -33,7 +33,7 @@ DiskCollector::DiskCollector()
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
-DiskCollector::DiskCollector(SchemaPtr schema)          // Schema direkt an DiskCollector übergeben
+DiskCollector::DiskCollector(const SchemaPtr& schema)          // Schema direkt an DiskCollector übergeben
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(schema) {
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
@@ -62,11 +62,4 @@ const MetricPtr DiskCollector::readMetric() const {
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
-
-//const MetricPtr DiskCollector::readMetricBA02(Schema schema) const {
-//    DiskMetrics metrics = resourceReader->readDiskStatsBA02(schema);
-//    metrics.nodeId = getNodeId();
-//    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
-//}
-
 }// namespace NES

@@ -19,6 +19,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 #include <cpprest/json.h>
 
 namespace NES {
@@ -29,7 +30,7 @@ MemoryMetrics::MemoryMetrics()
 
 MemoryMetrics::MemoryMetrics(SchemaPtr schema)
     : nodeId(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0), TOTAL_HIGH(0),
-      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0), schema(schema) {}
+      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0), schema(std::move(schema)) {}
 
 SchemaPtr MemoryMetrics::getDefaultSchema(const std::string& prefix) {
     auto schema = Schema::create(Schema::ROW_LAYOUT)
@@ -50,7 +51,7 @@ SchemaPtr MemoryMetrics::getDefaultSchema(const std::string& prefix) {
     return schema;
 }
 
-SchemaPtr MemoryMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
+SchemaPtr MemoryMetrics::createSchema(const std::string& prefix, const std::list<std::string>& configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64);
 
@@ -237,7 +238,7 @@ std::vector<std::string> MemoryMetrics::getAttributesVector() {
     return attributesVector;
 }
 
-uint64_t MemoryMetrics::getValue(std::string metricName) {
+uint64_t MemoryMetrics::getValue(const std::string& metricName) const {
     if (metricName == "TOTAL_RAM") {
         return TOTAL_RAM;
     } else if (metricName == "TOTAL_SWAP") {

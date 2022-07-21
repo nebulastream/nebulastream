@@ -109,7 +109,7 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
 
 SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
+        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getDefaultSchema("");
         case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getDefaultSchema("");
         case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getDefaultSchema("");
         case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
