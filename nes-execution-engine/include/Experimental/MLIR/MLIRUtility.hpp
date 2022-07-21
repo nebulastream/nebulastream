@@ -76,6 +76,12 @@ class MLIRUtility {
      */
     void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags);
 
+    /**
+     * @brief Creates a function that applies a custom LLVM IR optimizer the LLVM IR query code generated from MLIR
+     * @param linkProxyFunctions: if true, link proxy function definitions from prepared LLVM IR module
+     */
+    llvm::function_ref<llvm::Error(llvm::Module*)> getOptimizingTransformer(bool linkProxyFunctions);
+
   private:
     mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
