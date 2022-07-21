@@ -74,11 +74,6 @@ int main(int argc, char** argv) {
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
-        if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {
-            NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->parentId.getValue());
-            nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->parentId.getValue());
-        }
-
         NES_INFO("Starting worker");
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//This is a blocking call
         NES_INFO("Stopping worker");

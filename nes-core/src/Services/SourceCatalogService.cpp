@@ -39,6 +39,11 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
         return false;
     }
 
+    if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
+        NES_ERROR("SourceCatalogService::RegisterPhysicalSource logical source does not exist " << logicalSourceName);
+        return false;
+    }
+
     NES_DEBUG("SourceCatalogService::RegisterPhysicalSource: try to register physical node id "
               << topologyNode->getId() << " physical source=" << physicalSourceName << " logical source=" << logicalSourceName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalSource);

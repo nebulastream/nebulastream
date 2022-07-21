@@ -161,7 +161,8 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
 }
 
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
-    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got " << physicalSources.size() << " physical sources to register");
+    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got "
+              << physicalSources.size() << " physical sources to register for worker with id " << workerId);
 
     RegisterPhysicalSourcesRequest request;
     request.set_id(workerId);
@@ -173,7 +174,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         physicalSourceDefinition->set_logicalsourcename(physicalSource->getLogicalSourceName());
     }
 
-    NES_DEBUG("RegisterPhysicalSourceRequest::RegisterLogicalSourceRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply>(
         request,

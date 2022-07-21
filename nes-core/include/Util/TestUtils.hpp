@@ -59,6 +59,8 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
 }
 
+[[nodiscard]] std::string parentId(uint64_t parentId) { return "--" + PARENT_ID_CONFIG + "=" + std::to_string(parentId); }
+
 [[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort) {
     return "--" + NUMBER_OF_SLOTS_CONFIG + "=" + std::to_string(coordinatorPort);
 }

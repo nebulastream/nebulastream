@@ -50,82 +50,66 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
-TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
-    remove(outputFilePath.c_str());
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    std::stringstream schema;
+    schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
+              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
+              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::physicalSourceName("test_stream1"),
+                                           TestUtils::logicalSourceName("QnV"),
+                                           TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                           TestUtils::sourceGatheringInterval(1000),
                                            TestUtils::workerHealthCheckWaitTime(1)});
+
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test1"),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
+                                           TestUtils::parentId(2),
+                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::physicalSourceName("test_stream2"),
+                                           TestUtils::logicalSourceName("QnV"),
+                                           TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableDebug()});
+    std::this_thread::sleep_for(5000ms);
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << R"("Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
-    ss << outputFilePath;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
-    ss << endl;
-    NES_INFO("string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    auto worker3 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::parentId(3),
+                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::physicalSourceName("test_stream2"),
+                                           TestUtils::logicalSourceName("QnV"),
+                                           TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableDebug()});
 
-    QueryId queryId = json_return.at("queryId").as_integer();
+    std::this_thread::sleep_for(5000ms);
 
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
-    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
-
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
-
-    int response = remove(outputFilePath.c_str());
-    EXPECT_TRUE(response == 0);
+    //ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 2));
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {

@@ -86,13 +86,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool start(bool blocking, bool withConnect);
 
     /**
-     * @brief configure setup with set of parent id
-     * @param parentId
-     * @return bool indicating sucess
-     */
-    bool setWithParent(uint32_t parentId);
-
-    /**
      * @brief stop the worker
      * @return bool indicating success
      */
@@ -267,7 +260,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Monitoring::MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
-    bool withParent{false};
     uint32_t parentId;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
