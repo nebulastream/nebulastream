@@ -174,4 +174,9 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
 
 web::json::value asJson(const RegistrationMetrics& metrics) { return metrics.toJson(); }
 
+std::vector<std::string> RegistrationMetrics::getAttributesVector() {
+    std::vector<std::string> attributesVector { "totalMemoryBytes", "cpuCoreNum", "totalCPUJiffies", "cpuPeriodUS", "cpuQuotaUS",
+                                              "isMoving", "hasBattery"};
+    return attributesVector;
+}
 }// namespace NES

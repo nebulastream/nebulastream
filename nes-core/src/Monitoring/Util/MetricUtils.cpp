@@ -27,6 +27,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 
 namespace NES {
 bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
@@ -107,8 +110,8 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
 SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
     switch (type) {
         case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
-        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchema("");
-        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getDefaultSchema("");
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getDefaultSchema("");
         case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
         default: {
             NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
@@ -315,4 +318,46 @@ web::json::value MetricUtils::ConfigMapToJson(std::map <MetricType, std::list<st
     return configurationMonitoringJson;
 }
 
+std::string MetricUtils::listToString(const std::string& seperator, const std::list<std::string>& list) {
+    std::string string;
+    auto lengthSeperator = seperator.size();
+    for (const std::string& listItem : list) {
+        string += listItem + seperator;
+    }
+    string = string.substr(0, string.size()-lengthSeperator);
+
+    return string;
+}
+
+std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::randomAttributes(std::string metric, int numberOfAttributes) {
+    std::vector<std::string> attributesVector;
+
+    if (metric == "CpuMetric") {
+        attributesVector = CpuMetrics::getAttributesVector();
+    } else if (metric == "DiskMetric") {
+        attributesVector = DiskMetrics::getAttributesVector();
+    } else if (metric == "MemoryMetric") {
+        attributesVector = MemoryMetrics::getAttributesVector();
+    } else if (metric == "NetworkMetric") {
+        attributesVector = NetworkMetrics::getAttributesVector();
+    } else if (metric == "RegistrationMetric") {
+        attributesVector = RegistrationMetrics::getAttributesVector();
+    } else if (metric == "RuntimeMetric") {
+        attributesVector = RuntimeMetrics::getAttributesVector();
+    } else {
+        // TODO through exception
+    }
+
+    std::list<std::string> configuredAttributes;
+
+    int random;
+    for (int i = 0; i < numberOfAttributes; i++) {
+        random = std::rand() % attributesVector.size();
+        configuredAttributes.push_back(attributesVector[random]);
+        attributesVector.erase(attributesVector.begin()+random);
+    }
+
+    std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
+    return returnTuple;
+}
 }// namespace NES

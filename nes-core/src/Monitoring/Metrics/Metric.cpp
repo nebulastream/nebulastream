@@ -35,25 +35,13 @@ void readFromBuffer(uint64_t&, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
 }
 
-//void readFromBufferNEW(uint64_t&, Runtime::TupleBuffer&, uint64_t) {
-//    NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
-//}
-
 void readFromBuffer(std::string&, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
 }
 
-//void readFromBufferNEW(std::string&, Runtime::TupleBuffer&, uint64_t) {
-//    NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
-//}
-
 void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     readFromBuffer(*metrics, buf, tupleIndex);
 }       //nummer 1
-
-//void readFromBufferNEW(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) {
-//    readFromBufferNEW(*metrics, buf, tupleIndex, schema);
-//}
 
 web::json::value asJson(uint64_t intMetric) {
     web::json::value metricsJson{};

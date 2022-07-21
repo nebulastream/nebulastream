@@ -205,4 +205,10 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
 
 web::json::value asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
 
+std::vector<std::string> NetworkMetrics::getAttributesVector() {
+    std::vector<std::string> attributesVector { "name", "rBytes", "rPackets", "rErrs", "rDrop", "rFifo", "rFrame", "rCompressed",
+                                              "rMulticast", "tBytes", "tPackets", "tErrs", "tDrop", "tFifo", "tColls", "tCarrier",
+                                              "tCompressed"};
+    return attributesVector;
+}
 }// namespace NES

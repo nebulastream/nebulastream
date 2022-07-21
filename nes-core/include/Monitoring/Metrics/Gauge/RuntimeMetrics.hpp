@@ -59,6 +59,8 @@ class RuntimeMetrics {
     bool operator==(const RuntimeMetrics& rhs) const;
     bool operator!=(const RuntimeMetrics& rhs) const;
 
+    static std::vector<std::string> getAttributesVector();
+
     uint64_t nodeId;
     uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;

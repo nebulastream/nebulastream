@@ -44,32 +44,32 @@ MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {      //MonitoringPlan
     return create(metrics);
 }
 
-MonitoringCatalogPtr MonitoringCatalog::configuredCatalog(std::multimap<std::string, std::string> catalog) {
-    NES_DEBUG("MonitoringCatalog: Init configured catalog");
-
-    // init unordered_map
-    std::unordered_map<MetricType, MetricCollectorPtr> metrics;
-
-    for (auto it = catalog.begin(); it != catalog.end(); ++it) {
-        if(it == "WrappedCpuMetrics") {
-            metrics.insert({MetricType::WrappedCpuMetrics,
-                            std::shared_ptr<MetricCollector>(new CpuCollector(catalog.find("WrappedCpuMetrics")))})
-        } else if (it == "DiskMetrics") {
-            metrics.insert({MetricType::DiskMetric,
-                            std::shared_ptr<MetricCollector>(new DiskCollector(catalog.find("DiskMetrics")))})
-        } else if (it == "MemoryMetric") {
-            metrics.insert({MetricType::DiskMetric,
-                            std::shared_ptr<MetricCollector>(new MemoryCollector(catalog.find("MemoryMetric")))})
-        } else if (it == "WrappedNetworkMetrics") {
-            metrics.insert({MetricType::DiskMetric,
-                            std::shared_ptr<MetricCollector>(new NetworkCollector(catalog.find("WrappedNetworkMetrics")))})
-        } else {
-            NES_DEBUG("MonitoringCatalog: MetricType \"" << it << "\" unknown.");
-        }
-    }
-
-    return create(metrics);
-}
+//MonitoringCatalogPtr MonitoringCatalog::configuredCatalog(std::multimap<std::string, std::string> catalog) {
+//    NES_DEBUG("MonitoringCatalog: Init configured catalog");
+//
+//    // init unordered_map
+//    std::unordered_map<MetricType, MetricCollectorPtr> metrics;
+//
+//    for (auto it = catalog.begin(); it != catalog.end(); ++it) {
+//        if(it == "WrappedCpuMetrics") {
+//            metrics.insert({MetricType::WrappedCpuMetrics,
+//                            std::shared_ptr<MetricCollector>(new CpuCollector(catalog.find("WrappedCpuMetrics")))})
+//        } else if (it == "DiskMetrics") {
+//            metrics.insert({MetricType::DiskMetric,
+//                            std::shared_ptr<MetricCollector>(new DiskCollector(catalog.find("DiskMetrics")))})
+//        } else if (it == "MemoryMetric") {
+//            metrics.insert({MetricType::DiskMetric,
+//                            std::shared_ptr<MetricCollector>(new MemoryCollector(catalog.find("MemoryMetric")))})
+//        } else if (it == "WrappedNetworkMetrics") {
+//            metrics.insert({MetricType::DiskMetric,
+//                            std::shared_ptr<MetricCollector>(new NetworkCollector(catalog.find("WrappedNetworkMetrics")))})
+//        } else {
+//            NES_DEBUG("MonitoringCatalog: MetricType \"" << it << "\" unknown.");
+//        }
+//    }
+//
+//    return create(metrics);
+//}
 
 
 MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {

@@ -47,6 +47,12 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+std::vector<std::string> CpuMetrics::getAttributesVector() {
+    std::vector<std::string> attributesVector { "coreNum", "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal",
+                                              "guest", "guestnice"};
+    return attributesVector;
+}
+
 SchemaPtr CpuMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64);

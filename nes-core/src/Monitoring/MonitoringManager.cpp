@@ -68,7 +68,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring),
-      monitoringCollectors(MonitoringPlan::defaultCollectors()) {           //defaultplan ändern zu individuellen
+      monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->queryService = queryService;
     this->catalogService = catalogService;
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));

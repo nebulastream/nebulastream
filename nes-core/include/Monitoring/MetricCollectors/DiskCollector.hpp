@@ -31,8 +31,6 @@ class DiskCollector : public MetricCollector {
   public:
     explicit DiskCollector();
 
-    explicit DiskCollector(std::list<std::string> configuredMetrics);
-
     explicit DiskCollector(SchemaPtr schema);
 
     /**

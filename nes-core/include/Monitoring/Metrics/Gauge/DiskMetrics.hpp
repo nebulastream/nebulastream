@@ -38,17 +38,17 @@ class DiskMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static SchemaPtr getDefaultSchema(const std::string& prefix);
 
-    /*
+    /***
      * @brief added by Lennart
      */
-    static SchemaPtr getSchemaBA02(const std::string& prefix, std::list<std::string> configuredMetrics);
     static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+    [[nodiscard]] SchemaPtr getSchema() const;
+    void setSchema(SchemaPtr newSchema);
+    static std::vector<std::string> getAttributesVector();
 //    static SchemaPtr createSchemaJson(const std::string& prefix, std::vector<std::string>);
 
-    void writeToBufferBA02(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema) const;
-    void readFromBufferNEW(Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -87,6 +87,7 @@ class DiskMetrics {
     uint64_t fBlocks;
     uint64_t fBfree;
     uint64_t fBavail;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
@@ -98,7 +99,7 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
  * @param the tuple index indicating the location of the tuple
 */
 void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+//void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 
 /**
@@ -108,7 +109,7 @@ void writeToBufferBA02(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, ui
  * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-void readFromBufferNEW(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
+//void readFromBufferNEW(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex, SchemaPtr schema);
 
 /**
  * @brief Parses the metric to JSON

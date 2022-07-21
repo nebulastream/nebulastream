@@ -82,6 +82,8 @@ class RegistrationMetrics {
     bool operator==(const RegistrationMetrics& rhs) const;
     bool operator!=(const RegistrationMetrics& rhs) const;
 
+    static std::vector<std::string> getAttributesVector();
+
     uint64_t nodeId;
     uint64_t totalMemoryBytes;
     uint64_t cpuCoreNum;

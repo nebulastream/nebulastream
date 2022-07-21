@@ -27,6 +27,8 @@ namespace NES {
 class MemoryMetrics {
   public:
     MemoryMetrics();
+    MemoryMetrics(SchemaPtr schema);
+
     static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     /**
@@ -34,7 +36,7 @@ class MemoryMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix = "");
+    static SchemaPtr getDefaultSchema(const std::string& prefix = "");
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -60,6 +62,11 @@ class MemoryMetrics {
     bool operator==(const MemoryMetrics& rhs) const;
     bool operator!=(const MemoryMetrics& rhs) const;
 
+    static std::vector<std::string> getAttributesVector();
+    [[nodiscard]] SchemaPtr getSchema() const;
+    void setSchema(SchemaPtr newSchema);
+    uint64_t getValue(std::string metricName);
+
     uint64_t nodeId;
     uint64_t TOTAL_RAM;
     uint64_t TOTAL_SWAP;
@@ -74,6 +81,7 @@ class MemoryMetrics {
     uint64_t LOADS_1MIN;
     uint64_t LOADS_5MIN;
     uint64_t LOADS_15MIN;
+    SchemaPtr schema;
 } __attribute__((packed));
 using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 

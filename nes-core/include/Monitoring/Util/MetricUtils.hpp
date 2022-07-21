@@ -102,6 +102,9 @@ class MetricUtils {
 
     static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
 
+    static std::string listToString(const std::string& seperator, const std::list<std::string>& list);
+
+    static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric, int numberOfAttributes);
 };
 
 }// namespace NES
