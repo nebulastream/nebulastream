@@ -50,7 +50,7 @@ class LocationProviderCSV : public LocationProvider {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() override;
+    std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
 
     /**
      * @brief return a vector containing all the waypoints read from the csv file

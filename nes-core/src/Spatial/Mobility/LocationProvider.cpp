@@ -24,7 +24,7 @@ namespace NES::Spatial::Mobility::Experimental {
 
 LocationProvider::LocationProvider(Index::Experimental::NodeType spatialType, Index::Experimental::Location fieldNodeLoc) {
     this->nodeType = spatialType;
-    this->fixedLocationCoordinates = fieldNodeLoc;
+    this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
 }
 
 Index::Experimental::NodeType LocationProvider::getNodeType() const { return nodeType; };
@@ -33,11 +33,11 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
     if (nodeType != Index::Experimental::NodeType::FIXED_LOCATION) {
         return false;
     }
-    fixedLocationCoordinates = geoLoc;
+    fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(geoLoc);
     return true;
 }
 
-Index::Experimental::Location LocationProvider::getLocation() {
+Index::Experimental::LocationPtr LocationProvider::getLocation() {
     switch (nodeType) {
         case Index::Experimental::NodeType::MOBILE_NODE:
             return getCurrentLocation().first;
@@ -58,8 +58,9 @@ LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double 
 
 std::vector<std::pair<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
-    if (coord.isValid()) {
-        return getNodeIdsInRange(coord, radius);
+    if (coord && coord->isValid()) {
+        //todo: pass pointer
+        return getNodeIdsInRange(*coord, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
@@ -70,9 +71,9 @@ void LocationProvider::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinat
     coordinatorRpcClient = coordinatorClient;
 }
 
-std::pair<Index::Experimental::Location, Timestamp> LocationProvider::getCurrentLocation() {
+std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProvider::getCurrentLocation() {
     //location provider base class will always return invalid current locations
-    return {Index::Experimental::Location(), 0};
+    return {std::make_shared<Index::Experimental::Location>(), 0};
 }
 
 LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig) {

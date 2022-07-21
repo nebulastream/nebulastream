@@ -190,9 +190,11 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         return Status::OK;
     }
     auto loc = locationProvider->getLocation();
-    Coordinates* coord = reply->mutable_coord();
-    coord->set_lat(loc.getLatitude());
-    coord->set_lng(loc.getLongitude());
+    if (loc) {
+        Coordinates* coord = reply->mutable_coord();
+        coord->set_lat(loc->getLatitude());
+        coord->set_lng(loc->getLongitude());
+    }
     return Status::OK;
 }
 
@@ -206,6 +208,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     //obtain the current schedule form the trajectory predictor
     auto schedule = trajectoryPredictor->getReconnectSchedule();
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
+    scheduleMsg->set_parentid(schedule->getCurrentParentId());
 
     //if a predicted path was calculated, insert its start and endpoint into the message to be sent
     auto startLoc = schedule->getPathStart();

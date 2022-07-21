@@ -285,7 +285,7 @@ bool NesWorker::connect() {
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::Index::Experimental::Location fixedCoordinates = {};
     if (locationProvider) {
-        fixedCoordinates = locationProvider->getLocation();
+        fixedCoordinates = *(locationProvider->getLocation());
     }
 
     NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);
