@@ -220,6 +220,7 @@ const std::string NODE_INFO_DOWNLOAD_RADIUS_CONFIG = "nodeInfoDownloadRadius";
 const std::string NODE_INDEX_UPDATE_THRESHOLD_CONFIG = "nodeIndexUpdateThreshold";
 const std::string DEFAULT_COVERAGE_RADIUS_CONFIG = "defaultCoverageRadius";
 const std::string PATH_PREDICTION_LENGTH_CONFIG = "pathPredictionLength";
+const std::string SPEED_DIFFERENCE_THRESHOLD_FACTOR_CONFIG = "speedDifferenceThresholdFactor";
 const std::string SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG = "sendDevicePositionUpdateThreshold";
 const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
 const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "sendLocationUpdateInterval";

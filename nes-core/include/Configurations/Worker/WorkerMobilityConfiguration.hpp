@@ -100,6 +100,12 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                                        "The Length of the predicted path to be computed"};
 
     /**
+     * @brief the allowed factor for speed changes before a recalculation of the predictions is triggered
+     */
+    ScalarOption<double> speedDifferenceThresholdFactor = {SPEED_DIFFERENCE_THRESHOLD_FACTOR_CONFIG,
+                                                 0.00001, "The factor by which the speed needs to change to trigger a recalculation of reconnect predictions"};
+
+    /**
      * @brief the distance in meters which a device has to move before it informs the coordinator about the location change
      */
     UIntOption sendDevicePositionUpdateThreshold = {SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
@@ -145,6 +151,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &nodeIndexUpdateThreshold,
                 &defaultCoverageRadius,
                 &pathPredictionLength,
+                &speedDifferenceThresholdFactor,
                 &sendDevicePositionUpdateThreshold,
                 &pushDeviceLocationUpdates,
                 &sendLocationUpdateInterval,

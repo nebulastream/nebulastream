@@ -220,7 +220,7 @@ class TrajectoryPredictor {
     std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
     std::vector<ReconnectPoint> reconnectVector;
     double bufferAverageMovementSpeed;
-    double allowedSpeedDifferenceFactor;
+    double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
 }
