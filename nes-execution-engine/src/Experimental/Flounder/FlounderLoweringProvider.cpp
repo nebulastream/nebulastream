@@ -68,7 +68,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Basi
         for (auto& item : parentFrame.getContent()) {
             if (item.second->type() == flounder::NodeType::VREG) {
                 auto vregNode = static_cast<flounder::VirtualRegisterIdentifierNode*>(item.second);
-               // program << program.clear(vregNode);
+                // program << program.clear(vregNode);
             }
         }
     }
@@ -89,7 +89,7 @@ void FlounderLoweringProvider::LoweringContext::processInline(std::shared_ptr<IR
     for (auto& item : parentFrame.getContent()) {
         if (item.second->type() == flounder::NodeType::VREG) {
             auto vregNode = static_cast<flounder::VirtualRegisterIdentifierNode*>(item.second);
-      //      program << program.clear(vregNode);
+            //      program << program.clear(vregNode);
         }
     }
     // }
@@ -113,10 +113,16 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
     auto blockInputArguments = bi.getArguments();
     auto blockTargetArguments = bi.getBlock()->getArguments();
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
-        auto targetVreg = program.vreg(blockTargetArguments[i]->getIdentifier());
-        program << program.request_vreg64(targetVreg);
-        program << program.mov(targetVreg, parentFrame.getValue(blockInputArguments[i]->getIdentifier()));
-        blockFrame.setValue(blockTargetArguments[i]->getIdentifier(), targetVreg);
+        auto parentFrameFlounderValue = parentFrame.getValue(blockInputArguments[i]->getIdentifier());
+        // if the value is no a vrec, we have to materialize it before invoicing the subframe.
+        if(parentFrameFlounderValue->type() != flounder::VREG){
+            auto targetVreg = program.vreg(blockTargetArguments[i]->getIdentifier());
+            program << program.request_vreg64(targetVreg);
+            program << program.mov(targetVreg, parentFrameFlounderValue);
+            parentFrameFlounderValue = targetVreg;
+        }
+
+        blockFrame.setValue(blockTargetArguments[i]->getIdentifier(), parentFrameFlounderValue);
     }
     return blockFrame;
 }
@@ -137,50 +143,90 @@ FlounderLoweringProvider::LoweringContext::processInlineBlockInvocation(IR::Oper
     for (auto& item : parentFrame.getContent()) {
         if (!inputArguments.contains(item.first) && item.second->type() == flounder::NodeType::VREG) {
             auto vregNode = static_cast<flounder::VirtualRegisterIdentifierNode*>(item.second);
-            program << program.clear(vregNode);
+           // program << program.clear(vregNode);
         }
     }
     return blockFrame;
 }
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::AddOperation> addOpt,
                                                         FlounderFrame& frame) {
-    auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
-    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
-    program << program.mov(result, leftInput);
+
+    auto leftInput = addOpt->getLeftInput();
+    flounder::Node* leftFlounderRef = frame.getValue(leftInput->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto addFOp = program.add(result, rightInput);
+
+    if(leftInput->getStamp()->isAddress() && addOpt->getUsages()[0]->getOperationType() == IR::Operations::Operation::LoadOp){
+        auto result = program.mem_add(leftFlounderRef, rightInput);
+        frame.setValue(addOpt->getIdentifier(), result);
+        return;
+    }
+
+
+    if (leftInput->getUsages().size() > 1 || leftFlounderRef->type() != flounder::VREG) {
+        // the operation has shared access to the left input -> create new result register
+        auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
+        program << program.mov(result, leftFlounderRef);
+        leftFlounderRef = result;
+    }
+
+    // perform add
+    auto addFOp = program.add(leftFlounderRef, rightInput);
+    frame.setValue(addOpt->getIdentifier(), leftFlounderRef);
     program << addFOp;
+
+
+    // clear registers if we dont used them
+    if (addOpt->getRightInput()->getUsages().size() == 1 && rightInput->type() == flounder::VREG) {
+        //program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(rightInput));
+    }
     return;
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::MulOperation> addOpt,
                                                         FlounderFrame& frame) {
-    auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
-    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
-    program << program.mov(result, leftInput);
+    auto leftInput = addOpt->getLeftInput();
+    flounder::Node* leftFlounderRef = frame.getValue(leftInput->getIdentifier());
+
+    if (leftInput->getUsages().size() > 1 || leftFlounderRef->type() != flounder::VREG) {
+        // the operation has shared access to the left input -> create new result register
+        auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
+        program << program.mov(result, leftFlounderRef);
+        leftFlounderRef = result;
+    }
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto addFOp = program.imul(result, rightInput);
+
+    auto addFOp = program.imul(leftFlounderRef, rightInput);
+    frame.setValue(addOpt->getIdentifier(), leftFlounderRef);
     program << addFOp;
+    // clear registers if we dont used them
+    if (addOpt->getRightInput()->getUsages().size() == 1 && rightInput->type() == flounder::VREG) {
+       // program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(rightInput));
+    }
     return;
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::CompareOperation> opt,
                                                         FlounderFrame& frame) {
     auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
-    auto resultVreg = createVreg(compOpt->getIdentifier(), compOpt->getStamp(), frame);
+
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
-    program << program.mov(resultVreg, leftInput);
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
-    // cmp
-    program << program.cmp(resultVreg, rightInput);
-    program << program.clear(resultVreg);
+    if(leftInput->type() != flounder::VREG){
+        auto tempVreg = createVreg(compOpt->getIdentifier(), compOpt->getStamp(), frame);
+        program << program.mov(tempVreg, leftInput);
+        program << program.cmp(tempVreg, rightInput);
+        program << program.clear(tempVreg);
+    }else{
+        program << program.cmp(leftInput, rightInput);
+    }
+
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame) {
     auto compOpt = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
     //auto resultVreg = createVreg(compOpt->getIdentifier(), compOpt->getStamp(), frame);
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
-   // program << program.mov(resultVreg, leftInput);
+    // program << program.mov(resultVreg, leftInput);
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
     // cmp
     program << program.or_(leftInput, rightInput);
@@ -243,8 +289,8 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
             default: NES_THROW_RUNTIME_ERROR("No handler for comp");
         }
     }
-
     auto falseBlockFrame = processBlockInvocation(ifOpt->getFalseBlockInvocation(), frame);
+
     program << program.jmp(falseLabel);
 
     process(ifOpt->getTrueBlockInvocation().getBlock(), trueBlockFrame);
@@ -328,9 +374,11 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
             if (returnOpt->hasReturnValue()) {
                 auto returnFOp = frame.getValue(returnOpt->getReturnValue()->getIdentifier());
                 program << program.set_return(returnFOp);
+                if (returnFOp->type() == flounder::VREG) {
+                    //program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(returnFOp));
+                }
             }
             auto branchLabel = program.label("Block_return");
-
             program << program.jmp(branchLabel);
             return;
         }
@@ -363,7 +411,8 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
             auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
             process(call, frame);
             return;
-        }case IR::Operations::Operation::AndOp: {
+        }
+        case IR::Operations::Operation::AndOp: {
             auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
             process(call, frame);
             return;

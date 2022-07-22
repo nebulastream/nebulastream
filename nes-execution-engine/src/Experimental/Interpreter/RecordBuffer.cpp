@@ -82,10 +82,10 @@ Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLa
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
     auto tupleSize = rowLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;
+    auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (uint64_t i = 0; i < rowLayout->getSchema()->getSize(); i++) {
         auto fieldOffset = rowLayout->getFieldOffSets()[i];
-        auto offset = tupleSize * recordIndex + fieldOffset;
-        auto fieldAddress = bufferAddress + offset;
+        auto fieldAddress = recordOffset + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
         auto value = load(memoryLayout->getPhysicalTypes()[i], memRef);
         fieldValues.emplace_back(value);

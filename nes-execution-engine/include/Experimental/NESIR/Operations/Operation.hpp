@@ -18,6 +18,7 @@
 #include <Experimental/NESIR/Types/BasicTypes.hpp>
 #include <Experimental/NESIR/Types/Stamp.hpp>
 #include <memory>
+#include <vector>
 
 namespace NES::ExecutionEngine::Experimental::IR::Types {
 class Stamp;
@@ -51,6 +52,7 @@ class Operation {
         AndOp,
         NegateOp,
         BasicBlockArgument,
+        BlockInvocation,
         MLIR_YIELD,
         CastOp
     };
@@ -62,14 +64,18 @@ class Operation {
     virtual std::string toString() = 0;
     OperationType getOperationType() const;
     const Types::StampPtr& getStamp() const;
+    void addUsage(const Operation*);
+    const std::vector<const Operation*>& getUsages();
 
   protected:
     OperationType opType;
     OperationIdentifier identifier;
     const Types::StampPtr stamp;
+    std::vector<const Operation*> usages;
 };
 using OperationPtr = std::shared_ptr<Operation>;
 using OperationWPtr = std::weak_ptr<Operation>;
+using OperationRawPtr = Operation*;
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_OPERATION_HPP

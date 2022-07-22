@@ -17,7 +17,10 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {}
+      rightInput(std::move(rightInput)) {
+    leftInput->addUsage(this);
+    rightInput->addUsage(this);
+}
 std::string SubOperation::toString() {
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " - " + getRightInput()->getIdentifier();
 }

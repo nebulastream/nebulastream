@@ -17,7 +17,9 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 NegateOperation::NegateOperation(OperationIdentifier identifier, OperationPtr input)
-    : Operation(OperationType::NegateOp, identifier,  Types::StampFactory::createBooleanStamp()), input(std::move(input)) {}
+    : Operation(OperationType::NegateOp, identifier,  Types::StampFactory::createBooleanStamp()), input(std::move(input)) {
+    input->addUsage(this);
+}
 
 std::string NegateOperation::toString() { return identifier + "= not " + getInput()->getIdentifier(); }
 bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
