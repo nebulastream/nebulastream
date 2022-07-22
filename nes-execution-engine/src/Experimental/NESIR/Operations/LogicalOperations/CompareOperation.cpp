@@ -20,7 +20,10 @@ CompareOperation::CompareOperation(OperationIdentifier identifier,
                                    OperationPtr rightInput,
                                    Comparator comparator)
     : Operation(Operation::CompareOp, identifier,  Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)), rightInput(std::move(rightInput)),
-      comparator(comparator) {}
+      comparator(comparator) {
+    leftInput->addUsage(this);
+    rightInput->addUsage(this);
+}
 
 OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }

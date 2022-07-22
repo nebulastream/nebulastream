@@ -15,9 +15,10 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-class BasicBlockInvocation {
+class BasicBlockInvocation : public Operation {
   public:
     BasicBlockInvocation();
     void setBlock(BasicBlockPtr block);
@@ -25,6 +26,8 @@ class BasicBlockInvocation {
     void addArgument(OperationPtr argument);
     void removeArgument(uint64_t argumentIndex);
     std::vector<OperationPtr> getArguments();
+    std::string toString() override;
+
   private:
     BasicBlockPtr basicBlock;
     std::vector<OperationWPtr> operations;

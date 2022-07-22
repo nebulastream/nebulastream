@@ -187,6 +187,36 @@ TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionTest) {
     ASSERT_EQ(ex->execute<std::int64_t>(argument), 85);
 }
 
+Value<> ifThenElseConditionParameter(Value<> x) {
+    Value iw = x * 2;
+    if (iw == 8) {
+        iw = iw * 2;
+    } else {
+        iw = 42;
+    }
+    return iw;
+}
+
+TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionParameterTests) {
+    Value<Int32> tempx = (int32_t) 0;
+    tempx.ref.blockId = -1;
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return ifThenElseConditionParameter(tempx);
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto lp = Flounder::FlounderLoweringProvider();
+    auto ex = lp.lower(ir);
+    std::cout << " == Execute == " << std::endl;
+    ASSERT_EQ(ex->execute<std::int64_t>(1), 42);
+    ASSERT_EQ(ex->execute<std::int64_t>(4), 16);
+}
+
 Value<> nestedIfThenElseCondition() {
     Value value = Value(1);
     Value iw = Value(1);
@@ -302,7 +332,7 @@ void storeFunction(Value<MemRef> ptr) {
 TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
 
     int64_t valI = 42;
-    auto tempPara = Value<MemRef>((int8_t*)&valI);
+    auto tempPara = Value<MemRef>((int8_t*) &valI);
     tempPara.load<Int64>();
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
@@ -323,12 +353,9 @@ TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
     ex->execute<>(&valI);
     ASSERT_EQ(valI, 43);
     ex.release();
-
 }
 
-int64_t addInt(int64_t x, int64_t y){
-    return x + y;
-};
+int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
     auto x = Value<Int64>(2l);

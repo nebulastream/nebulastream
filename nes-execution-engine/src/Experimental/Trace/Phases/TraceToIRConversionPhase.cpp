@@ -170,7 +170,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                IR::BasicBlockPtr& block,
                                                                Operation& operation) {
-    std::cout << "current block " << operation << std::endl;
+    std::cout << "current block " << block->getIdentifier() << " "<< operation << std::endl;
     auto blockRef = get<BlockRef>(operation.input[0]);
     IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);
