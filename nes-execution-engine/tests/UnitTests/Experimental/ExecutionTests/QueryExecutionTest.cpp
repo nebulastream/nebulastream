@@ -108,6 +108,7 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::UINT64);
+    schema->addField("f2", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
     Scan scan = Scan(memoryLayout);
     auto emit = std::make_shared<Emit>(memoryLayout);
@@ -301,7 +302,7 @@ TEST_F(QueryExecutionTest, tpchQ6_agg) {
 
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
+    ASSERT_EQ(sumState->sum, (int64_t) 1995906217);
 }
 
 TEST_F(QueryExecutionTest, tpchQ6) {

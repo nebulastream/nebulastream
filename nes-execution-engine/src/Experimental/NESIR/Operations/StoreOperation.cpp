@@ -19,7 +19,10 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
-    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {}
+    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {
+    address->addUsage(this);
+    value->addUsage(this);
+}
 
 OperationPtr StoreOperation::getValue() { return value.lock(); }
 

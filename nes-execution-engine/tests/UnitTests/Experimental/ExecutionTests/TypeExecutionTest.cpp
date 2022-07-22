@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Experimental/Interpreter/DataValue/InvocationPlugin.hpp"
+#include "Experimental/Utility/PluginRegistry.hpp"
 #include <API/Schema.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
@@ -195,4 +197,75 @@ TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
     ASSERT_EQ(function(), 5);
 }
 
+class CustomType : public Any {
+  public:
+    static const inline auto type = TypeIdentifier::create<CustomType>();
+    CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
+
+    std::unique_ptr<CustomType> add(const CustomType& other) const {
+        return std::make_unique<CustomType>(x + other.x, y + other.y);
+    }
+
+    std::unique_ptr<CustomType> mulInt(const Int64& other) const {
+        return std::make_unique<CustomType>(x * other.getValue(), y * other.getValue());
+    }
+
+    std::unique_ptr<Int64> power(const CustomType& other) const { return std::make_unique<Int64>(x * other.x - y); }
+
+    std::unique_ptr<Any> copy() override { return std::make_unique<CustomType>(x, y); }
+
+    Value<> x;
+    Value<> y;
+};
+
+class CustomTypeInvocationPlugin : public InvocationPlugin {
+  public:
+    std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const override {
+        if (isa<CustomType>(left.value) && isa<CustomType>(right.value)) {
+            auto& ct1 = left.getValue().staticCast<CustomType>();
+            auto& ct2 = right.getValue().staticCast<CustomType>();
+            return Value(ct1.add(ct2));
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Value<>> Mul(const Value<>& left, const Value<>& right) const override {
+        if (isa<CustomType>(left.value) && isa<Int64>(right.value)) {
+            auto& ct1 = left.getValue().staticCast<CustomType>();
+            auto& ct2 = right.getValue().staticCast<Int64>();
+            return Value<CustomType>(ct1.mulInt(ct2));
+        }
+        return std::nullopt;
+    }
+};
+
+[[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
+
+Value<> customValueType() {
+
+    auto c1 = Value<CustomType>(CustomType(32l, 32l));
+    auto c2 = Value<CustomType>(CustomType(32l, 32l));
+
+    c1 = c1 + c2;
+    c1 = c1 * 2l;
+    return c1.getValue().x;
+}
+
+TEST_F(TypeConversionTest, customValueTypeTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return customValueType();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 128);
+}
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

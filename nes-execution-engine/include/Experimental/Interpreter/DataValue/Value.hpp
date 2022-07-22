@@ -156,6 +156,8 @@ class Value : BaseValue {
     // destructor
     ~Value() {}
 
+    ValueType* operator->() const { return value.get(); }
+
     ValueType& getValue() const { return *value.get(); };
 
   public:
