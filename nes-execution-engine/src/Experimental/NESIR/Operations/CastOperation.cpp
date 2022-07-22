@@ -16,7 +16,9 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp)
-    : Operation(CastOp, identifier, targetStamp), input(input) {}
+    : Operation(CastOp, identifier, targetStamp), input(input) {
+    input->addUsage(this);
+}
 
 OperationPtr CastOperation::getInput() { return input.lock(); }
 

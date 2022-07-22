@@ -18,7 +18,10 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::OrOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {}
+      rightInput(std::move(rightInput)) {
+    leftInput->addUsage(this);
+    rightInput->addUsage(this);
+}
 
 std::string OrOperation::toString() {
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " or " + getRightInput()->getIdentifier();

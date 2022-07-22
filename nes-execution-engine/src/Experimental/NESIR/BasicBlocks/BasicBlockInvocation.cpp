@@ -12,20 +12,23 @@
     limitations under the License.
 */
 #include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-BasicBlockInvocation::BasicBlockInvocation() {}
+BasicBlockInvocation::BasicBlockInvocation()
+    : Operation(OperationType::BlockInvocation, Types::StampFactory::createVoidStamp()) {}
 
 void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = block; }
 
 BasicBlockPtr BasicBlockInvocation::getBlock() { return basicBlock; }
 
-void BasicBlockInvocation::addArgument(OperationPtr argument) { this->operations.emplace_back(argument); }
-
-void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) {
-    operations.erase(operations.begin() + argumentIndex);
+void BasicBlockInvocation::addArgument(OperationPtr argument) {
+    this->operations.emplace_back(argument);
+    argument->addUsage(this);
 }
+
+void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.erase(operations.begin() + argumentIndex); }
 
 std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
     std::vector<OperationPtr> arguments;
@@ -34,5 +37,6 @@ std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
     }
     return arguments;
 }
+std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations
