@@ -26,8 +26,8 @@ class MaintenanceRequest;
 typedef std::shared_ptr<MaintenanceRequest> MaintenanceRequestPtr;
 
 /**
-     * @breif this request is used to migrate a query sub plan
-     */
+* @brief this request is used to migrate a query sub plan
+*/
 class MaintenanceRequest : public Request {
 
   public:
@@ -36,15 +36,15 @@ class MaintenanceRequest : public Request {
     std::string toString() override;
 
     /**
-         * @brief gets the Migration Type for this Query Migration Request
-         * @return MigrationType
-         */
+     * @brief gets the Migration Type for this Query Migration Request
+     * @return MigrationType
+     */
     MigrationType::Value getMigrationType();
 
     /**
-         * @brief gets the topology node on which the query can be found
-         * @return topology node id
-         */
+    * @brief gets the topology node which is to be marked for maintenance
+    * @returng topology node id
+    */
     TopologyNodeId getTopologyNode();
 
   private:
