@@ -60,19 +60,19 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     }
 
     //create MaintenanceRequest
-        //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
-        if (type == MigrationType::Value::RESTART) {
-            result.first = false;
-            result.second =
-                "RESTART currently not supported. Will be added in future";
+    //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
+    if (type == MigrationType::Value::RESTART) {
+        result.first = false;
+        result.second =
+            "RESTART currently not supported. Will be added in future";
             //functionality will be added in #2873
-        } else {
-            queryRequestQueue->add(MaintenanceRequest::create(nodeId, type));
-            result.first = true;
-            result.second =
-                "Successfully submitted Query Migration Requests for Topology Node with ID: "
-                + std::to_string(nodeId);
-        }
+    } else {
+        queryRequestQueue->add(MaintenanceRequest::create(nodeId, type));
+        result.first = true;
+        result.second =
+            "Successfully submitted Query Migration Requests for Topology Node with ID: "
+            + std::to_string(nodeId);
+    }
 
     return result;
 }
