@@ -214,15 +214,15 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 /**
      * @brief This method is used for making a monitoring rest call.
-     * param1 the rest call
-     * param2 the rest port
+     * @param1 the rest call
+     * @param2 the rest port
      * @return the json
      */
 [[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081");
 
 /**
      * @brief This method is used for making a REST call to coordinator to get the topology as Json
-     * param1 the rest port
+     * @param1 the rest port
      * @return the json
      */
 [[nodiscard]] web::json::value getTopology(uint64_t restPort);
