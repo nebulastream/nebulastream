@@ -19,7 +19,9 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 ReturnOperation::ReturnOperation() : Operation(Operation::ReturnOp, Types::StampFactory::createVoidStamp()) {}
 ReturnOperation::ReturnOperation(OperationPtr returnValue)
-    : Operation(Operation::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {}
+    : Operation(Operation::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {
+    returnValue->addUsage(this);
+}
 
 std::string ReturnOperation::toString() {
     if (hasReturnValue()) {

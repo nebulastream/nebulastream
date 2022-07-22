@@ -79,7 +79,9 @@ Value<> AddOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Add(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::ADD, left, right, result.value());
+            if(dynamic_cast<const TraceableType*>(&result.value().getValue()) != nullptr){
+                TraceOperation(Trace::OpCode::ADD, left, right, result.value());
+            }
         }
         return result;
     });
@@ -99,7 +101,9 @@ Value<> MulOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Mul(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::MUL, left, right, result.value());
+            if(dynamic_cast<const TraceableType*>(&result.value().getValue()) != nullptr){
+                TraceOperation(Trace::OpCode::MUL, left, right, result.value());
+            }
         }
         return result;
     });

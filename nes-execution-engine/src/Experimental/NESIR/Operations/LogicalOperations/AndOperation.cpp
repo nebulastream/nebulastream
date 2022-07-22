@@ -18,7 +18,10 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 AndOperation::AndOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::AndOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {}
+      rightInput(std::move(rightInput)) {
+    leftInput->addUsage(this);
+    rightInput->addUsage(this);
+}
 
 std::string AndOperation::toString() {
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " and " + getRightInput()->getIdentifier();

@@ -17,7 +17,10 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 MulOperation::MulOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::MulOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {}
+      rightInput(std::move(rightInput)) {
+    leftInput->addUsage(this);
+    rightInput->addUsage(this);
+}
 
 std::string MulOperation::toString() {
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " * " + getRightInput()->getIdentifier();
