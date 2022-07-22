@@ -253,6 +253,8 @@ bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t 
 
             if (nodeNo == expectedWorkers + 1U) {
                 NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
+                NES_INFO("TestUtils: Received topology JSON:\n" << json_return.to_string());
+
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
@@ -265,6 +267,32 @@ bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t 
     NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly " << nodeNo << " but expected "
                                                                                              << expectedWorkers);
     return false;
+}
+
+web::json::value TestUtils::getTopology(uint64_t restPort) {
+    auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
+    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
+    web::json::value json_return;
+    web::http::client::http_client client(baseUri);
+
+    try {
+        client.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+                return response.extract_json();
+            })
+            .then([&json_return](const pplx::task<web::json::value>& task) {
+                try {
+                    json_return = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                }
+            })
+            .wait();
+    } catch (const std::exception& e) {
+        NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    return json_return;
 }
 
 }// namespace NES
