@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.64](https://github.com/nebulastream/nebulastream/tree/v0.2.64) (2022-07-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.63...v0.2.64)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix Hierarchical Topology with ParentID via Config [\#2908](https://github.com/nebulastream/nebulastream/issues/2908)
+
 ## [v0.2.63](https://github.com/nebulastream/nebulastream/tree/v0.2.63) (2022-07-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.62...v0.2.63)
