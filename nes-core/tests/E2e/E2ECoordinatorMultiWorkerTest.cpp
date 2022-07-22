@@ -75,7 +75,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
                                            TestUtils::sourceGatheringInterval(1000),
                                            TestUtils::workerHealthCheckWaitTime(1)});
-
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -91,7 +90,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::sourceGatheringInterval(1000),
                                            TestUtils::workerHealthCheckWaitTime(1),
                                            TestUtils::enableDebug()});
-    std::this_thread::sleep_for(5000ms);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 2));
 
     auto worker3 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -106,10 +105,15 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::sourceGatheringInterval(1000),
                                            TestUtils::workerHealthCheckWaitTime(1),
                                            TestUtils::enableDebug()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 3));
 
-    std::this_thread::sleep_for(5000ms);
-
-    //ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 2));
+    auto topology = TestUtils::getTopology(*restPort);
+    NES_INFO("The final topology:\n" << topology);
+    //check edges
+    for (uint64_t i = 0; i < topology.at("edges").size(); i++) {
+        ASSERT_EQ(topology["edges"][i]["target"].as_integer(), i + 1);
+        ASSERT_EQ(topology["edges"][i]["source"].as_integer(), i + 2);
+    }
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
