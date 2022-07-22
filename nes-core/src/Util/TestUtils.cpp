@@ -253,8 +253,7 @@ bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t 
 
             if (nodeNo == expectedWorkers + 1U) {
                 NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
-                NES_INFO("TestUtils: Received topology JSON:\n" << json_return.to_string());
-
+                NES_DEBUG("TestUtils: Received topology JSON:\n" << json_return.to_string());
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));

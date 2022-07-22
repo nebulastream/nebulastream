@@ -165,9 +165,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
 
-    if (parentId > 1) {
+    if (parentId > NesCoordinator::NES_COORDINATOR_ID) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        bool success = replaceParent(1, parentId);
+        bool success = replaceParent(NesCoordinator::NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }

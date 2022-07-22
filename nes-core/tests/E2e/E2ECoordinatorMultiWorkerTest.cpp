@@ -50,6 +50,9 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
+/**
+ * @brief Testing NES with a config using a hierarchical topology.
+ */
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO(" start coordinator");
     auto coordinator = TestUtils::startCoordinator(
@@ -111,8 +114,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO("The final topology:\n" << topology);
     //check edges
     for (uint64_t i = 0; i < topology.at("edges").size(); i++) {
-        ASSERT_EQ(topology["edges"][i]["target"].as_integer(), i + 1);
-        ASSERT_EQ(topology["edges"][i]["source"].as_integer(), i + 2);
+        EXPECT_EQ(topology["edges"][i]["target"].as_integer(), i + 1);
+        EXPECT_EQ(topology["edges"][i]["source"].as_integer(), i + 2);
     }
 }
 
