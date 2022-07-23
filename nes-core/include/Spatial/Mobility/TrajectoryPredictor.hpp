@@ -16,6 +16,7 @@
 #define NES_TRAJECTORYPREDICTOR_HPP
 
 #include "Common/Location.hpp"
+#include "Common/ReconnectPrediction.hpp"
 #include "Util/TimeMeasurement.hpp"
 #include <atomic>
 #include <deque>
@@ -135,7 +136,7 @@ class TrajectoryPredictor {
      * @return an optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
      * nullopt if no reconnect has been calculated
      */
-    std::optional<ReconnectPoint> getNextPredictedReconnect();
+    std::shared_ptr<ReconnectPoint> getNextPredictedReconnect();
 
     /**
      * @brief return position and time at which the last reconnect happened
@@ -218,7 +219,7 @@ class TrajectoryPredictor {
 #endif
     uint64_t parentId;
     std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
-    std::vector<ReconnectPoint> reconnectVector;
+    std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;

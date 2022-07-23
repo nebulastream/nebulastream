@@ -40,7 +40,7 @@ class ReconnectSchedule {
      */
     ReconnectSchedule(uint64_t currentParentId, Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
-                      std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector);
+                      std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector);
 
     /**
      * @brief getter function for the start location of the current predicted path
@@ -65,7 +65,7 @@ class ReconnectSchedule {
      * @brief getter function for the vector containing the scheduled reconnects
      * @return a vector containing tuples consisting of expected next parent id, estimated reconnect location, estimated reconnect time
      */
-    [[nodiscard]] std::shared_ptr<std::vector<ReconnectPoint>> getReconnectVector() const;
+    [[nodiscard]] std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> getReconnectVector() const;
 
     [[nodiscard]] uint64_t getCurrentParentId();
 
@@ -80,7 +80,7 @@ class ReconnectSchedule {
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;
     Index::Experimental::LocationPtr lastIndexUpdatePosition;
-    std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector;
+    std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
 };
 }
 
