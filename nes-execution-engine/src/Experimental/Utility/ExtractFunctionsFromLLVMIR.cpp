@@ -43,6 +43,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <sstream>
+#include <iostream>
 using namespace llvm;
 
 std::string demangleToBaseName(const std::string &functionName) {
@@ -61,12 +63,12 @@ std::string demangleToBaseName(const std::string &functionName) {
 int main(int argc, char **argv) {
     InitLLVM X(argc, argv);
     bool Recursive = true;
-
+    std::cout << "Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE << std::endl;
     LLVMContext Context;
 
     // Use lazy loading, since we only care about selected global values.
     SMDiagnostic Err;
-    std::unique_ptr<Module> LLVMModule = getLazyIRFileModule("./llvm-ir/nes-runtime_opt/nes-runtime_link.bc", Err, Context);
+    std::unique_ptr<Module> LLVMModule = getLazyIRFileModule(std::string(IR_FILE_DIR)+"/"+std::string(IR_FILE_FILE), Err, Context);
 
     if (!LLVMModule.get()) {
         Err.print(argv[0], errs());
@@ -158,8 +160,9 @@ int main(int argc, char **argv) {
     Passes.add(createStripDeadPrototypesPass());    // Remove dead func decls
     // Passes.add(createFunctionInliningPass());    // Inline function definitions
 
+    std::cout << "Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR << std::endl;
     std::error_code EC;
-    ToolOutputFile Out("./llvm-ir/nes-runtime_opt/proxiesReduced.ll", EC, sys::fs::OF_None);
+    ToolOutputFile Out(std::string(PROXY_FUNCTIONS_RESULT_DIR), EC, sys::fs::OF_None);
     if (EC) {
         errs() << EC.message() << '\n';
         return 1;

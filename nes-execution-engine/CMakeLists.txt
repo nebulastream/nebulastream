@@ -31,9 +31,13 @@ message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
 # Reducing linked & optimized LLVM IR to Proxy Functions only.
 add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
-set_target_properties( generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
-target_link_libraries(generate-proxy-function-ir
-    nes-execution-engine)
+set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
+list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
+set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/proxiesReduced.ll)
+target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
+target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
+target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+
 add_dependencies(generate-proxy-function-ir nes-runtime_opt)
 
 add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
@@ -47,11 +51,13 @@ get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-execution-engine SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+target_compile_definitions(nes-execution-engine PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
 message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
 target_link_libraries(nes-execution-engine PUBLIC nes)
 target_include_directories(nes-execution-engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+add_dependencies(nes-execution-engine generate-proxy-function-ir)
 
 # include MLIR. This is currently required
 find_package(MLIR REQUIRED CONFIG)
@@ -63,6 +69,7 @@ if (MLIR_FOUND)
     get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
     message(STATUS "mlir_libs: ${mlir_libs}")
     target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs} )
+    target_link_libraries(generate-proxy-function-ir PRIVATE ${mlir_libs})
 else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)
