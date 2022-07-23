@@ -216,7 +216,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             // -> BUT: if the string contains "../." or "../.." or "../../", the string is also turned to garbage
             // 2. find better way to get the correct path
             // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/Folder/Folder/Folder/CWD'
-            auto proxyFunctionsIR = llvm::parseIRFile("../../../../llvm-ir/nes-runtime_opt/proxiesReduced.ll", 
+            auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR),
                                                       Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
 
