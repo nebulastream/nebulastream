@@ -62,7 +62,9 @@ class ReconnectConfigurator;
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 
 struct ReconnectPrediction;
+using ReconnectPredictionPtr = std::shared_ptr<ReconnectPrediction>;
 struct ReconnectPoint;
+using ReconnectPointPtr = std::shared_ptr<ReconnectPoint>;
 
 
 /**
@@ -219,7 +221,7 @@ class TrajectoryPredictor {
 #endif
     uint64_t parentId;
     std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
-    std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
+    std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
