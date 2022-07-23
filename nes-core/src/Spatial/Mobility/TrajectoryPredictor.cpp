@@ -48,6 +48,7 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, c
     updatePrediction = false;
     speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
     bufferAverageMovementSpeed = 0;
+    std::unique_lock lock(lastReconnectTupleMutex);
     devicePositionTupleAtLastReconnect = {std::make_shared<Index::Experimental::Location>(Index::Experimental::Location()), 0};
 #else
     (void) configuration;
@@ -71,12 +72,17 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
         end = std::make_shared<Index::Experimental::Location>(endLatLng.lat().degrees(), endLatLng.lng().degrees());
         lineLock.unlock();
     } else {
+        //todo: make create method (also for other types)
        start = std::make_shared<Index::Experimental::Location>();
        end = std::make_shared<Index::Experimental::Location>();
     }
 
+    std::unique_lock reconnectVectorLock(reconnectVectorMutex);
+
+        //todo make pointers to locations const
     //get a shared ptr to a vector containing predicted reconnect inf oconsisting of expected parent id, expected reconnect location and expected time
-    auto reconnectVectorPtr = std::make_shared<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>>(reconnectVector);
+    //auto reconnectVectorPtr = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>(reconnectVector);
+    reconnectVectorLock.unlock();
 
     // get a pointer to the position of the device at the time the local field node index was updated
     //if no such update has happened so for, set the pointer to nullptr
@@ -224,7 +230,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             //check if scheduled reconnects exist and inform the coordinator about any changes
             std::unique_lock reconnectVectorLock(reconnectVectorMutex);
             if (!reconnectVector.empty()) {
-                nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector[0].reconnectPrediction.expectedNewParentId);
+                nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector[0]->reconnectPrediction.expectedNewParentId);
                 auto updatedReconnectPoint = getNextPredictedReconnect();
                 std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
                 if (updatedReconnectPoint) {
@@ -252,7 +258,8 @@ void TrajectoryPredictor::startReconnectPlanning() {
             if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
                 //reconnect and inform coordinator about upcoming reconnect
                 std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
-                reconnectConfigurator->reconnect(parentId, reconnectVector.front().reconnectPrediction.expectedNewParentId);
+                //todo: pass pointer here
+                reconnectConfigurator->reconnect(parentId, reconnectVector.front()->reconnectPrediction.expectedNewParentId);
                 devicePositionTupleAtLastReconnect = currentOwnLocation;
 
                 std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
@@ -264,14 +271,14 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
 
                 //update locally saved information about parent
-                parentId = reconnectVector.front().reconnectPrediction.expectedNewParentId;
-                currentParentLocation = fieldNodeMap.at(reconnectVector[0].reconnectPrediction.expectedNewParentId);
+                parentId = reconnectVector.front()->reconnectPrediction.expectedNewParentId;
+                currentParentLocation = fieldNodeMap.at(reconnectVector[0]->reconnectPrediction.expectedNewParentId);
                 reconnectVector.erase(reconnectVector.begin());
 
                 //after reconnect, check if there is a next point on the schedule
                 if (!reconnectVector.empty()) {
-                    auto coverageEndLoc = reconnectVector.front().predictedReconnectLocation;
-                    nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector[0].reconnectPrediction.expectedNewParentId);
+                    auto coverageEndLoc = reconnectVector.front()->predictedReconnectLocation;
+                    nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector[0]->reconnectPrediction.expectedNewParentId);
                     NES_INFO("reconnect point: " << coverageEndLoc.toString());
                 } else {
                     NES_INFO("no next reconnect scheduled")
@@ -475,7 +482,7 @@ void TrajectoryPredictor::scheduleReconnects() {
             auto currLatLng = S2LatLng(reconnectLocationOnPath);
             auto currLoc =
                 std::make_shared<Index::Experimental::Location>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
-            reconnectVector.emplace_back(ReconnectPoint {*currLoc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectParentId, (uint64_t) estimatedReconnectTime}});
+            reconnectVector.emplace_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(NES::Spatial::Mobility::Experimental::ReconnectPoint {*currLoc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectParentId, (uint64_t) estimatedReconnectTime}}));
             NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
             reconnectLocationOnPath = nextReconnectLocationOnPath;
             estimatedReconnectTime = nextEstimatedReconnectTime;
@@ -489,12 +496,12 @@ void TrajectoryPredictor::scheduleReconnects() {
 #endif
 }
 
-std::optional<ReconnectPoint> TrajectoryPredictor::getNextPredictedReconnect() {
+std::shared_ptr<ReconnectPoint> TrajectoryPredictor::getNextPredictedReconnect() {
     std::unique_lock lock(reconnectVectorMutex);
     if (reconnectVector.size() > 1) {
         return reconnectVector.at(0);
     } else {
-        return std::nullopt;
+        return {};
     }
 }
 

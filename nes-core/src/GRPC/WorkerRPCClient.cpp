@@ -487,11 +487,11 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
 
         //iterate of the vector of reconnects and get all planned reconnects
-        auto vec = std::make_shared<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>>();
+        auto vec = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
             auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
-            vec->push_back(NES::Spatial::Mobility::Experimental::ReconnectPoint {loc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectData.reconnectprediction().id(), reconnectData.reconnectprediction().time()}});
+            vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(Spatial::Mobility::Experimental::ReconnectPoint {loc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectData.reconnectprediction().id(), reconnectData.reconnectprediction().time()}}));
         }
 
         //construct a schedule from the received data

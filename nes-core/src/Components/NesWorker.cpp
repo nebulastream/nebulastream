@@ -16,6 +16,7 @@
 #include "Spatial/Mobility/LocationProviderCSV.hpp"
 #include "Spatial/Mobility/ReconnectConfigurator.hpp"
 #include "Spatial/Mobility/TrajectoryPredictor.hpp"
+#include <Util/Experimental/NodeType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
@@ -284,7 +285,7 @@ bool NesWorker::connect() {
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::Index::Experimental::Location fixedCoordinates = {};
-    if (locationProvider) {
+    if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
         fixedCoordinates = *(locationProvider->getLocation());
     }
 

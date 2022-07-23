@@ -35,15 +35,15 @@ message ReconnectSchedule {
   Coordinates pathStart = 2;
   Coordinates pathEnd = 3;
   Coordinates lastIndexUpdatePosition = 4;
-  repeated ReconnectPoint reconnectPoints = 5;
+  repeated SerializableReconnectPoint reconnectPoints = 5;
 }
 
-message ReconnectPrediction {
+message SerializableReconnectPrediction {
   uint64 id = 1;
   uint64 time = 2;
 }
 
-message ReconnectPoint {
+message SerializableReconnectPoint {
   Coordinates coord = 1;
-  ReconnectPrediction reconnectPrediction = 2;
+  SerializableReconnectPrediction reconnectPrediction = 2;
 }

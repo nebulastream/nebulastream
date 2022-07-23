@@ -340,7 +340,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
-    const ReconnectPrediction& reconnectPoint = request->reconnect();
+    const SerializableReconnectPrediction& reconnectPoint = request->reconnect();
     const Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
     bool success = locationService->updatePredictedReconnect(request->deviceid(), prediction);
     reply->set_success(success);

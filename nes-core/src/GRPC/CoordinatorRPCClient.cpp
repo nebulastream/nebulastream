@@ -613,7 +613,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     SendScheduledReconnectReply reply;
 
     request.set_deviceid(nodeId);
-    ReconnectPrediction* reconnectPoint = request.mutable_reconnect();
+    SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
     reconnectPoint->set_id(scheduledReconnect.expectedNewParentId);
     reconnectPoint->set_time(scheduledReconnect.expectedTime);
 

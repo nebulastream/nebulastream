@@ -194,7 +194,7 @@ message GetNodesInRangeReply{
 
 message SendScheduledReconnectRequest {
   uint64 deviceId = 1;
-  ReconnectPrediction reconnect = 2;
+  SerializableReconnectPrediction reconnect = 2;
 }
 
 message SendScheduledReconnectReply {

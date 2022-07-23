@@ -601,8 +601,10 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
     std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime = std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect = std::nullopt;
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect = std::nullopt;
+    //std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect = std::nullopt;
+    std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
+    //std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect = std::nullopt;
+    std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;
     std::vector<NES::Spatial::Mobility::Experimental::ReconnectPrediction> checkVectorForCoordinatorPrediction;
@@ -703,19 +705,19 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         //the path covered the waypoint, but the new schedule is not necessarily computed yet, therefore we need to keep querying for the prediction
                         EXPECT_TRUE(lastReconnectPositionAndTime.first);
                         EXPECT_TRUE(updatedLastReconnect.first);
-                        if(newPredictedReconnect && (lastReconnectPositionAndTime.first->isValid()
-                            && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first)) {
+                        if(newPredictedReconnect && ((lastReconnectPositionAndTime.first->isValid()
+                            && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first) || !lastReconnectPositionAndTime.first->isValid())) {
                             if ((/*we are still connected to first node*/ !oldPredictedReconnect
-                                 || /*we are reconnected to a new node*/ (newPredictedReconnect.value().predictedReconnectLocation != oldPredictedReconnect.value().predictedReconnectLocation &&
+                                 || /*we are reconnected to a new node*/ (newPredictedReconnect->predictedReconnectLocation != oldPredictedReconnect->predictedReconnectLocation &&
                                                                           //prevent omitting reconnect check
-                                                                          oldPredictedReconnect.value().reconnectPrediction.expectedNewParentId == updatedLastReconnect.second))) {
+                                                                          oldPredictedReconnect->reconnectPrediction.expectedNewParentId == updatedLastReconnect.second))) {
                                 NES_TRACE("path stabilized after reconnect")
-                                NES_TRACE("new predicted parent = " << newPredictedReconnect.value().reconnectPrediction.expectedNewParentId);
+                                NES_TRACE("new predicted parent = " << newPredictedReconnect->reconnectPrediction.expectedNewParentId);
                                 predictedReconnect = newPredictedReconnect;
-                                firstPrediction = predictedReconnect.value().reconnectPrediction.expectedTime;
+                                firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
                             }
-                            if (predictedReconnect && predictedReconnect.value().predictedReconnectLocation == newPredictedReconnect.value().predictedReconnectLocation
-                                && predictedReconnect.value().reconnectPrediction.expectedTime != newPredictedReconnect.value().reconnectPrediction.expectedTime) {
+                            if (predictedReconnect && predictedReconnect->predictedReconnectLocation == newPredictedReconnect->predictedReconnectLocation
+                                && predictedReconnect->reconnectPrediction.expectedTime != newPredictedReconnect->reconnectPrediction.expectedTime) {
                                 NES_DEBUG("updating ETA")
                                 predictedReconnect = newPredictedReconnect;
                             }
@@ -734,14 +736,14 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                 NES_DEBUG("worker reconnected")
                 if (predictedReconnect) {
                     auto predictedPoint =
-                        NES::Spatial::Util::S2Utilities::locationToS2Point(predictedReconnect.value().predictedReconnectLocation);
+                        NES::Spatial::Util::S2Utilities::locationToS2Point(predictedReconnect->predictedReconnectLocation);
                     auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*(updatedLastReconnect.first));
                     EXPECT_TRUE(S2::ApproxEquals(predictedPoint, actualPoint, allowedReconnectPositionPredictionError));
-                    EXPECT_NE(predictedReconnect.value().reconnectPrediction.expectedTime,  0);
+                    EXPECT_NE(predictedReconnect->reconnectPrediction.expectedTime,  0);
                     EXPECT_NE(get<1>(updatedLastReconnect), 0);
-                    NES_DEBUG("timediff " << predictedReconnect.value().reconnectPrediction.expectedTime - (long long) get<1>(updatedLastReconnect));
-                    NES_DEBUG("expected parent id " << predictedReconnect.value().reconnectPrediction.expectedNewParentId);
-                    EXPECT_LT(abs((long long) predictedReconnect.value().reconnectPrediction.expectedTime - (long long) get<1>(updatedLastReconnect)),
+                    NES_DEBUG("timediff " << predictedReconnect->reconnectPrediction.expectedTime - (long long) get<1>(updatedLastReconnect));
+                    NES_DEBUG("expected parent id " << predictedReconnect->reconnectPrediction.expectedNewParentId);
+                    EXPECT_LT(abs((long long) predictedReconnect->reconnectPrediction.expectedTime - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
                     EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
@@ -752,7 +754,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     bool predictedAtCoord = false;
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin(); prediction != checkVectorForCoordinatorPrediction.end(); ++prediction) {
                         NES_DEBUG("comparing prediction to node with id " << prediction->expectedNewParentId)
-                       predictedAtCoord = prediction->expectedNewParentId == predictedReconnect.value().reconnectPrediction.expectedNewParentId;
+                       predictedAtCoord = prediction->expectedNewParentId == predictedReconnect->reconnectPrediction.expectedNewParentId;
                        if (predictedAtCoord) {
                            checkVectorForCoordinatorPrediction.erase(checkVectorForCoordinatorPrediction.begin(), prediction);
                            break;
@@ -760,13 +762,12 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     }
                     if (!predictedAtCoord) {
                         auto currentPredictionAtCoordinator = crd->getTopology()->getLocationIndex()->getScheduledReconnect(wrk1->getWorkerId());
-                        EXPECT_EQ(predictedReconnect.value().reconnectPrediction.expectedNewParentId, currentPredictionAtCoordinator.value().expectedNewParentId);
+                        EXPECT_EQ(predictedReconnect->reconnectPrediction.expectedNewParentId, currentPredictionAtCoordinator.value().expectedNewParentId);
                     }
-                    predictedReconnect = std::nullopt;
+                    predictedReconnect.reset();
                     oldPredictedReconnect = predictedReconnect;
                 } else {
                     NES_DEBUG("no prediction!");
-                    reconnectCounter++;
                 }
                 lastReconnectPositionAndTime = updatedLastReconnect;
             }

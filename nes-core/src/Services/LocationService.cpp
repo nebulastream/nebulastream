@@ -47,12 +47,14 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
 
     auto reconnectArray = web::json::value::array();
     int i = 0;
-    if (schedule->getReconnectVector()) {
-        for (auto elem : *(schedule->getReconnectVector())) {
+    auto reconnectVectorPtr = schedule->getReconnectVector();
+    if (reconnectVectorPtr) {
+        auto reconnectVector = *reconnectVectorPtr;
+        for (auto elem : reconnectVector) {
             web::json::value elemJson;
-            elemJson["id"] = elem.reconnectPrediction.expectedNewParentId;
-            elemJson["reconnectPoint"] = convertLocationToJson(elem.predictedReconnectLocation);
-            elemJson["time"] = elem.reconnectPrediction.expectedTime;
+            elemJson["id"] = elem->reconnectPrediction.expectedNewParentId;
+            elemJson["reconnectPoint"] = convertLocationToJson(elem->predictedReconnectLocation);
+            elemJson["time"] = elem->reconnectPrediction.expectedTime;
             reconnectArray[i] = elemJson;
             i++;
         }
