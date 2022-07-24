@@ -388,7 +388,6 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("value")).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();

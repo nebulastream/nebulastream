@@ -80,6 +80,8 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
+        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -92,6 +94,8 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     SchemaPtr testSchemaMultipleFields;
     SchemaPtr testSchemaColumnLayout;
     Runtime::NodeEnginePtr nodeEngine;
+    SourceCatalogPtr sourceCatalog;
+    UdfCatalogPtr udfCatalog;
 };
 
 void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -402,7 +406,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("value") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
@@ -478,7 +482,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
@@ -558,7 +562,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter

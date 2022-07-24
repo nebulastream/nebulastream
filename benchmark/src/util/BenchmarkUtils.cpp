@@ -129,7 +129,7 @@ void BenchmarkUtils::runBenchmark(std::vector<Runtime::QueryStatistics*>& statis
                                   Runtime::NodeEnginePtr nodeEngine,
                                   Query query) {
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, Catalogs::UdfCatalog::create());
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);

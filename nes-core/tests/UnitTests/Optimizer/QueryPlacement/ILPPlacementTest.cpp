@@ -52,6 +52,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
+    UdfCatalogPtr udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
 
@@ -62,6 +63,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UdfCatalog::create();
 
         z3::config cfg;
         cfg.set("timeout", 50000);
@@ -243,7 +245,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -302,7 +304,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -365,7 +367,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,

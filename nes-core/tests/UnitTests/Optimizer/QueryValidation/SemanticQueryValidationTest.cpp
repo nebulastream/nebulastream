@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
@@ -32,6 +33,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
   public:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     std::shared_ptr<QueryParsingService> queryParsingService;
+    Catalogs::UdfCatalogPtr udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -43,6 +45,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     void TearDown() override { NES_INFO("Tear down SemanticQueryValidationTest class."); }
@@ -58,7 +61,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
-        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
+        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
         QueryPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
         semanticQueryValidation->validate(filterQuery->getQueryPlan());
@@ -177,7 +180,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("default_logical")
                      .project(Attribute("id").as("new_id"), Attribute("value"))
@@ -200,7 +203,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
 
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("default_logical")
                      .map(Attribute("value") = Attribute("value") + 2)
@@ -216,7 +219,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     NES_INFO("Invalid projection test");
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, nullptr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto subQuery = Query::from("default_logical");
     auto query = Query::from("default_logical")
