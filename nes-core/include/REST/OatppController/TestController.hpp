@@ -51,7 +51,7 @@ class TestController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/hello", root) {
         auto dto = ConnectivityResponse::createShared();
         dto->statusCode = 200;
-        dto->message = "Hello World!";
+        dto->success = true;
         return createDtoResponse(Status::CODE_200, dto);
     }
 

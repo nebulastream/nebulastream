@@ -20,7 +20,7 @@
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
-#include <REST/OatppController/TestController.hpp>
+#include <REST/OatppController/ConnectivityController.hpp>
 #include <REST/AppComponent.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -133,9 +133,9 @@ void RestServer::run() {
     /* Get router component */
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
-    /* Create testController and add all of its endpoints to router */
-    auto testController = std::make_shared<TestController>();
-    router->addController(testController);
+    /* Create ConnectivityController and add all of its endpoints to router */
+    auto connectivityController = std::make_shared<ConnectivityController>();
+    router->addController(connectivityController);
 
     /* Get connection handler component */
     OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);

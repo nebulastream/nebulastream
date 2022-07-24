@@ -41,7 +41,7 @@ class ConnectivityResponse : public oatpp::DTO {
     DTO_INIT(ConnectivityResponse, DTO /* Extends */)
 
     DTO_FIELD(Int32, statusCode);   // Status code field
-    DTO_FIELD(String, message);     // Message field
+    DTO_FIELD(Boolean , success);     // Message field
 
 };
 
