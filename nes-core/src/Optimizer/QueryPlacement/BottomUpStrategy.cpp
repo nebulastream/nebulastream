@@ -188,9 +188,11 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
         operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
         operatorNode->addProperty(PLACED, true);
         auto operatorCopy = operatorNode->copy();
+
+        //Build the subQueryPlan already placed on the physical node
         if (candidateQueryPlan->getRootOperators().empty()) {
             candidateQueryPlan->appendOperatorAsNewRoot(operatorCopy);
-        } else {
+        } else { //
             auto children = operatorNode->getChildren();
             for (const auto& child : children) {
                 auto rootOperators = candidateQueryPlan->getRootOperators();
