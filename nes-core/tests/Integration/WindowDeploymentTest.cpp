@@ -1288,11 +1288,9 @@ TEST_F(WindowDeploymentTest, testDistributedTumblingWindowQueryEventTimeWithMerg
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,68\n"
                              "2000,3000,2,112\n";
-
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
@@ -1318,6 +1316,103 @@ TEST_F(WindowDeploymentTest, testDistributedTumblingWindowQueryEventTimeWithMerg
     NES_INFO("WindowDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
+    remove(outputFilePath.c_str());
+    NES_INFO("WindowDeploymentTest: Test finished");
+}
+
+/**
+ * @brief test tumbling window with multiple aggregations
+ */
+TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+
+    //register logical source qnv
+    std::string ktmSchema =
+        R"(Schema::create()->addField(createField("Time",UINT64))->addField(createField("Dist",UINT64))->
+            addField(createField("ABS_Front_Wheel_Press",FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Press",FLOAT64))->
+            addField(createField("ABS_Front_Wheel_Speed",FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Speed",FLOAT64))->
+            addField(createField("V_GPS",FLOAT64))->
+            addField(createField("MMDD",FLOAT64))->
+            addField(createField("HHMM",FLOAT64))->
+            addField(createField("LAS_Ax1",FLOAT64))->
+            addField(createField("LAS_Ay1",FLOAT64))->
+            addField(createField("LAS_Az_Vertical_Acc",FLOAT64))->
+            addField(createField("ABS_Lean_Angle",FLOAT64))->
+            addField(createField("ABS_Pitch_Info",FLOAT64))->
+            addField(createField("ECU_Gear_Position",FLOAT64))->
+            addField(createField("ECU_Accel_Position",FLOAT64))->
+            addField(createField("ECU_Engine_Rpm",FLOAT64))->
+            addField(createField("ECU_Water_Temperature",FLOAT64))->
+            addField(createField("ECU_Oil_Temp_Sensor_Data",UINT64))->
+            addField(createField("ECU_Side_StanD",UINT64))->
+            addField(createField("Longitude",FLOAT64))->
+            addField(createField("Latitude",FLOAT64))->
+            addField(createField("Altitude",FLOAT64)))";
+
+    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("WindowDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    QueryCompilerConfiguration queryCompilerConfiguration;
+    queryCompilerConfiguration.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfig1->queryCompiler = queryCompilerConfiguration;
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    // create source
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm.csv");
+    csvSourceType1->setGatheringInterval(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(1);
+    auto physicalSource1 = PhysicalSource::create("ktm", "test_stream", csvSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart2 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=3
+    EXPECT_TRUE(retStart2);
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
+
+    std::string outputFilePath = "ktm-results.csv";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("WindowDeploymentTest: Submit query");
+    string query =
+        R"(Query::from("ktm").window(TumblingWindow::of(EventTime(Attribute("Time")), Seconds(1)))
+        .apply(Avg(Attribute("ABS_Lean_Angle"))->as(Attribute("avg_value_1")), Avg(Attribute("ABS_Pitch_Info"))->as(Attribute("avg_value_2")), Avg(Attribute("ABS_Front_Wheel_Speed"))->as(Attribute("avg_value_3")), Count()->as(Attribute("count_value")))
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
+    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
+                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
+                             "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("WindowDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("WindowDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    remove(outputFilePath.c_str());
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
