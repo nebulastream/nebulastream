@@ -45,15 +45,15 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          z3::ContextPtr z3Context)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
 
-bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
-    const QueryId queryId = queryPlan->getQueryId();
-    NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
-    NES_INFO("ILPStrategy: And query plan \n" << queryPlan->toString());
+bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
+                                            FaultToleranceType faultToleranceType,
+                                            LineageType lineageType,
+                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
     z3::optimize opt(*z3Context);
-
     std::map<std::string, OperatorNodePtr> operatorNodes;
     std::map<std::string, TopologyNodePtr> topologyNodes;
     std::map<std::string, z3::expr> placementVariables;
@@ -62,22 +62,75 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
 
     // 1. Construct the placementVariable, compute distance, utilization and mileages
-    for (const auto& sourceNode : sourceOperators) {
-        std::string sourceName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
-        //FIXME: #2485 Dwi: Can we extract this information from the operators?
-        //TopologyNodePtr sourceToplogyNode = sourceCatalog->getSourceNodesForLogicalSource(sourceName)[0];
-        //std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
-        //std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
-        //auto success = addConstraints(z3Context,
-        //                              opt,
-        //                              operatorPath,
-        //                              topologyPath,
-        //                              operatorNodes,
-        //                              topologyNodes,
-        //                              placementVariables,
-        //                              distances,
-        //                              utilizations,
-        //                              milages);
+    for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+
+        //Find all path between pinned upstream and downstream operators
+        std::vector<NodePtr> operatorPath;
+        operatorPath.push_back(pinnedUpStreamOperator);
+        while (!operatorPath.back()->getParents().empty()) {
+
+            //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
+            auto& operatorToProcess = operatorPath.back();
+            auto isPinnedDownStreamOperator =
+                std::find_if(pinnedDownStreamOperators.begin(),
+                             pinnedDownStreamOperators.end(),
+                             [operatorToProcess](const OperatorNodePtr& pinnedDownStreamOperator) {
+                                 return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<OperatorNode>()->getId();
+                             });
+
+            //Skip further processing if encountered pinned downstream operator
+            if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+                NES_DEBUG("ILPStrategy: Found pinned downstream operator. Skipping further downstream operators.");
+                break;
+            }
+
+            //Look for the next downstream operators and add them to the path.
+            auto downstreamOperators = operatorToProcess->getParents();
+
+            if(downstreamOperators.empty()){
+                NES_ERROR("ILPStrategy: Unable to find pinned downstream operator.");
+                return false;
+            }
+
+            uint16_t unpinnedDownStreamOperatorCount = 0;
+            for (auto& downstreamOperator : downstreamOperators) {
+
+                // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
+                //  multiple sinks or parents.
+                if (unpinnedDownStreamOperatorCount > 1) {
+                    NES_ERROR("ILPStrategy: Current implementation can not place plan with multiple downstream operators.");
+                    return false;
+                }
+
+                //Only include unpinned operators in the path
+                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
+                    operatorPath.push_back(downstreamOperator);
+                    unpinnedDownStreamOperatorCount++;
+                }
+            }
+        }
+
+        //Find path between pinned upstream and downstream topology node
+        auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto upstreamTopologyNode = topology->findNodeWithId(upstreamPinnedNodeId);
+
+        auto downstreamPinnedNodeId =
+            std::any_cast<uint64_t>(operatorPath.back()->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID));
+        auto downstreamTopologyNode = topology->findNodeWithId(downstreamPinnedNodeId);
+
+        std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
+
+        //Add constraints to Z3 solver
+        auto success = addConstraints(z3Context,
+                                      opt,
+                                      operatorPath,
+                                      topologyPath,
+                                      operatorNodes,
+                                      topologyNodes,
+                                      placementVariables,
+                                      distances,
+                                      utilizations,
+                                      milages);
         if (false /*!success*/) {
             NES_ERROR("ILPStrategy: an error occurred when adding path.");
         }
@@ -169,7 +222,7 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     std::vector<NodePtr> path;
     path.push_back(sourceNode);
     while (!path.back()->getParents().empty()) {
-        // FIXME: Assuming a tree structure, hence a node can only has a single parent (issue #2290)
+        // FIXME: Assuming a tree structure, hence a node can only have a single parent (issue #2290)
         path.push_back(path.back()->getParents()[0]);
     }
     return path;
@@ -215,7 +268,7 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
 bool ILPStrategy::addConstraints(z3::ContextPtr z3Context,
                                  z3::optimize& opt,
                                  std::vector<NodePtr>& operatorNodePath,
-                                 std::vector<NodePtr>& topologyNodePath,
+                                 std::vector<TopologyNodePtr>& topologyNodePath,
                                  std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
                                  std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
                                  std::map<std::string, z3::expr>& placementVariable,

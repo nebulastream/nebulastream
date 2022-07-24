@@ -45,8 +45,8 @@ class ILPStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
@@ -117,7 +117,7 @@ class ILPStrategy : public BasePlacementStrategy {
     bool addConstraints(z3::ContextPtr z3Context,
                         z3::optimize& opt,
                         std::vector<NodePtr>& operatorNodePath,
-                        std::vector<NodePtr>& topologyNodePath,
+                        std::vector<TopologyNodePtr>& topologyNodePath,
                         std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
                         std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
                         std::map<std::string, z3::expr>& placementVariable,
