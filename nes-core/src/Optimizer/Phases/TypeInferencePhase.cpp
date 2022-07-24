@@ -63,7 +63,9 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 std::string qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {
-                    field->setName(qualifierName + field->getName());
+                    if (!field->getName().starts_with(qualifierName)) {
+                        field->setName(qualifierName + field->getName());
+                    }
                 }
                 sourceDescriptor->setSchema(schema);
                 NES_DEBUG("TypeInferencePhase: update source descriptor for source " << logicalSourceName
