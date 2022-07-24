@@ -59,9 +59,14 @@ void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseCon
     //Set fully qualified name for the as Field
     auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
     auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
-    if (onFieldName != asFieldName) {
-        auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
+
+    auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    //If on and as field name are different then append the attribute name resolver from on field to the as field
+    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+    } else {
+        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

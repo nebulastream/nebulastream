@@ -13,6 +13,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
@@ -39,7 +40,19 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-void CountAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr) {
+void CountAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {
+
+    auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+
+    //If on and as field name are different then append the attribute name resolver from on field to the as field
+    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+    } else {
+        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
+    }
+    //
     // a count aggregation is always on an uint 64
     asField->setStamp(DataTypeFactory::createUInt64());
 }

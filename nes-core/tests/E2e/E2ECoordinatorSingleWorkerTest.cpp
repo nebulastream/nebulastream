@@ -421,9 +421,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    // 2885: issue for ktm$ktm$ktm$ktm in header
-    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$ktm$ktm$ktm$avg_value_1:(Float),ktm$ktm$ktm$ktm$avg_value_2:("
-                             "Float),ktm$ktm$ktm$ktm$avg_value_3:(Float),count_value:INTEGER\n"
+    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
+                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
                              "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
