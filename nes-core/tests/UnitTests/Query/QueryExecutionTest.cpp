@@ -366,7 +366,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                              .project(Attribute("id"), Attribute("one"), Attribute("value"))
                              .sink(testSinkDescriptor);
 
-            //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
             auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
             auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -444,7 +443,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -561,7 +560,6 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                      .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(4)))
                      .sink(testSinkDescriptor);
 
-    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -751,7 +749,6 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                      .equalsTo(Attribute("id2"))
                      .sink(testSinkDescriptor);
 
-    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -887,7 +884,6 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                               && ABS(1 - Attribute("id")) == ABS(Attribute("id") - 1))
                      .sink(testSinkDescriptor);
 
-    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -1505,7 +1501,6 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
-    //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter

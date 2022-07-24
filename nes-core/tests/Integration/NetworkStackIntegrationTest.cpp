@@ -79,6 +79,8 @@ static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 namespace Network {
 class NetworkStackIntegrationTest : public Testing::NESBaseTest {
   public:
+    UdfCatalogPtr udfCatalog;
+    SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
@@ -88,6 +90,8 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         dataPort1 = Testing::NESBaseTest::getAvailablePort();
         dataPort2 = Testing::NESBaseTest::getAvailablePort();
+        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     void TearDown() {
@@ -514,7 +518,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
         auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
 
-        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         queryPlan->setQueryId(i);
         queryPlan->setQuerySubPlanId(subPlanId++);
@@ -864,7 +868,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr, nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     queryPlan->setQueryId(0);
     queryPlan->setQuerySubPlanId(0);
