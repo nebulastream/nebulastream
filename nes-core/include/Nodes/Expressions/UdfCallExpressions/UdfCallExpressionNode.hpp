@@ -30,8 +30,9 @@ using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNo
  */
 class UdfCallExpressionNode : public ExpressionNode {
   public:
-    UdfCallExpressionNode();
     explicit UdfCallExpressionNode(UdfCallExpressionNode* other);
+    explicit UdfCallExpressionNode(const ConstantValueExpressionNodePtr& udfName,
+                          std::vector<ExpressionNodePtr> functionArguments);
     ~UdfCallExpressionNode() = default;
 
     /**
@@ -41,7 +42,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * @return a UdfCallExpressionNode
      */
     static ExpressionNodePtr create(const ConstantValueExpressionNodePtr& udfName,
-                                    std::vector<ExpressionNodePtr> functionArguments);
+                                   const std::vector<ExpressionNodePtr>& functionArguments);
     /**
      * @brief determine the stamp of the Udf call by checking the return type of the function
      * An error is thrown when no UDF descriptor is set.

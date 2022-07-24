@@ -23,16 +23,19 @@
 
 namespace NES {
 
-UdfCallExpressionNode::UdfCallExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
-
 UdfCallExpressionNode::UdfCallExpressionNode(UdfCallExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getUdfNameNode()->copy());
 }
 
+UdfCallExpressionNode::UdfCallExpressionNode(const ConstantValueExpressionNodePtr& udfName,
+                                             std::vector<ExpressionNodePtr> functionArguments)
+    : ExpressionNode(DataTypeFactory::createUndefined()) {
+        setChildren(udfName, std::move(functionArguments));
+}
+
 ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
-                                                std::vector<ExpressionNodePtr> functionArguments) {
-    auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>();
-    udfExpressionNode->setChildren(udfName, std::move(functionArguments));
+                                                const std::vector<ExpressionNodePtr>& functionArguments) {
+    auto udfExpressionNode = std::make_shared<UdfCallExpressionNode>(udfName, functionArguments);
     return udfExpressionNode;
 }
 
