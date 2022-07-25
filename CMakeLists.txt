@@ -386,6 +386,12 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_inter
 find_package(oatpp REQUIRED)
 set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
 
+# C++ REST SDK
+find_package(cpr REQUIRED)
+if (cpr_FOUND)
+    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
+endif ()
+
 # Eigen3 linear alg library
 find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
@@ -574,7 +580,7 @@ endif ()
 
 # Add tests with command
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES})
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")

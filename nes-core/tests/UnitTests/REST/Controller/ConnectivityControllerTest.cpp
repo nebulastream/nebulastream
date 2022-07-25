@@ -11,3 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
+
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <memory>
+
+namespace NES {
+class ConnectivityControllerTest : public Testing::NESBaseTest {
+  public:
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TopologyControllerTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup TopologyControllerTest test class.");
+    }
+
+    static void TearDownTestCase() { NES_INFO("Tear down TopologyControllerTest test class."); }
+
+    NesCoordinatorPtr createAndStartCoordinator() const {
+        NES_INFO("TestsForOatppEndpoints: Start coordinator");
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->serverTypeOatpp = true;
+        auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+        EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+        NES_INFO("TestsForOatppEndpoints: Coordinator started successfully");
+        return coordinator;
+    }
+};
+}//namespace NES
