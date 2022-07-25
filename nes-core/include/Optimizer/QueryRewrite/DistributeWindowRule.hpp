@@ -124,6 +124,7 @@ class DistributeWindowRule : public BaseRewriteRule {
     // The number of child nodes from which on we will introduce combiner
     uint64_t windowDistributionCombinerThreshold;
     TopologyPtr topology;
+    bool enableNemoPlacement;
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_

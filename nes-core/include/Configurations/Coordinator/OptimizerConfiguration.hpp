@@ -114,6 +114,15 @@ class OptimizerConfiguration : public BaseConfiguration {
         false,
         "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)"};
 
+    /**
+     * @brief Enable for distributed windows the NEMO placement where aggregation happens based on the params
+     * distributedWindowChildThreshold and distributedWindowCombinerThreshold.
+     */
+    BoolOption enableNemoPlacement = {
+        ENABLE_NEMO_PLACEMENT,
+        false,
+        "Enables for distributed window optimization the NEMO placement optimizer. (Default: false)"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryBatchSize,

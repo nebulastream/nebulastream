@@ -394,8 +394,8 @@ class TestHarness {
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
-    TestHarness& setupTopology() {
-
+    template<typename Functor>
+    TestHarness& setupTopology(Functor crdFunctor = [] (CoordinatorConfigurationPtr) {}) {
         if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
@@ -405,6 +405,8 @@ class TestHarness {
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
+        crdFunctor(coordinatorConfiguration);
+
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
         auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);
         //Add all logical sources

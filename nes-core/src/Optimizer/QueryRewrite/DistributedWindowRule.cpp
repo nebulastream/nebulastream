@@ -35,7 +35,8 @@ namespace NES::Optimizer {
 DistributeWindowRule::DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology)
     : performDistributedWindowOptimization(configuration.performDistributedWindowOptimization),
       windowDistributionChildrenThreshold(configuration.distributedWindowChildThreshold),
-      windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold), topology(topology) {
+      windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold), topology(topology),
+      enableNemoPlacement(configuration.enableNemoPlacement) {
     if (performDistributedWindowOptimization) {
         NES_DEBUG("Create DistributeWindowRule with distributedWindowChildThreshold: " << windowDistributionChildrenThreshold
                                                                                        << " distributedWindowCombinerThreshold: "
@@ -66,8 +67,11 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
 
             if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold) {
-                createDistributedNemoWindowOperator(windowOp, queryPlan);
-                // createDistributedWindowOperator(windowOp, queryPlan); // should be removed in the future
+                if (enableNemoPlacement) {
+                    createDistributedNemoWindowOperator(windowOp, queryPlan);
+                } else {
+                    createDistributedWindowOperator(windowOp, queryPlan);// should be removed in the future
+                }
             } else {
                 createCentralWindowOperator(windowOp);
                 NES_DEBUG("DistributeWindowRule::apply: central op \n" << queryPlan->toString());
