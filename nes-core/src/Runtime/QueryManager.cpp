@@ -324,29 +324,4 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
-bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId sourceOperatorId) {
-    std::unique_lock lock(queryMutex);
-    auto qeps = sourceToQEPMapping.find(sourceOperatorId);
-    if (qeps != sourceToQEPMapping.end()) {
-        //post reconfiguration message to the executable query plans with an epoch barrier to trim buffer storages
-        for (auto qep : qeps->second) {
-            auto sinks = qep->getSinks();
-            for (auto sink : sinks) {
-                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
-                    auto newReconf = ReconfigurationMessage(queryId,
-                                                            qep->getQuerySubPlanId(),
-                                                            Runtime::ReconfigurationType::PropagateEpoch,
-                                                            sink,
-                                                            std::make_any<uint64_t>(epochBarrier));
-                    addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
-                }
-            }
-            return true;
-        }
-
-    } else {
-        NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no query execution plans were found");
-    }
-    return false;
-}
 }// namespace NES::Runtime

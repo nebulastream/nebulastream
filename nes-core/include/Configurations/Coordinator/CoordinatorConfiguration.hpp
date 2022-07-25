@@ -106,7 +106,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                                          "Number buffers in source local buffer pool."};
 
     /**
-      * @brief Number of buffers per epoch
+      * @brief Indicates how many buffers are stored in one epoch.
+      * This value controls how often the buffer storages trim tuple buffers.
       */
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 

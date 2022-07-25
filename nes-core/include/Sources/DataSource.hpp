@@ -244,7 +244,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @param queryId currect query id
      * @return success is the message was sent
      */
-    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const;
+    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId);
 
     [[nodiscard]] virtual bool fail();
 

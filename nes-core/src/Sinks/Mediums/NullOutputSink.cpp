@@ -33,16 +33,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  querySubPlanId,
                  faultToleranceType,
                  numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
-}
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

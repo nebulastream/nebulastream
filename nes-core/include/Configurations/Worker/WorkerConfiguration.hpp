@@ -222,7 +222,7 @@ class WorkerConfiguration : public BaseConfiguration {
 
     /**
      * @brief Number of buffers per epoch
-     * Set trimming frequency fro upstream backup
+     * Set trimming frequency for upstream backup
      */
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 

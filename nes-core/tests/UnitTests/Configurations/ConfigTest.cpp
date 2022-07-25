@@ -67,6 +67,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerEpoch.getValue(),
+              coordinatorConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
@@ -146,6 +148,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_NE(workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
               workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
     EXPECT_TRUE(workerConfigPtr->physicalSources.empty());
 }

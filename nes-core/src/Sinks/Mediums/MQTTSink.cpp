@@ -71,15 +71,6 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
 
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
     NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
-
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
 }
 
 MQTTSink::~MQTTSink() NES_NOEXCEPT(false) {

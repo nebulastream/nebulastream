@@ -27,29 +27,30 @@ struct BufferSorter : public std::greater<TupleBuffer> {
     bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
 };
 
-using TupleBufferPriorityQueue = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>;
-
+/**
+ * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
+ */
 class BufferStorage : public AbstractBufferStorage {
 
   public:
     /**
      * @brief Constructor, which creates a buffer storage
      */
-    BufferStorage(Network::NesPartition nesPartitionId);
+    BufferStorage() = default;
 
     /**
      * @brief Inserts a tuple buffer for a given nes partition
      * @param nesPartition destination
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer bufferPtr) override;
+    void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) override;
 
     /**
      * @brief Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
      * @param NesPartition destination
      * @param timestamp max timestamp of current epoch
      */
-    bool trimBuffer(Network::NesPartition nesPartition, uint64_t timestamp) override;
+    void trimBuffer(uint64_t timestamp) override;
 
     /**
      * @brief Return current storage size
@@ -58,22 +59,14 @@ class BufferStorage : public AbstractBufferStorage {
     size_t getStorageSize() const override;
 
     /**
-     * @brief Return the size of queue with a given  nes partition
-     * @param nesPartitionId destination
-     * @return Given queue size
-     */
-    size_t getQueueSize(Network::NesPartition nesPartition) const;
-
-    /**
      * @brief Return top element of the queue
      * @param nesPartition destination
      * @return buffer storage unit
      */
-    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(Network::NesPartition nesPartition) const;
+    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
 
   private:
-    std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>> storage;
-    mutable std::mutex mutex;
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
 };
 
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
