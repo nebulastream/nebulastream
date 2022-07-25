@@ -157,7 +157,6 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
 
-get_directory_property(MYDEFS COMPILE_DEFINITIONS)
 message( STATUS "Compile defs contain: " ${MYDEFS} )
 
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.

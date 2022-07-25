@@ -162,8 +162,6 @@ class RestEngine {
     Experimental::MaintenanceControllerPtr maintenanceController;
     LocationControllerPtr locationController;
 };
-
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
-
 #endif// NES_INCLUDE_REST_RESTENGINE_HPP_

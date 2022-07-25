@@ -63,16 +63,16 @@ bool RestServer::start(bool useOatpp){
 }
 
 bool RestServer::startWithOatpp() {
-    NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
+    NES_INFO("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     try {
         oatpp::base::Environment::init();
-        /* Run App */
-        NES_DEBUG("start RestServer with OATPP");
+        // Run Server
+        NES_INFO("start RestServer with OATPP");
+        // this call is blocking
         run();
-        /* Destroy oatpp Environment */
+        // Destroy oatpp Environment
         oatpp::base::Environment::destroy();
-
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
         return false;
@@ -101,7 +101,6 @@ bool RestServer::startWithRestSDK(){
         restEngine.reset();
         shutdownPromise.set_value(true);
         NES_DEBUG("RestServer: after waitForUserInterrupt");
-
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
         shutdownPromise.set_exception(std::make_exception_ptr(e));
@@ -145,9 +144,6 @@ void RestServer::run() {
 
     /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
     oatpp::network::Server server(connectionProvider, connectionHandler);
-
-    /* Priny info about server port */
-    OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
     /* Run server */
     server.run();
