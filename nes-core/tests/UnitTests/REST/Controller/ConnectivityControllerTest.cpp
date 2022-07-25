@@ -13,10 +13,11 @@
 */
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-
+#include <cpr/cpr.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <memory>
+#include <REST/ServerTypes.hpp>
 
 namespace NES {
 class ConnectivityControllerTest : public Testing::NESBaseTest {
@@ -33,11 +34,20 @@ class ConnectivityControllerTest : public Testing::NESBaseTest {
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->serverTypeOatpp = true;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
         NES_INFO("TestsForOatppEndpoints: Coordinator started successfully");
         return coordinator;
     }
 };
+
+TEST_F(ConnectivityControllerTest, testGetRequest) {
+    auto coordinator = createAndStartCoordinator();
+
+    cpr::Response r = cpr::Get(cpr::Url{"http://localhost/" + std::to_string(*restPort) + "check"});
+    NES_DEBUG(r.status_code);
+    NES_DEBUG(r.text);
+}
+
 }//namespace NES
