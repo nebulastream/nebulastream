@@ -30,12 +30,9 @@
 #include <immintrin.h>
 #include <random>
 #include <sys/mman.h>
+#include <tuple>
 //#include <tsl/robin_map.h>
 #include <xmmintrin.h>
-
-#ifndef min
-#define min(A, B) ((A) < (B) ? (A) : (B))
-#endif
 
 namespace NexmarkCommon {
 static constexpr long PERSON_EVENT_RATIO = 1;
@@ -177,7 +174,7 @@ int memcpy_uncached_store_avx(void* dest, const void* src, size_t n_bytes) {
 
     // align dest to 256-bits
     if (d_int & 0x1f) {
-        size_t nh = min(0x20 - (d_int & 0x1f), n);
+        size_t nh = std::min(0x20 - (d_int & 0x1f), n);
         memcpy(d, s, nh);
         d += nh;
         d_int += nh;
@@ -401,12 +398,13 @@ class alignas(64) FixedPage {
     ~FixedPage() = default;
 
     bool append(const uint64_t hash, const T* element) {
-        if constexpr (sizeof(T) >= 64) {
-            //            detail::memcpy_uncached_store_avx(&data[pos++], element, sizeof(T));
-        } else {
-            data[pos++] = *element;
-            bf.add(hash);
-        }
+        //        if constexpr (sizeof(T) >= 64) {
+        //            detail::memcpy_uncached_store_avx(&data[pos++], element, sizeof(T));
+        //        } else {
+        //            data[pos++] = *element;
+        //        }
+        data[pos++] = *element;
+        bf.add(hash);
         return pos < MAX_ITEM;
     }
 
@@ -840,7 +838,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
         size_t dataSegmentSize = bufferSize * numOfBuffers;
         NES_INFO("Creating BenchmarkSource #" << i);
         auto* data = detail::allocHugePages<uint8_t>(dataSegmentSize);// new uint8_t[dataSegmentSize];
-        writer(data, dataSegmentSize, bufferSize, reinterpret_cast<uintptr_t>(data));
+        writer(data, dataSegmentSize, bufferSize, i * 100'000'000);
         std::shared_ptr<uint8_t> ptr(data, [](uint8_t* ptr) {
             //delete[] ptr;
             std::free(ptr);
@@ -858,7 +856,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
                                                         0,
                                                         64ul,
                                                         GatheringMode::INGESTION_RATE_MODE,
-                                                        SourceMode::COPY_BUFFER,
+                                                        SourceMode::WRAP_BUFFER,
                                                         i,
                                                         0ul,
                                                         pipelines);
@@ -925,7 +923,7 @@ void nexmarkAuctionGenerator(uint8_t* data, size_t length, size_t bufferSize, ui
             matchingPerson = (personId / NexmarkCommon::HOT_SELLER_RATIO) * NexmarkCommon::HOT_SELLER_RATIO;
         } else {
             long personId = minAuctionId + epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset + 1;
-            long activePersons = min(personId, 20000L);
+            long activePersons = std::min(personId, 20000L);
             long n = rand() % (activePersons + 100);
             matchingPerson = personId + activePersons - n;
         }
@@ -985,195 +983,196 @@ class DummyQueryListener : public AbstractQueryStatusListener {
 };
 
 }// namespace NES
-int main(int argc, char** argv) {
+int main(int, char**) {
     using namespace NES;
     using std::string;
-    WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
-
-    std::map<string, string> commandLineParams;
-    for (int i = 1; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
-    auto workerConfigPath = commandLineParams.find("--configPath");
-    //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
-    if (workerConfigPath != commandLineParams.end()) {
-        workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
-    }
-
-    //if command line params are provided that do not contain a path to a yaml file for worker config,
-    //command line param physicalSources are used to overwrite default physicalSources
-    if (argc >= 1 && !commandLineParams.contains("--configPath")) {
-        workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
-    }
-
-    NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
-
-    NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-
     NES::Logger::setupLogging("LazyJoin.log", NES::LogLevel::LOG_INFO);
 
-    // fake schemas :: just to make the bench source happy :: make sure the schema sizes match the sizes of the two struct above
-    auto lhsStreamSchema = Schema::create()// 64 + 8 + 8 + 8
-                               ->addField("id", UINT64)
-                               ->addField("itemName", UINT64)
-                               ->addField("description", UINT64)
-                               ->addField("initialBit", UINT64)
-                               ->addField("reserve", UINT64)
-                               ->addField("dateTime", UINT64)
-                               ->addField("seller", UINT64)
-                               ->addField("expires", UINT64)
-                               ->addField("sellera", UINT64)
-                               ->addField("expireas", UINT64)
-                               ->addField("asdexpireas", UINT64)
-                               ->addField("category", UINT64);
+    std::vector<std::tuple<int, double, double>> measurements;
 
-    auto rhsStreamSchema = Schema::create()// 64 + 8 + 8
-                               ->addField("id", UINT64)
-                               ->addField("itemName", UINT64)
-                               ->addField("description", UINT64)
-                               ->addField("initialBit", UINT64)
-                               ->addField("reserve", UINT64)
-                               ->addField("dateTime", UINT64)
-                               ->addField("seller", UINT64)
-                               ->addField("expires", UINT64)
-                               ->addField("expiresa", UINT64)
-                               ->addField("category", UINT64);
+    for (auto threadCount = 2; threadCount <= 16; threadCount *= 2) {
 
-    NES_ASSERT2_FMT(lhsStreamSchema->getSchemaSizeInBytes() == sizeof(AuctionStream),
-                    "invalid schema size " << lhsStreamSchema->getSchemaSizeInBytes());
-    NES_ASSERT2_FMT(rhsStreamSchema->getSchemaSizeInBytes() == sizeof(PersonStream),
-                    "invalid schema size " << rhsStreamSchema->getSchemaSizeInBytes());
+        WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
+        workerConfiguration->numWorkerThreads = threadCount;
+        workerConfiguration->bufferSizeInBytes = 1024 * 1024;
+        workerConfiguration->numberOfBuffersInGlobalBufferManager = 8 * 1024;
+        workerConfiguration->numberOfBuffersInSourceLocalBufferPool = 1024;
 
-    std::vector<PhysicalSourcePtr> physicalSources;
+        NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
-    auto leftStreamSize = 6 * 128 * 1024 * 1024;
-    auto rightStreamSize = 128 * 1024 * 1024;
+        NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
 
-    auto leftStreamSizeCfg = commandLineParams.find("--leftStreamSize");
-    if (leftStreamSizeCfg != commandLineParams.end()) {
-        leftStreamSize = std::stol(leftStreamSizeCfg->second);
-    }
+        // fake schemas :: just to make the bench source happy :: make sure the schema sizes match the sizes of the two struct above
+        auto lhsStreamSchema = Schema::create()// 64 + 8 + 8 + 8
+                                   ->addField("id", UINT64)
+                                   ->addField("itemName", UINT64)
+                                   ->addField("description", UINT64)
+                                   ->addField("initialBit", UINT64)
+                                   ->addField("reserve", UINT64)
+                                   ->addField("dateTime", UINT64)
+                                   ->addField("seller", UINT64)
+                                   ->addField("expires", UINT64)
+                                   ->addField("sellera", UINT64)
+                                   ->addField("expireas", UINT64)
+                                   ->addField("asdexpireas", UINT64)
+                                   ->addField("category", UINT64);
 
-    auto rightStreamSizeCfg = commandLineParams.find("--rightStreamSize");
-    if (rightStreamSizeCfg != commandLineParams.end()) {
-        rightStreamSize = std::stol(rightStreamSizeCfg->second);
-    }
+        auto rhsStreamSchema = Schema::create()// 64 + 8 + 8
+                                   ->addField("id", UINT64)
+                                   ->addField("itemName", UINT64)
+                                   ->addField("description", UINT64)
+                                   ->addField("initialBit", UINT64)
+                                   ->addField("reserve", UINT64)
+                                   ->addField("dateTime", UINT64)
+                                   ->addField("seller", UINT64)
+                                   ->addField("expires", UINT64)
+                                   ->addField("expiresa", UINT64)
+                                   ->addField("category", UINT64);
 
-    auto fakeWorker = std::make_shared<DummyQueryListener>();
-    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(fakeWorker).build();
-    Exceptions::installGlobalErrorListener(engine);
+        NES_ASSERT2_FMT(lhsStreamSchema->getSchemaSizeInBytes() == sizeof(AuctionStream),
+                        "invalid schema size " << lhsStreamSchema->getSchemaSizeInBytes());
+        NES_ASSERT2_FMT(rhsStreamSchema->getSchemaSizeInBytes() == sizeof(PersonStream),
+                        "invalid schema size " << rhsStreamSchema->getSchemaSizeInBytes());
 
-    auto sink = createNullOutputSink(0, 0, engine, 1);
+        std::vector<PhysicalSourcePtr> physicalSources;
 
-    auto numSourcesLeft = 1;
-    auto numSourcesRight = 1;
+        auto leftStreamSize = 1024 * 1024 * 1024;
+        auto rightStreamSize = 128 * 1024 * 1024;
 
-    auto numSourcesLeftCfg = commandLineParams.find("--numSourcesLeft");
-    if (numSourcesLeftCfg != commandLineParams.end()) {
-        numSourcesLeft = std::stol(numSourcesLeftCfg->second);
-    }
+        //    auto leftStreamSizeCfg = commandLineParams.find("--leftStreamSize");
+        //    if (leftStreamSizeCfg != commandLineParams.end()) {
+        //        leftStreamSize = std::stol(leftStreamSizeCfg->second);
+        //    }
+        //
+        //    auto rightStreamSizeCfg = commandLineParams.find("--rightStreamSize");
+        //    if (rightStreamSizeCfg != commandLineParams.end()) {
+        //        rightStreamSize = std::stol(rightStreamSizeCfg->second);
+        //    }
 
-    auto numSourcesRightCfg = commandLineParams.find("--numSourcesRight");
-    if (numSourcesRightCfg != commandLineParams.end()) {
-        numSourcesRight = std::stol(numSourcesRightCfg->second);
-    }
+        auto fakeWorker = std::make_shared<DummyQueryListener>();
+        auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(fakeWorker).build();
+        Exceptions::installGlobalErrorListener(engine);
 
-    JoinSharedState<AuctionStream, PersonStream> joinSharedState;
-    joinSharedState.control = numSourcesLeft + numSourcesRight;
+        auto sink = createNullOutputSink(0, 0, engine, 1);
 
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+        auto numSourcesLeft = std::min(8, threadCount);
+        auto numSourcesRight = std::min(8, threadCount);
 
-    //    auto joinStateLeft = std::make_shared<JoinState>(engine->getHardwareManager(), 1024, 1024 * 1024 * 1024);
-    //    auto joinStateRight = std::make_shared<JoinState>(engine->getHardwareManager(), 1024, 1024 * 1024 * 1024);
+        //    auto numSourcesLeftCfg = commandLineParams.find("--numSourcesLeft");
+        //    if (numSourcesLeftCfg != commandLineParams.end()) {
+        //        numSourcesLeft = std::stol(numSourcesLeftCfg->second);
+        //    }
+        //
+        //    auto numSourcesRightCfg = commandLineParams.find("--numSourcesRight");
+        //    if (numSourcesRightCfg != commandLineParams.end()) {
+        //        numSourcesRight = std::stol(numSourcesRightCfg->second);
+        //    }
 
-    auto executionContextLeft = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
-        0,
-        engine->getQueryManager(),
-        [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
-            sink->writeData(buffer, wctx);
-        },
-        [](Runtime::TupleBuffer&) {
-        },
-        operatorHandlers);
+        JoinSharedState<AuctionStream, PersonStream> joinSharedState;
+        joinSharedState.control = numSourcesLeft + numSourcesRight;
 
-    auto executionContextRight = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
-        0,
-        engine->getQueryManager(),
-        [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
-            sink->writeData(buffer, wctx);
-        },
-        [](Runtime::TupleBuffer&) {
-        },
-        operatorHandlers);
+        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 
-    auto executableTrigger = std::make_shared<JoinTriggerPipeline<AuctionStream, PersonStream>>(joinSharedState);
-    auto pipelineTrigger =
-        Runtime::Execution::ExecutablePipeline::create(2, 0, 0, executionContextRight, executableTrigger, 2, {sink});
+        //    auto joinStateLeft = std::make_shared<JoinState>(engine->getHardwareManager(), 1024, 1024 * 1024 * 1024);
+        //    auto joinStateRight = std::make_shared<JoinState>(engine->getHardwareManager(), 1024, 1024 * 1024 * 1024);
 
-    auto executableLeft =
-        std::make_shared<LeftJoinPipelineStage>(joinSharedState.control, joinSharedState.ghtLeft, pipelineTrigger);
-    auto executableRight =
-        std::make_shared<RightJoinPipelineStage>(joinSharedState.control, joinSharedState.ghtRight, pipelineTrigger);
+        auto executionContextLeft = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+            0,
+            engine->getQueryManager(),
+            [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
+                sink->writeData(buffer, wctx);
+            },
+            [](Runtime::TupleBuffer&) {
+            },
+            operatorHandlers);
 
-    auto pipelineLeft = Runtime::Execution::ExecutablePipeline::create(0,
-                                                                       0,
-                                                                       0,
-                                                                       executionContextLeft,
-                                                                       executableLeft,
-                                                                       numSourcesLeft,
-                                                                       {pipelineTrigger});
-    auto pipelineRight = Runtime::Execution::ExecutablePipeline::create(1,
-                                                                        0,
-                                                                        0,
-                                                                        executionContextRight,
-                                                                        executableRight,
-                                                                        numSourcesRight,
-                                                                        {pipelineTrigger});
+        auto executionContextRight = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+            0,
+            engine->getQueryManager(),
+            [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
+                sink->writeData(buffer, wctx);
+            },
+            [](Runtime::TupleBuffer&) {
+            },
+            operatorHandlers);
 
-    std::vector<DataSourcePtr> dataProducers;
+        auto executableTrigger = std::make_shared<JoinTriggerPipeline<AuctionStream, PersonStream>>(joinSharedState);
+        auto pipelineTrigger =
+            Runtime::Execution::ExecutablePipeline::create(2, 0, 0, executionContextRight, executableTrigger, 2, {sink});
 
-    createBenchmarkSources(dataProducers,
-                           engine,
-                           lhsStreamSchema,
-                           leftStreamSize,
-                           numSourcesLeft,
-                           1,
-                           pipelineLeft,
-                           nexmarkAuctionGenerator);
+        auto executableLeft =
+            std::make_shared<LeftJoinPipelineStage>(joinSharedState.control, joinSharedState.ghtLeft, pipelineTrigger);
+        auto executableRight =
+            std::make_shared<RightJoinPipelineStage>(joinSharedState.control, joinSharedState.ghtRight, pipelineTrigger);
 
-    createBenchmarkSources(dataProducers,
-                           engine,
-                           rhsStreamSchema,
-                           rightStreamSize,
-                           numSourcesRight,
-                           1,
-                           pipelineRight,
-                           nexmarkPersonGenerator);
+        auto pipelineLeft = Runtime::Execution::ExecutablePipeline::create(0,
+                                                                           0,
+                                                                           0,
+                                                                           executionContextLeft,
+                                                                           executableLeft,
+                                                                           numSourcesLeft,
+                                                                           {pipelineTrigger});
+        auto pipelineRight = Runtime::Execution::ExecutablePipeline::create(1,
+                                                                            0,
+                                                                            0,
+                                                                            executionContextRight,
+                                                                            executableRight,
+                                                                            numSourcesRight,
+                                                                            {pipelineTrigger});
 
-    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(0,
-                                                                         0,
-                                                                         dataProducers,
-                                                                         {sink},
-                                                                         {pipelineLeft, pipelineRight, pipelineTrigger},
-                                                                         engine->getQueryManager(),
-                                                                         engine->getBufferManager());
+        std::vector<DataSourcePtr> dataProducers;
 
-    NES_ASSERT(engine->registerQueryInNodeEngine(executionPlan), "Cannot register query");
+        createBenchmarkSources(dataProducers,
+                               engine,
+                               lhsStreamSchema,
+                               leftStreamSize,
+                               numSourcesLeft,
+                               1,
+                               pipelineLeft,
+                               nexmarkAuctionGenerator);
 
-    auto startTs = std::chrono::high_resolution_clock::now();
+        createBenchmarkSources(dataProducers,
+                               engine,
+                               rhsStreamSchema,
+                               rightStreamSize,
+                               numSourcesRight,
+                               1,
+                               pipelineRight,
+                               nexmarkPersonGenerator);
 
-    NES_ASSERT(engine->startQuery(executionPlan->getQueryId()), "Cannot start query");
+        auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(0,
+                                                                             0,
+                                                                             dataProducers,
+                                                                             {sink},
+                                                                             {pipelineLeft, pipelineRight, pipelineTrigger},
+                                                                             engine->getQueryManager(),
+                                                                             engine->getBufferManager());
 
-    auto processedTuplesSoFar = 0ul;
-    double throughputMTuples = 0ul;
-    double throughputMBytes = 0ul;
-    auto iterations = 0;
+        NES_ASSERT(engine->registerQueryInNodeEngine(executionPlan), "Cannot register query");
 
-    auto statistics = engine->getQueryStatistics(executionPlan->getQueryId());
-    while (engine->getQueryStatus(executionPlan->getQueryId()) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        auto startTs = std::chrono::high_resolution_clock::now();
+
+        NES_ASSERT(engine->startQuery(executionPlan->getQueryId()), "Cannot start query");
+
+        auto processedTuplesSoFar = 0ul;
+        double throughputMTuples = 0ul;
+        double throughputMBytes = 0ul;
+        auto iterations = 0;
+
+        auto statistics = engine->getQueryStatistics(executionPlan->getQueryId());
+        while (engine->getQueryStatus(executionPlan->getQueryId()) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+            double elapsedNs = (std::chrono::high_resolution_clock::now() - startTs).count();
+            double elapsedSec = elapsedNs / 1'000'000'000.0;
+            double processedTuplesStep = statistics[0]->getProcessedTuple() - processedTuplesSoFar;
+            double throughputMTuplesStep = (processedTuplesStep / 1'000'000.0) / elapsedSec;
+            double throughputMBytesStep = (sizeof(AuctionStream) * processedTuplesStep / elapsedSec) / (1024.0 * 1024.0);
+            throughputMTuples += throughputMTuplesStep;
+            throughputMBytes += throughputMBytesStep;
+            processedTuplesSoFar = statistics[0]->getProcessedTuple();
+            ++iterations;
+            sleep(1);
+        }
+        // last step
         double elapsedNs = (std::chrono::high_resolution_clock::now() - startTs).count();
         double elapsedSec = elapsedNs / 1'000'000'000.0;
         double processedTuplesStep = statistics[0]->getProcessedTuple() - processedTuplesSoFar;
@@ -1181,39 +1180,34 @@ int main(int argc, char** argv) {
         double throughputMBytesStep = (sizeof(AuctionStream) * processedTuplesStep / elapsedSec) / (1024.0 * 1024.0);
         throughputMTuples += throughputMTuplesStep;
         throughputMBytes += throughputMBytesStep;
-        processedTuplesSoFar = statistics[0]->getProcessedTuple();
-        ++iterations;
-        sleep(1);
+
+        // do the math
+        throughputMTuples /= iterations;
+        throughputMBytes /= iterations;
+
+        NES_INFO("Processed: " << throughputMTuples << " MTuple/sec :: " << throughputMBytes << " MB/sec");
+
+        NES_ASSERT(engine->undeployQuery(executionPlan->getQueryId()), "Cannot undeploy query");
+        NES_ASSERT(engine->stop(), "Cannot stop query");
+
+        measurements.emplace_back(std::make_tuple(threadCount, throughputMTuples, throughputMBytes));
+
+        //    auto query = Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))));
+        //
+        //    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+        //                                  .addLogicalSource("window1", windowSchema)
+        //                                  .addLogicalSource("window2", window2Schema)
+        //                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+        //                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+        //                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+        //                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+        //                                  .validate()
+        //                                  .setupTopology();
     }
-    // last step
-    double elapsedNs = (std::chrono::high_resolution_clock::now() - startTs).count();
-    double elapsedSec = elapsedNs / 1'000'000'000.0;
-    double processedTuplesStep = statistics[0]->getProcessedTuple() - processedTuplesSoFar;
-    double throughputMTuplesStep = (processedTuplesStep / 1'000'000.0) / elapsedSec;
-    double throughputMBytesStep = (sizeof(AuctionStream) * processedTuplesStep / elapsedSec) / (1024.0 * 1024.0);
-    throughputMTuples += throughputMTuplesStep;
-    throughputMBytes += throughputMBytesStep;
 
-    // do the math
-    throughputMTuples /= iterations;
-    throughputMBytes /= iterations;
-
-    NES_INFO("Processed: " << throughputMTuples << " MTuple/sec :: " << throughputMBytes << " MB/sec");
-
-    NES_ASSERT(engine->undeployQuery(executionPlan->getQueryId()), "Cannot undeploy query");
-    NES_ASSERT(engine->stop(), "Cannot stop query");
-
-    //    auto query = Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))));
-    //
-    //    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
-    //                                  .addLogicalSource("window1", windowSchema)
-    //                                  .addLogicalSource("window2", window2Schema)
-    //                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-    //                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-    //                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
-    //                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
-    //                                  .validate()
-    //                                  .setupTopology();
-
+    for (auto [threadCount, throughputMTuples, throughputMBytes] : measurements) {
+        NES_INFO("Processed using " << threadCount << " threads: " << throughputMTuples << " MTuple/sec :: " << throughputMBytes
+                                    << " MB/sec");
+    }
     return 0;
 }
