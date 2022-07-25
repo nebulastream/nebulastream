@@ -236,4 +236,91 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
     ASSERT_EQ(content, expectedContent);
 }
 
+TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsSparseTopology) {
+    uint64_t childThreshold = 0;
+    uint64_t combinerThreshold = 0;
+    uint64_t expectedNoBuffers = 2;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 4, 2, 1, childThreshold, combinerThreshold, expectedNoBuffers);
+
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                             "0,10000,1,204\n"
+                             "10000,20000,1,580\n"
+                             "0,10000,4,4\n"
+                             "0,10000,11,20\n"
+                             "0,10000,12,4\n"
+                             "0,10000,16,8\n";
+
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    ASSERT_EQ(content, expectedContent);
+}
+
+TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsDenseTopology) {
+    uint64_t childThreshold = 0;
+    uint64_t combinerThreshold = 0;
+    uint64_t expectedNoBuffers = 9;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 4, 3, 3, childThreshold, combinerThreshold, expectedNoBuffers);
+
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n"
+                             "0,10000,1,153\n"
+                             "10000,20000,1,435\n"
+                             "0,10000,4,3\n"
+                             "0,10000,11,15\n"
+                             "0,10000,12,3\n"
+                             "0,10000,16,6\n";
+
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    ASSERT_EQ(content.size(), expectedContent.size());
+    ASSERT_EQ(content, expectedContent);
+}
+
 }// namespace NES
