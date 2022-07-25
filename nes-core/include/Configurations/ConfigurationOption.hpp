@@ -185,6 +185,7 @@ const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidati
 const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedWindowOptimization";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
+const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
