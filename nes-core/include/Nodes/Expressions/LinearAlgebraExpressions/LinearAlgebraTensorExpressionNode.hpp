@@ -18,6 +18,10 @@
 #include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraExpressionNode.hpp>
 #include <Nodes/Expressions/MultiExpressionNode.hpp>
 namespace NES {
+
+class TensorType;
+using TensorPtr = std::shared_ptr<TensorType>;
+
 /**
  * @brief This node represents an arithmetical expression with multiple children
  */
@@ -34,23 +38,11 @@ class LinearAlgebraTensorExpressionNode : public MultiExpressionNode, public Lin
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
-    const std::vector<size_t>& getShape() const;
-    void setShape(const std::vector<size_t>& shape);
-    TensorMemoryFormat getTensorMemoryFormat() const;
-    void setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat);
-
   protected:
     explicit LinearAlgebraTensorExpressionNode(DataTypePtr stamp);
     explicit LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other);
 
-    explicit LinearAlgebraTensorExpressionNode(DataTypePtr stamp, std::vector<size_t> shape, TensorMemoryFormat tensorType);
-    explicit LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other, std::vector<size_t> shape, TensorMemoryFormat tensorType);
     ~LinearAlgebraTensorExpressionNode() noexcept override = default;
-
-  private:
-
-    std::vector<size_t> shape = {};
-    TensorMemoryFormat tensorMemoryFormat = DENSE;
 
 };
 }// namespace NES

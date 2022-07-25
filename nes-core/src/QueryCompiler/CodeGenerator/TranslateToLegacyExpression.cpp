@@ -27,6 +27,8 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -62,6 +64,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
     if (expression->instanceOf<ArithmeticalExpressionNode>()) {
         // Translate arithmetical expressions to the legacy representation
         return transformArithmeticalExpressions(expression);
+    } else if (expression->instanceOf<LinearAlgebraExpressionNode>()) {
+        return transformLinearAlgebraExpressions(expression);
     } else if (expression->instanceOf<ConstantValueExpressionNode>()) {
         // Translate constant value expression node.
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
@@ -160,6 +164,21 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
+                    << expression->toString());
+    NES_NOT_IMPLEMENTED();
+}
+
+LegacyExpressionPtr TranslateToLegacyExpression::transformLinearAlgebraExpressions(const ExpressionNodePtr& expression) {
+    if (expression->instanceOf<CreateTensorExpressionNode>()) {
+        // Translate add expression node.
+        auto addExpressionNode = expression->as<CreateTensorExpressionNode>();
+        std::vector<LegacyExpressionPtr> exps;
+        for (auto child : addExpressionNode->children()) {
+            exps.push_back(transformExpression(child));
+        }
+        return Predicate(MultiOperatorType::CREATETENSOR_OP, exps).copy();
+    }
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this linear algebra expression node: "
                     << expression->toString());
     NES_NOT_IMPLEMENTED();
 }

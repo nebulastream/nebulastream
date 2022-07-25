@@ -19,7 +19,7 @@
 
 namespace NES {
 /**
- * @brief Logical Binary operator, defines two output schemas
+ * @brief Logical Binary operator, defines two input schemas
  */
 class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOperatorNode {
   public:

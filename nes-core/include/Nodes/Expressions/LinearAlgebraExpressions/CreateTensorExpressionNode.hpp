@@ -23,7 +23,9 @@ namespace NES {
  */
 class CreateTensorExpressionNode final : public LinearAlgebraTensorExpressionNode {
   public:
-    explicit CreateTensorExpressionNode(DataTypePtr stamp, const std::vector<size_t> shape, const TensorMemoryFormat tensorType);
+    explicit CreateTensorExpressionNode(DataTypePtr stamp,
+                                        const std::vector<size_t> shape,
+                                        const TensorMemoryFormat tensorType);
     ~CreateTensorExpressionNode() noexcept final = default;
     /**
      * @brief Create a new tensor creation expression
@@ -40,10 +42,17 @@ class CreateTensorExpressionNode final : public LinearAlgebraTensorExpressionNod
     */
     ExpressionNodePtr copy() final;
 
+    const std::vector<size_t>& getShape() const;
+    void setShape(const std::vector<size_t>& shape);
+    TensorMemoryFormat getTensorMemoryFormat() const;
+    void setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat);
+
   protected:
-    explicit CreateTensorExpressionNode(CreateTensorExpressionNode* other,
-                                        const std::vector<size_t> shape,
-                                        const TensorMemoryFormat tensorType);
+    explicit CreateTensorExpressionNode(CreateTensorExpressionNode* other);
+
+  private:
+    std::vector<size_t> shape;
+    TensorMemoryFormat tensorMemoryFormat;
 };
 
 }// namespace NES

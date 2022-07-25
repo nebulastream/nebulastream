@@ -132,7 +132,8 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     ASSERT_ANY_THROW(incrementArray->inferStamp(typeInferencePhaseContext, schema));
 
     auto createTensorExpression = CREATETENSOR({Attribute("f1"), Attribute("f2"), Attribute("f3")},{3},"DENSE");
-    EXPECT_TRUE(createTensorExpression->getStamp()->isUndefined());
+    EXPECT_TRUE(createTensorExpression->getStamp()->isTensor());
+    EXPECT_TRUE(createTensorExpression->getStamp()->as<TensorType>(createTensorExpression->getStamp())->component->isUndefined());
     createTensorExpression->inferStamp(schema);
     EXPECT_TRUE(createTensorExpression->getStamp()->isEquals(DataTypeFactory::createTensor({3}, "FLOAT64", "DENSE")));
 }

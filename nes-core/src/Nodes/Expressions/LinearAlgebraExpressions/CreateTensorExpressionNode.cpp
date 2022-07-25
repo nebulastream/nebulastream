@@ -21,17 +21,16 @@ namespace NES {
 CreateTensorExpressionNode::CreateTensorExpressionNode(DataTypePtr stamp,
                                                        const std::vector<size_t> shape,
                                                        const TensorMemoryFormat tensorType)
-    : LinearAlgebraTensorExpressionNode(std::move(stamp), shape, tensorType) {}
+    : LinearAlgebraTensorExpressionNode(std::move(stamp)), shape(shape), tensorMemoryFormat(tensorType)  {}
 
-CreateTensorExpressionNode::CreateTensorExpressionNode(CreateTensorExpressionNode* other,
-                                                       const std::vector<size_t> shape,
-                                                       const TensorMemoryFormat tensorType)
-    : LinearAlgebraTensorExpressionNode(other, shape, tensorType) {}
+CreateTensorExpressionNode::CreateTensorExpressionNode(CreateTensorExpressionNode* other)
+    : LinearAlgebraTensorExpressionNode(other) {}
 
 ExpressionNodePtr CreateTensorExpressionNode::create(std::vector<ExpressionNodePtr> const expressionNodes,
                                                      const std::vector<size_t> shape,
                                                      const TensorMemoryFormat tensorType) {
-    auto createTensorNode = std::make_shared<CreateTensorExpressionNode>(expressionNodes.at(0)->getStamp(), shape, tensorType);
+    auto createTensorNode = std::make_shared<CreateTensorExpressionNode>(
+        DataTypeFactory::createTensor(shape, expressionNodes.at(0)->getStamp(), tensorType), shape, tensorType);
     createTensorNode->setChildren(expressionNodes);
     return createTensorNode;
 }
@@ -59,8 +58,13 @@ std::string CreateTensorExpressionNode::toString() const {
 }
 
 ExpressionNodePtr CreateTensorExpressionNode::copy() {
-    return std::make_shared<CreateTensorExpressionNode>(
-        CreateTensorExpressionNode(this, stamp->as<TensorType>(stamp)->shape, stamp->as<TensorType>(stamp)->tensorMemoryFormat));
+    return std::make_shared<CreateTensorExpressionNode>(CreateTensorExpressionNode(this));
+}
+const std::vector<size_t>& CreateTensorExpressionNode::getShape() const { return shape; }
+void CreateTensorExpressionNode::setShape(const std::vector<size_t>& shape) { CreateTensorExpressionNode::shape = shape; }
+TensorMemoryFormat CreateTensorExpressionNode::getTensorMemoryFormat() const { return tensorMemoryFormat; }
+void CreateTensorExpressionNode::setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat) {
+    CreateTensorExpressionNode::tensorMemoryFormat = tensorMemoryFormat;
 }
 
 }// namespace NES

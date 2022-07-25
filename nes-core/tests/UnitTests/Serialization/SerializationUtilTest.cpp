@@ -38,6 +38,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -182,9 +183,10 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     // serialize and deserialize tensor
     std::vector<size_t> shape = {5};
     auto* serializedTensor =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createTensor(shape, "FLOAT32", "DENSE"));
-    auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
-    EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
+        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createTensor(shape, "FLOAT32", "DENSE"),
+                                                     new SerializableDataType());
+    auto deserializedTensor = DataTypeSerializationUtil::deserializeDataType(serializedTensor);
+    EXPECT_TRUE(DataTypeFactory::createTensor(shape, "FLOAT32", "DENSE")->isEquals(deserializedTensor));
 
     /*
    std::string json_string;
@@ -483,6 +485,12 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
     }
     {
         auto expression = SqrtExpressionNode::create(f1);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = CreateTensorExpressionNode::create({f1, f2}, {2}, TensorMemoryFormat::DENSE);
         auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
         EXPECT_TRUE(expression->equal(deserializedExpression));

@@ -319,11 +319,6 @@ TEST_F(TensorTest, testCreateCubeInSchema) {
  * */
 TEST_F(TensorTest, testCreateVectorSimpleFieldsMatrixInSchema) {
 
-    //TODO: tell ankit and philipp that int8_t and uint8_t take up more space in c++ than in nes
-    // size of schema with vector and matrix 48
-    // size of schema with vector, matrix and int8 49 in nes, in c++ it's 56
-    // uint16_t not same size either: c++ 64, nes 62 same for int16_t
-    // 32 is same size
     struct TestSchema {
         double durationMonth;
         double creditAmount;
@@ -393,7 +388,7 @@ TEST_F(TensorTest, testCreateVectorSimpleFieldsMatrixInSchema) {
 }
 
 // Disabled because MQTT broker and message script are needed
-TEST_F(TensorTest, testMixedSchemaVectorMatrixCubeViaMQTT) {
+TEST_F(TensorTest, DISABLED_testMixedSchemaVectorMatrixCubeViaMQTT) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 

@@ -127,6 +127,29 @@ LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 LegacyExpressionPtr Predicate::getRight() const { return right; }
 
+MultiPredicate::MultiPredicate(const MultiOperatorType& op,
+                               const std::vector<LegacyExpressionPtr>& children,
+                               std::string functionCallOverload,
+                               bool bracket)
+    : op(op), children(children), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
+
+MultiPredicate::MultiPredicate(MultiOperatorType const& op, std::vector<LegacyExpressionPtr> const& children, bool bracket)
+    : op(op), children(children), bracket(bracket) {}
+
+ExpressionStatementPtr MultiPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {}
+
+std::string MultiPredicate::toString() const {
+    std::stringstream stream;
+    if (bracket) {
+        stream << "(";
+    }
+    stream << left->toString() << " " << toCodeExpression(op)->code_ << " " << right->toString() << " ";
+    if (bracket) {
+        stream << ")";
+    }
+    return stream.str();
+}
+
 UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op, const LegacyExpressionPtr& child, bool bracket)
     : op(op), child(child), bracket(bracket) {}
 

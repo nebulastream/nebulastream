@@ -66,6 +66,10 @@ enum BinaryOperatorType {
     MEMBER_SELECT_REFERENCE_OP
 };
 
+enum MultiOperatorType {
+    CREATETENSOR_OP
+};
+
 const std::string toString(const BinaryOperatorType& type);
 }// namespace NES
 

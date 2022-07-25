@@ -53,6 +53,13 @@ class TranslateToLegacyExpression {
      * @return LegacyExpressionPtr
      */
     LegacyExpressionPtr transformArithmeticalExpressions(const ExpressionNodePtr& expression);
+
+    /**
+     * @brief Translates linear algebra expessions to a legacy user api expression.
+     * @param expression node
+     * @return LegacyExpressionPtr
+     */
+    LegacyExpressionPtr transformLinearAlgebraExpressions(const ExpressionNodePtr& expression)
 };
 }// namespace QueryCompilation
 }// namespace NES

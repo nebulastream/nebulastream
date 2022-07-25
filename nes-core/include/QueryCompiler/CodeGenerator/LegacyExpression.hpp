@@ -65,6 +65,30 @@ class Predicate : public LegacyExpression {
     std::string functionCallOverload;
 };
 
+class MultiPredicate : public LegacyExpression {
+  public:
+    MultiPredicate(MultiOperatorType const& op,
+                   std::vector<LegacyExpressionPtr> const& children,
+                   std::string functionCallOverload,
+                   bool bracket = true);
+
+    MultiPredicate(MultiOperatorType const& op, std::vector<LegacyExpressionPtr> const& children, bool bracket = true);
+
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] BinaryOperatorType getOperatorType() const;
+    [[nodiscard]] std::vector<LegacyExpressionPtr> getChildren() const;
+
+  private:
+    MultiPredicate() = default;
+    BinaryOperatorType op;
+    std::vector<LegacyExpressionPtr> children;
+    bool bracket{};
+    std::string functionCallOverload;
+};
+
 class UnaryPredicate : public LegacyExpression {
   public:
     UnaryPredicate(UnaryOperatorType const& op, LegacyExpressionPtr const& child, bool bracket = true);

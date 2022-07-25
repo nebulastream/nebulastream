@@ -64,9 +64,9 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         // store dimension and datatype into ArrayDetails by invoking this function recursively.
         auto serializedTensor = SerializableDataType_TensorDetails();
         auto const tensorType = DataType::as<TensorType>(dataType);
-        SerializableDataType_TensorDetails_TensorMemoryType memoryType;
+        SerializableDataType_TensorDetails_TensorMemoryFormat memoryType;
         switch (tensorType->tensorMemoryFormat) {
-            case DENSE: memoryType = SerializableDataType_TensorDetails_TensorMemoryType_DENSE; break;
+            case DENSE: memoryType = SerializableDataType_TensorDetails_TensorMemoryFormat_DENSE; break;
         }
         serializedTensor.set_tensormemoryformat(memoryType);
         *serializedTensor.mutable_shape() = {tensorType->shape.begin(), tensorType->shape.end()};
@@ -138,8 +138,8 @@ std::shared_ptr<TensorType> DataTypeSerializationUtil::deserializeTensorType(Ser
     //get component data type
     auto componentType = deserializeDataType(tensorDetails.release_componenttype());
     std::vector<std::size_t> shape(tensorDetails.shape().begin(), tensorDetails.shape().end());
-    TensorMemoryFormat tensorType = static_cast<TensorMemoryFormat>(tensorDetails.tensormemorytype());
-    return std::make_shared<TensorType>(shape, componentType, tensorType);
+    TensorMemoryFormat tensorMemoryFormat = static_cast<TensorMemoryFormat>(tensorDetails.tensormemoryformat());
+    return std::make_shared<TensorType>(shape, componentType, tensorMemoryFormat);
 }
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,

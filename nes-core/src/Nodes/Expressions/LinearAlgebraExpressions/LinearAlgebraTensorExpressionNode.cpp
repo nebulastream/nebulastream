@@ -23,16 +23,6 @@ LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other)
     : MultiExpressionNode(other) {}
 
-LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr stamp,
-                                                                 std::vector<size_t> shape,
-                                                                 TensorMemoryFormat tensorType)
-    : MultiExpressionNode(std::move(stamp)), LinearAlgebraExpressionNode(), shape(shape),
-      tensorType(tensorType) {}
-LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other,
-                                                                 std::vector<size_t> shape,
-                                                                 TensorMemoryFormat tensorType)
-    : MultiExpressionNode(other), shape(shape), tensorType(tensorType) {}
-
 void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
     bool firstSkipped = false;
     std::shared_ptr<ExpressionNode> previousChild;
@@ -57,8 +47,8 @@ void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
         throw std::logic_error("LinearAlgebraTensorExpressionNode: " + commonStamp->toString()
                                + " is not supported by arithmetical expressions");
     }
-    if (!shape.empty()) {
-        stamp = DataTypeFactory::createTensor(shape, commonStamp, tensorType);
+    if (stamp->isTensor()){
+        stamp = DataTypeFactory::createTensor(stamp->as<TensorType>(stamp)->shape, commonStamp, stamp->as<TensorType>(stamp)->tensorMemoryFormat);
     } else {
         stamp = commonStamp;
     }
@@ -78,14 +68,5 @@ bool LinearAlgebraTensorExpressionNode::equal(const NodePtr& rhs) const {
 }
 
 std::string LinearAlgebraTensorExpressionNode::toString() const { return "LinearAlgebraTensorExpression()"; }
-
-const std::vector<size_t>& LinearAlgebraTensorExpressionNode::getShape() const { return shape; }
-void LinearAlgebraTensorExpressionNode::setShape(const std::vector<size_t>& shape) {
-    LinearAlgebraTensorExpressionNode::shape = shape;
-}
-TensorMemoryFormat LinearAlgebraTensorExpressionNode::getTensorMemoryFormat() const { return tensorMemoryFormat; }
-void LinearAlgebraTensorExpressionNode::setTensorMemoryFormat(TensorMemoryFormat tensorMemoryFormat) {
-    LinearAlgebraTensorExpressionNode::tensorMemoryFormat = tensorMemoryFormat;
-}
 
 }// namespace NES

@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp>
-#include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraExpressionNode.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
@@ -35,6 +33,8 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/CreateTensorExpressionNode.hpp>
+#include <Nodes/Expressions/LinearAlgebraExpressions/LinearAlgebraExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -301,20 +301,25 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
 }
 
 void ExpressionSerializationUtil::serializeLinearAlgebraExpressions(const ExpressionNodePtr& expression,
-                                                                   SerializableExpression* serializedExpression) {
+                                                                    SerializableExpression* serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: serialize linear algebra expression " << expression->toString());
     if (expression->instanceOf<CreateTensorExpressionNode>()) {
         // serialize create tensor expression node.
-        NES_TRACE(
-            "ExpressionSerializationUtil:: serialize CREATETENSOR linear algebra expression to SerializableExpression_CreateTensorExpression");
+        NES_TRACE("ExpressionSerializationUtil:: serialize CREATETENSOR linear algebra expression to "
+                  "SerializableExpression_CreateTensorExpression");
         auto createTensorExpressionNode = expression->as<CreateTensorExpressionNode>();
         auto serializedTensorExpressionNode = SerializableExpression_CreateTensorExpression();
-        std::vector<SerializableExpression> tensorChildren;
-        for (size_t i = 0; i < createTensorExpressionNode->children().size(); ++i) {
-            serializeExpression(createTensorExpressionNode->children()[i], serializedTensorExpressionNode.mutable_child());
-            tensorChildren.push_back(serializedExpression->children(i));
+        for (auto& child : createTensorExpressionNode->children()) {
+            auto* mutableChildren = serializedTensorExpressionNode.mutable_children()->Add();
+            ExpressionSerializationUtil::serializeExpression(child, mutableChildren);
         }
-        *serializedTensorExpressionNode.mutable_children() ={tensorChildren.begin(), tensorChildren.end()};
+        SerializableExpression_CreateTensorExpression_TensorMemoryFormat memoryType;
+        switch (createTensorExpressionNode->getTensorMemoryFormat()) {
+            case DENSE: memoryType = SerializableExpression_CreateTensorExpression_TensorMemoryFormat_DENSE; break;
+        }
+        serializedTensorExpressionNode.set_tensormemoryformat(memoryType);
+        *serializedTensorExpressionNode.mutable_shape() = {createTensorExpressionNode->getShape().begin(),
+                                                                           createTensorExpressionNode->getShape().end()};
         serializedExpression->mutable_details()->PackFrom(serializedTensorExpressionNode);
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this linear algebra expression node: "
@@ -405,14 +410,14 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLinearAlgebraExpressio
         NES_TRACE("ExpressionSerializationUtil:: de-serialize linear algebra expression as creatTensor expression node.");
         auto serializedExpressionNode = SerializableExpression_CreateTensorExpression();
         serializedExpression->details().UnpackTo(&serializedExpressionNode);
-        //todo: find out how to release multiple children ...
-        for (auto child : serializedExpressionNode.children()){
-            deserializeExpression(child);
+        std::vector<ExpressionNodePtr> exps;
+        for (auto mutableChild : *serializedExpressionNode.mutable_children()) {
+            auto child = ExpressionSerializationUtil::deserializeExpression(&mutableChild);
+            exps.push_back(child);
         }
-        CreateTensorExpressionNode::CreateTensorExpressionNode()
-        auto left = deserializeExpression(serializedExpressionNode.release_left());
-        auto right = deserializeExpression(serializedExpressionNode.release_right());
-        return AddExpressionNode::create(left, right);
+        std::vector<std::size_t> shape(serializedExpressionNode.shape().begin(), serializedExpressionNode.shape().end());
+        TensorMemoryFormat tensorMemoryFormat = static_cast<TensorMemoryFormat>(serializedExpressionNode.tensormemoryformat());
+        return CreateTensorExpressionNode::create(exps, shape, tensorMemoryFormat);
     }
     return nullptr;
 }

@@ -17,7 +17,7 @@
 
 namespace NES {
 /**
- * @brief This class just indicates that a node is an linear algebrea expression.
+ * @brief This class just indicates that a node is an linear algebra expression.
  */
 class LinearAlgebraExpressionNode {
   protected:

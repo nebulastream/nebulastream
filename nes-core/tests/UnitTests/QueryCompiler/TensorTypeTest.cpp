@@ -34,7 +34,7 @@ class TensorTypeTest : public Testing::NESBaseTest {
   protected:
 };
 /// Check that the null-terminator has to be present for fixed-size strings only.
-TEST_F(TensorTypeTest, testCheckNullTerminator) {
+TEST_F(TensorTypeTest, testCorrectCreationOfTensor) {
     // From supertype's constructor
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 1, 5>(5)));
     EXPECT_THROW((ExecutableTypes::Tensor<int, 1, 5>(10)), std::out_of_range);
