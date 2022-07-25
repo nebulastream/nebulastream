@@ -247,11 +247,10 @@ class TestHarness {
      * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness&
-    attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
-                                            const CSVSourceTypePtr& csvSourceType,
-                                            uint64_t parentId,
-                                            WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
+                                                         const CSVSourceTypePtr& csvSourceType,
+                                                         uint64_t parentId) {
+        auto workerConfiguration = WorkerConfiguration::create();
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
         workerConfiguration->physicalSources.add(physicalSource);
@@ -282,8 +281,9 @@ class TestHarness {
      * @param parentId id of the Test Harness worker to connect
      * Note: The parent id can not be greater than the current testharness worker id
      */
-    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId,
-                                            WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
+    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
+
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->parentId = parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
@@ -294,9 +294,9 @@ class TestHarness {
     /**
      * @brief add non source worker
      */
-    TestHarness& attachWorkerToCoordinator(WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
+    TestHarness& attachWorkerToCoordinator() {
         //We are assuming coordinator will start with id 1
-        return attachWorkerToWorkerWithId(1, workerConfiguration);
+        return attachWorkerToWorkerWithId(1);
     }
 
     uint64_t getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
@@ -394,13 +394,14 @@ class TestHarness {
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
-    TestHarness& setupTopology(CoordinatorConfigurationPtr coordinatorConfiguration = CoordinatorConfiguration::create()) {
+    TestHarness& setupTopology() {
 
         if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
 
         //Start Coordinator
+        auto coordinatorConfiguration = CoordinatorConfiguration::create();
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
@@ -431,6 +432,7 @@ class TestHarness {
                 }
                 default: break;
             }
+
             NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 
@@ -461,6 +463,7 @@ class TestHarness {
                              std::string faultTolerance,
                              std::string lineage,
                              uint64_t testTimeout = 60) {
+
         if (!topologySetupDone || !validationDone) {
             throw Exceptions::RuntimeException(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");

@@ -280,25 +280,6 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
     return false;
 }
 
-bool Node::replicate() {
-    NodePtr newNode = std::shared_ptr<Node>();
-    bool success = true;
-
-    for (const NodePtr& child : children) {
-        if (!newNode->addChild(child)) {
-            success = false;
-        }
-    }
-
-    for (const NodePtr& parent : parents) {
-        if (!newNode->addParent(parent)) {
-            success = false;
-        }
-    }
-
-    return success;
-}
-
 bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     auto node = findRecursively(shared_from_this(), oldNode);
     // oldNode is not in current graph
