@@ -1356,7 +1356,7 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
+    ASSERT_EQ(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
@@ -1375,7 +1375,7 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
     workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart2 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=3
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = "ktm-results.csv";
