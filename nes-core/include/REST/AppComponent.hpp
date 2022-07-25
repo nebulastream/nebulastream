@@ -12,19 +12,6 @@
     limitations under the License.
 */
 
-
-/***************************************************************************
- *
- * Project         _____    __   ____   _      _
- *                (  _  )  /__\ (_  _)_| |_  _| |_
- *                 )(_)(  /(__)\  )( (_   _)(_   _)
- *                (_____)(__)(__)(__)  |_|    |_|
- *
- *
- * Copyright 2018-present, Leonid Stryzhevskyi <lganzzzo@gmail.com>
- *
- ***************************************************************************/
-
 #ifndef NES_NES_CORE_INCLUDE_REST_APPCOMPONENT_HPP_
 #define NES_NES_CORE_INCLUDE_REST_APPCOMPONENT_HPP_
 

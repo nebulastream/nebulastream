@@ -97,7 +97,7 @@ class RestServer {
 
     /**
    * @brief method to start the rest server
-     * calls withOatpp or withRestSDK according to bool useOatpp
+   * calls then startwithOatpp or startwithRestSDK according to bool useOatpp
    * @return bool indicating success
    */
     bool start(bool useOatpp = false);

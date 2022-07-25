@@ -17,7 +17,7 @@
 
 namespace NES {
 
-ConnectivityController::ConnectivityController(){};
+ConnectivityController::ConnectivityController() = default;
 
 void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     if (path[1] == "check") {
