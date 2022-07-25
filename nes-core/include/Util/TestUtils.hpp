@@ -156,6 +156,16 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 }
 
 /**
+     * @brief start a new instance of a nes worker with a set of configuration flags
+     * @param flags
+     * @return worker process, which terminates if it leaves the scope
+     */
+[[nodiscard]] std::shared_ptr<Util::Subprocess> startWorkerPtr(std::initializer_list<std::string> flags) {
+    NES_INFO("Start worker");
+    return std::make_shared<Util::Subprocess>(std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags);
+}
+
+/**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
      * @param ptr to Runtime
      * @param queryId
@@ -188,10 +198,10 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 /**
      * @brief This method is used for checking if the submitted query produced the expected result within the timeout
      * @param queryId: Id of the query
-     * @param expectedResult: The expected value
+     * @param expectedNumberBuffers: The expected value
      * @return true if matched the expected result within the timeout
      */
-[[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort = "8081");
+[[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedNumberBuffers, const std::string& restPort = "8081");
 
 /**
      * @brief This method is used for checking if the submitted query is running
