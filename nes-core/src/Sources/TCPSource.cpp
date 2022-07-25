@@ -85,10 +85,7 @@ TCPSource::TCPSource(SchemaPtr schema,
 TCPSource::~TCPSource() {
     NES_DEBUG("TCPSource::~TCPSource() with connection: " << connection);
     // Close the connections
-    if (connection == 0) {
-        ::close(connection);
-        ::close(sockfd);
-    }
+    close();
     NES_DEBUG("TCPSource::~TCPSource  " << this << ": Destroy TCP Source");
 }
 
@@ -100,7 +97,7 @@ std::string TCPSource::toString() const {
     return ss.str();
 }
 
-bool TCPSource::connected() {
+void TCPSource::open() {
     NES_TRACE("TCPSource::connected: Trying to create socket.");
     if (sockfd < 0) {
         sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
@@ -109,7 +106,7 @@ bool TCPSource::connected() {
     if (sockfd == -1) {
         NES_ERROR("TCPSource::connected: Failed to create socket.");
         connection = -1;
-        return false;
+        return;
     }
     NES_TRACE("Created socket");
 
@@ -127,16 +124,16 @@ bool TCPSource::connected() {
     if (connection < 0) {
         NES_ERROR("TCPSource::connected: Connection with server failed. ");
         connection = -1;
-        return false;
+        return;
     }
 
     NES_TRACE("TCPSource::connected: Connected to server.");
-    return true;
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
-    if (connected()) {
+    open();
+    if (connection != -1) {
         auto buffer = allocateBuffer();
         try {
             fillBuffer(buffer);
@@ -175,6 +172,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 bufferSize = std::stoi(bufferSizeFromSocket);
                 NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSize);
             }
+            delete [] bufferSizeFromSocket;
         } else {
             bufferSize = sourceConfig->getSocketBufferSize()->getValue();
         }
@@ -194,6 +192,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             tupleCount++;
         }
+        delete [] buffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
@@ -210,6 +209,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     generatedTuples += tupleCount;
     generatedBuffers++;
     return true;
+}
+
+void TCPSource::close() {
+    if (connection == 0) {
+        ::close(connection);
+        ::close(sockfd);
+    }
 }
 
 SourceType TCPSource::getType() const { return TCP_SOURCE; }

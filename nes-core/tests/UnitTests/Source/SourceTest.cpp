@@ -1757,8 +1757,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadCSVData) {
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(tcpSchema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    bool connection = tcpDataSource.connected();
-    EXPECT_EQ(connection, true);
+    tcpDataSource.open();
     tcpDataSource.fillBuffer(buffer);
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
@@ -1795,8 +1794,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(tcpSchema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    bool connection = tcpDataSource.connected();
-    EXPECT_EQ(connection, true);
+    tcpDataSource.open();
     tcpDataSource.fillBuffer(buffer);
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
