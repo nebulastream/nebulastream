@@ -783,11 +783,6 @@ if (USE_S2)
     add_test(NAME location-integration-tests COMMAND location-integration-tests)
 endif ()
 
-### Tests for Oatpp ###
-add_executable(tests-for-oatpp-endpoints "UnitTests/REST/OatppTests/TestsForOatppEndpoints.cpp"  "UnitTests/REST/OatppTests/MyControllerTest.cpp")
-target_link_libraries(tests-for-oatpp-endpoints nes-tests oatpp::oatpp oatpp::oatpp-test)
-add_test(NAME tests-for-oatpp-endpoints COMMAND tests-for-oatpp-endpoints )
-
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
