@@ -16,6 +16,7 @@
 #define NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -43,7 +44,8 @@ class MonitoringCatalog {
      */
     static MonitoringCatalogPtr defaultCatalog();
 
-//    static MonitoringCatalogPtr configuredCatalog(std::multimap<std::string, std::string> catalog);
+    static MonitoringCatalogPtr createCatalog(const MonitoringPlanPtr& monitoringPlan);
+
     /**
      * Get the collector for a specific MetricType
      * @param metricType
@@ -54,6 +56,8 @@ class MonitoringCatalog {
   private:
     explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
+//    MonitoringCatalogPtr createCatalog(MonitoringPlanPtr monitoringPlan);
+//    MonitoringCatalogPtr createCatalog(MonitoringPlanPtr monitoringPlan);
 };
 
 }// namespace NES

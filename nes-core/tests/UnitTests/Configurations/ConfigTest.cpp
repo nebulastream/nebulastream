@@ -96,23 +96,23 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testWorkerConfigLennart) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
-   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-//    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+//   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
     std::map <MetricType, std::list<std::string>> mapMonitoringConfig =
         MetricUtils::parseMonitoringConfigStringToMap(workerConfigPtr->monitoringConfiguration.getValue());
-
     MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchema(mapMonitoringConfig);
-    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::defaultCatalog();
-    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
+
+//    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::defaultCatalog();
+//    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
+
     // Json Kram
-//    web::json::value configurationMonitoringJson{};
-//    configurationMonitoringJson = MetricUtils::ConfigMapToJson(mapMonitoringConfig);
-//    web::json::value configurationMonitoringJson02 =
-//        MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
-//    std::string jsonString01 = configurationMonitoringJson.serialize();
-//    std::string jsonString02 = configurationMonitoringJson02.serialize();
-//    ASSERT_EQ(jsonString01, jsonString02);
-//    MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
+    web::json::value configurationMonitoringJson =
+        MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
+    MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
+    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlanJson);
+    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
+    // TODO: test if the right MonitoringPlan and Catalog was created
+
     std::cout << "Well done!";
 }
 

@@ -77,7 +77,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
     NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto bufferSize = NetworkMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
@@ -106,7 +106,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
-        auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
+        auto bufferSize = NetworkMetrics::getDefaultSchema("")->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
         writeToBuffer(totalMetrics, tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -123,29 +123,30 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     }
 }
 
-//TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
-//    auto cpuCollector = CpuCollector();
-//    cpuCollector.setNodeId(nodeId);
-//    MetricPtr cpuMetric = cpuCollector.readMetric();
-//    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
-//
-//    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
-//
-//    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-//        auto bufferSize = CpuMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
-//        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-//        wrappedMetric.writeToBuffer(tupleBuffer, 0);
-//        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
-//
-//        CpuMetricsWrapper parsedMetric{};
-//        readFromBuffer(parsedMetric, tupleBuffer, 0);
-//        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
-//        ASSERT_EQ(wrappedMetric, parsedMetric);
-//        ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
-//    } else {
-//        NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
-//    }
-//}
+TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
+    auto cpuCollector = CpuCollector();
+    cpuCollector.setNodeId(nodeId);
+    MetricPtr cpuMetric = cpuCollector.readMetric();
+    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+
+    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+
+    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
+        auto bufferSize = CpuMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        wrappedMetric.writeToBuffer(tupleBuffer, 0);
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
+
+        CpuMetricsWrapper parsedMetric{};
+        std::cout << "TESTTEST";
+        readFromBuffer(parsedMetric, tupleBuffer, 0);
+        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        ASSERT_EQ(wrappedMetric, parsedMetric);
+        ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
+    } else {
+        NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
+    }
+}
 
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     auto readMetrics = reader->readCpuStats();
@@ -186,6 +187,7 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
     auto bufferSize = DiskMetrics::getDefaultSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+//    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -223,7 +225,7 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
 TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
     // Select i random attributes from the vector. This way different configurations will be tested.
     std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        MetricUtils::randomAttributes("DiskMetric", 3);
+        MetricUtils::randomAttributes("DiskMetric", 5);
     std::vector<std::string>  attributesList = get<0>(randomTuple);
     std::list<std::string>  configuredMetrics = get<1>(randomTuple);
     std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
@@ -238,16 +240,16 @@ TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
-    auto diskCollector = DiskCollector(schema);       //Schema übergeben
-    diskCollector.setNodeId(nodeId);            //Set NodeId to right Value
+    auto diskCollector = DiskCollector(schema);
+    diskCollector.setNodeId(nodeId);
     MetricPtr diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
-    typedMetric.setSchema(schema);
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
-    ASSERT_EQ(typedMetric.getSchema(), schema);             // Compare if DiskMetric object has the right schema
+    ASSERT_EQ(typedMetric.getSchema(), schema);
     auto bufferSize = typedMetric.getSchema()->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    writeToBuffer(typedMetric, tupleBuffer, 0);         // write Values to Buffer
+//    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
+    writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
@@ -271,7 +273,7 @@ TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
 TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
     // Select i random attributes from the vector. This way different configurations will be tested.
     std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        MetricUtils::randomAttributes("MemoryMetric", 5);
+        MetricUtils::randomAttributes("MemoryMetric", 6);
     std::vector<std::string>  attributesList = get<0>(randomTuple);
     std::list<std::string>  configuredMetrics = get<1>(randomTuple);
     std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
@@ -289,10 +291,10 @@ TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
     memoryCollector.setNodeId(nodeId);
     MetricPtr memoryMetric = memoryCollector.readMetric();
     MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
-    typedMetric.setSchema(schema);
     ASSERT_EQ(memoryMetric->getMetricType(), MetricType::MemoryMetric);
     auto bufferSize = typedMetric.getSchema()->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+//    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -315,8 +317,8 @@ TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetricsConfiguration) {
     std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
         MetricUtils::randomAttributes("CpuMetric", 5);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+    std::vector<std::string> attributesList = get<0>(randomTuple);
+    std::list<std::string> configuredMetrics = get<1>(randomTuple);
     std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
     NES_DEBUG("Configured attributes are: " << configuredMetricsString);
 
@@ -334,18 +336,27 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetricsConfiguration) {
     ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
     CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
-
+    ASSERT_EQ(wrappedMetric.getSchema(), schema);
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-        auto bufferSize = CpuMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto bufferSize = wrappedMetric.getSchema()->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
 
-        CpuMetricsWrapper parsedMetric{};
+        MetricPtr parsedMetric = std::make_shared<Metric>(CpuMetricsWrapper(schema));
         readFromBuffer(parsedMetric, tupleBuffer, 0);
+        CpuMetricsWrapper parsedMetricValues = parsedMetric->getValue<CpuMetricsWrapper>();
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
-        ASSERT_EQ(wrappedMetric, parsedMetric);
-        ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
+        for (unsigned int i = 0; i < parsedMetricValues.size(); i++) {
+            for (const std::string& metricName : configuredMetrics) {
+                ASSERT_EQ(parsedMetricValues.getValue(i).getValue(metricName), wrappedMetric.getValue(i).getValue(metricName));
+            }
+            for (const std::string& metricName : attributesList) {
+                ASSERT_EQ(parsedMetricValues.getValue(i).getValue(metricName), 0);
+            }
+        }
+        ASSERT_EQ(parsedMetricValues.getNodeId(), nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
     }
@@ -368,6 +379,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
     }
 
     auto readMetrics = reader->readCpuStats();
+    readMetrics.setSchema(schema);
     readMetrics.setNodeId(nodeId);
 
     auto cpuCollector = CpuCollector(schema);
@@ -380,9 +392,10 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         CpuMetrics totalMetrics = wrappedMetric.getValue(0);
-        totalMetrics.setSchema(schema);
+
         auto bufferSize = totalMetrics.getSchema()->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
         writeToBuffer(totalMetrics, tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
@@ -405,34 +418,107 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
     }
 }
 
-//TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
-//    auto readMetrics = reader->readNetworkStats();
-//    readMetrics.setNodeId(nodeId);
-//
-//    auto networkCollector = NetworkCollector();
-//    networkCollector.setNodeId(nodeId);
-//    MetricPtr networkMetric = networkCollector.readMetric();
-//    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
-//
-//    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
-//    ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
-//
-//    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-//        NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
-//        auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
-//        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-//        writeToBuffer(totalMetrics, tupleBuffer, 0);
-//        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
-//
-//        NetworkMetrics parsedMetric{};
-//        readFromBuffer(parsedMetric, tupleBuffer, 0);
-//        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
-//        ASSERT_EQ(totalMetrics, parsedMetric);
-//        ASSERT_EQ(totalMetrics.nodeId, nodeId);
-//        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
-//        ASSERT_EQ(parsedMetric.nodeId, nodeId);
-//    } else {
-//        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
-//    }
-//}
+TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
+    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+        MetricUtils::randomAttributes("NetworkMetric", 7);
+    std::vector<std::string>  attributesList = get<0>(randomTuple);
+    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+    std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
+    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+    SchemaPtr schema = NetworkMetrics::createSchema("", configuredMetrics);
+    for (std::string attribute : configuredMetrics) {
+        ASSERT_TRUE(schema->contains(attribute));
+    }
+    for (std::string attribute : attributesList) {
+        ASSERT_FALSE(schema->contains(attribute));
+    }
+
+    auto readMetrics = reader->readNetworkStats();
+    readMetrics.setSchema(schema);
+    readMetrics.setNodeId(nodeId);
+
+    auto networkCollector = NetworkCollector(schema);
+    networkCollector.setNodeId(nodeId);
+    MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+
+    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
+
+    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
+        NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
+        ASSERT_EQ(totalMetrics.getSchema(), schema);
+        auto bufferSize = totalMetrics.getSchema()->getSchemaSizeInBytes();
+        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
+        writeToBuffer(totalMetrics, tupleBuffer, 0);
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+        MetricPtr parsedMetric = std::make_shared<Metric>(NetworkMetrics(schema));
+        readFromBuffer(parsedMetric, tupleBuffer, 0);
+        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        NetworkMetrics parsedMetricValues = parsedMetric->getValue<NetworkMetrics>();
+        ASSERT_EQ(parsedMetricValues.getSchema(), schema);
+        for(const std::string& metricName : configuredMetrics) {
+            ASSERT_EQ(parsedMetricValues.getValue(metricName), totalMetrics.getValue(metricName));
+        }
+        for(const std::string& metricName : attributesList) {
+            ASSERT_EQ(parsedMetricValues.getValue(metricName), 0);
+        }
+        ASSERT_EQ(totalMetrics.nodeId, nodeId);
+        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
+        ASSERT_EQ(parsedMetricValues.nodeId, nodeId);
+    } else {
+        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
+    }
+}
+
+TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetricsConfiguration) {
+    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+        MetricUtils::randomAttributes("NetworkMetric", 7);
+    std::vector<std::string>  attributesList = get<0>(randomTuple);
+    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+    std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
+    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+    SchemaPtr schema = NetworkMetrics::createSchema("", configuredMetrics);
+    for (std::string attribute : configuredMetrics) {
+        ASSERT_TRUE(schema->contains(attribute));
+    }
+    for (std::string attribute : attributesList) {
+        ASSERT_FALSE(schema->contains(attribute));
+    }
+
+    auto networkCollector = NetworkCollector(schema);
+    networkCollector.setNodeId(nodeId);
+    MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+
+    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    ASSERT_EQ(wrappedMetric.getSchema(), schema);
+    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
+        auto bufferSize = wrappedMetric.getSchema()->getSchemaSizeInBytes() * wrappedMetric.size();
+        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        wrappedMetric.writeToBuffer(tupleBuffer, 0);
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
+
+        MetricPtr parsedMetric = std::make_shared<Metric>(NetworkMetricsWrapper(schema));
+        readFromBuffer(parsedMetric, tupleBuffer, 0);
+        NetworkMetricsWrapper parsedMetricValues = parsedMetric->getValue<NetworkMetricsWrapper>();
+        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        for (unsigned int i = 0; i < parsedMetricValues.size(); i++) {
+            for (const std::string& metricName : configuredMetrics) {
+                ASSERT_EQ(parsedMetricValues.getNetworkValue(i).getValue(metricName), wrappedMetric.getNetworkValue(i).getValue(metricName));
+            }
+            for (const std::string& metricName : attributesList) {
+                ASSERT_EQ(parsedMetricValues.getNetworkValue(i).getValue(metricName), 0);
+            }
+        }
+        ASSERT_EQ(parsedMetricValues.getNodeId(), nodeId);
+    } else {
+        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorWrappedMetrics. Abstract reader found.");
+    }
+}
+
 }// namespace NES

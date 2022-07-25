@@ -67,28 +67,6 @@ SchemaPtr DiskMetrics::createSchema(const std::string& prefix, std::list<std::st
 void DiskMetrics::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
 SchemaPtr DiskMetrics::getSchema() const { return this->schema; }
 
-//SchemaPtr DiskMetrics::createSchemaJson(const std::string& prefix, std::vector<std::string> configuredMetrics) {
-//    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
-//                           ->addField(prefix + "node_id", BasicType::UINT64);
-//
-//    for (const auto& metric : configuredMetrics) {
-//        if (metric == "F_BSIZE") {
-//            schema->addField(prefix + "F_BSIZE", BasicType::UINT64);
-//        } else if (metric == "F_FRSIZE") {
-//            schema->addField(prefix + "F_FRSIZE", BasicType::UINT64);
-//        } else if (metric == "F_BLOCKS") {
-//            schema->addField(prefix + "F_BLOCKS", BasicType::UINT64);
-//        } else if (metric == "F_BFREE") {
-//            schema->addField(prefix + "F_BFREE", BasicType::UINT64);
-//        } else if (metric == "F_BAVAIL") {
-//            schema->addField(prefix + "F_BAVAIL", BasicType::UINT64);
-//        } else {
-//            NES_INFO("DiskMetrics: Metric unknown: " << metric);
-//        }
-//    }
-//    return schema;
-//}
-
 void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(this->schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
@@ -98,6 +76,7 @@ void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
                "DiskMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
+    // TODO auffangen, wenn kein Schema da ist oder ein leeres
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);//NodeId has always to be filled
     if (schema->contains("F_BSIZE")) {

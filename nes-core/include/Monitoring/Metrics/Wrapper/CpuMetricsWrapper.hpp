@@ -26,10 +26,16 @@ namespace NES {
  */
 class CpuMetricsWrapper {
   public:
-    CpuMetricsWrapper() = default;
-    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+    CpuMetricsWrapper();
     CpuMetricsWrapper(uint64_t nodeId);
+    CpuMetricsWrapper(uint64_t nodeId, SchemaPtr schema);
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    CpuMetricsWrapper(std::vector<CpuMetrics>&& arr, SchemaPtr schema);
+    CpuMetricsWrapper(SchemaPtr schema);
+
+    //    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+    [[nodiscard]] SchemaPtr getSchema() const;
+    void setSchema(SchemaPtr newSchema);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
@@ -79,6 +85,7 @@ class CpuMetricsWrapper {
   private:
     std::vector<CpuMetrics> cpuMetrics;
     uint64_t nodeId;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**

@@ -40,7 +40,7 @@ MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }
 bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         MemoryMetrics measuredVal = resourceReader->readMemoryStats();
-        measuredVal.setSchema(schema);
+        measuredVal.setSchema(this->schema);
         measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
@@ -54,7 +54,7 @@ SchemaPtr MemoryCollector::getSchema() { return schema; }
 
 const MetricPtr MemoryCollector::readMetric() const {
     MemoryMetrics metrics = resourceReader->readMemoryStats();
-//    metrics.setSchema(schema);
+    metrics.setSchema(this->schema);
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }

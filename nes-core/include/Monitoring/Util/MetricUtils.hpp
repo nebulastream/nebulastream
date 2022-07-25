@@ -100,6 +100,8 @@ class MetricUtils {
      */
     static web::json::value ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring);
 
+    static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
+
     static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
 
     static std::string listToString(const std::string& seperator, const std::list<std::string>& list);

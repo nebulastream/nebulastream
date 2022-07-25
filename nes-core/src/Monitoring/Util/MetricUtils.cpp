@@ -112,7 +112,7 @@ SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
         case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getDefaultSchema("");
         case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getDefaultSchema("");
         case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getDefaultSchema("");
-        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
+        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getDefaultSchema("");
         default: {
             NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
         }
@@ -359,5 +359,15 @@ std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::random
 
     std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
     return returnTuple;
+}
+std::list<std::string> MetricUtils::jsonArrayToList(web::json::value jsonAttributes) {
+    std::list<std::string> attributesList;
+    int i;
+    auto arrayLength = jsonAttributes.size();
+    for (i = 0; i < static_cast<int>(arrayLength); i++) {
+        attributesList.push_front(jsonAttributes[i].as_string());
+    }
+
+    return attributesList;
 }
 }// namespace NES

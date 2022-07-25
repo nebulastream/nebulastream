@@ -40,8 +40,7 @@ MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
 bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
-        // TODO: check if it has to be done still
-//        measuredVal.setSchema(schema);
+        measuredVal.setSchema(this->schema);
         measuredVal.setNodeId(getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
         NES_TRACE("CpuCollector: Written metrics for " << getNodeId() << ": " << asJson(measuredVal));
@@ -56,7 +55,7 @@ SchemaPtr CpuCollector::getSchema() { return schema; }
 
 const MetricPtr CpuCollector::readMetric() const {
     CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
-    // TODO: eventuell Schema übergeben
+    wrapper.setSchema(this->schema);
     wrapper.setNodeId(getNodeId());
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);
 }

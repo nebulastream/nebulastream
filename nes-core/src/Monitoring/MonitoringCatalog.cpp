@@ -33,7 +33,7 @@ MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricTy
     return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
 }
 
-MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {      //MonitoringPlanPtr übergeben und den Collectoren die entsprechenden Schemas geben
+MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
     NES_DEBUG("MonitoringCatalog: Init default catalog");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics(
@@ -44,33 +44,31 @@ MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {      //MonitoringPlan
     return create(metrics);
 }
 
-//MonitoringCatalogPtr MonitoringCatalog::configuredCatalog(std::multimap<std::string, std::string> catalog) {
-//    NES_DEBUG("MonitoringCatalog: Init configured catalog");
-//
-//    // init unordered_map
-//    std::unordered_map<MetricType, MetricCollectorPtr> metrics;
-//
-//    for (auto it = catalog.begin(); it != catalog.end(); ++it) {
-//        if(it == "WrappedCpuMetrics") {
-//            metrics.insert({MetricType::WrappedCpuMetrics,
-//                            std::shared_ptr<MetricCollector>(new CpuCollector(catalog.find("WrappedCpuMetrics")))})
-//        } else if (it == "DiskMetrics") {
-//            metrics.insert({MetricType::DiskMetric,
-//                            std::shared_ptr<MetricCollector>(new DiskCollector(catalog.find("DiskMetrics")))})
-//        } else if (it == "MemoryMetric") {
-//            metrics.insert({MetricType::DiskMetric,
-//                            std::shared_ptr<MetricCollector>(new MemoryCollector(catalog.find("MemoryMetric")))})
-//        } else if (it == "WrappedNetworkMetrics") {
-//            metrics.insert({MetricType::DiskMetric,
-//                            std::shared_ptr<MetricCollector>(new NetworkCollector(catalog.find("WrappedNetworkMetrics")))})
-//        } else {
-//            NES_DEBUG("MonitoringCatalog: MetricType \"" << it << "\" unknown.");
-//        }
-//    }
-//
-//    return create(metrics);
-//}
+MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& monitoringPlan) {
+    NES_DEBUG("MonitoringCatalog: Init catalog for Monitoringplan!");
 
+    std::unordered_map<MetricType, MetricCollectorPtr> metrics;
+    // TODO: confusion of Wrapped and what
+    if(monitoringPlan->hasMetric(CpuMetric)) {
+        metrics.insert({MetricType::WrappedCpuMetrics,
+                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(CpuMetric)))});
+    }
+    if (monitoringPlan->hasMetric(DiskMetric)) {
+        metrics.insert({MetricType::DiskMetric,
+                        std::shared_ptr<MetricCollector>(new DiskCollector(monitoringPlan->getSchema(DiskMetric)))});
+    }
+    if (monitoringPlan->hasMetric(MemoryMetric)) {
+        metrics.insert({MetricType::MemoryMetric,
+                        std::shared_ptr<MetricCollector>(new MemoryCollector(monitoringPlan->getSchema(MemoryMetric)))});
+    }
+    if (monitoringPlan->hasMetric(NetworkMetric)) {
+        metrics.insert({MetricType::WrappedNetworkMetrics,
+                        std::shared_ptr<MetricCollector>(new NetworkCollector(monitoringPlan->getSchema(NetworkMetric)))});
+    }
+    // TODO: add Registration and Runtime Metrics
+
+    return create(metrics);
+}
 
 MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
     if (metricMap.contains(metricType)) {

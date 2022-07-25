@@ -36,6 +36,8 @@ namespace NES {
 class NetworkMetrics {
   public:
     NetworkMetrics();
+    NetworkMetrics(SchemaPtr schema);
+
     static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     /**
@@ -43,7 +45,7 @@ class NetworkMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static SchemaPtr getDefaultSchema(const std::string& prefix);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -69,6 +71,9 @@ class NetworkMetrics {
     bool operator!=(const NetworkMetrics& rhs) const;
 
     static std::vector<std::string> getAttributesVector();
+    [[nodiscard]] SchemaPtr getSchema() const;
+    void setSchema(SchemaPtr newSchema);
+    uint64_t getValue(const std::string& metricName) const;
 
     uint64_t nodeId;
     uint64_t interfaceName;
@@ -90,6 +95,8 @@ class NetworkMetrics {
     uint64_t tColls;
     uint64_t tCarrier;
     uint64_t tCompressed;
+
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**
