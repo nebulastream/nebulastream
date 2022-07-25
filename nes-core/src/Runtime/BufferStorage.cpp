@@ -19,53 +19,23 @@
 
 namespace NES::Runtime {
 
-BufferStorage::BufferStorage(Network::NesPartition nesPartitionId) {
-    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
+void BufferStorage::insertBuffer(NES::Runtime::TupleBuffer buffer) {
+    this->storage.push(buffer);
 }
 
-void BufferStorage::insertBuffer(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
-    storage[nesPartition].push(buffer);
-}
-
-bool BufferStorage::trimBuffer(Network::NesPartition nesPartition, uint64_t timestamp) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        if (!iteratorPartitionId->second.empty()) {
-            while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
-                NES_TRACE("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
-                iteratorPartitionId->second.pop();
-            }
-            return true;
-        }
+void BufferStorage::trimBuffer(uint64_t timestamp) {
+    while (!this->storage.empty() && this->storage.top().getWatermark() < timestamp) {
+        NES_TRACE("BufferStorage: Delete tuple with watermark" << this->storage.top().getWatermark());
+        this->storage.pop();
     }
-    return false;
 }
 
 size_t BufferStorage::getStorageSize() const {
-    size_t size = 0;
-    for (auto& iteratorPartition : storage) {
-        size += iteratorPartition.second.size();
-    }
-    return size;
+    return this->storage.size();
 }
 
-size_t BufferStorage::getQueueSize(Network::NesPartition nesPartition) const {
-    auto iteratorPartition = storage.find(nesPartition);
-    if (iteratorPartition != storage.end()) {
-        return iteratorPartition->second.size();
-    } else {
-        return 0;
-    }
-}
-
-std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue(Network::NesPartition nesPartition) const {
-    auto iteratorQueryId = this->storage.find(nesPartition);
-    if (iteratorQueryId == this->storage.end()) {
-        NES_ERROR("BufferStorage: No queue with nesPartition " << nesPartition << "was found");
-        return std::optional<TupleBuffer>();
-    } else {
-        return iteratorQueryId->second.top();
-    }
+std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const {
+    return this->storage.top();
 }
 
 }// namespace NES::Runtime

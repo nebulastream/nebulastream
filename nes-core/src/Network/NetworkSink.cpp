@@ -65,7 +65,9 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        insertIntoStorageCallback(inputBuffer, workerContext);
+        if (success) {
+            insertIntoStorageCallback(inputBuffer, workerContext);
+        }
         return success;
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
     }

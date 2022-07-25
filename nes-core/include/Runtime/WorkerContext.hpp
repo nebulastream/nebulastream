@@ -49,7 +49,7 @@ class WorkerContext {
     LocalBufferPoolPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    BufferStoragePtr bufferStorage;
+    std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
 
   public:
     explicit WorkerContext(uint32_t workerId,

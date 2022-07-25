@@ -271,7 +271,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
     uint32_t parentId;
-    uint64_t numberOfBuffersPerEpoch;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

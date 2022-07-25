@@ -336,14 +336,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
-    /**
-     * @brief injects epoch barrier in all network sinks
-     * @param epochBarrier max timestamp of current epoch
-     * @param queryId query id
-     * @param source current operator
-     */
-    bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
-
   private:
     friend class ThreadPool;
     friend class NodeEngine;

@@ -56,15 +56,6 @@ FileSink::FileSink(SinkFormatPtr format,
     }
     NES_ASSERT(outputFile.is_open(), "file is not open");
     NES_ASSERT(outputFile.good(), "file not good");
-
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
 }
 
 FileSink::~FileSink() {

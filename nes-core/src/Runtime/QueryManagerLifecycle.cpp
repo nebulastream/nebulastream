@@ -491,7 +491,6 @@ bool AbstractQueryManager::addEpochPropagation(DataSourcePtr source, uint64_t qu
             }
             return true;
         }
-
     } else {
         NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no query execution plans were found");
     }

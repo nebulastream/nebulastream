@@ -146,7 +146,6 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event) {
         if (success) {
             NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
         } else {
-
             NES_ERROR("NetworkSource::onEvent:: could not propagate epoch " << epochBarrier << " queryId " << queryId);
         }
     }

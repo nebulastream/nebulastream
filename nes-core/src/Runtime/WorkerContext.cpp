@@ -62,15 +62,21 @@ void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::Network
 }
 
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
-    this->bufferStorage = std::make_shared<BufferStorage>(nesPartition);
+    this->storage[nesPartition] = std::make_shared<BufferStorage>();
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
-    bufferStorage->insertBuffer(nesPartition, buffer);
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        this->storage[nesPartition]->insertBuffer(buffer);
+    }
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
-    bufferStorage->trimBuffer(nesPartition, timestamp);
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        this->storage[nesPartition]->trimBuffer(timestamp);
+    }
 }
 
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
