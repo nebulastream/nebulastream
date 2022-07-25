@@ -58,6 +58,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                       gatheringMode,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
+    NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
     this->numBuffersToProcess = numBuffersToProcess;
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
@@ -87,15 +88,31 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     }
 
     NES_DEBUG("BenchmarkSource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
-    NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
+}
+
+
+BenchmarkSource::~BenchmarkSource() {
+    numaLocalMemoryArea.release();
 }
 
 void BenchmarkSource::open() {
     DataSource::open();
-    auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
-    numaLocalMemoryArea = *buffer;
+    numaLocalMemoryArea = *localBufferManager->getUnpooledBuffer(memoryAreaSize);
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
     memoryArea.reset();
+    memoryAreaRefCnt = 1;
+}
+
+void BenchmarkSource::recyclePooledBuffer(Runtime::detail::MemorySegment*) {
+    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+        numaLocalMemoryArea.release();
+    }
+}
+
+void BenchmarkSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {
+    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+        numaLocalMemoryArea.release();
+    }
 }
 
 void BenchmarkSource::runningRoutine() {
@@ -143,6 +160,7 @@ void BenchmarkSource::runningRoutine() {
                     buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
                                                               bufferSize,
                                                               this);
+                    memoryAreaRefCnt.fetch_add(1);
                     break;
                 }
             }
@@ -168,7 +186,9 @@ void BenchmarkSource::runningRoutine() {
 
 void BenchmarkSource::close() {
     DataSource::close();
-    numaLocalMemoryArea.release();
+    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+        numaLocalMemoryArea.release();
+    }
 }
 
 std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
