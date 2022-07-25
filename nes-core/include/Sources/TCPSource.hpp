@@ -81,11 +81,14 @@ class TCPSource : public DataSource {
     SourceType getType() const override;
 
     /**
-     * @brief method to connect tcp using the host and port specified before
-     * check if already connected, if not connect try to connect, if already connected return
-     * @return bool indicating if connection could be established
+     * @brief opens TCP connection
      */
-    bool connected();
+    void open() override;
+
+    /**
+     * @brief closes TCP connection
+     */
+    void close() override;
 
   private:
     TCPSource() = delete;
