@@ -20,6 +20,7 @@
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <REST/ServerTypes.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -153,10 +154,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
     /**
-     * @brief Configuration of Server Type
-     * set true if type of server should be oatpp
+     * @brief Configuration of Server Type using oatpp or cpprestSDK
      */
-    BoolOption serverTypeOatpp = {SERVERTYPE_OATPP, false, "set True, when you want to use the oatpp framework."};
+    EnumOption<ServerType> restServerType = {SERVER_TYPE,
+                                     ServerType::CPPRestSDK,
+                                     "Sets the Server Type (Oatpp, CPPRestSDK)"};
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
@@ -181,7 +183,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &optimizer,
                 &logicalSources,
                 &coordinatorHealthCheckWaitTime,
-                &serverTypeOatpp};
+                &restServerType};
     }
 };
 

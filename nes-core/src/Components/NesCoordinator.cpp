@@ -232,7 +232,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
 
-        if (this->coordinatorConfiguration->serverTypeOatpp == true){
+        if (this->coordinatorConfiguration->restServerType == NES::ServerType::Oatpp){
             NES_DEBUG("NesCoordinator::startCoordinatorRESTServerOATPP: ready");
             restServer->start(true);//this call is blocking
         }
