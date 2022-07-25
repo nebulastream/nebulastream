@@ -18,7 +18,7 @@
 
 namespace NES {
 
-bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort) {
+bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedNumberBuffers, const std::string& restPort) {
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t currentResult = 0;
@@ -76,15 +76,15 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
             })
             .wait();
 
-        if (currentResult >= expectedResult) {
+        if (currentResult >= expectedNumberBuffers) {
             NES_DEBUG("checkCompleteOrTimeout: results are correct");
             return true;
         }
-        NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedResult);
+        NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedNumberBuffers);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
     NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult="
-              << currentResult << " expectedResult=" << expectedResult);
+              << currentResult << " expectedNumberBuffers=" << expectedNumberBuffers);
     return false;
 }
 

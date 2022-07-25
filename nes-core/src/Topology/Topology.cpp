@@ -317,7 +317,7 @@ std::string Topology::toString() {
     return topologyInfo.str();
 }
 
-void Topology::print() { NES_DEBUG("Topology:" << toString()); }
+void Topology::print() { NES_DEBUG("Topology print:" << toString()); }
 
 bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t grpcPort) {
     std::unique_lock lock(topologyLock);

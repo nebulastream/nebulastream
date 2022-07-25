@@ -49,81 +49,129 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         NES_INFO("NemoIntegrationTest: Setting up test with rpc port " << rpcCoordinatorPort << ", rest port " << restPort);
     }
+
+    std::string testTopology(uint64_t restPort,
+                             uint64_t rpcCoordinatorPort,
+                             uint64_t layers,
+                             uint64_t nodesPerNode,
+                             uint64_t leafNodesPerNode,
+                             uint64_t childThreshold,
+                             uint64_t combinerThreshold,
+                             uint64_t expectedNumberBuffers) {
+        NES_INFO(" start coordinator");
+        std::string outputFilePath = "windowOut.csv";
+        remove(outputFilePath.c_str());
+
+        uint64_t nodeId = 1;
+        uint64_t leafNodes = 0;
+
+        std::vector<uint64_t> nodes;
+        std::vector<uint64_t> parents;
+        std::vector<std::shared_ptr<Util::Subprocess>> workerProcs;
+
+        // Setup the topology
+        auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcCoordinatorPort),
+                                                        TestUtils::restPort(restPort),
+                                                        TestUtils::enableDebug(),
+                                                        TestUtils::setDistributedWindowChildThreshold(childThreshold),
+                                                        TestUtils::setDistributedWindowCombinerThreshold(combinerThreshold)});
+        assert(TestUtils::waitForWorkers(restPort, timeout, 0));
+
+        std::stringstream schema;
+        schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
+                  ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
+                  "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+        schema << endl;
+
+        NES_INFO("schema submit=" << schema.str());
+        bool logSource = TestUtils::addLogicalSource(schema.str(), std::to_string(restPort));
+        assert(logSource);
+
+        nodes.emplace_back(1);
+        parents.emplace_back(1);
+
+        for (uint64_t i = 2; i <= layers; i++) {
+            std::vector<uint64_t> newParents;
+            for (auto parent : parents) {
+                uint64_t nodeCnt = nodesPerNode;
+                if (i == layers) {
+                    nodeCnt = leafNodesPerNode;
+                }
+                for (uint64_t j = 0; j < nodeCnt; j++) {
+                    nodeId++;
+                    nodes.emplace_back(nodeId);
+                    newParents.emplace_back(nodeId);
+
+                    if (i == layers) {
+                        leafNodes++;
+                        auto workerProc = TestUtils::startWorkerPtr(
+                            {TestUtils::rpcPort(0),
+                             TestUtils::dataPort(0),
+                             TestUtils::coordinatorPort(rpcCoordinatorPort),
+                             TestUtils::parentId(parent),
+                             TestUtils::sourceType("CSVSource"),
+                             TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                             TestUtils::physicalSourceName("test_stream_" + std::to_string(nodeId)),
+                             TestUtils::logicalSourceName("window"),
+                             TestUtils::numberOfBuffersToProduce(1),
+                             TestUtils::numberOfTuplesToProducePerBuffer(28),
+                             TestUtils::sourceGatheringInterval(1000),
+                             TestUtils::workerHealthCheckWaitTime(1)});
+                        workerProcs.emplace_back(std::move(workerProc));
+                        assert(TestUtils::waitForWorkers(restPort, timeout, nodeId - 1));
+                        continue;
+                    }
+
+                    auto workerProc = TestUtils::startWorkerPtr({TestUtils::rpcPort(0),
+                                                                 TestUtils::dataPort(0),
+                                                                 TestUtils::coordinatorPort(rpcCoordinatorPort),
+                                                                 TestUtils::parentId(parent),
+                                                                 TestUtils::workerHealthCheckWaitTime(1)});
+                    workerProcs.emplace_back(std::move(workerProc));
+                    assert(TestUtils::waitForWorkers(restPort, timeout, nodeId - 1));
+                }
+            }
+            parents = newParents;
+        }
+
+        NES_INFO("NemoIntegrationTest: Finished setting up topology.");
+
+        std::stringstream ss;
+        ss << "{\"userQuery\" : ";
+        ss << "\"Query::from(\\\"window\\\")"
+              ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
+              ".byKey(Attribute(\\\"id\\\"))"
+              ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+        ss << outputFilePath;
+        ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+        ss << R"());","strategyName" : "BottomUp"})";
+        ss << endl;
+
+        NES_INFO("query string submit=" << ss.str());
+
+        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+        QueryId queryId = json_return.at("queryId").as_integer();
+
+        NES_INFO("try to acc return");
+        NES_INFO("Query ID: " << queryId);
+
+        assert(TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort)));
+        assert(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+        std::ifstream ifs(outputFilePath.c_str());
+        assert(ifs.good());
+        std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        NES_INFO("content=" << content);
+
+        return content;
+    }
 };
 
 TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
-    NES_INFO(" start coordinator");
-    std::string outputFilePath = "windowOut.csv";
-    remove(outputFilePath.c_str());
-
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(),
-                                                    TestUtils::setDistributedWindowChildThreshold(100),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
-    schema << endl;
-
-    NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
-
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_1"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_2"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
-
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\")"
-          ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-          ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
-    ss << outputFilePath;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
-    ss << endl;
-
-    NES_INFO("query string submit=" << ss.str());
-
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
-
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
-    ASSERT_NE(queryId, INVALID_QUERY_ID);
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    ASSERT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    uint64_t childThreshold = 0;
+    uint64_t combinerThreshold = 0;
+    uint64_t expectedNoBuffers = 3;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 2, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,102\n"
@@ -139,78 +187,10 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
 }
 
 TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
-    NES_INFO(" start coordinator");
-    std::string outputFilePath = "windowOut.csv";
-    remove(outputFilePath.c_str());
-
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(),
-                                                    TestUtils::setDistributedWindowChildThreshold(0),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
-    schema << endl;
-
-    NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
-
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_1"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_2"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
-
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\")"
-          ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-          ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
-    ss << outputFilePath;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
-    ss << endl;
-
-    NES_INFO("query string submit=" << ss.str());
-
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
-
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
-    ASSERT_NE(queryId, INVALID_QUERY_ID);
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    ASSERT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    uint64_t childThreshold = 0;
+    uint64_t combinerThreshold = 100;
+    uint64_t expectedNoBuffers = 2;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 2, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,51\n"
@@ -232,95 +212,24 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
 }
 
 TEST_F(NemoIntegrationTest, testNemoThreelevels) {
-    NES_INFO(" start coordinator");
-    std::string outputFilePath = "windowOut.csv";
-    remove(outputFilePath.c_str());
-
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(),
-                                                    TestUtils::setDistributedWindowChildThreshold(0),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(100)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
-    schema << endl;
-
-    NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
-
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_1"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::parentId(2),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_2"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
-
-    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
-
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\")"
-          ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-          ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
-    ss << outputFilePath;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
-    ss << endl;
-
-    NES_INFO("query string submit=" << ss.str());
-
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
-
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
-    ASSERT_NE(queryId, INVALID_QUERY_ID);
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    ASSERT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    uint64_t childThreshold = 0;
+    uint64_t combinerThreshold = 0;
+    uint64_t expectedNoBuffers = 2;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,51\n"
-                             "10000,20000,1,145\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n"
-                             "0,10000,1,51\n"
-                             "10000,20000,1,145\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n";
+                             "0,10000,1,102\n"
+                             "10000,20000,1,290\n"
+                             "0,10000,4,2\n"
+                             "0,10000,11,10\n"
+                             "0,10000,12,2\n"
+                             "0,10000,16,4\n"
+                             "0,10000,1,102\n"
+                             "10000,20000,1,290\n"
+                             "0,10000,4,2\n"
+                             "0,10000,11,10\n"
+                             "0,10000,12,2\n"
+                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
