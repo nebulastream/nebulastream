@@ -35,6 +35,10 @@ namespace NES {
 
 uint16_t timeout = 15;
 
+/**
+ * @brief Test the NEMO placement on different topologies to check if shared nodes contain the window operator based on the configs
+ * of setDistributedWindowChildThreshold and setDistributedWindowCombinerThreshold.
+ */
 class NemoIntegrationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;

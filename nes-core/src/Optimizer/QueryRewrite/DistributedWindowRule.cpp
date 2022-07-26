@@ -127,10 +127,10 @@ void DistributeWindowRule::createDistributedNemoWindowOperator(const WindowOpera
 std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
 DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold) {
     std::unordered_map<uint64_t, std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>> nodePlacement;
+    //iterate over all children of the operator
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
         if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_NODE_ID)) {
             auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_NODE_ID));
-            //auto operatorId = child->as_if<OperatorNode>()->getId();
             TopologyNodePtr node = topology->findNodeWithId(nodeId);
             for (auto& parent : node->getParents()) {
                 auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());
@@ -146,6 +146,7 @@ DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t comb
                 NES_ASSERT(watermark != nullptr, "DistributedWindowRule: Window source does not contain a watermark");
 
                 auto newPair = std::make_pair(node, watermark);
+                //identify shared parent and add to result
                 if (nodePlacement.contains(parentId)) {
                     nodePlacement[parentId].emplace_back(newPair);
                 } else {
@@ -155,10 +156,10 @@ DistributeWindowRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t comb
             }
         }
     }
-    auto sinkNodes = operatorNode->getAllRootNodes();
     std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>> rootOperators;
     auto rootId = topology->getRoot()->getId();
 
+    //get the root operators
     if (nodePlacement.contains(rootId)) {
         rootOperators = nodePlacement[rootId];
     } else {

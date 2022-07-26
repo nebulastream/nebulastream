@@ -58,7 +58,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     originIdInferencePhase = OriginIdInferencePhase::create();
-    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfiguration);
+    topologySpecificQueryRewritePhase =
+        TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
@@ -69,7 +70,8 @@ GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
-                                   const Configurations::OptimizerConfiguration optimizerConfiguration, Catalogs::UdfCatalogPtr udfCatalog) {
+                                   const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                   Catalogs::UdfCatalogPtr udfCatalog) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
                                                                                    std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),

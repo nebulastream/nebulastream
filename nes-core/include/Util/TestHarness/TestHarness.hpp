@@ -394,6 +394,11 @@ class TestHarness {
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
+    /**
+     * @brief Method to setup the topology
+     * @param crdFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
+     * @return the TestHarness
+     */
     TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr) {
     }) {
         if (!validationDone) {
