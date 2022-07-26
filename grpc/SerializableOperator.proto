@@ -68,6 +68,12 @@ message SerializablePhysicalSourceType{
       CSV = 1;
   };
 
+  enum TCPDecideMessageSize{
+      TUPLE_SEPARATOR = 0;
+      USER_SPECIFIED_BUFFER_SIZE = 1;
+      BUFFER_SIZE_FROM_SOCKET = 2;
+  }
+
   /**
   The serializable wrapper for the sense source config object
   */
@@ -118,7 +124,11 @@ message SerializablePhysicalSourceType{
       uint32 socketType = 4;
       float flushIntervalMS = 6;
       InputFormat inputFormat = 7;
-      string tupleSeparator = 8;
+      TCPDecideMessageSize tcpDecideMessageSize = 8;
+      string tupleSeparator = 9;
+      uint32 socketBufferSize = 10;
+      uint32 bytesUsedForSocketBufferSizeTransfer = 11;
+
     }
 
   /**

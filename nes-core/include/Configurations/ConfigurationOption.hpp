@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
+#include <Util/Logger/Logger.hpp>
 #include <Util/GatheringMode.hpp>
 
 #include <any>
@@ -28,7 +29,19 @@ namespace NES {
 
 namespace Configurations {
 
+/**
+ * @brief input format enum gives information whether a JSON or CSV was used to transfer data
+ */
 enum InputFormat { JSON, CSV };
+
+/**
+ * @brief Decide how a message size is obtained:
+ * TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator between them, tupleSeperator needs to be set
+ * USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, socketBufferSize needs to be set
+ * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
+ * bytesUsedForSocketBufferSizeTransfer needs to be set
+ */
+enum TCPDecideMessageSize { TUPLE_SEPARATOR, USER_SPECIFIED_BUFFER_SIZE, BUFFER_SIZE_FROM_SOCKET };
 
 /**
  * @brief Template for a ConfigurationOption object
@@ -124,9 +137,26 @@ class ConfigurationOption {
     void setInputFormatEnum(std::string inputFormat) {
         if (inputFormat == "CSV") {
             this->value = InputFormat::CSV;
-        }
-        if (inputFormat == "JSON") {
+        } else if (inputFormat == "JSON") {
             this->value = InputFormat::JSON;
+        } else {
+            NES_ERROR("InputFormatEnum: value unknown.");
+        }
+    }
+
+    /**
+     * @brief converts a string to the appropriate TCPDecideMessageSize enum value and sets it
+     * @param decideMessageSize
+     */
+    void setTCPDecideMessageSizeEnum(std::string decideMessageSize) {
+        if (decideMessageSize == "TUPLE_SEPARATOR") {
+            this->value = TCPDecideMessageSize::TUPLE_SEPARATOR;
+        } else if (decideMessageSize == "USER_SPECIFIED_BUFFER_SIZE") {
+            this->value = TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE;
+        } else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET") {
+            this->value = TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET;
+        } else {
+            NES_ERROR("TCPDecideMessageSizeEnum: value unknown.");
         }
     }
 
@@ -156,6 +186,7 @@ using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
 using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode::Value>>;
+using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
@@ -283,7 +314,10 @@ const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
 const std::string SOCKET_TYPE_CONFIG = "socketType";
+const std::string DECIDE_MESSAGE_SIZE_CONFIG = "decideMessageSize";
 const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
+const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
+const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
 //Runtine configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";

@@ -73,7 +73,7 @@ class TCPSourceType : public PhysicalSourceType {
 
     /**
      * @brief get host address
-     * @return host adress
+     * @return host address
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getSocketHost() const;
 
@@ -143,6 +143,25 @@ class TCPSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<Configurations::InputFormat>> getInputFormat() const;
 
     /**
+     * @brief Sets decideMessageSize given as Configuration::TCPDecideMessageSize
+     * @param decideMessageSize TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator between them, tupleSeperator needs to be set
+     * USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, socketBufferSize needs to be set
+     * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
+     * bytesUsedForSocketBufferSizeTransfer needs to be set
+     */
+    void setDecideMessageSize(Configurations::TCPDecideMessageSize decideMessageSizeValue);
+
+    /**
+     * @brief Get the decideMessageSize given as Configuration::TCPDecideMessageSize
+     * @return decideMessageSizeValue
+     * TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator between them, tupleSeperator needs to be set
+     * USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, socketBufferSize needs to be set
+     * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
+     * bytesUsedForSocketBufferSizeTransfer needs to be set
+     */
+    [[nodiscard]] Configurations::TCPDecideMessageSizeConfigOption getDecideMessageSize() const;
+
+    /**
      * @brief Get tupleBuffer flush interval in milliseconds
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<float>> getFlushIntervalMS() const;
@@ -163,6 +182,30 @@ class TCPSourceType : public PhysicalSourceType {
      * @param deviderTokenValue message divider as char
      */
     void setTupleSeparator(char dividerTokenValue);
+
+    /**
+     * @brief get socket buffer size, i.e. fix the message size for tuple data that is send via socket to this value
+     * @return socketBufferSize
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketBufferSize() const;
+
+    /**
+     * @brief set socketBufferSize, i.e. fix the message size for tuple data that is send via socket to this value
+     * @param socketBufferSizeValue size of the message that is send over the socket
+     */
+    void setSocketBufferSize(uint32_t socketBufferSizeValue);
+
+    /**
+     * @brief get bytesUsedForSocketBufferSizeTransfer, i.e. the number of bytes that are send between messages to indicate the messages' sizes
+     * @return bytesUsedForSocketBufferSizeTransfer
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getBytesUsedForSocketBufferSizeTransfer() const;
+
+    /**
+     * @brief bytesUsedForSocketBufferSizeTransfer, i.e. the number of bytes that are send between messages to indicate the messages' sizes
+     * @param bytesUsedForSocketBufferSizeTransferValue new socket port
+     */
+    void setBytesUsedForSocketBufferSizeTransfer(uint32_t bytesUsedForSocketBufferSizeTransferValue);
 
   private:
     /**
@@ -188,8 +231,10 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption socketType;
     Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
+    Configurations::TCPDecideMessageSizeConfigOption decideMessageSize;
     Configurations::CharConfigOption tupleSeparator;
-
+    Configurations::IntConfigOption socketBufferSize;
+    Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
 };
 }// namespace NES
 #endif//NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP
