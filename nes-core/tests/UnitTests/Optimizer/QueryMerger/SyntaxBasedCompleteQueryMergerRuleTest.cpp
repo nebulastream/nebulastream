@@ -32,6 +32,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -649,7 +650,9 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
     auto topoSpecificRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                        sourceCatalog,
+                                                                        Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
@@ -704,7 +707,9 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
     auto topoSpecificRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                        sourceCatalog,
+                                                                        Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
