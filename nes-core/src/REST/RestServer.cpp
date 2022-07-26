@@ -15,14 +15,19 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <iostream>
-#include <oatpp/network/Server.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/OatppController/ConnectivityController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
-#include <REST/OatppController/ConnectivityController.hpp>
-#include <REST/AppComponent.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <iostream>
+#include <oatpp/network/Address.hpp>
+#include <oatpp/network/Server.hpp>
+#include <oatpp/network/tcp/server/ConnectionProvider.hpp>
+#include <oatpp/parser/json/mapping/ObjectMapper.hpp>
+#include <oatpp/web/server/HttpConnectionHandler.hpp>
+#include <oatpp/web/server/HttpRouter.hpp>
 #include <utility>
 
 namespace NES {
@@ -55,23 +60,22 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port) {}
 
-bool RestServer::start(bool useOatpp){
-    if (useOatpp == true){
+bool RestServer::start(bool useOatpp) {
+    if (useOatpp == true) {
         return startWithOatpp();
     }
     return startWithRestSDK();
 }
 
 bool RestServer::startWithOatpp() {
-    NES_INFO("RestServer: starting on " << host << ":" << std::to_string(port));
+    NES_INFO("Starting Oatpp Server on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     try {
+        // Initialize Oatpp Environment
         oatpp::base::Environment::init();
-        // Run Server
-        NES_INFO("start RestServer with OATPP");
-        // this call is blocking
+        // Start a blocking Server
         run();
-        // Destroy oatpp Environment
+        // Destroy Oatpp Environment
         oatpp::base::Environment::destroy();
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
@@ -83,7 +87,7 @@ bool RestServer::startWithOatpp() {
     return true;
 }
 
-bool RestServer::startWithRestSDK(){
+bool RestServer::startWithRestSDK() {
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
@@ -126,24 +130,31 @@ bool RestServer::stop() {
 }
 
 void RestServer::run() {
-    /* Register Components in scope of run() method */
-    AppComponent components(host, port);
 
-    /* Get router component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
+    /* Initialize Object mapper */
+    auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
 
-    /* Create ConnectivityController and add all of its endpoints to router */
-    auto connectivityController = std::make_shared<ConnectivityController>();
+    /* Create Router for HTTP requests routing */
+    auto router = oatpp::web::server::HttpRouter::createShared();
+
+    /* Create connectivity controller and add all of its endpoints to the router */
+    auto connectivityController = ConnController::createShared(objectMapper);
     router->addController(connectivityController);
 
-    /* Get connection handler component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
+    /* Create HTTP connection handler with router */
+    auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
+    //register error handler
+    connectionHandler->setErrorHandler(std::make_shared<ErrorHandler>(objectMapper));
 
-    /* Get connection provider component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
+    /* Create TCP connection provider */
+    auto connectionProvider =
+        oatpp::network::tcp::server::ConnectionProvider::createShared({host, port, oatpp::network::Address::IP_4});
 
-    /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
+    /* Create a server, which takes provided TCP connections and passes them to HTTP connection handler. */
     oatpp::network::Server server(connectionProvider, connectionHandler);
+
+    /* Print info about server port */
+    NES_INFO("NebulaStream REST Server listening on port" << connectionProvider->getProperty("port").getData());
 
     /* Run server */
     server.run();

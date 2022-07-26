@@ -12,29 +12,30 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_HPP_
-#define NES_NES_CORE_INCLUDE_REST_DTOS_HPP_
+#ifndef NES_ERRORRESPONSE_HPP
+#define NES_ERRORRESPONSE_HPP
 
-#include <oatpp/core/data/mapping/type/Object.hpp>
-#include <oatpp/core/macro/codegen.hpp>
+#include "oatpp/core/Types.hpp"
+#include "oatpp/core/macro/codegen.hpp"
 
-/* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
 
-/**
- * Message Data-Transfer-Object
- */
-class ConnectivityResponse : public oatpp::DTO {
-    DTO_INIT(ConnectivityResponse, DTO /* Extends */)
-    DTO_FIELD(Int32, statusCode);// Status code field
-    DTO_FIELD(Boolean, success); // Message field
+class ErrorMessage : public oatpp::DTO {
+
+    DTO_INIT(ErrorMessage, DTO)
+
+    DTO_FIELD_INFO(status) { info->description = "Short status text"; }
+    DTO_FIELD(String, status);
+
+    DTO_FIELD_INFO(code) { info->description = "Status code"; }
+    DTO_FIELD(Int32, code);
+
+    DTO_FIELD_INFO(message) { info->description = "Verbose message"; }
+    DTO_FIELD(String, message);
 };
 
 }// namespace NES
-
-/* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-
-#endif//NES_NES_CORE_INCLUDE_REST_DTOS_HPP_
+#endif//NES_ERRORRESPONSE_HPP

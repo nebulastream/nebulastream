@@ -36,7 +36,7 @@ class ConnectivityControllerTest : public Testing::NESBaseTest {
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->restServerType = ServerType::Oatpp;
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-        EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+        EXPECT_EQ(coordinator->startCoordinator(true), *rpcCoordinatorPort);
         NES_INFO("TestsForOatppEndpoints: Coordinator started successfully");
         return coordinator;
     }

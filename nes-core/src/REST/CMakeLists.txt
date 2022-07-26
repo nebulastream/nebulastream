@@ -23,6 +23,7 @@ add_source_files(nes-core
         Controller/TopologyController.cpp
         Controller/MaintenanceController.cpp
         Controller/LocationController.cpp
+        Handlers/ErrorHandler.cpp
         RestServer.cpp
         RestServerInterruptHandler.cpp
         )
