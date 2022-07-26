@@ -57,9 +57,6 @@ using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
@@ -73,6 +70,9 @@ class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
@@ -86,7 +86,7 @@ class RequestProcessorService {
                                      const TopologyPtr& topology,
                                      const QueryCatalogServicePtr& queryCatalogService,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
-                                     const SourceCatalogPtr& sourceCatalog,
+                                     const Catalogs::SourceCatalogPtr& sourceCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::OptimizerConfiguration optimizerConfiguration,

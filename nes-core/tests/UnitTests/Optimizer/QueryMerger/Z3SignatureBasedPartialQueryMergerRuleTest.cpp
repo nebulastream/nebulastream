@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -51,7 +52,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
@@ -69,7 +70,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
@@ -79,28 +80,28 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
-        SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry2);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry3 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
-        SourceCatalogEntryPtr sourceCatalogEntry4 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode2);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry3 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry4 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode2);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry3);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry4);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry5 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
-        SourceCatalogEntryPtr sourceCatalogEntry6 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry5 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry6 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
         udfCatalog = Catalogs::UdfCatalog::create();

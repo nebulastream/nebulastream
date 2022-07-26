@@ -43,7 +43,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     void SetUp() override {
@@ -51,7 +51,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 

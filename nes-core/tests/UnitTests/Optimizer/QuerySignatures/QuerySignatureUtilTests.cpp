@@ -47,8 +47,8 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
     SchemaPtr schema;
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
-    SourceCatalogPtr sourceCatalog;
-    UdfCatalogPtr udfCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::UdfCatalogPtr udfCatalog;
     std::shared_ptr<Optimizer::TypeInferencePhaseContext> typeInferencePhaseContext;
 
     /* Will be called before all tests in this class are started. */
@@ -62,7 +62,7 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
         udfCatalog = Catalogs::UdfCatalog::create();
         typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
             Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));

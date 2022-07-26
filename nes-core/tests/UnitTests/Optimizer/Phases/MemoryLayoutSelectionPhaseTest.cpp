@@ -18,6 +18,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -204,7 +205,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
 
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -231,7 +232,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto inputSchema = Schema::create();
     inputSchema->addField("default_logical$f1", BasicType::INT32);
 
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 

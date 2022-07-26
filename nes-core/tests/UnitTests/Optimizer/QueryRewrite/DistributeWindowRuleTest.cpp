@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -71,7 +72,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
     static void TearDownTestCase() { NES_INFO("Tear down DistributeWindowRuleTest test class."); }
 };
 
-void setupSensorNodeAndSourceCatalogTwoNodes(const SourceCatalogPtr& sourceCatalog) {
+void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -79,14 +80,14 @@ void setupSensorNodeAndSourceCatalogTwoNodes(const SourceCatalogPtr& sourceCatal
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    Catalogs::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
     sourceCatalog->addPhysicalSource("default_logical", sce2);
 }
 
-void setupSensorNodeAndSourceCatalogFiveNodes(const SourceCatalogPtr& sourceCatalog) {
+void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
 
@@ -101,11 +102,11 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const SourceCatalogPtr& sourceCata
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
-    SourceCatalogEntryPtr sce3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
-    SourceCatalogEntryPtr sce4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
-    SourceCatalogEntryPtr sce5 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
+    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    Catalogs::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    Catalogs::SourceCatalogEntryPtr sce3 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
+    Catalogs::SourceCatalogEntryPtr sce4 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
+    Catalogs::SourceCatalogEntryPtr sce5 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
     sourceCatalog->addPhysicalSource("default_logical", sce2);
@@ -114,20 +115,20 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const SourceCatalogPtr& sourceCata
     sourceCatalog->addPhysicalSource("default_logical", sce5);
 }
 
-void setupSensorNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) {
+void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -151,7 +152,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalogTwoNodes(sourceCatalog);
 
     // Prepare
@@ -182,7 +183,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalogFiveNodes(sourceCatalog);
 
     // Prepare

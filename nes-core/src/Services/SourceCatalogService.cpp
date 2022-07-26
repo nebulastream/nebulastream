@@ -26,7 +26,7 @@
 
 namespace NES {
 
-SourceCatalogService::SourceCatalogService(SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
+SourceCatalogService::SourceCatalogService(Catalogs::SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
     NES_DEBUG("SourceCatalogService()");
     NES_ASSERT(this->sourceCatalog, "sourceCatalogPtr has to be valid");
 }
@@ -49,7 +49,7 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
     std::unique_lock<std::mutex> lock(addRemovePhysicalSource);
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
+    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
     bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");

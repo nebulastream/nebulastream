@@ -66,7 +66,7 @@ class SourceCatalogServiceTest : public Testing::NESBaseTest {
 
 TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
@@ -89,7 +89,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
 
 TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);

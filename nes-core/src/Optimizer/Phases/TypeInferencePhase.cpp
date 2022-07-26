@@ -25,12 +25,12 @@
 #include <utility>
 namespace NES::Optimizer {
 
-TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog)
+TypeInferencePhase::TypeInferencePhase(Catalogs::SourceCatalogPtr sourceCatalog, Catalogs::UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhasePtr TypeInferencePhase::create(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog) {
+TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::SourceCatalogPtr sourceCatalog, Catalogs::UdfCatalogPtr udfCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 

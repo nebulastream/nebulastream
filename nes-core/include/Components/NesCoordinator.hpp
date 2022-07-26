@@ -43,9 +43,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class RestServer;
 using RestServerPtr = std::shared_ptr<RestServer>;
 
@@ -83,6 +80,9 @@ class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
 namespace Catalogs {
+
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
@@ -144,7 +144,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief catalog method for debug use only
      * @return sourceCatalog
      */
-    SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
+    Catalogs::SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
 
     /**
      * @brief getter of replication service
@@ -247,7 +247,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     HealthCheckServicePtr healthCheckService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     Catalogs::QueryCatalogPtr queryCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;

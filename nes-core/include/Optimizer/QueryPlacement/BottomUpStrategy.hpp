@@ -18,7 +18,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
 
-namespace NES {
+namespace NES::Catalogs {
 
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;

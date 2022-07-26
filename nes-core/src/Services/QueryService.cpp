@@ -38,7 +38,7 @@ namespace NES {
 
 QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            RequestQueuePtr queryRequestQueue,
-                           SourceCatalogPtr sourceCatalog,
+                           Catalogs::SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
                            Catalogs::UdfCatalogPtr udfCatalog)

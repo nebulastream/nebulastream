@@ -57,7 +57,7 @@ NES::NesCoordinatorPtr coordinator;
  * @param noOfPhysicalSource : number of physical sources
  */
 void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource) {
-    NES::SourceCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
+    Catalogs::SourceCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
                                  ->addField("a", NES::UINT64)
@@ -113,7 +113,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
-            SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
+            Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }

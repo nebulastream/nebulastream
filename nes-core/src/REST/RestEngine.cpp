@@ -30,7 +30,7 @@
 
 namespace NES {
 
-RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
+RestEngine::RestEngine(const Catalogs::SourceCatalogPtr& sourceCatalog,
                        const NesCoordinatorWeakPtr& coordinator,
                        const QueryCatalogServicePtr& queryCatalogService,
                        const TopologyPtr& topology,

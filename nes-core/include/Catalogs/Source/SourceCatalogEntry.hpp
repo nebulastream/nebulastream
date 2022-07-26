@@ -24,14 +24,16 @@ namespace NES {
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-class SourceCatalogEntry;
-using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
-
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+
+namespace Catalogs {
+
+class SourceCatalogEntry;
+using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
 
 /**
  * @brief one entry in the catalog contains
@@ -85,7 +87,7 @@ class SourceCatalogEntry {
     LogicalSourcePtr logicalSource;
     TopologyNodePtr node;
 };
-
+}// namespace Catalogs
 }// namespace NES
 
 #endif// NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

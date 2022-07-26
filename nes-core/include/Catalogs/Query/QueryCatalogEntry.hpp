@@ -30,10 +30,10 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Catalogs {
-
 class QuerySubPlanMetaData;
 using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+
+namespace Catalogs {
 
 /**
  * @brief class to handle the entry in the query catalog

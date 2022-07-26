@@ -96,7 +96,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
-    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
 

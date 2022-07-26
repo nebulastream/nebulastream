@@ -33,9 +33,6 @@ using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
@@ -52,6 +49,9 @@ class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
@@ -83,7 +83,7 @@ class RestServer {
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogServicePtr& queryCatalogService,
-               const SourceCatalogPtr& sourceCatalog,
+               const Catalogs::SourceCatalogPtr& sourceCatalog,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,

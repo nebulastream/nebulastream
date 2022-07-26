@@ -39,7 +39,7 @@ const std::string defaultLogicalSourceName = "default_logical";
 /* - nesTopologyManager ---------------------------------------------------- */
 class SourceCatalogTest : public Testing::NESBaseTest {
   public:
-    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<Catalogs::SourceCatalog> sourceCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -52,7 +52,7 @@ class SourceCatalogTest : public Testing::NESBaseTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
     }
 
     /* Will be called before a test is executed. */
@@ -63,7 +63,7 @@ class SourceCatalogTest : public Testing::NESBaseTest {
 };
 
 TEST_F(SourceCatalogTest, testAddGetLogSource) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
 
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
     SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
@@ -98,7 +98,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 }
 
 TEST_F(SourceCatalogTest, testGetNotExistingKey) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
 
     SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream22");
     EXPECT_EQ(sPtr, nullptr);
@@ -113,7 +113,7 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -128,7 +128,7 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
     EXPECT_TRUE(sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
@@ -145,7 +145,7 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -174,10 +174,10 @@ TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
-    const vector<SourceCatalogEntryPtr>& allPhysicalSources =
+    const vector<Catalogs::SourceCatalogEntryPtr>& allPhysicalSources =
         sourceCatalog->getPhysicalSources(logicalSource->getLogicalSourceName());
     EXPECT_EQ(allPhysicalSources.size(), 1U);
 }

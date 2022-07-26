@@ -19,19 +19,23 @@
 #include <REST/CpprestForwardedRefs.hpp>
 
 namespace NES {
+
+namespace Catalogs {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
 
 class SourceCatalogController : public BaseController {
 
   public:
-    explicit SourceCatalogController(SourceCatalogPtr sourceCatalog);
+    explicit SourceCatalogController(Catalogs::SourceCatalogPtr sourceCatalog);
+
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
 };
 using SourceCatalogControllerPtr = std::shared_ptr<SourceCatalogController>;
 

@@ -33,7 +33,7 @@ namespace NES {
 
 NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                               NESTopologyPlanPtr nesTopologyPlan,
-                                                                              SourceCatalogPtr sourceCatalog) {
+                                                                              Catalogs::SourceCatalogPtr sourceCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 

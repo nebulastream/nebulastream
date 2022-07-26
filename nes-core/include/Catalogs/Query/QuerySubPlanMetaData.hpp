@@ -19,7 +19,7 @@
 #include <Util/QueryStatus.hpp>
 #include <memory>
 
-namespace NES::Catalogs {
+namespace NES {
 
 class QuerySubPlanMetaData;
 using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
@@ -81,6 +81,6 @@ class QuerySubPlanMetaData {
      */
     std::string metaInformation;
 };
-}// namespace NES::Catalogs
+}// namespace NES
 
 #endif//NES_QUERYSUBPLANMETADATA_HPP

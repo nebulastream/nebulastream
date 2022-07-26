@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -79,8 +80,8 @@ static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 namespace Network {
 class NetworkStackIntegrationTest : public Testing::NESBaseTest {
   public:
-    UdfCatalogPtr udfCatalog;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
@@ -90,7 +91,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         dataPort1 = Testing::NESBaseTest::getAvailablePort();
         dataPort2 = Testing::NESBaseTest::getAvailablePort();
-        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 

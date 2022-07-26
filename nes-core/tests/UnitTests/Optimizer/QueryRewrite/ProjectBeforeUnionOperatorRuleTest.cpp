@@ -20,6 +20,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -35,7 +36,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
@@ -56,15 +57,15 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ProjectBeforeUnionOperatorRuleTest test class."); }
 
-    void setupSensorNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
         LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);
         PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
-        SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
-        SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
+        Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
+        Catalogs::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
         sourceCatalog->addPhysicalSource("x", sce1);
         sourceCatalog->addPhysicalSource("y", sce2);
         sourceCatalog->addLogicalSource("x", schema);
@@ -75,7 +76,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas) {
 
     // Prepare
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
@@ -104,7 +105,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
 
     // Prepare
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");

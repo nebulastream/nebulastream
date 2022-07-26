@@ -33,12 +33,10 @@
 using namespace std::string_literals;
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog,
-                                                 bool advanceChecks,
-                                                 Catalogs::UdfCatalogPtr udfCatalog)
+SemanticQueryValidation::SemanticQueryValidation(Catalogs::SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog,
+SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::SourceCatalogPtr& sourceCatalog,
                                                            bool advanceChecks,
                                                            const Catalogs::UdfCatalogPtr& udfCatalog) {
     return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks, udfCatalog);
@@ -150,7 +148,7 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::st
 }
 
 void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
-                                                         const SourceCatalogPtr& sourceCatalog) {
+                                                         const Catalogs::SourceCatalogPtr& sourceCatalog) {
 
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
@@ -170,7 +168,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr
     }
 }
 
-void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog) {
+void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& queryPlan, const Catalogs::SourceCatalogPtr& sourceCatalog) {
     //Identify the source operators
     auto sourceOperators = queryPlan->getSourceOperators();
     std::vector<std::string> invalidLogicalSourceNames;

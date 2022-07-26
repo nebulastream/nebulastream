@@ -67,7 +67,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
 GlobalQueryPlanUpdatePhasePtr
 GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    QueryCatalogServicePtr queryCatalogService,
-                                   SourceCatalogPtr sourceCatalog,
+                                   Catalogs::SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration,
