@@ -27,7 +27,7 @@ class FlounderLoweringProvider {
     FlounderLoweringProvider();
     std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::NESIR> ir);
     flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ true,
+                                                     /*collect the asm code to print later*/ false,
                                                      /*do not collect asm instruction offsets*/ true};
 
   private:
