@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.65](https://github.com/nebulastream/nebulastream/tree/v0.2.65) (2022-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.64...v0.2.65)
+
+#### User Defined Functions
+
+- \[Feature\] add ExpressionNodes for Python UDFs [\#2799](https://github.com/nebulastream/nebulastream/issues/2799)
+
 ## [v0.2.64](https://github.com/nebulastream/nebulastream/tree/v0.2.64) (2022-07-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.63...v0.2.64)
