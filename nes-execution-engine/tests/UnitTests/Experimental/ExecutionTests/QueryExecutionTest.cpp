@@ -62,7 +62,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 /**
  * @brief This test tests query execution using th mlir backend
  */
-class QueryExecutionTest : public testing::Test {
+class QueryExecutionTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
@@ -72,13 +72,18 @@ class QueryExecutionTest : public testing::Test {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup QueryExecutionTest test class." << std::endl;
+
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup QueryExecutionTest test case." << std::endl;
-        //backend = std::make_shared<MLIRPipelineCompilerBackend>();
-        backend = std::make_shared<FlounderPipelineCompilerBackend>();
+        auto param = this->GetParam();
+        std::cout << "Setup QueryExecutionTest test case." << param << std::endl;
+        if(param == "MLIR") {
+            backend = std::make_shared<MLIRPipelineCompilerBackend>();
+        }else{
+            backend = std::make_shared<FlounderPipelineCompilerBackend>();
+        }
     }
 
     /* Will be called before a test is executed. */
@@ -235,7 +240,7 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
 }
 
 
-TEST_F(QueryExecutionTest, tpchQ6_agg) {
+TEST_P(QueryExecutionTest, tpchQ6_agg) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = loadLineItemTable(bm);
 
@@ -293,16 +298,19 @@ TEST_F(QueryExecutionTest, tpchQ6_agg) {
     executablePipeline->setup();
 
     auto buffer = lineitemBuffer.second.getBuffer();
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
+
+    for(auto i = 0; i <10;i++) {
+        Timer timer("QueryExecutionTime");
+        timer.start();
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+        timer.snapshot("QueryExecutionTime");
+        timer.pause();
+        NES_INFO("QueryExecutionTime: " << timer);
+    }
 
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 1995906217);
+    ASSERT_EQ(sumState->sum, (int64_t) 19599269581);
 }
 
 TEST_F(QueryExecutionTest, tpchQ6) {
@@ -368,7 +376,7 @@ TEST_F(QueryExecutionTest, tpchQ6) {
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
 
-TEST_F(QueryExecutionTest, tpchQ6and) {
+TEST_P(QueryExecutionTest, tpchQ6and) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = loadLineItemTable(bm);
 
@@ -430,5 +438,13 @@ TEST_F(QueryExecutionTest, tpchQ6and) {
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
+
+INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
+                        QueryExecutionTest,
+                        ::testing::Values("MLIR", "Flounder"),
+                        [](const testing::TestParamInfo<QueryExecutionTest::ParamType>& info) {
+                            return info.param;
+                        });
+
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
