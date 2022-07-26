@@ -19,7 +19,7 @@
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
 
-#include OATPP_CODEGEN_BEGIN(ApiController)///< Begin Codegen
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
 namespace REST {
@@ -44,13 +44,13 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/check", root) {
         auto dto = ConnectivityResponse::createShared();
         dto->statusCode = 200;
-        dto->success = false;
+        dto->success = true;
         return createDtoResponse(Status::CODE_200, dto);
     }
 };
 }// namespace REST
 }// namespace NES
 
-#include OATPP_CODEGEN_END(ApiController)///< End Codegen
+#include OATPP_CODEGEN_END(ApiController)
 
 #endif//NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_CONNECTIVITYCONTROLLER_HPP_
