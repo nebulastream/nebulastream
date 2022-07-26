@@ -29,6 +29,7 @@
 
 using namespace NES;
 using namespace std;
+using namespace Catalogs;
 
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
@@ -66,7 +67,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
@@ -87,7 +88,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
@@ -120,7 +121,7 @@ TEST_F(QueryCatalogServiceTest, testPrintQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryServiceCatalog = std::make_shared<QueryCatalogService>(queryCatalog);
 
     auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
@@ -132,7 +133,7 @@ TEST_F(QueryCatalogServiceTest, testPrintQuery) {
 }
 
 TEST_F(QueryCatalogServiceTest, getAllQueriesWithoutAnyQueryRegistration) {
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     auto allRegisteredQueries = queryCatalogService->getAllQueryCatalogEntries();
@@ -142,7 +143,7 @@ TEST_F(QueryCatalogServiceTest, getAllQueriesWithoutAnyQueryRegistration) {
 TEST_F(QueryCatalogServiceTest, getAllQueriesAfterQueryRegistration) {
 
     //Prepare
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     std::string queryString =
@@ -163,7 +164,7 @@ TEST_F(QueryCatalogServiceTest, getAllQueriesAfterQueryRegistration) {
 TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
 
     //Prepare
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     std::string queryString =
@@ -184,7 +185,7 @@ TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
 TEST_F(QueryCatalogServiceTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown) {
 
     //Prepare
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     EXPECT_THROW(queryCatalogService->getAllQueriesInStatus("something_random"), InvalidArgumentException);

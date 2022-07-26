@@ -47,7 +47,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
     void SetUp() {
         Testing::NESBaseTest::SetUp();
         TopologyPtr topology = Topology::create();
-        QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+        Catalogs::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
         QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         RequestQueuePtr queryRequestQueue = std::make_shared<RequestQueue>(1);
         Compiler::JITCompilerBuilder jitCompilerBuilder = Compiler::JITCompilerBuilder();

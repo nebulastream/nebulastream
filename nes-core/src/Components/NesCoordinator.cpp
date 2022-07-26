@@ -98,7 +98,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>();
+    queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);

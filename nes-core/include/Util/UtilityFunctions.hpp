@@ -33,9 +33,6 @@ namespace NES {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -50,6 +47,11 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+namespace Catalogs {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}//namespace Catalogs
 
 namespace Util {
 namespace detail {

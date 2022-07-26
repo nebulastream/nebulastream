@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 
-namespace NES {
+namespace NES::Catalogs {
 
 QuerySubPlanMetaDataPtr
 QuerySubPlanMetaData::create(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId) {
@@ -40,4 +40,4 @@ uint64_t QuerySubPlanMetaData::getWorkerId() const { return workerId; }
 
 const std::string& QuerySubPlanMetaData::getMetaInformation() const { return metaInformation; }
 
-}// namespace NES
+}// namespace NES::Catalogs

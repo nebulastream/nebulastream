@@ -80,7 +80,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        QueryCatalogEntryPtr queryCatalogEntry =
+        Catalogs::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
@@ -127,7 +127,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        QueryCatalogEntryPtr queryCatalogEntry =
+        Catalogs::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
