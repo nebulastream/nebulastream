@@ -354,9 +354,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     remove(testFile.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThresholdMax(),
-                                                    TestUtils::setDistributedWindowCombinerThresholdMax()});
+                                                    TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;

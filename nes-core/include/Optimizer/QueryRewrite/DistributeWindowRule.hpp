@@ -105,12 +105,23 @@ class DistributeWindowRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
-    getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold);
-
-  private:
     explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
+
+    /**
+     * @brief This helper method identifies the nodes where the window operator should be placed its sources.
+     * @param operatorNode the operator node
+     * @param combinerThreshold threshold that identifies when to combine based on the number of sources of an operator
+     * @return map with the node id where the window operator shall be placed and its sources
+     */
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold);
+
+    /**
+     * @brief The NEMO placement is identifying in a hierarchical tree shared parents and places there a CentralWindowOperator.
+     * The conditions for placing the CentralWindowOperator are based on the distributedChildThreshold and distributed CombinerThreshold parameters.
+     * @param windowOp the window operator node
+     * @param queryPlan the query plan
+     */
     void createDistributedNemoWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
 
     /**

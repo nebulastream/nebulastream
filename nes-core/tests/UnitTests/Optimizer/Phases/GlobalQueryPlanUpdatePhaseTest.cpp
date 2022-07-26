@@ -29,6 +29,7 @@
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -44,6 +45,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
     QueryCatalogPtr queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::UdfCatalogPtr udfCatalog;
+    TopologyPtr topology;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -56,6 +58,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+        topology = Topology::create();
         //Setup source catalog
         sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
@@ -89,7 +92,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -117,7 +121,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -149,7 +154,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -181,7 +187,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -218,7 +225,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -250,7 +258,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -301,7 +310,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -371,7 +381,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
