@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.66](https://github.com/nebulastream/nebulastream/tree/v0.2.66) (2022-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.65...v0.2.66)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Multi-aggregation logic outputs the name of the stream multiple times [\#2885](https://github.com/nebulastream/nebulastream/issues/2885)
+
 ## [v0.2.65](https://github.com/nebulastream/nebulastream/tree/v0.2.65) (2022-07-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.64...v0.2.65)
