@@ -64,7 +64,7 @@ class OriginIdInferencePhaseTest : public testing::Test {
         auto optimizerConfiguration = OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = false;
         topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
+            Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration);
     }
 
     /* Will be called before a test is executed. */

@@ -36,6 +36,7 @@
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -117,8 +118,9 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -196,8 +198,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
 
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -282,8 +285,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
 
     // Prepare
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -342,8 +346,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries) {
 
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -432,8 +437,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog) {
 
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -513,8 +519,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
 
-    auto topologySpecificReWrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                        sourceCatalog,
+                                                                                        Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
