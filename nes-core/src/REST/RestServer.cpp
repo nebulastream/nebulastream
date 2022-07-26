@@ -138,7 +138,7 @@ void RestServer::run() {
     auto router = oatpp::web::server::HttpRouter::createShared();
 
     /* Create connectivity controller and add all of its endpoints to the router */
-    auto connectivityController = ConnController::createShared(objectMapper);
+    auto connectivityController = REST::ConnectivityController::createShared(objectMapper);
     router->addController(connectivityController);
 
     /* Create HTTP connection handler with router */
@@ -154,7 +154,7 @@ void RestServer::run() {
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     /* Print info about server port */
-    NES_INFO("NebulaStream REST Server listening on port" << connectionProvider->getProperty("port").getData());
+    NES_INFO("NebulaStream REST Server listening on port " << port);
 
     /* Run server */
     server.run();

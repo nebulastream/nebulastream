@@ -22,17 +22,23 @@
 #include OATPP_CODEGEN_BEGIN(ApiController)///< Begin Codegen
 
 namespace NES {
+namespace REST {
+class ConnectivityController : public oatpp::web::server::api::ApiController {
 
-class ConnController : public oatpp::web::server::api::ApiController {
   public:
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
-    ConnController(const std::shared_ptr<ObjectMapper>& objectMapper) : oatpp::web::server::api::ApiController(objectMapper) {}
+    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper) : oatpp::web::server::api::ApiController(objectMapper) {}
 
-    static std::shared_ptr<ConnController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper) {
-        return std::make_shared<ConnController>(objectMapper);
+    /**
+     * Create a shared object of the API controller
+     * @param objectMapper
+     * @return
+     */
+    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper) {
+        return std::make_shared<ConnectivityController>(objectMapper);
     }
 
     ENDPOINT("GET", "/check", root) {
@@ -42,6 +48,7 @@ class ConnController : public oatpp::web::server::api::ApiController {
         return createDtoResponse(Status::CODE_200, dto);
     }
 };
+}// namespace REST
 }// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)///< End Codegen
