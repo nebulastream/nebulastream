@@ -60,7 +60,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
         optimizerConfiguration.performDistributedWindowOptimization = true;
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
+        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration, Topology::create());
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 

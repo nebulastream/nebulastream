@@ -634,7 +634,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     Optimizer::DistributeWindowRulePtr distributeWindowRule =
-        Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
+        Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration(), Topology::create());
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
