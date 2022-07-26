@@ -382,13 +382,15 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 find_package(cpprestsdk CONFIG REQUIRED)
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
-#Oatpp REST SDK
+#Oatpp
 find_package(oatpp REQUIRED)
 set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
 
-# C++ REST SDK
+# CPR
 find_package(cpr REQUIRED)
 if (cpr_FOUND)
+    find_package(CURL REQUIRED)
+    message(STATUS "Found CURL : ${CURL_LIBRARIES}")
     message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
 endif ()
 
@@ -580,7 +582,7 @@ endif ()
 
 # Add tests with command
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr)
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
