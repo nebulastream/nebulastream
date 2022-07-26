@@ -223,6 +223,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 1000;
 
@@ -253,6 +254,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
 TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 0;
 
@@ -283,6 +285,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
     setupTopologyAndSourceCatalog(3, 10, 10);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 0;
 
@@ -322,6 +325,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
     setupTopologyAndSourceCatalog(4, 2, 1);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 0;
 
@@ -366,6 +370,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
     setupTopologyAndSourceCatalog(4, 3, 3);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 0;
 
