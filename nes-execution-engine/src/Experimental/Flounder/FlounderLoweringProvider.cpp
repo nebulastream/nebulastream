@@ -32,7 +32,8 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
 
     NES_INFO(program.to_string());
     const auto is_compilation_successful = compiler.compile(program, *executable.get());
-    NES_INFO(executable->code().value());
+    if (executable->code().has_value())
+        NES_INFO(executable->code().value());
     return executable;
 }
 
@@ -115,7 +116,7 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
         auto parentFrameFlounderValue = parentFrame.getValue(blockInputArguments[i]->getIdentifier());
         // if the value is no a vrec, we have to materialize it before invoicing the subframe.
-        if(parentFrameFlounderValue->type() != flounder::VREG){
+        if (parentFrameFlounderValue->type() != flounder::VREG) {
             auto targetVreg = program.vreg(blockTargetArguments[i]->getIdentifier());
             program << program.request_vreg64(targetVreg);
             program << program.mov(targetVreg, parentFrameFlounderValue);
@@ -143,7 +144,7 @@ FlounderLoweringProvider::LoweringContext::processInlineBlockInvocation(IR::Oper
     for (auto& item : parentFrame.getContent()) {
         if (!inputArguments.contains(item.first) && item.second->type() == flounder::NodeType::VREG) {
             auto vregNode = static_cast<flounder::VirtualRegisterIdentifierNode*>(item.second);
-           // program << program.clear(vregNode);
+            // program << program.clear(vregNode);
         }
     }
     return blockFrame;
@@ -155,12 +156,11 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     flounder::Node* leftFlounderRef = frame.getValue(leftInput->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
 
-    if(leftInput->getStamp()->isAddress() && addOpt->getUsages()[0]->getOperationType() == IR::Operations::Operation::LoadOp){
+    if (leftInput->getStamp()->isAddress() && addOpt->getUsages()[0]->getOperationType() == IR::Operations::Operation::LoadOp) {
         auto result = program.mem_add(leftFlounderRef, rightInput);
         frame.setValue(addOpt->getIdentifier(), result);
         return;
     }
-
 
     if (leftInput->getUsages().size() > 1 || leftFlounderRef->type() != flounder::VREG) {
         // the operation has shared access to the left input -> create new result register
@@ -173,7 +173,6 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     auto addFOp = program.add(leftFlounderRef, rightInput);
     frame.setValue(addOpt->getIdentifier(), leftFlounderRef);
     program << addFOp;
-
 
     // clear registers if we dont used them
     if (addOpt->getRightInput()->getUsages().size() == 1 && rightInput->type() == flounder::VREG) {
@@ -200,7 +199,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     program << addFOp;
     // clear registers if we dont used them
     if (addOpt->getRightInput()->getUsages().size() == 1 && rightInput->type() == flounder::VREG) {
-       // program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(rightInput));
+        // program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(rightInput));
     }
     return;
 }
@@ -211,15 +210,14 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
 
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
-    if(leftInput->type() != flounder::VREG){
+    if (leftInput->type() != flounder::VREG) {
         auto tempVreg = createVreg(compOpt->getIdentifier(), compOpt->getStamp(), frame);
         program << program.mov(tempVreg, leftInput);
         program << program.cmp(tempVreg, rightInput);
         program << program.clear(tempVreg);
-    }else{
+    } else {
         program << program.cmp(leftInput, rightInput);
     }
-
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame) {
