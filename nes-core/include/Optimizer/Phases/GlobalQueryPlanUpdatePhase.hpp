@@ -34,7 +34,7 @@ class OptimizerConfiguration;
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs
 
 class Request;
 using NESRequestPtr = std::shared_ptr<Request>;

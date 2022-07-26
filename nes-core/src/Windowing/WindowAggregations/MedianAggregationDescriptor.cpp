@@ -43,7 +43,8 @@ WindowAggregationPtr MedianAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));
 }
 
-void MedianAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void MedianAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                             SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {

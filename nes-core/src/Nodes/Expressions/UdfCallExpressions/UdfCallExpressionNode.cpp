@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
+#include <Exceptions/UdfException.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
-#include <Catalogs/UDF/UdfDescriptor.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
-#include <Exceptions/UdfException.hpp>
 #include <utility>
 
 namespace NES {
@@ -30,7 +30,7 @@ UdfCallExpressionNode::UdfCallExpressionNode(UdfCallExpressionNode* other) : Exp
 UdfCallExpressionNode::UdfCallExpressionNode(const ConstantValueExpressionNodePtr& udfName,
                                              std::vector<ExpressionNodePtr> functionArguments)
     : ExpressionNode(DataTypeFactory::createUndefined()) {
-        setChildren(udfName, std::move(functionArguments));
+    setChildren(udfName, std::move(functionArguments));
 }
 
 ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
@@ -39,7 +39,8 @@ ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNod
     return udfExpressionNode;
 }
 
-void UdfCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments) {
+void UdfCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& udfName,
+                                        std::vector<ExpressionNodePtr> functionArguments) {
     addChild(udfName);
     auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfName->getConstantValue());
     this->udfName = constantValue->value;
@@ -50,9 +51,8 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
     auto left = getUdfNameNode();
     left->inferStamp(typeInferencePhaseContext, schema);
     if (!left->getStamp()->isCharArray()) {
-        throw UdfException(
-            "UdfCallExpressionNode: Error during stamp inference. Function name needs to be Text but was:"
-            + left->getStamp()->toString());
+        throw UdfException("UdfCallExpressionNode: Error during stamp inference. Function name needs to be Text but was:"
+                           + left->getStamp()->toString());
     }
     auto udfDescriptorPtr = typeInferencePhaseContext.getUdfCatalog()->getUdfDescriptor(getUdfName());
     setUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::UdfDescriptor>(udfDescriptorPtr));
@@ -73,24 +73,16 @@ std::string UdfCallExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr UdfCallExpressionNode::copy() {
-    return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this));
-}
+ExpressionNodePtr UdfCallExpressionNode::copy() { return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this)); }
 
-ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() {
-    return children[0]->as<ConstantValueExpressionNode>();
-}
+ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() { return children[0]->as<ConstantValueExpressionNode>(); }
 
-std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() {
-    return functionArguments;
-}
+std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() { return functionArguments; }
 
 void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor) {
     this->udfDescriptor = udfDescriptor;
 }
 
-const std::string& UdfCallExpressionNode::getUdfName() const {
-    return udfName;
-}
+const std::string& UdfCallExpressionNode::getUdfName() const { return udfName; }
 
-}// namespace NES::Experimental
+}// namespace NES

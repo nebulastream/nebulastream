@@ -49,7 +49,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
     SchemaPtr schema;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
-    
+
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);

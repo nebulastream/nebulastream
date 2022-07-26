@@ -23,4 +23,4 @@ const SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { re
 
 const UdfCatalogPtr& TypeInferencePhaseContext::getUdfCatalog() const { return udfCatalog; }
 
-}
+}// namespace NES::Optimizer

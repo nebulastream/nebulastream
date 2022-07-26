@@ -27,7 +27,7 @@ using QueryPtr = std::shared_ptr<Query>;
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs
 
 }// namespace NES
 
@@ -60,7 +60,8 @@ class SemanticQueryValidation {
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UdfCatalogPtr& udfCatalog);
+    static SemanticQueryValidationPtr
+    create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UdfCatalogPtr& udfCatalog);
 
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.

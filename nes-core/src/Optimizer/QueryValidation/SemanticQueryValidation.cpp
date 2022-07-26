@@ -33,7 +33,9 @@
 using namespace std::string_literals;
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog)
+SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog,
+                                                 bool advanceChecks,
+                                                 Catalogs::UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog,

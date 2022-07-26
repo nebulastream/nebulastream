@@ -45,7 +45,8 @@ WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-void MaxAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void MaxAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                          SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {

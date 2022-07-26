@@ -44,7 +44,8 @@ WindowAggregationPtr AvgAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
-void AvgAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void AvgAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                          SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {

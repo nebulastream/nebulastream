@@ -45,7 +45,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
-    
+
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);

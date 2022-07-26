@@ -15,15 +15,14 @@
 #ifndef NES_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASECONTEXT_HPP_
 #define NES_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASECONTEXT_HPP_
 
-#include <memory>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <memory>
 namespace NES {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<Catalogs::UdfCatalog>;
 }// namespace NES
-
 
 namespace NES::Optimizer {
 
@@ -34,7 +33,7 @@ namespace NES::Optimizer {
  */
 class TypeInferencePhaseContext {
   public:
-    TypeInferencePhaseContext(SourceCatalogPtr  sourceCatalog, UdfCatalogPtr  udfCatalog);
+    TypeInferencePhaseContext(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog);
 
     /**
      * Retrieve the source catalog

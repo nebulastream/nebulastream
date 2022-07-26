@@ -59,8 +59,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  bool queryReconfiguration,
                                                  const UdfCatalogPtr& udfCatalog)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
-      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan),
-      globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog) {
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
+      udfCatalog(udfCatalog) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);

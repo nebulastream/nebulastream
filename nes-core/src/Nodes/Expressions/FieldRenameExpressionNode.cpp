@@ -49,7 +49,8 @@ std::string FieldRenameExpressionNode::toString() const {
     return "FieldRenameExpression(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                           SchemaPtr schema) {
 
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(typeInferencePhaseContext, schema);

@@ -37,7 +37,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
-    
+
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectBeforeUnionOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);

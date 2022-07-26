@@ -39,7 +39,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     SchemaPtr schema;
     SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
-    
+
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -47,7 +47,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { 
+    void SetUp() override {
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UdfCatalog::create();
     }
