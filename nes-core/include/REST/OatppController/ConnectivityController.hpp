@@ -15,31 +15,35 @@
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_CONNECTIVITYCONTROLLER_HPP_
 
 #include <REST/DTOs/ConnectivityResponse.hpp>
-#include <oatpp/web/server/api/ApiController.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
 
-namespace NES {
 #include OATPP_CODEGEN_BEGIN(ApiController)///< Begin Codegen
 
-class ConnectivityController : public oatpp::web::server::api::ApiController {
+namespace NES {
+
+class ConnController : public oatpp::web::server::api::ApiController {
   public:
     /**
-   * Constructor with object mapper.
-   * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-   */
-    ConnectivityController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
-        : oatpp::web::server::api::ApiController(objectMapper) {}
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     */
+    ConnController(const std::shared_ptr<ObjectMapper>& objectMapper) : oatpp::web::server::api::ApiController(objectMapper) {}
 
-  public:
+    static std::shared_ptr<ConnController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper) {
+        return std::make_shared<ConnController>(objectMapper);
+    }
+
     ENDPOINT("GET", "/check", root) {
         auto dto = ConnectivityResponse::createShared();
         dto->statusCode = 200;
-        dto->success = true;
+        dto->success = false;
         return createDtoResponse(Status::CODE_200, dto);
     }
 };
+}// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)///< End Codegen
-}//namespace NES
+
 #endif//NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_CONNECTIVITYCONTROLLER_HPP_
