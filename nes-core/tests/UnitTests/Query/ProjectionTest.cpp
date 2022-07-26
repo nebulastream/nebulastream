@@ -57,7 +57,7 @@ using Runtime::TupleBuffer;
 class ProjectionTest : public Testing::NESBaseTest {
   public:
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    
+
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("ProjectionTest: Setup QueryCatalogServiceTest test class.");
@@ -543,8 +543,6 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     // creating query plan
     auto query = TestQuery::from(testSchema).project(Attribute("asd")).sink(DummySink::create());
 
-    
-
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         FAIL();
@@ -668,7 +666,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     query.sink(DummySink::create());
 
     bool success = false;
-    
+
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     } catch (...) {
@@ -708,8 +706,6 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
             auto mergedQuery = query2.unionWith(query1).sink(DummySink::create());
 
             auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
-
-            
 
             auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
         },

@@ -55,9 +55,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 
-    static void SetUpTestCase() {
-        setupLogging();
-    }
+    static void SetUpTestCase() { setupLogging(); }
 
   protected:
     static void setupLogging() {

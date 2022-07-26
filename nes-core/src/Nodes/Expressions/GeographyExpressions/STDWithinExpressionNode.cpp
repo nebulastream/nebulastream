@@ -65,7 +65,8 @@ ShapeExpressionNodePtr STDWithinExpressionNode::getCircle() const {
     return children[1]->as<CircleExpressionNode>();
 }
 
-void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                         SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
     auto circle = getCircle();

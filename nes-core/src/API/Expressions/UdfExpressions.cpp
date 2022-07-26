@@ -27,4 +27,4 @@ ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNode
     return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));
 }
 
-}// namespace NES::Experimental
+}// namespace NES

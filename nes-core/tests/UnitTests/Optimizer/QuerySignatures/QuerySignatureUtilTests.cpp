@@ -64,7 +64,8 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
         queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         udfCatalog = Catalogs::UdfCatalog::create();
-        typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
+        typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
+            Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);
     }
 

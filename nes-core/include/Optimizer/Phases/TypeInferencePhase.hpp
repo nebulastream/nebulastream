@@ -14,8 +14,8 @@
 
 #ifndef NES_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 #define NES_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
-#include <memory>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <memory>
 namespace NES {
 
 class QueryPlan;

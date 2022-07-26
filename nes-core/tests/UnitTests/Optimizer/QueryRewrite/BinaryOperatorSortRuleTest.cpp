@@ -41,9 +41,7 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        udfCatalog = Catalogs::UdfCatalog::create();
-    }
+    void SetUp() override { udfCatalog = Catalogs::UdfCatalog::create(); }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Setup BinaryOperatorSortRuleTest test case."); }

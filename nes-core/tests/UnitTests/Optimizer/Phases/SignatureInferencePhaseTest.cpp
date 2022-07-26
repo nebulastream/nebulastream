@@ -44,9 +44,7 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testin
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
-    void SetUp() override {
-        udfCatalog = Catalogs::UdfCatalog::create();
-    }
+    void SetUp() override { udfCatalog = Catalogs::UdfCatalog::create(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down SignatureInferencePhaseTest test class."); }

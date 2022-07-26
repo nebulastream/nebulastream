@@ -66,7 +66,8 @@ ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLongitude() const {
     return children[1]->as<FieldAccessExpressionNode>();
 }
 
-void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+                                                     SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto left = getLatitude();
     auto right = getLongitude();

@@ -14,8 +14,8 @@
 #ifndef NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 #define NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <memory>
 
 namespace NES {
@@ -28,6 +28,6 @@ using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 **/
 ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs);
 
-}// namespace NES::Experimental
+}// namespace NES
 
 #endif//NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
