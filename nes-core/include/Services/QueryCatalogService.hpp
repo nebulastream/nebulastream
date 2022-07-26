@@ -25,17 +25,21 @@
 
 namespace NES {
 
-class QueryCatalogEntry;
-using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
-
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Catalogs {
+
+class QueryCatalogEntry;
+using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+}// namespace Catalogs
 
 /**
  * This class is responsible for interacting with query catalog to either fetch status of a query or to update it.
@@ -43,7 +47,7 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class QueryCatalogService {
 
   public:
-    explicit QueryCatalogService(QueryCatalogPtr queryCatalog);
+    explicit QueryCatalogService(Catalogs::QueryCatalogPtr queryCatalog);
 
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
@@ -52,7 +56,7 @@ class QueryCatalogService {
      * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
      * @return query catalog entry or nullptr
      */
-    QueryCatalogEntryPtr
+    Catalogs::QueryCatalogEntryPtr
     createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
     /**
@@ -82,7 +86,7 @@ class QueryCatalogService {
      * @param queryId: the query id
      * @return pointer to the query catalog entry
      */
-    QueryCatalogEntryPtr getEntryForQuery(QueryId queryId);
+    Catalogs::QueryCatalogEntryPtr getEntryForQuery(QueryId queryId);
 
     /**
      * Get a map of query id and query string that are in input query status
@@ -96,13 +100,13 @@ class QueryCatalogService {
      * @param queryStatus : the status to check
      * @return map containing query id and query catalog entry
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getAllEntriesInStatus(std::string queryStatus);
+    std::map<uint64_t, Catalogs::QueryCatalogEntryPtr> getAllEntriesInStatus(std::string queryStatus);
 
     /**
      * Get all query catalog entries
      * @return map containing query id and query catalog entry
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
+    std::map<uint64_t, Catalogs::QueryCatalogEntryPtr> getAllQueryCatalogEntries();
 
     /**
      * Update query entry with new status
@@ -178,7 +182,7 @@ class QueryCatalogService {
      */
     bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
-    QueryCatalogPtr queryCatalog;
+    Catalogs::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;
 };
 }// namespace NES

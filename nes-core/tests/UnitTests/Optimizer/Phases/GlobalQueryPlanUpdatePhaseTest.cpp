@@ -42,7 +42,7 @@ namespace NES {
 class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     SourceCatalogPtr sourceCatalog;
-    QueryCatalogPtr queryCatalog;
+    Catalogs::QueryCatalogPtr queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
@@ -56,7 +56,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
     /* Will be called before a  test is executed. */
     void SetUp() override {
         context = std::make_shared<z3::context>();
-        queryCatalog = std::make_shared<QueryCatalog>();
+        queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         topology = Topology::create();
         //Setup source catalog
@@ -99,7 +99,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                context,
                                                                optimizerConfiguration,
                                                                udfCatalog);
-    auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
+    auto catalogEntry1 = Catalogs::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -334,7 +334,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
-    //    auto queryCatalogService = std::make_shared<QueryCatalog>();
+    //    auto queryCatalogService = std::make_shared<Catalogs::QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("example")

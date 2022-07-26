@@ -21,7 +21,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <string>
 
-namespace NES {
+namespace NES::Catalogs {
 
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus::Value status) {
     NES_INFO("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status " << status);
@@ -130,4 +130,4 @@ void QueryCatalog::clearQueries() {
     queryIdAndCatalogEntryMapping.clear();
 }
 
-}// namespace NES
+}// namespace NES::Catalogs
