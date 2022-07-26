@@ -51,6 +51,7 @@
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -2004,6 +2005,237 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
+    std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
+    std::map <MetricType, SchemaPtr> metrics;
+    SchemaPtr schema;
+    std::vector<std::string> attributesNetwork;
+    std::vector<std::string> attributesMem;
+    std::vector<std::string> attributesCPU;
+    std::vector<std::string> attributesDisk;
+    std::list<std::string> configNetwork;
+    std::list<std::string> configMem;
+    std::list<std::string> configCPU;
+    std::list<std::string> configDisk;
+
+    for (auto metricType : metricTypeListString){
+        std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+            MetricUtils::randomAttributes(metricType, 4);
+        std::vector<std::string>  attributesList = get<0>(randomTuple);
+        std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+        std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
+        NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+        if (metricType == "DiskMetric") {
+            attributesDisk = attributesList;
+            configDisk = configuredMetrics;
+            schema = DiskMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+        } else if (metricType == "NetworkMetric") {
+            attributesNetwork = attributesList;
+            configNetwork = configuredMetrics;
+            schema = NetworkMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(NetworkMetric, schema));
+        } else if (metricType == "CpuMetric") {
+            attributesCPU = attributesList;
+            configCPU = configuredMetrics;
+            schema = CpuMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(CpuMetric, schema));
+        } else if (metricType == "MemoryMetric") {
+            attributesMem = attributesList;
+            configMem = configuredMetrics;
+            schema = MemoryMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(MemoryMetric, schema));
+        }
+    }
+
+    auto plan = MonitoringPlan::create(metrics);
+    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(plan);
+
+    std::list<MetricType> metricTypeList {CpuMetric, DiskMetric, MemoryMetric, NetworkMetric, WrappedNetworkMetrics, WrappedCpuMetrics};
+    std::list<MetricCollectorPtr> listCollector;
+    for(auto metricType : metricTypeList) {
+        if (monitoringCatalog->hasMetric(metricType)) {
+            listCollector.push_front(monitoringCatalog->getMetricCollector(metricType));
+        }
+    }
+
+    for (auto testCollector : listCollector) {
+        uint64_t numBuffers = 2;
+        MonitoringSourceProxy monitoringDataSource(testCollector,
+                                                   MonitoringSource::DEFAULT_WAIT_TIME,
+                                                   this->nodeEngine->getBufferManager(),
+                                                   this->nodeEngine->getQueryManager(),
+                                                   this->operatorId,
+                                                   this->numSourceLocalBuffersDefault,
+                                                   {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+        // open starts the bufferManager, otherwise receiveData will fail
+        monitoringDataSource.open();
+        MetricPtr typedMetric = testCollector->readMetric();
+        auto buf = monitoringDataSource.receiveData();
+        ASSERT_TRUE(buf.has_value());
+        //        ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+        //        ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+        ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+        if (testCollector->getType() == NETWORK_COLLECTOR) {
+            NetworkMetricsWrapper parsedValuesNetwork{testCollector->getSchema()};
+            parsedValuesNetwork.readFromBuffer(buf.value(), 0);
+            NetworkMetricsWrapper networkMetric = typedMetric->getValue<NetworkMetricsWrapper>();
+            for (unsigned int i = 0; i < parsedValuesNetwork.size(); i++) {
+//                for (const std::string& metricName : configNetwork) {
+//                    ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), networkMetric.getNetworkValue(i).getValue(metricName));
+//                }
+                for (const std::string& metricName : attributesNetwork) {
+                    ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), 0);
+                }
+            }
+            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesNetwork));
+        } else if (testCollector->getType() == CPU_COLLECTOR) {
+            CpuMetricsWrapper parsedValuesCPU{testCollector->getSchema()};
+            parsedValuesCPU.readFromBuffer(buf.value(), 0);
+            CpuMetricsWrapper cpuMetric = typedMetric->getValue<CpuMetricsWrapper>();
+            for (unsigned int i = 0; i < parsedValuesCPU.size(); i++) {
+//                for (const std::string& metricName : configCPU) {
+//                    ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), cpuMetric.getValue(i).getValue(metricName));
+//                }
+                for (const std::string& metricName : attributesCPU) {
+                    ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), 0);
+                }
+            }
+            //            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesCPU));
+        } else if (testCollector->getType() == DISK_COLLECTOR) {
+            DiskMetrics parsedValuesDisk{testCollector->getSchema()};
+            parsedValuesDisk.readFromBuffer(buf.value(), 0);
+            DiskMetrics diskMetric = typedMetric->getValue<DiskMetrics>();
+//            for(const std::string& metricName : configDisk) {
+//                ASSERT_EQ(parsedValuesDisk.getValue(metricName), diskMetric.getValue(metricName));
+//            }
+            for(const std::string& metricName : attributesDisk) {
+                ASSERT_EQ(parsedValuesDisk.getValue(metricName), 0);
+            }
+            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesDisk));
+        } else if (testCollector->getType() == MEMORY_COLLECTOR) {
+            MemoryMetrics parsedValuesMem{testCollector->getSchema()};
+            parsedValuesMem.readFromBuffer(buf.value(), 0);
+            MemoryMetrics memoryMetric = typedMetric->getValue<MemoryMetrics>();
+//            for(const std::string& metricName : configMem) {
+//                ASSERT_EQ(parsedValuesMem.getValue(metricName), memoryMetric.getValue(metricName));
+//            }
+            for(const std::string& metricName : attributesMem) {
+                ASSERT_EQ(parsedValuesMem.getValue(metricName), 0);
+            }
+            //            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesMem));
+        } else {
+            NES_DEBUG("CollectorType unknown!")
+        }
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+    }
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennart) {
+    std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
+    std::map <MetricType, SchemaPtr> metrics;
+    SchemaPtr schema;
+    std::vector<std::string> attributesNetwork;
+    std::vector<std::string> attributesMem;
+    std::vector<std::string> attributesCPU;
+    std::vector<std::string> attributesDisk;
+
+    for (const auto& metricType : metricTypeListString){
+        std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+            MetricUtils::randomAttributes(metricType, 4);
+        std::vector<std::string>  attributesList = get<0>(randomTuple);
+        std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+        std::string configuredMetricsString = MetricUtils::listToString(", ", configuredMetrics);
+        NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+        if (metricType == "DiskMetric") {
+            attributesDisk = attributesList;
+            schema = DiskMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+        } else if (metricType == "NetworkMetric") {
+            attributesNetwork = attributesList;
+            schema = NetworkMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(NetworkMetric, schema));
+        } else if (metricType == "CpuMetric") {
+            attributesCPU = attributesList;
+            schema = CpuMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(CpuMetric, schema));
+        } else if (metricType == "MemoryMetric") {
+            attributesMem = attributesList;
+            schema = MemoryMetrics::createSchema("", configuredMetrics);
+            metrics.insert(std::pair<MetricType, SchemaPtr>(MemoryMetric, schema));
+        }
+    }
+
+    auto plan = MonitoringPlan::create(metrics);
+    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(plan);
+
+    std::list<MetricType> metricTypeList {CpuMetric, DiskMetric, MemoryMetric, NetworkMetric, WrappedNetworkMetrics, WrappedCpuMetrics};
+    std::list<MetricCollectorPtr> listCollector;
+    for(auto metricType : metricTypeList) {
+        if (monitoringCatalog->hasMetric(metricType)) {
+            listCollector.push_front(monitoringCatalog->getMetricCollector(metricType));
+        }
+    }
+
+    for (const auto& testCollector : listCollector) {
+        uint64_t numBuffers = 2;
+        MonitoringSourceProxy monitoringDataSource(testCollector,
+                                                   MonitoringSource::DEFAULT_WAIT_TIME,
+                                                   this->nodeEngine->getBufferManager(),
+                                                   this->nodeEngine->getQueryManager(),
+                                                   this->operatorId,
+                                                   this->numSourceLocalBuffersDefault,
+                                                   {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+        // open starts the bufferManager, otherwise receiveData will fail
+        monitoringDataSource.open();
+        while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+            auto optBuf = monitoringDataSource.receiveData();
+            if (testCollector->getType() == NETWORK_COLLECTOR) {
+                NetworkMetricsWrapper parsedValuesNetwork{testCollector->getSchema()};
+                parsedValuesNetwork.readFromBuffer(optBuf.value(), 0);
+                for (unsigned int i = 0; i < parsedValuesNetwork.size(); i++) {
+                    for (const std::string& metricName : attributesNetwork) {
+                        ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), 0);
+                    }
+                }
+                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesNetwork));
+            } else if (testCollector->getType() == CPU_COLLECTOR) {
+                CpuMetricsWrapper parsedValuesCPU{testCollector->getSchema()};
+                parsedValuesCPU.readFromBuffer(optBuf.value(), 0);
+                for (unsigned int i = 0; i < parsedValuesCPU.size(); i++) {
+                    for (const std::string& metricName : attributesCPU) {
+                        ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), 0);
+                    }
+                }
+//                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesCPU));
+            } else if (testCollector->getType() == DISK_COLLECTOR) {
+                DiskMetrics parsedValuesDisk{testCollector->getSchema()};
+                parsedValuesDisk.readFromBuffer(optBuf.value(), 0);
+                for(const std::string& metricName : attributesDisk) {
+                    ASSERT_EQ(parsedValuesDisk.getValue(metricName), 0);
+                }
+                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesDisk));
+            } else if (testCollector->getType() == MEMORY_COLLECTOR) {
+                MemoryMetrics parsedValuesMem{testCollector->getSchema()};
+                parsedValuesMem.readFromBuffer(optBuf.value(), 0);
+                for(const std::string& metricName : attributesMem) {
+                    ASSERT_EQ(parsedValuesMem.getValue(metricName), 0);
+                }
+//                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesMem));
+            } else {
+                NES_DEBUG("CollectorType unknown!")
+            }
+        }
+        EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+//        EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+    }
 }
 
 }// namespace NES

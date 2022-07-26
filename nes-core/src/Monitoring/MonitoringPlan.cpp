@@ -128,7 +128,7 @@ bool MonitoringPlan::addMetric(MetricType metric) {
     return true;
 }
 
-bool MonitoringPlan::hasMetric(MetricType metric) const { return metricTypes.contains(metric); }
+bool MonitoringPlan::hasMetric(MetricType metric) const { return monitoringPlan.contains(metric); }
 
 std::string MonitoringPlan::toString() const {
     std::stringstream output;

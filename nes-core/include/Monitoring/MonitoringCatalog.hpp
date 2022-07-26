@@ -53,6 +53,8 @@ class MonitoringCatalog {
      */
     MetricCollectorPtr getMetricCollector(MetricType metricType);
 
+    [[nodiscard]] bool hasMetric(MetricType metric) const;
+
   private:
     explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;

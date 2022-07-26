@@ -91,7 +91,6 @@ class MonitoringPlan {
 
     //enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
-
     std::map <MetricType, SchemaPtr> monitoringPlan;
 };
 

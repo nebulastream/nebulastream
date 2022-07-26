@@ -28,6 +28,9 @@ monitoringConfiguration: '
   - memory:
     attributes: "FREE_RAM, FREE_SWAP, TOTAL_RAM"
     sampleRate: 40
+  - network:
+    attributes: "rBytes, rFifo, tPackets"
+    sampleRate: 
 '
 
 #monitoringConfiguration:

@@ -70,6 +70,8 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     return create(metrics);
 }
 
+bool MonitoringCatalog::hasMetric(MetricType metric) const { return metricMap.contains(metric); }
+
 MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
     if (metricMap.contains(metricType)) {
         return metricMap[metricType];
