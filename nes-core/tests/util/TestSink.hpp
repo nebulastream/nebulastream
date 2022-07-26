@@ -87,7 +87,9 @@ class TestSink : public SinkMedium {
     }
 
   public:
-    void shutdown() override {}
+    void shutdown() override {
+        cleanupBuffers();
+    }
 
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;

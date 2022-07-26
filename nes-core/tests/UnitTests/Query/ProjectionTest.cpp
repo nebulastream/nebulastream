@@ -63,24 +63,6 @@ class ProjectionTest : public Testing::NESBaseTest {
         NES_DEBUG("ProjectionTest: Setup QueryCatalogServiceTest test class.");
     }
 
-    void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
-        std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
-            plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
-        });
-        std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
-            plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
-        });
-        std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
-            plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
-        });
-
-        auto task =
-            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(), NES::Runtime::SoftEndOfStream, plan);
-        plan->postReconfigurationCallback(task);
-
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
-    }
-
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
@@ -129,6 +111,62 @@ class ProjectionTest : public Testing::NESBaseTest {
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
 
+class NonRunnableDataSource : public NES::DefaultSource {
+  public:
+    explicit NonRunnableDataSource(const SchemaPtr& schema,
+                                   const Runtime::BufferManagerPtr& bufferManager,
+                                   const Runtime::QueryManagerPtr& queryManager,
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t gatheringInterval,
+                                   OperatorId operatorId,
+                                   OriginId originId,
+                                   size_t numSourceLocalBuffers,
+                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+        : DefaultSource(schema,
+                        bufferManager,
+                        queryManager,
+                        numbersOfBufferToProduce,
+                        gatheringInterval,
+                        operatorId,
+                        originId,
+                        numSourceLocalBuffers,
+                        successors) {
+        wasGracefullyStopped = NES::Runtime::QueryTerminationType::HardStop;
+    }
+
+    void runningRoutine() override {
+        open();
+        completedPromise.set_value(canTerminate.get_future().get());
+        close();
+    }
+
+    bool stop(Runtime::QueryTerminationType termination) override {
+        canTerminate.set_value(true);
+        return NES::DefaultSource::stop(termination);
+    }
+
+  private:
+    std::promise<bool> canTerminate;
+};
+
+DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
+                                      const Runtime::BufferManagerPtr& bufferManager,
+                                      const Runtime::QueryManagerPtr& queryManager,
+                                      OperatorId operatorId,
+                                      OriginId originId,
+                                      size_t numSourceLocalBuffers,
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<NonRunnableDataSource>(schema,
+                                                   bufferManager,
+                                                   queryManager,
+                                                   /*bufferCnt*/ 1,
+                                                   /*frequency*/ 1000,
+                                                   operatorId,
+                                                   originId,
+                                                   numSourceLocalBuffers,
+                                                   successors);
+}
+
 /**
  * @brief A window source, which generates data consisting of (key, value, ts).
  * Key = 1||2
@@ -141,15 +179,15 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
-    WindowSource(SchemaPtr schema,
-                 Runtime::BufferManagerPtr bufferManager,
-                 Runtime::QueryManagerPtr queryManager,
-                 const uint64_t numbersOfBufferToProduce,
-                 uint64_t frequency,
-                 bool varyWatermark,
-                 bool decreaseTime,
-                 int64_t timestamp,
-                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    explicit WindowSource(SchemaPtr schema,
+                          Runtime::BufferManagerPtr bufferManager,
+                          Runtime::QueryManagerPtr queryManager,
+                          const uint64_t numbersOfBufferToProduce,
+                          uint64_t frequency,
+                          bool varyWatermark,
+                          bool decreaseTime,
+                          int64_t timestamp,
+                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DefaultSource(std::move(schema),
                         std::move(bufferManager),
                         std::move(queryManager),
@@ -160,6 +198,10 @@ class WindowSource : public NES::DefaultSource {
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
+
+    //    void runningRoutine() override {
+    //        completedPromise.set_value(true);
+    //    }
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
@@ -303,13 +345,13 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -329,15 +371,14 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
@@ -357,9 +398,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         }
     }
-    testSink->cleanupBuffers();
-
-    cleanUpPlan(plan);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
@@ -373,13 +412,13 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -398,15 +437,14 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
@@ -427,8 +465,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
         }
     }
-    testSink->cleanupBuffers();
-    cleanUpPlan(plan);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
@@ -442,13 +479,13 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
@@ -467,15 +504,14 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
@@ -499,8 +535,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
             EXPECT_EQ(resultFields01[recordIndex], 8);
         }
     }
-    testSink->cleanupBuffers();
-    cleanUpPlan(plan);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 }
 
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
@@ -514,13 +549,13 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -635,8 +670,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
             EXPECT_EQ(valueFields[recordIndex], 10ULL);
         }
     }
-    testSink->cleanupBuffers();
-    ASSERT_TRUE(nodeEngine->stopQuery(0));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -644,8 +678,10 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(),
+                                             nodeEngine->getQueryManager(),
+                                             /*bufferCnt*/ 2,
+                                             /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema()).project(Attribute("ts"), Attribute("empty"), Attribute("key"));
     // 2. dd window operator:
@@ -728,7 +764,7 @@ TEST_F(ProjectionTest, mergeQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+            return createNonRunnableSource(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
@@ -763,6 +799,9 @@ TEST_F(ProjectionTest, mergeQuery) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 3U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
@@ -770,10 +809,6 @@ TEST_F(ProjectionTest, mergeQuery) {
         fillBuffer(buffer, memoryLayout);
         // TODO do not rely on sleeps
 
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
@@ -794,6 +829,5 @@ TEST_F(ProjectionTest, mergeQuery) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
         }
     }
-    cleanUpPlan(plan);
-    testSink->cleanupBuffers();
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 }

@@ -145,7 +145,7 @@ bool ExecutableQueryPlan::stop() {
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
-            if (!stage->stop(QueryTerminationType::Failure)) {
+            if (!stage->stop(QueryTerminationType::HardStop)) {
                 NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
                 allStagesStopped = false;
             }
