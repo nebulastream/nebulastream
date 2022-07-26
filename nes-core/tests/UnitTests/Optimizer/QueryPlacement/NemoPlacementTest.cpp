@@ -52,6 +52,7 @@ using namespace Configurations;
 
 class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
+    UdfCatalogPtr udfCatalog;
     z3::ContextPtr z3Context;
     SourceCatalogPtr sourceCatalog;
     QueryPlanPtr queryPlan;
@@ -71,6 +72,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -149,7 +151,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
         // Prepare the placement
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
         // Execute optimization phases prior to placement
         queryPlan = typeInferencePhase->execute(queryPlan);

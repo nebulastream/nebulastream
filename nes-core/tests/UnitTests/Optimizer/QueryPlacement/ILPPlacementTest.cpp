@@ -53,6 +53,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     UdfCatalogPtr udfCatalog;
+    TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
 
@@ -263,7 +264,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     }
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP, sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -325,7 +326,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     }
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP, sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -388,7 +389,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     }
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP, sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
