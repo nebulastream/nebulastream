@@ -1356,7 +1356,7 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    ASSERT_EQ(port, 0UL);
+    ASSERT_EQ(port, *rpcCoordinatorPort);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
