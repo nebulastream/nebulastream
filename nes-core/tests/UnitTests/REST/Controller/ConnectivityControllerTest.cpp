@@ -12,42 +12,36 @@
     limitations under the License.
 */
 #include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-#include <cpr/cpr.h>
+#include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <cpr/cpr.h>
+#include <gtest/gtest.h>
 #include <memory>
-#include <REST/ServerTypes.hpp>
 
 namespace NES {
 class ConnectivityControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TopologyControllerTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down TopologyControllerTest test class."); }
-
-    NesCoordinatorPtr createAndStartCoordinator() const {
-        NES_INFO("TestsForOatppEndpoints: Start coordinator");
-        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-        coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->restServerType = ServerType::Oatpp;
-        auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-        EXPECT_EQ(coordinator->startCoordinator(true), *rpcCoordinatorPort);
-        NES_INFO("TestsForOatppEndpoints: Coordinator started successfully");
-        return coordinator;
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
 };
 
 TEST_F(ConnectivityControllerTest, testGetRequest) {
-    auto coordinator = createAndStartCoordinator();
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
-    cpr::Response r = cpr::Get(cpr::Url{"http://localhost/" + std::to_string(*restPort) + "check"});
-    NES_DEBUG(r.status_code);
-    NES_DEBUG(r.text);
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/check"});
+    EXPECT_EQ(r.status_code, 200l);
 }
 
 }//namespace NES
