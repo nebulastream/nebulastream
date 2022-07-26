@@ -133,7 +133,8 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &distributedWindowChildThreshold,
                 &distributedWindowCombinerThreshold,
                 &performOnlySourceOperatorExpansion,
-                &performAdvanceSemanticValidation};
+                &performAdvanceSemanticValidation,
+                &enableNemoPlacement};
     }
 };
 

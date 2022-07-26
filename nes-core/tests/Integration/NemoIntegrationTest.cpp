@@ -73,6 +73,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcCoordinatorPort),
                                                         TestUtils::restPort(restPort),
                                                         TestUtils::enableDebug(),
+                                                        TestUtils::enableNemoPlacement(),
                                                         TestUtils::setDistributedWindowChildThreshold(childThreshold),
                                                         TestUtils::setDistributedWindowCombinerThreshold(combinerThreshold)});
         assert(TestUtils::waitForWorkers(restPort, timeout, 0));

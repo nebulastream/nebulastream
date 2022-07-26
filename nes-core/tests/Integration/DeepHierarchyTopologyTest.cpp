@@ -477,9 +477,9 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
-    auto crdLambda = [] (CoordinatorConfigurationPtr coordinatorConfiguration) {
-        coordinatorConfiguration->optimizer.distributedWindowChildThreshold.setValue(0);
-        coordinatorConfiguration->optimizer.distributedWindowCombinerThreshold.setValue(0);
+    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
+        config->optimizer.distributedWindowChildThreshold.setValue(0);
+        config->optimizer.distributedWindowCombinerThreshold.setValue(0);
     };
 
     struct Test {
@@ -517,7 +517,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
                                   .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
                                   .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
                                   .validate()
-                                  .setupTopology();
+                                  .setupTopology(crdFunctor);
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -548,7 +548,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
     NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n" << queryPlan->toString());
-    //ASSERT_TRUE(queryPlan->toString().find("CENTRALWINDOW") != std::string::npos);
+    ASSERT_TRUE(queryPlan->toString().find("WindowComputationOperator") != std::string::npos);
+    ASSERT_TRUE(queryPlan->toString().find("SliceMergingOperator") != std::string::npos);
+    ASSERT_TRUE(queryPlan->toString().find("SliceCreationOperator") != std::string::npos);
+
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -591,9 +594,11 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
-    auto coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(100);
-    coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(100);
+    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
+        //config->optimizer.enableNemoPlacement.setValue(true);
+        config->optimizer.distributedWindowCombinerThreshold.setValue(100);
+        config->optimizer.distributedWindowChildThreshold.setValue(100);
+    };
 
     for (uint64_t i = 0; i < workerNo; i++) {
         auto workerConfig = WorkerConfiguration::create();

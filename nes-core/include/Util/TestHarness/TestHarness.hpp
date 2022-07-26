@@ -394,8 +394,8 @@ class TestHarness {
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
-    template<typename Functor>
-    TestHarness& setupTopology(Functor crdFunctor = [] (CoordinatorConfigurationPtr) {}) {
+    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr) {
+    }) {
         if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
