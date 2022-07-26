@@ -231,7 +231,7 @@ class CircularBuffer {
      * @return true if number of values to pop successfully popped, false otherwise
      */
     bool popGivenNumberOfValues(T* temp, uint64_t numberOfValuesToPop, bool popTextDivider) {
-        if (size() > numberOfValuesToPop) {
+        if (size() >= numberOfValuesToPop) {
             for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
                 char popped = pop();
                 temp[i] = popped;

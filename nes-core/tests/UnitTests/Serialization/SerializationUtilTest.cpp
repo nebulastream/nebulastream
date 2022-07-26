@@ -65,6 +65,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
@@ -298,6 +299,15 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
             OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto tcpSourceConfig = TCPSourceType::create();
+        auto tcpSource = TCPSourceDescriptor::create(schema, tcpSourceConfig);
+        auto* serializedSourceDescriptor =
+            OperatorSerializationUtil::serializeSourceDescriptor(tcpSource, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        EXPECT_TRUE(tcpSource->equal(deserializedSourceDescriptor));
     }
 }
 

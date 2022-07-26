@@ -160,44 +160,61 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
+    bool popped = true;
+    uint64_t messageSize = 0;
+    int64_t bufferSizeRecieved = 0;
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
 
-        uint32_t bufferSize = 0;
-        if (sourceConfig->getSocketBufferSize()->getValue() == 0) {
-            NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
-            char* bufferSizeFromSocket = new char[4];
-            uint8_t readSocket = read(sockfd, bufferSizeFromSocket, 4);
-            NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSizeFromSocket);
-            if (readSocket != 0){
-                bufferSize = std::stoi(bufferSizeFromSocket);
-                NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSize);
-            }
-            delete [] bufferSizeFromSocket;
-        } else {
-            bufferSize = sourceConfig->getSocketBufferSize()->getValue();
-        }
-
-        int16_t sendBytes;
         if (!buffer.full()) {
             char* buf = new char[buffer.capacity() - buffer.size()];
             NES_TRACE("TCPSOURCE::fillBuffer: size to fill: " << buffer.capacity() - buffer.size() << ".");
-            sendBytes = read(sockfd, buf, buffer.capacity() - buffer.size());
-            if (sendBytes != 0 && sendBytes != -1) {
-                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: " << sendBytes << ".");
+            bufferSizeRecieved = read(sockfd, buf, buffer.capacity() - buffer.size());
+            if (bufferSizeRecieved != 0 && bufferSizeRecieved != -1) {
+                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: " << bufferSizeRecieved << ".");
                 NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: " << buf << ".");
-                buffer.push(buf, sendBytes);
+                buffer.push(buf, bufferSizeRecieved);
+                NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: " << buf << ".");
             }
         }
 
-        //TODO: reintroduce size reading from buffer and inputting sizes
-        //todo: check if current buffer is robust if only half a message is send
-        //todo: make sure for all possible message sending scenarios buffer is able to work and robust
+        switch (sourceConfig->getDecideMessageSize()->getValue()) {
+            case Configurations::TUPLE_SEPARATOR:
+                messageSize = buffer.sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
+                messageBuffer = new char[messageSize];
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message of size: '" << messageSize << "'");
+                NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << buffer.size() << "'");
+                popped = buffer.popGivenNumberOfValues(messageBuffer, messageSize, true);
+                break;
+            case Configurations::USER_SPECIFIED_BUFFER_SIZE:
+                messageSize = sourceConfig->getSocketBufferSize()->getValue();
+                messageBuffer = new char[messageSize];
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message of size: '" << messageSize << "'");
+                NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << buffer.size() << "'");
+                popped = buffer.popGivenNumberOfValues(messageBuffer, messageSize, false);
+                break;
+            case Configurations::BUFFER_SIZE_FROM_SOCKET:
+                //check that there wasn't an error when receiving the buffer
+                //&& only obtain a new message size if buffer was actually popped during the last run
+                if (bufferSizeRecieved != -1 && popped == true) {
+                    NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
+                    char* bufferSizeFromSocket = new char[sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue()];
+                    popped = buffer.popGivenNumberOfValues(bufferSizeFromSocket,
+                                                           sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue(),
+                                                           false);
+                    NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << bufferSizeFromSocket);
+                    if (popped) {
+                        messageSize = std::stoi(bufferSizeFromSocket);
+                        NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << messageSize);
+                    }
+                    delete[] bufferSizeFromSocket;
+                }
+                messageBuffer = new char[messageSize];
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message of size: '" << messageSize << "'");
+                NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << buffer.size() << "'");
+                popped = buffer.popGivenNumberOfValues(messageBuffer, messageSize, false);
+                break;
+        }
 
-        uint64_t messageSize = buffer.sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
-        char* messageBuffer = new char[messageSize];
-        NES_TRACE("TCPSOURCE::fillBuffer: Client consume message of size: '" << messageSize << "'");
-        NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << buffer.size() << "'");
-        bool popped = buffer.popGivenNumberOfValues(messageBuffer, messageSize, true);
         NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared message? '" << popped << "'");
         if (messageSize != 0 && popped) {
             NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
@@ -211,7 +228,6 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             tupleCount++;
         }
-        delete[] messageBuffer;
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
@@ -223,7 +239,6 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             flushIntervalPassed = true;
         }
     }
-
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
