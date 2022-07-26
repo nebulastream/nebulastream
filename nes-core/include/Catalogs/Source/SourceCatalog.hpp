@@ -31,6 +31,8 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
+namespace Catalogs {
+
 /**
  * @brief the source catalog handles the mapping of logical to physical sources
  * @Limitations
@@ -203,5 +205,6 @@ class SourceCatalog {
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

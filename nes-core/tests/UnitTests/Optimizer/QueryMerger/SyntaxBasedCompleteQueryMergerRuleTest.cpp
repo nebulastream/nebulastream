@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -44,7 +45,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
@@ -60,7 +61,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
                      ->addField("value", BasicType::UINT64)
                      ->addField("type", BasicType::UINT64)
                      ->addField("ts", BasicType::UINT64);
-        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
@@ -69,20 +70,20 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry3 =
-            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry3 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UdfCatalog::create();
     }

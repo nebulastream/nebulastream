@@ -35,11 +35,13 @@ namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
 }// namespace NES
 
 namespace NES::Optimizer {

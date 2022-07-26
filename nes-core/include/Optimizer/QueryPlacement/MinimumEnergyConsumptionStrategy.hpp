@@ -27,7 +27,7 @@ class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
 
   public:
     ~MinimumEnergyConsumptionStrategy() = default;
-    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, SourceCatalogPtr sourceCatalog);
+    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, Catalogs::SourceCatalogPtr sourceCatalog);
 
     static std::unique_ptr<MinimumEnergyConsumptionStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
         return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy(nesTopologyPlan));

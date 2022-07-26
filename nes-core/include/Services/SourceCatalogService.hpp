@@ -19,14 +19,16 @@
 #include <mutex>
 
 namespace NES {
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
+
+namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical sources.
@@ -34,7 +36,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SourceCatalogService {
 
   public:
-    SourceCatalogService(SourceCatalogPtr sourceCatalog);
+    SourceCatalogService(Catalogs::SourceCatalogPtr sourceCatalog);
 
     /**
      * @brief method to register a physical source
@@ -82,7 +84,7 @@ class SourceCatalogService {
     bool unregisterLogicalSource(const std::string& logicalSourceName);
 
   private:
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     std::mutex addRemoveLogicalSource;
     std::mutex addRemovePhysicalSource;
 };

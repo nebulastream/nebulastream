@@ -53,15 +53,14 @@ class SemanticQueryValidation {
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog);
+    explicit SemanticQueryValidation(Catalogs::SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr
-    create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UdfCatalogPtr& udfCatalog);
+    static SemanticQueryValidationPtr create(const Catalogs::SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UdfCatalogPtr& udfCatalog);
 
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
@@ -75,14 +74,14 @@ class SemanticQueryValidation {
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog);
+    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Checks if the physical source for the provided QueryPlan is present
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog);
+    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
@@ -105,7 +104,7 @@ class SemanticQueryValidation {
      */
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
     bool performAdvanceChecks;
     Catalogs::UdfCatalogPtr udfCatalog;
 };

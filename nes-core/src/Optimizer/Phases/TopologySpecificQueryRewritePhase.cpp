@@ -24,14 +24,14 @@ namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr
 TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
-                                          SourceCatalogPtr sourceCatalog,
+                                          Catalogs::SourceCatalogPtr sourceCatalog,
                                           Configurations::OptimizerConfiguration configuration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
         TopologySpecificQueryRewritePhase(topology, std::move(sourceCatalog), configuration));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                                                     SourceCatalogPtr sourceCatalog,
+                                                                     Catalogs::SourceCatalogPtr sourceCatalog,
                                                                      Configurations::OptimizerConfiguration configuration)
     : topology(topology) {
     logicalSourceExpansionRule =

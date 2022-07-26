@@ -22,14 +22,17 @@
 
 namespace NES {
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+
+namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}//namespace Catalogs
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -92,7 +95,7 @@ const std::string LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS = "ListOfBlockingDown
  */
 class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
-    static LogicalSourceExpansionRulePtr create(SourceCatalogPtr, bool expandSourceOnly);
+    static LogicalSourceExpansionRulePtr create(Catalogs::SourceCatalogPtr, bool expandSourceOnly);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
@@ -104,8 +107,8 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     virtual ~LogicalSourceExpansionRule() = default;
 
   private:
-    explicit LogicalSourceExpansionRule(SourceCatalogPtr, bool expandSourceOnly);
-    SourceCatalogPtr sourceCatalog;
+    explicit LogicalSourceExpansionRule(Catalogs::SourceCatalogPtr, bool expandSourceOnly);
+    Catalogs::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 
     /**

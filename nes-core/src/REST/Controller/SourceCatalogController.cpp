@@ -22,7 +22,7 @@
 #include <utility>
 
 namespace NES {
-SourceCatalogController::SourceCatalogController(SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
+SourceCatalogController::SourceCatalogController(Catalogs::SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
     NES_DEBUG("SourceCatalogController()");
 }
 
@@ -58,7 +58,7 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
 
         try {
             std::string logicalSourceName = param->second;
-            const std::vector<SourceCatalogEntryPtr>& allPhysicalSource = sourceCatalog->getPhysicalSources(logicalSourceName);
+            const std::vector<Catalogs::SourceCatalogEntryPtr>& allPhysicalSource = sourceCatalog->getPhysicalSources(logicalSourceName);
 
             //Prepare the response
             web::json::value result{};

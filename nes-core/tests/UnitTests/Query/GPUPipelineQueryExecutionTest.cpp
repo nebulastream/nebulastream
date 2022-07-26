@@ -80,7 +80,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 
@@ -94,8 +94,8 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     SchemaPtr testSchemaMultipleFields;
     SchemaPtr testSchemaColumnLayout;
     Runtime::NodeEnginePtr nodeEngine;
-    SourceCatalogPtr sourceCatalog;
-    UdfCatalogPtr udfCatalog;
+    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::UdfCatalogPtr udfCatalog;
 };
 
 void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {

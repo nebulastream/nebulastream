@@ -17,12 +17,12 @@
 
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <memory>
-namespace NES {
+namespace NES::Catalogs {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<Catalogs::UdfCatalog>;
-}// namespace NES
+}// namespace NES::Catalogs
 
 namespace NES::Optimizer {
 
@@ -33,23 +33,23 @@ namespace NES::Optimizer {
  */
 class TypeInferencePhaseContext {
   public:
-    TypeInferencePhaseContext(SourceCatalogPtr sourceCatalog, UdfCatalogPtr udfCatalog);
+    TypeInferencePhaseContext(Catalogs::SourceCatalogPtr  sourceCatalog, Catalogs::UdfCatalogPtr  udfCatalog);
 
     /**
      * Retrieve the source catalog
      * @return pointer to the source catalog
      */
-    [[nodiscard]] const SourceCatalogPtr& getSourceCatalog() const;
+    [[nodiscard]] const Catalogs::SourceCatalogPtr& getSourceCatalog() const;
 
     /**
      * Return the UdfCatalog that is used for type inference
      * @return pointer to the udf catalog
      */
-    [[nodiscard]] const UdfCatalogPtr& getUdfCatalog() const;
+    [[nodiscard]] const Catalogs::UdfCatalogPtr& getUdfCatalog() const;
 
   private:
-    const SourceCatalogPtr sourceCatalog;
-    const UdfCatalogPtr udfCatalog;
+    const Catalogs::SourceCatalogPtr sourceCatalog;
+    const Catalogs::UdfCatalogPtr udfCatalog;
 };
 
 }// namespace NES::Optimizer

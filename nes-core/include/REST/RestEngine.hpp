@@ -29,9 +29,6 @@ namespace NES {
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
@@ -72,6 +69,9 @@ class LocationController;
 using LocationControllerPtr = std::shared_ptr<LocationController>;
 
 namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
@@ -96,7 +96,7 @@ using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 class RestEngine {
 
   public:
-    RestEngine(const SourceCatalogPtr& sourceCatalog,
+    RestEngine(const Catalogs::SourceCatalogPtr& sourceCatalog,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogServicePtr& queryCatalogService,
                const TopologyPtr& topology,

@@ -32,6 +32,9 @@ class OptimizerConfiguration;
 }
 
 namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
@@ -44,9 +47,6 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -94,7 +94,7 @@ class GlobalQueryPlanUpdatePhase {
      */
     static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
                                                 QueryCatalogServicePtr queryCatalogService,
-                                                SourceCatalogPtr sourceCatalog,
+                                                Catalogs::SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 const Configurations::OptimizerConfiguration optimizerConfiguration,
@@ -110,7 +110,7 @@ class GlobalQueryPlanUpdatePhase {
   private:
     explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                         QueryCatalogServicePtr queryCatalogService,
-                                        const SourceCatalogPtr& sourceCatalog,
+                                        const Catalogs::SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::OptimizerConfiguration optimizerConfiguration,

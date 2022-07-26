@@ -18,6 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
@@ -52,7 +53,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
-    UdfCatalogPtr udfCatalog;
+    Catalogs::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
@@ -106,15 +107,15 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string sourceName = "car";
 
-        sourceCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalogForILP = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
         sourceCatalogForILP->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-        SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
@@ -156,7 +157,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         operatorNode->addProperty("cost", cost);
     }
 
-    SourceCatalogPtr sourceCatalogForILP;
+    Catalogs::SourceCatalogPtr sourceCatalogForILP;
     TopologyPtr topologyForILP;
 };
 

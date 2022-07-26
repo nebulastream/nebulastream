@@ -47,9 +47,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
@@ -61,6 +58,11 @@ using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 class NetworkSinkDescriptor;
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
+
+namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
 }// namespace NES
 
 namespace NES::Optimizer {

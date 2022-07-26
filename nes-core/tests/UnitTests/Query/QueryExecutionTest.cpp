@@ -23,6 +23,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -100,7 +101,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
         Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
-        auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        auto sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 

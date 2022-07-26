@@ -34,9 +34,6 @@ namespace NES {
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
@@ -47,6 +44,9 @@ class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
@@ -59,7 +59,7 @@ class QueryService {
   public:
     explicit QueryService(QueryCatalogServicePtr queryCatalogService,
                           RequestQueuePtr queryRequestQueue,
-                          SourceCatalogPtr sourceCatalog,
+                          Catalogs::SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
                           Catalogs::UdfCatalogPtr udfCatalog);

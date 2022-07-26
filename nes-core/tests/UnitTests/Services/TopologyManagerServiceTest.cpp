@@ -64,7 +64,7 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 };
 
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 

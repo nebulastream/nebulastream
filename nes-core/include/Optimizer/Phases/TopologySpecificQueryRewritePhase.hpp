@@ -23,11 +23,14 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+namespace Catalogs {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Catalogs
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -56,7 +59,7 @@ class TopologySpecificQueryRewritePhase {
      * @return TopologySpecificQueryRewritePhasePtr
      */
     static TopologySpecificQueryRewritePhasePtr
-    create(TopologyPtr topology, SourceCatalogPtr sourceCatalog, Configurations::OptimizerConfiguration configuration);
+    create(TopologyPtr topology, Catalogs::SourceCatalogPtr sourceCatalog, Configurations::OptimizerConfiguration configuration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -67,7 +70,7 @@ class TopologySpecificQueryRewritePhase {
 
   private:
     explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                               SourceCatalogPtr sourceCatalog,
+                                               Catalogs::SourceCatalogPtr sourceCatalog,
                                                Configurations::OptimizerConfiguration configuration);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;

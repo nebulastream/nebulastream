@@ -23,7 +23,7 @@
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 
-namespace NES {
+namespace NES::Catalogs {
 
 void SourceCatalog::addDefaultSources() {
     std::unique_lock lock(catalogMutex);
@@ -341,4 +341,4 @@ bool SourceCatalog::updatedLogicalSource(const std::string& logicalSourceName, S
     return true;
 }
 
-}// namespace NES
+}// namespace NES::Catalogs
