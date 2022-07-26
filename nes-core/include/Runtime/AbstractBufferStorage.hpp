@@ -18,7 +18,6 @@
 #include <Network/NesPartition.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/BufferSequenceNumber.hpp>
 #include <cstddef>
 
 namespace NES::Runtime {
