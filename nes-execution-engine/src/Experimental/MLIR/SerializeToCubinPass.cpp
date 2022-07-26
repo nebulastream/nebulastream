@@ -1,4 +1,9 @@
 #include <Experimental/MLIR/SerializeToCubinPass.hpp>
+#include <mlir/Dialect/GPU/Passes.h>
+#include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+#include <mlir/Transforms/Passes.h>
+#include <mlir/Pass/PassOptions.h>
+
 
 static void emitCudaError(const llvm::Twine& expr, const char* buffer, CUresult result, mlir::Location loc) {
     const char* error;
@@ -22,9 +27,11 @@ NES::ExecutionEngine::Experimental::MLIR::SerializeToCubinPass::SerializeToCubin
 }
 
 void NES::ExecutionEngine::Experimental::MLIR::SerializeToCubinPass::getDependentDialects(mlir::DialectRegistry& registry) const {
-    registerNVVMDialectTranslation(registry);
-    mlir::gpu::SerializeToBlobPass::getDependentDialects(registry);
+    mlir::registerNVVMDialectTranslation(registry);
+    mlir::registerLLVMDialectTranslation(registry);
+    OperationPass<mlir::gpu::GPUModuleOp>::getDependentDialects(registry);
 }
+
 std::unique_ptr<std::vector<char>>
 NES::ExecutionEngine::Experimental::MLIR::SerializeToCubinPass::serializeISA(const std::string& isa) {
     mlir::Location loc = getOperation().getLoc();

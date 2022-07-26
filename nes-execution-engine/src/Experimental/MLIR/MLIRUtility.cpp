@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include "../../../include/Experimental/MLIR/MLIRUtility.hpp"
 #include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Experimental/MLIR/SerializeToCubinPass.hpp>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
@@ -23,18 +25,21 @@
 #include <llvm/Support/TargetSelect.h>
 #include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
 #include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
+#include <mlir/Dialect/Affine/IR/AffineOps.h>
+#include <mlir/Dialect/GPU/GPUDialect.h>
+#include <mlir/Dialect/GPU/Passes.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/SCF/SCF.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
-#include <mlir/Dialect/GPU/GPUDialect.h>
-#include <mlir/Dialect/Affine/IR/AffineOps.h>
-#include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/OperationSupport.h>
+#include <mlir/InitAllPasses.h>
 #include <mlir/Parser.h>
+#include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Dialect/NVVM/NVVMToLLVMIRTranslation.h>
@@ -43,10 +48,6 @@
 #include <mlir/Transforms/Passes.h>
 #include <string>
 #include <utility>
-#include <mlir/Pass/Pass.h>
-#include <mlir/Dialect/GPU/Passes.h>
-#include <mlir/InitAllPasses.h>
-#include <Experimental/MLIR/SerializeToCubinPass.hpp>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
@@ -206,12 +207,12 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
 //    passManager.addPass(mlir::createLowerToCFGPass());
 //    passManager.addPass(mlir::createLowerToLLVMPass());
     mlir::PassManager passManager(&context);
-    passManager.addPass(mlir::createGpuKernelOutliningPass());
-    auto &kernelPm = passManager.nest<mlir::gpu::GPUModuleOp>();
-    kernelPm.addPass(mlir::createStripDebugInfoPass());
-    kernelPm.addPass(mlir::createLowerGpuOpsToNVVMOpsPass());
-    kernelPm.addPass(std::make_unique<SerializeToCubinPass>());
-    passManager.addPass(mlir::createGpuToLLVMConversionPass());
+//    passManager.addPass(mlir::createGpuKernelOutliningPass());
+//    auto &kernelPm = passManager.nest<mlir::gpu::GPUModuleOp>();
+//    kernelPm.addPass(mlir::createStripDebugInfoPass());
+//    kernelPm.addPass(mlir::createLowerGpuOpsToNVVMOpsPass());
+//    kernelPm.addPass(std::make_unique<SerializeToCubinPass>());
+//    passManager.addPass(mlir::createGpuToLLVMConversionPass());
     if (mlir::failed(passManager.run(*module))) {
         return 1;
     }
@@ -229,7 +230,7 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
-    mlir::registerNVVMDialectTranslation(*module->getContext());
+//    mlir::registerNVVMDialectTranslation(*module->getContext());
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
@@ -295,8 +296,8 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine() {
 //    LLVMInitializeNVPTXTargetMC();
 //    LLVMInitializeNVPTXAsmPrinter();
 
-    mlir::registerMLIRContextCLOptions();
-    mlir::registerPassManagerCLOptions();
+//    mlir::registerMLIRContextCLOptions();
+//    mlir::registerPassManagerCLOptions();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerNVVMDialectTranslation(*module->getContext());

@@ -9,7 +9,7 @@
 namespace NES::ExecutionEngine::Experimental::MLIR {
 class SerializeToCubinPass : public mlir::PassWrapper<SerializeToCubinPass, mlir::gpu::SerializeToBlobPass> {
   public:
-//    MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(SerializeToCubinPass)
+    //MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(SerializeToCubinPass)
 
     mlir::StringRef getArgument() const final { return "test-gpu-to-cubin"; }
     mlir::StringRef getDescription() const final { return "Lower GPU kernel function to CUBIN binary annotations"; }
@@ -20,6 +20,8 @@ class SerializeToCubinPass : public mlir::PassWrapper<SerializeToCubinPass, mlir
 
     // Serializes PTX to CUBIN.
     std::unique_ptr<std::vector<char>> serializeISA(const std::string& isa) override;
+
+
 };
 
 }// namespace NES::ExecutionEngine::Experimental::MLIR
