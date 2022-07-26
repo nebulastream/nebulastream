@@ -15,8 +15,6 @@
 #ifndef NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 #define NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 
-#include <Network/NesPartition.hpp>
-#include <Plans/Query/QueryId.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstddef>
 
