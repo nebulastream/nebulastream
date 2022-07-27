@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.2.67](https://github.com/nebulastream/nebulastream/tree/v0.2.67) (2022-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.66...v0.2.67)
+
+**Implemented enhancements:**
+
+- Refactoring Physical Stream Config and Source Config [\#2311](https://github.com/nebulastream/nebulastream/issues/2311)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix data race when Worker is shutdown [\#2912](https://github.com/nebulastream/nebulastream/issues/2912)
+
+#### Fault Tolerance
+
+- Upstream backup with non-blocking storage [\#2880](https://github.com/nebulastream/nebulastream/issues/2880)
+
 ## [v0.2.66](https://github.com/nebulastream/nebulastream/tree/v0.2.66) (2022-07-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.65...v0.2.66)
