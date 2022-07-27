@@ -126,18 +126,18 @@ class ILPStrategy : public BasePlacementStrategy {
                         std::map<std::string, double>& mileages);
 
     /**
+    * @brief computes heuristics for distance
+    * @param pinnedUpStreamOperators: pinned upstream operators
+    * @return a mapping of topology node (represented by string id) and their distance to the root node
+    */
+    std::map<std::string, double> computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+
+    /**
     * @brief calculates the mileage property for a node
     * @param node topology node for which mileage is calculated
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileages);
-
-    /**
-    * @brief computes heuristics for distance
-    * @param queryPlan query plan to place
-    * @return a mapping of topology node (represented by string id) and their distance to the root node
-    */
-    std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
+    void computeDistance(TopologyNodePtr node, std::map<std::string, double>& mileages);
 
     // context from the Z3 library used for optimization
     z3::ContextPtr z3Context;

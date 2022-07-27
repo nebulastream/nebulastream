@@ -53,18 +53,21 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
+    // 1. Find the path where operators need to be placed
+    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+
     z3::optimize opt(*z3Context);
     std::map<std::string, OperatorNodePtr> operatorNodes;
     std::map<std::string, TopologyNodePtr> topologyNodes;
     std::map<std::string, z3::expr> placementVariables;
     std::map<std::string, z3::expr> distances;
     std::map<std::string, z3::expr> utilizations;
-    std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
+    std::map<std::string, double> milages = computeMileage(pinnedUpStreamOperators);
 
-    // 1. Construct the placementVariable, compute distance, utilization and mileages
+    // 2. Construct the placementVariable, compute distance, utilization and mileages
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
 
-        //Find all path between pinned upstream and downstream operators
+        //2.1 Find all path between pinned upstream and downstream operators
         std::vector<NodePtr> operatorPath;
         operatorPath.push_back(pinnedUpStreamOperator);
         while (!operatorPath.back()->getParents().empty()) {
@@ -87,7 +90,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             //Look for the next downstream operators and add them to the path.
             auto downstreamOperators = operatorToProcess->getParents();
 
-            if(downstreamOperators.empty()){
+            if (downstreamOperators.empty()) {
                 NES_ERROR("ILPStrategy: Unable to find pinned downstream operator.");
                 return false;
             }
@@ -110,17 +113,17 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             }
         }
 
-        //Find path between pinned upstream and downstream topology node
+        //2.2 Find path between pinned upstream and downstream topology node
         auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        auto upstreamTopologyNode = topology->findNodeWithId(upstreamPinnedNodeId);
+        auto upstreamTopologyNode = nodeIdToTopologyNodeMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
             std::any_cast<uint64_t>(operatorPath.back()->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID));
-        auto downstreamTopologyNode = topology->findNodeWithId(downstreamPinnedNodeId);
+        auto downstreamTopologyNode = nodeIdToTopologyNodeMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
 
-        //Add constraints to Z3 solver
+        //2.3 Add constraints to Z3 solver
         auto success = addConstraints(z3Context,
                                       opt,
                                       operatorPath,
@@ -136,8 +139,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
     }
 
-    // 2. Calculate the network cost.
-    // Network cost = sum over all operators (output of operator * distance of operator)
+    // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
 
     for (auto const& [operatorID, position] : distances) {
@@ -157,7 +159,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
     NES_DEBUG("cost_net: " << cost_net);
 
-    // 3. Calculate the node over-utilization cost.
+    // 4. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
     auto overUtilizationCost = z3Context->int_val(0);// initialize the over-utilization cost with 0
     for (auto const& [topologyID, utilization] : utilizations) {
@@ -178,26 +180,27 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     auto weightOverUtilization = z3Context->real_val(std::to_string(this->overUtilizationCostWeight).c_str());
     auto weightNetwork = z3Context->real_val(std::to_string(this->networkCostWeight).c_str());
 
-    // 4. Optimize ILP problem and print solution.
+    // 5. Optimize ILP problem and print solution.
     opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationCost);// where the actual optimization happen
 
-    // 5. Check if we have solution, return false if that is not the case
+    // 6. Check if we have solution, return false if that is not the case
     if (z3::sat != opt.check()) {
         NES_ERROR("ILPStrategy: Solver failed.");
         return false;
     }
 
     // At this point, we already get the solution.
-    // 6. Get the model to retrieve the optimization solution
+    // 7. Get the model to retrieve the optimization solution
     auto z3Model = opt.get_model();
     NES_DEBUG("ILPStrategy:model: \n" << z3Model);
 
-    // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
+    // 8. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
         if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+
             OperatorNodePtr operatorNode = queryPlan->getOperatorWithId(operatorId);
             TopologyNodePtr topologyNode = topology->findNodeWithId(topologyNodeId);
 
@@ -211,11 +214,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
     }
 
-    // 8. Apply the operator placement to the execution nodes based on the ILP solution
+    // 9. Apply the operator placement to the execution nodes based on the ILP solution
     placeOperators(queryPlan, z3Model, placementVariables);
 
-    // 9. Run the type inference phase and return the status
-    return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
+    // 10. Run the type inference phase and return the status
+    return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 
 std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
@@ -228,7 +231,18 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     return path;
 }
 
-void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileages) {
+std::map<std::string, double> ILPStrategy::computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
+    std::map<std::string, double> mileageMap;// (operatorId, M)
+    // populate the distance map
+    for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto topologyNode = nodeIdToTopologyNodeMap[nodeId];
+        computeDistance(topologyNode, mileageMap);
+    }
+    return mileageMap;
+}
+
+void ILPStrategy::computeDistance(TopologyNodePtr node, std::map<std::string, double>& mileages) {
     std::string topologyID = std::to_string(node->getId());
     auto& parents = node->getParents();
     // if the current node has no parent (i.e., is a root node), then the mileages is 0
@@ -242,27 +256,9 @@ void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::s
     TopologyNodePtr parent = parents[0]->as<TopologyNode>();
     std::string parentID = std::to_string(parent->getId());
     if (mileages.find(parentID) == mileages.end()) {
-        computeDistanceRecursive(parent, mileages);
+        computeDistance(parent, mileages);
     }
     mileages[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileages[parentID];
-}
-
-std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan) {
-    std::map<std::string, double> mileageMap;// (operatorid, M)
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-
-    // populate the whole distance map
-    for (const auto& sourceNode : sourceOperators) {
-        std::string sourceName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
-        auto nodeId = std::any_cast<uint64_t>(sourceNode->getProperty(PINNED_NODE_ID));
-        auto topologyNode = topology->findNodeWithId(nodeId);
-        //FIXME: #2485 Dwi: can we use the pinning information from the source operators?
-        // for (const auto& sourceToplogyNode : sourceCatalog->getSourceNodesForLogicalSource(sourceName)) {
-        //    computeDistanceRecursive(sourceToplogyNode, mileageMap);
-        // }
-    }
-
-    return mileageMap;
 }
 
 bool ILPStrategy::addConstraints(z3::ContextPtr z3Context,
@@ -383,13 +379,5 @@ double ILPStrategy::getNetworkCostWeight() { return this->networkCostWeight; }
 void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizationCostWeight = weight; }
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
-
-bool ILPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                            FaultToleranceType /*faultToleranceType*/,
-                                            LineageType /*lineageType*/,
-                                            const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                            const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
-    NES_NOT_IMPLEMENTED();
-}
 
 }// namespace NES::Optimizer
