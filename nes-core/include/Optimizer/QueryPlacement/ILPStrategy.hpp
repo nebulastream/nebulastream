@@ -77,9 +77,14 @@ class ILPStrategy : public BasePlacementStrategy {
     double getNetworkCostWeight();
 
   private:
-    // default value for the relative weight of overutilization and network cost
+    // default weights for over utilization and network cost
     double overUtilizationCostWeight = 1.0;
     double networkCostWeight = 1.0;
+    // context from the Z3 library used for optimization
+    z3::ContextPtr z3Context;
+    //map to hold operators to place
+    std::map<OperatorId, OperatorNodePtr> operatorMap;
+    const char* const KEY_SEPARATOR = ",";
 
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
@@ -87,60 +92,42 @@ class ILPStrategy : public BasePlacementStrategy {
                          z3::ContextPtr z3Context);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
-     * @param queryPlan the query plan to place
      * @param z3Model a Z3 z3Model from the Z3 Optimize
      * @param placementVariables a mapping between concatenation of operator id and placement id and their z3 expression
      */
-    bool placeOperators(QueryPlanPtr queryPlan, z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
-
-    /**
-    * @brief Find a path between a source node and a destination node
-    * @param sourceNode source operator or source topology node
-    * @returns array containing all nodes on path from source to sink or parent topology node
-     * TODO: #2290: try to extend existing function in the Topology class and use it instead
-    */
-    std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
+    bool pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
     * @brief Populate the placement variables and adds constraints to the optimizer
-    * @param context Z3 context
     * @param opt an instance of the Z3 optimize class
     * @param operatorNodePath the selected sequence of operator to add
     * @param topologyNodePath the selected sequence of topology node to add
-    * @param operatorIdToNodeMap a mapping of operator id string and operator node object
-    * @param topologyNodeIdToNodeMap a mapping of topology nodes id string and topology node object
     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
-    * @param operatorIdDistancesMap a mapping between operators (represented by ids) to their next operator in the topology
-    * @param operatorIdUtilizationsMap a mapping of topology nodes and their node utilization
-    * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
+    * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
+    * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
+    * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
     */
-    bool addConstraints(z3::ContextPtr z3Context,
-                        z3::optimize& opt,
+    bool addConstraints(z3::optimize& opt,
                         std::vector<NodePtr>& operatorNodePath,
                         std::vector<TopologyNodePtr>& topologyNodePath,
-                        std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
-                        std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
                         std::map<std::string, z3::expr>& placementVariable,
-                        std::map<std::string, z3::expr>& operatorIdDistancesMap,
-                        std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
-                        std::map<std::string, double>& mileages);
+                        std::map<OperatorId, z3::expr>& operatorDistanceMap,
+                        std::map<uint64_t, z3::expr>& nodeUtilizationMap,
+                        std::map<uint64_t, double>& nodeMileageMap);
 
     /**
     * @brief computes heuristics for distance
     * @param pinnedUpStreamOperators: pinned upstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<std::string, double> computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+    std::map<uint64_t, double> computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node
     * @param node topology node for which mileage is calculated
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void computeDistance(TopologyNodePtr node, std::map<std::string, double>& mileages);
-
-    // context from the Z3 library used for optimization
-    z3::ContextPtr z3Context;
+    void computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages);
 };
 }// namespace NES::Optimizer
 
