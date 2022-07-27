@@ -201,7 +201,6 @@ class WindowSource : public NES::DefaultSource {
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
 
-
     void close() override {
         canTerminate.get_future().get();
         NES::DefaultSource::close();
@@ -774,12 +773,12 @@ TEST_F(ProjectionTest, mergeQuery) {
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createNonRunnableSource(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);

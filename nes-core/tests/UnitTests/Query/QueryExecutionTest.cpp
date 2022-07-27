@@ -435,8 +435,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
                 fillBuffer(inputBuffer, memoryLayout);
 
-
-
                 ASSERT_EQ(plan->getPipelines()[0]->execute(inputBuffer, workerContext), ExecutionResult::Ok);
                 // This plan should produce one output buffer
                 EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
@@ -1045,7 +1043,6 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
 
-
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1218,7 +1215,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         }
     }
 
-
     ASSERT_TRUE(nodeEngine->stopQuery(plan->getQueryId()));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1363,7 +1359,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                        "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent2, dynamicTupleBufferActual2.toString(windowResultSchema));
     }
-
 
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
