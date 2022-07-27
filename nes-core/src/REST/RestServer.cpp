@@ -73,7 +73,7 @@ bool RestServer::startWithOatpp() {
     try {
         // Initialize Oatpp Environment
         oatpp::base::Environment::init();
-        // Start a blocking Server
+        //Creates component parts necessary to start server, then starts a blocking server
         run();
         // Destroy Oatpp Environment
         oatpp::base::Environment::destroy();
