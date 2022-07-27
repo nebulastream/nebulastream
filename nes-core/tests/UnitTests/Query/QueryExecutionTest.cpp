@@ -104,24 +104,6 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
-        std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
-            plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
-        });
-        std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
-            plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
-        });
-        std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
-            plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
-        });
-
-        auto task =
-            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(), NES::Runtime::SoftEndOfStream, plan);
-        plan->postReconfigurationCallback(task);
-
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
-    }
-
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
@@ -152,6 +134,62 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
 };
 
+class NonRunnableDataSource : public NES::DefaultSource {
+  public:
+    explicit NonRunnableDataSource(const SchemaPtr& schema,
+                                   const Runtime::BufferManagerPtr& bufferManager,
+                                   const Runtime::QueryManagerPtr& queryManager,
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t gatheringInterval,
+                                   OperatorId operatorId,
+                                   OriginId originId,
+                                   size_t numSourceLocalBuffers,
+                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+        : DefaultSource(schema,
+                        bufferManager,
+                        queryManager,
+                        numbersOfBufferToProduce,
+                        gatheringInterval,
+                        operatorId,
+                        originId,
+                        numSourceLocalBuffers,
+                        successors) {
+        wasGracefullyStopped = NES::Runtime::QueryTerminationType::HardStop;
+    }
+
+    void runningRoutine() override {
+        open();
+        completedPromise.set_value(canTerminate.get_future().get());
+        close();
+    }
+
+    bool stop(Runtime::QueryTerminationType termination) override {
+        canTerminate.set_value(true);
+        return NES::DefaultSource::stop(termination);
+    }
+
+  private:
+    std::promise<bool> canTerminate;
+};
+
+DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
+                                      const Runtime::BufferManagerPtr& bufferManager,
+                                      const Runtime::QueryManagerPtr& queryManager,
+                                      OperatorId operatorId,
+                                      OriginId originId,
+                                      size_t numSourceLocalBuffers,
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<NonRunnableDataSource>(schema,
+                                                   bufferManager,
+                                                   queryManager,
+                                                   /*bufferCnt*/ 1,
+                                                   /*frequency*/ 1000,
+                                                   operatorId,
+                                                   originId,
+                                                   numSourceLocalBuffers,
+                                                   successors);
+}
+
 /**
  * @brief A window source, which generates data consisting of (key, value, ts).
  * Key = 1||2
@@ -164,6 +202,9 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
+
+    std::promise<bool> canTerminate;
+
     WindowSource(SchemaPtr schema,
                  Runtime::BufferManagerPtr bufferManager,
                  Runtime::QueryManagerPtr queryManager,
@@ -183,6 +224,16 @@ class WindowSource : public NES::DefaultSource {
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
+
+    void close() override {
+        canTerminate.get_future().get();
+        NES::DefaultSource::close();
+    }
+
+    bool stop(Runtime::QueryTerminationType termination) override {
+        canTerminate.set_value(true);
+        return NES::DefaultSource::stop(termination);
+    }
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = allocateBuffer();
@@ -322,13 +373,13 @@ TEST_F(QueryExecutionTest, filterQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()
@@ -375,15 +426,16 @@ TEST_F(QueryExecutionTest, filterQuery) {
             // The plan should have one pipeline
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
             EXPECT_EQ(plan->getPipelines().size(), 1u);
+            ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+            ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+            ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
             Runtime::WorkerContext workerContext(1, nodeEngine->getBufferManager(), 4);
             if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
                 auto memoryLayout =
                     Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
                 fillBuffer(inputBuffer, memoryLayout);
-                ASSERT_TRUE(plan->setup());
-                ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-                ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
-                ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+
 
                 ASSERT_EQ(plan->getPipelines()[0]->execute(inputBuffer, workerContext), ExecutionResult::Ok);
                 // This plan should produce one output buffer
@@ -412,9 +464,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
                 FAIL();
             }
 
-            cleanUpPlan(plan);
+            ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
 
-            testSink->cleanupBuffers();// wont be called by runtime as no runtime support in this test
+            // wont be called by runtime as no runtime support in this test
             ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
         }
     }
@@ -429,13 +481,13 @@ TEST_F(QueryExecutionTest, projectionQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -453,15 +505,14 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
@@ -481,8 +532,8 @@ TEST_F(QueryExecutionTest, projectionQuery) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         }
     }
-    cleanUpPlan(plan);
-    testSink->cleanupBuffers();// need to be called manually here
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
+    // need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
@@ -517,13 +568,13 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,// dummy origin id
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,// dummy origin id
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     SchemaPtr schemaBuildSide =
@@ -535,13 +586,13 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(schemaBuildSide,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,// dummy origin id
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(schemaBuildSide,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,// dummy origin id
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()
@@ -707,13 +758,13 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,// dummy origin id
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,// dummy origin id
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     SchemaPtr schemaBuildSide =
@@ -725,13 +776,13 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(schemaBuildSide,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,// dummy origin id
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(schemaBuildSide,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,// dummy origin id
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()
@@ -781,9 +832,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     std::vector<std::vector<int64_t>> dataProbeSide2(110, {6, 1, 6002});
     fillBufferWithData(bufferProbeSide2, memoryLayoutProbeSide, dataProbeSide2);
 
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     plan->getPipelines()[1]->execute(bufferBuildSide, workerContext);
@@ -824,8 +874,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
         EXPECT_EQ(resultRecordIndexFields3[i], expectedTuple2);
     }
 
-    cleanUpPlan(plan);
-    testSink->cleanupBuffers();// need to be called manually here
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
+    // need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
@@ -839,13 +889,13 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()
@@ -893,16 +943,14 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
     if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
         auto memoryLayout =
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        plan->start(nodeEngine->getStateManager());
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
@@ -928,8 +976,8 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
         NES_DEBUG("QueryExecutionTest: buffer=" << buffer);
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
     }
-    cleanUpPlan(plan);
-    testSink->cleanupBuffers();
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
+
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
@@ -997,7 +1045,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
 
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1080,7 +1128,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
             EXPECT_EQ(valueFields[recordIndex], 10UL);
         }
     }
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(0U, testSink->getNumberOfResultBuffers());
 }
@@ -1170,7 +1218,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         }
     }
 
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(plan->getQueryId()));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1237,7 +1285,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                       "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent, dynamicTupleBuffer.toString(windowResultSchema));
     }
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1316,7 +1364,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
         EXPECT_EQ(expectedContent2, dynamicTupleBufferActual2.toString(windowResultSchema));
     }
 
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1387,7 +1435,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                       "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(windowResultSchema));
     }
-    testSink->cleanupBuffers();
+
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1403,7 +1451,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 
-    //auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    //auto testSource1 = createNonRunnableSource(testSchema, nodeEngine->getBufferManager(),
     //                                                                 nodeEngine->getQueryManager(), 1, 12);
 
     auto query1 = TestQuery::from(testSchema);
@@ -1411,7 +1459,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-    // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    // auto testSource2 = createNonRunnableSource(testSchema, nodeEngine->getBufferManager(),
     //                                                                 nodeEngine->getQueryManager(), 1, 12);
     auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
 
@@ -1486,13 +1534,13 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -1551,8 +1599,8 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
         }
     }
-    cleanUpPlan(plan);
-    testSink->cleanupBuffers();
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
+
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 #endif
