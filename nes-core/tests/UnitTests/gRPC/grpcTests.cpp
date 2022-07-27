@@ -49,7 +49,7 @@ class GrpcTests : public Testing::NESBaseTest {
 /**
 * Test of Notification from Worker to Coordinator of a failed Query.
 */
-TEST_F(GrpcTests, testGrpcNotifyQueryFailure) {
+TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     // Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
@@ -113,7 +113,7 @@ TEST_F(GrpcTests, testGrpcNotifyQueryFailure) {
 /**
 * Test if errors are transferred from Worker to Coordinator.
 */
-TEST_F(GrpcTests, testGrpcSendErrorNotification) {
+TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
 
     // Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
