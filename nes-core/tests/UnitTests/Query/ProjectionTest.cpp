@@ -179,6 +179,8 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
+    std::promise<bool> canTerminate;
+
     explicit WindowSource(SchemaPtr schema,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
@@ -199,9 +201,16 @@ class WindowSource : public NES::DefaultSource {
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
 
-    //    void runningRoutine() override {
-    //        completedPromise.set_value(true);
-    //    }
+
+    void close() override {
+        canTerminate.get_future().get();
+        NES::DefaultSource::close();
+    }
+
+    bool stop(Runtime::QueryTerminationType termination) override {
+        canTerminate.set_value(true);
+        return NES::DefaultSource::stop(termination);
+    }
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
