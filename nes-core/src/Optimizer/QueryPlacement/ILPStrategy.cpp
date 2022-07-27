@@ -120,17 +120,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
 
-        //2.3 Add constraints to Z3 solver
-        auto success = addConstraints(opt,
-                                      operatorPath,
-                                      topologyPath,
-                                      placementVariables,
-                                      operatorDistanceMap,
-                                      nodeUtilizationMap,
-                                      nodeMileageMap);
-        if (!success) {
-            NES_ERROR("ILPStrategy: an error occurred when adding path.");
-        }
+        //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+        addConstraints(opt,
+                       operatorPath,
+                       topologyPath,
+                       placementVariables,
+                       operatorDistanceMap,
+                       nodeUtilizationMap,
+                       nodeMileageMap);
     }
 
     // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
@@ -200,7 +197,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
-    std::map<uint64_t, double> mileageMap;// (operatorId, M)
+    std::map<uint64_t, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
@@ -229,7 +226,7 @@ void ILPStrategy::computeDistance(TopologyNodePtr node, std::map<uint64_t, doubl
     mileages[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileages[parentID];
 }
 
-bool ILPStrategy::addConstraints(z3::optimize& opt,
+void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::vector<NodePtr>& operatorNodePath,
                                  std::vector<TopologyNodePtr>& topologyNodePath,
                                  std::map<std::string, z3::expr>& placementVariable,
@@ -296,7 +293,6 @@ bool ILPStrategy::addConstraints(z3::optimize& opt,
         // add constraint that operator is placed exactly once on topology path
         opt.add(sum_i == 1);
     }
-    return true;
 }
 
 bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables) {

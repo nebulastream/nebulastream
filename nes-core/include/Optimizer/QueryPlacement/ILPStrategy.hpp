@@ -107,7 +107,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
     */
-    bool addConstraints(z3::optimize& opt,
+    void addConstraints(z3::optimize& opt,
                         std::vector<NodePtr>& operatorNodePath,
                         std::vector<TopologyNodePtr>& topologyNodePath,
                         std::map<std::string, z3::expr>& placementVariable,
