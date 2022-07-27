@@ -595,7 +595,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
     csvSourceType->setNumberOfBuffersToProduce(3);
 
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        //config->optimizer.enableNemoPlacement.setValue(true);
+        config->optimizer.enableNemoPlacement.setValue(true);
         config->optimizer.distributedWindowCombinerThreshold.setValue(100);
         config->optimizer.distributedWindowChildThreshold.setValue(100);
     };
@@ -625,7 +625,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
                                   .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
                                   .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
                                   .validate()
-                                  .setupTopology();
+                                  .setupTopology(crdFunctor);
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
