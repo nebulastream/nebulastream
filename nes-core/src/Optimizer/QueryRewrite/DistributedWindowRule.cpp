@@ -66,7 +66,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
 
-            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold) {
+            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
+                && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
                 if (enableNemoPlacement) {
                     createDistributedNemoWindowOperator(windowOp, queryPlan);
                 } else {

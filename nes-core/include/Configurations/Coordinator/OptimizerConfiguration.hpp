@@ -94,14 +94,14 @@ class OptimizerConfiguration : public BaseConfiguration {
      * @brief Indicated the number of child operators from, which a window operator is distributed.
      */
     IntOption distributedWindowChildThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD,
-                                                 0,
+                                                 1000,
                                                  "Threshold for the distribution of window aggregations."};
 
     /**
      * @brief Indicated the number of child nodes from which on we will introduce combine operator between the pre-aggregation operator and the final aggregation.
      */
     IntOption distributedWindowCombinerThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD,
-                                                    0,
+                                                    1000,
                                                     "Threshold for the insertion of pre-aggregation operators."};
 
     /**
