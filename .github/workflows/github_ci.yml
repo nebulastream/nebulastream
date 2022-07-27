@@ -107,7 +107,7 @@ jobs:
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="16" -eNesTestParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -eNesBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
@@ -143,7 +143,7 @@ jobs:
       - name: Run build and test
         if: github.event_name != 'workflow_dispatch'
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE -eNesTestParallelism="28" -eNesBuildParallelism="28" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE -eNesTestParallelism="4" -eNesBuildParallelism="28" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup build
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |

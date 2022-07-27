@@ -38,10 +38,10 @@ namespace NES {
 
 using namespace Configurations;
 
-class grpcTests : public Testing::NESBaseTest {
+class GrpcTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("grpcTests.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("GrpcTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup grpc test class.");
     }
 };
@@ -49,7 +49,7 @@ class grpcTests : public Testing::NESBaseTest {
 /**
 * Test of Notification from Worker to Coordinator of a failed Query.
 */
-TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
+TEST_F(GrpcTests, testGrpcNotifyQueryFailure) {
     // Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
@@ -94,6 +94,8 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
+
     // stop coordinator and worker
     NES_INFO("GrpcNotifyQueryFailureTest: Stop worker");
     bool retStopWrk = wrk->stop(true);
@@ -111,7 +113,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
 /**
 * Test if errors are transferred from Worker to Coordinator.
 */
-TEST_F(grpcTests, testGrpcSendErrorNotification) {
+TEST_F(GrpcTests, testGrpcSendErrorNotification) {
 
     // Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
