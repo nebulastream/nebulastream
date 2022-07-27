@@ -60,18 +60,19 @@ using MaintenanceRequestPtr = std::shared_ptr<MaintenanceRequest>;
 /**
  * @brief The QueryMigrationPhase is responsible for handling MaintenanceRequests and QueryMigrationRequests
  *
- * @paragraph Query Migration is made up of two parts: 1. Clean Up and 2. Migration
- * @paragraph 1. Clean Up:
- * @paragraph Made up of decentralized and centralized component:
- * @paragraph Decentralized:
- * QMP creates message that propagates across all nodes that need clean up. Once this message reaches the last node that needs clean up,
- * that node sends an Ack to the Coordinator.
- * @paragraph Centralized:
- * After receiving the Ack, the Query Migration Phase cleans up centralized data structures (Global Execution Plan)
- * @paragraph 2. Migration: Migration consists of 3 steps:
- * @paragraph Placement
- * @paragraph Deployment
- * @paragraph Reconfiguration
+ * Query Migration is made up of two parts: 1. Clean Up and 2. Migration
+ * 1. Clean Up:
+ *      Made up of decentralized and centralized component:
+ * -Decentralized:
+ *      QMP creates message that propagates across all nodes that need clean up. Once this message reaches the last node that needs clean up,
+ *      that node sends an Ack to the Coordinator.
+ * -Centralized:
+ *      After receiving the Ack, the Query Migration Phase cleans up centralized data structures (Global Execution Plan)
+ *
+ * 2. Migration: Migration consists of 3 steps:
+ *      -Placement
+ *      -Deployment
+ *      -Reconfiguration
  *
  * Depending on the Migration Type, the above phases can be triggered in different orders.
  */
