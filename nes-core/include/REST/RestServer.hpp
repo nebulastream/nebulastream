@@ -94,7 +94,6 @@ class RestServer {
                const Runtime::BufferManagerPtr& bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 
-
     /**
    * @brief method to start the rest server
    * calls then startwithOatpp or startwithRestSDK according to bool useOatpp

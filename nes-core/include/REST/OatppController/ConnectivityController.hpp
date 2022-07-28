@@ -30,7 +30,8 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
-    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper) : oatpp::web::server::api::ApiController(objectMapper) {}
+    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper)
+        : oatpp::web::server::api::ApiController(objectMapper) {}
 
     /**
      * Create a shared object of the API controller
