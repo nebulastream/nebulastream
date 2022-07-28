@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.68](https://github.com/nebulastream/nebulastream/tree/v0.2.68) (2022-07-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.67...v0.2.68)
+
+#### REST API 
+
+- Move to oatapp REST server: start oatapp server on NES startup [\#2770](https://github.com/nebulastream/nebulastream/issues/2770)
+
 ## [v0.2.67](https://github.com/nebulastream/nebulastream/tree/v0.2.67) (2022-07-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.66...v0.2.67)
