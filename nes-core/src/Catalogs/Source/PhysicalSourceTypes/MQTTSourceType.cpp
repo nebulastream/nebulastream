@@ -140,8 +140,8 @@ MQTTSourceType::MQTTSourceType()
                                                                          -1,
                                                                          "tupleBuffer flush interval in milliseconds")),
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
-                                                                           Configurations::InputFormat::JSON,
-                                                                           "input data format")) {
+                                                                                           Configurations::InputFormat::JSON,
+                                                                                           "input data format")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -204,9 +204,13 @@ void MQTTSourceType::setCleanSession(bool cleanSessionValue) { cleanSession->set
 
 void MQTTSourceType::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
-void MQTTSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setInputFormatEnum(std::move(inputFormatValue)); }
+void MQTTSourceType::setInputFormat(std::string inputFormatValue) {
+    inputFormat->setInputFormatEnum(std::move(inputFormatValue));
+}
 
-void MQTTSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
+void MQTTSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) {
+    inputFormat->setValue(std::move(inputFormatValue));
+}
 
 void MQTTSourceType::reset() {
     setUrl(url->getDefaultValue());

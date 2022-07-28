@@ -36,8 +36,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
    * @param sourceConfig all needed physicalSources for MQTT passed with object
    * @return source descriptor pointer to mqtt source
    */
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig);
+    static SourceDescriptorPtr create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig);
 
     /**
      * @brief get MQTT server address
