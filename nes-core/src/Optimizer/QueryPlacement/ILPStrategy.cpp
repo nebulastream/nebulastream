@@ -186,13 +186,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_DEBUG("ILPStrategy:model: \n" << z3Model);
     NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
 
-    // 8. Apply the operator placement to the execution nodes based on the ILP solution
+    // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
-    // 9. Add network source and sink operators
+    // 8. Perform operator placement.
+    performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+    // 9. Add network source and sink operators.
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-    // 10. Run the type inference phase and return the status
+    // 10. Run the type inference phase and return.
     return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 

@@ -40,8 +40,6 @@ class ILPStrategy : public BasePlacementStrategy {
   public:
     ~ILPStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
-
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
