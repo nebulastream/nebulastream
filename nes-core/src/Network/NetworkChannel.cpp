@@ -54,11 +54,6 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
         zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
 
-        int highWaterMark = 4;
-        int maxSendBufferSize = highWaterMark * bufferManager->getBufferSize();
-        zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
-        zmqSocket.set(zmq::sockopt::sndbuf, maxSendBufferSize);
-
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
