@@ -17,7 +17,7 @@
 
 namespace NES {
 
-RestartQueryRequest::RestartQueryRequest(QueryId queryId) :queryId(queryId) {}
+RestartQueryRequest::RestartQueryRequest(QueryId queryId) : queryId(queryId) {}
 
 RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
     return std::make_shared<RestartQueryRequest>(RestartQueryRequest(queryId));

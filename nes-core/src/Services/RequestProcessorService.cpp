@@ -39,13 +39,13 @@
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <exception>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <z3++.h>
-#include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 
 namespace NES {
 
@@ -84,9 +84,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                optimizerConfiguration,
                                                                                udfCatalog);
 
-    queryMigrationPhase = Experimental::QueryMigrationPhase::create(globalExecutionPlan,topology,
-                                                                    workerRpcClient,
-                                                                    queryPlacementPhase);
+    queryMigrationPhase =
+        Experimental::QueryMigrationPhase::create(globalExecutionPlan, topology, workerRpcClient, queryPlacementPhase);
 }
 
 void RequestProcessorService::start() {
@@ -106,10 +105,9 @@ void RequestProcessorService::start() {
             }
 
             try {
-                if(requests[0]->instanceOf<Experimental::MaintenanceRequest>()){
+                if (requests[0]->instanceOf<Experimental::MaintenanceRequest>()) {
                     queryMigrationPhase->execute(requests[0]->as<Experimental::MaintenanceRequest>());
-                }
-                else {
+                } else {
                     NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                     //1. Update global query plan by applying all requests
                     globalQueryPlanUpdatePhase->execute(requests);

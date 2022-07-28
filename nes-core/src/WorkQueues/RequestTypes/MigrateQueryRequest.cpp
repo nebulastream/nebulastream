@@ -20,14 +20,11 @@ NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experi
 
 NES::Experimental::MigrateQueryRequest::MigrateQueryRequest(NES::QueryId queryId,
                                                             NES::Experimental::MigrationType::Value migrationType)
-    : queryId(queryId), migrationType(migrationType){}
+    : queryId(queryId), migrationType(migrationType) {}
 
 std::string NES::Experimental::MigrateQueryRequest::toString() {
-    return "QueryMigrationRequest { Query Id: " + std::to_string(queryId)
-        + ", withBuffer: " + std::to_string(migrationType) + "}";
+    return "QueryMigrationRequest { Query Id: " + std::to_string(queryId) + ", withBuffer: " + std::to_string(migrationType)
+        + "}";
 }
-NES::Experimental::MigrationType::Value NES::Experimental::MigrateQueryRequest::getMigrationType() {
-    return migrationType;
-}
+NES::Experimental::MigrationType::Value NES::Experimental::MigrateQueryRequest::getMigrationType() { return migrationType; }
 NES::QueryId NES::Experimental::MigrateQueryRequest::getQueryId() { return queryId; }
-

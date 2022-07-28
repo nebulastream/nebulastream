@@ -26,8 +26,7 @@ FailQueryRequestPtr FailQueryRequest::create(SharedQueryId sharedQueryId, const 
 std::string FailQueryRequest::getFailureReason() { return failureReason; }
 
 std::string FailQueryRequest::toString() {
-    return "FailQueryRequest { Shared Query Plan Id: " + std::to_string(queryId) + ", Failure Reason: " + failureReason
-        + "}";
+    return "FailQueryRequest { Shared Query Plan Id: " + std::to_string(queryId) + ", Failure Reason: " + failureReason + "}";
 }
 uint64_t FailQueryRequest::getQueryId() { return queryId; }
 

@@ -42,11 +42,10 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup MaintenanceService test case." << std::endl;
         topology = Topology::create();
-        TopologyNodePtr root = TopologyNode::create(id,ip, grpcPort, dataPort,resources);
+        TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
         topology->setAsRoot(root);
         nesRequestQueue = std::make_shared<RequestQueue>(1);
-        maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
-                                                                                     nesRequestQueue);
+        maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, nesRequestQueue);
     }
 
     /* Will be called before a test is executed. */
@@ -81,13 +80,10 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     //test RESTART migration type behavior
     auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::RESTART);
     EXPECT_FALSE(result3);
-    EXPECT_EQ(info3,
-              "RESTART currently not supported. Will be added in future");
+    EXPECT_EQ(info3, "RESTART currently not supported. Will be added in future");
     //test pass valid MigrationType and topology node
-    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
+    auto [result4, info4] =
+        maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
     EXPECT_TRUE(result4);
-    EXPECT_EQ(info4,
-              "Successfully submitted Query Migration Requests for Topology Node with ID: "
-                  + std::to_string(id));
-
+    EXPECT_EQ(info4, "Successfully submitted Query Migration Requests for Topology Node with ID: " + std::to_string(id));
 }

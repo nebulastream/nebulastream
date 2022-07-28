@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryMigrationPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 
 using namespace NES;
 
@@ -25,18 +25,18 @@ Experimental::QueryMigrationPhase::QueryMigrationPhase(GlobalExecutionPlanPtr gl
                                                        TopologyPtr topology,
                                                        WorkerRPCClientPtr workerRpcClient,
                                                        NES::Optimizer::QueryPlacementPhasePtr queryPlacementPhase)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),  workerRPCClient(std::move(workerRpcClient)),
-      queryPlacementPhase(std::move(queryPlacementPhase)) {}
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
+      workerRPCClient(std::move(workerRpcClient)), queryPlacementPhase(std::move(queryPlacementPhase)) {}
 
 Experimental::QueryMigrationPhasePtr
 Experimental::QueryMigrationPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                           TopologyPtr topology,
                                           WorkerRPCClientPtr workerRPCClient,
                                           NES::Optimizer::QueryPlacementPhasePtr queryPlacementPhase) {
-    return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(std::move(globalExecutionPlan),std::move(topology), std::move(workerRPCClient), std::move(queryPlacementPhase)));
+    return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(std::move(globalExecutionPlan),
+                                                                     std::move(topology),
+                                                                     std::move(workerRPCClient),
+                                                                     std::move(queryPlacementPhase)));
 }
 
-bool Experimental::QueryMigrationPhase::execute([[maybe_unused]] const MaintenanceRequestPtr& req) {
-    NES_NOT_IMPLEMENTED();
-}
-
+bool Experimental::QueryMigrationPhase::execute([[maybe_unused]] const MaintenanceRequestPtr& req) { NES_NOT_IMPLEMENTED(); }
