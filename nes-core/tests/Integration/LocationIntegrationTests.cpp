@@ -578,10 +578,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    if (wrk1->getWorkerConfiguration()->parentId.getValue() != 0) {
-        NES_INFO("start with dedicated parent=" << wrk1->getWorkerConfiguration()->parentId.getValue());
-        wrk1->setWithParent(wrk1->getWorkerConfiguration()->parentId.getValue());
-    }
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
