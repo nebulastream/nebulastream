@@ -64,6 +64,8 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
 TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy = std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources));
     copy->reduceResources(usedResources);
+    copy->linkProperties = this->linkProperties;
+    copy->nodeProperties = this->nodeProperties;
     return copy;
 }
 
@@ -113,9 +115,11 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
     nodeProperties.erase(key);
     return true;
 }
+
 void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink) {
     linkProperties.insert(std::make_pair(linkedNode, topologyLink));
 }
+
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
@@ -124,6 +128,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode)
         return linkProperties.at(linkedNode);
     }
 }
+
 bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");

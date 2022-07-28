@@ -30,10 +30,12 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -242,27 +244,27 @@ TEST_F(ILPPlacementTest, Z3Test) {
 }
 
 /* Test query placement with ILP strategy - simple filter query */
-//TODO: enable this test after fixing #2485
-TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
-                                                                              globalExecutionPlan,
-                                                                              topologyForILP,
-                                                                              typeInferencePhase,
-                                                                              z3Context);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topologyForILP,
+                                                                      typeInferencePhase,
+                                                                      z3Context,
+                                                                      false /*query reconfiguration*/);
 
+    //Prepare query plan
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -271,7 +273,8 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
