@@ -19,8 +19,8 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <REST/ServerTypes.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -156,9 +156,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Configuration of Server Type using oatpp or cpprestSDK
      */
-    EnumOption<ServerType> restServerType = {SERVER_TYPE,
-                                     ServerType::CPPRestSDK,
-                                     "Sets the Server Type (Oatpp, CPPRestSDK)"};
+    EnumOption<ServerType> restServerType = {SERVER_TYPE, ServerType::CPPRestSDK, "Sets the Server Type (Oatpp, CPPRestSDK)"};
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 

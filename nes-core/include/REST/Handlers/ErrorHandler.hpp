@@ -15,8 +15,8 @@
 #ifndef NES_ERRORHANDLER_HPP
 #define NES_ERRORHANDLER_HPP
 
-#include <oatpp/web/server/handler/ErrorHandler.hpp>
 #include <oatpp/web/protocol/http/outgoing/ResponseFactory.hpp>
+#include <oatpp/web/server/handler/ErrorHandler.hpp>
 
 namespace NES {
 
