@@ -47,8 +47,7 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
  */
 class MaintenanceService {
   public:
-    MaintenanceService(TopologyPtr topology,
-                       RequestQueuePtr queryRequestQueue);
+    MaintenanceService(TopologyPtr topology, RequestQueuePtr queryRequestQueue);
 
     ~MaintenanceService();
 

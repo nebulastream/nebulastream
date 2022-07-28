@@ -24,7 +24,7 @@
 namespace NES::Optimizer {
 class QueryPlacementPhase;
 using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
-}
+}// namespace NES::Optimizer
 
 namespace NES {
 

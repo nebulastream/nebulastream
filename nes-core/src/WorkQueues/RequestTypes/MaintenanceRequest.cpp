@@ -22,13 +22,13 @@ MaintenanceRequestPtr MaintenanceRequest::create(TopologyNodeId nodeId, Migratio
 }
 
 MaintenanceRequest::MaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value migrationType)
-    :nodeId(nodeId), migrationType(migrationType){};
+    : nodeId(nodeId), migrationType(migrationType){};
 
 MigrationType::Value MaintenanceRequest::getMigrationType() { return migrationType; }
 
 std::string MaintenanceRequest::toString() {
-    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId)
-        + ", withBuffer: " + std::to_string(migrationType) + "}";
+    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId) + ", withBuffer: " + std::to_string(migrationType)
+        + "}";
 }
 TopologyNodeId MaintenanceRequest::getTopologyNode() { return nodeId; }
 }// namespace NES::Experimental
