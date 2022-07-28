@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.69](https://github.com/nebulastream/nebulastream/tree/v0.2.69) (2022-07-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.68...v0.2.69)
+
+**Implemented enhancements:**
+
+- Create a netty source for reading data from the external data generator  [\#1382](https://github.com/nebulastream/nebulastream/issues/1382)
+
 ## [v0.2.68](https://github.com/nebulastream/nebulastream/tree/v0.2.68) (2022-07-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.67...v0.2.68)
@@ -7,6 +15,10 @@
 #### REST API 
 
 - Move to oatapp REST server: start oatapp server on NES startup [\#2770](https://github.com/nebulastream/nebulastream/issues/2770)
+
+### Miscellaneous Issues ✌️
+
+- Investigation of buffer and tuple benchmark [\#1455](https://github.com/nebulastream/nebulastream/issues/1455)
 
 ## [v0.2.67](https://github.com/nebulastream/nebulastream/tree/v0.2.67) (2022-07-27)
 
