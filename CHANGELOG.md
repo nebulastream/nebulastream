@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.70](https://github.com/nebulastream/nebulastream/tree/v0.2.70) (2022-07-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.69...v0.2.70)
+
+### Miscellaneous Issues ✌️
+
+- Refactor NESRequests so not all require a query ID [\#2896](https://github.com/nebulastream/nebulastream/issues/2896)
+
 ## [v0.2.69](https://github.com/nebulastream/nebulastream/tree/v0.2.69) (2022-07-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.68...v0.2.69)
