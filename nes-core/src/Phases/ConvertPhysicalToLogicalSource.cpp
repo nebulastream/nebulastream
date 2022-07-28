@@ -93,8 +93,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
         case MQTT_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
             const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
-            const SourceDescriptorPtr mqttSourceDescriptor = MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(),
-                                                                                          mqttSourcePtr->getSourceConfigPtr());
+            const SourceDescriptorPtr mqttSourceDescriptor =
+                MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(), mqttSourcePtr->getSourceConfigPtr());
             return mqttSourceDescriptor;
         }
 #endif

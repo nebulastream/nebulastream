@@ -126,7 +126,6 @@ class ConfigurationOption {
         if (inputFormat == "JSON") {
             this->value = InputFormat::JSON;
         }
-
     }
 
   private:
