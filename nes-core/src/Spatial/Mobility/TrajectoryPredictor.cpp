@@ -73,20 +73,17 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
         end = std::make_shared<Index::Experimental::Location>(endLatLng.lat().degrees(), endLatLng.lng().degrees());
         lineLock.unlock();
     } else {
-        //todo: make create method (also for other types)
+        //todo #2918: make create method
        start = std::make_shared<Index::Experimental::Location>();
        end = std::make_shared<Index::Experimental::Location>();
     }
 
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
-
-        //todo make pointers to locations const
     //get a shared ptr to a vector containing predicted reconnect inf oconsisting of expected parent id, expected reconnect location and expected time
-    //auto reconnectVectorPtr = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>(reconnectVector);
     reconnectVectorLock.unlock();
 
-    // get a pointer to the position of the device at the time the local field node index was updated
-    //if no such update has happened so for, set the pointer to nullptr
+    /*get a pointer to the position of the device at the time the local field node index was updated
+    if no such update has happened so for, set the pointer to nullptr */
     Index::Experimental::LocationPtr indexUpdatePointer;
     std::unique_lock indexUpdatePosLock(indexUpdatePositionMutex);
     if (positionOfLastNodeIndexUpdate) {
@@ -263,7 +260,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
                 //reconnect and inform coordinator about upcoming reconnect
                 std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
-                //todo: pass pointer here
+                //todo #2918: pass pointer here
                 reconnectConfigurator->reconnect(parentId, reconnectVector->front()->reconnectPrediction.expectedNewParentId);
                 devicePositionTupleAtLastReconnect = currentOwnLocation;
 
@@ -360,8 +357,7 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
 #ifdef S2DEF
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
-    //todo: use conversion funciton from utils here
-    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
+    S2Point currentPoint = Util::S2Utilities::locationToS2Point(*currentLocation);
     S1Angle distAngle = S2Earth::MetersToAngle(0);
 
     //if a predicted path exists, calculate how far the workers current location is from the path
@@ -376,8 +372,7 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
     //todo 2815: instead of just using points, calculate central points
     if ((trajectoryLine && distAngle > pathDistanceDeltaAngle) || (!trajectoryLine && locationBuffer.size() == locationBufferSize)) {
         NES_DEBUG("updating trajectory");
-        //todo: use conversion funciton from utils here
-        S2Point oldPoint(S2LatLng::FromDegrees(newPathStart->getLatitude(), newPathStart->getLongitude()));
+        S2Point oldPoint = Util::S2Utilities::locationToS2Point(*newPathStart);
         auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
         //we need to extrapolate backwards as well to make sure, that triangulation still works even if covering nodes lie behind the device
         auto backwardsExtrapolation = S2::GetPointOnLine(currentPoint, oldPoint, defaultCoverageRadiusAngle * 2);

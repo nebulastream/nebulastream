@@ -59,7 +59,7 @@ LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double 
 std::vector<std::pair<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
     if (coord && coord->isValid()) {
-        //todo: pass pointer
+        //todo  #2918: pass pointer
         return getNodeIdsInRange(*coord, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");

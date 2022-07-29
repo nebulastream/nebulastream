@@ -212,7 +212,6 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    //wrkConf1->mobilityConfiguration = mobilityConfiguration1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -598,9 +597,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
     std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime = std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
-    //std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect = std::nullopt;
     std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
-    //std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect = std::nullopt;
     std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;

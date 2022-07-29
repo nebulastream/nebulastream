@@ -84,7 +84,7 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
     //as an s2 polyline
     S2Point prev = Util::S2Utilities::locationToS2Point(*prevWaypoint->first);
-    S2Point post = Util::S2Utilities::locationToS2Point( *nextWaypoint->first);
+    S2Point post = Util::S2Utilities::locationToS2Point(*nextWaypoint->first);
     std::vector<S2Point> pointVec;
     pointVec.push_back(prev);
     pointVec.push_back(post);

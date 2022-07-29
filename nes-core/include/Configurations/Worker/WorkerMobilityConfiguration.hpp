@@ -36,7 +36,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
     WorkerMobilityConfiguration() : BaseConfiguration(){};
     WorkerMobilityConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
     /**
-     * @brief Factory function for a worker config
+     * @brief Factory function for a worker mobility config
      */
     static std::shared_ptr<WorkerMobilityConfiguration> create() { return std::make_shared<WorkerMobilityConfiguration>(); }
 

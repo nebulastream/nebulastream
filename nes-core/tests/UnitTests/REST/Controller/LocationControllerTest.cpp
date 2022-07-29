@@ -264,10 +264,8 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     node2->setFixedCoordinates(13.4, -23);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    //node3->setSpatialNodeType(true);
     node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
-    //node4->setSpatialNodeType(true);
     node4->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);

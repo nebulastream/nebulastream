@@ -113,7 +113,6 @@ class LocationProvider {
      */
     std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
 
-
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
      * @param geoLoc: The new fixed Location to be set
@@ -126,7 +125,6 @@ class LocationProvider {
      * @param coordinatorClient : a smart pointer to the coordinator rpc client object
      */
     void setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient);
-
 
     /**
      * Experimental
