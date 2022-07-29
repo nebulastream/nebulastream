@@ -56,12 +56,12 @@ class LocationProviderCSV : public LocationProvider {
      * @brief return a vector containing all the waypoints read from the csv file
      * @return a vector of pairs of Locations and Timestamps
      */
-    const std::vector<std::pair<Index::Experimental::Location, Timestamp>>& getWaypoints();
+    const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& getWaypoints();
 
   private:
     Timestamp startTime;
-    std::vector<std::pair<Index::Experimental::Location, Timestamp>> waypoints;
-    std::vector<std::pair<Index::Experimental::Location, Timestamp>>::iterator nextWaypoint;
+    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>> waypoints;
+    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>::iterator nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
