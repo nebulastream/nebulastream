@@ -18,6 +18,7 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace NES {
 
@@ -96,20 +97,25 @@ ExpressionItem Attribute(std::string name);
 ExpressionItem Attribute(std::string name, BasicType type);
 
 /**
- * @brief WHEN(condition,value) allows to only return the value expression of condition is met.
- * @param conditionExp, valueExp
+ * @brief WHEN(condition,value) can only be used as part of the left vector in a CASE() expression.
+ * Allows to only return the value expression if condition is met.
+ * @param conditionExp : a logical condition which will be evaluated.
+ * @param valueExp : the value to return if the condition is the first true one.
  */
 ExpressionNodePtr WHEN(const ExpressionNodePtr& conditionExp, const ExpressionNodePtr& valueExp);
 ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionNodePtr valueExp);
 ExpressionNodePtr WHEN(ExpressionNodePtr conditionExp, ExpressionItem valueExp);
 ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp);
+
 /**
- * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value)
- * allows to return the value of the first WHEN expression from the list of which the condition is met, or the value of the second expression.
- * @param conditionExp, valueExp
+ * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
+ * WHEN expressions from the vector list and only return the first one where the condition evaluated to true, or the value of the default expression.
+ * The CASE({WHEN()},default) is evaluated as a concatenated ternary operator in C++.
+ * @param whenExpressions : a vector of at least one WHEN expression to evaluate.
+ * @param defaultValueExp : an expression which will be returned if no WHEN condition evaluated to true.
  */
-ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionNodePtr valueExp);
-ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem valueExp);
+ExpressionNodePtr CASE( const std::vector<ExpressionNodePtr>& whenExpressions, ExpressionNodePtr defaultValueExp);
+ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem defaultValueExp);
 
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
