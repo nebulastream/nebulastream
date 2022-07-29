@@ -610,7 +610,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     ReconnectSchedule lastSchedule;
 
     //keep looping until the final waypoint is reached
-    for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation(); *workerLocation.first != waypoints.back().first; workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
+    for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation(); *workerLocation.first != *(waypoints.back().first); workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
         //test local node index
         NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition =
             wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
@@ -667,7 +667,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     auto startPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStart);
                     auto endPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEnd);
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
-                    auto pathCurrentPosToWayPoint = S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation.first), NES::Spatial::Util::S2Utilities::locationToS2Point(nextWaypoint.first)}));
+                    auto pathCurrentPosToWayPoint = S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation.first), NES::Spatial::Util::S2Utilities::locationToS2Point(*nextWaypoint.first)}));
                     waypointCovered[waypointCounter] = lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
                 }
             }

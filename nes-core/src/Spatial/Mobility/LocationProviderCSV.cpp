@@ -17,6 +17,7 @@
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
 #include <iostream>
+#include <Util/Experimental/S2Utilities.hpp>
 #ifdef S2DEF
 #include <s2/s2point.h>
 #include <s2/s2polyline.h>
@@ -50,7 +51,7 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(Index::Experimental::Location::fromString(locString),
+        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)),
                            time);
         waypoints.push_back(waypoint);
     }
@@ -77,13 +78,13 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //we therefore keep returning the location of the last timestamp, without looking at the request time
     if (nextWaypoint == waypoints.end()) {
         NES_DEBUG("Last waypoint reached, do not interpolate, node will stay in this position for the rest of the simulation");
-        return {std::make_shared<Index::Experimental::Location>(prevWaypoint->first), requestTime};
+        return {prevWaypoint->first, requestTime};
     }
 
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
     //as an s2 polyline
-    S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first.getLatitude(), prevWaypoint->first.getLongitude()));
-    S2Point post(S2LatLng::FromDegrees(nextWaypoint->first.getLatitude(), nextWaypoint->first.getLongitude()));
+    S2Point prev = Util::S2Utilities::locationToS2Point(*prevWaypoint->first);
+    S2Point post = Util::S2Utilities::locationToS2Point( *nextWaypoint->first);
     std::vector<S2Point> pointVec;
     pointVec.push_back(prev);
     pointVec.push_back(post);
@@ -109,14 +110,14 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
 #else
     //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
     NES_TRACE("S2 not used, returning most recently passed waypoint from csv")
-    NES_TRACE("Location: " << prevWaypoint->first.toString() << "; Time: " << prevWaypoint->second)
+    NES_TRACE("Location: " << prevWaypoint->first->toString() << "; Time: " << prevWaypoint->second)
     return *prevWaypoint;
 #endif
 }
 
 Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
 
-const std::vector<std::pair<Index::Experimental::Location, Timestamp>>& LocationProviderCSV::getWaypoints() {
+const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& LocationProviderCSV::getWaypoints() {
     return waypoints;
 }
 }// namespace NES::Spatial::Mobility::Experimental
