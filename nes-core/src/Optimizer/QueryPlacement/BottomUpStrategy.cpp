@@ -52,7 +52,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 2. Place operators on the selected path
-        performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -64,7 +64,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
 }
 
-void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
+void BottomUpStrategy::placePinnedOperators(QueryId queryId,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 

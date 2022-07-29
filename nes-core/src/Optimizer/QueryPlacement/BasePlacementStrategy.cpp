@@ -125,28 +125,133 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     }
 }
 
-void BasePlacementStrategy::performOperatorPlacement(QueryId queryId,
-                                                     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
+                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("ManualPlacementStrategy: Get the all source operators for performing the placement.");
-    for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG("ManualPlacementStrategy: Get the topology node for source operator " << pinnedUpStreamOperator->toString()
-                                                                                        << " placement.");
+    NES_DEBUG("Place all pinned upstream operators.");
 
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+    //0. Iterate over all pinned upstream operators and place them
+    for (auto& pinnedOperator : pinnedUpStreamOperators) {
+        NES_TRACE("PlacePinnedOperators: Place operator " << pinnedOperator->toString());
 
-        // 1. If pinned up stream node was already placed then place all its downstream operators
-        if (pinnedUpStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamOperator->getProperty(PLACED))) {
+        //1 Fetch the node where operator is to be placed
+        auto pinnedNodeId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_NODE_ID));
+        auto pinnedNode = getTopologyNode(pinnedNodeId);
+
+        // 2. If pinned up stream node was already placed then place all its downstream operators
+        if (pinnedOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedOperator->getProperty(PLACED))) {
             //Fetch the execution node storing the operator
-            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
-            //Place all downstream nodes
-            for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
-                placeOperator(queryId, downStreamNode->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
+            operatorToExecutionNodeMap[pinnedOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(pinnedNodeId);
+        } else {// 3. If pinned operator is not placed then start by placing the operator
+
+            //3.1 Find if the operator has multiple upstream or downstream operators and is not of source operator type
+            if ((pinnedOperator->hasMultipleChildrenOrParents() && !pinnedOperator->instanceOf<SourceLogicalOperatorNode>())
+                || pinnedOperator->instanceOf<SinkLogicalOperatorNode>()) {
+
+                //3.1.1 Check if all upstream operators of this operator are placed
+                bool allUpstreamOperatorsPlaced = true;
+                for (auto& upstreamOperator : pinnedOperator->getChildren()) {
+                    if (!upstreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
+                        allUpstreamOperatorsPlaced = false;
+                        break;
+                    }
+                }
+
+                //3.1.2 If not all upstream operators are placed then skip placement of this operator
+                if (!allUpstreamOperatorsPlaced) {
+                    NES_WARNING("PlacePinnedOperators: Upstream operators are not placed yet. Skipping the placement.");
+                    continue;
+                }
             }
-        } else {// 2. If pinned operator is not placed then start by placing the operator
-            placeOperator(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
+
+            //3.2 Fatch Execution node with id same as the pinned node id
+            auto candidateExecutionNode = getExecutionNode(pinnedNode);
+
+            //3.3 Fetch candidate query plan where operator is to be added
+            NES_TRACE("ManualPlacementStrategy: Get the candidate query plan where operator is to be appended.");
+            QueryPlanPtr candidateQueryPlan = getCandidateQueryPlanForOperator(queryId, pinnedOperator, candidateExecutionNode);
+
+            //3.4 Create copy of the operator before insertion into query plan
+            pinnedOperator->addProperty(PLACED, true);
+            auto operatorCopy = pinnedOperator->copy();
+
+            //3.5 Add pinned operator to the candidate query plan
+            if (candidateQueryPlan->getRootOperators().empty()) {//3.5.1 if candidate query plan
+                                                                 // is empty then set the operator as root of the query plan
+                candidateQueryPlan->appendOperatorAsNewRoot(operatorCopy);
+
+            } else {//3.5.2 if candidate query plan is non-empty then set the operator as root of all its upstream operators
+
+                auto upstreamOperators = pinnedOperator->getChildren();
+                for (const auto& upstreamOperator : upstreamOperators) {
+                    auto rootOperators = candidateQueryPlan->getRootOperators();
+                    if (candidateQueryPlan->hasOperatorWithId(upstreamOperator->as<OperatorNode>()->getId())) {
+                        candidateQueryPlan->getOperatorWithId(upstreamOperator->as<OperatorNode>()->getId())
+                            ->addParent(operatorCopy);
+                    }
+
+                    auto found = std::find_if(rootOperators.begin(),
+                                              rootOperators.end(),
+                                              [upstreamOperator](const OperatorNodePtr& rootOperator) {
+                                                  return rootOperator->getId() == upstreamOperator->as<OperatorNode>()->getId();
+                                              });
+                    if (found != rootOperators.end()) {
+                        candidateQueryPlan->removeAsRootOperator(*(found));
+                        auto updatedRootOperators = candidateQueryPlan->getRootOperators();
+                        auto operatorAlreadyExistsAsRoot =
+                            std::find_if(updatedRootOperators.begin(),
+                                         updatedRootOperators.end(),
+                                         [operatorCopy](const OperatorNodePtr& rootOperator) {
+                                             return rootOperator->getId() == operatorCopy->as<OperatorNode>()->getId();
+                                         });
+                        if (operatorAlreadyExistsAsRoot == updatedRootOperators.end()) {
+                            candidateQueryPlan->addRootOperator(operatorCopy);
+                        }
+                    }
+                }
+            }
+
+            NES_TRACE("ManualPlacementStrategy: Add the query plan to the candidate execution node.");
+            if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
+                NES_ERROR("ManualPlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
+                throw log4cxx::helpers::Exception(
+                    "ManualPlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
+            }
+            NES_TRACE("ManualPlacementStrategy: Update the global execution plan with candidate execution node");
+            globalExecutionPlan->addExecutionNode(candidateExecutionNode);
+
+            NES_TRACE("ManualPlacementStrategy: Place the information about the candidate execution plan and operator id in "
+                      "the map.");
+            operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
+            NES_DEBUG("ManualPlacementStrategy: Reducing the node remaining CPU capacity by 1");
+            // Reduce the processing capacity by 1
+            // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
+            pinnedNode->reduceResources(1);
+            topology->reduceResources(pinnedNode->getId(), 1);
+        }
+
+        //3. Check if this operator in the pinned downstream operator list.
+        auto isOperatorAPinnedDownStreamOperator =
+            std::find_if(pinnedDownStreamOperators.begin(),
+                         pinnedDownStreamOperators.end(),
+                         [pinnedOperator](const OperatorNodePtr& pinnedDownStreamOperator) {
+                             return pinnedDownStreamOperator->getId() == pinnedOperator->getId();
+                         });
+
+        //4. Check if this operator is not in the list of pinned downstream operators then recursively call this function for its downstream operators.
+        if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+
+            //4.1 Prepare next set of pinned upstream operators to place.
+            std::vector<OperatorNodePtr> nextPinnedUpstreamOperators;
+            for (const auto& downStreamOperator : pinnedOperator->getParents()) {
+                //4.1.1 Only select the operators that are not placed.
+                if (!downStreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
+                    nextPinnedUpstreamOperators.emplace_back(downStreamOperator->as<OperatorNode>());
+                }
+            }
+            //4.2 Recursively call this function for next set of pinned upstream operators.
+            placePinnedOperators(queryId, nextPinnedUpstreamOperators, pinnedDownStreamOperators);
         }
     }
     NES_DEBUG("ManualPlacementStrategy: Finished placing query operators into the global execution plan");
@@ -159,6 +264,8 @@ void BasePlacementStrategy::placeOperator(QueryId queryId,
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        operatorToExecutionNodeMap[operatorNode->getId()] =
+            globalExecutionPlan->getExecutionNodeByNodeId(std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID)));
         return;
     }
 

@@ -213,9 +213,9 @@ class TopologyNode : public Node {
     std::map<std::string, std::any> nodeProperties;
 
     /**
-     * @brief A field to store a map of linked nodes and its link property
+     * @brief A field to store a map of the id of the linked nodes and its link property
      */
-    std::map<TopologyNodePtr, LinkPropertyPtr> linkProperties;
+    std::map<uint64_t, LinkPropertyPtr> linkProperties;
 };
 }// namespace NES
 

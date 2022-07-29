@@ -52,7 +52,7 @@ class Request : public std::enable_shared_from_this<Request> {
         if (instanceOf<RequestType>()) {
             return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
         }
-        throw std::logic_error("Request:: we performed an invalid cast of operator ");
+        throw std::logic_error("Request:: we performed an invalid cast of request");
     }
 
     virtual std::string toString() = 0;

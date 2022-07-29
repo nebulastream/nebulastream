@@ -56,7 +56,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamNodes: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void performOperatorPlacement(QueryId queryId,
+    void placePinnedOperators(QueryId queryId,
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 

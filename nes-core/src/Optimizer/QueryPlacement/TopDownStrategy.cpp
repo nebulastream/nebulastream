@@ -54,7 +54,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 2. Place operators on the selected path
-        performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -66,7 +66,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
 }
 
-void TopDownStrategy::performOperatorPlacement(QueryId queryId,
+void TopDownStrategy::placePinnedOperators(QueryId queryId,
                                                const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
