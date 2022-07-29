@@ -47,8 +47,6 @@ using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-
-
 }// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -65,7 +63,6 @@ struct ReconnectPrediction;
 using ReconnectPredictionPtr = std::shared_ptr<ReconnectPrediction>;
 struct ReconnectPoint;
 using ReconnectPointPtr = std::shared_ptr<ReconnectPoint>;
-
 
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule

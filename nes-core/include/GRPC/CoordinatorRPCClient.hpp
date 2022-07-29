@@ -41,7 +41,6 @@ namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
-
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
 

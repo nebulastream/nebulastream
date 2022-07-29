@@ -22,7 +22,7 @@ namespace NES::Spatial::Mobility::Experimental {
  * @brief used in the mobility configuration to define the type of location provider to be constructed at the startup of a worker
  */
 enum class LocationProviderType {
-    BASE = 0,  //base class of location provider used for workers without a location and for field nodes
+    BASE = 0,  //base class of location provider used for workers with a fixed location
     CSV = 1,   //simulate location with coordinates read from csv
     INVALID = 2//the supplied configuration does not represent a valid provider type
 };

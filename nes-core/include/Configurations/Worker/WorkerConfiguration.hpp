@@ -178,18 +178,18 @@ class WorkerConfiguration : public BaseConfiguration {
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
-     * @brief specify if the worker is running on a mobile device, if it is a field node with a known fixed loction, or if it
+     * @brief specify if the worker is running on a mobile device, if it is a node with a known fixed loction, or if it
      * does not have a known location.
      */
     EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {SPATIAL_TYPE_CONFIG,
                                                                                     NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
-                                                                                    "specifies if the worker has no known location or if it is a field node or mobile node"};
+                                                                                    "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
 
     /**
      * @brief specifies the path to a yaml file containing a mobility configuration
      */
      Spatial::Mobility::Experimental::WorkerMobilityConfiguration mobilityConfiguration = {
-        MOBILITY_CONFIG_CONFIG, "the configuration data for the location wrapper class"};
+        MOBILITY_CONFIG_CONFIG, "the configuration data for the location provider class"};
 
     /**
      * @brief Configuration yaml path.

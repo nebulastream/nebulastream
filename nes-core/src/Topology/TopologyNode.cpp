@@ -150,7 +150,7 @@ Spatial::Index::Experimental::Location TopologyNode::getCoordinates() {
         case Spatial::Index::Experimental::NodeType::NO_LOCATION:
             return {};
         case Spatial::Index::Experimental::NodeType::INVALID:
-            NES_WARNING("trying to access location of a node with invalid spatial tyep")
+            NES_WARNING("trying to access location of a node with invalid spatial type")
             return {};
     }
 }
