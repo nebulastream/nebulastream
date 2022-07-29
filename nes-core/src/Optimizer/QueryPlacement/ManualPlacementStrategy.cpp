@@ -54,7 +54,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 2. Place the operators
-        performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

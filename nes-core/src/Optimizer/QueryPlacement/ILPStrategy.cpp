@@ -103,10 +103,10 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 }
 
                 //Only include unpinned operators in the path
-                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-                    operatorPath.push_back(downstreamOperator);
-                    unpinnedDownStreamOperatorCount++;
-                }
+                //                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
+                operatorPath.push_back(downstreamOperator);
+                unpinnedDownStreamOperatorCount++;
+                //                }
             }
         }
 
@@ -119,6 +119,15 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto downstreamTopologyNode = nodeIdToTopologyNodeMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
+
+        while (!topologyPath.back()->getParents().empty()) {
+            //FIXME: path with multiple parents not supported
+            if (topologyPath[0]->getParents().size() > 1) {
+                NES_ERROR("ILPStrategy: Current implementation can not place operators on topology with multiple paths.");
+                return false;
+            }
+            topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
+        }
 
         //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
         addConstraints(opt,
@@ -186,11 +195,31 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_DEBUG("ILPStrategy:model: \n" << z3Model);
     NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
 
+
+    // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
+    std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
+    for (auto const& [topologyID, P] : placementVariables) {
+        if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
+            int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
+            int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+            OperatorNodePtr operatorNode = operatorMap[operatorId];
+            TopologyNodePtr topologyNode = nodeIdToTopologyNodeMap[topologyNodeId];
+
+            // collect the solution to operatorToTopologyNodeMap
+            operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+        }
+    }
+
+    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
+    for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
+        NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
+    }
+
     // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
     // 8. Perform operator placement.
-    performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+    placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 9. Add network source and sink operators.
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

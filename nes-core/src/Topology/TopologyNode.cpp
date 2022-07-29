@@ -117,24 +117,24 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
 }
 
 void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink) {
-    linkProperties.insert(std::make_pair(linkedNode, topologyLink));
+    linkProperties.insert(std::make_pair(linkedNode->getId(), topologyLink));
 }
 
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
-    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+    if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
         NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
     } else {
-        return linkProperties.at(linkedNode);
+        return linkProperties.at(linkedNode->getId());
     }
 }
 
 bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
-    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+    if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
         return false;
     }
-    linkProperties.erase(linkedNode);
+    linkProperties.erase(linkedNode->getId());
     return true;
 }
 
