@@ -17,6 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
+#include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -58,7 +59,7 @@ RestServer::RestServer(std::string host,
                                               udfCatalog,
                                               bufferManager,
                                               locationService)),
-      host(std::move(host)), port(port) {}
+      host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -137,9 +138,15 @@ void RestServer::run() {
     /* Create Router for HTTP requests routing */
     auto router = oatpp::web::server::HttpRouter::createShared();
 
-    /* Create connectivity controller and add all of its endpoints to the router */
-    auto connectivityController = REST::ConnectivityController::createShared(objectMapper);
+    /* Create controllers and add all of their endpoints to the router */
+    auto connectivityController = REST::Controller::ConnectivityController::createShared(objectMapper, "/connectivity");
+    auto queryCatalogController = REST::Controller::QueryCatalogController::createShared(objectMapper,
+                                                                                         queryCatalogService,
+                                                                                         coordinator,
+                                                                                         globalQueryPlan,
+                                                                                         "/queryCatalog");
     router->addController(connectivityController);
+    router->addController(queryCatalogController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
@@ -153,6 +160,8 @@ void RestServer::run() {
     /* Create a server, which takes provided TCP connections and passes them to HTTP connection handler. */
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
+    NES_INFO("Available Paths");
+    router->logRouterMappings();
     /* Print info about server port */
     NES_INFO("NebulaStream REST Server listening on port " << port);
 

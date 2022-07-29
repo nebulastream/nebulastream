@@ -18,11 +18,13 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <REST/OatppController/BaseRouterPrefix.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
 namespace REST {
+namespace Controller {
 class ConnectivityController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -30,16 +32,17 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
-    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper)
-        : oatpp::web::server::api::ApiController(objectMapper) {}
+    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, oatpp::String completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix) {}
 
     /**
      * Create a shared object of the API controller
      * @param objectMapper
      * @return
      */
-    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper) {
-        return std::make_shared<ConnectivityController>(objectMapper);
+    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, std::string routerPrefixAddition) {
+        oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
+        return std::make_shared<ConnectivityController>(objectMapper, completeRouterPrefix);
     }
 
     ENDPOINT("GET", "/check", root) {
@@ -49,6 +52,7 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
         return createDtoResponse(Status::CODE_200, dto);
     }
 };
+}//namespace Controller
 }// namespace REST
 }// namespace NES
 

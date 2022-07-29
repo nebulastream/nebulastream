@@ -135,6 +135,10 @@ class RestServer {
     RestEnginePtr restEngine;
     std::string host;
     uint16_t port;
+    QueryCatalogServicePtr queryCatalogService;
+    NesCoordinatorWeakPtr coordinator;
+    GlobalQueryPlanPtr globalQueryPlan;
+
 
     std::condition_variable cvar;
     std::mutex mutex;
