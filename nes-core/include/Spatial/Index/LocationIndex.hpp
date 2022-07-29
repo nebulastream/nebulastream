@@ -14,13 +14,13 @@
 #ifndef NES_GEOLOCATION_LOCATIONINDEX_HPP
 #define NES_GEOLOCATION_LOCATIONINDEX_HPP
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
-#include <mutex>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Index/Location.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif

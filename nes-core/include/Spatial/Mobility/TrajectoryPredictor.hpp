@@ -15,9 +15,9 @@
 #ifndef NES_TRAJECTORYPREDICTOR_HPP
 #define NES_TRAJECTORYPREDICTOR_HPP
 
-#include "Common/Location.hpp"
-#include "Common/ReconnectPrediction.hpp"
-#include "Util/TimeMeasurement.hpp"
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <deque>
 #include <memory>

@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
+#include <Spatial/Index/LocationIndex.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

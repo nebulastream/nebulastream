@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>

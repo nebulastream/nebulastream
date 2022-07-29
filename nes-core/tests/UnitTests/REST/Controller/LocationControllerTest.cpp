@@ -15,12 +15,12 @@
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <REST/Controller/LocationController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Services/LocationService.hpp>
-#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

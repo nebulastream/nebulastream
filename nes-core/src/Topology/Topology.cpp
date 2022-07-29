@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

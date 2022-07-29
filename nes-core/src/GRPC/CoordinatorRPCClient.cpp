@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -28,7 +28,6 @@
 #include <fstream>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
-#include <optional>
 #include <string>
 namespace NES {
 

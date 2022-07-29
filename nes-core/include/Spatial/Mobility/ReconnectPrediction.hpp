@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef S2DEF
+#ifndef NES_RECONNECTPREDICTION_HPP
+#define NES_RECONNECTPREDICTION_HPP
+#include <cstdint>
+#include <Util/TimeMeasurement.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Util/Experimental/S2Utilities.hpp>
-#include <s2/s2latlng.h>
-#include <s2/s2point.h>
-namespace NES::Spatial::Util {
 
-    S2Point S2Utilities::locationToS2Point(Index::Experimental::Location location) {
-        return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
-    }
+namespace NES::Spatial::Mobility::Experimental {
 
-    Index::Experimental::Location S2Utilities::s2pointToLocation(S2Point point) {
-        S2LatLng latLng(point);
-        return {latLng.lat().degrees(), latLng.lng().degrees()};
-    }
+/**
+ * @brief a struct conteining data about the predicted next reconnect of a mobile worker
+ */
+struct ReconnectPrediction {
+    uint64_t expectedNewParentId;
+    Timestamp expectedTime;
+};
 }
-#endif
+#endif//NES_RECONNECTPREDICTION_HPP

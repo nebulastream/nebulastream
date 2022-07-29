@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>

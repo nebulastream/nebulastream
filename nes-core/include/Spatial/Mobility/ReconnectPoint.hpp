@@ -11,26 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RECONNECTPREDICTION_HPP
-#define NES_RECONNECTPREDICTION_HPP
-#include <cstdint>
-#include <Util/TimeMeasurement.hpp>
-#include <Common/Location.hpp>
 
-namespace NES::Spatial {
+#ifndef NES_RECONNECTPOINT_HPP
+#define NES_RECONNECTPOINT_HPP
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 
-//todo refactor
-namespace Mobility::Experimental {
-struct ReconnectPrediction {
-    uint64_t expectedNewParentId;
-    Timestamp expectedTime;
-};
+namespace NES::Spatial::Mobility::Experimental {
 
+/**
+ * @brief A struct containing the reconnect prediction consisting of expected reconnect time and expected new parent as well as
+ * the location where the device is expected to be located at the time of reconnect
+ */
 struct ReconnectPoint {
     Index::Experimental::Location predictedReconnectLocation;
     ReconnectPrediction reconnectPrediction;
 };
 }
-}
-
-#endif//NES_RECONNECTPREDICTION_HPP
+#endif//NES_RECONNECTPOINT_HPP

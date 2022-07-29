@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/LocationService.hpp>
-#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

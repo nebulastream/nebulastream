@@ -12,15 +12,12 @@
     limitations under the License.
 */
 
-#include "Spatial/Mobility/LocationProvider.hpp"
-#include "Spatial/Mobility/LocationProviderCSV.hpp"
-#include "Spatial/Mobility/ReconnectConfigurator.hpp"
-#include "Spatial/Mobility/TrajectoryPredictor.hpp"
-#include <Util/Experimental/NodeType.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/ReconnectConfigurator.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
@@ -36,6 +33,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
+#include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>

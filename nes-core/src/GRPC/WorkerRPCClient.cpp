@@ -14,10 +14,11 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include "Spatial/Mobility/ReconnectSchedule.hpp"
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <API/Schema.hpp>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
