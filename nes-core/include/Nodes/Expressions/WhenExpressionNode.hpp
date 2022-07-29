@@ -18,14 +18,15 @@
 namespace NES {
 /**
  * @brief This node represents an When expression.
- * It evaluates the left child and if true, appends the right child, else re
+ * It is used as part of a case expression, if it evaluates the left child to true, the right child will be returned.
  */
 class WhenExpressionNode final : public BinaryExpressionNode {
   public:
     explicit WhenExpressionNode(DataTypePtr stamp);
     ~WhenExpressionNode() noexcept final = default;
+
     /**
-     * @brief Create a new When expression
+     * @brief Create a new When expression.
      */
     static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
 

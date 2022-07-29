@@ -23,6 +23,8 @@
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include <vector>
+
 namespace NES {
 
 ExpressionItem::ExpressionItem(int8_t value)
@@ -110,7 +112,7 @@ ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp) {
     return WHEN(conditionExp.getExpressionNode(), valueExp.getExpressionNode());
 }
 
-ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionNodePtr valueExp) {
+ExpressionNodePtr CASE(const std::vector<ExpressionNodePtr>& whenExpressions, ExpressionNodePtr valueExp) {
     return CaseExpressionNode::create(std::move(whenExpressions), std::move(valueExp));
 }
 ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem valueExp) {

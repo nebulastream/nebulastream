@@ -17,7 +17,8 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
         /**
-         * @brief A case expression represents expressions with multiple children from which the first existing one is evaluated.
+         * @brief A case expression has at least one when expression and one default expression.
+         * All when expressions are evaluated and the first one with a true condition is returned.
          */
         class CaseExpressionNode : public ExpressionNode {
           public:
@@ -25,7 +26,7 @@ namespace NES {
             ~CaseExpressionNode() noexcept override = default;
 
             /**
-            * @brief Create a new Case expression
+            * @brief Create a new Case expression node.
             * @param whenExps : a vector of when expression nodes.
             * @param defaultExp : the expression to select, if no when expression evaluates to a value
             */
@@ -39,12 +40,12 @@ namespace NES {
             void setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp);
 
             /**
-            * @brief gets the vector of when-children.
+            * @brief gets the vector of when children.
             */
             std::vector<ExpressionNodePtr> getWhenChildren() const;
 
             /**
-             * @brief gets the default child.
+             * @brief gets the node representing the default child.
              */
             ExpressionNodePtr getDefaultExp() const;
 

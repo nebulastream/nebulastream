@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Nodes/Expressions/WhenExpressionNode.hpp"
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <utility>
@@ -47,6 +48,13 @@ namespace NES {
 
             for (auto elem : whenChildren){
                 elem->inferStamp(schema);
+                //all elements in whenChildren must be WhenExpressionNodes
+                if (!elem->instanceOf<WhenExpressionNode>()) {
+                    throw std::logic_error(
+                        "CaseExpressionNode: Error during stamp inference."
+                        "All expressions in when expression vector must be when expressions, but " + elem->toString() + " is not a when expression."
+                    );
+                }
                 //all elements must have same stamp as defaultExp value
                 if (!defaultExp->getStamp()->isEquals(elem->getStamp())) {
                     throw std::logic_error(
@@ -73,7 +81,6 @@ namespace NES {
             if (children.size() < 2) {
                 NES_FATAL_ERROR("A case expression always should have at least two children, but it had: " << children.size());
             }
-            //todo: maybe replace by vector slicing
             std::vector<ExpressionNodePtr> whenChildren;
             for ( auto whenIter = children.begin(); whenIter != children.end() -1; ++whenIter){
                 whenChildren.push_back(whenIter->get()->as<ExpressionNode>());
