@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>

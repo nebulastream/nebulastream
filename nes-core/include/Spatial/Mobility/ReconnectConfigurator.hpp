@@ -14,8 +14,8 @@
 #ifndef NES_RECONNECTCONFIGURATOR_HPP
 #define NES_RECONNECTCONFIGURATOR_HPP
 
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>

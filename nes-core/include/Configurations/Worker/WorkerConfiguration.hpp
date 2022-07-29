@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/LocationFactory.hpp>

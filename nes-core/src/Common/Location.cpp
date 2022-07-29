@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>

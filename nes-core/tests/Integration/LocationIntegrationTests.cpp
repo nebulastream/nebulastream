@@ -14,23 +14,24 @@
 
 #include <iostream>
 
-#include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Spatial/LocationIndex.hpp>
+#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

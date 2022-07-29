@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/Location.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>

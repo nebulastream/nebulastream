@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/Mobility/ReconnectConfigurator.hpp>
-#include <Common/Location.hpp>
-#include <Common/ReconnectPrediction.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <utility>
 #ifdef S2DEF
 #include <s2/s2point.h>

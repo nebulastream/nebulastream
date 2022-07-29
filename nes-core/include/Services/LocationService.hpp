@@ -14,10 +14,10 @@
 #ifndef NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
 #define NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
 
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <cpprest/json.h>
 #include <memory>
-#include <Util/TimeMeasurement.hpp>
-#include <Common/ReconnectPrediction.hpp>
 
 namespace web::json {
 class value;
