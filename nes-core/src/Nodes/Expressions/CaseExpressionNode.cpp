@@ -35,10 +35,11 @@ namespace NES {
             return caseNode;
         }
 
-        void CaseExpressionNode::inferStamp(SchemaPtr schema) {
+        void CaseExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+
             auto whenChildren = getWhenChildren();
             auto defaultExp = getDefaultExp();
-            defaultExp->inferStamp(schema);
+            defaultExp->inferStamp(typeInferencePhaseContext, schema);
             if (defaultExp->getStamp()->isUndefined()){
                 throw std::logic_error(
                     "CaseExpressionNode: Error during stamp inference. Right type must be defined, but was:"
@@ -47,7 +48,7 @@ namespace NES {
             }
 
             for (auto elem : whenChildren){
-                elem->inferStamp(schema);
+                elem->inferStamp(typeInferencePhaseContext, schema);
                 //all elements in whenChildren must be WhenExpressionNodes
                 if (!elem->instanceOf<WhenExpressionNode>()) {
                     throw std::logic_error(
