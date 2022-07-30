@@ -53,7 +53,7 @@ namespace NES {
              * @brief Infers the stamp of this expression node.
              * @param schema the current schema.
              */
-            void inferStamp(SchemaPtr schema) override;
+            void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
             [[nodiscard]] bool equal(NodePtr const& rhs) const final;
             [[nodiscard]] std::string toString() const final;
