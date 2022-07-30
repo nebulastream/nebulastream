@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
-#include <REST/ServerTypes.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
+#include "NesBaseTest.hpp"
+#include "REST/ServerTypes.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TestUtils.hpp"
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -44,7 +44,7 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     //FIXME: @Balint Replace this by a timeout call in next PR
     sleep(4);
 
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/check"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/connectivity/check"});
     EXPECT_EQ(r.status_code, 200l);
 }
 
