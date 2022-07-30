@@ -25,6 +25,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
+#include <REST/DTOs/ErrorMessage.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -76,7 +77,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         auto dto = QueryCatalogControllerAllRegisteredQueriesResponse::createShared();
         std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
 
-        //uint64_t index = 0;
+        uint64_t count = 0;
         for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
             auto entry = QueryInfo::createShared();
             entry->queryId = queryId;
@@ -84,9 +85,16 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             entry->queryStatus = catalogEntry->getQueryStatusAsString();
             entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
             entry->queryMetaData = catalogEntry->getMetaInformation();
-            //result[index] = jsonEntry;
-            //index++;
+            //result[count] = jsonEntry;
+            count++;
             dto->queries->push_back(entry);
+        }
+        if(count == 0){
+            auto errorMessage = ErrorMessage::createShared();
+            errorMessage->code = Status::CODE_204.code;
+            errorMessage->status = "No registered queries";
+            errorMessage->message = "";
+            return createDtoResponse(Status::CODE_204, errorMessage);
         }
         return createDtoResponse(Status::CODE_200, dto);
 
