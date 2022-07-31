@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_TERNARYOPERATORSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_TERNARYOPERATORSTATEMENT_HPP_
 
-#include "Statement.hpp"
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
@@ -24,25 +23,29 @@
 #include <string>
 
 namespace NES {
-        namespace QueryCompilation {
+namespace QueryCompilation {
 
-        class TernaryOperatorStatement: public ExpressionStatement {
-          public:
-            TernaryOperatorStatement(const ExpressionStatement& condExpr, const ExpressionStatement& condTrueExpr, const ExpressionStatement& condFalseExpr);
-            TernaryOperatorStatement(ExpressionStatementPtr& condExpr, const ExpressionStatementPtr& condTrueExpr, const ExpressionStatementPtr& condFalseExpr);
+class TernaryOperatorStatement : public ExpressionStatement {
+  public:
+    TernaryOperatorStatement(const ExpressionStatement& condExpr,
+                             const ExpressionStatement& condTrueExpr,
+                             const ExpressionStatement& condFalseExpr);
+    TernaryOperatorStatement(ExpressionStatementPtr& condExpr,
+                             const ExpressionStatementPtr& condTrueExpr,
+                             const ExpressionStatementPtr& condFalseExpr);
 
-            ~TernaryOperatorStatement() override = default;
+    ~TernaryOperatorStatement() override = default;
 
-            [[nodiscard]] StatementType getStamentType() const override;
-            [[nodiscard]] CodeExpressionPtr getCode() const override;
-            [[nodiscard]] ExpressionStatementPtr copy() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
-          private:
-            const ExpressionStatementPtr conditionalExpression;
-            const ExpressionStatementPtr trueCaseExpression;
-            const ExpressionStatementPtr falseCaseExpression;
-        };
-        }// namespace QueryCompilation
-    }// namespace NES
+  private:
+    const ExpressionStatementPtr conditionalExpression;
+    const ExpressionStatementPtr trueCaseExpression;
+    const ExpressionStatementPtr falseCaseExpression;
+};
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif// NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_TERNARYOPERATORSTATEMENT_HPP_

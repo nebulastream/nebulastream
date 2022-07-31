@@ -20,18 +20,24 @@
 
 namespace NES::QueryCompilation {
 
-        TernaryOperatorStatement::TernaryOperatorStatement(const ExpressionStatement& condExpr, const ExpressionStatement& condTrueExpr, const ExpressionStatement& condFalseExpr)
-            : conditionalExpression(condExpr.copy()), trueCaseExpression(condTrueExpr.copy()), falseCaseExpression(condFalseExpr.copy()) {}
+TernaryOperatorStatement::TernaryOperatorStatement(const ExpressionStatement& condExpr,
+                                                   const ExpressionStatement& condTrueExpr,
+                                                   const ExpressionStatement& condFalseExpr)
+    : conditionalExpression(condExpr.copy()), trueCaseExpression(condTrueExpr.copy()), falseCaseExpression(condFalseExpr.copy()) {
+}
 
-        TernaryOperatorStatement::TernaryOperatorStatement(ExpressionStatementPtr& condExpr, const ExpressionStatementPtr& condTrueExpr, const ExpressionStatementPtr& condFalseExpr)
-            : conditionalExpression(condExpr), trueCaseExpression(condTrueExpr), falseCaseExpression(condFalseExpr) {}
+TernaryOperatorStatement::TernaryOperatorStatement(ExpressionStatementPtr& condExpr,
+                                                   const ExpressionStatementPtr& condTrueExpr,
+                                                   const ExpressionStatementPtr& condFalseExpr)
+    : conditionalExpression(condExpr), trueCaseExpression(condTrueExpr), falseCaseExpression(condFalseExpr) {}
 
-        StatementType TernaryOperatorStatement::getStamentType() const { return TERNARY_OP_STMT; }
+StatementType TernaryOperatorStatement::getStamentType() const { return TERNARY_OP_STMT; }
 
-        CodeExpressionPtr TernaryOperatorStatement::getCode() const {
-            std::stringstream code;
-            code << conditionalExpression->getCode()->code_ << "?" << trueCaseExpression->getCode()->code_ << ":" << falseCaseExpression->getCode()->code_;
-            return std::make_shared<CodeExpression>(code.str());
-        }
-        ExpressionStatementPtr TernaryOperatorStatement::copy() const { return std::make_shared<TernaryOperatorStatement>(*this); }
-    }// namespace NES::QueryCompilation
+CodeExpressionPtr TernaryOperatorStatement::getCode() const {
+    std::stringstream code;
+    code << conditionalExpression->getCode()->code_ << "?" << trueCaseExpression->getCode()->code_ << ":"
+         << falseCaseExpression->getCode()->code_;
+    return std::make_shared<CodeExpression>(code.str());
+}
+ExpressionStatementPtr TernaryOperatorStatement::copy() const { return std::make_shared<TernaryOperatorStatement>(*this); }
+}// namespace NES::QueryCompilation
