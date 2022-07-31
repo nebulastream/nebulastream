@@ -137,7 +137,13 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
 
         //1 Fetch the node where operator is to be placed
         auto pinnedNodeId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_NODE_ID));
-        auto pinnedNode = getTopologyNode(pinnedNodeId);
+        NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << pinnedNodeId);
+        if (nodeIdToTopologyNodeMap.find(pinnedNodeId) == nodeIdToTopologyNodeMap.end()) {
+            NES_ERROR("BasePlacementStrategy: Topology node with id " << pinnedNodeId << " not considered for the placement.");
+            throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(pinnedNodeId)
+                                              + " not considered for the placement.");
+        }
+        auto pinnedNode = nodeIdToTopologyNodeMap[pinnedNodeId];
 
         // 2. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedOperator->getProperty(PLACED))) {
@@ -240,7 +246,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                          });
 
         //4. Check if this operator is not in the list of pinned downstream operators then recursively call this function for its downstream operators.
-        if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+        if (isOperatorAPinnedDownStreamOperator == pinnedDownStreamOperators.end()) {
 
             //4.1 Prepare next set of pinned upstream operators to place.
             std::vector<OperatorNodePtr> nextPinnedUpstreamOperators;
