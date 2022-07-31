@@ -16,9 +16,9 @@
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <utility>
 namespace NES {
-WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode( std::move(stamp)){};
+WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 
-WhenExpressionNode::WhenExpressionNode(WhenExpressionNode* other) : BinaryExpressionNode(other){}
+WhenExpressionNode::WhenExpressionNode(WhenExpressionNode* other) : BinaryExpressionNode(other) {}
 
 ExpressionNodePtr WhenExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto whenNode = std::make_shared<WhenExpressionNode>(left->getStamp());
@@ -34,11 +34,9 @@ void WhenExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
     right->inferStamp(typeInferencePhaseContext, schema);
 
     //left expression has to be boolean
-    if(!left->getStamp()->isBoolean()){
-        throw std::logic_error(
-            "WhenExpressionNode: Error during stamp inference. Left type needs to be Boolean, but Left was:"
-            + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString()
-            );
+    if (!left->getStamp()->isBoolean()) {
+        throw std::logic_error("WhenExpressionNode: Error during stamp inference. Left type needs to be Boolean, but Left was:"
+                               + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
 
     //set stamp to right stamp, as only the left expression will be returned
@@ -60,8 +58,6 @@ std::string WhenExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr WhenExpressionNode::copy() {
-    return std::make_shared<WhenExpressionNode>(WhenExpressionNode(this));
-}
+ExpressionNodePtr WhenExpressionNode::copy() { return std::make_shared<WhenExpressionNode>(WhenExpressionNode(this)); }
 
 }// namespace NES

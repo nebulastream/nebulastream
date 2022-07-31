@@ -41,9 +41,9 @@ class WhenExpressionNode final : public BinaryExpressionNode {
     [[nodiscard]] std::string toString() const final;
 
     /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
+     * @brief Create a deep copy of this expression node.
+     * @return ExpressionNodePtr
+     */
     ExpressionNodePtr copy() final;
 
   protected:
