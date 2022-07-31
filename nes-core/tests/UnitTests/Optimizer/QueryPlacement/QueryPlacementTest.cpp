@@ -929,7 +929,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
             ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
             for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
@@ -941,7 +941,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
             }
         }
     }
