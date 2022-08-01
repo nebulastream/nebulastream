@@ -1772,14 +1772,14 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
-    sourceConfig->setSocketBufferSize(0);
+    sourceConfig->setSocketBufferSize(59);
     sourceConfig->setFlushIntervalMS(2000);
     sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
 
     auto tcpSchema = Schema::create()
                          ->addField("id", UINT8)
                          ->addField("value", FLOAT32)
-                         ->addField("name", DataTypeFactory::createFixedChar(8));
+                         ->addField("name", DataTypeFactory::createFixedChar(5));
 
     TCPSourceProxy tcpDataSource(tcpSchema,
                                  this->nodeEngine->getBufferManager(),
@@ -1796,6 +1796,7 @@ TEST_F(SourceTest, DISABLED_TCPSourceReadJSONData) {
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     tcpDataSource.open();
     tcpDataSource.fillBuffer(buffer);
+    EXPECT_EQ(buffer.operator[](0).operator[](2).toString(), "hello");
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
     EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
 }

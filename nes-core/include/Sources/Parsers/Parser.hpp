@@ -59,7 +59,6 @@ class Parser {
     void writeFieldValueToTupleBuffer(std::string value,
                                       uint64_t schemaFieldIndex,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                      bool json,
                                       const SchemaPtr& schema,
                                       uint64_t tupleCount);
 
