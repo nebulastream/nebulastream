@@ -51,14 +51,15 @@ class ExpressionSerializationUtil {
     static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
     static void serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                  SerializableExpression* serializedExpression);
-    static void serializeGeographyExpressions(const ExpressionNodePtr& expression,
-                                              SerializableExpression* serializedExpression);
-    static void serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
-                                                         SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
+    static void serializeGeographyExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
+    static void
+    serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
+                                             SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeGeographyExpressions(SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
+    static ExpressionNodePtr
+    deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
 };
 }// namespace NES
 
