@@ -92,7 +92,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.performDistributedWindowOptimization = true;
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-        distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration, Topology::create());
+        distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
         // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
