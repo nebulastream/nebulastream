@@ -64,6 +64,7 @@ SchemaPtr DiskMetrics::createSchema(const std::string& prefix, std::list<std::st
     }
     return schema;
 }
+
 void DiskMetrics::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
 SchemaPtr DiskMetrics::getSchema() const { return this->schema; }
 

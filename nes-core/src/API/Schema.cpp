@@ -121,10 +121,14 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         return true;
     }
     for (auto&& fieldAttribute : fields) {
-        auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
-        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
-            return false;
+        std::string field = fieldAttribute->getName();
+        if (!(schema->contains(field))) {
+                return false;
         }
+//        auto otherFieldAttribute = schema->hasFieldName(field);
+//        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
+//            return false;
+//        }
     }
     return true;
 }

@@ -39,7 +39,7 @@ class MonitoringPlan {
     static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics);
     static MonitoringPlanPtr defaultPlan();
 
-    static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
+//    static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
 
     static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
 

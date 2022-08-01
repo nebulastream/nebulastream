@@ -41,37 +41,37 @@ MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>&
 }
 
 //set the MonitoringPlan for the Yaml Konfiguration
-MonitoringPlanPtr MonitoringPlan::setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetrics) {
-    std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
-//    SchemaPtr schema;
-    if (configuredMetrics.count(CpuMetric) > 0) {
-        auto it = configuredMetrics.find(CpuMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(CpuMetric, CpuMetrics::createSchema("", it->second)));
-    } if (configuredMetrics.count(DiskMetric) > 0) {
-        auto it = configuredMetrics.find(DiskMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", it->second)));
-    } if (configuredMetrics.count(MemoryMetric) > 0) {
-        auto it = configuredMetrics.find(MemoryMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(MemoryMetric, MemoryMetrics::createSchema("", it->second)));
-    } if (configuredMetrics.count(NetworkMetric) > 0) {
-        auto it = configuredMetrics.find(NetworkMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(NetworkMetric, NetworkMetrics::createSchema("", it->second)));
-    } if (configuredMetrics.count(RegistrationMetric) > 0) {
-        auto it = configuredMetrics.find(RegistrationMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", it->second)));
-    } if (configuredMetrics.count(RuntimeMetric) > 0) {
-        auto it = configuredMetrics.find(RuntimeMetric);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", it->second)));
-    }
-
-    return MonitoringPlan::create(configuredMonitoringPlan);
-}
+//MonitoringPlanPtr MonitoringPlan::setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetrics) {
+//    std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
+////    SchemaPtr schema;
+//    if (configuredMetrics.count(CpuMetric) > 0) {
+//        auto it = configuredMetrics.find(CpuMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(CpuMetric, CpuMetrics::createSchema("", it->second)));
+//    } if (configuredMetrics.count(DiskMetric) > 0) {
+//        auto it = configuredMetrics.find(DiskMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", it->second)));
+//    } if (configuredMetrics.count(MemoryMetric) > 0) {
+//        auto it = configuredMetrics.find(MemoryMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(MemoryMetric, MemoryMetrics::createSchema("", it->second)));
+//    } if (configuredMetrics.count(NetworkMetric) > 0) {
+//        auto it = configuredMetrics.find(NetworkMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(NetworkMetric, NetworkMetrics::createSchema("", it->second)));
+//    } if (configuredMetrics.count(RegistrationMetric) > 0) {
+//        auto it = configuredMetrics.find(RegistrationMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", it->second)));
+//    } if (configuredMetrics.count(RuntimeMetric) > 0) {
+//        auto it = configuredMetrics.find(RuntimeMetric);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", it->second)));
+//    }
+//
+//    return MonitoringPlan::create(configuredMonitoringPlan);
+//}
 
 MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
     std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
@@ -108,6 +108,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
 }
 
 SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
+    // TODO: auffangen, falls MetricType nicht in MonitoringPlan vorhanden
     return monitoringPlan.find(metric)->second;
 }
 

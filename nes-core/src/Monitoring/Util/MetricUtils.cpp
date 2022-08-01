@@ -135,87 +135,87 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
-std::map <MetricType, std::list<std::string>> MetricUtils::parseMonitoringConfigStringToMap(std::string rawConfigString) {
-    // init map to save everything
-    std::map <MetricType, std::list<std::string>> monitoringConfigurationMap;
-
-    // argument for splitting the string
-    std::string delimiter(" - ");
-
-    // erase first 3 characters from the raw string and check, if the string has the right format in the beginning
-    if (rawConfigString.substr(0, 3) == delimiter) {
-        rawConfigString.erase(0, 3);
-    } else {
-        //throw exception
-        std::cout << "String has the wrong format";
-    }
-    // list to save strings for each metric
-    std::list<std::string> tokenList;
-
-    size_t pos = 0;
-    std::string token;
-    std::list<std::string>::iterator i;
-    i = tokenList.begin();
-
-    // split rawString into n different strings;
-    // each string will represent the configuration of one metric
-    while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
-        token = rawConfigString.substr(0, pos);
-        rawConfigString.erase(0, pos + delimiter.length());
-        tokenList.insert(i, token);
-        ++i;
-    }
-    tokenList.insert(i, rawConfigString);
-
-    std::string metricType;
-    std::string attributes;
-    std::list<std::string> listOfAttributes;
-    std::string sampleRate;
-    std::list<std::string>::iterator j;
-    // split the metric configuration strings into the form of the map
-    // key: metricType
-    // value: list of strings including all attributes of metric and the sample rate
-    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
-        delimiter = ": ";
-        pos = i->find(delimiter);
-        metricType = i->substr(0, pos);
-        i->erase(0, pos + delimiter.length());
-
-        delimiter = "attributes: \"";
-        i->erase(0, delimiter.length());
-
-        delimiter = "\" ";
-        pos = i->find(delimiter);
-        attributes = i->substr(0, pos);
-        i->erase(0, pos + delimiter.length());
-
-        delimiter= "sampleRate: ";
-        i->erase(0, delimiter.length());
-
-        delimiter = " ";
-        pos = i->find(delimiter);
-        sampleRate = i->substr(0, pos);
-
-        attributes.insert(0, sampleRate + ", ");
-
-        // parse attribute string to list of strings
-        delimiter = ", ";
-        j = listOfAttributes.begin();
-        while ((pos = attributes.find(delimiter)) != std::string::npos) {
-            token = attributes.substr(0, pos);
-            attributes.erase(0, pos + delimiter.length());
-            listOfAttributes.insert(j, token);
-            ++j;
-        }
-        listOfAttributes.insert(j, attributes);
-
-        monitoringConfigurationMap[NES::parse(metricType)] = listOfAttributes;
-        listOfAttributes.clear();
-
-    }
-
-    return monitoringConfigurationMap;
-}
+//std::map <MetricType, std::list<std::string>> MetricUtils::parseMonitoringConfigStringToMap(std::string rawConfigString) {
+//    // init map to save everything
+//    std::map <MetricType, std::list<std::string>> monitoringConfigurationMap;
+//
+//    // argument for splitting the string
+//    std::string delimiter(" - ");
+//
+//    // erase first 3 characters from the raw string and check, if the string has the right format in the beginning
+//    if (rawConfigString.substr(0, 3) == delimiter) {
+//        rawConfigString.erase(0, 3);
+//    } else {
+//        //throw exception
+//        std::cout << "String has the wrong format";
+//    }
+//    // list to save strings for each metric
+//    std::list<std::string> tokenList;
+//
+//    size_t pos = 0;
+//    std::string token;
+//    std::list<std::string>::iterator i;
+//    i = tokenList.begin();
+//
+//    // split rawString into n different strings;
+//    // each string will represent the configuration of one metric
+//    while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
+//        token = rawConfigString.substr(0, pos);
+//        rawConfigString.erase(0, pos + delimiter.length());
+//        tokenList.insert(i, token);
+//        ++i;
+//    }
+//    tokenList.insert(i, rawConfigString);
+//
+//    std::string metricType;
+//    std::string attributes;
+//    std::list<std::string> listOfAttributes;
+//    std::string sampleRate;
+//    std::list<std::string>::iterator j;
+//    // split the metric configuration strings into the form of the map
+//    // key: metricType
+//    // value: list of strings including all attributes of metric and the sample rate
+//    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
+//        delimiter = ": ";
+//        pos = i->find(delimiter);
+//        metricType = i->substr(0, pos);
+//        i->erase(0, pos + delimiter.length());
+//
+//        delimiter = "attributes: \"";
+//        i->erase(0, delimiter.length());
+//
+//        delimiter = "\" ";
+//        pos = i->find(delimiter);
+//        attributes = i->substr(0, pos);
+//        i->erase(0, pos + delimiter.length());
+//
+//        delimiter= "sampleRate: ";
+//        i->erase(0, delimiter.length());
+//
+//        delimiter = " ";
+//        pos = i->find(delimiter);
+//        sampleRate = i->substr(0, pos);
+//
+//        attributes.insert(0, sampleRate + ", ");
+//
+//        // parse attribute string to list of strings
+//        delimiter = ", ";
+//        j = listOfAttributes.begin();
+//        while ((pos = attributes.find(delimiter)) != std::string::npos) {
+//            token = attributes.substr(0, pos);
+//            attributes.erase(0, pos + delimiter.length());
+//            listOfAttributes.insert(j, token);
+//            ++j;
+//        }
+//        listOfAttributes.insert(j, attributes);
+//
+//        monitoringConfigurationMap[NES::parse(metricType)] = listOfAttributes;
+//        listOfAttributes.clear();
+//
+//    }
+//
+//    return monitoringConfigurationMap;
+//}
 
 web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawConfigString) {
     // init json to save everything
@@ -293,30 +293,30 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
     return monitoringConfigurationJson;
 }
 
-web::json::value MetricUtils::ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring) {
-    web::json::value configurationMonitoringJson;
-    web::json::value temp;
-    std::map <MetricType, std::list<std::string>>::iterator i;
-    std::list<std::string>::iterator j;
-
-    //eventuell zu uint casten
-    int sampleRate;
-    std::vector<web::json::value> vectorAttributes;
-    for (i = mapConfigurationMonitoring.begin(); i != mapConfigurationMonitoring.end(); ++i) {
-        i->second.sort();
-        sampleRate = std::stoi(i->second.front());
-        i->second.pop_front();
-        configurationMonitoringJson[toString(i->first)]["sampleRate"] = web::json::value::number(sampleRate);
-        for (j = i->second.begin(); j != i->second.end(); ++j) {
-            vectorAttributes.push_back(web::json::value::string(*j));
-            std::cout << "String has the wrong format";
-        }
-        configurationMonitoringJson[toString(i->first)]["attributes"] = web::json::value::array(vectorAttributes);
-        vectorAttributes.clear();
-    }
-
-    return configurationMonitoringJson;
-}
+//web::json::value MetricUtils::ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring) {
+//    web::json::value configurationMonitoringJson;
+//    web::json::value temp;
+//    std::map <MetricType, std::list<std::string>>::iterator i;
+//    std::list<std::string>::iterator j;
+//
+//    //eventuell zu uint casten
+//    int sampleRate;
+//    std::vector<web::json::value> vectorAttributes;
+//    for (i = mapConfigurationMonitoring.begin(); i != mapConfigurationMonitoring.end(); ++i) {
+//        i->second.sort();
+//        sampleRate = std::stoi(i->second.front());
+//        i->second.pop_front();
+//        configurationMonitoringJson[toString(i->first)]["sampleRate"] = web::json::value::number(sampleRate);
+//        for (j = i->second.begin(); j != i->second.end(); ++j) {
+//            vectorAttributes.push_back(web::json::value::string(*j));
+//            std::cout << "String has the wrong format";
+//        }
+//        configurationMonitoringJson[toString(i->first)]["attributes"] = web::json::value::array(vectorAttributes);
+//        vectorAttributes.clear();
+//    }
+//
+//    return configurationMonitoringJson;
+//}
 
 std::string MetricUtils::listToString(const std::string& seperator, const std::list<std::string>& list) {
     std::string string;

@@ -12,6 +12,11 @@
     limitations under the License.
 */
 
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -94,24 +99,41 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 }
 
 TEST_F(ConfigTest, testWorkerConfigLennart) {
+    // schema zum Vergleich
+    std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
+    int sampleDisk = 50;
+    SchemaPtr schemaDisk = DiskMetrics::createSchema("", configuredDisk);
+    std::list<std::string> configuredCpu = {"coreNum", "user", "system"};
+    int sampleCpu = 60;
+    SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
+    std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
+    int sampleMem = 60;
+    SchemaPtr schemaMem = MemoryMetrics::createSchema("", configuredMem);
+    std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
+    int sampleNetwork = 60;
+    SchemaPtr schemaNetwork = NetworkMetrics::createSchema("", configuredNetwork);
+
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-
-   std::map <MetricType, std::list<std::string>> mapMonitoringConfig =
-        MetricUtils::parseMonitoringConfigStringToMap(workerConfigPtr->monitoringConfiguration.getValue());
-    MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchema(mapMonitoringConfig);
-
-//    MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::defaultCatalog();
-//    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
 
     // Json Kram
     web::json::value configurationMonitoringJson =
         MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
     MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
     MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlanJson);
-    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, true);
+
+    ASSERT_TRUE(monitoringPlanJson->getSchema(CpuMetric)->equals(schemaCpu, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(DiskMetric)->equals(schemaDisk, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(MemoryMetric)->equals(schemaMem, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(NetworkMetric)->equals(schemaNetwork, false));
+
+    // TODO: check if Catalog is init right; check the schema for each MetricType
+//    MetricCollectorPtr collectorCpu = monitoringCatalog->getMetricCollector(WrappedCpuMetrics);
+//    ASSERT_TRUE(collectorCpu->getschema());
+
+    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
     // TODO: test if the right MonitoringPlan and Catalog was created
 
     std::cout << "Well done!";

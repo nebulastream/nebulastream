@@ -30,7 +30,7 @@ monitoringConfiguration: '
     sampleRate: 40
   - network:
     attributes: "rBytes, rFifo, tPackets"
-    sampleRate: 
+    sampleRate: 30
 '
 
 #monitoringConfiguration:

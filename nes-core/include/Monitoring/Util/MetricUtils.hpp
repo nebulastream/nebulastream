@@ -91,14 +91,14 @@ class MetricUtils {
      * @return a map with the configured metrics types and their attributes
      */
 
-    static std::map<MetricType, std::list<std::string>> parseMonitoringConfigStringToMap(std::string rawConfigString);
+//    static std::map<MetricType, std::list<std::string>> parseMonitoringConfigStringToMap(std::string rawConfigString);
 
     /**
      *
      * @param mapConfigurationMonitoring
      * @return
      */
-    static web::json::value ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring);
+//    static web::json::value ConfigMapToJson(std::map <MetricType, std::list<std::string>> mapConfigurationMonitoring);
 
     static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
 
