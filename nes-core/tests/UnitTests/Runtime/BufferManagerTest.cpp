@@ -184,7 +184,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 5'000;
+    constexpr uint32_t max_buffer = 1'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -271,7 +271,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 25'000;
+    constexpr uint32_t max_buffer = 1'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -446,7 +446,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 10'000;
+    constexpr uint32_t max_buffer = 1'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -527,7 +527,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 2;
+    constexpr uint32_t max_buffer = 1'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 

@@ -39,6 +39,7 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
+option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the highly experimental execution engine based on mlir." OFF)
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
@@ -95,7 +96,7 @@ endif ()
 
 if (NES_ENABLE_CXA_THROW_HOOK)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
-endif()
+endif ()
 
 # this is an experimental feature; do not rely on it yet
 #if(NES_COMPUTE_COVERAGE)
@@ -157,7 +158,7 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
 
-message( STATUS "Compile defs contain: " ${MYDEFS} )
+message(STATUS "Compile defs contain: " ${MYDEFS})
 
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
 # Currently we support the following log levels:
@@ -219,7 +220,7 @@ if (ENABLE_PYTHON_UDF)
     include_directories(${PYTHON_INCLUDE_DIRS})
     # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
     set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
-endif()
+endif ()
 
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
@@ -258,7 +259,7 @@ else ()
         # to use -mcpu=CPU_TYPE. For more info, here:
         # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
-    else()
+    else ()
         message(FATAL_ERROR "CMAKE_SYSTEM_PROCESSOR was ${CMAKE_SYSTEM_PROCESSOR} this is a unsupported architecture.")
     endif ()
 endif ()
@@ -402,12 +403,12 @@ set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 if (USE_S2)
     message(STATUS "s2 is enabled")
 
-    if(NOT S2_ABSL_INCLUDE_PATH)
+    if (NOT S2_ABSL_INCLUDE_PATH)
         message(STATUS "s2 requires absl lts_2021_11_02 which is not included in the nes dependencies, please specify the path to the include directory containing the header folder of the absl files used to compile s2")
-    endif()
+    endif ()
     include_directories(${S2_ABSL_INCLUDE_PATH})
 
-    if(S2_PATH)
+    if (S2_PATH)
         add_library(s2 STATIC IMPORTED)
         set_target_properties(s2 PROPERTIES
                 IMPORTED_LOCATION "${S2_PATH}/lib/libs2.so"
@@ -416,9 +417,9 @@ if (USE_S2)
 
         #to get the static library for linking libnes.so
         link_directories(${S2_PATH}/lib)
-    else()
+    else ()
         find_package(s2)
-    endif()
+    endif ()
 
     set(LIBRARIES ${LIBRARIES} s2)
     add_compile_definitions(S2DEF)
@@ -583,12 +584,24 @@ endif ()
 # Add tests with command
 if (NES_ENABLES_TESTS)
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+    include(cmake/NebulaStreamTest.cmake)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
+    if (NES_CODE_COVERAGE)
+        set(CODE_COVERAGE ON)
+        include(cmake/CodeCoverage.cmake)
+        include(cmake/NebulaStreamTest.cmake)
+        add_code_coverage()
+        enable_extra_test_features()
+        message(STATUS "Tests are enabled with code coverage")
+    endif ()
 else ()
     message(STATUS "Tests are disabled")
 endif ()
+
+# code cov
+
 
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
@@ -597,10 +610,10 @@ add_subdirectory(nes-common)
 add_subdirectory(nes-compiler)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
-if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
     # Add target for execution engines
     add_subdirectory(nes-execution-engine)
-endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
+endif (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 # Add target for client
 add_subdirectory(nes-client)
 # Add target for benchmarks
