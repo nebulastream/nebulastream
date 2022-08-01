@@ -38,8 +38,8 @@ using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQue
 class LogicalSourceExpansionRule;
 using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
-class DistributeWindowRule;
-using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
+class DistributedWindowRule;
+using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
 
 class DistributeJoinRule;
 using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
@@ -71,7 +71,7 @@ class TopologySpecificQueryRewritePhase {
                                                Configurations::OptimizerConfiguration configuration);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
-    DistributeWindowRulePtr distributeWindowRule;
+    DistributeWindowRulePtr distributedWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer

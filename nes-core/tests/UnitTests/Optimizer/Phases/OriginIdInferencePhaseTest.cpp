@@ -31,7 +31,7 @@
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>

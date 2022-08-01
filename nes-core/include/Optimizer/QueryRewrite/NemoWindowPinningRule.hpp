@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
-#define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
+#ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 
 namespace NES {
 class QueryPlan;
@@ -38,8 +38,8 @@ using TopologyPtr = std::shared_ptr<Topology>;
 
 namespace NES::Optimizer {
 
-class DistributeWindowRule;
-using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
+class NemoWindowPinningRule;
+using NemoWindowPinningRulePtr = std::shared_ptr<NemoWindowPinningRule>;
 
 /**
  * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.
@@ -92,29 +92,29 @@ using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
  *                                      |               |
  *                                   Source(Car1)    Source(Car2)
 */
-class DistributeWindowRule : public BaseRewriteRule {
+class NemoWindowPinningRule : public DistributedWindowRule {
   public:
     /**
-     * @brief Creates a new DistributeWindowRule with specific thresholds that influence when the rule is applied.
+     * @brief Creates a new NemoWindowPinningRule with specific thresholds that influence when the rule is applied.
      * @param windowDistributionChildrenThreshold The number of child nodes from which on we will replace a central window operator with a distributed window operator.
      * @param windowDistributionCombinerThreshold The number of child nodes from which on we will introduce combiner
-     * @return DistributeWindowRulePtr
+     * @return NemoWindowPinningRulePtr
      */
-    static DistributeWindowRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topologyNode);
-    virtual ~DistributeWindowRule() = default;
+    static NemoWindowPinningRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topologyNode);
+    virtual ~NemoWindowPinningRule() = default;
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+    explicit NemoWindowPinningRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
 
     /**
      * @brief This helper method identifies the nodes where the window operator should be placed its sources.
      * @param operatorNode the operator node
-     * @param combinerThreshold threshold that identifies when to combine based on the number of sources of an operator
+     * @param sharedParentThreshold threshold that identifies when to combine based on the number of sources of an operator
      * @return map with the node id where the window operator shall be placed and its sources
      */
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> getMergerNodes(OperatorNodePtr operatorNode, uint64_t combinerThreshold);
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold);
 
     /**
      * @brief The NEMO placement is identifying in a hierarchical tree shared parents and places there a CentralWindowOperator.
@@ -122,10 +122,10 @@ class DistributeWindowRule : public BaseRewriteRule {
      * @param windowOp the window operator node
      * @param queryPlan the query plan
      */
-    void createDistributedNemoWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
+    void pinWindowOperators(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
 
     /**
-     * @deprecated Replaced by createDistributedNemoWindowOperator as it is using the old window operator implementation
+     * @deprecated Replaced by pinWindowOperators as it is using the old window operator implementation
      */
     void createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
 
@@ -138,4 +138,4 @@ class DistributeWindowRule : public BaseRewriteRule {
     bool enableNemoPlacement;
 };
 }// namespace NES::Optimizer
-#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_

@@ -18,12 +18,12 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <algorithm>
 #include <any>
 #include <functional>
 #include <map>
 #include <set>
 #include <string>
-#include <algorithm>
 
 /**
  * @brief a collection of shared utility functions
@@ -232,7 +232,7 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 /**
- * Partition a vector in n chunks
+ * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
  * @param input the vector
  * @param n the chunks
  * @return the chunked vector
@@ -240,21 +240,16 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
 template<typename T>
 std::vector<std::vector<T>> partition(const std::vector<T>& vec, size_t n) {
     std::vector<std::vector<T>> outVec;
-
     size_t length = vec.size() / n;
     size_t remain = vec.size() % n;
 
     size_t begin = 0;
     size_t end = 0;
-
     for (size_t i = 0; i < std::min(n, vec.size()); ++i) {
         end += (remain > 0) ? (length + !!(remain--)) : length;
-
         outVec.push_back(std::vector<T>(vec.begin() + begin, vec.begin() + end));
-
         begin = end;
     }
-
     return outVec;
 }
 

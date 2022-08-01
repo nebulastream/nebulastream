@@ -14,7 +14,8 @@
 
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
+#include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Topology/Topology.hpp>
 #include <utility>
@@ -35,14 +36,20 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr
     : topology(topology) {
     logicalSourceExpansionRule =
         LogicalSourceExpansionRule::create(std::move(sourceCatalog), configuration.performOnlySourceOperatorExpansion);
-    distributeWindowRule = DistributeWindowRule::create(configuration, topology);
+    if (configuration.enableNemoPlacement) {
+        distributedWindowRule = NemoWindowPinningRule::create(configuration, topology);
+    }
+    else {
+        distributedWindowRule = DistributedWindowRule::create(configuration);
+    }
+
     distributeJoinRule = DistributeJoinRule::create();
 }
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
     queryPlan = distributeJoinRule->apply(queryPlan);
-    return distributeWindowRule->apply(queryPlan);
+    return distributedWindowRule->apply(queryPlan);
 }
 
 }// namespace NES::Optimizer

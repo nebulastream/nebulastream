@@ -16,6 +16,7 @@ add_source_files(nes-core
         BinaryOperatorSortRule.cpp
         DistributedJoinRule.cpp
         DistributedWindowRule.cpp
+        NemoWindowPinningRule.cpp
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
