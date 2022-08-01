@@ -15,17 +15,11 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
-target_link_libraries(compiler-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
-add_test(NAME compiler-test COMMAND compiler-test)
+add_nes_ut_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
 
-add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
-target_link_libraries(compiler-sharedlibrary-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
-add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
+add_nes_ut_test(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
 
-add_executable(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
-target_link_libraries(compiler-compilationcache-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
-add_test(NAME compiler-compilationcache-test COMMAND compiler-compilationcache-test)
+add_nes_ut_test(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
