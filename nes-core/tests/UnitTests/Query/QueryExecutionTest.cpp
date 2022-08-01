@@ -100,8 +100,8 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
-        auto sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+        Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 

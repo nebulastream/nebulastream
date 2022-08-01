@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::Query {
 
 /**
  * @brief catalog class to handle the queryIdAndCatalogEntryMapping in the system
@@ -128,6 +128,6 @@ class QueryCatalog {
 };
 
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::Query
 
 #endif// NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

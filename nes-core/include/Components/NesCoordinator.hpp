@@ -81,14 +81,20 @@ using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
 namespace Catalogs {
 
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
 
 }// namespace Catalogs
 
@@ -144,7 +150,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief catalog method for debug use only
      * @return sourceCatalog
      */
-    Catalogs::SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
+    Catalogs::Source::SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
 
     /**
      * @brief getter of replication service
@@ -170,7 +176,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Return the UDF catalog.
      * @return Pointer to the UDF catalog.
      */
-    Catalogs::UdfCatalogPtr getUdfCatalog();
+    Catalogs::UDF::UdfCatalogPtr getUdfCatalog();
 
     /**
      * @brief Get instance of monitoring service
@@ -247,8 +253,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     HealthCheckServicePtr healthCheckService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    Catalogs::QueryCatalogPtr queryCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
@@ -262,7 +268,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     WorkerConfigurationPtr workerConfig;
-    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
 

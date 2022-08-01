@@ -33,7 +33,7 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class QuerySubPlanMetaData;
 using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 
-namespace Catalogs {
+namespace Catalogs::Query {
 
 /**
  * @brief class to handle the entry in the query catalog
@@ -162,7 +162,7 @@ class QueryCatalogEntry {
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
+}// namespace Catalogs::Query
 }// namespace NES
-}// namespace Catalogs
 
 #endif// NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_

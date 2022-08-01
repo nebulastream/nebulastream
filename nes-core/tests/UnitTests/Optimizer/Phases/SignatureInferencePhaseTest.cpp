@@ -38,14 +38,14 @@ namespace NES::Optimizer {
 
 class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
-    void SetUp() override { udfCatalog = Catalogs::UdfCatalog::create(); }
+    void SetUp() override { udfCatalog = Catalogs::UDF::UdfCatalog::create(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down SignatureInferencePhaseTest test class."); }
@@ -63,8 +63,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test1");
     auto logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
-    Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
     auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);

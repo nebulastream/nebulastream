@@ -15,7 +15,7 @@
 #include <Catalogs/UDF/PythonUdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 PythonUdfDescriptor::PythonUdfDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType)
     : UdfDescriptor(methodName), numberOfArgs(numberOfArgs), returnType(returnType) {
@@ -31,4 +31,4 @@ PythonUdfDescriptor::PythonUdfDescriptor(const std::string& methodName, int numb
     }
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF

@@ -53,12 +53,12 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const TopologyPtr& topology,
                                                  const QueryCatalogServicePtr& queryCatalogService,
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
-                                                 const Catalogs::SourceCatalogPtr& sourceCatalog,
+                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration,
-                                                 const Catalogs::UdfCatalogPtr& udfCatalog)
+                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
       udfCatalog(udfCatalog) {

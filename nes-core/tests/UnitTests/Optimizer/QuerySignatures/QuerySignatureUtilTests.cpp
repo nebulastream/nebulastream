@@ -47,8 +47,8 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
     SchemaPtr schema;
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     std::shared_ptr<Optimizer::TypeInferencePhaseContext> typeInferencePhaseContext;
 
     /* Will be called before all tests in this class are started. */
@@ -62,8 +62,8 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
         typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
             Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);

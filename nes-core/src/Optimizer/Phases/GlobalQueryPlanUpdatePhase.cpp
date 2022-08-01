@@ -39,11 +39,11 @@ namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                                        QueryCatalogServicePtr queryCatalogService,
-                                                       const SourceCatalogPtr& sourceCatalog,
+                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                       const Catalogs::UdfCatalogPtr& udfCatalog)
+                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
     : topology(topology), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
@@ -67,11 +67,11 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
 GlobalQueryPlanUpdatePhasePtr
 GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    QueryCatalogServicePtr queryCatalogService,
-                                   Catalogs::SourceCatalogPtr sourceCatalog,
+                                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   Catalogs::UdfCatalogPtr udfCatalog) {
+                                   Catalogs::UDF::UdfCatalogPtr udfCatalog) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
                                                                                    std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),

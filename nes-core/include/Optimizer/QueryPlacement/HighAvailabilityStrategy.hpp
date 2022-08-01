@@ -27,7 +27,7 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
 
   public:
     ~HighAvailabilityStrategy() = default;
-    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, Catalogs::SourceCatalogPtr sourceCatalog);
+    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     static std::unique_ptr<HighAvailabilityStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
         return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy(nesTopologyPlan));

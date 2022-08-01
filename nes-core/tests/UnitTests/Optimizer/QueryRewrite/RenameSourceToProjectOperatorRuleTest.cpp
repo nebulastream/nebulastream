@@ -38,8 +38,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
 
   public:
     SchemaPtr schema;
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -50,7 +50,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     /* Will be called before a test is executed. */
     void SetUp() override {
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -59,12 +59,12 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down RenameSourceToProjectOperatorRuleTest test class."); }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
-        Catalogs::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
         sourceCatalog->addLogicalSource("src", schema);
         sourceCatalog->addPhysicalSource("src", sce);
     }
@@ -73,7 +73,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperator) {
 
     // Prepare
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
@@ -100,7 +100,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOperator) {
 
     // Prepare
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query =
@@ -128,7 +128,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWithProject) {
 
     // Prepare
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src")

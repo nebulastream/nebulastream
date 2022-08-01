@@ -30,7 +30,7 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Catalogs {
+namespace Catalogs::Source {
 
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
@@ -87,7 +87,7 @@ class SourceCatalogEntry {
     LogicalSourcePtr logicalSource;
     TopologyNodePtr node;
 };
-}// namespace Catalogs
+}// namespace Catalogs::Source
 }// namespace NES
 
 #endif// NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

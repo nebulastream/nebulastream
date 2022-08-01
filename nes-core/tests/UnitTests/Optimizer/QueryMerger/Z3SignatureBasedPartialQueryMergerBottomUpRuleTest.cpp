@@ -50,8 +50,8 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestW
 
   public:
     SchemaPtr schema;
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -68,7 +68,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestW
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
@@ -77,22 +77,22 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestW
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry3 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry3 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */

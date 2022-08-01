@@ -36,7 +36,7 @@ MinimumResourceConsumptionStrategy::MinimumResourceConsumptionStrategy(NESTopolo
 
 NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                                 NESTopologyPlanPtr nesTopologyPlan,
-                                                                                Catalogs::SourceCatalogPtr sourceCatalog) {
+                                                                                Catalogs::Source::SourceCatalogPtr sourceCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 

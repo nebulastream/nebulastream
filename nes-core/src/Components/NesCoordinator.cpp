@@ -96,9 +96,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
-    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
+    queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
@@ -126,7 +126,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   this->coordinatorConfiguration->optimizer,
                                                   udfCatalog);
 
-    udfCatalog = Catalogs::UdfCatalog::create();
+    udfCatalog = Catalogs::UDF::UdfCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, queryRequestQueue);
     locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
 
@@ -362,7 +362,7 @@ QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 
-Catalogs::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
+Catalogs::UDF::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 

@@ -17,11 +17,19 @@
 
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <memory>
+
 namespace NES::Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
+
+namespace UDF {
 class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<Catalogs::UdfCatalog>;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace NES::Catalogs
 
 namespace NES::Optimizer {
@@ -33,23 +41,23 @@ namespace NES::Optimizer {
  */
 class TypeInferencePhaseContext {
   public:
-    TypeInferencePhaseContext(Catalogs::SourceCatalogPtr  sourceCatalog, Catalogs::UdfCatalogPtr  udfCatalog);
+    TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr  sourceCatalog, Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
     /**
      * Retrieve the source catalog
      * @return pointer to the source catalog
      */
-    [[nodiscard]] const Catalogs::SourceCatalogPtr& getSourceCatalog() const;
+    [[nodiscard]] const Catalogs::Source::SourceCatalogPtr& getSourceCatalog() const;
 
     /**
      * Return the UdfCatalog that is used for type inference
      * @return pointer to the udf catalog
      */
-    [[nodiscard]] const Catalogs::UdfCatalogPtr& getUdfCatalog() const;
+    [[nodiscard]] const Catalogs::UDF::UdfCatalogPtr& getUdfCatalog() const;
 
   private:
-    const Catalogs::SourceCatalogPtr sourceCatalog;
-    const Catalogs::UdfCatalogPtr udfCatalog;
+    const Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    const Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 
 }// namespace NES::Optimizer

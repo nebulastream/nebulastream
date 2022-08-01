@@ -38,7 +38,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-namespace Catalogs {
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs

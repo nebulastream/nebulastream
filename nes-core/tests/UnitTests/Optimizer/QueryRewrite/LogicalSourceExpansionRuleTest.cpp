@@ -57,7 +57,7 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling<tes
     static void TearDownTestCase() { NES_INFO("Tear down LogicalSourceExpansionRuleTest test class."); }
 };
 
-void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCatalog) {
+void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -65,15 +65,15 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCat
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    Catalogs::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
     sourceCatalog->addPhysicalSource("default_logical", sce2);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -95,7 +95,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
 
@@ -129,7 +129,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
 
@@ -166,7 +166,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -189,7 +189,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare

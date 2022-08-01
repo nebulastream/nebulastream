@@ -41,10 +41,10 @@ namespace NES {
 
 class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    Catalogs::QueryCatalogPtr queryCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
-    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
 
     /* Will be called before any test in this class are executed. */
@@ -56,18 +56,18 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
     /* Will be called before a  test is executed. */
     void SetUp() override {
         context = std::make_shared<z3::context>();
-        queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
+        queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         topology = Topology::create();
         //Setup source catalog
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "test1", defaultSourceType);
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, node);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
         sourceCatalog->addPhysicalSource("default_logical", sourceCatalogEntry1);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -99,7 +99,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                context,
                                                                optimizerConfiguration,
                                                                udfCatalog);
-    auto catalogEntry1 = Catalogs::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
+    auto catalogEntry1 = Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -334,7 +334,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
-    //    auto queryCatalogService = std::make_shared<Catalogs::QueryCatalog>();
+    //    auto queryCatalogService = std::make_shared<Catalogs::Query::QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("example")
@@ -365,7 +365,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     }
 
     //Setup source catalog
-    auto sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", NES::UINT64)
                                 ->addField("val", NES::UINT64)
@@ -376,7 +376,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
     auto physicalSource = PhysicalSource::create("example", "test1");
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, node);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
     sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;

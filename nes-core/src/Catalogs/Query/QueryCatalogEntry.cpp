@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <utility>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::Query {
 
 QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
@@ -110,4 +110,4 @@ void QueryCatalogEntry::removeAllQuerySubPlanMetaData() {
     querySubPlanMetaDataMap.clear();
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::Query

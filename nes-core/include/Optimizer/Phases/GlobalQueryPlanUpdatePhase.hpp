@@ -32,11 +32,17 @@ class OptimizerConfiguration;
 }
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace Catalogs
 
 class Request;
@@ -94,11 +100,11 @@ class GlobalQueryPlanUpdatePhase {
      */
     static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
                                                 QueryCatalogServicePtr queryCatalogService,
-                                                Catalogs::SourceCatalogPtr sourceCatalog,
+                                                Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                Catalogs::UdfCatalogPtr udfCatalog);
+                                                Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -110,11 +116,11 @@ class GlobalQueryPlanUpdatePhase {
   private:
     explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                         QueryCatalogServicePtr queryCatalogService,
-                                        const Catalogs::SourceCatalogPtr& sourceCatalog,
+                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                        const Catalogs::UdfCatalogPtr& udfCatalog);
+                                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;

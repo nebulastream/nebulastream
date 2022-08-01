@@ -53,18 +53,18 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
 };
 
-void setupSensorNodeAndSourceCatalog(const Catalogs::SourceCatalogPtr& sourceCatalog) {
+void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -101,7 +101,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -145,7 +145,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -194,7 +194,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -238,7 +238,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -275,7 +275,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -339,7 +339,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -401,7 +401,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -469,7 +469,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelowABinaryOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -544,7 +544,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFiltersBelowABinaryOperator) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -620,7 +620,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", NES::UINT64)
                                 ->addField("val", NES::UINT64)
@@ -634,7 +634,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("example", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
-    Catalogs::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     sourceCatalog->addPhysicalSource("example", sce1);
 

@@ -64,7 +64,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
 
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -74,7 +74,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
     static void TearDownTestCase() { NES_INFO("Tear down MemoryLayoutSelectionPhase test class."); }
 
     SchemaPtr testSchema;
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 };
 
 class TestSink : public SinkMedium {
@@ -205,7 +205,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
 
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -232,7 +232,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto inputSchema = Schema::create();
     inputSchema->addField("default_logical$f1", BasicType::INT32);
 
-    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 

@@ -25,7 +25,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Catalogs {
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs
@@ -36,7 +36,7 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 class SourceCatalogService {
 
   public:
-    SourceCatalogService(Catalogs::SourceCatalogPtr sourceCatalog);
+    SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     /**
      * @brief method to register a physical source
@@ -84,7 +84,7 @@ class SourceCatalogService {
     bool unregisterLogicalSource(const std::string& logicalSourceName);
 
   private:
-    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::mutex addRemoveLogicalSource;
     std::mutex addRemovePhysicalSource;
 };

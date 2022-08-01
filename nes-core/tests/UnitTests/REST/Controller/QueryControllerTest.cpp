@@ -47,15 +47,15 @@ class QueryControllerTest : public Testing::NESBaseTest {
     void SetUp() {
         Testing::NESBaseTest::SetUp();
         TopologyPtr topology = Topology::create();
-        Catalogs::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::QueryCatalog>();
+        Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         RequestQueuePtr queryRequestQueue = std::make_shared<RequestQueue>(1);
         Compiler::JITCompilerBuilder jitCompilerBuilder = Compiler::JITCompilerBuilder();
         jitCompilerBuilder.registerLanguageCompiler(Compiler::CPPCompiler::create());
         QueryParsingServicePtr queryParsingService = QueryParsingService::create(jitCompilerBuilder.build());
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         Configurations::OptimizerConfiguration optimizerConfiguration = OptimizerConfiguration();
-        Catalogs::UdfCatalogPtr udfCatalog = Catalogs::UdfCatalog::create();
+        Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
         QueryServicePtr queryService = std::make_shared<QueryService>(queryCatalogService,
                                                                       queryRequestQueue,
                                                                       sourceCatalog,
@@ -66,7 +66,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
         queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
     };
 
-    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryControllerPtr queryController;
 };
 
@@ -132,8 +132,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
-    Catalogs::SourceCatalogEntryPtr entry =
-        Catalogs::SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
+    Catalogs::Source::SourceCatalogEntryPtr entry =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string
@@ -436,8 +436,8 @@ TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
 TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
-    Catalogs::SourceCatalogEntryPtr entry =
-        Catalogs::SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
+    Catalogs::Source::SourceCatalogEntryPtr entry =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string
