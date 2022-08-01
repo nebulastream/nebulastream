@@ -69,11 +69,17 @@ class LocationController;
 using LocationControllerPtr = std::shared_ptr<LocationController>;
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace Catalogs
 
 namespace Experimental {
@@ -96,7 +102,7 @@ using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 class RestEngine {
 
   public:
-    RestEngine(const Catalogs::SourceCatalogPtr& sourceCatalog,
+    RestEngine(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogServicePtr& queryCatalogService,
                const TopologyPtr& topology,
@@ -105,7 +111,7 @@ class RestEngine {
                const MonitoringServicePtr& monitoringService,
                const Experimental::MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
-               const Catalogs::UdfCatalogPtr& udfCatalog,
+               const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationService);
 

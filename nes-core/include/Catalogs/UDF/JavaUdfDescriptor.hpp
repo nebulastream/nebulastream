@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
@@ -94,5 +94,5 @@ class JavaUdfDescriptor : public UdfDescriptor {
     const JavaUdfByteCodeList byteCodeList;
 };
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF
 #endif// NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_

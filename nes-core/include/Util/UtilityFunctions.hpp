@@ -46,12 +46,18 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}//namespace Catalogs
+}// namespace Query
+
+}// namespace Catalogs
 
 namespace Util {
 namespace detail {

@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::Source {
 
 SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource,
                                        LogicalSourcePtr logicalSource,
@@ -41,4 +41,4 @@ std::string SourceCatalogEntry::toString() {
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::Source

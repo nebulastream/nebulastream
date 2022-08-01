@@ -38,10 +38,10 @@ namespace NES {
 
 QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            RequestQueuePtr queryRequestQueue,
-                           Catalogs::SourceCatalogPtr sourceCatalog,
+                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           Catalogs::UdfCatalogPtr udfCatalog)
+                           Catalogs::UDF::UdfCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG("QueryService()");
@@ -80,7 +80,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        Catalogs::QueryCatalogEntryPtr queryCatalogEntry =
+        Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
@@ -127,7 +127,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        Catalogs::QueryCatalogEntryPtr queryCatalogEntry =
+        Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);

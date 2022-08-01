@@ -22,7 +22,7 @@ using namespace std::string_literals;
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 class UdfCatalogTest : public Testing::NESBaseTest {
   protected:

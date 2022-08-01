@@ -25,7 +25,7 @@
 namespace NES {
 
 using namespace std::string_literals;
-using namespace Catalogs;
+using namespace Catalogs::UDF;
 
 const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 

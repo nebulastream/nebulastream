@@ -70,11 +70,17 @@ class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace Catalogs
 
 /**
@@ -86,12 +92,12 @@ class RequestProcessorService {
                                      const TopologyPtr& topology,
                                      const QueryCatalogServicePtr& queryCatalogService,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
-                                     const Catalogs::SourceCatalogPtr& sourceCatalog,
+                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::OptimizerConfiguration optimizerConfiguration,
                                      bool queryReconfiguration,
-                                     const Catalogs::UdfCatalogPtr& udfCatalog);
+                                     const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -124,7 +130,7 @@ class RequestProcessorService {
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
-    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif// NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

@@ -20,7 +20,7 @@
 
 using namespace std::string_literals;
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 class PythonUdfDescriptorTest : public Testing::NESBaseTest {
   protected:

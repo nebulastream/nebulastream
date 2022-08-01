@@ -214,7 +214,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     // Removed this and replaced it by the above. Test is disabled, cannot check correctness. Leaving this for future fixing.
     //    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
-    //    Catalogs::SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    //    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     //    sourceCatalog->physicalSources.add("default_logical", sce);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
@@ -477,7 +477,7 @@ TEST_F(RESTEndpointTest, DISABLED_testAddLogicalSourceEx) {
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("sourceCatalog/addLogicalStream-ex");
 
-    Catalogs::SourceCatalogPtr sourceCatalog = crd->getSourceCatalog();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = crd->getSourceCatalog();
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);

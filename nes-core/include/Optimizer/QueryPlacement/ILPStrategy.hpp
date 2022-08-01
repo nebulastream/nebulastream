@@ -26,11 +26,10 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES::Catalogs {
-
+namespace NES::Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::Source
 
 namespace NES::Optimizer {
 

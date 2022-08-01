@@ -55,7 +55,7 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
                            + left->getStamp()->toString());
     }
     auto udfDescriptorPtr = typeInferencePhaseContext.getUdfCatalog()->getUdfDescriptor(getUdfName());
-    setUdfDescriptorPtr(Catalogs::UdfDescriptor::as<Catalogs::UdfDescriptor>(udfDescriptorPtr));
+    setUdfDescriptorPtr(Catalogs::UDF::UdfDescriptor::as<Catalogs::UDF::UdfDescriptor>(udfDescriptorPtr));
     if (udfDescriptor == nullptr) {
         throw UdfException("UdfCallExpressionNode: Error during stamp/return type inference. No UdfDescriptor was set");
     }
@@ -79,7 +79,7 @@ ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() { return children[0]->
 
 std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() { return functionArguments; }
 
-void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor) {
+void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UDF::UdfDescriptorPtr& udfDescriptor) {
     this->udfDescriptor = udfDescriptor;
 }
 

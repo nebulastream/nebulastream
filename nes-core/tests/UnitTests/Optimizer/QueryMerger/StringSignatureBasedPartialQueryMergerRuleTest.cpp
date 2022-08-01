@@ -43,8 +43,8 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithE
 
   public:
     SchemaPtr schema;
-    Catalogs::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -61,11 +61,11 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithE
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */

@@ -49,11 +49,17 @@ class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace Catalogs
 
 namespace Experimental {
@@ -83,14 +89,14 @@ class RestServer {
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogServicePtr& queryCatalogService,
-               const Catalogs::SourceCatalogPtr& sourceCatalog,
+               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
                const NES::Experimental::MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
-               const Catalogs::UdfCatalogPtr& udfCatalog,
+               const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr& bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 

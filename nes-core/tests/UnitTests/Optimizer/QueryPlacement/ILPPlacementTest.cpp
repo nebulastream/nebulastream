@@ -53,7 +53,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
-    Catalogs::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
@@ -65,7 +65,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
 
         z3::config cfg;
         cfg.set("timeout", 50000);
@@ -107,15 +107,15 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string sourceName = "car";
 
-        sourceCatalogForILP = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+        sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalogForILP->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
@@ -157,7 +157,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         operatorNode->addProperty("cost", cost);
     }
 
-    Catalogs::SourceCatalogPtr sourceCatalogForILP;
+    Catalogs::Source::SourceCatalogPtr sourceCatalogForILP;
     TopologyPtr topologyForILP;
 };
 

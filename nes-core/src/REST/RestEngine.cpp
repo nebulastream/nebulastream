@@ -30,7 +30,7 @@
 
 namespace NES {
 
-RestEngine::RestEngine(const Catalogs::SourceCatalogPtr& sourceCatalog,
+RestEngine::RestEngine(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                        const NesCoordinatorWeakPtr& coordinator,
                        const QueryCatalogServicePtr& queryCatalogService,
                        const TopologyPtr& topology,
@@ -39,7 +39,7 @@ RestEngine::RestEngine(const Catalogs::SourceCatalogPtr& sourceCatalog,
                        const MonitoringServicePtr& monitoringService,
                        const Experimental::MaintenanceServicePtr& maintenanceService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
-                       const Catalogs::UdfCatalogPtr& udfCatalog,
+                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr bufferManager,
                        const Spatial::Index::Experimental::LocationServicePtr& locationService) {
     sourceCatalogController = std::make_shared<SourceCatalogController>(sourceCatalog);

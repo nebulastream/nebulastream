@@ -44,11 +44,17 @@ class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 namespace Catalogs {
+
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
 
+namespace UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
 }// namespace Catalogs
 
 /**
@@ -59,10 +65,10 @@ class QueryService {
   public:
     explicit QueryService(QueryCatalogServicePtr queryCatalogService,
                           RequestQueuePtr queryRequestQueue,
-                          Catalogs::SourceCatalogPtr sourceCatalog,
+                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          Catalogs::UdfCatalogPtr udfCatalog);
+                          Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

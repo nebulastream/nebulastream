@@ -64,7 +64,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
-    std::vector<Catalogs::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
@@ -107,7 +107,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
-    std::vector<Catalogs::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("testSource");
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("testSource");
 
     EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
@@ -153,7 +153,7 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     EXPECT_TRUE(success);
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
-    std::vector<Catalogs::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 0U);
 
@@ -201,7 +201,7 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     EXPECT_NE(sPtr, nullptr);
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
-    std::vector<Catalogs::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
 

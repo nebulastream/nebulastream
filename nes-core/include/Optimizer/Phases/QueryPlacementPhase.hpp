@@ -42,7 +42,7 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-namespace Catalogs {
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs

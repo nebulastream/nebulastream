@@ -80,8 +80,8 @@ static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 namespace Network {
 class NetworkStackIntegrationTest : public Testing::NESBaseTest {
   public:
-    Catalogs::UdfCatalogPtr udfCatalog;
-    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
@@ -91,8 +91,8 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         dataPort1 = Testing::NESBaseTest::getAvailablePort();
         dataPort2 = Testing::NESBaseTest::getAvailablePort();
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(QueryParsingServicePtr());
-        udfCatalog = Catalogs::UdfCatalog::create();
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     void TearDown() {

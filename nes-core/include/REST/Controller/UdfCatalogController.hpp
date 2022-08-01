@@ -20,12 +20,12 @@
 
 namespace NES {
 
-namespace Catalogs {
+namespace Catalogs::UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::UDF
 
-using namespace Catalogs;
+using namespace Catalogs::UDF;
 
 class UdfCatalogController : public BaseController {
 

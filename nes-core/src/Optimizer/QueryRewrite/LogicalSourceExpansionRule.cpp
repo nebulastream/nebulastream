@@ -33,10 +33,10 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(Catalogs::SourceCatalogPtr sourceCatalog, bool expandSourceOnly)
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(Catalogs::Source::SourceCatalogPtr sourceCatalog, bool expandSourceOnly)
     : sourceCatalog(std::move(sourceCatalog)), expandSourceOnly(expandSourceOnly) {}
 
-LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(Catalogs::SourceCatalogPtr sourceCatalog, bool expandSourceOnly) {
+LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(Catalogs::Source::SourceCatalogPtr sourceCatalog, bool expandSourceOnly) {
     return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(sourceCatalog), expandSourceOnly));
 }
 
@@ -72,7 +72,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-        std::vector<Catalogs::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
+        std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
                                                        << " physical source locations in the topology.");
         if (sourceCatalogEntries.empty()) {

@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 class UdfDescriptor;
 using UdfDescriptorPtr = std::shared_ptr<UdfDescriptor>;
@@ -52,5 +52,5 @@ class UdfDescriptor {
     const std::string methodName;
     const DataTypePtr returnType;
 };
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF
 #endif

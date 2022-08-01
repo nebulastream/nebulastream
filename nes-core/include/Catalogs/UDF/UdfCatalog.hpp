@@ -23,7 +23,7 @@
 #include <Catalogs/UDF/PythonUdfDescriptor.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 /**
  * @brief The UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
@@ -81,5 +81,5 @@ class UdfCatalog {
     std::unordered_map<std::string, UdfDescriptorPtr> udfStore;
 };
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF
 #endif// NES_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_

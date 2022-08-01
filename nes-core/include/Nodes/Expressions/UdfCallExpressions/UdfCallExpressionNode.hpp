@@ -83,7 +83,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      * set the UdfDescriptor manually to retrieve the return type.
      * @param pyUdfDescriptor The (python) udf descriptor
      */
-    void setUdfDescriptorPtr(const Catalogs::UdfDescriptorPtr& udfDescriptor);
+    void setUdfDescriptorPtr(const Catalogs::UDF::UdfDescriptorPtr& udfDescriptor);
 
     /**
      * @return a string with the UDF name
@@ -91,7 +91,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     const std::string& getUdfName() const;
 
   private:
-    Catalogs::UdfDescriptorPtr udfDescriptor;
+    Catalogs::UDF::UdfDescriptorPtr udfDescriptor;
     std::vector<ExpressionNodePtr> functionArguments;
     std::string udfName;
 };

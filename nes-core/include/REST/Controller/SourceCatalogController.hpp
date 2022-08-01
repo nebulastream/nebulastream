@@ -20,7 +20,7 @@
 
 namespace NES {
 
-namespace Catalogs {
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs
@@ -28,14 +28,14 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 class SourceCatalogController : public BaseController {
 
   public:
-    explicit SourceCatalogController(Catalogs::SourceCatalogPtr sourceCatalog);
+    explicit SourceCatalogController(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
-    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
 using SourceCatalogControllerPtr = std::shared_ptr<SourceCatalogController>;
 

@@ -18,7 +18,7 @@
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 std::unique_ptr<UdfCatalog> UdfCatalog::create() { return std::make_unique<UdfCatalog>(); }
 
@@ -68,4 +68,4 @@ std::vector<std::string> UdfCatalog::listUdfs() const {
     return list;
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF

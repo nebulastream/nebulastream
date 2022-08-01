@@ -59,7 +59,7 @@ using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 class NetworkSinkDescriptor;
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 
-namespace Catalogs {
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs

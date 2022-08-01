@@ -60,12 +60,12 @@ using namespace Configurations;
 class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     z3::ContextPtr z3Context;
-    Catalogs::SourceCatalogPtr sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -77,7 +77,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -103,7 +103,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string sourceName = "car";
 
-        sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
@@ -112,10 +112,10 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
-        Catalogs::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
@@ -975,14 +975,14 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
@@ -1104,15 +1104,15 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
@@ -1242,14 +1242,14 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
@@ -1355,14 +1355,14 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")

@@ -23,9 +23,9 @@
 
 namespace NES {
 
-QueryCatalogService::QueryCatalogService(Catalogs::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
+QueryCatalogService::QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
 
-Catalogs::QueryCatalogEntryPtr QueryCatalogService::createNewEntry(const std::string& queryString,
+Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::createNewEntry(const std::string& queryString,
                                                          const QueryPlanPtr& queryPlan,
                                                          const std::string& placementStrategyName) {
     std::unique_lock lock(serviceMutex);
@@ -131,7 +131,7 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
     return true;
 }
 
-Catalogs::QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
+Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
     std::unique_lock lock(serviceMutex);
 
     //Check if query exists
@@ -152,7 +152,7 @@ std::map<uint64_t, std::string> QueryCatalogService::getAllQueriesInStatus(std::
     return queryCatalog->getQueriesWithStatus(status);
 }
 
-std::map<uint64_t, Catalogs::QueryCatalogEntryPtr> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
+std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
     std::unique_lock lock(serviceMutex);
 
     QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
@@ -317,7 +317,7 @@ void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step,
     }
 }
 
-std::map<uint64_t, Catalogs::QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalogEntries() {
+std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalogEntries() {
     std::unique_lock lock(serviceMutex);
     return queryCatalog->getAllQueryCatalogEntries();
 }

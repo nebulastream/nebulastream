@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-namespace NES::Catalogs {
+namespace NES::Catalogs::UDF {
 
 class PythonUdfDescriptor;
 using PythonUdfDescriptorPtr = std::shared_ptr<PythonUdfDescriptor>;
@@ -43,5 +43,5 @@ class PythonUdfDescriptor : public UdfDescriptor {
     const int numberOfArgs;
     const DataTypePtr returnType;
 };
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF
 #endif// NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
