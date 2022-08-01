@@ -73,16 +73,6 @@ class TopDownStrategy : public BasePlacementStrategy {
      */
     std::vector<TopologyNodePtr> getTopologyNodesForUpStreamOperators(const OperatorNodePtr& candidateOperator);
 
-    /**
-     * @brief Get the candidate query plan where input operator is to be appended
-     * @param queryId : the query id
-     * @param candidateOperator : the candidate operator
-     * @param executionNode : the execution node where operator is to be placed
-     * @return the query plan to which the input operator is to be appended
-     */
-    static QueryPlanPtr addOperatorToCandidateQueryPlan(QueryId queryId,
-                                                        const OperatorNodePtr& candidateOperator,
-                                                        const ExecutionNodePtr& executionNode);
 };
 
 }// namespace NES::Optimizer

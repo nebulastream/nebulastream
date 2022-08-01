@@ -152,18 +152,6 @@ class BasePlacementStrategy {
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
-//    /**
-//     * @brief Update the shared query plan in a topology node by adding a new operator in it
-//     * @param queryId id of the query containing operators to place
-//     * @param operatorNode operator to place
-//     * @param candidateTopologyNode the topology containing shared query plan to update
-//     * @param pinnedDownStreamOperators the downstream operators succeeding operators to place
-//     */
-//    void placeOperator(QueryId queryId,
-//                       const OperatorNodePtr& operatorNode,
-//                       TopologyNodePtr candidateTopologyNode,
-//                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
-
     /**
      * @brief Get Execution node for the input topology node
      * @param candidateTopologyNode: topology node
