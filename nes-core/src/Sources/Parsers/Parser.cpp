@@ -33,7 +33,6 @@ Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes) : physicalTypes(std::
 void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                                           uint64_t schemaFieldIndex,
                                           Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                          bool json,
                                           const SchemaPtr& schema,
                                           uint64_t tupleCount) {
     auto fields = schema->fields;
@@ -130,7 +129,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
         char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        strcpy(value, (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str());
+        strcpy(value, inputString.c_str());
     }
     tupleBuffer.setNumberOfTuples(tupleCount);
 }

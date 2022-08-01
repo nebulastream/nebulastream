@@ -51,7 +51,8 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             return false;
         }
         jsonValue = Util::trim(jsonValue, '"');
-        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        jsonValue = Util::trim(jsonValue, '\'');
+        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount);
     }
     return true;
 }
