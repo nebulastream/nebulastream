@@ -11,22 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <vector>
-#include <Util/Logger/Logger.hpp>
-#include <SerializableShapeType.pb.h>
 #include <GRPC/Serialization/ShapeTypeSerializationUtil.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <SerializableShapeType.pb.h>
+#include <Util/Logger/Logger.hpp>
+#include <vector>
 
 namespace NES {
 
 SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const ShapeExpressionNodePtr& shape,
                                                                       SerializableShapeType* serializedShape) {
     ShapeType shapeType = shape->getShapeType();
-    if(shapeType == Circle) {
+    if (shapeType == Circle) {
         auto circleExpressionNode = shape->as<CircleExpressionNode>();
         serializedShape->set_shapetype(SerializableShapeType_ShapeType_CIRCLE);
         auto serializedCircle = SerializableShapeType_SerializableCircle();
@@ -46,7 +46,7 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
         auto polygonExpressionNode = shape->as<PolygonExpressionNode>();
         auto serializedPolygon = SerializableShapeType_SerializablePolygon();
         auto coordinates = polygonExpressionNode->getCoordinates();
-        for(auto &coord : coordinates) {
+        for (auto& coord : coordinates) {
             serializedPolygon.add_coords(coord);
         }
         serializedShape->mutable_details()->PackFrom(serializedPolygon);
@@ -62,8 +62,7 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
     } else {
         NES_THROW_RUNTIME_ERROR("ShapeTypeSerializationUtil: serialization is not possible for " + shape->toString());
     }
-    NES_TRACE("ShapeTypeSerializationUtil:: serialized " << shape->toString() << " to "
-                                                         << serializedShape->SerializeAsString());
+    NES_TRACE("ShapeTypeSerializationUtil:: serialized " << shape->toString() << " to " << serializedShape->SerializeAsString());
     return serializedShape;
 }
 
@@ -89,7 +88,7 @@ ShapeExpressionNodePtr ShapeTypeSerializationUtil::deserializeShapeType(Serializ
         data.UnpackTo(&serializedPolygon);
         std::vector<double> values;
         values.reserve(serializedPolygon.coords_size());
-        for(const auto& coord : serializedPolygon.coords()) {
+        for (const auto& coord : serializedPolygon.coords()) {
             values.push_back(coord);
         }
         return PolygonExpressionNode::create(std::move(values));
