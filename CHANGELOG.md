@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.71](https://github.com/nebulastream/nebulastream/tree/v0.2.71) (2022-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.70...v0.2.71)
+
+#### Spatial Query Processing 🌇
+
+- \[Feature\] Serialize and de-serialize shape expressions [\#2887](https://github.com/nebulastream/nebulastream/issues/2887)
+
 ## [v0.2.70](https://github.com/nebulastream/nebulastream/tree/v0.2.70) (2022-07-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.69...v0.2.70)
