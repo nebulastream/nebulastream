@@ -18,6 +18,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <cpr/cpr.h>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -654,6 +655,32 @@ template<typename T>
 }
 
 [[nodiscard]] bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
+
+/**
+   * @brief Check if Coordinator REST API is available or timeout
+   * @param expectedContent
+   * @param outputFilePath
+   * @return true if successful
+   */
+[[nodiscard]] bool checkRESTServerCreationOrTimeout(uint64_t restPort, uint64_t customTimeout = 0) {
+    std::chrono::seconds timeoutInSec;
+    if (customTimeout == 0) {
+        timeoutInSec = std::chrono::seconds(defaultTimeout);
+    } else {
+        timeoutInSec = std::chrono::seconds(customTimeout);
+    }
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        std::this_thread::sleep_for(sleepDuration);
+        NES_TRACE("check if NES REST interface is up");
+        cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        if (r.status_code == 200l) {
+            return true;
+        }
+    }
+    NES_TRACE("checkFileCreationOrTimeout: expected result not reached within set timeout");
+    return false;
+}
 };// namespace TestUtils
 
 class DummyQueryListener : public AbstractQueryStatusListener {
