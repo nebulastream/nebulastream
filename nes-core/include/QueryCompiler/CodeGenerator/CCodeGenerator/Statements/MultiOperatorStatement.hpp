@@ -29,12 +29,12 @@ CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 class MultiOperatorStatement : public ExpressionStatement {
   public:
     MultiOperatorStatement(const std::vector<ExpressionStatementPtr&> children,
-                            const MultiOperatorType& op,
-                            BracketMode bracket_mode = NO_BRACKETS);
+                           const MultiOperatorType& op,
+                           BracketMode bracket_mode = NO_BRACKETS);
 
     MultiOperatorStatement(const std::vector<ExpressionStatement&> children,
-                            const MultiOperatorType& op,
-                            BracketMode bracket_mode = NO_BRACKETS);
+                           const MultiOperatorType& op,
+                           BracketMode bracket_mode = NO_BRACKETS);
 
     ~MultiOperatorStatement() override = default;
 
@@ -50,9 +50,10 @@ class MultiOperatorStatement : public ExpressionStatement {
     [[nodiscard]] ExpressionStatementPtr copy() const override;
 
   private:
-    std::vector<ExpressionStatementPtr> children_;
+    std::vector<ExpressionStatementPtr> children_{};
     BinaryOperatorType op_;
     BracketMode bracket_mode_;
 };
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_MULTIOPERATORSTATEMENT_HPP_
+}

@@ -59,7 +59,7 @@ class TranslateToLegacyExpression {
      * @param expression node
      * @return LegacyExpressionPtr
      */
-    LegacyExpressionPtr transformLinearAlgebraExpressions(const ExpressionNodePtr& expression)
+    LegacyExpressionPtr transformLinearAlgebraExpressions(const ExpressionNodePtr& expression);
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -199,11 +199,11 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
     std::vector<NodePtr> children = root->getChildren();
     if (children.empty()) {
-        NES_DEBUG("UtilityFunctions::children : children is empty()");
+        NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
         return;
     }
 
-    NES_DEBUG("UtilityFunctions::children : children size = " << children.size());
+    NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
     for (const NodePtr& child : children) {
         // Create a node JSON object for the current operator
         auto node = web::json::value::object();

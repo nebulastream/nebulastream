@@ -81,7 +81,7 @@ CodeExpressionPtr MultiOperatorStatement::getCode() const {
     return std::make_shared<CodeExpression>(ret);
 }
 
-ExpressionStatementPtr MultiOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
+ExpressionStatementPtr MultiOperatorStatement::copy() const { return std::make_shared<MultiOperatorStatement>(*this); }
 
 /** \brief small utility operator overloads to make code generation simpler and */
 

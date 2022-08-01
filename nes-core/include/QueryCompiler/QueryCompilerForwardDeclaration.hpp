@@ -22,6 +22,9 @@ using BasicValuePtr = std::shared_ptr<BasicValue>;
 class ArrayPhysicalType;
 using ArrayPhysicalTypePtr = std::shared_ptr<ArrayPhysicalType>;
 
+class TensorPhysicalType;
+using TensorPhysicalTypePtr = std::shared_ptr<TensorPhysicalType>;
+
 namespace Compiler {
 class JITCompiler;
 using JITCompilerPtr = std::shared_ptr<JITCompiler>;

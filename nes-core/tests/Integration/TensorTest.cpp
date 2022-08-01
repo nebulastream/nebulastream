@@ -432,6 +432,7 @@ TEST_F(TensorTest, DISABLED_testMixedSchemaVectorMatrixCubeViaMQTT) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query =
         R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    //todo: adapt to new design
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
