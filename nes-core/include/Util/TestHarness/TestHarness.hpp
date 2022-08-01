@@ -396,11 +396,12 @@ class TestHarness {
 
     /**
      * @brief Method to setup the topology
-     * @param crdFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
+     * @param crdConfigFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
      * @return the TestHarness
      */
-    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr) {
-    }) {
+    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor =
+                                   [](CoordinatorConfigurationPtr) {
+                                   }) {
         if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
@@ -410,7 +411,7 @@ class TestHarness {
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
-        crdFunctor(coordinatorConfiguration);
+        crdConfigFunctor(coordinatorConfiguration);
 
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
         auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);

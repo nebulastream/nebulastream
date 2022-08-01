@@ -17,7 +17,7 @@
 #include "../../../tests/util/DummySink.hpp"
 #include "../../../tests/util/TestQueryCompiler.hpp"
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>

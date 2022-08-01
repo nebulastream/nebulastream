@@ -27,7 +27,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
@@ -60,7 +60,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
         optimizerConfiguration.performDistributedWindowOptimization = true;
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration, Topology::create());
+        distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration, Topology::create());
         udfCatalog = Catalogs::UdfCatalog::create();
     }
 

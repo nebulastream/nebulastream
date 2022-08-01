@@ -121,7 +121,7 @@ class OptimizerConfiguration : public BaseConfiguration {
     BoolOption enableNemoPlacement = {
         ENABLE_NEMO_PLACEMENT,
         false,
-        "Enables for distributed window optimization the NEMO placement optimizer. (Default: false)"};
+        "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

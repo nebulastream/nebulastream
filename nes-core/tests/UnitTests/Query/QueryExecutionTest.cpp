@@ -33,7 +33,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -92,7 +92,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.performDistributedWindowOptimization = true;
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration, Topology::create());
+        distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration, Topology::create());
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
         // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog

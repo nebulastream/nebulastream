@@ -27,7 +27,7 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -634,7 +634,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     Optimizer::DistributeWindowRulePtr distributeWindowRule =
-        Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration(), Topology::create());
+        Optimizer::DistributedWindowRule::create(Configurations::OptimizerConfiguration(), Topology::create());
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
