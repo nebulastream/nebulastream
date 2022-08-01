@@ -40,10 +40,10 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
-    //sleep to allow server to start
-    //FIXME: @Balint Replace this by a timeout call in next PR
-    sleep(4);
-
+    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if(!success){
+        FAIL() << "REST Server failed to start";
+    }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/connectivity/check"});
     EXPECT_EQ(r.status_code, 200l);
 }
