@@ -50,27 +50,27 @@ class BottomUpStrategy : public BasePlacementStrategy {
                               TypeInferencePhasePtr typeInferencePhase);
 
     /**
-     * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
+     * This method is responsible for pinning the operators to the worker nodes.
      * @param queryId: query id
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamNodes: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void placePinnedOperators(QueryId queryId,
-                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+    void pinOperators(QueryId queryId,
+                      const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
-     * @brief Try to place input operator on the input topology node
+     * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
      * @param queryId :  the query id
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
-    void placeOperator(QueryId queryId,
-                       const OperatorNodePtr& operatorNode,
-                       TopologyNodePtr candidateTopologyNode,
-                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+    void identifyPinningLocation(QueryId queryId,
+                                 const OperatorNodePtr& operatorNode,
+                                 TopologyNodePtr candidateTopologyNode,
+                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 };
 }// namespace NES::Optimizer
 
