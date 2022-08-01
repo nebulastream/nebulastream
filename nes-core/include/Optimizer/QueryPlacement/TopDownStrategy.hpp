@@ -64,14 +64,14 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where parent operator was placed or empty if not all parent operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForParentOperators(const OperatorNodePtr& candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const OperatorNodePtr& candidateOperator);
 
     /**
      * @brief Get topology node where all children operators of the input operator are to be placed
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where child operator are to be placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildOperators(const OperatorNodePtr& candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForUpStreamOperators(const OperatorNodePtr& candidateOperator);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended
