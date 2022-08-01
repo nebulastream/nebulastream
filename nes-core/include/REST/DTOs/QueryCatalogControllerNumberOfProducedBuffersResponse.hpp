@@ -1,7 +1,3 @@
-//
-// Created by balint on 29.07.22.
-//
-
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGALLREGISTEREDQUERIESRESPONSE_H_
-#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGALLREGISTEREDQUERIESRESPONSE_H_
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_
+
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
-#include <REST/DTOs/QueryInfo.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
@@ -29,13 +25,13 @@ namespace NES {
 /**
  * Message Data-Transfer-Object
  */
-class QueryCatalogControllerAllRegisteredQueriesResponse : public oatpp::DTO {
-    DTO_INIT(QueryCatalogControllerAllRegisteredQueriesResponse, DTO /* Extends */)
-    DTO_FIELD(List<Object<QueryInfo>>, queries);
+class QueryCatalogControllerNumberOfProducedBuffersResponse : public oatpp::DTO {
+    DTO_INIT(QueryCatalogControllerNumberOfProducedBuffersResponse, DTO /* Extends */)
+    DTO_FIELD(UInt64 , producedBuffers, "producedBuffers");
 };
 
 }// namespace NES
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif//NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGALLREGISTEREDQUERIESRESPONSE_H_
+#endif//NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_

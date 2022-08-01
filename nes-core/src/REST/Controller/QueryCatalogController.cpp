@@ -38,13 +38,13 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
     //Extract parameters if any
     auto parameters = getParameters(request);
 
-    if (path[1] == "queryIdAndCatalogEntryMapping") {
-        //Check if the path contains the query id
+    if (path[1] == "queries") {
+        //Check if the path contains a status
         auto param = parameters.find("status");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            NES_ERROR("QueryController: Unable to find status for the GET request");
             web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
+            errorResponse["detail"] = web::json::value::string("Parameter status must be provided");
             errorMessageImpl(request, errorResponse);
         }
 

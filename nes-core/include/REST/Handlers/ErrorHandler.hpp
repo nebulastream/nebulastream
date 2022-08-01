@@ -33,7 +33,7 @@ class ErrorHandler : public oatpp::web::server::handler::ErrorHandler {
     ErrorHandler(const std::shared_ptr<oatpp::data::mapping::ObjectMapper>& objectMapper);
 
     std::shared_ptr<OutgoingResponse>
-    handleError(const Status& status, const oatpp::String& message, const Headers& headers) override;
+    handleError(const Status& status, const oatpp::String& message, const Headers& headers = {}) override;
 };
 }// namespace NES
 #endif//NES_ERRORHANDLER_HPP

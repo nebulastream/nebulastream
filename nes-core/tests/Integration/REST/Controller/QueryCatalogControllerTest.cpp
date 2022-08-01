@@ -39,10 +39,11 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNoRegistedQueries) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
 
-    //sleep to allow server to start
-    //FIXME: @Balint Replace this by a timeout call in next PR
-    sleep(4);
+    if(!success){
+        FAIL() << "Rest server failed to start";
+    }
 
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
