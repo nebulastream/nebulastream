@@ -30,7 +30,7 @@ void* allocateBufferProxy(void* workerContext) {
 
 Value<MemRef> WorkerContext::allocateBuffer() { return FunctionCall<>("allocateBuffer", allocateBufferProxy, workerContextRef); }
 
-uint64_t getWorkerIdProxy(void* workerContext) {
+extern "C" uint64_t getWorkerIdProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
     return wc->getId();
 }

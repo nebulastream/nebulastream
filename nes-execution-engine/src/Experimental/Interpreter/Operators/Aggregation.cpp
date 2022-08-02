@@ -50,7 +50,7 @@ void Aggregation::execute(RuntimeExecutionContext& executionCtx, Record& record)
     }
 }
 
-void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t threadId){
+extern "C" void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t threadId){
     auto gas = (GlobalAggregationState*)globalAggregationState;
     return gas->threadLocalAggregationSlots[threadId].get();
 }

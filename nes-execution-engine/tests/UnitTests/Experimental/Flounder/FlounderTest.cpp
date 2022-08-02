@@ -23,6 +23,7 @@
 #include <flounder/executable.h>
 #include <flounder/program.h>
 #include <flounder/statement.h>
+#include <babelfish.h>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -45,6 +46,18 @@ class FlounderTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down FlounderTest test class." << std::endl; }
 };
+
+TEST_F(FlounderTest, BFSimpleTest) {
+    graal_isolatethread_t *thread = NULL;
+    ASSERT_TRUE(graal_create_isolate(NULL, NULL, &thread) == 0);
+    std::string sourceCode = "SourceCodeOfPipeline";
+    auto* pipeline = init(thread, sourceCode.data());
+    run(thread, pipeline);
+    run(thread, pipeline);
+    run(thread, pipeline);
+    run(thread, pipeline);
+    graal_tear_down_isolate(thread);
+}
 
 TEST_F(FlounderTest, flounderGenTest) {
     auto program = flounder::Program{};
