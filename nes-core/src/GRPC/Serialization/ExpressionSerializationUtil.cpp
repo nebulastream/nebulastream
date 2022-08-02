@@ -467,17 +467,17 @@ void ExpressionSerializationUtil::serializeUdfCallExpressions(const ExpressionNo
     auto udfCallExpressionNode = expression->as<UdfCallExpressionNode>();
     auto serializedExpressionNode = SerializableExpression_UdfCallExpression();
     auto udfNameExpression = udfCallExpressionNode->getUdfNameNode();
-
+    //serialize udf name
     auto constantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
     auto constantValue = constantValueExpression->getConstantValue();
     auto* serializedConstantValue = serializedExpressionNode.mutable_udfname();
     DataTypeSerializationUtil::serializeDataValue(constantValue, serializedConstantValue->mutable_value());
-
-    std::vector<ExpressionNodePtr> ff = udfCallExpressionNode->getFunctionArguments();
-    for(const auto& value: ff) {
-        auto* s = new SerializableExpression();
-        serializeExpression(value, s);
-        serializedExpressionNode.mutable_functionarguments()->AddAllocated(s);
+    //serialize function arguments
+    std::vector<ExpressionNodePtr> functionArguments = udfCallExpressionNode->getFunctionArguments();
+    for (const auto& functionArgument : functionArguments) {
+        auto* serializableExpression = new SerializableExpression();
+        serializeExpression(functionArgument, serializableExpression);
+        serializedExpressionNode.mutable_functionarguments()->AddAllocated(serializableExpression);
     }
     serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
 }
@@ -739,16 +739,16 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeUdfCallExpressions(Ser
         std::vector<ExpressionNodePtr> functionArguments;
         auto serializedExpressionNode = SerializableExpression_UdfCallExpression();
         serializedExpression->details().UnpackTo(&serializedExpressionNode);
-
+        //de-serialize udf name
         auto serializedUdfName = serializedExpressionNode.release_udfname();
         auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedUdfName->release_value());
         auto constantExpression = ConstantValueExpressionNode::create(valueType);
         auto constantValueExpressionNode = constantExpression->as<ConstantValueExpressionNode>();
-
-        auto ff = serializedExpressionNode.functionarguments();
-        for (auto ele : ff) {
-            auto ele2 = deserializeExpression(&ele);
-            functionArguments.push_back(ele2);
+        //de-serialize function arguments
+        auto serializedFunctionArguments = serializedExpressionNode.functionarguments();
+        for (auto serializedFunctionArgument : serializedFunctionArguments) {
+            auto functionArgument = deserializeExpression(&serializedFunctionArgument);
+            functionArguments.push_back(functionArgument);
         }
         return UdfCallExpressionNode::create(constantValueExpressionNode, functionArguments);
     }
