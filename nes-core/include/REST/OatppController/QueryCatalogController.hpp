@@ -33,7 +33,7 @@
 //#include <REST/Handlers/ErrorHandler.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
-
+#include "Runtime/QueryStatistics.hpp"
 
 namespace NES {
 class NesCoordinator;
@@ -87,6 +87,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
         auto dto = QueryCatalogControllerCollectionResponse::createShared();
+        oatpp::List<oatpp::Object<QueryInfo>> list({});
         try{
         std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
 
@@ -100,7 +101,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             entry->queryMetaData = catalogEntry->getMetaInformation();
             //result[count] = jsonEntry;
             count++;
-            dto->queries->push_back(entry);
+           list->push_back(entry);
         }
         if(count == 0){
             auto errorMessage = ErrorMessage::createShared();
@@ -110,6 +111,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             return createDtoResponse(Status::CODE_204, errorMessage);
             //return errorHandler->handleError(Status::CODE_204, "No registered queries");
         }
+        dto->queries= list;
         return createDtoResponse(Status::CODE_200, dto);
         }
         catch(...){
@@ -125,13 +127,14 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         try {
             std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus(status);
             auto dto = QueryCatalogControllerCollectionResponse::createShared();
+            oatpp::List<oatpp::Object<QueryInfo>> list({});
             uint64_t count = 0;
             for (auto [key, value] : queries) {
                 auto entry = QueryInfo::createShared();
                 entry->queryId = key;
                 entry->queryString = value;
                 count++;
-                dto->queries->push_back(entry);
+                list->push_back(entry);
             }
             if (count == 0) {
                 auto errorMessage = ErrorMessage::createShared();
@@ -141,6 +144,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                 return createDtoResponse(Status::CODE_204, errorMessage);
                 //return errorHandler->handleError(Status::CODE_204, "No registered queries");
             }
+            dto->queries=list;
             return createDtoResponse(Status::CODE_200, dto);
         }
         catch(...){
@@ -187,6 +191,13 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
             uint64_t processedBuffers = 0;
             if (auto shared_back_reference = coordinator.lock()) {
+                std::vector<Runtime::QueryStatisticsPtr> statistics = shared_back_reference->getQueryStatistics(sharedQueryId);
+                if(statistics.empty()){
+                    auto errorMessage = ErrorMessage::createShared();
+                    errorMessage->code = Status::CODE_204.code;
+                    errorMessage->status = "no statistics available";
+                    return createDtoResponse(Status::CODE_204, errorMessage);
+                }
                 processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
             }
             auto result = QueryCatalogControllerNumberOfProducedBuffersResponse::createShared();
