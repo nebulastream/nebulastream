@@ -499,10 +499,11 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
     EXPECT_TRUE(udfExpression->getUdfNameNode()->equal(udfDeserialized->getUdfNameNode()));
     EXPECT_TRUE(udfExpression->getFunctionArguments()[0]->equal(udfDeserialized->getFunctionArguments()[0]));
     EXPECT_TRUE(udfExpression->getFunctionArguments()[1]->equal(udfDeserialized->getFunctionArguments()[1]));
+    EXPECT_TRUE(expression == deserializedExpression);
 
-    //TODO This fails currently, even though both classes seem to be identical
+    //This fails currently, even though both classes seem to be identical
     //EXPECT_TRUE(expression->equal(deserializedExpression));
- }
+}
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
