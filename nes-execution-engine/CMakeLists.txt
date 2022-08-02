@@ -82,6 +82,22 @@ if (MLIR_FOUND)
 else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)
+
+
+#find_package(JNI)
+#if (JNI_FOUND)
+#    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+#    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+#    message (STATUS "JAVA_INCLUDE_PATH=${JAVA_INCLUDE_PATH}")
+#    message (STATUS "JAVA_INCLUDE_PATH2=${JAVA_INCLUDE_PATH2}")
+#    target_link_libraries(nes-execution-engine PRIVATE ${JNI_LIBRARIES} )
+#    target_include_directories(nes-execution-engine PUBLIC
+#            ${JNI_INCLUDE_DIRS}
+#            ${JNI_INCLUDE_DIRS})
+#else ()
+#    message(FATAL_ERROR "Cannot find jni")
+#endif (JNI_FOUND)
+
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 
 target_include_directories(nes-execution-engine PUBLIC
@@ -94,6 +110,15 @@ target_include_directories(nes-execution-engine PUBLIC
 target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
 target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
 target_link_libraries(nes-execution-engine PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
+
+target_include_directories(nes-execution-engine PUBLIC
+        $<BUILD_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>
+        $<INSTALL_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>)
+
+add_library(babelfish STATIC IMPORTED)
+set_target_properties(babelfish PROPERTIES IMPORTED_LOCATION //home/pgrulich/projects/nes/nautilusbf/makenative/lib/babelfish.so)
+set_target_properties(babelfish PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/pgrulich/projects/nes/nautilusbf/makenative/lib/)
+target_link_libraries(nes-execution-engine PUBLIC babelfish)
 
 #target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/fmt/src/fmt-build/libfmt.a)
 

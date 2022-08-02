@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp"
 #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
@@ -19,24 +20,27 @@
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
+#include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
+#include <Experimental/Interpreter/Operators/Map.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
-#include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
+#include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -72,18 +76,18 @@ class QueryExecutionTest : public testing::Test, public ::testing::WithParamInte
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup QueryExecutionTest test class." << std::endl;
-
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        /*
         auto param = this->GetParam();
         std::cout << "Setup QueryExecutionTest test case." << param << std::endl;
         if(param == "MLIR") {
             backend = std::make_shared<MLIRPipelineCompilerBackend>();
         }else{
             backend = std::make_shared<FlounderPipelineCompilerBackend>();
-        }
+        }*/
     }
 
     /* Will be called before a test is executed. */
@@ -205,6 +209,105 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
+TEST_F(QueryExecutionTest, longAggregationQueryTest) {
+
+    auto bm = std::make_shared<Runtime::BufferManager>();
+
+    // use 100 mb buffer
+    auto buffer = bm->getUnpooledBuffer(1024 * 1024 * 100).value();
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::UINT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan scan = Scan(memoryLayout);
+    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    scan.setChild(aggregation);
+    backend = std::make_shared<MLIRPipelineCompilerBackend>();
+   // backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+    auto executablePipeline = executionEngine.compile(pipeline);
+
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
+        dynamicBuffer[i]["f1"].write((uint64_t) 1);
+    }
+    dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+    for (auto i = 0; i < 10; i++) {
+        Timer timer("QueryExecutionTime");
+        timer.start();
+        sumState->sum = 0;
+        executablePipeline->setup();
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+        std::cout << "Result " << sumState->sum;
+        timer.snapshot("QueryExecutionTime");
+        timer.pause();
+        NES_INFO("QueryExecutionTime: " << timer);
+    }
+}
+
+TEST_F(QueryExecutionTest, longAggregationUDFQueryTest) {
+
+    auto bm = std::make_shared<Runtime::BufferManager>();
+
+    // use 100 mb buffer
+    auto buffer = bm->getUnpooledBuffer(1024 * 1024 * 100).value();
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan scan = Scan(memoryLayout);
+
+    // map
+    auto field_0 = std::make_shared<ReadFieldExpression>(0);
+    auto udfCallExpression = std::make_shared<UDFCallExpression>(field_0);
+    auto writeExpression = std::make_shared<WriteFieldExpression>(0, udfCallExpression);
+    auto mapOperator = std::make_shared<Map>(writeExpression);
+    scan.setChild(mapOperator);
+    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    mapOperator->setChild(aggregation);
+    //backend = std::make_shared<MLIRPipelineCompilerBackend>();
+    backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+    auto executablePipeline = executionEngine.compile(pipeline);
+
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
+        dynamicBuffer[i]["f1"].write((int64_t) 1);
+    }
+    dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
+
+    for (auto i = 0; i < 100; i++) {
+        Timer timer("QueryExecutionTime");
+        timer.start();
+        executablePipeline->setup();
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+        auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+        auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+        std::cout << "Result " << sumState->sum;
+        timer.snapshot("QueryExecutionTime");
+        timer.pause();
+        NES_INFO("QueryExecutionTime: " << timer);
+    }
+}
+
 TEST_F(QueryExecutionTest, aggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -218,7 +321,7 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
     scan.setChild(aggregation);
-
+    backend = std::make_shared<BabelfishPipelineCompilerBackend>();
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
@@ -238,7 +341,6 @@ TEST_F(QueryExecutionTest, aggQueryTest) {
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 10);
 }
-
 
 TEST_P(QueryExecutionTest, tpchQ6_agg) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -285,10 +387,6 @@ TEST_P(QueryExecutionTest, tpchQ6_agg) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     selection5->setChild(aggregation);
 
-
-
-
-
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
@@ -299,7 +397,7 @@ TEST_P(QueryExecutionTest, tpchQ6_agg) {
 
     auto buffer = lineitemBuffer.second.getBuffer();
 
-    for(auto i = 0; i <10;i++) {
+    for (auto i = 0; i < 10; i++) {
         Timer timer("QueryExecutionTime");
         timer.start();
         executablePipeline->execute(*runtimeWorkerContext, buffer);
@@ -445,6 +543,5 @@ INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         [](const testing::TestParamInfo<QueryExecutionTest::ParamType>& info) {
                             return info.param;
                         });
-
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

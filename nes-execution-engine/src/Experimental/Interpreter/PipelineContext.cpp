@@ -47,6 +47,7 @@ extern "C" __attribute__((always_inline)) void* NES__QueryCompiler__PipelineCont
     return pc->getGlobalOperatorState(tag);
 }
 
+
 Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* operatorPtr) {
     auto tag = this->operatorIndexMap[operatorPtr];
     // The tag is assumed to be constant therefore we create a constant string and call the get global operator state function with it.
