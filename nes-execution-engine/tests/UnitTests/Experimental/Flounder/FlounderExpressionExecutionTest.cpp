@@ -11,9 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Flounder/FlounderLoweringProvider.hpp>
+#include <gtest/gtest.h>
+
+#include <Experimental/Babelfish/IRSerialization.hpp>
 
 #include <API/Schema.hpp>
-#include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
@@ -26,11 +29,11 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+
 #include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -38,8 +41,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <babelfish.h>
 #include <execinfo.h>
-#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -64,19 +67,6 @@ class FlounderExpressionExecutionTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down FlounderExpressionExecutionTest test class." << std::endl; }
-
-    auto prepate(std::shared_ptr<Trace::ExecutionTrace> executionTrace) {
-        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        std::cout << *executionTrace.get() << std::endl;
-        auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
-
-        // create and print MLIR
-        auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-        int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
-        assert(loadedModuleSuccess == 0);
-        return mlirUtility->prepareEngine();
-    }
 };
 
 Value<> addExpression(Value<Int64> x) {
@@ -100,6 +90,56 @@ TEST_F(FlounderExpressionExecutionTest, addI8Test) {
     constexpr std::int64_t argument = 11;
     std::cout << " == Execute == " << std::endl;
     ASSERT_EQ(ex->execute<std::uint64_t>(argument), 13);
+}
+
+Value<> addExpressionConst() {
+    Value<Int64> y = 58l;
+    Value<Int64> x = 42l;
+    auto r =  x + y;
+    if (r == 42l) {
+        r = r + 1l;
+    }
+    return r + 42l;
+}
+
+int64_t test(int64_t){
+    return 10;
+};
+
+Value<> sumLoop(Value<MemRef> ptr) {
+    auto agg = ptr.load<Int64>();
+    //agg = FunctionCall<>("callUDFProxyFunction", test, agg);
+    //for (Value start = 0l; start < 10l; start = start + 1l) {
+        agg = agg + 10l;
+    //}
+    ptr.store(agg);
+    return agg;
+}
+
+TEST_F(FlounderExpressionExecutionTest, bftest) {
+    int64_t valI = 42;
+    auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
+    tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempPara]() {
+        return sumLoop(tempPara);
+    });
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    auto serializedIr = IRSerialization().serialize(ir);
+    std::cout << serializedIr << std::endl;
+
+    graal_isolatethread_t* thread = NULL;
+    ASSERT_TRUE(graal_create_isolate(NULL, NULL, &thread) == 0);
+    auto* pipeline = initializePipeline(thread, serializedIr.data());
+    for (auto i = 0; i < 100000; i++) {
+        executePipeline(thread, pipeline, &valI, nullptr);
+    }
+    for (auto i = 0; i < 100000; i++) {
+        executePipeline(thread, pipeline,  &valI, nullptr);
+    }
 }
 
 Value<> longExpression(Value<Int64> i1) {
@@ -248,14 +288,8 @@ TEST_F(FlounderExpressionExecutionTest, nestedIFThenElseConditionTest) {
     ASSERT_EQ(ex->execute<std::int64_t>(), 5);
 }
 
-Value<> sumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        agg = agg + 10;
-    }
-    return agg;
-}
 
+/*
 TEST_F(FlounderExpressionExecutionTest, sumLoopTest) {
     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop();
@@ -271,7 +305,7 @@ TEST_F(FlounderExpressionExecutionTest, sumLoopTest) {
     std::cout << " == Execute == " << std::endl;
     std::cout << ex->code().value() << std::endl;
     ASSERT_EQ(ex->execute<std::int64_t>(argument), 101);
-}
+}*/
 
 Value<> ifSumLoop() {
     Value agg = Value(1);

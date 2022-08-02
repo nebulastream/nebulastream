@@ -24,6 +24,9 @@ class WriteFieldExpression : public Expression {
     ExpressionPtr subExpression;
 
   public:
+    WriteFieldExpression(uint64_t fieldIndex, const ExpressionPtr& subExpression);
+
+  public:
     Value<> execute(Record& record) override;
 };
 }// namespace NES
