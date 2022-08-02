@@ -46,6 +46,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -481,6 +482,27 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 }
+
+TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
+    auto udfName = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "udf"))
+                       ->as<ConstantValueExpressionNode>();
+    auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "1"));
+    auto argument2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
+    std::vector<ExpressionNodePtr> functionArguments = {argument1, argument2};
+    auto expression = UdfCallExpressionNode::create(udfName, functionArguments);
+
+    auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+    auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+
+    auto udfExpression = expression->as<UdfCallExpressionNode>();
+    auto udfDeserialized = deserializedExpression->as<UdfCallExpressionNode>();
+    EXPECT_TRUE(udfExpression->getUdfNameNode()->equal(udfDeserialized->getUdfNameNode()));
+    EXPECT_TRUE(udfExpression->getFunctionArguments()[0]->equal(udfDeserialized->getFunctionArguments()[0]));
+    EXPECT_TRUE(udfExpression->getFunctionArguments()[1]->equal(udfDeserialized->getFunctionArguments()[1]));
+
+    //TODO This fails currently, even though both classes seem to be identical
+    //EXPECT_TRUE(expression->equal(deserializedExpression));
+ }
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
 

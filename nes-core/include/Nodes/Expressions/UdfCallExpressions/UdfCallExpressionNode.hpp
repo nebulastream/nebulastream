@@ -93,7 +93,7 @@ class UdfCallExpressionNode : public ExpressionNode {
   private:
     Catalogs::UDF::UdfDescriptorPtr udfDescriptor;
     std::vector<ExpressionNodePtr> functionArguments;
-    std::string udfName;
+    ConstantValueExpressionNodePtr udfName;
 };
 
 }// namespace NES
