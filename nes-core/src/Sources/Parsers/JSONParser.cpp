@@ -50,6 +50,8 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
+        //JSON stings are send with " or '. We do not want to save these chars to our strings, though. Hence, we need to trim
+        //the strings. This behavior can be improved with a JSON library in the future.
         jsonValue = Util::trim(jsonValue, '"');
         jsonValue = Util::trim(jsonValue, '\'');
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount);
