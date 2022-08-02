@@ -41,7 +41,7 @@ OperatorState* RuntimeExecutionContext::getLocalState(const Operator* op) {
 //    return value.get();
 //}
 
-void* getWorkerContextProxy(void* executionContextPtr) {
+extern "C" void* getWorkerContextProxy(void* executionContextPtr) {
     auto executionContext = (Runtime::Execution::RuntimeExecutionContext*) executionContextPtr;
     return executionContext->getWorkerContext();
 }
@@ -53,7 +53,7 @@ WorkerContext RuntimeExecutionContext::getWorkerContext() {
 
 RuntimeExecutionContext::RuntimeExecutionContext(Value<MemRef> executionContext) : executionContext(executionContext) {}
 
-void* getPipelineContextProxy(void* executionContextPtr) {
+extern "C" void* getPipelineContextProxy(void* executionContextPtr) {
     auto executionContext = (Runtime::Execution::RuntimeExecutionContext*) executionContextPtr;
     return executionContext->getPipelineContext();
 }
