@@ -41,9 +41,7 @@ ExpressionNodePtr UdfCallExpressionNode::create(const ConstantValueExpressionNod
 
 void UdfCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& udfName,
                                         std::vector<ExpressionNodePtr> functionArguments) {
-    addChild(udfName);
-    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfName->getConstantValue());
-    this->udfName = constantValue->value;
+    this->udfName = udfName;
     this->functionArguments = std::move(functionArguments);
 }
 
@@ -64,10 +62,10 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
 
 std::string UdfCallExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "CALL(" << children[0]->toString() << ",";
+    ss << "CALL(" << getUdfName() << ",";
     ss << "Arguments(";
     for (const auto& argument : functionArguments) {
-        ss << argument->getStamp() << ",";
+        ss << argument->toString() << ",";
     }
     ss << ")";
     return ss.str();
@@ -75,7 +73,7 @@ std::string UdfCallExpressionNode::toString() const {
 
 ExpressionNodePtr UdfCallExpressionNode::copy() { return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this)); }
 
-ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() { return children[0]->as<ConstantValueExpressionNode>(); }
+ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() { return udfName; }
 
 std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() { return functionArguments; }
 
@@ -83,6 +81,9 @@ void UdfCallExpressionNode::setUdfDescriptorPtr(const Catalogs::UDF::UdfDescript
     this->udfDescriptor = udfDescriptor;
 }
 
-const std::string& UdfCallExpressionNode::getUdfName() const { return udfName; }
+const std::string& UdfCallExpressionNode::getUdfName() const {
+    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfName->getConstantValue());
+    return constantValue->value;
+}
 
 }// namespace NES
