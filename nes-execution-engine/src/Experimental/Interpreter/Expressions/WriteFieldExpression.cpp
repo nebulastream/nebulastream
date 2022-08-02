@@ -21,6 +21,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 Value<> WriteFieldExpression::execute(Record& record) {
     Value<> newValue = subExpression->execute(record);
     record.write(fieldIndex, newValue);
-    return Value<Any>(nullptr);
+    return newValue;
 }
+WriteFieldExpression::WriteFieldExpression(uint64_t fieldIndex, const ExpressionPtr& subExpression)
+    : fieldIndex(fieldIndex), subExpression(subExpression) {}
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
