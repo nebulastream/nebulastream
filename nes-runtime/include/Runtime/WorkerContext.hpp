@@ -155,6 +155,12 @@ class WorkerContext {
     void createStorage(Network::PartitionId nesPartitionId);
 
     /**
+     * @brief This method reutrn buffer storage size
+     * @return size
+     */
+    size_t getStorageSize();
+
+    /**
      * @brief This method inserts a tuple buffer into the storage
      * @param nesPartitionId partition id
      * @param TupleBuffer tuple buffer

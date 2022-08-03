@@ -79,7 +79,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
-        workerConfig1->sourceGatheringInterval = 0;
+        workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 4;
 
         workerConfig2 = WorkerConfiguration::create();
@@ -89,7 +89,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig2->coordinatorPort = *rpcCoordinatorPort;
         workerConfig2->enableStatisticOutput = true;
         workerConfig2->numberOfBuffersToProduce = 5000000;
-        workerConfig2->sourceGatheringInterval = 0;
+        workerConfig2->sourceGatheringInterval = 10;
         workerConfig2->numWorkerThreads = 4;
 
         workerConfig3 = WorkerConfiguration::create();
@@ -100,7 +100,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig3->coordinatorPort = *rpcCoordinatorPort;
         workerConfig3->enableStatisticOutput = true;
         workerConfig3->numberOfBuffersToProduce = 5000000;
-        workerConfig3->sourceGatheringInterval = 0;
+        workerConfig3->sourceGatheringInterval = 10;
 
         workerConfig4 = WorkerConfiguration::create();
         workerConfig4->numberOfBuffersPerEpoch = 10;
@@ -110,7 +110,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig4->coordinatorPort = *rpcCoordinatorPort;
         workerConfig4->enableStatisticOutput = true;
         workerConfig4->numberOfBuffersToProduce = 5000000;
-        workerConfig4->sourceGatheringInterval = 0;
+        workerConfig4->sourceGatheringInterval = 10;
 
         workerConfig5 = WorkerConfiguration::create();
         workerConfig5->numberOfBuffersPerEpoch = 10;
@@ -120,7 +120,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig5->coordinatorPort = *rpcCoordinatorPort;
         workerConfig5->enableStatisticOutput = true;
         workerConfig5->numberOfBuffersToProduce = 5000000;
-        workerConfig5->sourceGatheringInterval = 0;
+        workerConfig5->sourceGatheringInterval = 10;
 
         workerConfig6 = WorkerConfiguration::create();
         workerConfig6->numberOfBuffersPerEpoch = 10;
@@ -130,7 +130,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig6->coordinatorPort = *rpcCoordinatorPort;
         workerConfig6->enableStatisticOutput = true;
         workerConfig6->numberOfBuffersToProduce = 5000000;
-        workerConfig6->sourceGatheringInterval = 0;
+        workerConfig6->sourceGatheringInterval = 10;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
