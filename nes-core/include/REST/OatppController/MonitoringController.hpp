@@ -71,10 +71,12 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/start", getMonitoringControllerStart) {
-        auto queryIds = monitoringService->startMonitoringStreams();
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->startMonitoringStreams().to_string();
-        return createDtoResponse(Status::CODE_200, dto);
+        if (dto->monitoringData != "null"){
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        return errorHandler->handleError(Status::CODE_404, "Starting monitoring Service was not successful.");
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
