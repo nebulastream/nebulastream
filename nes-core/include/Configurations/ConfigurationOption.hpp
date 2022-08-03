@@ -15,6 +15,8 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
+#include <Util/GatheringMode.hpp>
+
 #include <any>
 #include <memory>
 #include <sstream>
@@ -152,6 +154,7 @@ using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
+using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode::Value>>;
 
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
@@ -234,6 +237,7 @@ const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
 const std::string DELIMITER_CONFIG = "delimiter";
+const std::string SOURCE_GATHERING_MODE_CONFIG = "sourceGatheringMode";
 
 const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";

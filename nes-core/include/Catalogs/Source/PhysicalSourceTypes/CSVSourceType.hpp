@@ -125,6 +125,22 @@ class CSVSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
     /**
+     * @brief Get gathering mode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode::Value>> getGatheringMode() const;
+
+    /**
+     * @brief Set gathering mode
+     */
+    void setGatheringMode(std::string inputGatheringMode);
+
+    /**
+     * @brief Sets the gathering mode given as GatheringMode::Value
+     * @param inputGatheringMode
+     */
+    void setGatheringMode(GatheringMode::Value inputGatheringMode);
+
+    /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
      */
     void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
@@ -150,6 +166,7 @@ class CSVSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
     Configurations::IntConfigOption sourceGatheringInterval;
+    Configurations::GatheringModeConfigOption gatheringMode;
 };
 
 }// namespace NES

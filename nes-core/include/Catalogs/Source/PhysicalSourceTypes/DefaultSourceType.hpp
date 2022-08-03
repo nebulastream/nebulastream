@@ -61,6 +61,22 @@ class DefaultSourceType : public PhysicalSourceType {
 
     void setSourceGatheringInterval(uint32_t sourceGatheringInterval);
 
+    /**
+     * @brief Get gathering mode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode::Value>> getGatheringMode() const;
+
+    /**
+     * @brief Set gathering mode
+     */
+    void setGatheringMode(std::string inputGatheringMode);
+
+    /**
+     * @brief Sets the gathering mode given as GatheringMode::Value
+     * @param inputGatheringMode
+     */
+    void setGatheringMode(GatheringMode::Value inputGatheringMode);
+
     std::string toString() override;
 
     bool equal(const PhysicalSourceTypePtr& other) override;
@@ -87,6 +103,11 @@ class DefaultSourceType : public PhysicalSourceType {
 
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption sourceGatheringInterval;
+
+    /**
+     * @brief the gathering mode of the sampl. fun.
+     */
+    Configurations::GatheringModeConfigOption gatheringMode;
 };
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
