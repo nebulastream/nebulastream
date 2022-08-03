@@ -52,7 +52,11 @@ CSVSourceType::CSVSourceType()
       sourceGatheringInterval(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                 1,
-                                                                "Gathering interval of the source.")) {
+                                                                "Gathering interval of the source.")),
+      gatheringMode(
+          Configurations::ConfigurationOption<GatheringMode::Value>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                            GatheringMode::INTERVAL_MODE,
+                                                                            "Gathering mode of the source.")) {
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
@@ -81,6 +85,10 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
     if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG) != sourceConfigMap.end()) {
         sourceGatheringInterval->setValue(
             std::stoi(sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG) != sourceConfigMap.end()) {
+        gatheringMode->setValue(
+            GatheringMode::getFromString(sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG)->second));
     }
 }
 
@@ -114,6 +122,10 @@ CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
         && yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>() != "\n") {
         sourceGatheringInterval->setValue(yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<uint32_t>());
     }
+    if (!yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>() != "\n") {
+        gatheringMode->setValue(GatheringMode::getFromString(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>()));
+    }
 }
 
 std::string CSVSourceType::toString() {
@@ -123,6 +135,7 @@ std::string CSVSourceType::toString() {
     ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
     ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
+    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + GatheringMode::toString(gatheringMode->getValue()) << "\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":"
             + numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
@@ -139,6 +152,7 @@ bool CSVSourceType::equal(const PhysicalSourceTypePtr& other) {
         && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
         && delimiter->getValue() == otherSourceConfig->delimiter->getValue()
         && sourceGatheringInterval->getValue() == otherSourceConfig->sourceGatheringInterval->getValue()
+        && gatheringMode->getValue() == otherSourceConfig->gatheringMode->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
         && numberOfTuplesToProducePerBuffer->getValue() == otherSourceConfig->numberOfTuplesToProducePerBuffer->getValue();
 }
@@ -155,6 +169,10 @@ Configurations::IntConfigOption CSVSourceType::getNumberOfBuffersToProduce() con
 
 Configurations::IntConfigOption CSVSourceType::getNumberOfTuplesToProducePerBuffer() const {
     return numberOfTuplesToProducePerBuffer;
+}
+
+Configurations::GatheringModeConfigOption CSVSourceType::getGatheringMode() const {
+    return gatheringMode;
 }
 
 void CSVSourceType::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
@@ -175,6 +193,14 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
     numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
 
+void CSVSourceType::setGatheringMode(std::string inputGatheringMode){
+    gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
+}
+
+void CSVSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) {
+    gatheringMode->setValue(inputGatheringMode);
+}
+
 void CSVSourceType::reset() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
@@ -182,6 +208,7 @@ void CSVSourceType::reset() {
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
     setGatheringInterval(sourceGatheringInterval->getDefaultValue());
+    setGatheringMode(gatheringMode->getDefaultValue());
 }
 
 }// namespace NES

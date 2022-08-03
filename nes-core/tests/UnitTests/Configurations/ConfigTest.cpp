@@ -15,6 +15,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -341,6 +342,50 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     EXPECT_NE(physicalSourceType2->getTopic()->getValue(), physicalSourceType2->getTopic()->getDefaultValue());
     EXPECT_NE(physicalSourceType2->getConnectionTimeout()->getValue(),
               physicalSourceType2->getConnectionTimeout()->getDefaultValue());
+}
+
+TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
+    std::string argv[] = {"type=DefaultSource",
+                          "numberOfBuffersToProduce=5",
+                          "rowLayout=false",
+                          "physicalSourceName=x",
+                          "logicalSourceName=default"};
+    int argc = 5;
+
+    std::map<string, string> commandLineParams;
+
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
+    DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
+    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), physicalSourceType1->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
+}
+
+TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
+    std::string argv[] = {"type=CSVSource",
+                           "numberOfBuffersToProduce=5",
+                           "rowLayout=false",
+                           "physicalSourceName=x",
+                           "logicalSourceName=default",
+                           "filePath=fileLoc",
+                           "sourceGatheringMode=adaptive"};
+    int argc = 7;
+    std::map<string, string> commandLineParams;
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
+    CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    EXPECT_NE(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
 }
 
 }// namespace NES
