@@ -21,6 +21,7 @@
 #include <REST/OatppController/MaintenanceController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/QueryController.hpp>
+#include <REST/OatppController/MonitoringController.hpp>
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
@@ -68,7 +69,7 @@ RestServer::RestServer(std::string host,
       host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
       globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
       sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), locationService(locationService),
-      maintenanceService(maintenanceService) {}
+      maintenanceService(maintenanceService), monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -196,6 +197,10 @@ void RestServer::run() {
     router->addController(udfCatalogController);
     router->addController(maintenanceController);
     router->addController(locationController);
+
+    /* Create monitoring controller and add all of its endpoints to the router */
+    auto monitoringController = REST::Controller::MonitoringController::createShared(objectMapper,  monitoringService, bufferManager, errorHandler, "/monitoring");
+    router->addController(monitoringController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
