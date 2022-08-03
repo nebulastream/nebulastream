@@ -114,7 +114,8 @@ class NemoWindowPinningRule : public DistributedWindowRule {
      * @param sharedParentThreshold threshold that identifies when to combine based on the number of sources of an operator
      * @return map with the node id where the window operator shall be placed and its sources
      */
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold);
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
+    getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold);
 
     /**
      * @brief The NEMO placement is identifying in a hierarchical tree shared parents and places there a CentralWindowOperator.

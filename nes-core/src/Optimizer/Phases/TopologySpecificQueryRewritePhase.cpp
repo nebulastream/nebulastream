@@ -15,8 +15,8 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
-#include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <Topology/Topology.hpp>
 #include <utility>
 
@@ -38,8 +38,7 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr
         LogicalSourceExpansionRule::create(std::move(sourceCatalog), configuration.performOnlySourceOperatorExpansion);
     if (configuration.enableNemoPlacement) {
         distributedWindowRule = NemoWindowPinningRule::create(configuration, topology);
-    }
-    else {
+    } else {
         distributedWindowRule = DistributedWindowRule::create(configuration);
     }
 

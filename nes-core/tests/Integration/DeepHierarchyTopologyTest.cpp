@@ -552,7 +552,6 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     ASSERT_TRUE(queryPlan->toString().find("SliceMergingOperator") != std::string::npos);
     ASSERT_TRUE(queryPlan->toString().find("SliceCreationOperator") != std::string::npos);
 
-
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
