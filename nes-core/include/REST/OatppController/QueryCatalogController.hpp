@@ -45,8 +45,8 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-//class ErrorHandler;
-//using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
+class ErrorHandler;
+using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
 namespace REST {
 namespace Controller {
@@ -61,10 +61,11 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                            QueryCatalogServicePtr queryCatalogService,
                            NesCoordinatorWeakPtr coordinator,
                            GlobalQueryPlanPtr globalQueryPlan,
-                           oatpp::String completeRouterPrefix)
+                           oatpp::String completeRouterPrefix,
+                           ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          queryCatalogService(queryCatalogService),coordinator(coordinator), globalQueryPlan(globalQueryPlan){
-            //errorHandler = std::make_shared<ErrorHandler>(objectMapper);
+          queryCatalogService(queryCatalogService),coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler){
+
     }
 
     /**
@@ -76,13 +77,15 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                                                                 QueryCatalogServicePtr queryCatalogService,
                                                                 NesCoordinatorWeakPtr coordinator,
                                                                 GlobalQueryPlanPtr globalQueryPlan,
-                                                                std::string routerPrefixAddition ) {
+                                                                std::string routerPrefixAddition,
+                                                                ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
         return std::make_shared<QueryCatalogController>(objectMapper,
                                                         queryCatalogService,
                                                         coordinator,
                                                         globalQueryPlan,
-                                                        completeRouterPrefix);
+                                                        completeRouterPrefix,
+                                                        errorHandler);
     }
 
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
@@ -104,22 +107,14 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
            list->push_back(entry);
         }
         if(count == 0){
-            auto errorMessage = ErrorMessage::createShared();
-            errorMessage->code = Status::CODE_204.code;
-            errorMessage->status = "No registered queries";
-            errorMessage->message = "";
-            return createDtoResponse(Status::CODE_204, errorMessage);
-            //return errorHandler->handleError(Status::CODE_204, "No registered queries");
+            return errorHandler->handleError(Status::CODE_204, "No registered queries");
         }
         dto->queries= list;
         return createDtoResponse(Status::CODE_200, dto);
         }
         catch(...){
-            auto errorMessage = ErrorMessage::createShared();
-            errorMessage->code = Status::CODE_500.code;
-            errorMessage->status = "Internal Error";
-            errorMessage->message = "";
-            return createDtoResponse(Status::CODE_500, errorMessage);
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+
         }
     }
 
@@ -137,22 +132,13 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                 list->push_back(entry);
             }
             if (count == 0) {
-                auto errorMessage = ErrorMessage::createShared();
-                errorMessage->code = Status::CODE_204.code;
-                errorMessage->status = "No queries with status: " + status + " found";
-                errorMessage->message = "";
-                return createDtoResponse(Status::CODE_204, errorMessage);
-                //return errorHandler->handleError(Status::CODE_204, "No registered queries");
+                return errorHandler->handleError(Status::CODE_204, "No registered queries");
             }
             dto->queries=list;
             return createDtoResponse(Status::CODE_200, dto);
         }
         catch(...){
-            auto errorMessage = ErrorMessage::createShared();
-            errorMessage->code = Status::CODE_500.code;
-            errorMessage->status = "Internal Error";
-            errorMessage->message = "";
-            return createDtoResponse(Status::CODE_500, errorMessage);
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
     }
 
@@ -167,18 +153,10 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             entry->queryStatus = currentQueryStatus;
             return createDtoResponse(Status::CODE_200, entry);
         } catch (QueryNotFoundException e ) {
-            auto errorMessage = ErrorMessage::createShared();
-            errorMessage->code = Status::CODE_204.code;
-            errorMessage->status = "No query with given ID";
-            errorMessage->message = e.what();
-            return createDtoResponse(Status::CODE_204, errorMessage);
+            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
         }
         catch (...) {
-            auto errorMessage = ErrorMessage::createShared();
-            errorMessage->code = Status::CODE_500.code;
-            errorMessage->status = "Internal Error";
-            errorMessage->message = "";
-            return createDtoResponse(Status::CODE_500, errorMessage);
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
     }
 
@@ -216,7 +194,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     QueryCatalogServicePtr queryCatalogService;
     NesCoordinatorWeakPtr coordinator;
     GlobalQueryPlanPtr globalQueryPlan;
-    //ErrorHandlerPtr errorHandler;
+    ErrorHandlerPtr errorHandler;
 };
 }//namespace Controller
 }// namespace REST
