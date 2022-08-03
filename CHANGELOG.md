@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.72](https://github.com/nebulastream/nebulastream/tree/v0.2.72) (2022-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.71...v0.2.72)
+
+#### Monitoring 🚥
+
+- \[Feature\] Create NEMO Placement Strategy [\#2859](https://github.com/nebulastream/nebulastream/issues/2859)
+
 ## [v0.2.71](https://github.com/nebulastream/nebulastream/tree/v0.2.71) (2022-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.70...v0.2.71)
