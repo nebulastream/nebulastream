@@ -135,6 +135,9 @@ void RestServer::run() {
     /* Initialize Object mapper */
     auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
 
+    /* Initialize Error Handler */
+    ErrorHandlerPtr errorHandler = std::make_shared<ErrorHandler>(objectMapper);
+
     /* Create Router for HTTP requests routing */
     auto router = oatpp::web::server::HttpRouter::createShared();
 
@@ -144,7 +147,8 @@ void RestServer::run() {
                                                                                          queryCatalogService,
                                                                                          coordinator,
                                                                                          globalQueryPlan,
-                                                                                         "/queryCatalog");
+                                                                                         "/queryCatalog",
+                                                                                         errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
 
