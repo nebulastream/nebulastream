@@ -50,7 +50,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
 
 };
 
-TEST_F(MonitoringControllerTest, testStartMonitoringControllerWithEmptyPlan) {
+TEST_F(MonitoringControllerTest, testStartMonitoringControllerUnsuccessfully) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -70,22 +70,25 @@ TEST_F(MonitoringControllerTest, testStartMonitoringControllerWithEmptyPlan) {
     Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
     //auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
 
+    //just for debugging
     web::json::value registered = monitoringService.registerMonitoringPlanToAllNodes(monitoringPlan);
-    std::cout << "Content of registered Monitoring Plan: ";
+    std::cout << "\n Content of registered Monitoring Plan: ";
     std::cout << registered.to_string();
-    web::json::value resultJson = monitoringService.startMonitoringStreams();
-    std::cout << "Content of startMonitoringStreams value: ";
-    std::cout << resultJson.to_string();
+    web::json::value resultJsonStart = monitoringService.startMonitoringStreams();
+    std::cout << "\n Content of startMonitoringStreams value: ";
+    std::cout << resultJsonStart.to_string();
+    web::json::value resultJsonStop = monitoringService.stopMonitoringStreams();
+    std::cout << "\n Content of stopMonitoringStreams value: ";
+    std::cout << resultJsonStop.to_string();
 
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
-    std::cout << "Content of Response r: ";
+    std::cout << "\n Content of Response r: ";
     std::cout << r.text;
     EXPECT_EQ(r.status_code, 404);
     //std::string resultJ = resultJson.to_string();
     //EXPECT_EQ(resultJ, r.);
 
-    std::cout << resultJson.to_string();
 }
 
 }//namespace NES

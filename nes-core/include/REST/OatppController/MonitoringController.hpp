@@ -82,7 +82,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
         auto dto = MonitoringControllerBoolResponse::createShared();
         dto->success = monitoringService->stopMonitoringStreams().as_bool();
-        return createDtoResponse(Status::CODE_200, dto);
+        if (dto->success == true){
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        return errorHandler->handleError(Status::CODE_404, "Stopping monitoring Service was not successful.");
     }
 
     ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
