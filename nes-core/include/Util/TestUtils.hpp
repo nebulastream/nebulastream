@@ -118,6 +118,9 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 [[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
 
+[[nodiscard]] std::string monitoringConfig(std::string config) { return "--monitoringConfiguration=" + config; }
+
+
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags

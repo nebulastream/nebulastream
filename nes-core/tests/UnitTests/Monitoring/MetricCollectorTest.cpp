@@ -187,7 +187,6 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
     auto bufferSize = DiskMetrics::getDefaultSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-//    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -248,7 +247,7 @@ TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
     ASSERT_EQ(typedMetric.getSchema(), schema);
     auto bufferSize = typedMetric.getSchema()->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-//    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
+    //    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);

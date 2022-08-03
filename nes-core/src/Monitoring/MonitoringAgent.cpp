@@ -56,7 +56,7 @@ const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
     if (enabled) {
         NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
         for (auto type : monitoringPlan->getMetricTypes()) {
-            auto collector = catalog->getMetricCollector(type);
+            auto collector = catalog->getMetricCollector(type.first);
             collector->setNodeId(nodeId);
             MetricPtr metric = collector->readMetric();
             output.emplace_back(metric);
@@ -77,8 +77,8 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
     web::json::value metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
-            NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));
-            auto collector = catalog->getMetricCollector(type);
+            NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type.first));
+            auto collector = catalog->getMetricCollector(type.first);
             collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
             metricsJson[toString(metric->getMetricType())] = asJson(metric);
@@ -102,8 +102,8 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             // auto generate the specifics
             MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
-            std::string metricTypeString = NES::toString(metricType);
+                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType.first));
+            std::string metricTypeString = NES::toString(metricType.first);
 
             NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);

@@ -164,12 +164,12 @@ std::string MonitoringPlan::toString() const {
 
 std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) { return strm << plan.toString(); }
 
-const std::set<MetricType>& MonitoringPlan::getMetricTypes() const { return metricTypes; }
+const std::map <MetricType, SchemaPtr>& MonitoringPlan::getMetricTypes() const { return monitoringPlan; }
 
 const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {
     std::set<MetricCollectorType> output;
     for (auto mType : getMetricTypes()) {
-        output.insert(MetricUtils::createCollectorTypeFromMetricType(mType));
+        output.insert(MetricUtils::createCollectorTypeFromMetricType(mType.first));
     }
     return output;
 }

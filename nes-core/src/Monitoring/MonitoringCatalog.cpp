@@ -48,7 +48,6 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     NES_DEBUG("MonitoringCatalog: Init catalog for Monitoringplan!");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics;
-    // TODO: confusion of Wrapped and what
     if(monitoringPlan->hasMetric(CpuMetric)) {
         metrics.insert({MetricType::WrappedCpuMetrics,
                         std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(CpuMetric)))});

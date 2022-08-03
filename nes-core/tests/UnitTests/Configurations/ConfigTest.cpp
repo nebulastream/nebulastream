@@ -107,10 +107,10 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     int sampleCpu = 60;
     SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
     std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
-    int sampleMem = 60;
+    int sampleMem = 40;
     SchemaPtr schemaMem = MemoryMetrics::createSchema("", configuredMem);
     std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
-    int sampleNetwork = 60;
+    int sampleNetwork = 30;
     SchemaPtr schemaNetwork = NetworkMetrics::createSchema("", configuredNetwork);
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
@@ -130,11 +130,9 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     ASSERT_TRUE(monitoringPlanJson->getSchema(NetworkMetric)->equals(schemaNetwork, false));
 
     // TODO: check if Catalog is init right; check the schema for each MetricType
-//    MetricCollectorPtr collectorCpu = monitoringCatalog->getMetricCollector(WrappedCpuMetrics);
-//    ASSERT_TRUE(collectorCpu->getschema());
+
 
     MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
-    // TODO: test if the right MonitoringPlan and Catalog was created
 
     std::cout << "Well done!";
 }

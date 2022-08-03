@@ -17,6 +17,9 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
+#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
@@ -2062,8 +2065,9 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
         }
     }
 
+    uint64_t numBuffers = 2;
     for (auto testCollector : listCollector) {
-        uint64_t numBuffers = 2;
+
         MonitoringSourceProxy monitoringDataSource(testCollector,
                                                    MonitoringSource::DEFAULT_WAIT_TIME,
                                                    this->nodeEngine->getBufferManager(),
@@ -2236,6 +2240,141 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennart) {
         EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
 //        EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
     }
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartDisk) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"F_BSIZE", "F_BLOCKS", "F_BAVAIL"};
+    std::list<std::string> notConfiguredAttributes {"F_FRSIZE", "F_BFREE"};
+    SchemaPtr schema = DiskMetrics::createSchema("", configuredAttributes);
+    std::map <MetricType, SchemaPtr> monitoringPlan;
+    monitoringPlan.insert (std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+    auto plan = MonitoringPlan::create(monitoringPlan);
+    auto testCollector = std::make_shared<DiskCollector>(DiskCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+    DiskMetrics parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(parsedValues.getValue("F_BSIZE"), 4096);
+    for(const std::string& metricName : notConfiguredAttributes) {
+        ASSERT_EQ(parsedValues.getValue(metricName), 0);
+    }
+    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartDisk) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"F_BSIZE", "F_BLOCKS", "F_BAVAIL"};
+    SchemaPtr schema = DiskMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<DiskCollector>(DiskCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        DiskMetrics parsedValues{testCollector->getSchema()};
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartCPU) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"coreNum", "idle", "system", "iowait"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = CpuMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = CpuMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<CpuCollector>(CpuCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+
+    CpuMetricsWrapper parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(buf->getNumberOfTuples(), parsedValues.size());
+//    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
+    for (unsigned int i = 0; i < parsedValues.size(); i++) {
+        for (const std::string& metricName : notConfiguredAttributes) {
+            ASSERT_EQ(parsedValues.getValue(i).getValue(metricName), 0);
+        }
+    }
+
+//    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartCPU) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"coreNum", "idle", "system", "iowait"};
+    SchemaPtr schema = CpuMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<CpuCollector>(CpuCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    CpuMetricsWrapper parsedValues{testCollector->getSchema()};
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), (2 * parsedValues.size()));
 }
 
 }// namespace NES
