@@ -57,6 +57,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
             notifyEpochTermination(timestamp);
             auto t2 = std::chrono::high_resolution_clock::now();
             statisticsFile << duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
+            statisticsFile.flush();
         }
     }
     bufferCount++;
