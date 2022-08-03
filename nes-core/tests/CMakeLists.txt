@@ -124,6 +124,9 @@ add_nes_integration_test(connectivity-controller-integration-tests "Integration/
 ### NES Query Catalog Controller Test ###
 add_nes_integration_test(query-catalog-controller-integration-tests "Integration/REST/Controller/QueryCatalogControllerTest.cpp")
 
+### NES Monitoring Controller Test ###
+add_nes_integration_test(monitoring-controller-tests "Integration/REST/Controller/MonitoringControllerTest.cpp")
+
 ### NES Topology Controller Test ###
 add_nes_integration_test(topology-controller-integration-tests "Integration/REST/Controller/TopologyControllerTest.cpp")
 

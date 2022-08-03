@@ -145,6 +145,8 @@ class RestServer {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
     Experimental::MaintenanceServicePtr maintenanceService;
+    MonitoringServicePtr monitoringService;
+    Runtime::BufferManagerPtr bufferManager;
     std::condition_variable cvar;
     std::mutex mutex;
     bool stopRequested{false};
