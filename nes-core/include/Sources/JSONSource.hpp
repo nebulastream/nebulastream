@@ -44,12 +44,11 @@ class JSONSource : public DataSource {
     const JSONSourceTypePtr& getSourceConfig() const;
 
   protected:
-    simdjson::ondemand::parser parser;
+    simdjson::dom::parser parser;
 
   private:
     JSONParserPtr inputParser;
     simdjson::padded_string json;
-    simdjson::ondemand::document_stream documentStream;
     std::vector<PhysicalTypePtr> physicalTypes;
     JSONSourceTypePtr jsonSourceType;
     std::string filePath;

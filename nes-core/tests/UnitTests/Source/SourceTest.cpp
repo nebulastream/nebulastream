@@ -2009,7 +2009,7 @@ TEST_F(SourceTest, testJSONSourceBenchmark) {
      *      content=$(cat tpch_region.json); for i in {1..100000}; do echo "$content" >> tpch_region_100000.ndjson; done
      *  File size: 10 MB
      */
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region_100000.ndjson";
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "simdjson/tpch_region_300000.ndjson";
     JSONSourceTypePtr sourceConfig = JSONSourceType::create();
     sourceConfig->setFilePath(filePath);
     sourceConfig->setNumBuffersToProcess(1);

@@ -50,7 +50,7 @@ class JSONParser : public Parser {
     void writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                                       uint64_t fieldIndex,
                                       const SchemaPtr& schema,
-                                      simdjson::simdjson_result<simdjson::ondemand::document_reference> doc,
+                                      simdjson::simdjson_result<simdjson::dom::element> element,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
 
   private:

@@ -37,12 +37,6 @@ JSONSource::JSONSource(SchemaPtr schema,
     this->inputParser = std::make_shared<JSONParser>(physicalTypes);
 
     json = simdjson::padded_string::load(filePath);
-    auto error = parser.iterate_many(json).get(documentStream);
-    if (error) {
-        // TODO
-        NES_ERROR("Error reading JSON file")
-        throw std::logic_error(error_message(error));
-    }
 }
 
 std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
@@ -58,40 +52,40 @@ std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
     return buffer.getBuffer();
 }
 
-void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    uint64_t numOverwrites = 1;
-    auto i = documentStream.begin();
+void JSONSource::fillBuffer([[maybe_unused]] Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+    uint64_t numOverwrites = 1;// TODO
     uint64_t tupleIndex = 0;
-    for (; i != documentStream.end(); ++i) {
-        auto doc = *i;
-        if (!doc.error()) {
-            if (tupleIndex >= buffer.getCapacity()) {
-                if (numBuffersToProcess == 0) {
-                    // read source until buffer is full
-                    NES_INFO("Buffer is full but there are still tuples left.")
-                    return;
-                } else if (numBuffersToProcess == 1) {
-                    // read source until source ends and overwrite current buffer content
-                    NES_INFO("Overwriting buffer (" << numOverwrites << ")")
-                    numOverwrites++;
-                    tupleIndex = 0;
-                } else {
-                    NES_ERROR("Logic not yet implemented")
-                    throw std::invalid_argument("numBuffersToProcess must be 0 or 1");
-                    // TODO
-                }
-            }
-            for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
-                DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
-                std::string jsonKey = schema->fields[fieldIndex]->getName();
-                inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, doc, buffer);
-            }
-            tupleIndex++;
-            buffer.setNumberOfTuples(tupleIndex);
-        } else {
-            NES_ERROR("got broken document at " << i.current_index());
-            throw std::logic_error(error_message(doc.error()));
+    for (simdjson::simdjson_result result : parser.parse_many(json)) {
+        auto error = result.error();
+        if (error) {
+            // TODO
+            NES_ERROR("Error reading JSON file")
+            throw std::logic_error(error_message(error));
         }
+        //        std::cout << result << std::endl;
+        if (tupleIndex >= buffer.getCapacity()) {
+            if (numBuffersToProcess == 0) {
+                // read source until buffer is full
+                NES_INFO("Buffer is full but there are still tuples left.")
+                return;
+            } else if (numBuffersToProcess == 1) {
+                // read source until source ends and overwrite current buffer content
+                NES_INFO("Overwriting buffer (" << numOverwrites << ")")
+                numOverwrites++;
+                tupleIndex = 0;
+            } else {
+                NES_ERROR("Logic not yet implemented")
+                throw std::invalid_argument("numBuffersToProcess must be 0 or 1");
+                // TODO
+            }
+        }
+        for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
+            DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
+            std::string jsonKey = schema->fields[fieldIndex]->getName();
+            inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, result, buffer);
+        }
+        tupleIndex++;
+        buffer.setNumberOfTuples(tupleIndex);
     }
 }
 

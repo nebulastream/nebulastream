@@ -67,88 +67,88 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
 void JSONParser::writeFieldValueToTupleBuffer(uint64_t tupleIndex,
                                               uint64_t fieldIndex,
                                               const SchemaPtr& schema,
-                                              simdjson::simdjson_result<simdjson::ondemand::document_reference> valueResult,
+                                              simdjson::simdjson_result<simdjson::dom::element> element,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
     DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
     std::string jsonKey = schema->fields[fieldIndex]->getName();
-    PhysicalTypePtr physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+    PhysicalTypePtr physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType); // TODO remove
     if (physicalType->isBasicType()) {
         BasicPhysicalTypePtr basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType;
         switch (nativeType) {
             case BasicPhysicalType::UINT_8: {
-                uint64_t value64 = valueResult[jsonKey];
+                uint64_t value64 = element[jsonKey];
                 uint8_t value8 = static_cast<uint8_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<uint8_t>(value8);
                 break;
             }
             case BasicPhysicalType::UINT_16: {
-                uint64_t value64 = valueResult[jsonKey];
+                uint64_t value64 = element[jsonKey];
                 uint16_t value16 = static_cast<uint16_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<uint16_t>(value16);
                 break;
             }
             case BasicPhysicalType::UINT_32: {
-                uint64_t value64 = valueResult[jsonKey];
+                uint64_t value64 = element[jsonKey];
                 uint32_t value32 = static_cast<uint32_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<uint32_t>(value32);
                 break;
             }
             case BasicPhysicalType::UINT_64: {
-                uint64_t value = valueResult[jsonKey];
+                uint64_t value = element[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<uint64_t>(value);
                 break;
             }
             case BasicPhysicalType::INT_8: {
-                int64_t value64 = valueResult[jsonKey];
+                int64_t value64 = element[jsonKey];
                 int8_t value8 = static_cast<int8_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<int8_t>(value8);
                 break;
             }
             case BasicPhysicalType::INT_16: {
-                int64_t value64 = valueResult[jsonKey];
+                int64_t value64 = element[jsonKey];
                 int16_t value16 = static_cast<int16_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<int16_t>(value16);
                 break;
             }
             case BasicPhysicalType::INT_32: {
-                int64_t value64 = valueResult[jsonKey];
+                int64_t value64 = element[jsonKey];
                 int32_t value32 = static_cast<int32_t>(value64);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<int32_t>(value32);
                 break;
             }
             case BasicPhysicalType::INT_64: {
-                int64_t value = valueResult[jsonKey];
+                int64_t value = element[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<int64_t>(value);
                 break;
             }
             case BasicPhysicalType::FLOAT: {
-                double valueD = valueResult[jsonKey];
+                double valueD = element[jsonKey];
                 float valueF = static_cast<float>(valueD);// TODO safe?
                 tupleBuffer[tupleIndex][fieldIndex].write<float>(valueF);
                 break;
             }
             case BasicPhysicalType::DOUBLE: {
-                double value = valueResult[jsonKey];
+                double value = element[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
                 break;
             }
             case BasicPhysicalType::CHAR: {
-                std::string_view value = valueResult[jsonKey];
+                std::string_view value = element[jsonKey];
                 std::string str = {value.begin(), value.end()};
                 char c = str.at(0);
                 tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
                 break;
             }
             case BasicPhysicalType::BOOLEAN: {
-                bool value = valueResult[jsonKey];
+                bool value = element[jsonKey];
                 tupleBuffer[tupleIndex][fieldIndex].write<bool>(value);
                 break;
             }
         }
     } else {
         if (dataType->isCharArray()) {
-            std::string_view value = valueResult[jsonKey];
+            std::string_view value = element[jsonKey];
             std::string str = {value.begin(), value.end()};
             const char* c_str = str.c_str();
             char* valueRead = tupleBuffer[tupleIndex][fieldIndex].read<char*>();
