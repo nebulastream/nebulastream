@@ -16,6 +16,7 @@
 #define NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
 #include <API/Schema.hpp>
+#include <chrono>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -192,6 +193,7 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint32_t buffersPerEpoch;
+    std::ofstream statisticsFile;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety

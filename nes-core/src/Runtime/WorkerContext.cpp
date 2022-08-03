@@ -29,7 +29,8 @@ WorkerContext::WorkerContext(uint32_t workerId,
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
     statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
-    statisticsFile << "latency\n";
+    statisticsFile << "latency, ";
+    statisticsFile << "numberOfBuffers\n";
 }
 
 WorkerContext::~WorkerContext() {
@@ -38,14 +39,21 @@ WorkerContext::~WorkerContext() {
     statisticsFile.close();
 }
 
+size_t WorkerContext::getStorageSize() {
+    auto size = 0;
+    for (auto iteratorPartitionId : this->storage) {
+        size += iteratorPartitionId.second.size();
+    }
+    return size;
+}
+
 void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-    statisticsFile << value.count() << ",";
-    statisticsFile << inputBuffer.getWatermark() << ",";
     statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
+    statisticsFile << getStorageSize() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
