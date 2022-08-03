@@ -125,9 +125,7 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--optimizer.performDistributedWindowOptimization=false";
 }
 
-[[nodiscard]] std::string enableNemoPlacement() {
-    return "--optimizer.enableNemoPlacement=true";
-}
+[[nodiscard]] std::string enableNemoPlacement() { return "--optimizer.enableNemoPlacement=true"; }
 
 [[nodiscard]] std::string setDistributedWindowChildThreshold(uint64_t val) {
     return "--optimizer.distributedWindowChildThreshold=" + std::to_string(val);
