@@ -135,8 +135,10 @@ class RestServer {
     RestEnginePtr restEngine;
     std::string host;
     uint16_t port;
-    QueryCatalogServicePtr queryCatalogService;
     NesCoordinatorWeakPtr coordinator;
+    QueryCatalogServicePtr queryCatalogService;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    QueryServicePtr queryService;
     GlobalQueryPlanPtr globalQueryPlan;
     TopologyPtr topology;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;

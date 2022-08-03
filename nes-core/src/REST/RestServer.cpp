@@ -20,6 +20,7 @@
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
+#include <REST/OatppController/QueryController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -61,8 +62,8 @@ RestServer::RestServer(std::string host,
                                               udfCatalog,
                                               bufferManager,
                                               locationService)),
-      host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator),
-      globalQueryPlan(globalQueryPlan), topology(topology), udfCatalog(udfCatalog) {}
+      host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService), globalExecutionPlan(globalExecutionPlan),
+      queryService(queryService), globalQueryPlan(globalQueryPlan), topology(topology), udfCatalog(udfCatalog) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -154,10 +155,17 @@ void RestServer::run() {
                                                                                          errorHandler);
     auto topologyController =
         REST::Controller::TopologyController::createShared(objectMapper, topology, "/topology", errorHandler);
+    auto queryController = REST::Controller::QueryController::createShared(objectMapper,
+                                                                           queryService,
+                                                                           queryCatalogService,
+                                                                           globalExecutionPlan,
+                                                                           "/query",
+                                                                           errorHandler);
     auto udfCatalogController =
         REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
+    router->addController(queryController);
     router->addController(topologyController);
     router->addController(udfCatalogController);
 
