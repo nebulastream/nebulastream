@@ -30,10 +30,9 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
-//#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
-#include "Runtime/QueryStatistics.hpp"
 
 namespace NES {
 class NesCoordinator;
