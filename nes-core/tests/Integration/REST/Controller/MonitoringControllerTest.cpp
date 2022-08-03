@@ -54,6 +54,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoringController) {
     if(!success){
         FAIL() << "Rest server failed to start";
     }
+    
     WorkerRPCClientPtr workerClient = std::make_shared<WorkerRPCClient>();
     auto monitoringService = MonitoringService(workerClient, coordinator->getTopology(), coordinator->getQueryService(), coordinator->getQueryCatalogService());
     Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
