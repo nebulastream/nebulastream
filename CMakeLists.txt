@@ -44,7 +44,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the highly experimental
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
-set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
+set(NES_LOG_LEVEL "ERROR" CACHE STRING "LogLevel")
 
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
@@ -57,6 +57,7 @@ endif ()
 if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif ()
+
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
@@ -503,6 +504,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 # LLVM
 find_package(LLVM 14 CONFIG REQUIRED)
 if (LLVM_FOUND)
+    message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
     message("-- LLVM tool dir ${LLVM_TOOLS_INSTALL_DIR}")

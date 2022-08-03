@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
+#include "Util/Timer.hpp"
 #include <Experimental/NESIR/NESIR.hpp>
 #include <memory>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
@@ -49,6 +50,9 @@ class MLIRUtility {
     MLIRUtility(std::string mlirFilepath, bool debugFromFile);
     ~MLIRUtility() = default;
 
+
+    bool generateMLIR(std::shared_ptr<IR::NESIR> nesIR, bool useSCF);
+    bool lowerMLIR();
     /**
     * @brief Creates MLIR and if successful, applies lowering passes to it
     * @param NESTree: NES abstraction tree from which MLIR is generated.
@@ -67,7 +71,7 @@ class MLIRUtility {
      * @return int: 1 if error occurred, else 0
      */
     int runJit(bool linkProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
-    std::unique_ptr<mlir::ExecutionEngine> prepareEngine(bool linkProxyFunctions = false);
+    std::unique_ptr<mlir::ExecutionEngine> prepareEngine(bool linkProxyFunctions = false, std::shared_ptr<Timer<>> timer = nullptr);
 
     /**
      * @brief Can print a module and write it to a file, depending on debugFlags.

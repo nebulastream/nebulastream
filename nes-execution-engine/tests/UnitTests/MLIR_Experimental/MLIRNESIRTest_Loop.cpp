@@ -205,7 +205,7 @@
 //     NES::NESIR nesIR(executeFuncOp);
 
 //     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIRUtility("", false);
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
 //     assert(loadedModuleSuccess == 0);
 

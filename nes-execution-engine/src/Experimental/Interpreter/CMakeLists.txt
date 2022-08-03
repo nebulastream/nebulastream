@@ -24,4 +24,5 @@ add_source_files(nes-execution-engine
         FunctionCall.cpp
         WorkerContext.cpp
         PipelineContext.cpp
+        ProxyFunctions.cpp
         )

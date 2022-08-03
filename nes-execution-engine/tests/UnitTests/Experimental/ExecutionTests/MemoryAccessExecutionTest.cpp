@@ -66,7 +66,7 @@ class MemoryAccessExecutionTest : public testing::Test {
 
 Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Int64>(); }
 
-TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
+TEST_F(MemoryAccessExecutionTest, DISABLED_loadFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
@@ -81,7 +81,7 @@ TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
@@ -94,7 +94,7 @@ void storeFunction(Value<MemRef> ptr) {
     ptr.store(tmp);
 }
 
-TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
+TEST_F(MemoryAccessExecutionTest, DISABLED_storeFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>((int8_t*) &valI);
     tempPara.load<Int64>();
@@ -110,7 +110,7 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
@@ -118,7 +118,7 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     ASSERT_EQ(valI, 43);
 }
 
-Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
+Value<Int64> memScanAgg(Value<MemRef> ptr, Value<Int64> size) {
     Value<Int64> sum = 0l;
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
@@ -134,7 +134,7 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     auto size = Value<Int64>(0l);
     size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
-        return memScan(memPtr, size);
+        return memScanAgg(memPtr, size);
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -143,7 +143,7 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
     auto engine = mlirUtility->prepareEngine();
     auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();

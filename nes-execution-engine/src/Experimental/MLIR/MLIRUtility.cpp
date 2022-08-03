@@ -43,6 +43,7 @@
 #include <string>
 #include <utility>
 #include <filesystem>
+#include <fstream>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
@@ -105,9 +106,7 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     if (debugFlags) {
         printf("Kek %d", debugFlags->comments);
     }
-    //    auto opIterator = module->getOps().begin()->getBlock()->getOperations().begin();
-    //    opIterator->dump();
-    module->dump();
+    // module->dump();
     if (!module) {
         llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
         return 1;
@@ -143,7 +142,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     }
     //    auto opIterator = module2->getOps().begin()->getBlock()->getOperations().front();
     //    module-> push_back(module2->getOps().begin()->getBlock()->getOperations().front().clone());
-    module->dump();
+    // module->dump();
 
     if (!module) {
         llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
@@ -162,6 +161,37 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
+bool MLIRUtility::generateMLIR(std::shared_ptr<IR::NESIR> nesIR, bool useSCF) {
+    // Load all Dialects required to process/generate the required MLIR.
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+
+    auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+    mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
+    mlirGenerator->useSCF = useSCF;
+    module = mlirGenerator->generateModuleFromNESIR(nesIR);
+    if (!module) {
+        llvm::errs() << "MLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
+        return false;
+    }
+    return true;
+}
+
+bool MLIRUtility::lowerMLIR() {
+    mlir::PassManager passManager(&context);
+    applyPassManagerCLOptions(passManager);
+    // passManager.addPass(mlir::createInlinerPass());
+    passManager.addPass(mlir::createLowerToCFGPass());
+    passManager.addPass(mlir::createLowerToLLVMPass());
+
+    if (mlir::failed(passManager.run(*module))) {
+        return false;
+    }
+    return true;
+}
+
+
 int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* , bool useSCF) {
 
     // Todo find a good place to load the required Dialects
@@ -169,7 +199,6 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
-    //    context.loadDialect<>()
     // Generate MLIR for the sample NESAbstraction or load from file.
     if (debugFromFile) {
         assert(!mlirFilepath.empty() && "No MLIR filename to read from given.");
@@ -206,37 +235,51 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
 
 
 llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransformer(bool linkProxyFunctions) {
-       if (linkProxyFunctions) {
+    if (linkProxyFunctions) {
         return [] (llvm::Module* llvmIRModule) mutable {
             llvm::SMDiagnostic Err;
-            //Todo 
-            // 1. Find a way to reliably pass paths as captured parameters to lambda.
-            // -> tried using capture parameter, but every try lead to errors/garage strings
-            // -> moving code into runJit/prepareJit function makes it possible to print correct strings from within lambda
-            // -> BUT: if the string contains "../." or "../.." or "../../", the string is also turned to garbage
-            // 2. find better way to get the correct path
-            // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/Folder/Folder/Folder/CWD'
+            auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
+            timer->start();
+            // PROXY_FUNCTIONS_RESULT_DIR is a CMake paramater that holds the path to the  proxy functions file.
             auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR),
                                                       Err, llvmIRModule->getContext());
+            timer->snapshot("Proxy Module Parsed");
+            
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
+            timer->snapshot("Proxy Module Linked");
 
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
+            timer->snapshot("Linked Module Optimized");
 
-            std::string llvmIRString;
-            llvm::raw_string_ostream llvmStringStream(llvmIRString);
-            llvmIRModule->print(llvmStringStream, nullptr);
+            timer->pause();
+            std::string timerString;
+            for(auto snapshot : timer->getSnapshots()) {
+                timerString += std::to_string(snapshot.getPrintTime()) + ',';
+            }
+            timerString += '\n';
 
-            auto* basicError = new std::error_code();
-            llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
-            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
+            // Write inlining results to folder where benchmark is executed (will be removed later).
+            std::ofstream fs("inlining.csv", std::ios::app);
+            if(fs.is_open()) { 
+                fs.write(timerString.c_str(), timerString.size());
+            }
+
+            // std::string llvmIRString;
+            // llvm::raw_string_ostream llvmStringStream(llvmIRString);
+            // llvmIRModule->print(llvmStringStream, nullptr);
+
+            // auto* basicError = new std::error_code();
+            // //Todo Also use CMake parameter for generated file.
+            // llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
+            // fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };
     } else {
         return [](llvm::Module* llvmIRModule) {
-            auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
+            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::outs(), nullptr);
+            // llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     }
@@ -288,33 +331,58 @@ int MLIRUtility::runJit(bool linkProxyFunctions, void* inputBufferPtr, void* out
     return (bool) inputBufferPtr + (bool) outputBufferPtr;
 }
 
-std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions) {
+std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions, std::shared_ptr<Timer<>> parentTimer) {
+    if(!parentTimer) {
+        parentTimer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
+    }
+    //Todo move
+    std::unordered_set<std::string> ExtractFuncs{
+        "getHash",
+        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", 
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestamp",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestamp"};
+
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    // Register and execute the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*module->getContext());
+    parentTimer->snapshot("Lowering to LLVM IR");
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
     llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
+    
 
     // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
     auto maybeEngine =
         mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
-
     assert(maybeEngine && "failed to construct an execution engine");
     auto& engine = maybeEngine.get();
+    parentTimer->snapshot("JIT Compilation");
 
     auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();
         for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
-                llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+            if(!linkProxyFunctions || !ExtractFuncs.contains(mlirGenerator->getJitProxyFunctionSymbols().at(i))) {
+                symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
+                    llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+            }
         }
         return symbolMap;
     };
+    
     engine->registerSymbols(runtimeSymbolMap);
+    parentTimer->snapshot("JIT Symbols Registered");
 
     // Invoke the JIT-compiled function.
     int64_t result = 0;

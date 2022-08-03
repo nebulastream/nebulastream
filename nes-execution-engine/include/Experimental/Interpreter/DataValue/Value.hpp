@@ -77,7 +77,7 @@ class Value : BaseValue {
     //}
 
     Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {
-        std::cout << "copy value" << std::endl;
+        // std::cout << "copy value" << std::endl;
     }
 
     // move constructor

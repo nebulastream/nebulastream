@@ -12,12 +12,19 @@
     limitations under the License.
 */
 
+#include "Experimental/Interpreter/FunctionCall.hpp"
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Record.hpp>
+
+// #include <Experimental/Interpreter/ProxyFunctions.hpp>
+
+
+
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) : memoryLayout(memoryLayout) {}
+
 
 void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
@@ -25,8 +32,10 @@ void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const 
     // iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
+    std::cout << "Num records: " << numberOfRecords << '\n';
     for (Value<UInt64> i = 0ul; i <= numberOfRecords; i = i + 1ul) {
         auto record = recordBuffer.read(memoryLayout, bufferAddress, i);
+        std::cout << "Buffer Value:" << record.read(0) << '\n';
         child->execute(ctx, record);
     }
 }

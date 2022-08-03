@@ -71,7 +71,7 @@ class ExpressionExecutionTest : public testing::Test {
         std::cout << ir->toString() << std::endl;
 
         // create and print MLIR
-        auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+        auto mlirUtility = new MLIR::MLIRUtility("", false);
         int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
         assert(loadedModuleSuccess == 0);
         return mlirUtility->prepareEngine();

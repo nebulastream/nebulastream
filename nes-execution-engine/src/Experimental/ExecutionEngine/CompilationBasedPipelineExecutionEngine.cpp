@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Experimental/Utility/TestUtility.hpp"
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
@@ -25,52 +26,67 @@
 #include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Util/Timer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <memory>
+
+#include <Experimental/Utility/TestUtility.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 
 std::shared_ptr<ExecutablePipeline>
-CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) {
-    Timer timer("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> parentTimer) {
+    if(!parentTimer) {
+        parentTimer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
+    }
+    // Setup utility
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
+
+    // TRACE GENERATION PHASE
+    parentTimer->start();
+    // Create pipeline and execution context.
     auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, pipelineContext.get());
     auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
         std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Trace::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
     auto executionContext = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
-
+    // Create MemRef for input TupleBuffer.
     auto memRef = Interpreter::Value<Interpreter::MemRef>(std::make_unique<Interpreter::MemRef>(Interpreter::MemRef(0)));
     memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto recordBuffer = Interpreter::RecordBuffer(memRef);
-
+    // Generate execution trace starting with the root operator.
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
-    // generate trace
     auto executionTrace = Trace::traceFunctionSymbolically([&rootOperator, &executionContext, &recordBuffer]() {
         rootOperator->open(executionContext, recordBuffer);
         rootOperator->close(executionContext, recordBuffer);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
-    timer.snapshot("TraceGeneration");
+    parentTimer->snapshot("TraceGeneration");
+    
+    // NAUTILUS IR GENERATION PHASE
     auto ir = irCreationPhase.apply(executionTrace);
-    timer.snapshot("NESIRGeneration");
-    //std::cout << ir->toString() << std::endl;
-    //ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
-    auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
-    timer.snapshot("MLIRGeneration");
-    timer.pause();
-    NES_INFO("CompilationBasedPipelineExecutionEngine TIME: " << timer);
+    // std::cout << ir->toString() << std::endl;
+    parentTimer->snapshot("NESIRGeneration");
+
+    // MLIR GENERATION PHASE
+    if(!mlirUtility->generateMLIR(ir, false)) {return nullptr; }
+    parentTimer->snapshot("MLIRGeneration");
+
+    //MLIR LOWERING PHASE
+    if(!mlirUtility->lowerMLIR()) {return nullptr; }
+    parentTimer->snapshot("MLIRLowering");
+    
+    // JIT COMPILATION PHASE
+    auto engine = mlirUtility->prepareEngine(true, parentTimer);
+    // auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
+
+    parentTimer->pause();
+    NES_INFO("CompilationBasedPipelineExecutionEngine TIME: " << parentTimer);
     auto rx = std::make_shared<ExecutablePipeline>(pipelineContext, physicalOperatorPipeline, std::move(engine));
+
     return rx;
 }
 

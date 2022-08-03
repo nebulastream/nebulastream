@@ -188,14 +188,12 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
     // Create function in global scope. Return reference.
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
-    //Todo find cleaner way to not add available proxy functions to JIT symbols
-    if(!name.starts_with("NES__")) {
-        jitProxyFunctionSymbols.push_back(name);
-        if (functionPtr == nullptr) {
-            functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
-        }
-        jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
+    jitProxyFunctionSymbols.push_back(name);
+    if (functionPtr == nullptr) {
+        functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
     }
+    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
+
     return mlir::SymbolRefAttr::get(context, name);
 }
 
@@ -263,7 +261,7 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR) {
     ValueFrame firstframe;
     generateMLIR(nesIR->getRootOperation(), firstframe);
-    theModule->dump();
+    // theModule->dump();
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
         return nullptr;
@@ -807,8 +805,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame& frame) {
-    printf("ProxyCallOperation identifier: %s\n", proxyCallOp->getIdentifier().c_str());
-    printf("ProxyCallOperation first BlockArg name: \n");
+    printf("ProxyCallOperation Symbol: %s\n", proxyCallOp->getFunctionSymbol().c_str());
 
     //Todo simplify!!!!
     switch (proxyCallOp->getProxyCallType()) {

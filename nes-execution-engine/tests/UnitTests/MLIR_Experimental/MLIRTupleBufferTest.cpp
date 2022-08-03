@@ -149,7 +149,7 @@
 // //
 // //    // Configuration
 // //    const bool debugFromFile = false;
-// //    const std::string mlirFilepath = "/home/rudi/mlir/generatedMLIR/locationTest.mlir";
+// //    const std::string mlirFilepath = "";
 // //    MLIRUtility::DebugFlags debugFlags{};
 // //    debugFlags.comments = true;
 // //    debugFlags.enableDebugInfo = false;

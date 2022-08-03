@@ -87,7 +87,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
     auto engine = mlirUtility->prepareEngine();
@@ -107,7 +107,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
 //     auto engine = mlirUtility->prepareEngine();
@@ -137,7 +137,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();
@@ -169,7 +169,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();
@@ -200,7 +200,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();
@@ -234,7 +234,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();
@@ -270,7 +270,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();
@@ -305,7 +305,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 //     std::cout << ir->toString() << std::endl;
 
 //     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+//     auto mlirUtility = new MLIR::MLIRUtility("", false);
 //     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
 //     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
 //     auto engine = mlirUtility->prepareEngine();

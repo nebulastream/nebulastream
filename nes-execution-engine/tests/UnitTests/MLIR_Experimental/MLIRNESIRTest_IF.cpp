@@ -205,7 +205,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
                                     ->addOperation(make_shared<ReturnOperation>(0)));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -313,7 +313,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -434,7 +434,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -565,7 +565,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -736,7 +736,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -924,7 +924,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 
@@ -1171,7 +1171,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
-    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    auto mlirUtility = new MLIRUtility("", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
 

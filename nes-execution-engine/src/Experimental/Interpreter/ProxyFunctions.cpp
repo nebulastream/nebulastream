@@ -12,8 +12,13 @@
     limitations under the License.
 */
 #include <Runtime/TupleBuffer.hpp>
+// #include <Runtime/TupleBuffer.hpp>
+#include <cstdint>
+
+#include <Experimental/Interpreter/ProxyFunctions.hpp>
+
 namespace NES::Runtime::ProxyFunctions {
-extern "C" __attribute__((always_inline)) void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
+void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getBuffer();
 };
@@ -21,22 +26,18 @@ uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getBufferSize();
 };
-// extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void *thisPtr) {
-//    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
-//    return tupleBuffer->getNumberOfTuples();
-// }
-extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
+uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getNumberOfTuples();
 };
-extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->setNumberOfTuples(numberOfTuples);
-};
-// extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void *thisPtr, uint64_t numberOfTuples) {
-//    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
-//    tupleBuffer->setNumberOfTuples(numberOfTuples);
-// }
+// void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples) {
+//     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+//     return thisPtr_->setNumberOfTuples(numberOfTuples);
+// };
+__attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void *thisPtr, uint64_t numberOfTuples) {
+   NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+   tupleBuffer->setNumberOfTuples(numberOfTuples);
+}
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getWatermark();
@@ -60,6 +61,60 @@ uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
 void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestamp(value);
+}
+
+__attribute__((always_inline)) void printInt64(int64_t inputValue) {
+    printf("I64 Value: %ld\n", inputValue);
+}
+
+
+// Playground
+
+__attribute__((always_inline)) uint32_t fmix32(uint32_t h) {
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
+}
+inline uint32_t rotl32(uint32_t x, int8_t r) { 
+    return (x << r) | (x >> (32 - r)); 
+}
+
+inline uint32_t hashKey(uint64_t k) {
+        // inline hash_t hashKey(uint64_t k, hash_t seed) const {
+        uint32_t h1 = 0;
+        const uint32_t c1 = 0xcc9e2d51;
+        const uint32_t c2 = 0x1b873593;
+
+        uint32_t k1 = k;
+        uint32_t k2 = k >> 32;
+
+        k1 *= c1;
+        k1 = rotl32(k1, 15);
+        k1 *= c2;
+
+        h1 ^= k1;
+        h1 = rotl32(h1, 13);
+        h1 = h1 * 5 + 0xe6546b64;
+
+        k2 *= c1;
+        k1 = rotl32(k1, 15);
+        k2 *= c2;
+
+        h1 ^= k2;
+        h1 = rotl32(h1, 13);
+        h1 = h1 * 5 + 0xe6546b64;
+
+        return fmix32(h1);
+    }
+
+__attribute__((always_inline)) int64_t getHash(uint64_t inputValue) {
+    uint32_t hashKeyValue = hashKey(inputValue);
+    // printf("Current input value: %ld\n", inputValue);
+    // printf("Current input value: %u\n", hashKeyValue);
+    return (int64_t)hashKeyValue;
 }
 
 
