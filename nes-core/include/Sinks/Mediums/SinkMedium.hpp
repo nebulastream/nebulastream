@@ -23,6 +23,7 @@
 #include <Util/FaultToleranceType.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
+#include <iomanip>
 
 namespace NES {
 
