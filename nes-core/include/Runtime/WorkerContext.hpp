@@ -25,6 +25,7 @@
 #include <queue>
 #include <unordered_map>
 #include <fstream>
+#include <iomanip>
 
 namespace NES::Runtime {
 
@@ -57,6 +58,7 @@ class WorkerContext {
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
 
     std::ofstream statisticsFile;
+    std::ofstream storageFile;
 
   public:
     explicit WorkerContext(uint32_t workerId,

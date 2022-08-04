@@ -29,14 +29,17 @@ WorkerContext::WorkerContext(uint32_t workerId,
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
     statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
-    statisticsFile << "latency, ";
-    statisticsFile << "numberOfBuffers\n";
+    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
+    statisticsFile << "time, latency\n";
+    storageFile << "time, numberOfBuffers\n";
 }
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
     statisticsFile.flush();
     statisticsFile.close();
+    storageFile.flush();
+    storageFile.close();
 }
 
 size_t WorkerContext::getStorageSize() {
@@ -52,8 +55,10 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
     statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
-    statisticsFile << getStorageSize() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
@@ -91,6 +96,10 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
     storage[nesPartitionId].push(buffer);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    storageFile << getStorageSize() << "\n";
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
