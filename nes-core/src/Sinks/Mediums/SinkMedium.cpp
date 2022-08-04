@@ -60,7 +60,6 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
             auto timeNow = std::chrono::system_clock::to_time_t(ts);
             statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
             statisticsFile << duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
-            statisticsFile.flush();
         }
     }
     bufferCount++;
