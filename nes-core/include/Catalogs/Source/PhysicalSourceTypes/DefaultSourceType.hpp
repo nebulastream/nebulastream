@@ -105,7 +105,7 @@ class DefaultSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption sourceGatheringInterval;
 
     /**
-     * @brief the gathering mode of the sampl. fun.
+     * @brief the gathering mode of the sampling function.
      */
     Configurations::GatheringModeConfigOption gatheringMode;
 };
