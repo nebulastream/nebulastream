@@ -493,16 +493,7 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 
     auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
     auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-
-    auto udfExpression = expression->as<UdfCallExpressionNode>();
-    auto udfDeserialized = deserializedExpression->as<UdfCallExpressionNode>();
-    EXPECT_TRUE(udfExpression->getUdfNameNode()->equal(udfDeserialized->getUdfNameNode()));
-    EXPECT_TRUE(udfExpression->getFunctionArguments()[0]->equal(udfDeserialized->getFunctionArguments()[0]));
-    EXPECT_TRUE(udfExpression->getFunctionArguments()[1]->equal(udfDeserialized->getFunctionArguments()[1]));
-    EXPECT_TRUE(expression == deserializedExpression);
-
-    //This fails currently, even though both classes seem to be identical
-    //EXPECT_TRUE(expression->equal(deserializedExpression));
+    EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
