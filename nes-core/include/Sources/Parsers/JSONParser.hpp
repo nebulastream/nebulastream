@@ -20,41 +20,17 @@
 #include <simdjson.h>
 
 namespace NES {
-class JSONParser : public Parser {
+class JSONParser {
 
   public:
-    /**
-   * @brief public constructor for JSON input data parser
-   * @param numberOfSchemaFields number of schema fields
-   * @param schemaKeys vector with schema keys to identify the keys in the json object
-   * @param physicalTypes vector with physical data types
-   */
-    JSONParser(uint64_t numberOfSchemaFields,
-               std::vector<std::string> schemaKeys,
-               std::vector<NES::PhysicalTypePtr> physicalTypes);
+    JSONParser(std::vector<PhysicalTypePtr> physicalTypes);
 
-    JSONParser(std::vector<PhysicalTypePtr> physical_types);
-
-    /**
-   * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
-   * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param tupleCount: the number of tuples already written to the current TupleBuffer
-   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
-   * @param schema: data schema
-   */
-    bool writeInputTupleToTupleBuffer(const std::string& jsonTuple,
-                                      uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema) override;
-
-    void writeFieldValueToTupleBuffer(uint64_t tupleIndex,
-                                      uint64_t fieldIndex,
-                                      const SchemaPtr& schema,
+    void writeFieldValueToTupleBuffer(SchemaPtr& schema,
+                                      uint64_t tupleIndex,
                                       simdjson::simdjson_result<simdjson::dom::element> element,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
 
   private:
-    uint64_t numberOfSchemaFields;
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };

@@ -79,11 +79,7 @@ void JSONSource::fillBuffer([[maybe_unused]] Runtime::MemoryLayouts::DynamicTupl
                 // TODO
             }
         }
-        for (uint64_t fieldIndex = 0; fieldIndex < schema->getSize(); fieldIndex++) {
-            DataTypePtr dataType = schema->fields[fieldIndex]->getDataType();
-            std::string jsonKey = schema->fields[fieldIndex]->getName();
-            inputParser->writeFieldValueToTupleBuffer(tupleIndex, fieldIndex, schema, result, buffer);
-        }
+        inputParser->writeFieldValueToTupleBuffer(schema, tupleIndex, result, buffer);
         tupleIndex++;
         buffer.setNumberOfTuples(tupleIndex);
     }
