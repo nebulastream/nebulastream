@@ -51,6 +51,7 @@ class UdfCallExpressionNode : public ExpressionNode {
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
+    bool equal(NodePtr const& rhs) const final;
     std::string toString() const override;
 
     /**
@@ -64,7 +65,7 @@ class UdfCallExpressionNode : public ExpressionNode {
     /**
      * @return the name of the UDF as a ConstantValueExpressionNode
      */
-    ExpressionNodePtr getUdfNameNode();
+    ExpressionNodePtr getUdfNameNode() const;
 
     /**
      * @return a vector containing all function arguments passed to the UDF

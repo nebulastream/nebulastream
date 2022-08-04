@@ -60,6 +60,23 @@ void UdfCallExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContex
     stamp = udfDescriptor->getReturnType();
 }
 
+bool UdfCallExpressionNode::equal(NodePtr const& rhs) const {
+    if (rhs->instanceOf<UdfCallExpressionNode>()) {
+        auto otherUdfCallNode = rhs->as<UdfCallExpressionNode>();
+        auto otherFunctionArguments = otherUdfCallNode->getFunctionArguments();
+        if (otherFunctionArguments.size() != functionArguments.size()) {
+            return false;
+        }
+        for (std::size_t i = 0; i < functionArguments.size(); ++i) {
+            if (!otherFunctionArguments[i]->equal(functionArguments[i])) {
+                return false;
+            }
+        }
+        return getUdfNameNode()->equal(otherUdfCallNode->getUdfNameNode());
+    }
+    return false;
+}
+
 std::string UdfCallExpressionNode::toString() const {
     std::stringstream ss;
     ss << "CALL(" << getUdfName() << ",";
@@ -73,7 +90,7 @@ std::string UdfCallExpressionNode::toString() const {
 
 ExpressionNodePtr UdfCallExpressionNode::copy() { return std::make_shared<UdfCallExpressionNode>(UdfCallExpressionNode(this)); }
 
-ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() { return udfName; }
+ExpressionNodePtr UdfCallExpressionNode::getUdfNameNode() const { return udfName; }
 
 std::vector<ExpressionNodePtr> UdfCallExpressionNode::getFunctionArguments() { return functionArguments; }
 
