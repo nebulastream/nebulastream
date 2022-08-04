@@ -250,7 +250,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);

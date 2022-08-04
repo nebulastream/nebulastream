@@ -31,7 +31,7 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    bool inferSchema() override;
+    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
     void inferStringSignature() override;
     const std::string& getModel() const;
     const std::string getDeployedModelPath() const;
