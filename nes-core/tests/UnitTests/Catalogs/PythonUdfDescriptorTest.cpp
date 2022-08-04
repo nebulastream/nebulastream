@@ -44,4 +44,4 @@ TEST_F(PythonUdfDescriptorTest, returnTypeMustBeDefined) {
     EXPECT_THROW(PythonUdfDescriptor(methodName, numberOfArgs, undefinedType), UdfException);
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF

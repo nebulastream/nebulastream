@@ -58,8 +58,9 @@ class TopologySpecificQueryRewritePhase {
      * @param configuration for the optimizer
      * @return TopologySpecificQueryRewritePhasePtr
      */
-    static TopologySpecificQueryRewritePhasePtr
-    create(TopologyPtr topology, Catalogs::Source::SourceCatalogPtr sourceCatalog, Configurations::OptimizerConfiguration configuration);
+    static TopologySpecificQueryRewritePhasePtr create(TopologyPtr topology,
+                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                       Configurations::OptimizerConfiguration configuration);
 
     /**
      * @brief Perform query plan re-write for the input query plan

@@ -23,7 +23,7 @@ namespace NES {
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::Source
 
 class SourceCatalogController : public BaseController {
 

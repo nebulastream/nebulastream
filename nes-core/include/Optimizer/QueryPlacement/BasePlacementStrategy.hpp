@@ -62,7 +62,7 @@ using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::Source
 }// namespace NES
 
 namespace NES::Optimizer {

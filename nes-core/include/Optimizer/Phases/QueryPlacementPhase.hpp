@@ -45,7 +45,7 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::Source
 }// namespace NES
 
 namespace NES::Optimizer {

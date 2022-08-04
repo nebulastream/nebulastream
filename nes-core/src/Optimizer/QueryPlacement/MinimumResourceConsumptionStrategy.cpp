@@ -34,9 +34,10 @@ namespace NES {
 MinimumResourceConsumptionStrategy::MinimumResourceConsumptionStrategy(NESTopologyPlanPtr nesTopologyPlan)
     : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
-                                                                                NESTopologyPlanPtr nesTopologyPlan,
-                                                                                Catalogs::Source::SourceCatalogPtr sourceCatalog) {
+NESExecutionPlanPtr
+MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
+                                                            NESTopologyPlanPtr nesTopologyPlan,
+                                                            Catalogs::Source::SourceCatalogPtr sourceCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 

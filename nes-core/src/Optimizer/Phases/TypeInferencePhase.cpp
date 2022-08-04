@@ -30,7 +30,8 @@ TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr source
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UdfCatalogPtr udfCatalog) {
+TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                 Catalogs::UDF::UdfCatalogPtr udfCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 

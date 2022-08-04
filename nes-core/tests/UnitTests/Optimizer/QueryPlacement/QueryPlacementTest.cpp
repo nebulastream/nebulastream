@@ -982,7 +982,8 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
@@ -1111,8 +1112,10 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
@@ -1249,7 +1252,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
@@ -1362,7 +1366,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")

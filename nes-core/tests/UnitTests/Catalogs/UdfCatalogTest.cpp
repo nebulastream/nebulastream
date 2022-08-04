@@ -135,4 +135,4 @@ TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     ASSERT_EQ(udfs.front(), udfName);
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF

@@ -64,8 +64,10 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
         LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);
         PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
-        Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
-        Catalogs::Source::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sce2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
         sourceCatalog->addPhysicalSource("x", sce1);
         sourceCatalog->addPhysicalSource("y", sce2);
         sourceCatalog->addLogicalSource("x", schema);
@@ -76,7 +78,8 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
@@ -105,7 +108,8 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");

@@ -39,7 +39,7 @@ using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-}// namespace Catalogs
+}// namespace Catalogs::Query
 
 /**
  * This class is responsible for interacting with query catalog to either fetch status of a query or to update it.

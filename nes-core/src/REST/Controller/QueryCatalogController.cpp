@@ -83,7 +83,8 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         try {
             //Prepare the response
             web::json::value result{};
-            std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
+            std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries =
+                queryCatalogService->getAllQueryCatalogEntries();
 
             uint64_t index = 0;
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
@@ -170,7 +171,8 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
 
             //Prepare the response
             web::json::value result{};
-            const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(std::stoi(queryId));
+            const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
+                queryCatalogService->getEntryForQuery(std::stoi(queryId));
             std::string currentQueryStatus = queryCatalogEntry->getQueryStatusAsString();
             NES_DEBUG("Current query status=" << currentQueryStatus);
 

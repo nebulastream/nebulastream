@@ -16,7 +16,8 @@
 
 namespace NES::Optimizer {
 
-TypeInferencePhaseContext::TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UdfCatalogPtr udfCatalog)
+TypeInferencePhaseContext::TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                     Catalogs::UDF::UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
 const Catalogs::Source::SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { return sourceCatalog; }

@@ -57,7 +57,8 @@ class TypeInferencePhase {
      * @brief Factory method to create a type inference phase.
      * @return TypeInferencePhasePtr
      */
-    static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UdfCatalogPtr udfCatalog);
+    static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                        Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.

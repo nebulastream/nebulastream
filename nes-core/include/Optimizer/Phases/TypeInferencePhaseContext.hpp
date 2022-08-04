@@ -41,7 +41,7 @@ namespace NES::Optimizer {
  */
 class TypeInferencePhaseContext {
   public:
-    TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr  sourceCatalog, Catalogs::UDF::UdfCatalogPtr  udfCatalog);
+    TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * Retrieve the source catalog
