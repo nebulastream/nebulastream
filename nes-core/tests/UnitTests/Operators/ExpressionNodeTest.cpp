@@ -244,4 +244,54 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
     EXPECT_EQ(upperBound, UINT32_MAX);// == upper bound of UINT32, as it  is lower than range spanned by Float divisor
 }
 
+/**
+ * @brief Test behaviour of special WhenExpressionNode::inferStamp function. (float)
+ */
+TEST_F(ExpressionNodeTest, whenInferStampTest){
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
+    auto schema = Schema::create()
+                      ->addField("test$bool", BOOLEAN)
+                      ->addField("test$float", FLOAT32);
+    auto whenNode = WHEN(Attribute("bool"), Attribute("float"));
+    ASSERT_TRUE(whenNode->getStamp()->isUndefined());
+    whenNode->inferStamp(typeInferencePhaseContext,schema);
+    ASSERT_TRUE(whenNode->getStamp()->isFloat());
+}
+
+/**
+ * @brief Test behaviour of special CaseExpressionNode::inferStamp function.
+ */
+TEST_F(ExpressionNodeTest, caseInfereStampTest){
+    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
+    auto schema = Schema::create()
+                      ->addField("test$bool1", BOOLEAN)
+                      ->addField("test$bool2", BOOLEAN)
+                      ->addField("test$float1", FLOAT32)
+                      ->addField("test$float2", FLOAT32)
+                      ->addField("test$float3", FLOAT32)
+                      ->addField("test$integer", INT32);
+
+    auto whenNode1 = WHEN(Attribute("bool1"), Attribute("float1"));
+    auto whenNode2 = WHEN(Attribute("bool2"), Attribute("float2"));
+
+    //test expected use
+    auto caseNode = CASE({whenNode1, whenNode2}, Attribute("float3"));
+    ASSERT_TRUE(caseNode->getStamp()->isUndefined());
+    caseNode->inferStamp(typeInferencePhaseContext,schema);
+    ASSERT_TRUE(caseNode->getStamp()->isFloat());
+
+    //test error-throwing-use, by mixing stamps of whens-expressions
+    //different stamp of default-expression
+    auto badCaseNode1 = CASE({whenNode1, whenNode2}, Attribute("integer"));
+
+    //when node with integer
+    auto whenNode3 = WHEN(Attribute("bool1"), Attribute("integer"));
+    // different stamp of integer when-expression whenNode3
+    auto badCaseNode2 = CASE({whenNode1, whenNode3}, Attribute("float3"));
+    ASSERT_ANY_THROW(badCaseNode1->inferStamp(typeInferencePhaseContext,schema));
+    ASSERT_ANY_THROW(badCaseNode2->inferStamp(typeInferencePhaseContext,schema));
+
+
+}
+
 }// namespace NES

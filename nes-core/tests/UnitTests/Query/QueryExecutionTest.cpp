@@ -1600,3 +1600,112 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 #endif
+
+/**
+ * @brief This test creates a CASE-WHEN query with three CASE-expressions
+ * which return the default value and the second and first when value respectively.
+ */
+TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
+    // creating query plan
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createNonRunnableSource(testSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           0,
+                                           numSourceLocalBuffers,
+                                           std::move(successors));
+        });
+
+    auto outputSchema = Schema::create()
+                            ->addField("id", BasicType::INT64)
+                            ->addField("one", BasicType::INT64)
+                            ->addField("value", BasicType::INT64)
+                            ->addField("defaultValue", BasicType::FLOAT64)
+                            ->addField("compareValue", BasicType::FLOAT64)
+                            ->addField("firstWhenResultValue", BasicType::FLOAT64)
+                            ->addField("secondWhenResultValue", BasicType::FLOAT64)
+                            ->addField("result_leq_default_float", BasicType::FLOAT64)
+                            ->addField("result_eq_second_when_float", BasicType::FLOAT64)
+                            ->addField("result_combined_first_when_float", BasicType::FLOAT64);
+
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto compareValue = ExpressionItem(5.0);
+    auto firstWhenResultValue = ExpressionItem(-1.0);
+    auto secondWhenResultValue = ExpressionItem(-2.0);
+    auto defaultValue = ExpressionItem(10.0);
+
+
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .filter(Attribute("id") < 2)
+                     .map(Attribute("defaultValue") = defaultValue)
+                     .map(Attribute("compareValue") = compareValue)
+                     .map(Attribute("firstWhenResultValue") = firstWhenResultValue)
+                     .map(Attribute("secondWhenResultValue") = secondWhenResultValue)
+                     //no WHEN condition is true, so default value will be used
+                     .map(Attribute("result_leq_default_float") = CASE({
+                              WHEN(compareValue <= 2, 2.0),
+                              WHEN(compareValue <= 4, 4.0)
+                          }, defaultValue))
+                     //second WHEN condition is true, so its value will be used
+                     .map(Attribute("result_eq_second_when_float") = CASE({
+                              WHEN(compareValue == 3, 3.0),
+                              WHEN(compareValue == 5.0, secondWhenResultValue)
+                          }, defaultValue))
+                     //first WHEN condition is true, so its value will be used
+                     .map(Attribute("result_combined_first_when_float") = CASE({
+                              WHEN(compareValue == 5.0 && compareValue<6.0, firstWhenResultValue),
+                              WHEN(compareValue == 5.0 && compareValue<3.0, 3.0)
+                          }, defaultValue))
+                     .sink(testSinkDescriptor);
+
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
+    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
+
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
+
+        std::string expectedContent =
+            "+----------------------------------------------------+\n"
+            "|id:INT64|one:INT64|value:INT64|defaultValue:FLOAT64|compareValue:FLOAT64|firstWhenResultValue:FLOAT64"
+            "|secondWhenResultValue:FLOAT64|result_leq_default_float:FLOAT64|result_eq_second_when_float:FLOAT64|result_combined_first_when_float:FLOAT64|\n"
+            "+----------------------------------------------------+\n"
+            "|0|1|0|10.000000|5.000000|-1.000000|-2.000000|10.000000|-2.000000|-1.000000|\n"
+            "|1|1|1|10.000000|5.000000|-1.000000|-2.000000|10.000000|-2.000000|-1.000000|\n"
+            "+----------------------------------------------------+";
+
+        auto resultBuffer = testSink->get(0);
+
+        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
+        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
+        NES_DEBUG("QueryExecutionTest: buffer=" << buffer);
+        EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
+    }
+    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
+
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
