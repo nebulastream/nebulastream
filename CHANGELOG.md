@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.73](https://github.com/nebulastream/nebulastream/tree/v0.2.73) (2022-08-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.72...v0.2.73)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Move source and query catalog to catalog namespace [\#2903](https://github.com/nebulastream/nebulastream/issues/2903)
+
 ## [v0.2.72](https://github.com/nebulastream/nebulastream/tree/v0.2.72) (2022-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.71...v0.2.72)
