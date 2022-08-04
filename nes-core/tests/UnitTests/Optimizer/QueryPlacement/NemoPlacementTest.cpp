@@ -19,6 +19,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
@@ -52,9 +53,9 @@ using namespace Configurations;
 
 class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     z3::ContextPtr z3Context;
-    SourceCatalogPtr sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryPlanPtr queryPlan;
     SharedQueryPlanPtr sharedQueryPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -72,7 +73,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -125,7 +126,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
                              "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
         const std::string sourceName = "car";
 
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
@@ -136,8 +137,8 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
             csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
 
             auto physicalSource = PhysicalSource::create(sourceName, "test" + std::to_string(i), csvSourceType);
-            SourceCatalogEntryPtr sourceCatalogEntry1 =
-                std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, nodes[i]);
+            Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[i]);
             sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         }
     }
