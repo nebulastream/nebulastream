@@ -366,6 +366,27 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
     EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
 }
 
+TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput) {
+    std::string argv[] = {"type=CSVSource",
+                          "numberOfBuffersToProduce=5",
+                          "rowLayout=false",
+                          "physicalSourceName=x",
+                          "logicalSourceName=default",
+                          "filePath=fileLoc"};
+    int argc = 6;
+    std::map<string, string> commandLineParams;
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
+    CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
+}
+
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
     std::string argv[] = {"type=CSVSource",
                            "numberOfBuffersToProduce=5",
@@ -386,6 +407,17 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInp
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
     EXPECT_NE(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
+}
+
+TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode) {
+
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerWithAdaptiveCSVSource.yaml");
+    EXPECT_TRUE(workerConfigPtr->physicalSources.size() == 1);
+
+    auto csvSourceType = workerConfigPtr->physicalSources.getValues()[0].getValue()->getPhysicalSourceType()->as<CSVSourceType>();
+    EXPECT_NE(csvSourceType->getGatheringMode()->getValue(), csvSourceType->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
 }
 
 }// namespace NES
