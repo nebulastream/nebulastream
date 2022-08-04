@@ -82,7 +82,7 @@ inline uint32_t rotl32(uint32_t x, int8_t r) {
     return (x << r) | (x >> (32 - r)); 
 }
 
-inline uint32_t hashKey(uint64_t k) {
+inline uint32_t murmurHashKey(uint64_t k) {
         // inline hash_t hashKey(uint64_t k, hash_t seed) const {
         uint32_t h1 = 0;
         const uint32_t c1 = 0xcc9e2d51;
@@ -108,14 +108,61 @@ inline uint32_t hashKey(uint64_t k) {
         h1 = h1 * 5 + 0xe6546b64;
 
         return fmix32(h1);
-    }
+}
 
-__attribute__((always_inline)) int64_t getHash(uint64_t inputValue) {
-    uint32_t hashKeyValue = hashKey(inputValue);
+#if defined(__SSE__)
+#include <x86intrin.h>
+// inline uint64_t crc32HashKey(uint64_t k, uint64_t seed) {
+        // uint64_t result1 = _mm_crc32_u64(seed, k);
+        // uint64_t result2 = _mm_crc32_u64(0x04c11db7, k);
+        // return ((result2 << 32) | result1) * 0x2545F4914F6CDD1Dull;
+        // return k + seed;
+// }
+
+__attribute__((__always_inline__, __nodebug__, __target__("sse4.2")))int64_t getCRC32Hash(uint64_t inputValue, uint64_t seed) {
+    // uint32_t hashKeyValue = crc32HashKey(inputValue, 0);
+    uint64_t result1 = _mm_crc32_u64(seed, inputValue);
+    uint64_t result2 = _mm_crc32_u64(0x04c11db7, inputValue);
+    return ((result2 << 32) | result1) * 0x2545F4914F6CDD1Dull;
+    // printf("Current input value: %ld\n", inputValue);
+    // printf("Current input value: %u\n", hashKeyValue);
+    // return (int64_t)hashKeyValue;
+    return ((result2 << 32) | result1) * 0x2545F4914F6CDD1Dull;
+}
+# else 
+inline auto crc32HashKey(uint64_t k, uint64_t seed) {
+    std::cout << "DUMMY CRC32 FUNCTION\n";
+    return k + seed;
+}
+#endif//__SSE__
+
+__attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue) {
+    uint32_t hashKeyValue = murmurHashKey(inputValue);
     // printf("Current input value: %ld\n", inputValue);
     // printf("Current input value: %u\n", hashKeyValue);
     return (int64_t)hashKeyValue;
 }
+
+//Todo might have to provide implementation
+__attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString) {
+    auto test = (char**) inputString + i;
+    char *currentString = *test;
+    for(char c = *currentString; c; c=*++currentString) {
+        *currentString = ::toupper(c);
+    };
+}
+
+// __attribute__((always_inline)) int64_t stringToUpperCasePlusCount(int64_t val1, int64_t i, void *inputString) {
+//     auto test = (char**) inputString + i;
+//     char *currentString = *test;
+//     int numCharactersProcessed = 0;
+//     for(char c = *currentString; c; c=*++currentString) {
+//         *currentString = ::toupper(c);
+//         ++numCharactersProcessed;
+//     };
+//     return val1 + numCharactersProcessed;
+// }
+
 
 
 }// namespace NES::Runtime::ProxyFunctions

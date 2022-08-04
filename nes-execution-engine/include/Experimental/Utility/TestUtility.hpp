@@ -29,6 +29,7 @@ class TestUtility {
     void produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                         std::vector<std::string> snapshotNames, const std::string &resultsFileName, 
                         bool writeRawData = true);
+    std::vector<std::string> loadStringsFromLineitemTable();
 };
 }
 #endif //NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TESTUTILITY_HPP_

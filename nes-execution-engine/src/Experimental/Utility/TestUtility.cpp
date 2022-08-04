@@ -81,25 +81,42 @@ std::pair<std::shared_ptr<NES::Runtime::MemoryLayouts::RowLayout>, NES::Runtime:
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
-void tokenize(std::string const &str, const char delim, std::vector<std::string> &out)
-{
-    size_t start;
-    size_t end = 0;
- 
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
-        end = str.find(delim, start);
-        out.push_back(str.substr(start, end - start));
+std::vector<std::string> NES::ExecutionEngine::Experimental::TestUtility::loadStringsFromLineitemTable() {
+    std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
+    uint64_t linecount = 0;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        linecount++;
     }
+    NES_DEBUG("LOAD lineitem with " << linecount << " lines");
+
+    inFile.clear();// clear fail and eof bits
+    inFile.seekg(0, std::ios::beg);
+
+    int currentLineCount = 0;
+    std::vector<std::string> lineitemStrings;
+    while (std::getline(inFile, line)) {
+        if(!(currentLineCount % 60000)) {
+            printf("Current LineCount: %f\n", currentLineCount/60012.150);
+        }
+        auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
+        lineitemStrings.emplace_back(strings[15]);
+        ++currentLineCount;
+    }
+    inFile.close();
+    NES_DEBUG("Loading of Lineitem done");
+    return lineitemStrings;
 }
+
 
 void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                                                     std::vector<std::string> snapshotNames, 
                                                     const std::string &resultsFileName, bool writeRawData) {
-    //Todo fix path base
-    std::ifstream inlineFS("inlining.csv");
+    std::ifstream inlineFS("llvmLambda.csv");
 
     if(inlineFS.is_open()) {
+        std::cout << "Adding Inlining Informatinon\n";
         std::string line;
         std::vector<double> llvmParsingTimes;
         std::vector<double> llvmIRLinkingTimes;
@@ -129,7 +146,7 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
         snapshotNames.emplace_back("LLVM IR Linking       ");
         snapshotNames.emplace_back("LLVM IR Optimization  ");
         // std::remove((RESULTS_PATH_BASE + "inlining/proxyFunctionsSize/inlining.csv").c_str());
-        std::remove("inlining.csv");
+        std::remove("llvmLambda.csv");
     }
 
     

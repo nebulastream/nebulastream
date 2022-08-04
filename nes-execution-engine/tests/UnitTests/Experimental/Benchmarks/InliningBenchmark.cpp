@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/DataTypeFactory.hpp"
 #include "Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/ExecutionEngine/ExecutablePipeline.hpp"
 #include "Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp"
@@ -46,6 +47,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -92,6 +94,8 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     NES_DEBUG("LOAD lineitem with " << linecount << " lines");
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
 
+    // schema->addField("l_comment", DataTypeFactory::createFixedChar(8));
+    // schema->addField("l_comment", BasicType::UINT64);
     schema->addField("l_quantity", BasicType::INT64);
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
@@ -113,59 +117,105 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
         auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
 
         auto l_quantityString = strings[4];
+        printf("Comment string: %s\n", l_quantityString.c_str());
         int64_t l_quantity = std::stoi(l_quantityString);
         dynamicBuffer[index][0].write(l_quantity);
 
+        
+        //Todo add comment to loaded data
+        // auto l_commentString = strings[15];
+        // std::string test = std::to_string(index);
+        // char charArray[8];
+	    // std::strcpy(charArray, test.c_str());
+        // dynamicBuffer[index][0].write(charArray);
+
         dynamicBuffer.setNumberOfTuples(index + 1);
     }
+    printf("Comment Ptr in buffer: %s\n", dynamicBuffer.getBuffer().getBuffer<char*>()[1]);
     inFile.close();
     NES_DEBUG("Loading of Lineitem done");
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
-/*
-BUGS:
-Value<UInt64> sumLoop(int upperLimit) {
-    Value<UInt64> runningValue((uint64_t) 0);
-    for (Value<UInt64> i = (uint64_t)0; i < (uint64_t)upperLimit; i = i + (uint64_t)1) {
-        for (Value<UInt64> start = (uint64_t)0; start < (uint64_t)upperLimit; start = start + (uint64_t)1) {
-            runningValue = runningValue + (uint64_t)1;
-        }
+void stringManipulation(Value<MemRef> ptr, Value<Int64> size) {
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        FunctionCall<>("stringToUpperCase", Runtime::ProxyFunctions::stringToUpperCase, i, ptr);
     }
-    return runningValue;
-}
-*/
-
-//Currently we are printing the hash results -> no constant folding.
-Value<UInt64> sumLoop(int upperLimit) {
-    Value<UInt64> test((uint64_t) 1);
-    // for (; test < (uint64_t)upperLimit;) {
-    for (Value<UInt64> start = (uint64_t)0; start < (uint64_t)upperLimit; start = start + (uint64_t)1) {
-        // test = test + FunctionCall<>("getHash", Runtime::ProxyFunctions::getHash, test);
-    }
-
-    return test;
 }
 
-
-TEST_F(InliningBenchmark, DISABLED_sumLoopTestSCF) {
-    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
-        return sumLoop(100);
-    });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
+TEST_F(InliningBenchmark, stringManipulationBenchmark) {
     auto mlirUtility = new MLIR::MLIRUtility("", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
-    auto engine = mlirUtility->prepareEngine(false);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
-    ASSERT_EQ(function(), 101);
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    // Get comment strings from Lineitem table and fill array of char pointers with it.
+    auto lineitemStrings = testUtility->loadStringsFromLineitemTable();
+    const char *langStrings [lineitemStrings.size()];
+    for(size_t i = 0; i < lineitemStrings.size(); ++i) {
+        langStrings[i] = lineitemStrings.at(i).c_str();
+    }
+
+    //Setup timing, and results logging.
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 2;
+    const int NUM_SNAPSHOTS = 7;
+    const std::string RESULTS_FILE_NAME = "stringManipulationBenchmark.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ", 
+        "SSA Phase                    ", 
+        "IR Created                   ", 
+        "MLIR Created                 ", 
+        "MLIR Compiled to Function Ptr", 
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+
+    // Execute workload NUM_ITERATIONS number of times.
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+        // Set up empty values for symbolic execution
+        timer.start();
+        auto memPtr = Value<MemRef>(nullptr);
+        memPtr.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+        auto size = Value<Int64>(0l);
+        size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
+        auto executionTrace = Trace::traceFunctionSymbolically([&memPtr, &size]() {
+            stringManipulation(memPtr, size);
+        });
+        timer.snapshot(snapshotNames.at(0));
+
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        timer.snapshot(snapshotNames.at(1));
+
+        auto ir = irCreationPhase.apply(executionTrace);
+        timer.snapshot(snapshotNames.at(2));
+
+        // create and print MLIR
+        int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+        timer.snapshot(snapshotNames.at(3));
+
+        auto engine = mlirUtility->prepareEngine(PERFORM_INLINING);
+        auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get(); //reverse argument order
+        timer.snapshot(snapshotNames.at(4));
+
+        // Execute to uppercase benchmark function.
+        function(lineitemStrings.size(), langStrings);
+        timer.snapshot(snapshotNames.at(5));
+
+        timer.pause();
+        auto snapshots = timer.getSnapshots();
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer.getPrintTime());
+
+    }
+    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+
+
+    // Print random manipulated string to force execution.
+    srand((unsigned) time(0));
+    int result = (rand() % lineitemStrings.size()-1);
+    std::cout << "Random Uppercase String: " << langStrings[result] << '\n';
 }
 
 // void memScanOnly(Value<MemRef> ptr, Value<Int64> size) {
@@ -181,13 +231,24 @@ Value<Int64> memScanAgg(Value<MemRef> ptr, Value<Int64> size) {
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-        auto hashResult = FunctionCall<>("getHash", NES::Runtime::ProxyFunctions::getHash, value);
+        auto hashResult = FunctionCall<>("getHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
         sum = sum + hashResult;
     }
     return sum;
 }
 
-TEST_F(InliningBenchmark, memScanFunctionTest) {
+Value<Int64> memScanAggCRC32(Value<MemRef> ptr, Value<Int64> size) {
+    Value<Int64> sum = 0l;
+    for (auto i = Value(0l); i < size; i = i + 1l) {
+        auto address = ptr + i * 8l;
+        auto value = address.as<MemRef>().load<Int64>();
+        auto hashResult = FunctionCall<>("getHash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+        sum = sum + hashResult;
+    }
+    return sum;
+}
+
+TEST_F(InliningBenchmark, DISABLED_memScanFunctionTest) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -198,7 +259,7 @@ TEST_F(InliningBenchmark, memScanFunctionTest) {
     //Setup timing, and results logging.
     const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
-    const std::string RESULTS_FILE_NAME = "inlining/proxyFunctionsSize/results.csv";
+    const std::string RESULTS_FILE_NAME = "inliningBenchmark.csv";
     const std::vector<std::string> snapshotNames {
         "Symbolic Execution Trace     ", 
         "SSA Phase                    ", 
@@ -220,7 +281,7 @@ TEST_F(InliningBenchmark, memScanFunctionTest) {
         auto size = Value<Int64>(0l);
         size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
         auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
-            return memScanAgg(memPtr, size);
+            return memScanAggCRC32(memPtr, size);
         });
         timer.snapshot(snapshotNames.at(0));
 
@@ -236,7 +297,8 @@ TEST_F(InliningBenchmark, memScanFunctionTest) {
         auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
         timer.snapshot(snapshotNames.at(4));
 
-        function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        int64_t result = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        std::cout << "Result: " << result << '\n';
 
         // Wrap up timing
         timer.snapshot(snapshotNames.at(5));
@@ -253,44 +315,17 @@ TEST_F(InliningBenchmark, memScanFunctionTest) {
     testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 }
 
-// Scan -> Map //-> Emit
-TEST_F(InliningBenchmark, DISABLED_aggregateHashes) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = loadLineItemTable(bm);
-
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    CustomScan scan = CustomScan(lineitemBuffer.first);
-
-    // auto aggField = std::make_shared<ReadFieldExpression>(0);
-    // auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-    // std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    // auto aggregation = std::make_shared<Aggregation>(functions);
-    // scan.setChild(aggregation);
-
-    auto readShipdate = std::make_shared<ReadFieldExpression>(0);
-    auto selection1 = std::make_shared<Selection>(readShipdate);
-    scan.setChild(selection1);
-    // selection1->setChild(aggregation);
-
-    auto executionEngine = CompilationBasedPipelineExecutionEngine();
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    executablePipeline->setup();
-
-    auto buffer = lineitemBuffer.second.getBuffer();
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 1995906217); //Scale 0.01
-}
-
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+/*
+BUGS:
+Value<UInt64> sumLoop(int upperLimit) {
+    Value<UInt64> runningValue((uint64_t) 0);
+    for (Value<UInt64> i = (uint64_t)0; i < (uint64_t)upperLimit; i = i + (uint64_t)1) {
+        for (Value<UInt64> start = (uint64_t)0; start < (uint64_t)upperLimit; start = start + (uint64_t)1) {
+            runningValue = runningValue + (uint64_t)1;
+        }
+    }
+    return runningValue;
+}
+*/

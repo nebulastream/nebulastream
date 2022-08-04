@@ -31,9 +31,10 @@ extern "C"  uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr)
 extern "C"  void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t value);
 
 extern "C" __attribute__((always_inline)) void printInt64(int64_t inputValue);
+extern "C" __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString);
 
-
-extern "C" __attribute__((always_inline)) int64_t getHash(uint64_t inputValue);
+extern "C" __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue);
+extern "C" __attribute__((__always_inline__, __nodebug__, __target__("sse4.2"))) int64_t getCRC32Hash(uint64_t inputValue, uint64_t seed);
 
 }// namespace NES::Runtime::ProxyFunctions
 #endif //NES_NES_EXECUTION_INCLUDE_INTERPRETER_PROXY_FUNCTIONS_HPP_

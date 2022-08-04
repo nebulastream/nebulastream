@@ -260,19 +260,19 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             timerString += '\n';
 
             // Write inlining results to folder where benchmark is executed (will be removed later).
-            std::ofstream fs("inlining.csv", std::ios::app);
+            std::ofstream fs("llvmLambda.csv", std::ios::app);
             if(fs.is_open()) { 
                 fs.write(timerString.c_str(), timerString.size());
             }
 
-            // std::string llvmIRString;
-            // llvm::raw_string_ostream llvmStringStream(llvmIRString);
-            // llvmIRModule->print(llvmStringStream, nullptr);
+            std::string llvmIRString;
+            llvm::raw_string_ostream llvmStringStream(llvmIRString);
+            llvmIRModule->print(llvmStringStream, nullptr);
 
-            // auto* basicError = new std::error_code();
-            // //Todo Also use CMake parameter for generated file.
-            // llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
-            // fileStream.write(llvmIRString.c_str(), llvmIRString.length());
+            auto* basicError = new std::error_code();
+            //Todo Also use CMake parameter for generated file.
+            llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
+            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };
     } else {
@@ -337,7 +337,9 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
     }
     //Todo move
     std::unordered_set<std::string> ExtractFuncs{
-        "getHash",
+        "getMurMurHash",
+        "getCRC32Hash",
+        "stringToUpperCase",
         "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", 
         "NES__Runtime__TupleBuffer__getNumberOfTuples",
         "NES__Runtime__TupleBuffer__setNumberOfTuples",
