@@ -194,7 +194,7 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint32_t buffersPerEpoch;
-    std::ofstream statisticsFile;
+//    std::ofstream statisticsFile;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety
