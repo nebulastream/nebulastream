@@ -92,6 +92,8 @@ auto transform(Arg argument) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<UInt64>>::value) {
         return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<Double>>::value) {
+        return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<Boolean>>::value) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<MemRef>>::value) {
@@ -112,6 +114,9 @@ auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, int64_t>::value) {
         return Value<Int64>(std::make_unique<Int64>(argument));
     }
+    if constexpr (std::is_same<Arg, double>::value) {
+        return Value<Double>(std::make_unique<Double>(argument));
+    }
     if constexpr (std::is_same<Arg, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int8_t*) argument));
     }
@@ -127,6 +132,9 @@ auto createDefault() {
     }
     if constexpr (std::is_same<R, uint64_t>::value) {
         return Value<UInt64>(std::make_unique<UInt64>(0));
+    }
+    if constexpr (std::is_same<R, double>::value) {
+        return Value<Double>(std::make_unique<Double>(0));
     }
     if constexpr (std::is_same<R, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));

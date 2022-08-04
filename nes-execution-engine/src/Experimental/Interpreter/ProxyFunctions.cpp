@@ -13,6 +13,7 @@
 */
 #include <Runtime/TupleBuffer.hpp>
 // #include <Runtime/TupleBuffer.hpp>
+#include <cmath>
 #include <cstdint>
 
 #include <Experimental/Interpreter/ProxyFunctions.hpp>
@@ -138,12 +139,32 @@ inline auto crc32HashKey(uint64_t k, uint64_t seed) {
 
 __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue) {
     uint32_t hashKeyValue = murmurHashKey(inputValue);
-    // printf("Current input value: %ld\n", inputValue);
-    // printf("Current input value: %u\n", hashKeyValue);
     return (int64_t)hashKeyValue;
 }
 
-//Todo might have to provide implementation
+
+__attribute__((always_inline)) int64_t standardDeviationOne(int64_t runningSum, int64_t inputValue) {
+    return runningSum + inputValue;
+}
+__attribute__((always_inline)) double standardDeviationGetMean(int64_t size, void* bufferPtr) {
+    int64_t *buffer = (int64_t *) bufferPtr;
+    int64_t runningSum = 0;
+    for(int64_t i = 0; i < size; ++i) {
+        runningSum += buffer[i];
+    }
+    // printf("Size: %ld\n", buffer[0]);
+    // printf("Size: %ld\n", size);
+    return runningSum / (double)size;
+    // return 25.5277;
+    // return (double)runningSum / (double)size;
+}
+__attribute__((always_inline)) double standardDeviationTwo(double runningDeviationSum, double mean, int64_t inputValue) {
+    return runningDeviationSum += (inputValue - mean) * (inputValue - mean);
+}
+__attribute__((always_inline)) double standardDeviationThree(double deviationSum, int64_t size) {
+    return std::sqrt(deviationSum) / size;
+}
+
 __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString) {
     auto test = (char**) inputString + i;
     char *currentString = *test;

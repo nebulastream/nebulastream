@@ -118,7 +118,7 @@ TEST_F(MemoryAccessExecutionTest, DISABLED_storeFunctionTest) {
     ASSERT_EQ(valI, 43);
 }
 
-Value<Int64> memScanAgg(Value<MemRef> ptr, Value<Int64> size) {
+Value<Int64> murmurHashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     Value<Int64> sum = 0l;
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
@@ -134,7 +134,7 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     auto size = Value<Int64>(0l);
     size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
-        return memScanAgg(memPtr, size);
+        return murmurHashAggregation(memPtr, size);
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));

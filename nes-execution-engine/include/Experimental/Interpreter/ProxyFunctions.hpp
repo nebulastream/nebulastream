@@ -34,6 +34,12 @@ extern "C" __attribute__((always_inline)) void printInt64(int64_t inputValue);
 extern "C" __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString);
 
 extern "C" __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue);
+
+extern "C" __attribute__((always_inline)) int64_t standardDeviationOne(int64_t runningSum, int64_t inputValue);
+extern "C" __attribute__((always_inline)) double standardDeviationGetMean(int64_t size, void *bufferPtr);
+extern "C" __attribute__((always_inline)) double standardDeviationTwo(double runningDeviationSum, double mean, int64_t inputValue);
+extern "C" __attribute__((always_inline)) double standardDeviationThree(double deviationSum, int64_t size);
+
 extern "C" __attribute__((__always_inline__, __nodebug__, __target__("sse4.2"))) int64_t getCRC32Hash(uint64_t inputValue, uint64_t seed);
 
 }// namespace NES::Runtime::ProxyFunctions

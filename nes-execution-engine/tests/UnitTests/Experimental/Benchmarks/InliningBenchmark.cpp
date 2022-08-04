@@ -16,6 +16,7 @@
 #include "Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/ExecutionEngine/ExecutablePipeline.hpp"
 #include "Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp"
+#include "Experimental/Interpreter/DataValue/Float/Double.hpp"
 #include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
@@ -83,6 +84,7 @@ class InliningBenchmark : public testing::Test {
 
 };
 
+//Todo allow loading specific column via TestUtility
 auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
     uint64_t linecount = 0;
@@ -96,6 +98,7 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
 
     // schema->addField("l_comment", DataTypeFactory::createFixedChar(8));
     // schema->addField("l_comment", BasicType::UINT64);
+    // schema->addField("l_quantity", BasicType::FLOAT64);
     schema->addField("l_quantity", BasicType::INT64);
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
@@ -107,6 +110,8 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
 
     int currentLineCount = 0;
     printf("Current LineCount: %ld\n", linecount);
+
+    int runningSum = 0;
     while (std::getline(inFile, line)) {
         if(!(currentLineCount % 60000)) {
             printf("Current LineCount: %f\n", currentLineCount/60012.150);
@@ -117,12 +122,15 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
         auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
 
         auto l_quantityString = strings[4];
-        printf("Comment string: %s\n", l_quantityString.c_str());
+        // printf("Comment string: %s\n", l_quantityString.c_str());
         int64_t l_quantity = std::stoi(l_quantityString);
         dynamicBuffer[index][0].write(l_quantity);
+        // double l_quantityAsDouble = (double) l_quantity;
+        // dynamicBuffer[index][0].write(l_quantityAsDouble);
+        runningSum += l_quantity;
 
         
-        //Todo add comment to loaded data
+        //Todo enable loading comments into TupleBuffer
         // auto l_commentString = strings[15];
         // std::string test = std::to_string(index);
         // char charArray[8];
@@ -131,19 +139,119 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
 
         dynamicBuffer.setNumberOfTuples(index + 1);
     }
-    printf("Comment Ptr in buffer: %s\n", dynamicBuffer.getBuffer().getBuffer<char*>()[1]);
+    std::cout << "Mean: " << runningSum / (double) dynamicBuffer.getNumberOfTuples() << '\n';
     inFile.close();
     NES_DEBUG("Loading of Lineitem done");
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
+Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size) {
+    auto meanPtr = ptr;
+    // 1. calculate mean via a single proxy call
+    Value<Double> mean  = FunctionCall<>("standardDeviationGetMean", NES::Runtime::ProxyFunctions::standardDeviationGetMean, size, meanPtr);
+
+    // 2. Aggregate squared difference between mean and values
+    auto deviationPtr = ptr;
+    Value<Double> runningDeviationSum = 0.0;
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        auto address = deviationPtr + i * 8l;
+        auto value = address.as<MemRef>().load<Int64>();
+        runningDeviationSum = FunctionCall<>("standardDeviationTwo", NES::Runtime::ProxyFunctions::standardDeviationTwo, runningDeviationSum, mean, value);
+    }
+
+    // //3. get root of aggregated squared values and divide by num elements
+    return FunctionCall<>("standardDeviationThree", NES::Runtime::ProxyFunctions::standardDeviationThree, runningDeviationSum, size);
+}
+
+//==-------------------------------------------------------------==//
+//==-------------- ALGEBRAIC FUNCTION BENCHMARKS ---------------==//
+//==-----------------------------------------------------------==//
+TEST_F(InliningBenchmark, algebraicFunctionBenchmark) {
+    // Setup test for proxy inlining with reduced and non-reduced proxy file.
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    auto buffer = lineitemBuffer.second.getBuffer();
+
+    //Setup timing, and results logging.
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 1;
+    const int NUM_SNAPSHOTS = 7;
+    const std::string RESULTS_FILE_NAME = "inliningBenchmark.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ", 
+        "SSA Phase                    ", 
+        "IR Created                   ", 
+        "MLIR Created                 ", 
+        "MLIR Compiled to Function Ptr", 
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+
+    // Execute workload NUM_ITERATIONS number of times.
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+
+        // Set up empty values for symbolic execution
+        timer.start();
+        auto memPtr = Value<MemRef>(nullptr);
+        memPtr.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+        auto size = Value<Int64>(0l);
+        size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
+        std::shared_ptr<NES::ExecutionEngine::Experimental::Trace::ExecutionTrace> executionTrace;
+        executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+            return standardDeviationAggregation(memPtr, size);
+        });
+        timer.snapshot(snapshotNames.at(0));
+
+        // Create SSA from trace.
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        timer.snapshot(snapshotNames.at(1));
+
+        // Create Nautilus IR from SSA trace.
+        auto ir = irCreationPhase.apply(executionTrace);
+        timer.snapshot(snapshotNames.at(2));
+
+        // Create MLIR
+        int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+        timer.snapshot(snapshotNames.at(3));
+
+        // Compile MLIR -> return function pointer
+        auto engine = mlirUtility->prepareEngine(PERFORM_INLINING);
+        auto function = (double(*)(int, void*)) engine->lookup("execute").get();
+        timer.snapshot(snapshotNames.at(4));
+
+        // Execute function
+        double stdDeviationResult = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        timer.snapshot(snapshotNames.at(5));
+
+        // Print aggregation result to force execution.
+        std::cout << "Standard Deviation Result: " << stdDeviationResult << '\n';
+
+        // Wrap up timing
+        timer.pause();
+        NES_DEBUG("Overall time: " << timer.getPrintTime());
+        auto snapshots = timer.getSnapshots();
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer.getPrintTime());
+    }
+    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+}
+
+
+//==--------------------------------------------------------------==//
+//==-------------- STRING MANIPULATION BENCHMARKS ---------------==//
+//==------------------------------------------------------------==//
 void stringManipulation(Value<MemRef> ptr, Value<Int64> size) {
     for (Value<Int64> i = 0l; i < size; i = i + 1l) {
         FunctionCall<>("stringToUpperCase", Runtime::ProxyFunctions::stringToUpperCase, i, ptr);
     }
 }
-
-TEST_F(InliningBenchmark, stringManipulationBenchmark) {
+TEST_F(InliningBenchmark, DISABLED_stringManipulationBenchmark) {
     auto mlirUtility = new MLIR::MLIRUtility("", false);
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     // Get comment strings from Lineitem table and fill array of char pointers with it.
@@ -172,6 +280,7 @@ TEST_F(InliningBenchmark, stringManipulationBenchmark) {
     // Execute workload NUM_ITERATIONS number of times.
     for(int i = 0; i < NUM_ITERATIONS; ++i) {
         Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+
         // Set up empty values for symbolic execution
         timer.start();
         auto memPtr = Value<MemRef>(nullptr);
@@ -202,6 +311,7 @@ TEST_F(InliningBenchmark, stringManipulationBenchmark) {
         timer.snapshot(snapshotNames.at(5));
 
         timer.pause();
+        NES_DEBUG("Overall time: " << timer.getPrintTime());
         auto snapshots = timer.getSnapshots();
         for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
@@ -218,37 +328,33 @@ TEST_F(InliningBenchmark, stringManipulationBenchmark) {
     std::cout << "Random Uppercase String: " << langStrings[result] << '\n';
 }
 
-// void memScanOnly(Value<MemRef> ptr, Value<Int64> size) {
-//     for (auto i = Value(0l); i < size; i = i + 1l) {
-//         auto address = ptr + i * 8l;
-//         auto value = address.as<MemRef>().load<Int64>();
-//         FunctionCall<>("printInt64", NES::Runtime::ProxyFunctions::printInt64, value);
-//     }
-// }
 
-Value<Int64> memScanAgg(Value<MemRef> ptr, Value<Int64> size) {
+//==----------------------------------------------------------==//
+//==-------------- HASH AGGREGATION BENCHMARKS --------------==//
+//==--------------------------------------------------------==//
+Value<Int64> murmurHashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     Value<Int64> sum = 0l;
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-        auto hashResult = FunctionCall<>("getHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
+        auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
         sum = sum + hashResult;
     }
     return sum;
 }
 
-Value<Int64> memScanAggCRC32(Value<MemRef> ptr, Value<Int64> size) {
+Value<Int64> crc32HashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     Value<Int64> sum = 0l;
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-        auto hashResult = FunctionCall<>("getHash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+        auto hashResult = FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
         sum = sum + hashResult;
     }
     return sum;
 }
 
-TEST_F(InliningBenchmark, DISABLED_memScanFunctionTest) {
+TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -257,6 +363,8 @@ TEST_F(InliningBenchmark, DISABLED_memScanFunctionTest) {
     auto buffer = lineitemBuffer.second.getBuffer();
 
     //Setup timing, and results logging.
+    const bool PERFORM_INLINING = true;
+    const bool USE_CRC32_HASH_FUNCTION = true; //ELSE: We are using the MurMur hash function.
     const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
     const std::string RESULTS_FILE_NAME = "inliningBenchmark.csv";
@@ -274,39 +382,53 @@ TEST_F(InliningBenchmark, DISABLED_memScanFunctionTest) {
     // Execute workload NUM_ITERATIONS number of times.
     for(int i = 0; i < NUM_ITERATIONS; ++i) {
         Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+
         // Set up empty values for symbolic execution
         timer.start();
         auto memPtr = Value<MemRef>(nullptr);
         memPtr.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
         auto size = Value<Int64>(0l);
         size.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
-        auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
-            return memScanAggCRC32(memPtr, size);
-        });
+        std::shared_ptr<NES::ExecutionEngine::Experimental::Trace::ExecutionTrace> executionTrace;
+        if(USE_CRC32_HASH_FUNCTION) {
+            executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+                return crc32HashAggregation(memPtr, size);
+            });
+        } else {
+            executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+                return murmurHashAggregation(memPtr, size);
+            });
+        }
         timer.snapshot(snapshotNames.at(0));
 
+        // Create SSA from trace.
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         timer.snapshot(snapshotNames.at(1));
+
+        // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
         timer.snapshot(snapshotNames.at(2));
 
-        // create and print MLIR
+        // Create MLIR
         int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
         timer.snapshot(snapshotNames.at(3));
-        auto engine = mlirUtility->prepareEngine(false);
+
+        // Compile MLIR -> return function pointer
+        auto engine = mlirUtility->prepareEngine(PERFORM_INLINING);
         auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
         timer.snapshot(snapshotNames.at(4));
 
-        int64_t result = function(buffer.getNumberOfTuples(), buffer.getBuffer());
-        std::cout << "Result: " << result << '\n';
+        // Execute function
+        int64_t hashAggregationResult = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        timer.snapshot(snapshotNames.at(5));
+
+        // Print aggregation result to force execution.
+        std::cout << "Result: " << hashAggregationResult << '\n';
 
         // Wrap up timing
-        timer.snapshot(snapshotNames.at(5));
         timer.pause();
+        NES_DEBUG("Overall time: " << timer.getPrintTime());
         auto snapshots = timer.getSnapshots();
-        NES_INFO(timer);
-        std::cout << "Overall time: " << timer.getPrintTime();
-        NES_DEBUG("Snapshot length: "<< snapshots.size());
         for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
@@ -319,6 +441,8 @@ TEST_F(InliningBenchmark, DISABLED_memScanFunctionTest) {
 
 /*
 BUGS:
+- Cannot call functions that take doubles as args or return doubles
+- Cannot run two consecutive loops
 Value<UInt64> sumLoop(int upperLimit) {
     Value<UInt64> runningValue((uint64_t) 0);
     for (Value<UInt64> i = (uint64_t)0; i < (uint64_t)upperLimit; i = i + (uint64_t)1) {
@@ -328,4 +452,15 @@ Value<UInt64> sumLoop(int upperLimit) {
     }
     return runningValue;
 }
+*/
+
+/*
+BACKUP:
+    Value<Int64> runningSum = 0l; //1536127 (x0.01)
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        auto address = sumPtr + i * 8l;
+        auto value = address.as<MemRef>().load<Int64>();
+        // runningSum = FunctionCall<>("standardDeviationOne", NES::Runtime::ProxyFunctions::standardDeviationOne, runningSum, value);
+        runningSum = FunctionCall<>("standardDeviationOne", NES::Runtime::ProxyFunctions::standardDeviationOne, runningSum, value);
+    }
 */
