@@ -67,7 +67,8 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -98,7 +99,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -128,7 +130,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -165,7 +168,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -202,7 +206,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -252,7 +257,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren) {
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);

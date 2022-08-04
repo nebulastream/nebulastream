@@ -28,7 +28,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::Source
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical sources.

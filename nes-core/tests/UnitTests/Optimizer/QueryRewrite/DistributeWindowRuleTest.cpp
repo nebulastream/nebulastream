@@ -80,8 +80,10 @@ void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatal
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sce2 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
     sourceCatalog->addPhysicalSource("default_logical", sce2);
@@ -102,11 +104,16 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sce2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
-    Catalogs::Source::SourceCatalogEntryPtr sce3 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
-    Catalogs::Source::SourceCatalogEntryPtr sce4 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
-    Catalogs::Source::SourceCatalogEntryPtr sce5 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sce2 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    Catalogs::Source::SourceCatalogEntryPtr sce3 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
+    Catalogs::Source::SourceCatalogEntryPtr sce4 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
+    Catalogs::Source::SourceCatalogEntryPtr sce5 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
     sourceCatalog->addPhysicalSource("default_logical", sce2);
@@ -122,13 +129,15 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    Catalogs::Source::SourceCatalogEntryPtr sce1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     sourceCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -152,7 +161,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalogTwoNodes(sourceCatalog);
 
     // Prepare
@@ -183,7 +193,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalogFiveNodes(sourceCatalog);
 
     // Prepare

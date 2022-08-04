@@ -70,4 +70,4 @@ TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByt
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeListWithEmptyByteCode), UdfException);
 }
 
-}// namespace NES::Catalogs
+}// namespace NES::Catalogs::UDF

@@ -64,7 +64,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
-        Catalogs::Source::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sce =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
         sourceCatalog->addLogicalSource("src", schema);
         sourceCatalog->addPhysicalSource("src", sce);
     }
@@ -73,7 +74,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperator) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
@@ -100,7 +102,8 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOperator) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query =
@@ -128,7 +131,8 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
 TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWithProject) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src")

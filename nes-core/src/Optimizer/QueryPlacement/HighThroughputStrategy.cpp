@@ -31,7 +31,9 @@ namespace NES {
 
 HighThroughputStrategy::HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog) {
+NESExecutionPlanPtr
+HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
+                                                std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog) {
 
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];

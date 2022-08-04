@@ -27,7 +27,7 @@ using QueryPtr = std::shared_ptr<Query>;
 namespace Catalogs::UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}// namespace Catalogs
+}// namespace Catalogs::UDF
 
 }// namespace NES
 
@@ -53,14 +53,18 @@ class SemanticQueryValidation {
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UDF::UdfCatalogPtr udfCatalog);
+    explicit SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                     bool advanceChecks,
+                                     Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      * @param sourceCatalog: source catalog
      * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog, bool advanceChecks, const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+    static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                             bool advanceChecks,
+                                             const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
@@ -74,14 +78,16 @@ class SemanticQueryValidation {
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
+    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
+                                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Checks if the physical source for the provided QueryPlan is present
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
+    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
+                                            const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message

@@ -33,7 +33,9 @@
 using namespace std::string_literals;
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog, bool advanceChecks, Catalogs::UDF::UdfCatalogPtr udfCatalog)
+SemanticQueryValidation::SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                 bool advanceChecks,
+                                                 Catalogs::UDF::UdfCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
@@ -168,7 +170,8 @@ void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr
     }
 }
 
-void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& queryPlan,
+                                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     //Identify the source operators
     auto sourceOperators = queryPlan->getSourceOperators();
     std::vector<std::string> invalidLogicalSourceNames;

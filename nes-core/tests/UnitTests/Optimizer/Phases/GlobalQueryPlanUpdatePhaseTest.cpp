@@ -65,7 +65,8 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "test1", defaultSourceType);
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
         sourceCatalog->addPhysicalSource("default_logical", sourceCatalogEntry1);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
@@ -99,7 +100,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                context,
                                                                optimizerConfiguration,
                                                                udfCatalog);
-    auto catalogEntry1 = Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
+    auto catalogEntry1 =
+        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -376,7 +378,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
     auto physicalSource = PhysicalSource::create("example", "test1");
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
     sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;

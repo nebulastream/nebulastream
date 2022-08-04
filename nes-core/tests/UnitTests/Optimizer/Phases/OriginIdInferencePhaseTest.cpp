@@ -59,7 +59,8 @@ class OriginIdInferencePhaseTest : public testing::Test {
         NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
-        Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        Catalogs::Source::SourceCatalogPtr sourceCatalog =
+            std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UdfCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
@@ -83,11 +84,13 @@ class OriginIdInferencePhaseTest : public testing::Test {
         LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
         PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create("A", "A1", DefaultSourceType::create());
-        Catalogs::Source::SourceCatalogEntryPtr sceA1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA1, logicalSourceA, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sceA1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA1, logicalSourceA, physicalNode);
         sourceCatalog->addPhysicalSource("A", sceA1);
 
         PhysicalSourcePtr physicalSourceA2 = PhysicalSource::create("A", "A2", DefaultSourceType::create());
-        Catalogs::Source::SourceCatalogEntryPtr sceA2 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA2, logicalSourceA, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sceA2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA2, logicalSourceA, physicalNode);
         sourceCatalog->addPhysicalSource("A", sceA2);
 
         auto schemaB = Schema::create()->addField("id", INT32)->addField("value", UINT32);
@@ -95,7 +98,8 @@ class OriginIdInferencePhaseTest : public testing::Test {
         LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
         PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create("B", "B1", DefaultSourceType::create());
-        Catalogs::Source::SourceCatalogEntryPtr sceB1 = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceB1, logicalSourceB, physicalNode);
+        Catalogs::Source::SourceCatalogEntryPtr sceB1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceB1, logicalSourceB, physicalNode);
         sourceCatalog->addPhysicalSource("B", sceB1);
     }
 };

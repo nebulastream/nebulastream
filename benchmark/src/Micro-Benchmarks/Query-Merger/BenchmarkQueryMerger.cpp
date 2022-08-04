@@ -113,7 +113,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
-            Catalogs::Source::SourceCatalogEntryPtr sce = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
+            Catalogs::Source::SourceCatalogEntryPtr sce =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }

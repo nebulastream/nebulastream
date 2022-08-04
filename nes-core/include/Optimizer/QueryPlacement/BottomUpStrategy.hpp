@@ -22,7 +22,7 @@ namespace NES::Catalogs::Source {
 
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace NES
+}// namespace NES::Catalogs::Source
 
 namespace NES::Optimizer {
 
