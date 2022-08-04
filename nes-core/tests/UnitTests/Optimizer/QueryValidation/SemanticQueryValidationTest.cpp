@@ -234,7 +234,7 @@ TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("default_logical")
         .inferModel("models/iris.tflite",
