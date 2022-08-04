@@ -265,6 +265,22 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
                 fs.write(timerString.c_str(), timerString.size());
             }
 
+//            std::string llvmIRString;
+//            llvm::raw_string_ostream llvmStringStream(llvmIRString);
+//            llvmIRModule->print(llvmStringStream, nullptr);
+//
+//            auto* basicError = new std::error_code();
+//            //Todo Also use CMake parameter for generated file.
+//            llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
+//            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
+            return optimizedModule;
+        };
+    } else {
+        return [](llvm::Module* llvmIRModule) {
+            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
+            auto optimizedModule = optPipeline(llvmIRModule);
+            // llvmIRModule->print(llvm::outs(), nullptr);
+
             std::string llvmIRString;
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
             llvmIRModule->print(llvmStringStream, nullptr);
@@ -273,13 +289,6 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             //Todo Also use CMake parameter for generated file.
             llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
             fileStream.write(llvmIRString.c_str(), llvmIRString.length());
-            return optimizedModule;
-        };
-    } else {
-        return [](llvm::Module* llvmIRModule) {
-            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
-            auto optimizedModule = optPipeline(llvmIRModule);
-            // llvmIRModule->print(llvm::outs(), nullptr);
             return optimizedModule;
         };
     }
@@ -338,20 +347,24 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
     //Todo move
     std::unordered_set<std::string> ExtractFuncs{
         "getMurMurHash",
-        "getCRC32Hash",
-        "stringToUpperCase",
-        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", 
-        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-        "NES__Runtime__TupleBuffer__setNumberOfTuples",
-        "NES__Runtime__TupleBuffer__getBuffer",
+//        "getCRC32Hash",
+//        "stringToUpperCase",
+//        "standardDeviationGetMean",
+//        "standardDeviationGetVariance",
+//        "standardDeviationGetStdDev",
+//        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
+//        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+//        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+//        "NES__Runtime__TupleBuffer__getBuffer",
         // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
-        "NES__Runtime__TupleBuffer__getBufferSize",
-        "NES__Runtime__TupleBuffer__getWatermark",
-        "NES__Runtime__TupleBuffer__setWatermark",
-        "NES__Runtime__TupleBuffer__getCreationTimestamp",
-        "NES__Runtime__TupleBuffer__setSequenceNumber",
-        "NES__Runtime__TupleBuffer__getSequenceNumber",
-        "NES__Runtime__TupleBuffer__setCreationTimestamp"};
+//        "NES__Runtime__TupleBuffer__getBufferSize",
+//        "NES__Runtime__TupleBuffer__getWatermark",
+//        "NES__Runtime__TupleBuffer__setWatermark",
+//        "NES__Runtime__TupleBuffer__getCreationTimestamp",
+//        "NES__Runtime__TupleBuffer__setSequenceNumber",
+//        "NES__Runtime__TupleBuffer__getSequenceNumber",
+//        "NES__Runtime__TupleBuffer__setCreationTimestamp"
+    };
 
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();

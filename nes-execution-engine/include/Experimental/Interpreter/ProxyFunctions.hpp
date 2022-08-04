@@ -35,7 +35,6 @@ extern "C" __attribute__((always_inline)) void stringToUpperCase(int64_t i, void
 
 extern "C" __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue);
 
-extern "C" __attribute__((always_inline)) int64_t standardDeviationOne(int64_t runningSum, int64_t inputValue);
 extern "C" __attribute__((always_inline)) double standardDeviationGetMean(int64_t size, void *bufferPtr);
 extern "C" __attribute__((always_inline)) double standardDeviationGetVariance(double runningDeviationSum, double mean, int64_t inputValue);
 extern "C" __attribute__((always_inline)) double standardDeviationGetStdDev(double deviationSum, int64_t size);

@@ -166,7 +166,7 @@ Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size)
 //==-------------------------------------------------------------==//
 //==-------------- ALGEBRAIC FUNCTION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, algebraicFunctionBenchmark) {
+TEST_F(InliningBenchmark, DISABLDE_algebraicFunctionBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -175,10 +175,10 @@ TEST_F(InliningBenchmark, algebraicFunctionBenchmark) {
     auto buffer = lineitemBuffer.second.getBuffer();
 
     //Setup timing, and results logging.
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 1;
+    const bool PERFORM_INLINING = true;
+    const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
-    const std::string RESULTS_FILE_NAME = "inliningBenchmark.csv";
+    const std::string RESULTS_FILE_NAME = "algebraicFunctionBenchmark.csv";
     const std::vector<std::string> snapshotNames {
         "Symbolic Execution Trace     ", 
         "SSA Phase                    ", 
@@ -263,15 +263,15 @@ TEST_F(InliningBenchmark, DISABLED_stringManipulationBenchmark) {
 
     //Setup timing, and results logging.
     const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 2;
+    const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
     const std::string RESULTS_FILE_NAME = "stringManipulationBenchmark.csv";
     const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ", 
-        "SSA Phase                    ", 
-        "IR Created                   ", 
-        "MLIR Created                 ", 
-        "MLIR Compiled to Function Ptr", 
+        "Symbolic Execution Trace     ",
+        "SSA Phase                    ",
+        "IR Created                   ",
+        "MLIR Created                 ",
+        "MLIR Compiled to Function Ptr",
         "Executed                     ",
         "Overall Time                 "
     };
@@ -354,7 +354,7 @@ Value<Int64> crc32HashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     return sum;
 }
 
-TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
+TEST_F(InliningBenchmark, crc32HashAggregationBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -363,11 +363,16 @@ TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
     auto buffer = lineitemBuffer.second.getBuffer();
 
     //Setup timing, and results logging.
-    const bool PERFORM_INLINING = true;
-    const bool USE_CRC32_HASH_FUNCTION = true; //ELSE: We are using the MurMur hash function.
+    const bool PERFORM_INLINING = false;
+    const bool USE_CRC32_HASH_FUNCTION = false; //ELSE: We are using the MurMur hash function.
     const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
-    const std::string RESULTS_FILE_NAME = "inliningBenchmark.csv";
+    std::string RESULTS_FILE_NAME;
+    if(USE_CRC32_HASH_FUNCTION) {
+        RESULTS_FILE_NAME = "crc32HashAggregationBenchmark.csv";
+    } else {
+        RESULTS_FILE_NAME = "murmurHashAggregationBenchmark.csv";
+    }
     const std::vector<std::string> snapshotNames {
         "Symbolic Execution Trace     ", 
         "SSA Phase                    ", 

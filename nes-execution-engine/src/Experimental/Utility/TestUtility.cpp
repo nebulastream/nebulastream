@@ -153,7 +153,7 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
     std::ofstream fs(resultsFileName, std::ios::out);
     if(fs.is_open()) {
         std::stringstream result;
-        result << "                      ; Mean; Max; Min; Median; Q1; Q3; STD-DEV\n";
+        result << "                             ; Mean; Max; Min; Median; Q1; Q3; STD-DEV\n";
         std::stringstream rawDataResultStream;
         // std::string snapshotNamesAsString = "\n\nThe below raw data lines correspond to: \n";
         rawDataResultStream << "\n\nRaw Data: \n---------\n";

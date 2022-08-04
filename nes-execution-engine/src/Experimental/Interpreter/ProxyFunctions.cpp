@@ -142,10 +142,6 @@ __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue) {
     return (int64_t)hashKeyValue;
 }
 
-
-__attribute__((always_inline)) int64_t standardDeviationOne(int64_t runningSum, int64_t inputValue) {
-    return runningSum + inputValue;
-}
 __attribute__((always_inline)) double standardDeviationGetMean(int64_t size, void* bufferPtr) {
     int64_t *buffer = (int64_t *) bufferPtr;
     int64_t runningSum = 0;
@@ -165,11 +161,23 @@ __attribute__((always_inline)) double standardDeviationGetStdDev(double deviatio
     return std::sqrt(deviationSum) / size;
 }
 
+__attribute__((always_inline)) char customToUpper(char c) {
+    if(c>=97 && c<=122)
+    {
+        return c-32;
+    }
+    else
+    {
+        return c;
+    }
+}
+
 __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString) {
     auto test = (char**) inputString + i;
     char *currentString = *test;
     for(char c = *currentString; c; c=*++currentString) {
-        *currentString = ::toupper(c);
+//        *currentString = ::toupper(c);
+        *currentString = customToUpper(c);
     };
 }
 
