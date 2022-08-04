@@ -165,7 +165,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
@@ -181,7 +181,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     void topologyGenerator() {
@@ -221,7 +221,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, schema);
-        auto logicalSource = sourceCatalog->getSourceForLogicalSource(streamName);
+        auto logicalSource = sourceCatalog->getLogicalSource(streamName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
@@ -234,7 +234,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         }
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -327,7 +327,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
