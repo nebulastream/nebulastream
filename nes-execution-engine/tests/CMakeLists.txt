@@ -14,18 +14,7 @@
 include(ExternalProject)
 
 ### MLIR Tests ###
-get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-target_link_libraries(nes-execution-engine
-        PUBLIC
-        nes
-        ${dialect_libs}
-        ${conversion_libs}
-        ${GTEST_LIBRARIES}
-        MLIRReconcileUnrealizedCasts
-        MLIRMemRefToLLVM
-        MLIRExecutionEngine
-        )
+
 #add_executable(mlir-nesir-loop-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Loop.cpp")
 #target_link_libraries(mlir-nesir-loop-test
 #        nes-execution-engine)
@@ -101,15 +90,18 @@ add_test(NAME execution-engine-expression-test COMMAND execution-engine-expressi
 
 add_subdirectory(UnitTests/Experimental/ExecutionTests)
 
-add_executable(execution-engine-flounder-test "UnitTests/Experimental/Flounder/FlounderTest.cpp")
-target_link_libraries(execution-engine-flounder-test
-        nes-execution-engine)
-add_test(NAME execution-engine-flounder-test COMMAND execution-engine-flounder-test)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
+    add_executable(execution-engine-flounder-test "UnitTests/Experimental/Flounder/FlounderTest.cpp")
+    target_link_libraries(execution-engine-flounder-test
+            nes-execution-engine)
+    add_test(NAME execution-engine-flounder-test COMMAND execution-engine-flounder-test)
 
-add_executable(execution-engine-flounder-exec-test "UnitTests/Experimental/Flounder/FlounderExpressionExecutionTest.cpp")
-target_link_libraries(execution-engine-flounder-exec-test
-        nes-execution-engine)
-add_test(NAME execution-engine-flounder-exec-test COMMAND execution-engine-flounder-exec-test)
+    add_executable(execution-engine-flounder-exec-test "UnitTests/Experimental/Flounder/FlounderExpressionExecutionTest.cpp")
+    target_link_libraries(execution-engine-flounder-exec-test
+            nes-execution-engine)
+    add_test(NAME execution-engine-flounder-exec-test COMMAND execution-engine-flounder-exec-test)
+endif ()
+
 
 add_subdirectory(UnitTests/Experimental/UtilityTests)
 

@@ -12,8 +12,16 @@
 
 add_subdirectory(MLIR)
 add_subdirectory(NESIR)
-add_subdirectory(Babelfish)
-add_subdirectory(Flounder)
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
+    add_subdirectory(Babelfish)
+endif ()
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
+    add_subdirectory(Flounder)
+endif ()
+
+
 add_subdirectory(Interpreter)
 add_subdirectory(Trace)
 add_subdirectory(Utility)

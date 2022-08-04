@@ -82,47 +82,112 @@ if (MLIR_FOUND)
 else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)
+# Set Sources and Headers
+add_subdirectory(src)
+get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
 
-
-#find_package(JNI)
-#if (JNI_FOUND)
-#    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-#    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-#    message (STATUS "JAVA_INCLUDE_PATH=${JAVA_INCLUDE_PATH}")
-#    message (STATUS "JAVA_INCLUDE_PATH2=${JAVA_INCLUDE_PATH2}")
-#    target_link_libraries(nes-execution-engine PRIVATE ${JNI_LIBRARIES} )
-#    target_include_directories(nes-execution-engine PUBLIC
-#            ${JNI_INCLUDE_DIRS}
-#            ${JNI_INCLUDE_DIRS})
-#else ()
-#    message(FATAL_ERROR "Cannot find jni")
-#endif (JNI_FOUND)
-
-message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-
+# Add Library
+add_library(nes-execution-engine SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
+target_link_libraries(nes-execution-engine PUBLIC nes)
 target_include_directories(nes-execution-engine PUBLIC
-        $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/src/>
-        $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/src/>)
-
-target_include_directories(nes-execution-engine PUBLIC
-        $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>
-        $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>)
-target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
-target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
-target_link_libraries(nes-execution-engine PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
-
-target_include_directories(nes-execution-engine PUBLIC
-        $<BUILD_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>
-        $<INSTALL_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>)
-
-add_library(babelfish STATIC IMPORTED)
-set_target_properties(babelfish PROPERTIES IMPORTED_LOCATION //home/pgrulich/projects/nes/nautilusbf/makenative/lib/babelfish.so)
-set_target_properties(babelfish PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/pgrulich/projects/nes/nautilusbf/makenative/lib/)
-target_link_libraries(nes-execution-engine PUBLIC babelfish)
-
-#target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/fmt/src/fmt-build/libfmt.a)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
 
 target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
+    add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
+    target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(nes-runtime PUBLIC nes)
+    target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
+    set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
+    set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
+    llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
+    llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
+    llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
+    get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
+    get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+    message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
+    message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
+    # include MLIR. This is currently required
+    find_package(MLIR REQUIRED CONFIG)
+    if (MLIR_FOUND)
+        target_include_directories(nes-execution-engine SYSTEM PUBLIC
+                $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
+                $<INSTALL_INTERFACE:include/nebulastream/>)
+        add_compile_definitions(MLIR_COMPILER)
+        get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
+        message(STATUS "mlir_libs: ${mlir_libs}")
+        target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs})
+        message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+        get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+        get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+        target_link_libraries(nes-execution-engine
+                PUBLIC
+                nes
+                ${dialect_libs}
+                ${conversion_libs}
+                ${GTEST_LIBRARIES}
+                MLIRReconcileUnrealizedCasts
+                MLIRMemRefToLLVM
+                MLIRExecutionEngine
+                )
+    else ()
+        message(FATAL_ERROR "Cannot find mlir")
+    endif (MLIR_FOUND)
+endif ()
+
+if ((NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI) AND (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH))
+    message(FATAL_ERROR "You cant activate JNI and BABELFISH at the same time")
+elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    find_package(JNI)
+    if (JNI_FOUND)
+        message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+        message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+        message(STATUS "JAVA_INCLUDE_PATH=${JAVA_INCLUDE_PATH}")
+        message(STATUS "JAVA_INCLUDE_PATH2=${JAVA_INCLUDE_PATH2}")
+        target_link_libraries(nes-execution-engine PRIVATE ${JNI_LIBRARIES})
+        target_include_directories(nes-execution-engine PUBLIC
+                ${JNI_INCLUDE_DIRS}
+                ${JNI_INCLUDE_DIRS})
+    else ()
+        message(FATAL_ERROR "Cannot find jni")
+    endif (JNI_FOUND)
+elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
+    target_compile_definitions(nes-execution-engine PUBLIC USE_BABELFISH)
+    add_library(babelfish STATIC IMPORTED)
+    set_target_properties(babelfish PROPERTIES IMPORTED_LOCATION //home/pgrulich/projects/nes/nautilusbf/makenative/lib/babelfish.so)
+    set_target_properties(babelfish PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/pgrulich/projects/nes/nautilusbf/makenative/lib/)
+    target_link_libraries(nes-execution-engine PUBLIC babelfish)
+    target_include_directories(nes-execution-engine PUBLIC
+            $<BUILD_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>
+            $<INSTALL_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>)
+endif ()
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
+    target_compile_definitions(nes-execution-engine PUBLIC USE_FLOUNDER)
+    ExternalProject_Add(
+            fmt-external
+            GIT_REPOSITORY "https://github.com/fmtlib/fmt"
+            GIT_TAG "8.1.1"
+            PREFIX "lib/fmt"
+            INSTALL_COMMAND cmake -E echo ""
+            CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE -DFMT_TEST=FALSE -DFMT_MASTER_PROJECT=OFF"
+    )
+
+    target_include_directories(nes-execution-engine PUBLIC
+            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/src/>
+            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/src/>)
+
+    target_include_directories(nes-execution-engine PUBLIC
+            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>
+            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>)
+    target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
+    target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
+    target_link_libraries(nes-execution-engine PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
+
+endif ()
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
