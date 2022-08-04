@@ -91,7 +91,6 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
         NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
         return CasePredicate(whenExprs,legacyDefault).copy();
-
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();

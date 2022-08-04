@@ -256,9 +256,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                  *VarRefStatement(varDeclJ).copy()
                      ).copy()
                                 );
-
         EXPECT_EQ(ternStatement.getCode()->code_, "i>j?i:i>j?i:j");
-
     }
 
     {
