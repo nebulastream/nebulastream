@@ -156,11 +156,11 @@ Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size)
     for (Value<Int64> i = 0l; i < size; i = i + 1l) {
         auto address = deviationPtr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-        runningDeviationSum = FunctionCall<>("standardDeviationTwo", NES::Runtime::ProxyFunctions::standardDeviationTwo, runningDeviationSum, mean, value);
+        runningDeviationSum = FunctionCall<>("standardDeviationGetVariance", NES::Runtime::ProxyFunctions::standardDeviationGetVariance, runningDeviationSum, mean, value);
     }
 
     // //3. get root of aggregated squared values and divide by num elements
-    return FunctionCall<>("standardDeviationThree", NES::Runtime::ProxyFunctions::standardDeviationThree, runningDeviationSum, size);
+    return FunctionCall<>("standardDeviationGetStdDev", NES::Runtime::ProxyFunctions::standardDeviationGetStdDev, runningDeviationSum, size);
 }
 
 //==-------------------------------------------------------------==//

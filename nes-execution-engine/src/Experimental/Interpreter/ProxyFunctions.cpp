@@ -158,10 +158,10 @@ __attribute__((always_inline)) double standardDeviationGetMean(int64_t size, voi
     // return 25.5277;
     // return (double)runningSum / (double)size;
 }
-__attribute__((always_inline)) double standardDeviationTwo(double runningDeviationSum, double mean, int64_t inputValue) {
+__attribute__((always_inline)) double standardDeviationGetVariance(double runningDeviationSum, double mean, int64_t inputValue) {
     return runningDeviationSum += (inputValue - mean) * (inputValue - mean);
 }
-__attribute__((always_inline)) double standardDeviationThree(double deviationSum, int64_t size) {
+__attribute__((always_inline)) double standardDeviationGetStdDev(double deviationSum, int64_t size) {
     return std::sqrt(deviationSum) / size;
 }
 
