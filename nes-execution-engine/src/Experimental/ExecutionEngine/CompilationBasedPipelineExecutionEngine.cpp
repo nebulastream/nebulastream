@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>

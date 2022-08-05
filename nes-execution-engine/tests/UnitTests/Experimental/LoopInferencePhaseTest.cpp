@@ -25,7 +25,6 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>

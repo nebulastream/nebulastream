@@ -97,6 +97,7 @@ target_include_directories(nes-execution-engine PUBLIC
 target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
+    target_compile_definitions(nes-execution-engine PUBLIC USE_MLIR)
     add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
     target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(nes-runtime PUBLIC nes)
