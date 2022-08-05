@@ -79,6 +79,7 @@ Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLa
                           Value<UInt64> recordIndex) {
     // read all fields
     // TODO add support for columnar layout
+    // -> currently performing address calculation for columnar layout
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
     auto tupleSize = rowLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;

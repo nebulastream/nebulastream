@@ -19,6 +19,8 @@ std::pair<std::shared_ptr<NES::Runtime::MemoryLayouts::RowLayout>, NES::Runtime:
         linecount++;
     }
     NES_DEBUG("LOAD lineitem with " << linecount << " lines");
+    // Todo try columnar layout
+//    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
 
     // orderkey
@@ -39,6 +41,8 @@ std::pair<std::shared_ptr<NES::Runtime::MemoryLayouts::RowLayout>, NES::Runtime:
     // comment
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
+    // Todo column layout
+//    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 
@@ -100,6 +104,7 @@ std::vector<std::string> NES::ExecutionEngine::Experimental::TestUtility::loadSt
         if(!(currentLineCount % 60000)) {
             printf("Current LineCount: %f\n", currentLineCount/60012.150);
         }
+        //Comments 44 bytes
         auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
         lineitemStrings.emplace_back(strings[15]);
         ++currentLineCount;

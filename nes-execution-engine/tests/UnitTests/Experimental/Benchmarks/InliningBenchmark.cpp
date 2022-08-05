@@ -166,7 +166,7 @@ Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size)
 //==-------------------------------------------------------------==//
 //==-------------- ALGEBRAIC FUNCTION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, DISABLDE_algebraicFunctionBenchmark) {
+TEST_F(InliningBenchmark, DISABLED_algebraicFunctionBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -246,24 +246,33 @@ TEST_F(InliningBenchmark, DISABLDE_algebraicFunctionBenchmark) {
 //==--------------------------------------------------------------==//
 //==-------------- STRING MANIPULATION BENCHMARKS ---------------==//
 //==------------------------------------------------------------==//
+void stringManipulationConstSize(Value<MemRef> ptr, Value<Int64> size) {
+    Value<Int64> stringSize = 10l;
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        FunctionCall<>("stringToUpperCaseConstSize", Runtime::ProxyFunctions::stringToUpperCaseConstSize, i, ptr, stringSize);
+    }
+}
 void stringManipulation(Value<MemRef> ptr, Value<Int64> size) {
     for (Value<Int64> i = 0l; i < size; i = i + 1l) {
         FunctionCall<>("stringToUpperCase", Runtime::ProxyFunctions::stringToUpperCase, i, ptr);
     }
 }
-TEST_F(InliningBenchmark, DISABLED_stringManipulationBenchmark) {
+TEST_F(InliningBenchmark, stringManipulationBenchmark) {
     auto mlirUtility = new MLIR::MLIRUtility("", false);
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     // Get comment strings from Lineitem table and fill array of char pointers with it.
     auto lineitemStrings = testUtility->loadStringsFromLineitemTable();
-    const char *langStrings [lineitemStrings.size()];
+    // avoid loading array on the small stack -> heap instead
+//    char *langStrings  = new char[lineitemStrings.size()];
+    char **langStrings  = new char*[lineitemStrings.size()];
+    // malloc/alloc/new char
     for(size_t i = 0; i < lineitemStrings.size(); ++i) {
-        langStrings[i] = lineitemStrings.at(i).c_str();
+        langStrings[i] = lineitemStrings.at(i).data();
     }
 
     //Setup timing, and results logging.
     const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 10;
+    const int NUM_ITERATIONS = 100;
     const int NUM_SNAPSHOTS = 7;
     const std::string RESULTS_FILE_NAME = "stringManipulationBenchmark.csv";
     const std::vector<std::string> snapshotNames {
@@ -337,8 +346,10 @@ Value<Int64> murmurHashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-        auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
-//        hashResult = hashResult + FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+//        auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
+//        auto secondHashResult = hashResult + FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+        auto hashResult = FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+//        hashResult = secondHashResult - hashResult;
         sum = sum + hashResult;
     }
     return sum;
@@ -355,7 +366,7 @@ Value<Int64> crc32HashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     return sum;
 }
 
-TEST_F(InliningBenchmark, crc32HashAggregationBenchmark) {
+TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -366,7 +377,7 @@ TEST_F(InliningBenchmark, crc32HashAggregationBenchmark) {
     //Setup timing, and results logging.
     const bool PERFORM_INLINING = true;
     const bool USE_CRC32_HASH_FUNCTION = false; //ELSE: We are using the MurMur hash function.
-    const int NUM_ITERATIONS = 10;
+    const int NUM_ITERATIONS = 100;
     const int NUM_SNAPSHOTS = 7;
     std::string RESULTS_FILE_NAME;
     if(USE_CRC32_HASH_FUNCTION) {

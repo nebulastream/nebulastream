@@ -176,8 +176,16 @@ __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputStri
     auto test = (char**) inputString + i;
     char *currentString = *test;
     for(char c = *currentString; c; c=*++currentString) {
-//        *currentString = ::toupper(c);
-        *currentString = customToUpper(c);
+       *currentString = ::toupper(c);
+        // *currentString = customToUpper(c);
+    };
+}
+__attribute__((always_inline)) void stringToUpperCaseConstSize(int64_t i, void *inputString, int64_t stringSize) {
+    auto test = (char**) inputString + i;
+    char *currentString = *test;
+    // for(int64_t i = 0; i < stringSize && currentString[i]; ++i) {
+    for(int64_t i = 0; i < stringSize; ++i) {
+        currentString[i] = customToUpper(currentString[i]);
     };
 }
 

@@ -32,6 +32,7 @@ extern "C"  void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, 
 
 extern "C" __attribute__((always_inline)) void printInt64(int64_t inputValue);
 extern "C" __attribute__((always_inline)) void stringToUpperCase(int64_t i, void *inputString);
+extern "C" __attribute__((always_inline)) void stringToUpperCaseConstSize(int64_t i, void *inputString, int64_t stringSize);
 
 extern "C" __attribute__((always_inline)) int64_t getMurMurHash(uint64_t inputValue);
 

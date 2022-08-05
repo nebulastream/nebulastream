@@ -265,14 +265,14 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
                 fs.write(timerString.c_str(), timerString.size());
             }
 
-//            std::string llvmIRString;
-//            llvm::raw_string_ostream llvmStringStream(llvmIRString);
-//            llvmIRModule->print(llvmStringStream, nullptr);
-//
-//            auto* basicError = new std::error_code();
-//            //Todo Also use CMake parameter for generated file.
-//            llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
-//            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
+           std::string llvmIRString;
+           llvm::raw_string_ostream llvmStringStream(llvmIRString);
+           llvmIRModule->print(llvmStringStream, nullptr);
+
+           auto* basicError = new std::error_code();
+           //Todo Also use CMake parameter for generated file.
+           llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
+           fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };
     } else {
