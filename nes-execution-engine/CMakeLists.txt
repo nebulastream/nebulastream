@@ -15,45 +15,6 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(../cmake/LLVMIRUtil.cmake)
 
-add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
-target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(nes-runtime PUBLIC nes)
-target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
-set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-llvmir_attach_bc_target(nes-runtime_bc nes-runtime -O3)
-llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
-llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
-get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
-get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
-message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}")
-message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
-message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
-
-ExternalProject_Add(
-        fmt-external
-        GIT_REPOSITORY "https://github.com/fmtlib/fmt"
-        GIT_TAG "8.1.1"
-        PREFIX "lib/fmt"
-        INSTALL_COMMAND cmake -E echo ""
-        CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE -DFMT_TEST=FALSE -DFMT_MASTER_PROJECT=OFF"
-)
-
-# Reducing linked & optimized LLVM IR to Proxy Functions only.
-add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
-set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
-list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
-set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/proxiesReduced.ll)
-target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
-target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
-target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
-
-add_dependencies(generate-proxy-function-ir nes-runtime_opt)
-
-add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
-    COMMAND "${OP_BINARY_DIR}/generate-proxy-function-ir"
-    COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
-    VERBATIM)
-
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
@@ -66,51 +27,42 @@ target_link_libraries(nes-execution-engine PUBLIC nes)
 target_include_directories(nes-execution-engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-add_dependencies(nes-execution-engine generate-proxy-function-ir)
-
-# include MLIR. This is currently required
-find_package(MLIR REQUIRED CONFIG)
-if (MLIR_FOUND)
-    target_include_directories(nes-execution-engine SYSTEM PUBLIC
-            $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
-            $<INSTALL_INTERFACE:include/nebulastream/>)
-    add_compile_definitions(MLIR_COMPILER)
-    get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
-    message(STATUS "mlir_libs: ${mlir_libs}")
-    target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs} )
-    target_link_libraries(generate-proxy-function-ir PRIVATE ${mlir_libs})
-else ()
-    message(FATAL_ERROR "Cannot find mlir")
-endif (MLIR_FOUND)
-# Set Sources and Headers
-add_subdirectory(src)
-get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
-
-# Add Library
-add_library(nes-execution-engine SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
-target_link_libraries(nes-execution-engine PUBLIC nes)
-target_include_directories(nes-execution-engine PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
 
 target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     target_compile_definitions(nes-execution-engine PUBLIC USE_MLIR)
-    add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
+    add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
     target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(nes-runtime PUBLIC nes)
     target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
     set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-    set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-    llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
+    llvmir_attach_bc_target(nes-runtime_bc nes-runtime -O3)
     llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
     llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
     get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
     get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+    message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}")
     message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
     message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
+
+
+    # Reducing linked & optimized LLVM IR to Proxy Functions only.
+    add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
+    set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
+    list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
+    set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/proxiesReduced.ll)
+    target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
+    target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
+    target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+
+    add_dependencies(generate-proxy-function-ir nes-runtime_opt)
+
+    add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
+            COMMAND "${OP_BINARY_DIR}/generate-proxy-function-ir"
+            COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
+            VERBATIM)
+    add_dependencies(nes-execution-engine generate-proxy-function-ir)
     # include MLIR. This is currently required
     find_package(MLIR REQUIRED CONFIG)
     if (MLIR_FOUND)
