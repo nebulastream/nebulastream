@@ -79,6 +79,22 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t tim
     }
 }
 
+//todo: optional does not work as expected here
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopBufferFromStorage(Network::NesPartition nesPartition) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        return this->storage[nesPartition]->getTopElementFromQueue();
+    }
+    return {};
+}
+
+void WorkerContext::removeTopBufferFromStorage(Network::NesPartition nesPartition) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        this->storage[nesPartition]->removeTopElementFromQueue();
+    }
+}
+
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
@@ -120,5 +136,11 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
     return (*it).second.get();
 }
 std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider() { return localBufferPool; }
+
+bool WorkerContext::isBuffering() { return buffering; }
+
+void WorkerContext::setIsBuffering(bool buffering) {
+    this->buffering = buffering;
+}
 
 }// namespace NES::Runtime
