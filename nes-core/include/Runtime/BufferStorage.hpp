@@ -65,6 +65,8 @@ class BufferStorage : public AbstractBufferStorage {
      */
     std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
 
+    void removeTopElementFromQueue();
+
   private:
     std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
 };

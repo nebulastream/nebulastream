@@ -154,6 +154,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
+    bool bufferAllData();
+
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
      * @param newNodeId : the id of the new node

@@ -586,6 +586,18 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
     }
 }
 
+bool NodeEngine::bufferAllData() {
+    NES_DEBUG("NodeEngine of Node " << nodeId << " received request to buffer all outgoing data");
+    std::unique_lock lock(engineMutex);
+    for (auto& [qepId, qepPtr] : deployedQEPs) {
+        auto sinks = qepPtr->getSinks();
+        for (auto& sink : sinks) {
+            //todo: check if sink is network sink an tell it to buffer
+        }
+    }
+    return true;
+}
+
 bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
                                    const std::string& newHostname,
                                    uint32_t newPort,

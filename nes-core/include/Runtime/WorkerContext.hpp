@@ -50,6 +50,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+    bool buffering;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -130,6 +131,14 @@ class WorkerContext {
       * @param timestamp timestamp
       */
     void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+
+    std::optional<NES::Runtime::TupleBuffer> getTopBufferFromStorage(Network::NesPartition nesPartition);
+
+    bool isBuffering();
+
+    void setIsBuffering(bool buffering);
+
+    void removeTopBufferFromStorage(Network::NesPartition nesPartition);
 
     /**
      * @brief removes a registered network channel with a termination type
