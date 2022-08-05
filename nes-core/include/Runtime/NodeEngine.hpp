@@ -17,6 +17,7 @@
 
 #include <Common/ForwardDeclaration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>

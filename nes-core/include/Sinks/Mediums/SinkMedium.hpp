@@ -178,7 +178,7 @@ class SinkMedium : public Runtime::Reconfigurable {
 
   protected:
     SinkFormatPtr sinkFormat;
-    uint32_t bufferCount;
+    uint64_t bufferCount;
     bool append{
         false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
     std::atomic_bool schemaWritten{false};// TODO same here
@@ -193,8 +193,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
-    uint32_t buffersPerEpoch;
-    std::ofstream statisticsFile;
+    uint64_t buffersPerEpoch;
+//    std::ofstream statisticsFile;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety
