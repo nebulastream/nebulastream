@@ -30,7 +30,11 @@ enum ReconfigurationType : uint8_t {
     /// forceful stop of a query with a failure
     FailEndOfStream,
     /// use PropagateEpoch to pass epoch barrier to all network sinks
-    PropagateEpoch
+    PropagateEpoch,
+    /// start buffering the data
+    StartBuffering,
+    /// stop buffering data
+    StopBuffering
 };
 }
 

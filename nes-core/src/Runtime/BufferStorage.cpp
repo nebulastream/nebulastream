@@ -32,4 +32,8 @@ size_t BufferStorage::getStorageSize() const { return this->storage.size(); }
 
 std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const { return this->storage.top(); }
 
+void BufferStorage::removeTopElementFromQueue() {
+    this->storage.pop();
+}
+
 }// namespace NES::Runtime
