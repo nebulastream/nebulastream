@@ -347,23 +347,23 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
     //Todo move
     std::unordered_set<std::string> ExtractFuncs{
         "getMurMurHash",
-//        "getCRC32Hash",
-//        "stringToUpperCase",
-//        "standardDeviationGetMean",
-//        "standardDeviationGetVariance",
-//        "standardDeviationGetStdDev",
-//        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
-//        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-//        "NES__Runtime__TupleBuffer__setNumberOfTuples",
-//        "NES__Runtime__TupleBuffer__getBuffer",
+        "getCRC32Hash",
+        "stringToUpperCase",
+        "standardDeviationGetMean",
+        "standardDeviationGetVariance",
+        "standardDeviationGetStdDev",
+        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestamp",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestamp"
         // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
-//        "NES__Runtime__TupleBuffer__getBufferSize",
-//        "NES__Runtime__TupleBuffer__getWatermark",
-//        "NES__Runtime__TupleBuffer__setWatermark",
-//        "NES__Runtime__TupleBuffer__getCreationTimestamp",
-//        "NES__Runtime__TupleBuffer__setSequenceNumber",
-//        "NES__Runtime__TupleBuffer__getSequenceNumber",
-//        "NES__Runtime__TupleBuffer__setCreationTimestamp"
     };
 
     // Initialize LLVM targets.

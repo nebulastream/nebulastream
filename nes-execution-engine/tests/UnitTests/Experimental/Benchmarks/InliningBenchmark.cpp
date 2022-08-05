@@ -338,6 +338,7 @@ Value<Int64> murmurHashAggregation(Value<MemRef> ptr, Value<Int64> size) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
         auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
+//        hashResult = hashResult + FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
         sum = sum + hashResult;
     }
     return sum;
@@ -363,7 +364,7 @@ TEST_F(InliningBenchmark, crc32HashAggregationBenchmark) {
     auto buffer = lineitemBuffer.second.getBuffer();
 
     //Setup timing, and results logging.
-    const bool PERFORM_INLINING = false;
+    const bool PERFORM_INLINING = true;
     const bool USE_CRC32_HASH_FUNCTION = false; //ELSE: We are using the MurMur hash function.
     const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 7;
