@@ -31,6 +31,28 @@ target_include_directories(nes-execution-engine PUBLIC
 target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
+
+    # include MLIR. This is currently required
+    find_package(MLIR REQUIRED CONFIG)
+    if (MLIR_FOUND)
+        target_include_directories(nes-execution-engine SYSTEM PUBLIC
+                $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
+                $<INSTALL_INTERFACE:include/nebulastream/>)
+        add_compile_definitions(MLIR_COMPILER)
+        get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
+        get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+        get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+        message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+        message(STATUS "mlir_libs: ${mlir_libs}")
+        target_link_libraries(nes-execution-engine PUBLIC ${mlir_libs}   ${dialect_libs}
+                ${conversion_libs}
+                MLIRReconcileUnrealizedCasts
+                MLIRMemRefToLLVM
+                MLIRExecutionEngine)
+    else ()
+        message(FATAL_ERROR "Cannot find mlir")
+    endif (MLIR_FOUND)
+
     target_compile_definitions(nes-execution-engine PUBLIC USE_MLIR)
     add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
     target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -49,46 +71,21 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
 
     # Reducing linked & optimized LLVM IR to Proxy Functions only.
     add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
-    set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}" )
+    set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}")
     list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
     set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/proxiesReduced.ll)
     target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
     target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
     target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
-
-    add_dependencies(generate-proxy-function-ir nes-runtime_opt)
+    target_link_libraries(nes-runtime PUBLIC nes)
+    target_link_libraries(generate-proxy-function-ir ${mlir_libs})
+    target_include_directories(generate-proxy-function-ir SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
 
     add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
             COMMAND "${OP_BINARY_DIR}/generate-proxy-function-ir"
             COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
             VERBATIM)
     add_dependencies(nes-execution-engine generate-proxy-function-ir)
-    # include MLIR. This is currently required
-    find_package(MLIR REQUIRED CONFIG)
-    if (MLIR_FOUND)
-        target_include_directories(nes-execution-engine SYSTEM PUBLIC
-                $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
-                $<INSTALL_INTERFACE:include/nebulastream/>)
-        add_compile_definitions(MLIR_COMPILER)
-        get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
-        message(STATUS "mlir_libs: ${mlir_libs}")
-        target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs})
-        message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-        get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-        get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-        target_link_libraries(nes-execution-engine
-                PUBLIC
-                nes
-                ${dialect_libs}
-                ${conversion_libs}
-                ${GTEST_LIBRARIES}
-                MLIRReconcileUnrealizedCasts
-                MLIRMemRefToLLVM
-                MLIRExecutionEngine
-                )
-    else ()
-        message(FATAL_ERROR "Cannot find mlir")
-    endif (MLIR_FOUND)
 endif ()
 
 if ((NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI) AND (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH))
