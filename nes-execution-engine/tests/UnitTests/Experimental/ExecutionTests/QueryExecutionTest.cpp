@@ -31,20 +31,22 @@
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Map.hpp>
+#include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#ifdef USE_MLIR
 #include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
+#endif
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -84,20 +86,24 @@ class QueryExecutionTest : public testing::Test, public ::testing::WithParamInte
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-#ifdef USE_FLOUNDER
-        backend = std::make_shared<FlounderPipelineCompilerBackend>();
-#endif
-        GTEST_SKIP_("No compiler backend found");
-        /*
-         *
-backend = std::make_shared<BabelfishPipelineCompilerBackend>();
         auto param = this->GetParam();
         std::cout << "Setup QueryExecutionTest test case." << param << std::endl;
-        if(param == "MLIR") {
+        if (param == "MLIR") {
+#ifdef USE_MLIR
             backend = std::make_shared<MLIRPipelineCompilerBackend>();
-        }else{
+#endif
+        } else if (param == "FLOUNDER") {
+#ifdef USE_FLOUNDER
             backend = std::make_shared<FlounderPipelineCompilerBackend>();
-        }*/
+#endif
+        } else if (param == "BABELFISH") {
+#ifdef USE_BABELFISH
+            backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+#endif
+        }
+        if (backend == nullptr) {
+            GTEST_SKIP_("No compiler backend found");
+        }
     }
 
     /* Will be called before a test is executed. */
@@ -122,6 +128,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
+#ifdef USE_MLIR
 TEST_F(QueryExecutionTest, emitQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
 
@@ -155,6 +162,7 @@ TEST_F(QueryExecutionTest, emitQueryTest) {
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
 }
+#endif
 
 auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
@@ -236,9 +244,6 @@ TEST_F(QueryExecutionTest, longAggregationQueryTest) {
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
     scan.setChild(aggregation);
-    backend = std::make_shared<MLIRPipelineCompilerBackend>();
-   // backend = std::make_shared<BabelfishPipelineCompilerBackend>();
-    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);

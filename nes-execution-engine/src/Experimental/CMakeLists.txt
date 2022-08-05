@@ -10,8 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(MLIR)
-add_subdirectory(NESIR)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
+    add_subdirectory(MLIR)
+endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
     add_subdirectory(Babelfish)
@@ -21,7 +22,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     add_subdirectory(Flounder)
 endif ()
 
-
+add_subdirectory(NESIR)
 add_subdirectory(Interpreter)
 add_subdirectory(Trace)
 add_subdirectory(Utility)
