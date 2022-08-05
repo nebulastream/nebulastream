@@ -19,6 +19,7 @@
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <utility>
+#include <Runtime/NodeEngine.hpp>
 #ifdef S2DEF
 #include <s2/s1angle.h>
 #include <s2/s2earth.h>
@@ -77,7 +78,10 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
 
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint64_t oldParent, uint64_t newParent) {
     //todo #2864: tell nesWorker to buffer
-    return worker.replaceParent(oldParent, newParent);
+    worker.getNodeEngine()->bufferAllData();
+    bool success = worker.replaceParent(oldParent, newParent);
+    worker.getNodeEngine()->stopBufferingAllData();
+    return success;
 }
 
 #ifdef S2DEF

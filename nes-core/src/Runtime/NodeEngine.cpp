@@ -556,6 +556,7 @@ std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQ
     return nullptr;
 }
 
+//todo: probably should use this function to buffer and inster reconfig msg
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
@@ -593,6 +594,29 @@ bool NodeEngine::bufferAllData() {
         auto sinks = qepPtr->getSinks();
         for (auto& sink : sinks) {
             //todo: check if sink is network sink an tell it to buffer
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink) {
+                NES_DEBUG("Starting to buffer on Network Sink" << networkSink->getUniqueNetworkSinkDescriptorId())
+                networkSink->startBuffering();
+            } else {
+                NES_DEBUG("Sink is not a network sink")
+            }
+        }
+    }
+    return true;
+}
+
+bool NodeEngine::stopBufferingAllData() {
+    NES_DEBUG("NodeEngine of Node " << nodeId << " received request to stop buffering data");
+    std::unique_lock lock(engineMutex);
+    for (auto& [qepId, qepPtr] : deployedQEPs) {
+        auto sinks = qepPtr->getSinks();
+        for (auto& sink : sinks) {
+            //todo: check if sink is network sink an tell it to buffer
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink) {
+                networkSink->stopBuffering();
+            }
         }
     }
     return true;

@@ -1356,7 +1356,7 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraU
 
 TEST_F(LocationIntegrationTests, testBufferingWithAdditionalOperator) {
     NES_INFO(" start coordinator");
-    NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
+    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
     std::string testFile = "exdra.csv";
 
     std::stringstream fileInStream;
@@ -1375,7 +1375,7 @@ TEST_F(LocationIntegrationTests, testBufferingWithAdditionalOperator) {
     //std::cout << "compstring" << compareString << std::endl;
     //std::cout << "done";
     remove(testFile.c_str());
-    std::system(std::string("/snap/bin/chromium file:///home/x/visualizeNes/mapNodesWithReconnects.html?restPort=" +std::to_string(*restPort)).c_str());
+    //std::system(std::string("/snap/bin/chromium file:///home/x/visualizeNes/mapNodesWithReconnects.html?restPort=" +std::to_string(*restPort)).c_str());
 
     //uint64_t myRestPort = 8081;
     NES_INFO("rest port = " << *restPort);
