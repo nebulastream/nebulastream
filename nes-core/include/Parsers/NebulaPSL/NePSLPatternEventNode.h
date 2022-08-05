@@ -16,51 +16,56 @@ limitations under the License.
 #define NES_NEPSLPATTERN_H
 
 #include "API/Query.hpp"
+#include "NePSLPatternEventNode.h"
 #include <list>
 #include <queue>
 #include <string>
 
+namespace NES {
+
 /**
- * @brief This class defines the attributes and methods used by the NebulaPSL Parsing Service.
+ * @brief This class defines the attributes and methods used by the PatternParsingService.
  * This enables the parsing of declarative patterns into NES queries.
  */
 
-class NePSLPattern {
+class NePSLPatternEventNode {
   private:
     int id;
-    int right= -1;
-    int left= -1;
-    std::string op;
-    int parent= -1;
-    bool negated;
-    bool iteration;
-    uint64_t iterMin;
-    uint64_t iterMax;
-    std::string eventRight;
-    std::string eventLeft;
-    NES::Query query=NES::Query(NULL);
+    std::string eventName;
+    int rightChildId;
+    int leftChildId;
 
   public:
-    explicit NePSLPattern(int id);
-    NePSLPattern* const* getPatternList() const;
+    int getRightChildId() const;
+    void setRightChildId(int right_child_id);
+    int getLeftChildId() const;
+    void setLeftChildId(int left_child_id);
+
+  private:
+    int parentNodeId = -1;
+    bool negated;
+    bool iteration;
+
+    uint64_t iterMin;
+    uint64_t iterMax;
+    NES::Query query = NES::Query(NULL);
+
+  public:
+    //Constructors
+    NePSLPatternEventNode() = default;
+    explicit NePSLPatternEventNode(int id);
+    // Getter and Setter
     int getId() const;
     void setId(int id);
-    int getRight() const;
-    void setRight(int right);
-    int getLeft() const;
-    void setLeft(int left);
-    const std::string& getOp() const;
-    void setOp(const std::string& op);
-    int getParent() const;
-    void setParent(int parent);
+    int getParentNodeId() const;
+    void setParentNodeId(int parent);
+    const std::string& getEventName() const;
+    void setEventName(const std::string& eventName);
+
     bool isNegated() const;
     void setNegated(bool negated);
     bool isIteration() const;
     void setIteration(bool iteration);
-    const std::string& getEventRight() const;
-    void setEventRight(const std::string& eventRight);
-    const std::string& getEventLeft() const;
-    void setEventLeft(const std::string& eventLeft);
     uint64_t getIterMin() const;
     void setIterMin(uint64_t iterMin);
     uint64_t getIterMax() const;
@@ -68,7 +73,9 @@ class NePSLPattern {
     const NES::Query& getQuery() const;
     void setQuery(const NES::Query& query);
     void printPattern();
-
 };
+
+}
+
 
 #endif//NES_NEPSLPATTERN_H
