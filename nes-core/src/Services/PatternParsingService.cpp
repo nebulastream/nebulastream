@@ -11,25 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Parsers/NePSL/NePSLPattern.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
-#include <Parsers/NePSL/gen/NesCEPLexer.h>
-#include <Parsers/NePSL/gen/NesCEPParser.h>
+#include <Parsers/NebulaPSL/NePSLPatternEventNode.h>
+#include <Parsers/NebulaPSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
+#include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 #include <Services/PatternParsingService.h>
 #include <antlr4-runtime/ANTLRInputStream.h>
 
 NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std::string& patternString) {
-    //ANTLR Pipeline
+    NES_DEBUG("PatternParsingService: received the following pattern string" + patternString);
+    // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
     antlr4::ANTLRInputStream input(patternString.c_str(), patternString.length());
     NesCEPLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     NesCEPParser parser(&tokens);
-    NesCEPParser::QueryContext* tree=parser.query();
+    NesCEPParser::QueryContext* tree = parser.query();
+    NES_DEBUG("PatternParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
 
-    NES_DEBUG("PatternParsingService:" + tree->toStringTree(&parser));
-
+    NES_DEBUG("PatternParsingService: Parse the AST into a query plan");
     NesCEPQueryPlanCreator queryPlanCreator;
+    //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
-    auto pattern= queryPlanCreator.getQuery();
-    return std::make_shared<Query>(pattern);
+    auto query= queryPlanCreator.getQuery();
+    NES_DEBUG("PatternParsingService: created the query from AST " + queryPlanCreator.getQuery().getQueryPlan()->toString());
+    return std::make_shared<Query>(query);
 }

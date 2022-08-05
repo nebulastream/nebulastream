@@ -1,4 +1,4 @@
-#include "Parsers/NePSL/gen/NesCEPLexer.h"
+#include "Parsers/NebulaPSL/gen/NesCEPLexer.h"
 
 using namespace antlr4;
 
