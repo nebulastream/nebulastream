@@ -15,20 +15,23 @@ limitations under the License.
 #define NES_PATTERNPARSINGSERVICE_H
 
 #include <memory>
-namespace NES {
-class Query;
-using QueryPtr = std::shared_ptr<Query>;
-}
 
 namespace NES {
+
+class Query;
+using QueryPtr = std::shared_ptr<Query>;
+
+/**
+ * This class is responsible for transforming a pattern string into a query object.
+ */
 class PatternParsingService {
   public:
     /**
-    *  @brief this function returns a Query Object out of the pattern string
+    *  @brief Creates a Query Object from a pattern string
     *  @param pattern as a string
-    *  @return Smart pointer to InputQuery object of the query
+    *  @return Query object pointer
     */
-    NES::QueryPtr createPatternFromCodeString(const std::string& queryCodeSnippet);
+    NES::QueryPtr createPatternFromCodeString(const std::string& patternString);
 };
 
 }
