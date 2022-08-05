@@ -501,8 +501,9 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
         for (auto querySubPlanId : querySubPlanIds) {
             NES_TRACE("querySubPlanId=" << querySubPlanId << " stat="
                                         << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
-
-            queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
+            if (queryManager->getQueryExecutionPlan(querySubPlanId)->getStatus() == Execution::ExecutableQueryPlanStatus::Running) {
+                queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
+            }
             if (withReset) {
                 queryManager->getQueryStatistics(querySubPlanId)->clear();
             }

@@ -508,8 +508,10 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     ClientContext context;
     Status status = coordinatorStub->NotifyEpochTermination(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
-        return true;
+        if (reply.success()) {
+            NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+            return true;
+        }
     }
     return false;
 }

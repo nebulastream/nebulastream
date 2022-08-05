@@ -18,6 +18,7 @@
 #include <Common/ForwardDeclaration.hpp>
 #include <Common/Identifiers.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
