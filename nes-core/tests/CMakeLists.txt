@@ -299,7 +299,7 @@ add_nes_integration_test(lambda-source-integration-test "Integration/LambdaSourc
 
 
 ### Pattern Query Plan Tests ###
-add_executable(pattern-query-plan-tests "UnitTests/Plans/Query/PatternParsingServiceTest.cpp")
+add_executable(pattern-query-plan-tests "UnitTests/Services/PatternParsingServiceTest.cpp")
 target_link_libraries(pattern-query-plan-tests nes-tests)
 add_test(NAME pattern-query-plan-tests COMMAND pattern-query-plan-tests)
 
