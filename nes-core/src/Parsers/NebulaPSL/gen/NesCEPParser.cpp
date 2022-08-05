@@ -1,5 +1,5 @@
-#include "Parsers/NePSL/gen/NesCEPListener.h"
-#include <Parsers/NePSL/gen/NesCEPParser.h>
+#include <Parsers/NebulaPSL/gen/NesCEPListener.h>
+#include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 
 using namespace antlrcpp;
 using namespace antlr4;

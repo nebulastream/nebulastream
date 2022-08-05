@@ -77,7 +77,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
 
     if(queryCodeSnippet.starts_with("PATTERN")){
         NES::PatternParsingService patternParsingService;
-        NES_DEBUG("QueryCatalog: parse pattern query.");
+        NES_DEBUG("QueryCatalog: parse pattern query from declarative PSL.");
         return patternParsingService.createPatternFromCodeString(queryCodeSnippet);
     }
 
