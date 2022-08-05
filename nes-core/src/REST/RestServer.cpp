@@ -136,8 +136,15 @@ bool RestServer::stop() {
 
 void RestServer::run() {
 
+    /* create serializer and deserializer configurations */
+    auto serializeConfig = oatpp::parser::json::mapping::Serializer::Config::createShared();
+    auto deserializeConfig = oatpp::parser::json::mapping::Deserializer::Config::createShared();
+
+    /* enable beautifier */
+    serializeConfig->useBeautifier = true;
+
     /* Initialize Object mapper */
-    auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
+    auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared(serializeConfig, deserializeConfig);
 
     /* Initialize Error Handler */
     ErrorHandlerPtr errorHandler = std::make_shared<ErrorHandler>(objectMapper);

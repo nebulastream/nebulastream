@@ -20,6 +20,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
+#include <cpprest/json.h>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -83,6 +84,61 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                                  completeRouterPrefix,
                                                  errorHandler);
     }
+
+    ENDPOINT("GET", "/execution-plan", getExecutionPlan, QUERY(UInt64 , queryId, "queryId")) {
+        try {
+            NES_DEBUG("Get current status of the query");
+            const QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId).serialize(); //TODO: change when removing cpprestsdk
+            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson);
+            auto entry = QueryInfo::createShared();
+            entry->queryId = queryId;
+            entry->queryPlan = executionPlanJson;
+            return createDtoResponse(Status::CODE_200, entry);
+        } catch (QueryNotFoundException e ) {
+            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
+    ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64 , queryId, "queryId")) {
+        try {
+            NES_DEBUG("Get current status of the query");
+            const QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan()).serialize();
+            auto entry = QueryInfo::createShared();
+            entry->queryId = queryId;
+            entry->queryPlan = basePlan;
+            return createDtoResponse(Status::CODE_200, entry);
+        } catch (QueryNotFoundException e ) {
+            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
+    ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64 , queryId, "queryId")) {
+        try {
+            NES_DEBUG("Get current status of the query");
+            const QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan()).serialize();
+            auto entry = QueryInfo::createShared();
+            entry->queryId = queryId;
+            entry->queryPlan = basePlan;
+            return createDtoResponse(Status::CODE_200, entry);
+        } catch (QueryNotFoundException e ) {
+            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
 
   private:
 
