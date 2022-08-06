@@ -44,6 +44,11 @@ target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
+### BasicTest ###
+add_executable(basic-test "Integration/BasicTest.cpp")
+target_link_libraries(basic-test nes-tests)
+add_test(NAME basic-test COMMAND basic-test)
+
 add_executable(udf-catalog-controller-test "UnitTests/REST/Controller/UdfCatalogControllerTest.cpp")
 target_link_libraries(udf-catalog-controller-test nes-tests)
 add_test(NAME udf-catalog-controller-test COMMAND udf-catalog-controller-test)

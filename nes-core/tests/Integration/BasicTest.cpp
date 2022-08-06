@@ -173,7 +173,7 @@ TEST_F(BasicTest, firstTest) {
 
         QueryCatalogEntryPtr qptr1 = crd->getQueryCatalogService()->getEntryForQuery(queryId);
         NES_INFO(qptr1->getQueryString());
-        QueryCatalogPtr qqp = crd->getGlobalQueryPlan().get
+        //QueryCatalogPtr qqp = crd->getGlobalQueryPlan().get
     }
 
     NES_INFO("BasicTest: Stop worker 1");
