@@ -20,7 +20,6 @@ namespace NES {
 CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
 CaseExpressionNode::CaseExpressionNode(CaseExpressionNode* other) : ExpressionNode(other) {
-    //todo: is this really not meant to get the children of the other one?
     auto otherWhenChildren = getWhenChildren();
     for (auto& whenItr : otherWhenChildren) {
         addChildWithEqual(whenItr->copy());
