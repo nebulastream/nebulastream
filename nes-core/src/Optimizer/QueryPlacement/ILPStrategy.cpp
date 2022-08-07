@@ -112,16 +112,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         //2.2 Find path between pinned upstream and downstream topology node
         auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        auto upstreamTopologyNode = nodeIdToTopologyNodeMap[upstreamPinnedNodeId];
+        auto upstreamTopologyNode = topologyMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
             std::any_cast<uint64_t>(operatorPath.back()->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID));
-        auto downstreamTopologyNode = nodeIdToTopologyNodeMap[downstreamPinnedNodeId];
+        auto downstreamTopologyNode = topologyMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
 
         while (!topologyPath.back()->getParents().empty()) {
-            //FIXME: path with multiple parents not supported
+            //FIXME #2290: path with multiple parents not supported
             if (topologyPath[0]->getParents().size() > 1) {
                 NES_ERROR("ILPStrategy: Current implementation can not place operators on topology with multiple paths.");
                 return false;
@@ -167,7 +167,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());// an integer expression of the slack
 
         // Obtain the available slot in the current node
-        TopologyNodePtr topologyNode = nodeIdToTopologyNodeMap[topologyID]->as<TopologyNode>();
+        TopologyNodePtr topologyNode = topologyMap[topologyID]->as<TopologyNode>();
         std::any prop = topologyNode->getNodeProperty("slots");
         auto availableSlot = std::any_cast<int>(prop);
 
@@ -203,7 +203,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
             OperatorNodePtr operatorNode = operatorMap[operatorId];
-            TopologyNodePtr topologyNode = nodeIdToTopologyNodeMap[topologyNodeId];
+            TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
 
             // collect the solution to operatorToTopologyNodeMap
             operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
@@ -233,7 +233,7 @@ std::map<uint64_t, double> ILPStrategy::computeMileage(const std::vector<Operato
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        auto topologyNode = nodeIdToTopologyNodeMap[nodeId];
+        auto topologyNode = topologyMap[nodeId];
         computeDistance(topologyNode, mileageMap);
     }
     return mileageMap;

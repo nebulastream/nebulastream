@@ -203,7 +203,7 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
+    std::map<uint64_t, TopologyNodePtr> topologyMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
 

@@ -222,7 +222,8 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForDownStreamOpera
             return {};
         }
 
-        TopologyNodePtr parentTopologyNode = nodeIdToTopologyNodeMap[std::any_cast<uint64_t>(
+        TopologyNodePtr parentTopologyNode =
+            topologyMap[std::any_cast<uint64_t>(
             downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
         parentTopologyNodes.push_back(parentTopologyNode);
     }
