@@ -75,7 +75,8 @@ class MonitoringPlan {
      * @brief Returns the MetricType objects that represent the plan.
      * @return A set of metric type objects.
     */
-    [[nodiscard]] const std::map <MetricType, SchemaPtr>& getMetricTypes() const;
+//    [[nodiscard]] const std::map <MetricType, SchemaPtr>& getMetricTypes() const;
+    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
 
     /**
      * @brief Returns the MetricType objects that represent the plan.
