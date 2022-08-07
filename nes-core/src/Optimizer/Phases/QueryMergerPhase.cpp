@@ -22,6 +22,7 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/FaultToleranceBasedQueryMergerRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -34,6 +35,9 @@ QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, Optimizer::
 QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRuleName) {
 
     switch (queryMergerRuleName) {
+        case QueryMergerRule::FaultToleranceBasedQueryMergerRule:
+            queryMergerRule = FaultToleranceBasedQueryMergerRule::create();
+            break;
         case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;

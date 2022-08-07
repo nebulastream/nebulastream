@@ -49,6 +49,11 @@ add_executable(basic-test "Integration/BasicTest.cpp")
 target_link_libraries(basic-test nes-tests)
 add_test(NAME basic-test COMMAND basic-test)
 
+### Fault tolerance based query merger test ###
+add_executable(fault-tolerance-based-query-merger-test "UnitTests/Optimizer/QueryMerger/FaultToleranceBasedQueryMergerRuleTest.cpp")
+target_link_libraries(fault-tolerance-based-query-merger-test nes-tests)
+add_test(NAME fault-tolerance-based-query-merger-test COMMAND fault-tolerance-based-query-merger-test)
+
 add_executable(udf-catalog-controller-test "UnitTests/REST/Controller/UdfCatalogControllerTest.cpp")
 target_link_libraries(udf-catalog-controller-test nes-tests)
 add_test(NAME udf-catalog-controller-test COMMAND udf-catalog-controller-test)

@@ -14,6 +14,7 @@
 add_source_files(nes-core
         SyntaxBasedCompleteQueryMergerRule.cpp
         SyntaxBasedPartialQueryMergerRule.cpp
+        FaultToleranceBasedQueryMergerRule.cpp
         Z3SignatureBasedCompleteQueryMergerRule.cpp
         Z3SignatureBasedPartialQueryMergerRule.cpp
         Z3SignatureBasedPartialQueryMergerBottomUpRule.cpp
