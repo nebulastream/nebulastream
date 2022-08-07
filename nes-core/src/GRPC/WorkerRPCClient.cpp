@@ -323,7 +323,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
 
     MonitoringRegistrationRequest request;
     for (auto metric : plan->getMetricTypes()) {
-        request.mutable_metrictypes()->Add(metric);
+        request.mutable_metrictypes()->Add(metric.first);
     }
     ClientContext context;
     MonitoringRegistrationReply reply;

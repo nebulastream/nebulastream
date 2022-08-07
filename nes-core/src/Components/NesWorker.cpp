@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Monitoring/Util/MetricUtils.hpp"
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
@@ -137,7 +139,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
-        monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
+        web::json::value configurationMonitoringJson =
+            MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
+        MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
+        MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
+        monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, workerConfig->enableMonitoring);
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =
