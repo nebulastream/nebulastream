@@ -332,8 +332,8 @@ void nestedIfThenElseCondition() {
     if (value == 42) {
     } else {
         if (iw == 8) {
-        }else{
-            iw = iw +2;
+        } else {
+            iw = iw + 2;
         }
     }
 }
@@ -619,6 +619,54 @@ TEST_F(SymbolicExecutionTest, invertedLoopTest) {
     ASSERT_EQ(block3.operations[1].op, Trace::ADD);
     ASSERT_EQ(block3.operations[2].op, Trace::LESS_THAN);
     ASSERT_EQ(block3.operations[3].op, Trace::CMP);
+}
+
+void nestedLoop() {
+    Value agg = Value(0);
+    Value i = Value(0);
+    Value end = Value(300);
+    for (; i < end; i = i + 1) {
+        for (Value j = 0; j < 10; j = j + 1) {
+            agg = agg + 1;
+        }
+    }
+}
+
+TEST_F(SymbolicExecutionTest, nestedLoop) {
+    auto execution = Trace::traceFunctionSymbolically([]() {
+        nestedLoop();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 7);
+}
+
+void nestedLoopIf() {
+    Value agg = Value(0);
+    Value i = Value(0);
+    Value end = Value(300);
+    for (; i < end; i = i + 1) {
+        for (Value j = 0; j < 10; j = j + 1) {
+            if (agg < 50)
+                agg = agg + 1;
+            else {
+                agg = agg / 2;
+            }
+        }
+    }
+}
+
+TEST_F(SymbolicExecutionTest, nestedLoopIf) {
+    auto execution = Trace::traceFunctionSymbolically([]() {
+        nestedLoopIf();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 10);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
