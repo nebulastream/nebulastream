@@ -189,13 +189,13 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
     //Todo find cleaner way to not add available proxy functions to JIT symbols
-    if(!name.starts_with("NES__")) {
+    //if(!name.starts_with("NES__")) {
         jitProxyFunctionSymbols.push_back(name);
         if (functionPtr == nullptr) {
             functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
         }
         jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
-    }
+    //}
     return mlir::SymbolRefAttr::get(context, name);
 }
 

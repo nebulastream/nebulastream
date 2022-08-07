@@ -129,7 +129,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 };
 
 #ifdef USE_MLIR
-TEST_F(QueryExecutionTest, emitQueryTest) {
+TEST_P(QueryExecutionTest, emitQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -227,7 +227,7 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
-TEST_F(QueryExecutionTest, longAggregationQueryTest) {
+TEST_P(QueryExecutionTest, longAggregationQueryTest) {
 
     auto bm = std::make_shared<Runtime::BufferManager>();
 
@@ -255,6 +255,7 @@ TEST_F(QueryExecutionTest, longAggregationQueryTest) {
         dynamicBuffer[i]["f1"].write((uint64_t) 1);
     }
     dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
+    executablePipeline->setup();
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     for (auto i = 0; i < 10; i++) {
@@ -322,7 +323,7 @@ TEST_F(QueryExecutionTest, longAggregationUDFQueryTest) {
     }
 }
 
-TEST_F(QueryExecutionTest, aggQueryTest) {
+TEST_P(QueryExecutionTest, aggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::UINT64);
