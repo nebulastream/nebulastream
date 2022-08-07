@@ -37,7 +37,7 @@ namespace NES {
 class RegistrationMetrics {
   public:
     RegistrationMetrics();
-    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
+//    static SchemaPtr createSchema(const std::string& prefix, std::list<std::string> configuredMetrics);
 
     RegistrationMetrics(bool isMoving, bool hasBattery);
     /**

@@ -13,6 +13,7 @@
 */
 
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/MetricType.hpp"
 #include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
@@ -81,7 +82,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
     if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["cpu"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(CpuMetric, CpuMetrics::createSchema("", attributesList)));
+                                                  SchemaPtr>(WrappedCpuMetrics, CpuMetrics::createSchema("", attributesList)));
     } if (configuredMetrics["disk"]["sampleRate"].is_number()) {
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["disk"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
@@ -93,16 +94,17 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
     } if (configuredMetrics["network"]["sampleRate"].is_number()) {
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["network"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(NetworkMetric, NetworkMetrics::createSchema("", attributesList)));
-    } if (configuredMetrics["registration"]["sampleRate"].is_number()) {
-        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["registration"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", attributesList)));
-    } if (configuredMetrics["runtime"]["sampleRate"].is_number()) {
-        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["runtime"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", attributesList)));
+                                                  SchemaPtr>(WrappedNetworkMetrics, NetworkMetrics::createSchema("", attributesList)));
     }
+        //    if (configuredMetrics["registration"]["sampleRate"].is_number()) {
+//        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["registration"]["attributes"]);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", attributesList)));
+//    } if (configuredMetrics["runtime"]["sampleRate"].is_number()) {
+//        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["runtime"]["attributes"]);
+//        configuredMonitoringPlan.insert(std::pair<MetricType,
+//                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", attributesList)));
+//    }
 
     return MonitoringPlan::create(configuredMonitoringPlan);
 }
@@ -165,7 +167,19 @@ std::string MonitoringPlan::toString() const {
 std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) { return strm << plan.toString(); }
 
 //const std::map <MetricType, SchemaPtr>& MonitoringPlan::getMetricTypes() const { return monitoringPlan; }
-const std::set<MetricType>& MonitoringPlan::getMetricTypes() const { return metricTypes; }
+//const std::set<MetricType>& MonitoringPlan::getMetricTypes() const { return metricTypes; }
+
+const std::set<MetricType> MonitoringPlan::getMetricTypes() const {
+    if(!(monitoringPlan.empty())) {
+        std::set<MetricType> allMetricTypes;
+        for (auto metric : monitoringPlan) {
+            NES_DEBUG("MonitoringPlan: getMetricTypes: config is set:" + NES::toString(metric.first));
+            allMetricTypes.insert(metric.first);
+        }
+        return allMetricTypes;
+    }
+    return metricTypes;
+}
 
 
 const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {

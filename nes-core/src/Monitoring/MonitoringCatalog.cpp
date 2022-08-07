@@ -48,7 +48,7 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     NES_DEBUG("MonitoringCatalog: Init catalog for Monitoringplan!");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics;
-    if(monitoringPlan->hasMetric(CpuMetric)) {
+    if(monitoringPlan->hasMetric(WrappedCpuMetrics)) {
         metrics.insert({MetricType::WrappedCpuMetrics,
                         std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(CpuMetric)))});
     }
@@ -60,7 +60,7 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
         metrics.insert({MetricType::MemoryMetric,
                         std::shared_ptr<MetricCollector>(new MemoryCollector(monitoringPlan->getSchema(MemoryMetric)))});
     }
-    if (monitoringPlan->hasMetric(NetworkMetric)) {
+    if (monitoringPlan->hasMetric(WrappedNetworkMetrics)) {
         metrics.insert({MetricType::WrappedNetworkMetrics,
                         std::shared_ptr<MetricCollector>(new NetworkCollector(monitoringPlan->getSchema(NetworkMetric)))});
     }

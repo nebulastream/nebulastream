@@ -118,7 +118,9 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 [[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
 
-[[nodiscard]] std::string monitoringConfiguration(std::string config) { return "--monitoringConfiguration=" + config; }
+[[nodiscard]] std::string monitoringConfiguration(std::string config) {
+    return "--" + MONITORING_CONFIG + "=" + config;
+}
 
 
 /**
