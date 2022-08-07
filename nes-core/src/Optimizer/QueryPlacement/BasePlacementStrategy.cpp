@@ -113,14 +113,14 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
 
     //4. Map nodes in the selected topology by their ids.
 
-    nodeIdToTopologyNodeMap.clear();
+    topologyMap.clear();
     // fetch root node from the identified path
     auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
     auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        nodeIdToTopologyNodeMap[currentTopologyNode->getId()] = currentTopologyNode;
+        topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
         ++topologyIterator;
     }
 }
@@ -138,12 +138,12 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
         //1 Fetch the node where operator is to be placed
         auto pinnedNodeId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_NODE_ID));
         NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << pinnedNodeId);
-        if (nodeIdToTopologyNodeMap.find(pinnedNodeId) == nodeIdToTopologyNodeMap.end()) {
+        if (topologyMap.find(pinnedNodeId) == topologyMap.end()) {
             NES_ERROR("BasePlacementStrategy: Topology node with id " << pinnedNodeId << " not considered for the placement.");
             throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(pinnedNodeId)
                                               + " not considered for the placement.");
         }
-        auto pinnedNode = nodeIdToTopologyNodeMap[pinnedNodeId];
+        auto pinnedNode = topologyMap[pinnedNodeId];
 
         // 2. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedOperator->getProperty(PLACED))) {
@@ -200,7 +200,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                 //Loop over all upstream operators of pinned operator
                 auto upstreamOperators = pinnedOperator->getChildren();
                 for (const auto& upstreamOperator : upstreamOperators) {
-
                     //3.5.2.1 If candidate query plan has the upstream operator then add to it pinned operator as downstream operator
                     if (candidateQueryPlan->hasOperatorWithId(upstreamOperator->as<OperatorNode>()->getId())) {
                         //add downstream operator
@@ -232,19 +231,21 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                     if (operatorAlreadyExistsAsRoot == updatedRootOperators.end()) {
                         candidateQueryPlan->addRootOperator(pinnedOperatorCopy);
                     }
+
+
                 }
             }
 
-            NES_TRACE("ManualPlacementStrategy: Add the query plan to the candidate execution node.");
+            NES_TRACE("BasePlacementStrategy: Add the query plan to the candidate execution node.");
             if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
-                NES_ERROR("ManualPlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
+                NES_ERROR("BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
                 throw log4cxx::helpers::Exception(
-                    "ManualPlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
+                    "BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
             }
-            NES_TRACE("ManualPlacementStrategy: Update the global execution plan with candidate execution node");
+            NES_TRACE("BasePlacementStrategy: Update the global execution plan with candidate execution node");
             globalExecutionPlan->addExecutionNode(candidateExecutionNode);
 
-            NES_TRACE("ManualPlacementStrategy: Place the information about the candidate execution plan and operator id in "
+            NES_TRACE("BasePlacementStrategy: Place the information about the candidate execution plan and operator id in "
                       "the map.");
             operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
             NES_DEBUG("ManualPlacementStrategy: Reducing the node remaining CPU capacity by 1");
@@ -277,7 +278,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             placePinnedOperators(queryId, nextPinnedUpstreamOperators, pinnedDownStreamOperators);
         }
     }
-    NES_DEBUG("ManualPlacementStrategy: Finished placing query operators into the global execution plan");
+    NES_DEBUG("BasePlacementStrategy: Finished placing query operators into the global execution plan");
 }
 
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
@@ -296,9 +297,9 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
 TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
 
     NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << nodeId);
-    auto found = nodeIdToTopologyNodeMap.find(nodeId);
+    auto found = topologyMap.find(nodeId);
 
-    if (found == nodeIdToTopologyNodeMap.end()) {
+    if (found == topologyMap.end()) {
         NES_ERROR("BasePlacementStrategy: Topology node with id " << nodeId << " not considered for the placement.");
         throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
                                           + " not considered for the placement.");
@@ -688,7 +689,7 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenO
             return {};
         }
         TopologyNodePtr childTopologyNode =
-            nodeIdToTopologyNodeMap[std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
+            topologyMap[std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
         childTopologyNodes.push_back(childTopologyNode);
     }
     NES_DEBUG("BasePlacementStrategy: returning list of topology nodes where children operators are placed");
