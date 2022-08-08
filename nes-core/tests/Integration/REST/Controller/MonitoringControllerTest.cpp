@@ -9,14 +9,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#include "Compiler/CPPCompiler/CPPCompiler.hpp"
-#include "NesBaseTest.hpp"
-#include "Plans/Utils/PlanIdGenerator.hpp"
-#include <Plans/Query/QueryPlan.hpp>
-#include "REST/ServerTypes.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestUtils.hpp"
-#include <Compiler/JITCompilerBuilder.hpp>
+
+#include <NesBaseTest.hpp>
+#include <REST/ServerTypes.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
@@ -24,12 +21,9 @@ limitations under the License.
 #include <API/Query.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Monitoring/MonitoringCatalog.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <cpprest/json.h>
-#include <regex>
 
 namespace NES {
 class MonitoringControllerTest : public Testing::NESBaseTest {
@@ -47,7 +41,6 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down MonitoringControllerTest test class."); }
-
 };
 
 TEST_F(MonitoringControllerTest, testStartMonitoringControllerUnsuccessfully) {
@@ -68,7 +61,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoringControllerUnsuccessfully) {
     WorkerRPCClientPtr workerClient = std::make_shared<WorkerRPCClient>();
     auto monitoringService = MonitoringService(workerClient, coordinator->getTopology(), coordinator->getQueryService(), coordinator->getQueryCatalogService());
     Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
-    //auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
 
     //just for debugging
     web::json::value registered = monitoringService.registerMonitoringPlanToAllNodes(monitoringPlan);
@@ -86,8 +78,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoringControllerUnsuccessfully) {
     std::cout << "\n Content of Response r: ";
     std::cout << r.text;
     EXPECT_EQ(r.status_code, 404);
-    //std::string resultJ = resultJson.to_string();
-    //EXPECT_EQ(resultJ, r.);
 
 }
 

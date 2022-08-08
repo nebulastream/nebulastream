@@ -25,11 +25,12 @@
 namespace NES {
 
 /**
- * Message Data-Transfer-Object
+ * Message Data-Transfer-Object containing a Boolean value
  */
 class MonitoringControllerBoolResponse: public oatpp::DTO {
     DTO_INIT(MonitoringControllerBoolResponse, DTO /* Extends */)
-    DTO_FIELD(Boolean, success); // Message field with all query IDs and the status indicated by the registered MonitoringPlan.
+    DTO_FIELD_INFO(success) { info->description = "True if requested action was successful"; }
+    DTO_FIELD(Boolean, success);
 };
 }
 #include OATPP_CODEGEN_END(DTO)

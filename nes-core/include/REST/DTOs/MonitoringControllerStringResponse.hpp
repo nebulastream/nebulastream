@@ -25,11 +25,12 @@
 namespace NES {
 
 /**
- * Message Data-Transfer-Object
+ * Message Data-Transfer-Object containing information as string
  */
 class MonitoringControllerStringResponse: public oatpp::DTO {
     DTO_INIT(MonitoringControllerStringResponse, DTO /* Extends */)
-    DTO_FIELD(String, monitoringData); // Message field with all query IDs and the status indicated by the registered MonitoringPlan.
+    DTO_FIELD_INFO(monitoringData) { info->description = "requested data from monitoring service"; }
+    DTO_FIELD(String, monitoringData);
 };
 }
 #include OATPP_CODEGEN_END(DTO)
