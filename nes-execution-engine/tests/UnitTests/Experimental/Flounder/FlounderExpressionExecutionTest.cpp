@@ -13,9 +13,7 @@
 */
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <gtest/gtest.h>
-
 #include <Experimental/Babelfish/IRSerialization.hpp>
-
 #include <API/Schema.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
@@ -33,7 +31,6 @@
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-
 #include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
