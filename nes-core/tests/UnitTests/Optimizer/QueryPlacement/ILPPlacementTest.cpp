@@ -437,3 +437,75 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
         }
     }
 }
+
+/* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added map - sink to filter operator*/
+TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
+
+    setupTopologyAndSourceCatalogForILP();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topologyForILP,
+                                                                      typeInferencePhase,
+                                                                      z3Context,
+                                                                      false /*query reconfiguration*/);
+
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
+                                                             sourceCatalogForILP,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3U);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            // filter should be placed on source node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 3) {
+            // map should be placed on cloud node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            //ASSERT_EQ(actualRootOperator->getId(), 4);
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+        }
+    }
+
+    // Add the new operators to the query plan
+
+
+}
