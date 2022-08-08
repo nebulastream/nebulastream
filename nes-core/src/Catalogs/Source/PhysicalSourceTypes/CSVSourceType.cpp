@@ -124,7 +124,8 @@ CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
     }
     if (!yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>() != "\n") {
-        gatheringMode->setValue(GatheringMode::getFromString(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>()));
+        gatheringMode->setValue(
+            GatheringMode::getFromString(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>()));
     }
 }
 
@@ -171,9 +172,7 @@ Configurations::IntConfigOption CSVSourceType::getNumberOfTuplesToProducePerBuff
     return numberOfTuplesToProducePerBuffer;
 }
 
-Configurations::GatheringModeConfigOption CSVSourceType::getGatheringMode() const {
-    return gatheringMode;
-}
+Configurations::GatheringModeConfigOption CSVSourceType::getGatheringMode() const { return gatheringMode; }
 
 void CSVSourceType::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
@@ -193,13 +192,11 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
     numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
 
-void CSVSourceType::setGatheringMode(std::string inputGatheringMode){
+void CSVSourceType::setGatheringMode(std::string inputGatheringMode) {
     gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
 }
 
-void CSVSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) {
-    gatheringMode->setValue(inputGatheringMode);
-}
+void CSVSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
 
 void CSVSourceType::reset() {
     setFilePath(filePath->getDefaultValue());
