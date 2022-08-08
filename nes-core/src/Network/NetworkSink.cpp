@@ -64,8 +64,8 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
-        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         insertIntoStorageCallback(inputBuffer, workerContext);
+        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         return success;
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
