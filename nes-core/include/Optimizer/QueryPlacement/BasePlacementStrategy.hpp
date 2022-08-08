@@ -149,8 +149,8 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamOperators the downstream operators succeeding operators to place
      */
     void placePinnedOperators(QueryId queryId,
-                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Get Execution node for the input topology node

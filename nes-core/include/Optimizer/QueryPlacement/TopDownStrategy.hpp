@@ -72,7 +72,6 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @return vector of topology nodes where child operator are to be placed
      */
     std::vector<TopologyNodePtr> getTopologyNodesForUpStreamOperators(const OperatorNodePtr& candidateOperator);
-
 };
 
 }// namespace NES::Optimizer

@@ -196,7 +196,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_DEBUG("ILPStrategy:model: \n" << z3Model);
     NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
 
-
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
