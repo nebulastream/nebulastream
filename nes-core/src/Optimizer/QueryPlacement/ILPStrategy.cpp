@@ -102,11 +102,12 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                     return false;
                 }
 
-                //Only include unpinned operators in the path
-                //                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
+                //FIXME: We need to figure out how incremental placement will happen
+                // Only include unpinned operators in the path
+                // if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
+                // }
                 operatorPath.push_back(downstreamOperator);
                 unpinnedDownStreamOperatorCount++;
-                //                }
             }
         }
 
