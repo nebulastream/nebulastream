@@ -54,7 +54,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * HashSignatureBasedCompleteQueryMergerRule,
      * ImprovedStringSignatureBasedCompleteQueryMergerRule,
      * ImprovedStringSignatureBasedPartialQueryMergerRule,
-     * StringSignatureBasedPartialQueryMergerRule,
+     * HashSignatureBasedPartialQueryMergerRule,
      * DefaultQueryMergerRule,
      * HybridCompleteQueryMergerRule
      */
