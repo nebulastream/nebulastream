@@ -36,6 +36,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
+    storage.clear();
 //    statisticsFile.flush();
 //    statisticsFile.close();
 //    storageFile.flush();

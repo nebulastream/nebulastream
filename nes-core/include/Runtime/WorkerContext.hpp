@@ -56,7 +56,6 @@ class WorkerContext {
     uint32_t queueId = 0;
     ///queue of tuple buffers that were processed by the thread
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
-
     std::ofstream statisticsFile;
     std::ofstream storageFile;
 
