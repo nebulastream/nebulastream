@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.76](https://github.com/nebulastream/nebulastream/tree/v0.2.76) (2022-08-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.75...v0.2.76)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Expose gathering mode as configuration flag in specific sources [\#2928](https://github.com/nebulastream/nebulastream/issues/2928)
+
 ## [v0.2.75](https://github.com/nebulastream/nebulastream/tree/v0.2.75) (2022-08-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.74...v0.2.75)
@@ -823,7 +831,6 @@
 - Build is failing on macOS because of missing std::string includes [\#2250](https://github.com/nebulastream/nebulastream/issues/2250)
 - Collection of Metrics fails on PIs [\#2247](https://github.com/nebulastream/nebulastream/issues/2247)
 - Bug in Worker Config [\#2240](https://github.com/nebulastream/nebulastream/issues/2240)
-- WorkerRPCServer::GetMonitoringData\(\) fails when assigning dynamic buffer [\#2226](https://github.com/nebulastream/nebulastream/issues/2226)
 
 #### Monitoring 🚥
 
