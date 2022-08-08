@@ -33,8 +33,7 @@ limitations under the License.
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <cpprest/json.h>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include "oatpp/core/parser/Caret.hpp"
-
+#include <oatpp/core/parser/Caret.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -56,6 +55,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param monitoringService
+     * @param BufferManager
+     * @param ErrorHandler
+     * @param routerprefix - part of the path of the request
      */
     MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper, MonitoringServicePtr mService, Runtime::BufferManagerPtr bManager, ErrorHandlerPtr eHandler, oatpp::String completeRouterPrefix)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService), bufferManager(bManager), errorHandler(eHandler) {}
@@ -63,7 +66,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     /**
      * Create a shared object of the API controller
      * @param objectMapper
-     * @return
+     * @param MonitoringServicePtr, BufferManagerPtr, ErrorHandlerPtr, routerPrefixAddition
+     * @return MonitoringController
      */
     static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, MonitoringServicePtr mService, Runtime::BufferManagerPtr bManager, ErrorHandlerPtr errorHandler, std::string routerPrefixAddition) {
         oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
@@ -76,7 +80,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         if (dto->monitoringData != "null"){
             return createDtoResponse(Status::CODE_200, dto);
         }
-        return errorHandler->handleError(Status::CODE_404, "Starting monitoring Service was not successful.");
+        return errorHandler->handleError(Status::CODE_404, "Starting monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
@@ -85,25 +89,34 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         if (dto->success == true){
             return createDtoResponse(Status::CODE_200, dto);
         }
-        return errorHandler->handleError(Status::CODE_404, "Stopping monitoring Service was not successful.");
+        return errorHandler->handleError(Status::CODE_404, "Stopping monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->getMonitoringStreams().to_string();
-        return createDtoResponse(Status::CODE_200, dto);
+        if (dto->monitoringData != "null"){
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        return errorHandler->handleError(Status::CODE_404, "Getting streams of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
-        return createDtoResponse(Status::CODE_200, dto);
+        if (dto->monitoringData != "null"){
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        return errorHandler->handleError(Status::CODE_404, "Getting newest monitoring data from metric store of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/Monitoring/metrics", getMonitoringControllerDataFromAllNodes) {
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
-        return createDtoResponse(Status::CODE_200, dto);
+        if (dto->monitoringData != "null"){
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        return errorHandler->handleError(Status::CODE_404, "Getting monitoring data from all nodes was not successful.");
     }
 
     ENDPOINT("GET", "/Monitoring/metrics/", getMonitoringControllerDataFromOneNode,
@@ -123,12 +136,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;
     ErrorHandlerPtr errorHandler;
-
 };
 }// namespace Controller
 }// namespace REST
 }// namespace NES
-
 #include OATPP_CODEGEN_END(ApiController)
-
 #endif//NEBULASTREAM_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_MONITORINGCONTROLLER_HPP_
