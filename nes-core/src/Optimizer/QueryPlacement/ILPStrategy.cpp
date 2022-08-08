@@ -57,7 +57,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     z3::optimize opt(*z3Context);
     std::map<std::string, z3::expr> placementVariables;
-    std::map<OperatorId, z3::expr> operatorDistanceMap;
+    std::map<OperatorId, z3::expr> operatorPositionMap;
     std::map<uint64_t, z3::expr> nodeUtilizationMap;
     std::map<uint64_t, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators);
 
@@ -92,22 +92,21 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 return false;
             }
 
-            uint16_t unpinnedDownStreamOperatorCount = 0;
+            uint16_t unplacedDownStreamOperatorCount = 0;
             for (auto& downstreamOperator : downstreamOperators) {
 
                 // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
                 //  multiple sinks or parents.
-                if (unpinnedDownStreamOperatorCount > 1) {
+                if (unplacedDownStreamOperatorCount > 1) {
                     NES_ERROR("ILPStrategy: Current implementation can not place plan with multiple downstream operators.");
                     return false;
                 }
 
-                //FIXME: We need to figure out how incremental placement will happen
-                // Only include unpinned operators in the path
-                // if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-                // }
-                operatorPath.push_back(downstreamOperator);
-                unpinnedDownStreamOperatorCount++;
+                // Only include unplaced operators in the path
+                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
+                    operatorPath.push_back(downstreamOperator);
+                    unplacedDownStreamOperatorCount++;
+                }
             }
         }
 
@@ -135,7 +134,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                        operatorPath,
                        topologyPath,
                        placementVariables,
-                       operatorDistanceMap,
+                       operatorPositionMap,
                        nodeUtilizationMap,
                        nodeMileageMap);
     }
@@ -143,20 +142,27 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
 
-    for (auto const& [operatorID, position] : operatorDistanceMap) {
+    for (auto const& [operatorID, position] : operatorPositionMap) {
         OperatorNodePtr operatorNode = operatorMap[operatorID]->as<OperatorNode>();
-        if (operatorNode->getParents().empty())
+        if (operatorNode->getParents().empty()) {
             continue;
-        OperatorNodePtr operatorParent = operatorNode->getParents()[0]->as<OperatorNode>();
-        OperatorId operatorParentID = operatorParent->getId();
+        }
 
-        auto distance = position - operatorDistanceMap.find(operatorParentID)->second;
-        NES_DEBUG("distance: " << operatorID << " " << distance);
+        //Loop over downstream operators and compute network cost
+        for (auto downStreamOperator : operatorNode->getParents()) {
+            OperatorId downStreamOperatorId = downStreamOperator->as_if<OperatorNode>()->getId();
+            //Only consider nodes that are to be placed
+            if(operatorMap.find(downStreamOperatorId) != operatorMap.end()){
 
-        std::any prop = operatorNode->getProperty("output");
-        auto output = std::any_cast<double>(prop);
+                auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
+                NES_DEBUG("distance: " << operatorID << " " << distance);
+                
+                std::any prop = operatorNode->getProperty("output");
+                auto output = std::any_cast<double>(prop);
 
-        cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
+                cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
+            }
+        }
     }
     NES_DEBUG("cost_net: " << cost_net);
 

@@ -53,7 +53,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
             break;
-        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule:
+        case QueryMergerRule::HashSignatureBasedPartialQueryMergerRule:
         case QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule:
             queryMergerRule = StringSignatureBasedPartialQueryMergerRule::create();
             break;

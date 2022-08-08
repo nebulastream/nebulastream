@@ -131,13 +131,13 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPl
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
-        "StringSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
+        "HashSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
         NES_WARNING(
-            "StringSignatureBasedPartialQueryMergerRule: Not matched as number of Sources in target and host query plans are "
+            "HashSignatureBasedPartialQueryMergerRule: Not matched as number of Sources in target and host query plans are "
             "different.");
         return {};
     }
@@ -161,13 +161,13 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
+        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
         return {};
     }
 
-    NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
+    NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
     if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(), hostOperator->getZ3Signature())) {
-        NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
+        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {
@@ -186,7 +186,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
         }
         return targetHostOperatorMap;
     }
-    NES_WARNING("StringSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
+    NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
     return {};
 }
 
