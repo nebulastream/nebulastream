@@ -132,8 +132,8 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
     NES_DEBUG("BasePlacementStrategy: Place all pinned upstream operators.");
     //0. Iterate over all pinned upstream operators and place them
     for (auto& pinnedOperator : pinnedUpStreamOperators) {
-        NES_TRACE("PlacePinnedOperators: Place operator " << pinnedOperator->toString());
-        //1 Fetch the node where operator is to be placed
+        NES_TRACE("BasePlacementStrategy: Place operator " << pinnedOperator->toString());
+        //1. Fetch the node where operator is to be placed
         auto pinnedNodeId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_NODE_ID));
         NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << pinnedNodeId);
         if (topologyMap.find(pinnedNodeId) == topologyMap.end()) {
@@ -165,14 +165,14 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                 }
                 //3.1.2 If not all upstream operators are placed then skip placement of this operator
                 if (!allUpstreamOperatorsPlaced) {
-                    NES_WARNING("PlacePinnedOperators: Upstream operators are not placed yet. Skipping the placement.");
+                    NES_WARNING("BasePlacementStrategy: Upstream operators are not placed yet. Skipping the placement.");
                     continue;
                 }
             }
-            //3.2 Fatch Execution node with id same as the pinned node id
+            //3.2 Fetch Execution node with id same as the pinned node id
             auto candidateExecutionNode = getExecutionNode(pinnedNode);
             //3.3 Fetch candidate query plan where operator is to be added
-            NES_TRACE("ManualPlacementStrategy: Get the candidate query plan where operator is to be appended.");
+            NES_TRACE("BasePlacementStrategy: Get the candidate query plan where operator is to be appended.");
             QueryPlanPtr candidateQueryPlan = getCandidateQueryPlanForOperator(queryId, pinnedOperator, candidateExecutionNode);
             //Record to which subquery plan the operator was added
             operatorToSubPlan[pinnedOperator->getId()] = candidateQueryPlan;
@@ -233,7 +233,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             NES_TRACE("BasePlacementStrategy: Place the information about the candidate execution plan and operator id in "
                       "the map.");
             operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
-            NES_DEBUG("ManualPlacementStrategy: Reducing the node remaining CPU capacity by 1");
+            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             pinnedNode->reduceResources(1);
