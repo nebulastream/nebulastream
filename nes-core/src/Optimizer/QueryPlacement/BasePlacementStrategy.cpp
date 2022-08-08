@@ -129,12 +129,10 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("Place all pinned upstream operators.");
-
+    NES_DEBUG("BasePlacementStrategy: Place all pinned upstream operators.");
     //0. Iterate over all pinned upstream operators and place them
     for (auto& pinnedOperator : pinnedUpStreamOperators) {
         NES_TRACE("PlacePinnedOperators: Place operator " << pinnedOperator->toString());
-
         //1 Fetch the node where operator is to be placed
         auto pinnedNodeId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_NODE_ID));
         NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << pinnedNodeId);
@@ -144,24 +142,19 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                                               + " not considered for the placement.");
         }
         auto pinnedNode = topologyMap[pinnedNodeId];
-
         // 2. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedOperator->getProperty(PLACED))) {
             //2.1 Fetch the execution node storing the operator
             const auto& candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(pinnedNodeId);
             operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
-
             //2.2 Fetch candidate query plan where operator was added
             QueryPlanPtr candidateQueryPlan = getCandidateQueryPlanForOperator(queryId, pinnedOperator, candidateExecutionNode);
-
             //2.3 Record to which subquery plan the operator was added
             operatorToSubPlan[pinnedOperator->getId()] = candidateQueryPlan;
         } else {// 3. If pinned operator is not placed then start by placing the operator
-
             //3.1 Find if the operator has multiple upstream or downstream operators and is not of source operator type
             if ((pinnedOperator->hasMultipleChildrenOrParents() && !pinnedOperator->instanceOf<SourceLogicalOperatorNode>())
                 || pinnedOperator->instanceOf<SinkLogicalOperatorNode>()) {
-
                 //3.1.1 Check if all upstream operators of this operator are placed
                 bool allUpstreamOperatorsPlaced = true;
                 for (auto& upstreamOperator : pinnedOperator->getChildren()) {
@@ -170,17 +163,14 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                         break;
                     }
                 }
-
                 //3.1.2 If not all upstream operators are placed then skip placement of this operator
                 if (!allUpstreamOperatorsPlaced) {
                     NES_WARNING("PlacePinnedOperators: Upstream operators are not placed yet. Skipping the placement.");
                     continue;
                 }
             }
-
             //3.2 Fatch Execution node with id same as the pinned node id
             auto candidateExecutionNode = getExecutionNode(pinnedNode);
-
             //3.3 Fetch candidate query plan where operator is to be added
             NES_TRACE("ManualPlacementStrategy: Get the candidate query plan where operator is to be appended.");
             QueryPlanPtr candidateQueryPlan = getCandidateQueryPlanForOperator(queryId, pinnedOperator, candidateExecutionNode);
@@ -196,7 +186,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                                                                  // is empty then set the operator as root of the query plan
                 candidateQueryPlan->appendOperatorAsNewRoot(pinnedOperatorCopy);
             } else {//3.5.2 if candidate query plan is non-empty then set the operator as downstream operator of all its upstream operators
-
                 //Loop over all upstream operators of pinned operator
                 auto upstreamOperators = pinnedOperator->getChildren();
                 for (const auto& upstreamOperator : upstreamOperators) {
@@ -206,7 +195,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                         candidateQueryPlan->getOperatorWithId(upstreamOperator->as<OperatorNode>()->getId())
                             ->addParent(pinnedOperatorCopy);
                     }
-
                     //3.5.2.2 Find if the upstream operator of the pinned operator is one of the root operator of the query plan.
                     auto rootOperators = candidateQueryPlan->getRootOperators();
                     auto found = std::find_if(rootOperators.begin(),
@@ -218,7 +206,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                         //Remove the upstream operator as root
                         candidateQueryPlan->removeAsRootOperator(*(found));
                     }
-
                     //add pinned operator as the root after validation
                     //validation
                     auto updatedRootOperators = candidateQueryPlan->getRootOperators();
@@ -231,8 +218,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                     if (operatorAlreadyExistsAsRoot == updatedRootOperators.end()) {
                         candidateQueryPlan->addRootOperator(pinnedOperatorCopy);
                     }
-
-
                 }
             }
 
@@ -265,7 +250,6 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
 
         //4. Check if this operator is not in the list of pinned downstream operators then recursively call this function for its downstream operators.
         if (isOperatorAPinnedDownStreamOperator == pinnedDownStreamOperators.end()) {
-
             //4.1 Prepare next set of pinned upstream operators to place.
             std::vector<OperatorNodePtr> nextPinnedUpstreamOperators;
             for (const auto& downStreamOperator : pinnedOperator->getParents()) {
