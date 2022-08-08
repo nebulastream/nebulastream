@@ -65,9 +65,7 @@ const Configurations::IntConfigOption& DefaultSourceType::getNumberOfBuffersToPr
 
 const Configurations::IntConfigOption& DefaultSourceType::getSourceGatheringInterval() const { return sourceGatheringInterval; }
 
-Configurations::GatheringModeConfigOption DefaultSourceType::getGatheringMode() const {
-    return gatheringMode;
-}
+Configurations::GatheringModeConfigOption DefaultSourceType::getGatheringMode() const { return gatheringMode; }
 
 void DefaultSourceType::reset() {
     //nothing
@@ -81,12 +79,10 @@ void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInter
     this->sourceGatheringInterval->setValue(sourceGatheringInterval);
 }
 
-void DefaultSourceType::setGatheringMode(std::string inputGatheringMode){
+void DefaultSourceType::setGatheringMode(std::string inputGatheringMode) {
     gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
 }
 
-void DefaultSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) {
-    gatheringMode->setValue(inputGatheringMode);
-}
+void DefaultSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
 
 }// namespace NES

@@ -14,8 +14,8 @@
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -389,12 +389,12 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
     std::string argv[] = {"type=CSVSource",
-                           "numberOfBuffersToProduce=5",
-                           "rowLayout=false",
-                           "physicalSourceName=x",
-                           "logicalSourceName=default",
-                           "filePath=fileLoc",
-                           "sourceGatheringMode=adaptive"};
+                          "numberOfBuffersToProduce=5",
+                          "rowLayout=false",
+                          "physicalSourceName=x",
+                          "logicalSourceName=default",
+                          "filePath=fileLoc",
+                          "sourceGatheringMode=adaptive"};
     int argc = 7;
     std::map<string, string> commandLineParams;
     for (int i = 0; i < argc; ++i) {
