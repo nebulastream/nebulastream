@@ -223,8 +223,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForDownStreamOpera
         }
 
         TopologyNodePtr parentTopologyNode =
-            topologyMap[std::any_cast<uint64_t>(
-            downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
+            topologyMap[std::any_cast<uint64_t>(downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
         parentTopologyNodes.push_back(parentTopologyNode);
     }
     NES_DEBUG("TopDownStrategy: returning list of topology nodes where parent operators are placed");
