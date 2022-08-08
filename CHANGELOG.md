@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.75](https://github.com/nebulastream/nebulastream/tree/v0.2.75) (2022-08-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.74...v0.2.75)
+
+### Query Optimizer 🔧
+
+- Fix ILP placement algorithm to follow new interface for placement strategy [\#2485](https://github.com/nebulastream/nebulastream/issues/2485)
+
 ## [v0.2.74](https://github.com/nebulastream/nebulastream/tree/v0.2.74) (2022-08-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.73...v0.2.74)
@@ -800,7 +808,6 @@
 - Print time unit in Timer [\#2304](https://github.com/nebulastream/nebulastream/issues/2304)
 - Key windows by N subsequent attributes [\#2294](https://github.com/nebulastream/nebulastream/issues/2294)
 - Key windows by multiple \(combined\) attributes [\#2293](https://github.com/nebulastream/nebulastream/issues/2293)
-- Add ClusterMonitoring benchmark to nes-benchmark [\#2221](https://github.com/nebulastream/nebulastream/issues/2221)
 
 ## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
 
