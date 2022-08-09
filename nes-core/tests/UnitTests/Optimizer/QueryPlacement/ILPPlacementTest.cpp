@@ -829,7 +829,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
 
 //TODO: as part of issue number #2939
 /* Test query placement with ILP strategy for query: source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
-TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
