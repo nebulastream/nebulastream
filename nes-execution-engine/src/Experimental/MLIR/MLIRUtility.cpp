@@ -14,21 +14,30 @@
 
 #include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
+#include <llvm/ADT/Triple.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/FileCollector.h>
+#include <llvm/Support/Process.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
 #include <llvm/Transforms/IPO/SCCP.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/MC/TargetRegistry.h>
 #include <mlir/Conversion/LLVMCommon/LoweringOptions.h>
 #include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
 #include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
 #include <mlir/Conversion/VectorToLLVM/ConvertVectorToLLVM.h>
 #include <mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h>
+#include <mlir/Conversion/AffineToStandard/AffineToStandard.h>
 #include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
 #include <mlir/Dialect/Affine/IR/AffineOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
@@ -52,6 +61,14 @@
 #include <utility>
 #include <filesystem>
 #include <fstream>
+
+#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/Host.h>
+#include <llvm/Support/raw_ostream.h>
+// #include <llvm-c/ExternC.h>
+// #include <llvm-c/Target.h>
+// #include <llvm-c/Types.h>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
@@ -243,14 +260,15 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     mlir::PassManager passManager(&context);
     applyPassManagerCLOptions(passManager);
     // passManager.addPass(mlir::createInlinerPass());
-    passManager.addPass(mlir::createLowerToCFGPass());
+    passManager.addPass(mlir::createLowerAffinePass());
+    passManager.addPass(mlir::createLowerToCFGPass());//SCF
     passManager.addPass(mlir::createConvertVectorToLLVMPass());
-    passManager.addPass(mlir::createMemRefToLLVMPass());
     mlir::LowerToLLVMOptions llvmLoweringOptions(&context);
     llvmLoweringOptions.emitCWrappers = true;
     passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
+    passManager.addPass(mlir::createMemRefToLLVMPass()); //Needs to be second to last for unrealized pass to work
     passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
-
+    
     if (mlir::failed(passManager.run(*module))) {
         return 1;
     }
@@ -272,6 +290,11 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
             timer->snapshot("Proxy Module Linked");
 
+            //Todo we probably need to provide a TargetMachine to enable e.g. AVX optimizations
+            // -> no available option to provide info on avx
+            // TargetMachine(const Target &T, StringRef DataLayoutString, const Triple &TargetTriple, 
+            // StringRef CPU, StringRef FS, const TargetOptions &Options);
+            
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
             timer->snapshot("Linked Module Optimized");
@@ -300,10 +323,51 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             return optimizedModule;
         };
     } else {
+        std::cout << "Proxy Inlining: No'\n'";
         return [](llvm::Module* llvmIRModule) {
-            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
+            //Todo  right now, we do not utilize the available 'call site attributes', instead, the attributes for execute are empty
+            // -> we could extract the line with attribute '#0' -> execute attribute, and replace it with the fully available attribute list
+            // -> only for testing, we need to find a more robust method in the future
+            // DOES NOT WORK! Attributes are overwritten again
+            // std::string cpuInfo = R"cpu("target-cpu"="skylake")cpu"; 
+            // std::string targetFeatures = R"features("target-features"="+64bit,+adx,+aes,+avx,+avx2,+bmi,+bmi2,+clflushopt,+cmov,+crc32,+cx16,+cx8,+f16c,+fma,+fsgsbase,+fxsr,+invpcid,+lzcnt,+mmx,+movbe,+pclmul,+popcnt,+prfchw,+rdrnd,+rdseed,+sahf,+sgx,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3,+x87,+xsave,+xsavec,+xsaveopt,+xsaves,-amx-bf16,-amx-int8,-amx-tile,-avx512bf16,-avx512bitalg,-avx512bw,-avx512cd,-avx512dq,-avx512er,-avx512f,-avx512fp16,-avx512ifma,-avx512pf,-avx512vbmi,-avx512vbmi2,-avx512vl,-avx512vnni,-avx512vp2intersect,-avx512vpopcntdq,-avxvnni,-cldemote,-clwb,-clzero,-enqcmd,-fma4,-gfni,-hreset,-kl,-lwp,-movdir64b,-movdiri,-mwaitx,-pconfig,-pku,-prefetchwt1,-ptwrite,-rdpid,-rtm,-serialize,-sha,-shstk,-sse4a,-tbm,-tsxldtrk,-uintr,-vaes,-vpclmulqdq,-waitpkg,-wbnoinvd,-widekl,-xop")features"; 
+            // llvm::Triple newTriple;
+            // newTriple.setTriple("x86_64-pc-linux-gnu");
+            // std::string dataLayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
+
+            // llvm::Target newTarget;
+            // llvm::TargetOptions newTargetOptions;
+            // llvm::Optional<llvm::Reloc::Model> relocModel;
+            // TargetMachineConstructor newTargetMachineConstructor(newTarget, dataLayout, newTriple, cpuInfo, targetFeatures, newTargetOptions);
+            // llvm::TargetMachine newTargetMachine(newTarget, dataLayout, newTriple, cpuInfo, targetFeatures, newTargetOptions);
+            // auto optPipeline = mlir::makeOptimizingTransformer(3, 3, &newTargetMachineConstructor);
+            // llvm::TargetMachine *newTargetMachine = newTarget.createTargetMachine("x86_64-pc-linux-gnu", "", "", newTargetOptions, relocModel);
+            // std::cout << "Target CPU: " << newTargetMachine->getTargetCPU().str() << '\n';
+            llvm::StringMap<bool> FeatureMap;
+            llvm::sys::getHostCPUFeatures(FeatureMap);
+            // std::cout << "FeatureMap: \n";
+            llvm::SmallVector<std::string> test(40);
+            for(auto string : FeatureMap.keys()) {
+                if(FeatureMap[string]) {
+                    test.emplace_back(string.str());
+                }
+            }
+            std::string cpuInfo = "skylake";
+            std::string architecture = "x86-64";
+            llvm::Triple newTriple("x86_64-pc-linux-gnu");
+            llvm::EngineBuilder engineBuilder;
+            auto targetMachine = engineBuilder.selectTarget(newTriple, architecture, cpuInfo, test);
+            std::function<llvm::Error (llvm::Module *)> optPipeline;
+
+            if(targetMachine) {
+                std::cout << "Using Target Machine\n";
+                optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
+            } else {
+                std::cout << "Not using Target Machine\n";
+                optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
+            }
             auto optimizedModule = optPipeline(llvmIRModule);
-            // llvmIRModule->print(llvm::outs(), nullptr);
+            llvmIRModule->print(llvm::outs(), nullptr);
 
             std::string llvmIRString;
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
@@ -318,6 +382,112 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
     }
 }
 
+std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions, std::shared_ptr<Timer<>> parentTimer) {
+    if(!parentTimer) {
+        parentTimer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
+    }
+    //Todo move
+    std::unordered_set<std::string> ExtractFuncs{
+        "getMurMurHash",
+        "getCRC32Hash",
+        "stringToUpperCase",
+        "standardDeviationGetMean",
+        "standardDeviationGetVariance",
+        "standardDeviationGetStdDev",
+        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestamp",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestamp"
+        // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
+    };
+
+    // Initialize LLVM targets.
+    llvm::InitializeNativeTarget();
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeNativeTargetAsmPrinter();
+
+    //Todo EngineBuilder allows to set 'march' -> could use to set 'march=native'
+    // llvm::SMDiagnostic Err;
+    // llvm::LLVMContext context;
+    // auto someModule = std::unique_ptr<llvm::Module>(llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR), Err, context));
+
+    // llvm::EngineBuilder engineBuilder;
+    // engineBuilder();
+    // engineBuilder.setMCPU(llvm::sys::getHostCPUName());
+    // engineBuilder.setEngineKind(llvm::EngineKind::JIT);
+    // engineBuilder.setOptLevel(llvm::CodeGenOpt::Aggressive);
+    // std::string builderError = "builderError";
+    // engineBuilder.setErrorStr(&builderError);
+    // auto testEngine = engineBuilder.create();
+
+    // llvm::StringMap<bool> FeatureMap;
+    // llvm::sys::getHostCPUFeatures(FeatureMap);
+    // // std::cout << "FeatureMap: \n";
+    // llvm::SmallVector<std::string> test(40);
+    // for(auto string : FeatureMap.keys()) {
+    //     if(FeatureMap[string]) {
+    //         test.emplace_back(string.str());
+    //     }
+    // }
+    // std::string cpuInfo = "skylake";
+    // llvm::Triple newTriple;
+    // newTriple.setTriple("x86_64-pc-linux-gnu");
+    
+    // auto targetMachine = engineBuilder.selectTarget(newTriple, "", cpuInfo, test);
+    // auto targetMach = testEngine->getTargetMachine();
+    // if(targetMachine) {
+    //     std::cout << "Target Mach!\n";
+    //     std::cout << "Feature strings: " << targetMachine->getTargetFeatureString().str() << '\n';
+    // } else {
+    //     std::cout << "No Target Mach :(!\n";
+        // std::cout << "error: " << testEngine->getErrorMessage() << '\n';
+    // }
+
+    // Register and execute the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    mlir::registerLLVMDialectTranslation(*module->getContext());
+    parentTimer->snapshot("Lowering to LLVM IR");
+
+    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
+    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
+    
+
+    // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
+    auto maybeEngine =
+        //Todo: does disabling debug info improve compilation times?
+        mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
+        // mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive, {}, false, false, false);
+    assert(maybeEngine && "failed to construct an execution engine");
+    auto& engine = maybeEngine.get();
+    parentTimer->snapshot("JIT Compilation");
+
+    //Todo #2936: do we need to register symbols and addresses
+    if(mlirGenerator && !mlirGenerator->getJitProxyFunctionSymbols().empty()) {
+        auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+            auto symbolMap = llvm::orc::SymbolMap();
+            for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
+                if(!linkProxyFunctions || !ExtractFuncs.contains(mlirGenerator->getJitProxyFunctionSymbols().at(i))) {
+                    symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
+                        llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+                }
+            }
+            return symbolMap;
+        };
+        engine->registerSymbols(runtimeSymbolMap);
+    }
+    parentTimer->snapshot("JIT Symbols Registered");
+
+    // Invoke the JIT-compiled function.
+    int64_t result = 0;
+    return std::move(engine);
+}
+
 /**
  * @brief Takes loaded and lowered MLIR module, jit compiles it and calls 'execute()'
  * @param module: MLIR module that contains the 'execute' function.
@@ -327,6 +497,7 @@ int MLIRUtility::runJit(bool linkProxyFunctions, void* inputBufferPtr, void* out
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
+
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*module->getContext());
@@ -362,71 +533,5 @@ int MLIRUtility::runJit(bool linkProxyFunctions, void* inputBufferPtr, void* out
     }
 
     return (bool) inputBufferPtr + (bool) outputBufferPtr;
-}
-
-std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions, std::shared_ptr<Timer<>> parentTimer) {
-    if(!parentTimer) {
-        parentTimer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
-    }
-    //Todo move
-    std::unordered_set<std::string> ExtractFuncs{
-        "getMurMurHash",
-        "getCRC32Hash",
-        "stringToUpperCase",
-        "standardDeviationGetMean",
-        "standardDeviationGetVariance",
-        "standardDeviationGetStdDev",
-        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
-        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-        "NES__Runtime__TupleBuffer__setNumberOfTuples",
-        "NES__Runtime__TupleBuffer__getBuffer",
-        "NES__Runtime__TupleBuffer__getBufferSize",
-        "NES__Runtime__TupleBuffer__getWatermark",
-        "NES__Runtime__TupleBuffer__setWatermark",
-        "NES__Runtime__TupleBuffer__getCreationTimestamp",
-        "NES__Runtime__TupleBuffer__setSequenceNumber",
-        "NES__Runtime__TupleBuffer__getSequenceNumber",
-        "NES__Runtime__TupleBuffer__setCreationTimestamp"
-        // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
-    };
-
-    // Initialize LLVM targets.
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
-
-    // Register and execute the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
-    mlir::registerLLVMDialectTranslation(*module->getContext());
-    parentTimer->snapshot("Lowering to LLVM IR");
-
-    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
-    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
-    
-
-    // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
-    auto maybeEngine =
-        mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
-    assert(maybeEngine && "failed to construct an execution engine");
-    auto& engine = maybeEngine.get();
-    parentTimer->snapshot("JIT Compilation");
-
-    //Todo #2936: do we need to register symbols and addresses
-    if(mlirGenerator && !mlirGenerator->getJitProxyFunctionSymbols().empty()) {
-        auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
-            auto symbolMap = llvm::orc::SymbolMap();
-            for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-                if(!linkProxyFunctions || !ExtractFuncs.contains(mlirGenerator->getJitProxyFunctionSymbols().at(i))) {
-                    symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
-                        llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
-                }
-            }
-            return symbolMap;
-        };
-        engine->registerSymbols(runtimeSymbolMap);
-    }
-    parentTimer->snapshot("JIT Symbols Registered");
-
-    // Invoke the JIT-compiled function.
-    int64_t result = 0;
-    return std::move(engine);
 }
 }// namespace NES::ExecutionEngine::Experimental::MLIR

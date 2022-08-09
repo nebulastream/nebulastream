@@ -140,6 +140,7 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
         dynamicBuffer.setNumberOfTuples(index + 1);
     }
     std::cout << "Loaded Buffer Num Tuples: " << dynamicBuffer.getNumberOfTuples() << '\n';
+    std::cout << "Final Running Sum is: " << runningSum << '\n';
     inFile.close();
     NES_DEBUG("Loading of Lineitem done");
     return std::make_pair(memoryLayout, dynamicBuffer);
@@ -176,30 +177,25 @@ struct MemRefDescriptor {
 //==-------------------------------------------------------------==//
 //==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, mlirOptimizationStandardDev) {
+TEST_F(InliningBenchmark, mlirOptimizationMemrefApproach) {
     //Todo can we actually skip adding symbols for functions
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = loadLineItemTable(bm);
-    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/simpleSum.mlir", true);
-    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop.mlir", true);
-    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_backup.mlir", true);
-    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_loops_unoptimized.mlir", true);
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/memrefLoad.mlir", true);
     auto buffer = lineitemBuffer.second.getBuffer();
 
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nullptr, nullptr, false);
      // Compile MLIR -> return function pointer
     auto engine = mlirUtility->prepareEngine(false);
-    auto function = (int64_t(*)(NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
-    // auto function = (int64_t(*)(NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1024> *)) engine->lookup("execute").get();
-    // auto function = (double(*)(int, void*)) engine->lookup("execute").get();
+    auto function = (double(*)(int64_t, NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
     
     const int NUM_ITERATIONS = 1;
 
     //Populate MemrefDescriptor
     auto int64BufferPtr = buffer.getBuffer<int64_t>();
-    auto resultMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {60175}, {1}};
+    //x1 Num Tuples: 6001215, x1 Sum: 153078795 -- x001 Num Tuples: 60175, x001 Sum: 
+    auto resultMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {153078795}, {1}};
     std::cout << "Strides: " << resultMemref->strides[0] << '\n';
 
     // Execute function
@@ -207,12 +203,48 @@ TEST_F(InliningBenchmark, mlirOptimizationStandardDev) {
     for(int i = 0; i < NUM_ITERATIONS; ++i) {
         Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
         timer.start();
+        double stdDeviationResult = function(buffer.getNumberOfTuples(), resultMemref);
+        timer.pause();  
+        // Print aggregation result to force execution.
+        // std::cout << "Standard Deviation Result: " << stdDeviationResult << '\n';
+        executionTimeSum += timer.getPrintTime();
+    }
+    std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
+}
+
+TEST_F(InliningBenchmark, DISABLED_mlirOptimizationStandardDev) {
+    //Todo can we actually skip adding symbols for functions
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/simpleSum.mlir", true);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop.mlir", true);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_backup.mlir", true);
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_loops_unoptimized.mlir", true);
+    auto buffer = lineitemBuffer.second.getBuffer();
+
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nullptr, nullptr, false);
+     // Compile MLIR -> return function pointer
+    auto engine = mlirUtility->prepareEngine(false);
+    auto function = (double(*)(int64_t, void*)) engine->lookup("execute").get();
+    // auto function = (double(*)(int, void*)) engine->lookup("execute").get();
+    
+    const int NUM_ITERATIONS = 100;
+
+    //Populate MemrefDescriptor
+    auto bufferPtr = buffer.getBuffer<void*>();
+
+    // Execute function
+    double executionTimeSum = 0.0;
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+        timer.start();
         // double stdDeviationResult = function(resultBuffer);
-        int64_t stdDeviationResult = function(resultMemref);
+        double stdDeviationResult = function(buffer.getNumberOfTuples(), bufferPtr);
         // double stdDeviationResult = function(buffer.getNumberOfTuples(), buffer.getBuffer());
         timer.pause();  
         // Print aggregation result to force execution.
-        std::cout << "Standard Deviation Result: " << stdDeviationResult << '\n';
+        // std::cout << "Standard Deviation Result: " << stdDeviationResult << '\n';
         // std::cout << "Final Timer: " << stdDeviationResult << '\n';
         executionTimeSum += timer.getPrintTime();
     }
@@ -220,8 +252,7 @@ TEST_F(InliningBenchmark, mlirOptimizationStandardDev) {
     // SCF Unoptimized: 11.0659, 1000: 9.83526
     // Control Flow (not inlined) approach: 22.8029, 25.2842
     // Control Flow (inlined) approach: 10.1949
-    std::cout << "Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
-
+    std::cout << "No Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
 }
 
 //==-------------------------------------------------------------==//
