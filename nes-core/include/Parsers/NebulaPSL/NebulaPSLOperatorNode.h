@@ -12,11 +12,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_NEPSLPATTERN_H
-#define NES_NEPSLPATTERN_H
+#ifndef NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_
+#define NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_
 
 #include "API/Query.hpp"
-#include "NePSLPatternEventNode.h"
 #include <list>
 #include <queue>
 #include <string>
@@ -28,54 +27,36 @@ namespace NES {
  * This enables the parsing of declarative patterns into NES queries.
  */
 
-class NePSLPatternEventNode {
+class NebulaPSLOperatorNode {
   private:
     int id;
     std::string eventName;
-    int rightChildId;
-    int leftChildId;
-
-  public:
-    int getRightChildId() const;
-    void setRightChildId(int right_child_id);
-    int getLeftChildId() const;
-    void setLeftChildId(int left_child_id);
-
-  private:
+    int rightChildId = -1;
+    int leftChildId = -1;
+    std::pair<int, int> minMax;
     int parentNodeId = -1;
-    bool negated;
-    bool iteration;
-
-    uint64_t iterMin;
-    uint64_t iterMax;
     NES::Query query = NES::Query(NULL);
 
   public:
     //Constructors
-    NePSLPatternEventNode() = default;
-    explicit NePSLPatternEventNode(int id);
+    explicit NebulaPSLOperatorNode(int id);
     // Getter and Setter
     int getId() const;
     void setId(int id);
-    int getParentNodeId() const;
-    void setParentNodeId(int parent);
     const std::string& getEventName() const;
-    void setEventName(const std::string& eventName);
-
-    bool isNegated() const;
-    void setNegated(bool negated);
-    bool isIteration() const;
-    void setIteration(bool iteration);
-    uint64_t getIterMin() const;
-    void setIterMin(uint64_t iterMin);
-    uint64_t getIterMax() const;
-    void setIterMax(uint64_t iterMax);
-    const NES::Query& getQuery() const;
-    void setQuery(const NES::Query& query);
-    void printPattern();
+    void setEventName(const std::string& event_name);
+    int getRightChildId() const;
+    void setRightChildId(int right_child_id);
+    int getLeftChildId() const;
+    void setLeftChildId(int left_child_id);
+    const std::pair<int, int>& getMinMax() const;
+    void setMinMax(const std::pair<int, int>& min_max);
+    int getParentNodeId() const;
+    void setParentNodeId(int parent_node_id);
+    const Query& getQuery() const;
+    void setQuery(const Query& query);
 };
 
-}
+}// namespace NES
 
-
-#endif//NES_NEPSLPATTERN_H
+#endif//NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_
