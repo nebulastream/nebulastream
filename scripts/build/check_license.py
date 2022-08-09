@@ -32,14 +32,14 @@ license_text_cpp = """/*
 
 if __name__ == "__main__":
     exclude_dirs = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
-                        'build', 'yaml', 'jitify', 'magicenum', '.idea', 'nes-core/include/Parsers/NebulaPSL/gen', 'nes-core/include/Parsers/NebulaSQL/gen',
+                        'build', 'yaml', 'jitify', 'magicenum', '.idea', 'gen', 'nes-core/include/Parsers/NebulaPSL/gen', 'nes-core/include/Parsers/NebulaSQL/gen',
                         'nes-core/src/Parsers/NebulaPSL/gen', 'nes-core/src/Parsers/NebulaSQL/gen'])
     exclude_files = ['backward.hpp',
                      'apex_memmove.hpp',
                      'rte_memory.h',
                      'apex_memmove.cpp']
     exclude = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
-                   'build', 'yaml', 'jitify', 'magicenum', 'Backward', 'nes-core/include/Parsers/NebulaPSL/gen', 'nes-core/include/Parsers/NebulaSQL/gen',
+                   'build', 'yaml', 'jitify', 'magicenum', 'Backward', 'gen','nes-core/include/Parsers/NebulaPSL/gen', 'nes-core/include/Parsers/NebulaSQL/gen',
                    'nes-core/src/Parsers/NebulaPSL/gen', 'nes-core/src/Parsers/NebulaSQL/gen'])
     result = True
     print(str(sys.argv))
