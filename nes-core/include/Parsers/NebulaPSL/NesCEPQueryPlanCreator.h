@@ -16,7 +16,8 @@ limitations under the License.
 #ifndef NES_NESCEPQUERYPLANCREATOR_H
 #define NES_NESCEPQUERYPLANCREATOR_H
 
-#include "NePSLPatternEventNode.h"
+#include "NebulaPSLOperatorNode.h"
+#include "NebulaPSLPattern.h"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -42,26 +43,13 @@ namespace NES {
 
 class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
-
-
   private:
     int sourceCounter = 0;
-    std::map<int,std::string> sources;
-    std::map<int, NePSLPatternEventNode*> operatorList; // contains the operators from the PATTERN clause
     int currentOperatorPointer = -1;
-    std::list<NES::ExpressionNodePtr> expressions;
-    std::list<NES::ExpressionItem> projectionFields;
-    std::list<std::shared_ptr<NES::SinkDescriptor>> sinks; // INTO
-    std::pair<std::string,int> window; // WITHIN
     int lastSeenSourcePtr = -1;
-
-
+    NebulaPSLPattern pattern;
     int nodeId = 0;
-    int direction = -1;// 1 for right child, 0 for op -1, for left child
     int currentElementPointer = -1;
-
-
-    std::map<int, NePSLPatternEventNode*>::iterator it = operatorList.begin();
     NES::Query query = NES::Query(NULL);
 
     bool inWhere = false;
@@ -70,26 +58,16 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     std::string currentRightExp;
 
   public:
-    const std::map<int, NePSLPatternEventNode*>& GetOperatorList() const;
-    void SetOperatorList(const std::map<int, NePSLPatternEventNode*>& operator_list);
-    const std::list<std::shared_ptr<NES::SinkDescriptor>>& GetSinks() const;
-    void SetSinks(const std::list<std::shared_ptr<NES::SinkDescriptor>>& sinks);
-    const std::pair<std::string, int>& getWindow() const;
-    void setWindow(const std::pair<std::string, int>& window);
     int GetLastSeenSourcePtr() const;
     void SetLastSeenSourcePtr(int last_seen_source_ptr);
     int GetSourceCounter() const;
     void SetSourceCounter(int source_counter);
     int getNodeId() const;
     void setNodeId(int node_id);
-    int getDirection() const;
-    void setDirection(int direction);
     int GetCurrentElementPointer() const;
     void setCurrentElementPointer(int current_element_pointer);
     int GetCurrentParentPointer() const;
     void SetCurrentParentPointer(int current_parent_pointer);
-    const std::map<int, NePSLPatternEventNode*>::iterator& GetIt() const;
-    void SetIt(const std::map<int, NePSLPatternEventNode*>::iterator& it);
     const NES::Query& getQuery() const;
     void SetQuery(const NES::Query& query);
     bool IsInWhere() const;
@@ -100,8 +78,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     void SetCurrentLeftExp(const std::string& current_left_exp);
     const std::string& GetCurrentRightExp() const;
     void SetCurrentRightExp(const std::string& current_right_exp);
-    const std::map<int, std::string>& getSources();
-    void setSources(const std::map<int, std::string>& sources);
 
     /** the following methods read out the AST tree and collect all mined patterns in the global pattern list
      * An example of the AST looks as follows:
@@ -124,23 +100,18 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     // EventElement
     /** @brief marks current (event) element as a child of the currentOperatorPointer subPattern and
       * move one step up in the AST hierarchy
-      * @param context
-      */
-    void exitEventElem(NesCEPParser::EventElemContext* context) override;
+      * @param context*/
+
+    void enterEventElem(NesCEPParser::EventElemContext* context) override;
 
     // Event
     /**
-         * @brief marks the position of the event inside of the currentElementPointer subPattern
-         * @param context
-         */
-    void enterEvent(NesCEPParser::EventContext* context) override;
+      * @brief marks the position of the event inside of the currentElementPointer subPattern
+      * @param context
+
+    void enterEvent(NesCEPParser::EventContext* context) override;*/
 
     // Operators
-    /**
-      * @brief adds operator to the currentOperatorPointer subPattern
-      * @param context
-      */
-    void enterOperatorRule(NesCEPParser::OperatorRuleContext* context) override;
 
     /**
       * @brief leaves the current operator element and changes direction to right to mine right branch for binary operators
@@ -183,43 +154,48 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
       */
     void exitInterval(NesCEPParser::IntervalContext* cxt) override;
 
-
-
-    //TODO
     /**
-         * @brief append a map operator to the query plan
-         * @param context
-         */
+      * @brief collects all projection attributes
+      * @param context
+      */
     void enterOutAttribute(NesCEPParser::OutAttributeContext* context) override;
 
-
-
     /**
-         * @brief add the appropriate iteration to the currentElementPointer subPattern
-         * @param context
-         */
+      * @brief add the appropriate iteration operator to the OperatorList
+      * @param context
+      */
     void enterQuantifiers(NesCEPParser::QuantifiersContext* context) override;
 
-
-
     /**
-         * @brief add a "<" filter to the query plan when needed
+         * @brief extracts WHERE Expressions
          * @param context
          */
     void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) override;
 
     /**
-         * @brief if walker is inside of WHERE clause mark current position of the Attribute
+         * @brief extracts Attributes in the WHERE
          * @param context
          */
     void enterAttribute(NesCEPParser::AttributeContext* context) override;
 
     /**
-     * @brief this class creates the query from the list of patterns
+     * @brief this method creates the query from the NesPattern
      */
     NES::Query createQueryFromPatternList();
+
+    /**
+     * @brief this methods add all filter to the query
+     */
     void addFilters();
-    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements();
+
+    /**
+     * @brief this methods parses the user-specified window information to TimeMeasures
+     */
+    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure, int time );
+
+    /**
+     * @brief this methods add all projections to the query
+     */
     void addProjections();
 };
 

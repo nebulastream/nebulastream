@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Parsers/NebulaPSL/NePSLPatternEventNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
 #include <Parsers/NebulaPSL/NesCEPQueryPlanCreator.h>
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>

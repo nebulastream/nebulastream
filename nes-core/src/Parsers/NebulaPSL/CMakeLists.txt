@@ -15,7 +15,8 @@
 
 add_source_files(nes-core
         NesCEPQueryPlanCreator.cpp
-        NePSLPatternEventNode.cpp
+        NebulaPSLOperatorNode.cpp
+        NebulaPSLPattern.cpp
 )
 
 add_subdirectory(gen)
