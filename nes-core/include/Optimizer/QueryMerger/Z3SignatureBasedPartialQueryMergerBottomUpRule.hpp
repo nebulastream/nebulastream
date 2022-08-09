@@ -26,7 +26,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule;
 using Z3SignatureBasedPartialQueryMergerBottomUpRulePtr = std::shared_ptr<Z3SignatureBasedPartialQueryMergerBottomUpRule>;
 
 /**
- * @brief SignatureBasedPartialQueryMergerRule is responsible for merging together all Queries sharing a common upstream operator
+ * @brief Z3SignatureBasedPartialQueryMergerBottomUpRule is responsible for merging together all Queries sharing a common upstream operator
  * chain. After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
  * upstream operator chain.
  * Effectively this rule will prune the global query plan for duplicate operators.
@@ -46,7 +46,7 @@ using Z3SignatureBasedPartialQueryMergerBottomUpRulePtr = std::shared_ptr<Z3Sign
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the SignatureBasedPartialQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the Z3SignatureBasedPartialQueryMergerBottomUpRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \

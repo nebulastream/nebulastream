@@ -35,15 +35,15 @@ Z3SignatureBasedPartialQueryMergerBottomUpRulePtr Z3SignatureBasedPartialQueryMe
 }
 
 bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO("Z3SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("Z3SignatureBasedPartialQueryMergerBottomUpRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("Z3SignatureBasedPartialQueryMergerBottomUpRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -57,7 +57,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
             auto matchedTargetToHostOperatorMap = areQueryPlansEqual(targetQueryPlan, hostQueryPlan);
 
             if (!matchedTargetToHostOperatorMap.empty()) {
-                NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("Z3SignatureBasedPartialQueryMergerBottomUpRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
@@ -95,7 +95,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
-                            NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
+                            NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Failed to add new parent");
                         }
                         hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                         targetOperator->removeParent(targetParent);
@@ -116,7 +116,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
         }
 
         if (!matched) {
-            NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("Z3SignatureBasedPartialQueryMergerBottomUpRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
@@ -131,13 +131,13 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPl
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
-        "HashSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
+        "Z3SignatureBasedPartialQueryMergerBottomUpRule: check if the target and address query plans are syntactically equal or not");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
         NES_WARNING(
-            "HashSignatureBasedPartialQueryMergerRule: Not matched as number of Sources in target and host query plans are "
+            "Z3SignatureBasedPartialQueryMergerBottomUpRule: Not matched as number of Sources in target and host query plans are "
             "different.");
         return {};
     }
@@ -161,13 +161,13 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
+        NES_TRACE("Z3SignatureBasedPartialQueryMergerBottomUpRule: Both target and host operators are of sink type.");
         return {};
     }
 
     NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
     if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(), hostOperator->getZ3Signature())) {
-        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
+        NES_TRACE("Z3SignatureBasedPartialQueryMergerBottomUpRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {
@@ -186,7 +186,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
         }
         return targetHostOperatorMap;
     }
-    NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
+    NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Target and host operators are not matched.");
     return {};
 }
 

@@ -26,7 +26,7 @@ class HashSignatureBasedCompleteQueryMergerRule;
 using HashSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<HashSignatureBasedCompleteQueryMergerRule>;
 
 /**
- * @brief StringSignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
+ * @brief HashSignatureBasedCompleteQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
  * only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this rule will prune the global query plan for duplicate operators.
  *
@@ -49,7 +49,7 @@ using HashSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<HashSignatu
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the StringSignatureBasedEqualQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the HashSignatureBasedCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
