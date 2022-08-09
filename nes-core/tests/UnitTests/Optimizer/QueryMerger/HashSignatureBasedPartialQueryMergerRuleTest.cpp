@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -39,7 +39,7 @@
 
 using namespace NES;
 
-class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;
@@ -48,8 +48,8 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithE
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("StringSignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StringSignatureBasedPartialQueryMergerRuleTest test case.");
+        NES::Logger::setupLogging("HashSignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup HashSignatureBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -78,7 +78,7 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithE
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -121,7 +121,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) 
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -145,7 +145,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) 
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -193,7 +193,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -221,7 +221,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -252,7 +252,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -279,7 +279,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -320,7 +320,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -344,7 +344,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -385,7 +385,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -406,7 +406,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -447,7 +447,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -474,7 +474,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -506,7 +506,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -527,7 +527,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -558,7 +558,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -579,7 +579,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -611,7 +611,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -632,7 +632,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -664,7 +664,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -685,7 +685,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -734,7 +734,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -755,7 +755,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -804,7 +804,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -825,7 +825,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -874,7 +874,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -902,7 +902,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -951,7 +951,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -972,7 +972,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1013,7 +1013,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1041,7 +1041,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator but in different order
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1082,7 +1082,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1103,7 +1103,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different project operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1144,7 +1144,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1165,7 +1165,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same watermark operators
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1208,7 +1208,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1237,7 +1237,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different watermark operators.
  * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1282,7 +1282,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1304,7 +1304,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queryIdAndCatalogEntryMapping with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
@@ -1347,7 +1347,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1373,7 +1373,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
        testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1423,7 +1423,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1449,7 +1449,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
        testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1494,7 +1494,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1515,7 +1515,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1565,7 +1565,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1589,7 +1589,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1639,7 +1639,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1660,7 +1660,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1710,7 +1710,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1731,7 +1731,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1780,7 +1780,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

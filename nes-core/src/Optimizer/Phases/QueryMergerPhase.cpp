@@ -15,8 +15,8 @@
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/HybridCompleteQueryMergerRule.hpp>
-#include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
@@ -41,7 +41,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
             break;
         case QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule:
-        case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
+        case QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule:
             queryMergerRule = HashSignatureBasedCompleteQueryMergerRule::create();
             break;
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
@@ -54,8 +54,8 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
             break;
         case QueryMergerRule::HashSignatureBasedPartialQueryMergerRule:
-        case QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule:
-            queryMergerRule = StringSignatureBasedPartialQueryMergerRule::create();
+        case QueryMergerRule::ImprovedHashSignatureBasedPartialQueryMergerRule:
+            queryMergerRule = HashSignatureBasedPartialQueryMergerRule::create();
             break;
         case QueryMergerRule::HybridCompleteQueryMergerRule:
             queryMergerRule = HybridCompleteQueryMergerRule::create(std::move(context));

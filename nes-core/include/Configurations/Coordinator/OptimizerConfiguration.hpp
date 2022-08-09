@@ -52,8 +52,8 @@ class OptimizerConfiguration : public BaseConfiguration {
      * Z3SignatureBasedPartialQueryMergerRule,
      * Z3SignatureBasedPartialQueryMergerBottomUpRule,
      * HashSignatureBasedCompleteQueryMergerRule,
-     * ImprovedStringSignatureBasedCompleteQueryMergerRule,
-     * ImprovedStringSignatureBasedPartialQueryMergerRule,
+     * ImprovedHashSignatureBasedCompleteQueryMergerRule,
+     * ImprovedHashSignatureBasedPartialQueryMergerRule,
      * HashSignatureBasedPartialQueryMergerRule,
      * DefaultQueryMergerRule,
      * HybridCompleteQueryMergerRule
