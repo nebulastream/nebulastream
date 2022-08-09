@@ -120,7 +120,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
 
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
 HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                               const QueryPlanPtr& hostQueryPlan) {
+                                                             const QueryPlanPtr& hostQueryPlan) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
         "HashSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
@@ -128,9 +128,8 @@ HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr&
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING(
-            "HashSignatureBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
-            "different.");
+        NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
+                    "different.");
         return {};
     }
 
@@ -149,7 +148,7 @@ HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr&
 
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
 HashSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
-                                                             const LogicalOperatorNodePtr& hostOperator) {
+                                                           const LogicalOperatorNodePtr& hostOperator) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
