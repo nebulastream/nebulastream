@@ -114,8 +114,8 @@ ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp);
  * @param whenExpressions : a vector of at least one WHEN expression to evaluate.
  * @param defaultValueExp : an expression which will be returned if no WHEN condition evaluated to true.
  */
-ExpressionNodePtr CASE( const std::vector<ExpressionNodePtr>& whenExpressions, ExpressionNodePtr defaultValueExp);
-ExpressionNodePtr CASE( std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem defaultValueExp);
+ExpressionNodePtr CASE(const std::vector<ExpressionNodePtr>& whenExpressions, ExpressionNodePtr defaultValueExp);
+ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem defaultValueExp);
 
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

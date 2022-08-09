@@ -247,21 +247,19 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
 /**
  * @brief Test behaviour of special WhenExpressionNode::inferStamp function. (float)
  */
-TEST_F(ExpressionNodeTest, whenInferStampTest){
+TEST_F(ExpressionNodeTest, whenInferStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()
-                      ->addField("test$bool", BOOLEAN)
-                      ->addField("test$float", FLOAT32);
+    auto schema = Schema::create()->addField("test$bool", BOOLEAN)->addField("test$float", FLOAT32);
     auto whenNode = WHEN(Attribute("bool"), Attribute("float"));
     ASSERT_TRUE(whenNode->getStamp()->isUndefined());
-    whenNode->inferStamp(typeInferencePhaseContext,schema);
+    whenNode->inferStamp(typeInferencePhaseContext, schema);
     ASSERT_TRUE(whenNode->getStamp()->isFloat());
 }
 
 /**
  * @brief Test behaviour of special CaseExpressionNode::inferStamp function.
  */
-TEST_F(ExpressionNodeTest, caseInfereStampTest){
+TEST_F(ExpressionNodeTest, caseInfereStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
                       ->addField("test$bool1", BOOLEAN)
@@ -277,7 +275,7 @@ TEST_F(ExpressionNodeTest, caseInfereStampTest){
     //test expected use
     auto caseNode = CASE({whenNode1, whenNode2}, Attribute("float3"));
     ASSERT_TRUE(caseNode->getStamp()->isUndefined());
-    caseNode->inferStamp(typeInferencePhaseContext,schema);
+    caseNode->inferStamp(typeInferencePhaseContext, schema);
     ASSERT_TRUE(caseNode->getStamp()->isFloat());
 
     //test error-throwing-use, by mixing stamps of whens-expressions
@@ -288,10 +286,8 @@ TEST_F(ExpressionNodeTest, caseInfereStampTest){
     auto whenNode3 = WHEN(Attribute("bool1"), Attribute("integer"));
     // different stamp of integer when-expression whenNode3
     auto badCaseNode2 = CASE({whenNode1, whenNode3}, Attribute("float3"));
-    ASSERT_ANY_THROW(badCaseNode1->inferStamp(typeInferencePhaseContext,schema));
-    ASSERT_ANY_THROW(badCaseNode2->inferStamp(typeInferencePhaseContext,schema));
-
-
+    ASSERT_ANY_THROW(badCaseNode1->inferStamp(typeInferencePhaseContext, schema));
+    ASSERT_ANY_THROW(badCaseNode2->inferStamp(typeInferencePhaseContext, schema));
 }
 
 }// namespace NES

@@ -68,10 +68,9 @@ class Predicate : public LegacyExpression {
 /**
  * @brief A legacy implementation of the when expression to get it into the codegenerator.
  */
-class WhenPredicate: public LegacyExpression {
+class WhenPredicate : public LegacyExpression {
   public:
-    WhenPredicate(LegacyExpressionPtr const& left,
-              LegacyExpressionPtr const& right);
+    WhenPredicate(LegacyExpressionPtr const& left, LegacyExpressionPtr const& right);
 
     ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;
@@ -89,7 +88,7 @@ class WhenPredicate: public LegacyExpression {
 /**
  * @brief A legacy implementation of the case expression to get it into the codegenerator.
  */
-class CasePredicate: public LegacyExpression {
+class CasePredicate : public LegacyExpression {
   public:
     CasePredicate(const std::vector<LegacyExpressionPtr>& whenExprs, const LegacyExpressionPtr& defautlExpr);
 

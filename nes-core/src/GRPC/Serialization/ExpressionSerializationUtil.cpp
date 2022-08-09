@@ -29,13 +29,12 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-#include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
@@ -55,6 +54,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <SerializableExpression.pb.h>
 namespace NES {
 
@@ -206,7 +206,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto left = deserializeExpression(serializedExpressionNode.release_left());
             auto right = deserializeExpression(serializedExpressionNode.release_right());
             return WhenExpressionNode::create(left, right);
-        } else if ( serializedExpression->details().Is<SerializableExpression_CaseExpression>()) {
+        } else if (serializedExpression->details().Is<SerializableExpression_CaseExpression>()) {
             // de-serialize CASE expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Case expression node.");
             auto serializedExpressionNode = SerializableExpression_CaseExpression();
@@ -214,7 +214,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             std::vector<ExpressionNodePtr> leftExps;
 
             //todo: deserialization might be possible more efficiently
-            for (int i = 0; i < serializedExpressionNode.left_size(); i++){
+            for (int i = 0; i < serializedExpressionNode.left_size(); i++) {
                 auto leftNode = serializedExpressionNode.left(i);
                 leftExps.push_back(deserializeExpression(&leftNode));
             }
