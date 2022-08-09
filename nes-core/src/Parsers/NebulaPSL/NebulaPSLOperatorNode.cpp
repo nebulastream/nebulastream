@@ -14,7 +14,7 @@
 
 #include <API/Query.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <iostream>
 

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Services/PatternParsingService.h"
+#include "Services/PatternParsingService.hpp"
 #include "API/Query.hpp"
 #include "API/QueryAPI.hpp"
 #include "API/Windowing.hpp"
@@ -24,6 +24,7 @@
 #include "Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
 #include "Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp"
 #include "Plans/Query/QueryPlan.hpp"
+#include "Services/PatternParsingService.hpp"
 #include "Util/Logger/Logger.hpp"
 #include <climits>
 #include <gtest/gtest.h>
