@@ -876,7 +876,6 @@
 - Introduce Benchmark Source [\#2252](https://github.com/nebulastream/nebulastream/issues/2252)
 - Move getNextNodeEngineId and getNextTaskId generators to appropriate classes [\#2244](https://github.com/nebulastream/nebulastream/issues/2244)
 - Release Notes Dokument [\#2243](https://github.com/nebulastream/nebulastream/issues/2243)
-- Improve error handling when starting the coordinator from the command line [\#2232](https://github.com/nebulastream/nebulastream/issues/2232)
 
 
 
