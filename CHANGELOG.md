@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.77](https://github.com/nebulastream/nebulastream/tree/v0.2.77) (2022-08-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.76...v0.2.77)
+
+#### Operators 
+
+- \[Feature\] CASE WHEN expressions in map operator [\#2881](https://github.com/nebulastream/nebulastream/issues/2881)
+
 ## [v0.2.76](https://github.com/nebulastream/nebulastream/tree/v0.2.76) (2022-08-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.75...v0.2.76)
@@ -700,7 +708,6 @@
 ### Query Optimizer 🔧
 
 - Allow For Incremental Placement of Merged Query Plans [\#2334](https://github.com/nebulastream/nebulastream/issues/2334)
-- Store intermediate optimized query plans in the query catalog [\#2229](https://github.com/nebulastream/nebulastream/issues/2229)
 
 #### Monitoring 🚥
 
