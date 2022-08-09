@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
-#include <Services/PatternParsingService.h>
+#include <Services/PatternParsingService.hpp>
 #include <antlr4-runtime/ANTLRInputStream.h>
 
 NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std::string& patternString) {

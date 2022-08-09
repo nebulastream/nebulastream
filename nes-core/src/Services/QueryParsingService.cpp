@@ -25,7 +25,7 @@
 #include <iostream>
 #include <log4cxx/helpers/exception.h>
 #include <sstream>
-#include <Services/PatternParsingService.h>
+#include <Services/PatternParsingService.hpp>
 
 namespace NES {
 

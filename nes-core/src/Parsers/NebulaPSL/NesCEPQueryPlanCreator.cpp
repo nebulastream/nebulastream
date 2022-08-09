@@ -20,7 +20,7 @@
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Parsers/NebulaPSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 
