@@ -37,15 +37,6 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-    trimmingThread = std::make_shared<std::thread>(([this]() {
-        while(this->nodeEngine->getQueryStatus(this->queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
-            sleep(100);
-            auto timestamp = this->watermarkProcessor->getCurrentWatermark();
-            if(timestamp) {
-                notifyEpochTermination(timestamp);
-            }
-        }
-    }));
 //    statisticsFile.open("sinkMedium.csv", std::ios::out);
 //    statisticsFile << "time, waitingTime\n";
 }
