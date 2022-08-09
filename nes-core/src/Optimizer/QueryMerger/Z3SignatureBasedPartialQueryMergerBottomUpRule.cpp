@@ -35,7 +35,8 @@ Z3SignatureBasedPartialQueryMergerBottomUpRulePtr Z3SignatureBasedPartialQueryMe
 }
 
 bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO("Z3SignatureBasedPartialQueryMergerBottomUpRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("Z3SignatureBasedPartialQueryMergerBottomUpRule: Applying Signature Based Equal Query Merger Rule to the Global "
+             "Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Found only a single query metadata in the global query plan."
@@ -43,7 +44,8 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
         return true;
     }
 
-    NES_DEBUG("Z3SignatureBasedPartialQueryMergerBottomUpRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG(
+        "Z3SignatureBasedPartialQueryMergerBottomUpRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -130,8 +132,8 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPl
                                                                    const QueryPlanPtr& hostQueryPlan) {
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
-    NES_DEBUG(
-        "Z3SignatureBasedPartialQueryMergerBottomUpRule: check if the target and address query plans are syntactically equal or not");
+    NES_DEBUG("Z3SignatureBasedPartialQueryMergerBottomUpRule: check if the target and address query plans are syntactically "
+              "equal or not");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 

@@ -152,11 +152,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         for (auto downStreamOperator : operatorNode->getParents()) {
             OperatorId downStreamOperatorId = downStreamOperator->as_if<OperatorNode>()->getId();
             //Only consider nodes that are to be placed
-            if(operatorMap.find(downStreamOperatorId) != operatorMap.end()){
+            if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
                 auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
                 NES_DEBUG("distance: " << operatorID << " " << distance);
-                
+
                 std::any prop = operatorNode->getProperty("output");
                 auto output = std::any_cast<double>(prop);
 
