@@ -52,7 +52,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
     //then apply special rewrite rules for improving the match identification
     bool applyRulesImprovingSharingIdentification =
         optimizerConfiguration.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
-        || optimizerConfiguration.queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
 

@@ -511,7 +511,7 @@ target_link_libraries(string-signature-based-equal-query-merger-rule-test nes-te
 add_test(NAME string-signature-based-equal-query-merger-rule-test COMMAND string-signature-based-equal-query-merger-rule-test)
 
 ### String Signature Based Partial Query Merger Rule Test ###
-add_executable(string-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRuleTest.cpp")
+add_executable(string-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRuleTest.cpp")
 target_link_libraries(string-signature-based-partial-query-merger-rule-test nes-tests)
 add_test(NAME string-signature-based-partial-query-merger-rule-test COMMAND string-signature-based-partial-query-merger-rule-test)
 

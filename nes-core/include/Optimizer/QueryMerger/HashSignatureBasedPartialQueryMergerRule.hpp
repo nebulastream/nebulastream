@@ -30,8 +30,8 @@ namespace NES::Optimizer {
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
-class StringSignatureBasedPartialQueryMergerRule;
-using StringSignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<StringSignatureBasedPartialQueryMergerRule>;
+class HashSignatureBasedPartialQueryMergerRule;
+using HashSignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<HashSignatureBasedPartialQueryMergerRule>;
 
 /**
  * @brief HashSignatureBasedPartialQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes
@@ -74,14 +74,14 @@ using StringSignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<StringSign
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class StringSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule {
+class HashSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static StringSignatureBasedPartialQueryMergerRulePtr create();
+    static HashSignatureBasedPartialQueryMergerRulePtr create();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    ~StringSignatureBasedPartialQueryMergerRule() final = default;
+    ~HashSignatureBasedPartialQueryMergerRule() final = default;
 
   private:
     /**

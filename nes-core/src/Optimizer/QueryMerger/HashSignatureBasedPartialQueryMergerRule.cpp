@@ -15,7 +15,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -25,11 +25,11 @@
 
 namespace NES::Optimizer {
 
-StringSignatureBasedPartialQueryMergerRulePtr StringSignatureBasedPartialQueryMergerRule::create() {
-    return std::make_shared<StringSignatureBasedPartialQueryMergerRule>();
+HashSignatureBasedPartialQueryMergerRulePtr HashSignatureBasedPartialQueryMergerRule::create() {
+    return std::make_shared<HashSignatureBasedPartialQueryMergerRule>();
 }
 
-bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
@@ -50,7 +50,7 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
-                NES_TRACE("SyntaxBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
@@ -88,7 +88,7 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
-                            NES_WARNING("SyntaxBasedPartialQueryMergerRule: Failed to add new parent");
+                            NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Failed to add new parent");
                         }
                         hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                         targetOperator->removeParent(targetParent);
@@ -119,7 +119,7 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
 }
 
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
-StringSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
+HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                                const QueryPlanPtr& hostQueryPlan) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
@@ -148,7 +148,7 @@ StringSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPt
 }
 
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
-StringSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
+HashSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
                                                              const LogicalOperatorNodePtr& hostOperator) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
