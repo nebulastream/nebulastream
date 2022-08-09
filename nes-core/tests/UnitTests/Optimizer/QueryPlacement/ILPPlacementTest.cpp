@@ -541,6 +541,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
         }
     }
 
+    //Here we add two partially equivalent queries to build a shared query plan to generate change logs
     // Add the new operators to the query plan
     globalQueryPlan->addQueryPlan(queryPlan2);
 
@@ -735,6 +736,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
         }
     }
 
+    //Here we add two partially equivalent queries to build a shared query plan to generate change logs
     // Add the new query to the global query plan
     globalQueryPlan->addQueryPlan(queryPlan2);
     globalQueryPlan->addQueryPlan(queryPlan3);
@@ -814,7 +816,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
             ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
             EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
 
-            //Assertion for second subquery plan
+            //Assertion for third subquery plan
             auto querySubPlan3 = querySubPlans[2U];
             std::vector<OperatorNodePtr> rootOperatorsForPlan3 = querySubPlan3->getRootOperators();
             ASSERT_EQ(rootOperatorsForPlan3.size(), 1U);

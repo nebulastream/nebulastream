@@ -31,7 +31,7 @@ class HybridCompleteQueryMergerRule;
 using HybridCompleteQueryMergerRulePtr = std::shared_ptr<HybridCompleteQueryMergerRule>;
 
 /**
- * @brief SignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
+ * @brief HybridCompleteQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
  * only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this rule will prune the global query plan for duplicate operators.
  *
@@ -54,7 +54,7 @@ using HybridCompleteQueryMergerRulePtr = std::shared_ptr<HybridCompleteQueryMerg
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the SignatureBasedEqualQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the HybridCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \

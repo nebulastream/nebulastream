@@ -40,7 +40,7 @@ class SyntaxBasedCompleteQueryMergerRule;
 using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedCompleteQueryMergerRule>;
 
 /**
- * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
+ * @brief SyntaxBasedCompleteQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
  * all equivalent operator chains should be merged together and only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this will prune the global query plan size.
  *
@@ -65,7 +65,7 @@ using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedComplet
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the SyntaxBasedEqualQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the SyntaxBasedCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
