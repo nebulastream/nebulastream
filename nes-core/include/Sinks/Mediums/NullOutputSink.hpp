@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <sstream>
+#include <Runtime/NodeEngine.hpp>
 #include <string>
 
 #include <Sinks/Mediums/SinkMedium.hpp>

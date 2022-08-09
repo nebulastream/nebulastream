@@ -37,6 +37,15 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
     else {
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {};
     }
+    trimmingThread = std::make_shared<std::thread>(([this]() {
+        while(this->nodeEngine->getQueryStatus(this->queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+            sleep(100);
+            auto timestamp = this->watermarkProcessor->getCurrentWatermark();
+            if(timestamp) {
+                notifyEpochTermination(timestamp);
+            }
+        }
+    }));
 }
 
 NullOutputSink::~NullOutputSink() = default;
