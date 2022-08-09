@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <utility>
 
 namespace NES {

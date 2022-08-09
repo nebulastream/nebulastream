@@ -27,10 +27,9 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -39,6 +38,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -90,7 +90,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         }
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
         NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
-        return CasePredicate(whenExprs,legacyDefault).copy();
+        return CasePredicate(whenExprs, legacyDefault).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();

@@ -1643,29 +1643,25 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
     auto secondWhenResultValue = ExpressionItem(-2.0);
     auto defaultValue = ExpressionItem(10.0);
 
-
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .filter(Attribute("id") < 2)
-                     .map(Attribute("defaultValue") = defaultValue)
-                     .map(Attribute("compareValue") = compareValue)
-                     .map(Attribute("firstWhenResultValue") = firstWhenResultValue)
-                     .map(Attribute("secondWhenResultValue") = secondWhenResultValue)
-                     //no WHEN condition is true, so default value will be used
-                     .map(Attribute("result_leq_default_float") = CASE({
-                              WHEN(compareValue <= 2, 2.0),
-                              WHEN(compareValue <= 4, 4.0)
-                          }, defaultValue))
-                     //second WHEN condition is true, so its value will be used
-                     .map(Attribute("result_eq_second_when_float") = CASE({
-                              WHEN(compareValue == 3, 3.0),
-                              WHEN(compareValue == 5.0, secondWhenResultValue)
-                          }, defaultValue))
-                     //first WHEN condition is true, so its value will be used
-                     .map(Attribute("result_combined_first_when_float") = CASE({
-                              WHEN(compareValue == 5.0 && compareValue<6.0, firstWhenResultValue),
-                              WHEN(compareValue == 5.0 && compareValue<3.0, 3.0)
-                          }, defaultValue))
-                     .sink(testSinkDescriptor);
+    auto query =
+        TestQuery::from(testSourceDescriptor)
+            .filter(Attribute("id") < 2)
+            .map(Attribute("defaultValue") = defaultValue)
+            .map(Attribute("compareValue") = compareValue)
+            .map(Attribute("firstWhenResultValue") = firstWhenResultValue)
+            .map(Attribute("secondWhenResultValue") = secondWhenResultValue)
+            //no WHEN condition is true, so default value will be used
+            .map(Attribute("result_leq_default_float") =
+                     CASE({WHEN(compareValue <= 2, 2.0), WHEN(compareValue <= 4, 4.0)}, defaultValue))
+            //second WHEN condition is true, so its value will be used
+            .map(Attribute("result_eq_second_when_float") =
+                     CASE({WHEN(compareValue == 3, 3.0), WHEN(compareValue == 5.0, secondWhenResultValue)}, defaultValue))
+            //first WHEN condition is true, so its value will be used
+            .map(Attribute("result_combined_first_when_float") =
+                     CASE({WHEN(compareValue == 5.0 && compareValue < 6.0, firstWhenResultValue),
+                           WHEN(compareValue == 5.0 && compareValue < 3.0, 3.0)},
+                          defaultValue))
+            .sink(testSinkDescriptor);
 
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
@@ -1692,7 +1688,8 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
         std::string expectedContent =
             "+----------------------------------------------------+\n"
             "|id:INT64|one:INT64|value:INT64|defaultValue:FLOAT64|compareValue:FLOAT64|firstWhenResultValue:FLOAT64"
-            "|secondWhenResultValue:FLOAT64|result_leq_default_float:FLOAT64|result_eq_second_when_float:FLOAT64|result_combined_first_when_float:FLOAT64|\n"
+            "|secondWhenResultValue:FLOAT64|result_leq_default_float:FLOAT64|result_eq_second_when_float:FLOAT64|result_combined_"
+            "first_when_float:FLOAT64|\n"
             "+----------------------------------------------------+\n"
             "|0|1|0|10.000000|5.000000|-1.000000|-2.000000|10.000000|-2.000000|-1.000000|\n"
             "|1|1|1|10.000000|5.000000|-1.000000|-2.000000|10.000000|-2.000000|-1.000000|\n"
