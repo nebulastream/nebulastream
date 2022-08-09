@@ -24,10 +24,18 @@
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
+#include <mlir/Conversion/LLVMCommon/LoweringOptions.h>
 #include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
 #include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
+#include <mlir/Conversion/VectorToLLVM/ConvertVectorToLLVM.h>
+#include <mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h>
+#include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+#include <mlir/Dialect/Affine/IR/AffineOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/Math/IR/Math.h>
 #include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/Dialect/Vector/IR/VectorOps.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
@@ -133,6 +141,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::vector::VectorDialect>();
 
     module = parseSourceString(mlirString, &context);
     auto module2 = parseSourceString(mlirString2, &context);
@@ -153,6 +162,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     applyPassManagerCLOptions(passManager);
     passManager.addPass(mlir::createInlinerPass());
     passManager.addPass(mlir::createLowerToCFGPass());
+    // passManager.addPass(mlir::createConvertVectorToLLVMPass());
     passManager.addPass(mlir::createLowerToLLVMPass());
 
     if (mlir::failed(passManager.run(*module))) {
@@ -166,8 +176,10 @@ bool MLIRUtility::generateMLIR(std::shared_ptr<IR::NESIR> nesIR, bool useSCF) {
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
+    // context.loadDialect<mlir::vector::VectorDialect>();
 
-    auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+    // auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+    auto memberFunctions = std::vector<mlir::FuncOp>{};
     mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
     mlirGenerator->useSCF = useSCF;
     module = mlirGenerator->generateModuleFromNESIR(nesIR);
@@ -199,14 +211,21 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::math::MathDialect>();
+    context.loadDialect<mlir::AffineDialect>();
+    context.loadDialect<mlir::vector::VectorDialect>();
+    context.loadDialect<mlir::memref::MemRefDialect>();
+    // passManager.addPass(mlir::createConvertVectorToLLVMPass());
     // Generate MLIR for the sample NESAbstraction or load from file.
     if (debugFromFile) {
         assert(!mlirFilepath.empty() && "No MLIR filename to read from given.");
+        std::cout << "Loading Module from File!\n";
         module = mlir::parseSourceFile(mlirFilepath, &context);
     } else {
-        // create NESAbstraction for testing and an MLIRGenerator
+        // create NESAbstraction for testing and an MLIRGeneratoruseSCF
         // Insert functions necessary to get information from TupleBuffer objects and more.
-        auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+        // auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+        auto memberFunctions = std::vector<mlir::FuncOp>{};
         mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
         mlirGenerator->useSCF = useSCF;
         module = mlirGenerator->generateModuleFromNESIR(nesIR);
@@ -223,9 +242,14 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     // Apply any generic pass manager command line options and run the pipeline.
     mlir::PassManager passManager(&context);
     applyPassManagerCLOptions(passManager);
-    passManager.addPass(mlir::createInlinerPass());
+    // passManager.addPass(mlir::createInlinerPass());
     passManager.addPass(mlir::createLowerToCFGPass());
-    passManager.addPass(mlir::createLowerToLLVMPass());
+    passManager.addPass(mlir::createConvertVectorToLLVMPass());
+    passManager.addPass(mlir::createMemRefToLLVMPass());
+    mlir::LowerToLLVMOptions llvmLoweringOptions(&context);
+    llvmLoweringOptions.emitCWrappers = true;
+    passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
+    passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
 
     if (mlir::failed(passManager.run(*module))) {
         return 1;
@@ -385,18 +409,20 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
     auto& engine = maybeEngine.get();
     parentTimer->snapshot("JIT Compilation");
 
-    auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
-        auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-            if(!linkProxyFunctions || !ExtractFuncs.contains(mlirGenerator->getJitProxyFunctionSymbols().at(i))) {
-                symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
-                    llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+    //Todo #2936: do we need to register symbols and addresses
+    if(mlirGenerator && !mlirGenerator->getJitProxyFunctionSymbols().empty()) {
+        auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+            auto symbolMap = llvm::orc::SymbolMap();
+            for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
+                if(!linkProxyFunctions || !ExtractFuncs.contains(mlirGenerator->getJitProxyFunctionSymbols().at(i))) {
+                    symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
+                        llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+                }
             }
-        }
-        return symbolMap;
-    };
-    
-    engine->registerSymbols(runtimeSymbolMap);
+            return symbolMap;
+        };
+        engine->registerSymbols(runtimeSymbolMap);
+    }
     parentTimer->snapshot("JIT Symbols Registered");
 
     // Invoke the JIT-compiled function.

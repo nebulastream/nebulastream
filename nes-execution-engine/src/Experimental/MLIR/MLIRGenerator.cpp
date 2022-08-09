@@ -188,6 +188,7 @@ mlir::FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string&
     // Create function in global scope. Return reference.
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
+    //Todo #2936: do we need to register symbols and addresses
     jitProxyFunctionSymbols.push_back(name);
     if (functionPtr == nullptr) {
         functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
@@ -261,11 +262,11 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR) {
     ValueFrame firstframe;
     generateMLIR(nesIR->getRootOperation(), firstframe);
-    // theModule->dump();
-    if (failed(mlir::verify(theModule))) {
-        theModule.emitError("module verification error");
-        return nullptr;
-    }
+    theModule->dump();
+    // if (failed(mlir::verify(theModule))) {
+    //     theModule.emitError("module verification error");
+    //     return nullptr;
+    // }
     return theModule;
 }
 
@@ -1089,6 +1090,7 @@ mlir::Block* MLIRGenerator::generateBasicBlock(IR::Operations::BasicBlockInvocat
     return mlirBasicBlock;
 }
 
+//Todo #2936: do we need to register symbols and addresses
 std::vector<std::string> MLIRGenerator::getJitProxyFunctionSymbols() { return jitProxyFunctionSymbols; }
 std::vector<llvm::JITTargetAddress> MLIRGenerator::getJitProxyTargetAddresses() { return jitProxyFunctionTargetAddresses; }
 MLIRGenerator::ValueFrame MLIRGenerator::createFrameFromParentBlock(MLIRGenerator::ValueFrame& frame,

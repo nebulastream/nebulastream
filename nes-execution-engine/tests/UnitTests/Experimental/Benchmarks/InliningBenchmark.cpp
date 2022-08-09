@@ -139,7 +139,7 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
 
         dynamicBuffer.setNumberOfTuples(index + 1);
     }
-    std::cout << "Mean: " << runningSum / (double) dynamicBuffer.getNumberOfTuples() << '\n';
+    std::cout << "Loaded Buffer Num Tuples: " << dynamicBuffer.getNumberOfTuples() << '\n';
     inFile.close();
     NES_DEBUG("Loading of Lineitem done");
     return std::make_pair(memoryLayout, dynamicBuffer);
@@ -161,6 +161,67 @@ Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size)
 
     // //3. get root of aggregated squared values and divide by num elements
     return FunctionCall<>("standardDeviationGetStdDev", NES::Runtime::ProxyFunctions::standardDeviationGetStdDev, runningDeviationSum, size);
+}
+
+// Struct to convert TupleBufferPtrs to Memrefs in MLIR. 'N' is the dimension of the Memref.
+template<typename T, size_t N>
+struct MemRefDescriptor {
+    T *allocated;
+    T *aligned;
+    intptr_t offset;
+    intptr_t sizes[N];
+    intptr_t strides[N];
+};
+
+//==-------------------------------------------------------------==//
+//==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//
+//==-----------------------------------------------------------==//
+TEST_F(InliningBenchmark, mlirOptimizationStandardDev) {
+    //Todo can we actually skip adding symbols for functions
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/simpleSum.mlir", true);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop.mlir", true);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_backup.mlir", true);
+    // auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/deviationLoop_loops_unoptimized.mlir", true);
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/dima/nebulastream/cmake-build-debug/nes-execution-engine/tests/UnitTests/Experimental/Benchmarks/mlirCode/memrefLoad.mlir", true);
+    auto buffer = lineitemBuffer.second.getBuffer();
+
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nullptr, nullptr, false);
+     // Compile MLIR -> return function pointer
+    auto engine = mlirUtility->prepareEngine(false);
+    auto function = (int64_t(*)(NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    // auto function = (int64_t(*)(NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1024> *)) engine->lookup("execute").get();
+    // auto function = (double(*)(int, void*)) engine->lookup("execute").get();
+    
+    const int NUM_ITERATIONS = 1;
+
+    //Populate MemrefDescriptor
+    auto int64BufferPtr = buffer.getBuffer<int64_t>();
+    auto resultMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {60175}, {1}};
+    std::cout << "Strides: " << resultMemref->strides[0] << '\n';
+
+    // Execute function
+    double executionTimeSum = 0.0;
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+        timer.start();
+        // double stdDeviationResult = function(resultBuffer);
+        int64_t stdDeviationResult = function(resultMemref);
+        // double stdDeviationResult = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        timer.pause();  
+        // Print aggregation result to force execution.
+        std::cout << "Standard Deviation Result: " << stdDeviationResult << '\n';
+        // std::cout << "Final Timer: " << stdDeviationResult << '\n';
+        executionTimeSum += timer.getPrintTime();
+    }
+    // Affine Optimized For approach: 9.76605, 1000: 9.64763
+    // SCF Unoptimized: 11.0659, 1000: 9.83526
+    // Control Flow (not inlined) approach: 22.8029, 25.2842
+    // Control Flow (inlined) approach: 10.1949
+    std::cout << "Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
+
 }
 
 //==-------------------------------------------------------------==//
@@ -257,7 +318,7 @@ void stringManipulation(Value<MemRef> ptr, Value<Int64> size) {
         FunctionCall<>("stringToUpperCase", Runtime::ProxyFunctions::stringToUpperCase, i, ptr);
     }
 }
-TEST_F(InliningBenchmark, stringManipulationBenchmark) {
+TEST_F(InliningBenchmark, DISABLED_stringManipulationBenchmark) {
     auto mlirUtility = new MLIR::MLIRUtility("", false);
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     // Get comment strings from Lineitem table and fill array of char pointers with it.
@@ -346,9 +407,9 @@ Value<Int64> murmurHashAggregation(Value<MemRef> ptr, Value<Int64> size) {
     for (auto i = Value(0l); i < size; i = i + 1l) {
         auto address = ptr + i * 8l;
         auto value = address.as<MemRef>().load<Int64>();
-//        auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
+       auto hashResult = FunctionCall<>("getMurMurHash", NES::Runtime::ProxyFunctions::getMurMurHash, value);
 //        auto secondHashResult = hashResult + FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
-        auto hashResult = FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
+        // auto hashResult = FunctionCall<>("getCRC32Hash", NES::Runtime::ProxyFunctions::getCRC32Hash, value, value);
 //        hashResult = secondHashResult - hashResult;
         sum = sum + hashResult;
     }
@@ -375,7 +436,7 @@ TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
     auto buffer = lineitemBuffer.second.getBuffer();
 
     //Setup timing, and results logging.
-    const bool PERFORM_INLINING = true;
+    const bool PERFORM_INLINING = false;
     const bool USE_CRC32_HASH_FUNCTION = false; //ELSE: We are using the MurMur hash function.
     const int NUM_ITERATIONS = 100;
     const int NUM_SNAPSHOTS = 7;

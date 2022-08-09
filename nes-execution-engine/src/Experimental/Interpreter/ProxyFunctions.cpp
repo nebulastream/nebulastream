@@ -158,6 +158,9 @@ __attribute__((always_inline)) double standardDeviationGetVariance(double runnin
     return runningDeviationSum += (inputValue - mean) * (inputValue - mean);
 }
 __attribute__((always_inline)) double standardDeviationGetStdDev(double deviationSum, int64_t size) {
+    // printf("Size: %ld, deviationSum: %f\n", size, deviationSum);
+    // return deviationSum;
+    // return deviationSum / size;
     return std::sqrt(deviationSum) / size;
 }
 
