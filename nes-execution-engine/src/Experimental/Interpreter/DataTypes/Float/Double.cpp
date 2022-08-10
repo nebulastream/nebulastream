@@ -24,6 +24,7 @@ std::unique_ptr<Double> Double::mul(const Double& otherValue) const { return cre
 std::unique_ptr<Double> Double::div(const Double& otherValue) const { return create<Double>(value / otherValue.value); }
 std::unique_ptr<Boolean> Double::equals(const Double& otherValue) const { return create<Boolean>(value == otherValue.value); }
 std::unique_ptr<Boolean> Double::lessThan(const Double& otherValue) const { return create<Boolean>(value < otherValue.value); }
+std::unique_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
 double Double::getValue() const { return value; }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

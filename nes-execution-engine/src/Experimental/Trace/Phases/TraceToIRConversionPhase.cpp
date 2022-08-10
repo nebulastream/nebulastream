@@ -112,6 +112,10 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             processLessThan(scope, frame, currentIrBlock, operation);
             return;
         };
+        case GREATER_THAN: {
+            processGreaterThan(scope, frame, currentIrBlock, operation);
+            return;
+        };
         case NEGATE: {
             processNegate(scope, frame, currentIrBlock, operation);
             return;
@@ -372,6 +376,21 @@ void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
                                                            leftInput,
                                                            rightInput,
                                                            IR::Operations::CompareOperation::Comparator::ISLT);
+    frame.setValue(resultIdentifier, compareOperation);
+    currentBlock->addOperation(compareOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
+                                                                    ValueFrame& frame,
+                                                                    IR::BasicBlockPtr& currentBlock,
+                                                                    Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto compareOperation =
+        std::make_shared<IR::Operations::CompareOperation>(resultIdentifier,
+                                                           leftInput,
+                                                           rightInput,
+                                                           IR::Operations::CompareOperation::Comparator::ISGT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }

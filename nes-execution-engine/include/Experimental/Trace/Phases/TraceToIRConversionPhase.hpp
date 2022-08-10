@@ -60,6 +60,7 @@ class TraceToIRConversionPhase {
         void processDiv(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processEquals(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processLessThan(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processGreaterThan(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processNegate(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         void processOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);

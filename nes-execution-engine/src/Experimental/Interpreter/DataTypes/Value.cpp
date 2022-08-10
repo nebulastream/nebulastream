@@ -140,6 +140,16 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right) {
     });
 }
 
+Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
+    return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+        auto result = plugin->LessThan(left, right);
+        if (result.has_value()) {
+            TraceOperation(Trace::OpCode::GREATER_THAN, left, right, result.value());
+        }
+        return result;
+    });
+}
+
 Value<> OrOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Or(left, right);

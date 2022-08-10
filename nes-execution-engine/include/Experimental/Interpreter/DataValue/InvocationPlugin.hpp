@@ -29,6 +29,7 @@ class InvocationPlugin {
     virtual std::optional<Value<>> Div(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> LessThan(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> Negate(const Value<>& left) const;
     virtual std::optional<Value<>> And(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> Or(const Value<>& left, const Value<>& right) const;

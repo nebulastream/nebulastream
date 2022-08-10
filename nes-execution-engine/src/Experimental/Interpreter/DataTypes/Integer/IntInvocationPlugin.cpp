@@ -80,6 +80,13 @@ class IntInvocationPlugin : public InvocationPlugin {
         });
     }
 
+    std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.greaterThan(right);
+            return Value<>(std::move(result));
+        });
+    }
+
     template<class Source, class Target>
     Value<> performIntCast(Any& source) const {
         auto& sourceValue = source.staticCast<Source>();
