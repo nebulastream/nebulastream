@@ -265,7 +265,7 @@ jobs:
         with:
           token: ${{ secrets.NES_CI_SECRET }}
           issues: true
-          maxIssues: 500
+          #maxIssues: 500
           issuesWoLabels: true
           pullRequests: false
           prWoLabels: true
