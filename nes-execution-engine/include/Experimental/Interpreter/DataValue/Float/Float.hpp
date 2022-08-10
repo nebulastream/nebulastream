@@ -30,6 +30,7 @@ class Float : public TraceableType {
     std::unique_ptr<Float> div(const Float& otherValue) const;
     std::unique_ptr<Boolean> equals(const Float& otherValue) const;
     std::unique_ptr<Boolean> lessThan(const Float& otherValue) const;
+    std::unique_ptr<Boolean> greaterThan(const Float& otherValue) const;
     float getValue() const;
   private:
     const float value;

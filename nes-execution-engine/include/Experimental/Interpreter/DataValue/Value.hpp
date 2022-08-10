@@ -172,6 +172,7 @@ Value<> DivOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> EqualsOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> NegateOp(const Value<>& exp);
 Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 
@@ -418,7 +419,7 @@ auto inline operator>(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator>(const LHS& left, const RHS& right) {
-    return !(left <= right);
+    return GreaterThanOp(left, right);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -435,7 +436,7 @@ auto inline operator>=(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator>=(const LHS& left, const RHS& right) {
-    return !(left < right);
+    return (left > right) || (left == right);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>

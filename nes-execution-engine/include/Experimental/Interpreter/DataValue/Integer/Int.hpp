@@ -28,6 +28,7 @@ class Int : public TraceableType {
     virtual const std::unique_ptr<Int> mul(const Int&) const = 0;
     virtual const std::unique_ptr<Boolean> equals(const Int&) const = 0;
     virtual const std::unique_ptr<Boolean> lessThan(const Int& other) const = 0;
+    virtual const std::unique_ptr<Boolean> greaterThan(const Int& other) const = 0;
     virtual int64_t getRawInt() const = 0;
     static bool isInteger(const Any&);
 };
@@ -44,6 +45,7 @@ class Int8 : public Int {
     const std::unique_ptr<Int> mul(const Int& other) const override;
     const std::unique_ptr<Boolean> equals(const Int& other) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     int8_t getValue() const;
     int64_t getRawInt() const override;
 
@@ -63,6 +65,7 @@ class Int16 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     int16_t getValue() const;
     int64_t getRawInt() const override;
 
@@ -82,6 +85,7 @@ class Int32 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     int32_t getValue() const;
     int64_t getRawInt() const override;
 
@@ -101,6 +105,7 @@ class Int64 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     int64_t getValue() const;
     int64_t getRawInt() const override;
 
@@ -120,6 +125,7 @@ class UInt8 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     uint8_t getValue() const;
     int64_t getRawInt() const override;
 
@@ -139,6 +145,7 @@ class UInt16 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     uint16_t getValue() const;
     int64_t getRawInt() const override;
   private:
@@ -157,6 +164,7 @@ class UInt32 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     uint32_t getValue() const;
     int64_t getRawInt() const override;
   private:
@@ -175,6 +183,7 @@ class UInt64 : public Int {
     const std::unique_ptr<Int> mul(const Int& anInt) const override;
     const std::unique_ptr<Boolean> equals(const Int& anInt) const override;
     const std::unique_ptr<Boolean> lessThan(const Int& other) const override;
+    const std::unique_ptr<Boolean> greaterThan(const Int& other) const override;
     uint64_t getValue() const;
     int64_t getRawInt() const override;
   private:

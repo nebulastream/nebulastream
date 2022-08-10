@@ -30,6 +30,7 @@ class Double : public TraceableType {
     std::unique_ptr<Double> div(const Double& otherValue) const;
     std::unique_ptr<Boolean> equals(const Double& otherValue) const;
     std::unique_ptr<Boolean> lessThan(const Double& otherValue) const;
+    std::unique_ptr<Boolean> greaterThan(const Double& otherValue) const;
     double getValue() const;
 
   private:
