@@ -37,8 +37,8 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-//    statisticsFile.open("sinkMedium.csv", std::ios::out);
-//    statisticsFile << "time, waitingTime\n";
+    statisticsFile.open("sinkMedium.csv", std::ios::out);
+    statisticsFile << "time, waitingTime\n";
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
