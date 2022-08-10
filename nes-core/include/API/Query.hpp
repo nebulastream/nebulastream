@@ -471,7 +471,7 @@ class Query {
 
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
-    
+
   protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
@@ -579,7 +579,6 @@ class Query {
     Query& windowByKey(std::vector<ExpressionNodePtr> keys,
                        Windowing::WindowTypePtr const& windowType,
                        std::vector<Windowing::WindowAggregationPtr> aggregation);
-
 
 };
 
