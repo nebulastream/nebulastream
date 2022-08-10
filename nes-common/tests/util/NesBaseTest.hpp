@@ -29,6 +29,7 @@
     }
 
 namespace NES {
+static const std::string BASE_URL = "http://127.0.0.1:";
 namespace Exceptions {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
