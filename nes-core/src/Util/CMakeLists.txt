@@ -15,7 +15,6 @@ add_source_files(nes-core
         UtilityFunctions.cpp
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
-        TestUtils.cpp
         FaultToleranceType.cpp
         LineageType.cpp
         PlacementStrategy.cpp

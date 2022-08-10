@@ -19,6 +19,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <cpr/cpr.h>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -197,57 +199,6 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
     return false;
 }
-
-/**
-     * @brief This method is used for checking if the submitted query produced the expected result within the timeout
-     * @param queryId: Id of the query
-     * @param expectedNumberBuffers: The expected value
-     * @return true if matched the expected result within the timeout
-     */
-[[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedNumberBuffers, const std::string& restPort = "8081");
-
-/**
-     * @brief This method is used for checking if the submitted query is running
-     * @param queryId: Id of the query
-     * @return true if is running within the timeout, else false
-     */
-[[nodiscard]] bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort = "8081");
-
-/**
-     * @brief This method is used for stop a query
-     * @param queryId: Id of the query
-     * @return if stopped
-     */
-[[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081");
-
-/**
-     * @brief This method is used for executing a query
-     * @param query string
-     * @return if stopped
-     */
-[[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
-
-/**
-     * @brief This method is used for making a monitoring rest call.
-     * @param1 the rest call
-     * @param2 the rest port
-     * @return the json
-     */
-[[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081");
-
-/**
-     * @brief This method is used for making a REST call to coordinator to get the topology as Json
-     * @param1 the rest port
-     * @return the json
-     */
-[[nodiscard]] web::json::value getTopology(uint64_t restPort);
-
-/**
-   * @brief This method is used adding a logical source
-   * @param query string
-   * @return
-   */
-[[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081");
 
 /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
@@ -654,8 +605,6 @@ template<typename T>
     return false;
 }
 
-[[nodiscard]] bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
-
 /**
    * @brief Check if Coordinator REST API is available or timeout
    * @param expectedContent
@@ -681,6 +630,320 @@ template<typename T>
     NES_TRACE("checkFileCreationOrTimeout: expected result not reached within set timeout");
     return false;
 }
+
+/**
+     * @brief This method is used for checking if the submitted query produced the expected result within the timeout
+     * @param queryId: Id of the query
+     * @param expectedNumberBuffers: The expected value
+     * @return true if matched the expected result within the timeout
+     */
+[[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedNumberBuffers, const std::string& restPort = "8081") {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    uint64_t currentResult = 0;
+    web::json::value json_return;
+    std::string currentStatus;
+
+    NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        clientProc.request(web::http::methods::GET, builder.to_string())
+            .then([](const web::http::http_response& response) {
+                //cout << "Get query status" << endl;
+                return response.extract_json();
+            })
+            .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_DEBUG("got status=" << json_return);
+                    json_return = task.get();
+                    currentStatus = json_return.at("status").as_string();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return" << e.what());
+                }
+            })
+            .wait();
+        if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
+            break;
+        }
+        NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    NES_DEBUG("checkCompleteOrTimeout: end with status =" << currentStatus);
+
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
+
+        web::http::client::http_client clientProc("http://localhost:" + restPort
+                                                  + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        clientProc.request(web::http::methods::GET, builder.to_string())
+            .then([](const web::http::http_response& response) {
+                cout << "read number of buffers" << endl;
+                return response.extract_json();
+            })
+            .then([&json_return, &currentResult](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_DEBUG("got #buffers=" << json_return);
+                    json_return = task.get();
+                    currentResult = json_return.at("producedBuffers").as_integer();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return" << e.what());
+                }
+            })
+            .wait();
+
+        if (currentResult >= expectedNumberBuffers) {
+            NES_DEBUG("checkCompleteOrTimeout: results are correct");
+            return true;
+        }
+        NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedNumberBuffers);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult="
+              << currentResult << " expectedNumberBuffers=" << expectedNumberBuffers);
+    return false;
+}
+
+/**
+     * @brief This method is used for checking if the submitted query is running
+     * @param queryId: Id of the query
+     * @return true if is running within the timeout, else false
+     */
+[[nodiscard]] bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort = "8081") {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    uint64_t currentResult = 0;
+    web::json::value json_return;
+    std::string currentStatus;
+
+    NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        clientProc.request(web::http::methods::GET, builder.to_string())
+            .then([](const web::http::http_response& response) {
+                //cout << "Get query status" << endl;
+                return response.extract_json();
+            })
+            .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_DEBUG("got status=" << json_return);
+                    json_return = task.get();
+                    currentStatus = json_return.at("status").as_string();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return" << e.what());
+                }
+            })
+            .wait();
+        if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
+            return true;
+        }
+        NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout");
+    return false;
+}
+
+/**
+     * @brief This method is used for stop a query
+     * @param queryId: Id of the query
+     * @return if stopped
+     */
+[[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
+    web::json::value json_return;
+
+    web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
+    web::uri_builder builder(("/"));
+    builder.append_query(("queryId"), queryId);
+    client.request(web::http::methods::DEL, builder.to_string())
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
+        })
+        .wait();
+
+    NES_DEBUG("stopQueryViaRest: status =" << json_return);
+
+    return json_return.at("success").as_bool();
+}
+
+/**
+     * @brief This method is used for executing a query
+     * @param query string
+     * @return if stopped
+     */
+[[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081") {
+    web::json::value json_return;
+
+    web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
+    clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
+        })
+        .wait();
+
+    NES_DEBUG("startQueryViaRest: status =" << json_return);
+
+    return json_return;
+}
+
+/**
+     * @brief This method is used for making a monitoring rest call.
+     * @param1 the rest call
+     * @param2 the rest port
+     * @return the json
+     */
+[[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081") {
+    web::json::value json_return;
+
+    web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
+    clientQ1.request(web::http::methods::GET, "monitoring/" + restCall)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
+        })
+        .wait();
+
+    NES_DEBUG("getAllMonitoringMetricsViaRest: status =" << json_return);
+
+    return json_return;
+}
+
+/**
+   * @brief This method is used adding a logical source
+   * @param query string
+   * @return
+   */
+[[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081") {
+    web::json::value json_returnSchema;
+
+    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/sourceCatalog/addLogicalSource");
+    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("set return");
+                json_returnSchema = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("error while setting return");
+                NES_ERROR("error " << e.what());
+            }
+        })
+        .wait();
+
+    NES_DEBUG("addLogicalSource: status =" << json_returnSchema);
+
+    return json_returnSchema.at("Success").as_bool();
+}
+
+bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
+    auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
+    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
+    web::json::value json_return;
+    web::http::client::http_client client(baseUri);
+    size_t nodeNo = 0;
+
+    for (int i = 0; i < maxTimeout; i++) {
+        try {
+            client.request(web::http::methods::GET)
+                .then([](const web::http::http_response& response) {
+                    return response.extract_json();
+                })
+                .then([&json_return](const pplx::task<web::json::value>& task) {
+                    try {
+                        json_return = task.get();
+                    } catch (const web::http::http_exception& e) {
+                        NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                    }
+                })
+                .wait();
+
+            nodeNo = json_return.at("nodes").size();
+
+            if (nodeNo == expectedWorkers + 1U) {
+                NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
+                NES_DEBUG("TestUtils: Received topology JSON:\n" << json_return.to_string());
+                return true;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+        } catch (const std::exception& e) {
+            NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+        }
+    }
+
+    NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly " << nodeNo << " but expected "
+                                                                                             << expectedWorkers);
+    return false;
+}
+
+/**
+     * @brief This method is used for making a REST call to coordinator to get the topology as Json
+     * @param1 the rest port
+     * @return the json
+     */
+[[nodiscard]] web::json::value getTopology(uint64_t restPort) {
+    auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
+    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
+    web::json::value json_return;
+    web::http::client::http_client client(baseUri);
+
+    try {
+        client.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+                return response.extract_json();
+            })
+            .then([&json_return](const pplx::task<web::json::value>& task) {
+                try {
+                    json_return = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                }
+            })
+            .wait();
+    } catch (const std::exception& e) {
+        NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    return json_return;
+}
+
 };// namespace TestUtils
 
 class DummyQueryListener : public AbstractQueryStatusListener {
