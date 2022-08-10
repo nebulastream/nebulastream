@@ -15,7 +15,6 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
@@ -478,17 +477,6 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
-    return *this;
-}
-
-Query& Query::multipleSink(const SinkDescriptorPtr sinkDescriptor, std::vector<OperatorNodePtr> rootOperators) {
-    NES_DEBUG("Query: add sink operator to query for multiple root nodes");
-    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
-    for (auto &rootOperator : rootOperators){
-        op->addChild(rootOperator);
-        queryPlan->removeAsRootOperator(rootOperator);
-    }
-    queryPlan->addRootOperator(op);
     return *this;
 }
 
