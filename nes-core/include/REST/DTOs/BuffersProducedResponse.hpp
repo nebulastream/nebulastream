@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_
-#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_BUFFERSPRODUCEDRESPONSE_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_BUFFERSPRODUCEDRESPONSE_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -21,17 +21,21 @@
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
+namespace REST{
+namespace DTO {
 
 /**
  * Message Data-Transfer-Object
  */
-class QueryCatalogControllerNumberOfProducedBuffersResponse : public oatpp::DTO {
-    DTO_INIT(QueryCatalogControllerNumberOfProducedBuffersResponse, DTO /* Extends */)
+class BuffersProducedResponse : public oatpp::DTO {
+    DTO_INIT(BuffersProducedResponse, DTO /* Extends */)
     DTO_FIELD(UInt64 , producedBuffers, "producedBuffers");
 };
 
+}// namespace DTO
+}// namespace REST
 }// namespace NES
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif//NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGCONTROLLERNUMBEROFPRODUCEDBUFFERSRESPONSE_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_DTOS_BUFFERSPRODUCEDRESPONSE_HPP_

@@ -15,12 +15,14 @@
 #ifndef NES_ERRORRESPONSE_HPP
 #define NES_ERRORRESPONSE_HPP
 
-#include "oatpp/core/Types.hpp"
-#include "oatpp/core/macro/codegen.hpp"
+#include <oatpp/core/Types.hpp>
+#include <oatpp/core/macro/codegen.hpp>
 
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
+namespace REST{
+namespace DTO {
 
 class ErrorMessage : public oatpp::DTO {
 
@@ -36,6 +38,10 @@ class ErrorMessage : public oatpp::DTO {
     DTO_FIELD(String, message);
 };
 
+}// namespace DTO
+}// namespace REST
 }// namespace NES
+
+/* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
 #endif//NES_ERRORRESPONSE_HPP

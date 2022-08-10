@@ -164,8 +164,6 @@ void RestServer::run() {
     /* Create a server, which takes provided TCP connections and passes them to HTTP connection handler. */
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
-    NES_INFO("Available Paths");
-    router->logRouterMappings();
     /* Print info about server port */
     NES_INFO("NebulaStream REST Server listening on port " << port);
 
