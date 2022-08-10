@@ -190,6 +190,16 @@ bool Schema::contains(const std::string& fieldName) {
     return false;
 }
 
+bool Schema::containsTensor(){
+    for (const auto& field : this->fields) {
+        NES_DEBUG("Check if field data type=" << field->getDataType()->toString() << " is tensor.");
+        if (field->getDataType()->isTensor()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;
     bool found = false;

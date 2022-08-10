@@ -38,7 +38,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
-    if (values.size() != schema->getSize()) {
+    if (values.size() != schema->getSize() && !schema->containsTensor()) {
         throw Exceptions::RuntimeException("CSVParser: The input line does not contain the right number of delited fiels."s
                                            + " Fields in schema: " + std::to_string(schema->getSize())
                                            + " Fields in line: " + std::to_string(values.size())

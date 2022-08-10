@@ -14,7 +14,6 @@ limitations under the License.
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include "../util/NesBaseTest.hpp"
 #include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -75,6 +74,7 @@ class TensorTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
+        dataPort = Testing::NESBaseTest::getAvailablePort();
         mqttSourceType = MQTTSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -82,20 +82,24 @@ class TensorTest : public Testing::NESBaseTest {
                          .build();
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
+        listener = std::make_shared<DummyQueryListener>();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
+        dataPort.reset();
         Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
 
+    Testing::BorrowedPortPtr dataPort;
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     Runtime::BufferManagerPtr bufferManager;
     Runtime::QueryManagerPtr queryManager;
     uint64_t buffer_size{};
     MQTTSourceTypePtr mqttSourceType;
+    AbstractQueryStatusListenerPtr listener;
 };
 
 /**
@@ -434,12 +438,12 @@ TEST_F(TensorTest, DISABLED_testMixedSchemaVectorMatrixCubeViaMQTT) {
         R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     //todo: adapt to new design
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
@@ -450,6 +454,96 @@ TEST_F(TensorTest, DISABLED_testMixedSchemaVectorMatrixCubeViaMQTT) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
+}
+
+/**
+ * @brief This test generates a map predicate, which manipulates the input buffer content.
+ * This one with a column layout for both input and output schema
+ */
+TEST_F(TensorTest, codeGenerationMapCreateTensorTest) {
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "GermanCreditAge25short.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setSkipHeader(true);
+    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", csvSourceType);
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(*dataPort);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
+
+    /* prepare objects for test */
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+
+    /* generate code for writing result tuples to output buffer */
+    auto inputSchema = Schema::create()
+                      ->addField("DurationMonth", FLOAT64)
+                      ->addField("CreditAmount", FLOAT64)
+                      ->addField("score", FLOAT64)
+                      ->addField("age25", INT8)
+                      ->addField("DurationMonth_1", FLOAT64)
+                      ->addField("CreditAmount_1", FLOAT64)
+                      ->addField("score_1", FLOAT64)
+                      ->addField("age25_1", INT8);
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create()
+                      ->addField("DurationMonth", FLOAT64)
+                      ->addField("CreditAmount", FLOAT64)
+                      ->addField("score", FLOAT64)
+                      ->addField("age25", INT8)
+                      ->addField("DurationMonth_1", FLOAT64)
+                      ->addField("CreditAmount_1", FLOAT64)
+                      ->addField("score_1", FLOAT64)
+                      ->addField("age25_1", INT8)->addField("tensorField", DataTypeFactory::createTensor({4}, "FLOAT64", "DENSE"));
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+
+    //predicate definition
+    codeGenerator->generateCodeForMap(mappedValue,
+                                      createPredicate((inputSchema->get(2) * QueryCompilation::PredicateItem(inputSchema->get(3)))
+                                                      + QueryCompilation::PredicateItem(2)),
+                                      context);
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, QueryCompilation::FIELD_COPY, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::DEBUG);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
+
+    auto resultBuffer = queryContext->buffers[0];
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout =
+        Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+
+    auto secondFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, inputLayout, inputBuffer);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
+
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        auto floatValue = secondFieldsInput[recordIndex];
+        auto doubleValue = thirdFieldsInput[recordIndex];
+        auto reference = (floatValue * doubleValue) + 2;
+        auto const mv = fourthFieldsOutput[recordIndex];
+        EXPECT_EQ(reference, mv);
+    }
 }
 
 TEST_F(TensorTest, testCreateTensorMapOperator) {
@@ -501,12 +595,12 @@ TEST_F(TensorTest, testCreateTensorMapOperator) {
         R"(Query::from("stream").map(Attribute("tensorField") = CREATETENSOR({Attribute("DurationMonth"), Attribute("score"), Attribute("age25"), Attribute("CreditAmount_1")},{4},"DENSE")).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");

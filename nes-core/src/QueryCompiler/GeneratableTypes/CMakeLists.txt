@@ -13,6 +13,7 @@
 
 add_source_files(nes-core
         ArrayGeneratableType.cpp
+        TensorGeneratableType.cpp
         GeneratableDataType.cpp
         AnonymousUserDefinedDataType.cpp
         PointerDataType.cpp
@@ -22,4 +23,5 @@ add_source_files(nes-core
         GeneratableValueType.cpp
         GeneratableBasicValueType.cpp
         GeneratableArrayValueType.cpp
+        GeneratableTensorValueType.cpp
 )

@@ -13,18 +13,23 @@
 */
 
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/TensorType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/TensorPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
+#include <Common/ValueTypes/TensorValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
+#include <QueryCompiler/GeneratableTypes/TensorGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTensorValueType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableBasicValueType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
@@ -47,6 +52,8 @@ GeneratableDataTypePtr GeneratableTypesFactory::createDataType(const DataTypePtr
 GeneratableValueTypePtr GeneratableTypesFactory::createValueType(const ValueTypePtr& valueType) {
     if (valueType->dataType->isArray()) {
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->values);
+    } else if (valueType->dataType->isTensor()){
+        return std::make_shared<GeneratableTensorValueType>(valueType, std::dynamic_pointer_cast<TensorValue>(valueType)->values);
     }
 
     return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));

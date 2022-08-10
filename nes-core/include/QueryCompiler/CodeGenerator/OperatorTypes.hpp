@@ -67,7 +67,7 @@ enum BinaryOperatorType {
 };
 
 enum MultiOperatorType {
-    CREATETENSOR_OP
+    CREATE_TENSOR_OP
 };
 
 const std::string toString(const BinaryOperatorType& type);

@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
-#define NES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#ifndef NES_INCLUDE_COMMON_VALUETYPES_TENSORVALUE_HPP_
+#define NES_INCLUDE_COMMON_VALUETYPES_TENSORVALUE_HPP_
 
 #include <Common/ValueTypes/ValueType.hpp>
 #include <type_traits>

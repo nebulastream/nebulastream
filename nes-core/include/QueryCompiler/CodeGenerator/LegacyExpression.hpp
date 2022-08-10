@@ -64,29 +64,26 @@ class Predicate : public LegacyExpression {
     bool bracket{};
     std::string functionCallOverload;
 };
-
+/**
+ * @brief Legacy implementation of createTensor to add to code generator
+ */
 class MultiPredicate : public LegacyExpression {
   public:
     MultiPredicate(MultiOperatorType const& op,
-                   std::vector<LegacyExpressionPtr> const& children,
-                   std::string functionCallOverload,
+                   std::vector<LegacyExpressionPtr> const& expressions,
                    bool bracket = true);
-
-    MultiPredicate(MultiOperatorType const& op, std::vector<LegacyExpressionPtr> const& children, bool bracket = true);
 
     ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
     [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
-    [[nodiscard]] BinaryOperatorType getOperatorType() const;
-    [[nodiscard]] std::vector<LegacyExpressionPtr> getChildren() const;
+    [[nodiscard]] std::vector<LegacyExpressionPtr> getFieldAccessExpressions() const;
 
   private:
     MultiPredicate() = default;
-    BinaryOperatorType op;
-    std::vector<LegacyExpressionPtr> children;
+    MultiOperatorType op;
+    std::vector<LegacyExpressionPtr> expressions;
     bool bracket{};
-    std::string functionCallOverload;
 };
 
 class UnaryPredicate : public LegacyExpression {

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -21,7 +22,7 @@
 
 namespace NES::QueryCompilation {
 std::string toString(const MultiOperatorType& type) {
-    const char* const names[] = {"CREATETENSOR_OP"};
+    const char* const names[] = {"CREATE_TENSOR_OP"};
     return std::string(names[type]);
 }
 
@@ -33,30 +34,32 @@ CodeExpressionPtr toCodeExpression(const MultiOperatorType& type) {
     return std::make_shared<CodeExpression>(names[type]);
 }
 
-MultiOperatorStatement::MultiOperatorStatement(const std::vector<ExpressionStatement&> children,
-                                               const MultiOperatorType& op,
+MultiOperatorStatement::MultiOperatorStatement(const std::vector<ExpressionStatement> expressions,
+                                               MultiOperatorType const& op,
                                                BracketMode bracket_mode)
-    : children_(children), op_(op), bracket_mode_(bracket_mode) {
-}//todo: check if this works because it should actually be copied with the copy constructor and create a new pointer
-
-MultiOperatorStatement::MultiOperatorStatement(const std::vector<ExpressionStatementPtr&> children,
-                                               const BinaryOperatorType& op,
-                                               BracketMode bracket_mode)
-    : children(children), op_(op), bracket_mode_(bracket_mode) {}
-
-//todo: what is this, what does this do?
-MultiOperatorStatement
-MultiOperatorStatement::addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode) {
-    return MultiOperatorStatement(*this, op, rhs, bracket_mode);
+    : bracket_mode_(bracket_mode), _op(op) {
+    for (auto& exp : expressions) {
+        this->expressions.push_back(exp.copy());
+    }
 }
 
-StatementPtr MultiOperatorStatement::assignToVariable(const VarRefStatement&) { return StatementPtr(); }
+MultiOperatorStatement::MultiOperatorStatement(const std::vector<ExpressionStatementPtr> expressions,
+                                               MultiOperatorType const& op,
+                                               BracketMode bracket_mode)
+    : bracket_mode_(bracket_mode), _op(op) {
+    for (auto& exp : expressions) {
+        this->expressions.push_back(exp);
+    }
+}
 
 StatementType MultiOperatorStatement::getStamentType() const { return MULTI_OP_STMT; }
 
 //todo: work on main portion!!!
+//I need:
+//- tensor information from query input aka from the expression node (shape, component type, tensortype)
+//- creating a new tensor in the schema with generatableTensorValueType
 CodeExpressionPtr MultiOperatorStatement::getCode() const {
-    CodeExpressionPtr code;
+    /*CodeExpressionPtr code;
     if (ARRAY_REFERENCE_OP == op_) {
         code = combine(lhs_->getCode(), std::make_shared<CodeExpression>("["));
         code = combine(code, rhs_->getCode());
@@ -72,11 +75,19 @@ CodeExpressionPtr MultiOperatorStatement::getCode() const {
         code = combine(code, rhs_->getCode());
     }
 
+    for (auto exp : expressions) {
+    }
+*/
+    for (auto exp : expressions) {
+        std::cout << "Current expression is: " << exp->getCode()->code_ << std::endl;
+    }
+    std::cout << "Current operator: " << std::endl;
+    std::cout << _op << std::endl;
     std::string ret;
     if (bracket_mode_ == BRACKETS) {
-        ret = std::string("(") + code->code_ + std::string(")");
+        ret = std::string("(") + "code" + std::string(")");
     } else {
-        ret = code->code_;
+        ret = "code";
     }
     return std::make_shared<CodeExpression>(ret);
 }
@@ -85,8 +96,8 @@ ExpressionStatementPtr MultiOperatorStatement::copy() const { return std::make_s
 
 /** \brief small utility operator overloads to make code generation simpler and */
 
-MultiOperatorStatement assign(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
+/*MultiOperatorStatement assign(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return MultiOperatorStatement(lhs, ASSIGNMENT_OP, rhs);
-}
+}*/
 
 }// namespace NES::QueryCompilation

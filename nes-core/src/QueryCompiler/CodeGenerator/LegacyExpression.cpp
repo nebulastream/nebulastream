@@ -16,6 +16,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/MultiOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
@@ -127,28 +128,71 @@ LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 LegacyExpressionPtr Predicate::getRight() const { return right; }
 
-MultiPredicate::MultiPredicate(const MultiOperatorType& op,
-                               const std::vector<LegacyExpressionPtr>& children,
-                               std::string functionCallOverload,
-                               bool bracket)
-    : op(op), children(children), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
+MultiPredicate::MultiPredicate(MultiOperatorType const& op, const std::vector<LegacyExpressionPtr>& expressions, bool bracket)
+    : op(op), expressions(expressions), bracket(bracket) {}
 
-MultiPredicate::MultiPredicate(MultiOperatorType const& op, std::vector<LegacyExpressionPtr> const& children, bool bracket)
-    : op(op), children(children), bracket(bracket) {}
+//todo: generate code
+ExpressionStatementPtr MultiPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
 
-ExpressionStatementPtr MultiPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {}
+    std::vector<ExpressionStatementPtr> expGenerateCode;
+    for (auto exp : expressions) {
+        expGenerateCode.push_back(exp->generateCode(code, recordHandler));
+    }
+    if (bracket) {
+        return MultiOperatorStatement(expGenerateCode,
+                                       op,
+                                       BRACKETS)
+            .copy();
+    }
+    return MultiOperatorStatement(expGenerateCode, op)
+        .copy();
+
+    std::cout << "What is the code here?" << std::endl;
+    std::cout << code << std::endl;
+    std::cout << recordHandler->hasAttribute("f1") << std::endl;
+    return nullptr;
+}
 
 std::string MultiPredicate::toString() const {
     std::stringstream stream;
     if (bracket) {
         stream << "(";
     }
-    stream << left->toString() << " " << toCodeExpression(op)->code_ << " " << right->toString() << " ";
+    stream << toCodeExpression(op)->code_ << "({";
+    for (size_t i = 0; i < expressions.size(); ++i) {
+        if (i != 0) {
+            stream << ", ";
+        }
+        stream << expressions.at(i)->toString();
+    }
+    stream << "})";
     if (bracket) {
         stream << ")";
     }
     return stream.str();
 }
+//Todo:write equals method
+bool MultiPredicate::equals(const LegacyExpression& _rhs) const {
+    try {
+        auto rhs = dynamic_cast<const MultiPredicate&>(_rhs);
+        bool expressionEqual = false;
+        for (size_t i = 0; i < expressions.size(); ++i) {
+            if ((expressions.at(i) == nullptr && rhs.expressions.at(i) == nullptr)
+                || (expressions.at(i)->equals(*rhs.expressions.at(i).get()))) {
+                expressionEqual = true;
+            } else {
+                expressionEqual = false;
+            }
+        }
+        return expressionEqual && op == rhs.op && bracket == rhs.bracket;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
+LegacyExpressionPtr MultiPredicate::copy() const { return std::make_shared<MultiPredicate>(*this); }
+
+std::vector<LegacyExpressionPtr> MultiPredicate::getFieldAccessExpressions() const { return expressions; }
 
 UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op, const LegacyExpressionPtr& child, bool bracket)
     : op(op), child(child), bracket(bracket) {}

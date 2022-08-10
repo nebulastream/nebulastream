@@ -24,24 +24,19 @@
 #include <vector>
 
 namespace NES::QueryCompilation {
-CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
+CodeExpressionPtr toCodeExpression(const MultiOperatorType& type);
 
 class MultiOperatorStatement : public ExpressionStatement {
   public:
-    MultiOperatorStatement(const std::vector<ExpressionStatementPtr&> children,
-                           const MultiOperatorType& op,
+    MultiOperatorStatement(const std::vector<ExpressionStatementPtr> expressions,
+                           MultiOperatorType const& op,
                            BracketMode bracket_mode = NO_BRACKETS);
 
-    MultiOperatorStatement(const std::vector<ExpressionStatement&> children,
-                           const MultiOperatorType& op,
+    MultiOperatorStatement(const std::vector<ExpressionStatement> expressions,
+                           MultiOperatorType const& op,
                            BracketMode bracket_mode = NO_BRACKETS);
 
     ~MultiOperatorStatement() override = default;
-
-    MultiOperatorStatement
-    addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS);
-
-    static StatementPtr assignToVariable(const VarRefStatement& lhs);
 
     [[nodiscard]] StatementType getStamentType() const override;
 
@@ -50,9 +45,9 @@ class MultiOperatorStatement : public ExpressionStatement {
     [[nodiscard]] ExpressionStatementPtr copy() const override;
 
   private:
-    std::vector<ExpressionStatementPtr> children_{};
-    BinaryOperatorType op_;
+    std::vector<ExpressionStatementPtr> expressions{};
     BracketMode bracket_mode_;
+    MultiOperatorType _op;
 };
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_MULTIOPERATORSTATEMENT_HPP_

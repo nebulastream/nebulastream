@@ -23,12 +23,12 @@ LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(DataTypePtr
 LinearAlgebraTensorExpressionNode::LinearAlgebraTensorExpressionNode(LinearAlgebraTensorExpressionNode* other)
     : MultiExpressionNode(other) {}
 
-void LinearAlgebraTensorExpressionNode::inferStamp(SchemaPtr schema) {
+void LinearAlgebraTensorExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     bool firstSkipped = false;
     std::shared_ptr<ExpressionNode> previousChild;
     std::shared_ptr<DataType> commonStamp;
     for (auto child : MultiExpressionNode::children()) {
-        child->inferStamp(schema);
+        child->inferStamp(typeInferencePhaseContext, schema);
         if (!child->getStamp()->isNumeric()) {
             throw std::logic_error(
                 "LinearAlgebraTensorExpressionNode: Error during stamp inference. Type needs to be Numerical but was: "

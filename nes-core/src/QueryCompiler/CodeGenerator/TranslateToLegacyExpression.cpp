@@ -176,7 +176,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLinearAlgebraExpressio
         for (auto child : addExpressionNode->children()) {
             exps.push_back(transformExpression(child));
         }
-        return Predicate(MultiOperatorType::CREATETENSOR_OP, exps).copy();
+        return MultiPredicate(MultiOperatorType::CREATE_TENSOR_OP, exps).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this linear algebra expression node: "
                     << expression->toString());

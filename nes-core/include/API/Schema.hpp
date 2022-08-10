@@ -164,6 +164,12 @@ class Schema {
     bool contains(const std::string& fieldName);
 
     /**
+     * @brief Checks if a tensor data type is contained in the schma
+     * @return boolean
+    */
+    bool containsTensor();
+
+    /**
      * @brief returns a string representation
      * @return
      */

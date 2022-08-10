@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEARRAYVALUETYPE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEARRAYVALUETYPE_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLETENSORVALUETYPE_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLETENSORVALUETYPE_HPP_
 
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <string>
@@ -22,26 +22,25 @@
 namespace NES {
 namespace QueryCompilation {
 /**
- * @brief Generates code for array values.
- * To this end it takes into account if the value is a string
- * todo we may want to factor string handling out in the future.
+ * @brief Generates code for tensor values.
+ * No string values handled
  */
-class GeneratableArrayValueType final : public GeneratableValueType {
+class GeneratableTensorValueType final : public GeneratableValueType {
   public:
     /**
-     * @brief Constructs a new GeneratableArrayValueType
+     * @brief Constructs a new GeneratableTensorValueType
      * @param valueType the value type
      * @param values the values of the value type
      */
-    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string>&& values) noexcept
+    inline GeneratableTensorValueType(ValueTypePtr valueTypePtr, std::vector<std::string>&& values) noexcept
         : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
-    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values) noexcept
+    inline GeneratableTensorValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values) noexcept
         : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
     /**
      * @brief Generates code expression, which represents this value.
-     * @return
+     * @return generated Code
      */
     [[nodiscard]] CodeExpressionPtr getCodeExpression() const noexcept final;
 
@@ -52,4 +51,4 @@ class GeneratableArrayValueType final : public GeneratableValueType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEARRAYVALUETYPE_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLETENSORVALUETYPE_HPP_
