@@ -35,6 +35,7 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 add_library(nes-tests INTERFACE)
 target_include_directories(nes-tests INTERFACE ${GTEST_INCLUDE_DIRS} "../include")
+
 target_include_directories(nes-tests INTERFACE "${CMAKE_BINARY_DIR}")
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/util/")
