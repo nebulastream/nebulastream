@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>

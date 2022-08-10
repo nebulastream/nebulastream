@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

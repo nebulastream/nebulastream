@@ -38,7 +38,7 @@ target_include_directories(nes-tests INTERFACE ${GTEST_INCLUDE_DIRS} "../include
 
 target_include_directories(nes-tests INTERFACE "${CMAKE_BINARY_DIR}")
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/util/")
+target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 
 

@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 // clang-format: on
 
-#include "../../../tests/util/MetricValidator.hpp"
+#include <Util/MetricValidator.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>

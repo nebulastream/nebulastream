@@ -21,7 +21,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 using namespace std;
 namespace NES {

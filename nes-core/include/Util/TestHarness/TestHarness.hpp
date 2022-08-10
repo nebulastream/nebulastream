@@ -14,6 +14,9 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
+
+#include <gtest/gtest.h>
+
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -26,7 +29,6 @@
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
-#include <gtest/gtest.h>
 #include <log4cxx/helpers/exception.h>
 #include <type_traits>
 #include <utility>

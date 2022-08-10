@@ -14,9 +14,9 @@
 
 #include "gtest/gtest.h"
 
-#include "../../util/DummySink.hpp"
-#include "../../util/TestQuery.hpp"
-#include "../../util/TestSink.hpp"
+#include <Util/DummySink.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestSink.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -44,7 +44,7 @@
 #include <iostream>
 #include <utility>
 
-#include "../../util/TestQueryCompiler.hpp"
+#include <Util/TestQueryCompiler.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>

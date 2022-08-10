@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-#include "../util/NesBaseTest.hpp"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>

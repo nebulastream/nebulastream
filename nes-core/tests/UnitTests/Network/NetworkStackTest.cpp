@@ -36,8 +36,8 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include "../../util/TestQuery.hpp"
-#include "../../util/TestQueryCompiler.hpp"
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <NesBaseTest.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
