@@ -178,10 +178,7 @@ TEST_F(TraceTest, logicalExpressionGreaterTest) {
     auto block0 = basicBlocks[0];
     ASSERT_EQ(block0.operations[0].op, Trace::CONST);
     ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::LESS_THAN);
-    ASSERT_EQ(block0.operations[3].op, Trace::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Trace::OR);
-    ASSERT_EQ(block0.operations[5].op, Trace::NEGATE);
+    ASSERT_EQ(block0.operations[2].op, Trace::GREATER_THAN);
 }
 
 void logicalExpressionGreaterEquals() {
@@ -197,8 +194,9 @@ TEST_F(TraceTest, logicalExpressionGreaterEqualsTest) {
     auto block0 = basicBlocks[0];
     ASSERT_EQ(block0.operations[0].op, Trace::CONST);
     ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::LESS_THAN);
-    ASSERT_EQ(block0.operations[3].op, Trace::NEGATE);
+    ASSERT_EQ(block0.operations[2].op, Trace::GREATER_THAN);
+    ASSERT_EQ(block0.operations[3].op, Trace::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Trace::OR);
 }
 
 void logicalExpression() {

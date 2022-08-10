@@ -116,6 +116,19 @@ class FloatInvocationPlugin : public InvocationPlugin {
         });
     }
 
+    std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Any& left, const Any& right) {
+            if (isa<Float>(left) && isa<Float>(right)) {
+                auto result = left.staticCast<Float>().greaterThan(right.staticCast<Float>());
+                return Value<>(std::move(result));
+            } else if (isa<Float>(left) && isa<Float>(right)) {
+                auto result = left.staticCast<Double>().greaterThan(right.staticCast<Double>());
+                return Value<>(std::move(result));
+            }
+            NES_THROW_RUNTIME_ERROR("");
+        });
+    }
+
     std::optional<Value<>> CastTo(const Value<>& left, const TypeIdentifier* toType) const override {
         // this method only performs float to double casts.
         if (isa<Float>(left.value) && toType->isType<Double>()) {

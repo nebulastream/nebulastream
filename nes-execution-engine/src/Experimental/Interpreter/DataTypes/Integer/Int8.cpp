@@ -41,8 +41,11 @@ const std::unique_ptr<Boolean> Int8::equals(const Int& other) const {
     auto& otherValue = other.staticCast<Int8>();
     return create<Boolean>(value == otherValue.value);
 }
-
 const std::unique_ptr<Boolean> Int8::lessThan(const Int& other) const {
+    auto& otherValue = other.staticCast<Int8>();
+    return create<Boolean>(value < otherValue.value);
+}
+const std::unique_ptr<Boolean> Int8::greaterThan(const Int& other) const {
     auto& otherValue = other.staticCast<Int8>();
     return create<Boolean>(value < otherValue.value);
 }
