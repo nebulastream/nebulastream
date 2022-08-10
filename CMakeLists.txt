@@ -330,7 +330,7 @@ find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} libzmq libzmq)
+set(LIBRARIES ${LIBRARIES} libzmq libzmq-static)
 
 # CppZMQ
 message(STATUS "cppzmq")
@@ -338,7 +338,7 @@ find_package(cppzmq CONFIG REQUIRED)
 if (NOT ${CPPZMQ_FOUND})
     message(FATAL_ERROR "Unable to find cppzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} cppzmq cppzmq)
+set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
 
 # Z3 Solver
 message(STATUS "Z3")
@@ -443,7 +443,7 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(PahoMqttCpp CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3)
+    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 

@@ -24,7 +24,6 @@
 #include "Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
 #include "Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp"
 #include "Plans/Query/QueryPlan.hpp"
-#include "Services/PatternParsingService.hpp"
 #include "Util/Logger/Logger.hpp"
 #include <climits>
 #include <gtest/gtest.h>
