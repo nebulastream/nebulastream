@@ -15,8 +15,8 @@
 #ifndef NES_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_H_
 #define NES_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_H_
 
-#include "API/QueryAPI.hpp"
-#include "NebulaPSLOperatorNode.h"
+#include <API/QueryAPI.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
 #include <list>
 #include <map>
 #include <string>
@@ -35,7 +35,7 @@ class NebulaPSLPattern {
     std::map<int, NebulaPSLOperatorNode*> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressions;
     std::vector<ExpressionNodePtr> projectionFields;
-    std::list<std::shared_ptr<SinkDescriptor>> sinks;// INTO
+    std::list<SinkDescriptorPtr> sinks;// INTO
     std::pair<std::string, int> window;              // WITHIN
 
   public:
@@ -50,8 +50,8 @@ class NebulaPSLPattern {
     void setExpressions(const std::list<ExpressionNodePtr>& expressions);
     const std::vector<ExpressionNodePtr>& getProjectionFields() const;
     void setProjectionFields(const std::vector<ExpressionNodePtr>& projection_fields);
-    const std::list<std::shared_ptr<SinkDescriptor>>& getSinks() const;
-    void setSinks(const std::list<std::shared_ptr<SinkDescriptor>>& sinks);
+    const std::list<SinkDescriptorPtr>& getSinks() const;
+    void setSinks(const std::list<SinkDescriptorPtr>& sinks);
     const std::pair<std::string, int>& getWindow() const;
     void setWindow(const std::pair<std::string, int>& window);
 

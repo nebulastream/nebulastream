@@ -31,8 +31,8 @@ const std::vector<ExpressionNodePtr>& NebulaPSLPattern::getProjectionFields() co
 void NebulaPSLPattern::setProjectionFields(const std::vector<ExpressionNodePtr>& projection_fields) {
     projectionFields = projection_fields;
 }
-const std::list<std::shared_ptr<SinkDescriptor>>& NebulaPSLPattern::getSinks() const { return sinks; }
-void NebulaPSLPattern::setSinks(const std::list<std::shared_ptr<SinkDescriptor>>& sinks) { NebulaPSLPattern::sinks = sinks; }
+const std::list<SinkDescriptorPtr>& NebulaPSLPattern::getSinks() const { return sinks; }
+void NebulaPSLPattern::setSinks(const std::list<SinkDescriptorPtr>& sinks) { NebulaPSLPattern::sinks = sinks; }
 const std::pair<std::string, int>& NebulaPSLPattern::getWindow() const { return window; }
 void NebulaPSLPattern::setWindow(const std::pair<std::string, int>& window) { NebulaPSLPattern::window = window; }
 void NebulaPSLPattern::addSource(std::pair<int, std::basic_string<char>> sourcePair) { sources.insert(sourcePair); }

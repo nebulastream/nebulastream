@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include "API/QueryAPI.hpp"
-#include "API/Windowing.hpp"
+#include <API/QueryAPI.hpp>
+#include <API/Windowing.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -105,10 +107,16 @@ void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext
 
 void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) {
     query = createQueryFromPatternList();
-    const std::vector<NES::OperatorNodePtr>& rootOperators = query.getQueryPlan()->getRootOperators();
+    const QueryPlanPtr& queryPlan = query.getQueryPlan();
+    const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
 
-    for (std::shared_ptr<NES::SinkDescriptor> it : pattern.getSinks()) {
-        query.multipleSink(it, rootOperators);
+    for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()){
+        auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
+        for (auto &rootOperator : rootOperators){
+            sinkOperator->addChild(rootOperator);
+            queryPlan->removeAsRootOperator(rootOperator);
+            queryPlan->addRootOperator(sinkOperator);
+        }
     }
     NesCEPBaseListener::exitSinkList(context);
 }
@@ -116,7 +124,7 @@ void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context
 void NesCEPQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
 
     std::string sinkType = context->sinkType()->getText();
-    std::shared_ptr<NES::SinkDescriptor> sinkDescriptorPtr;
+    SinkDescriptorPtr sinkDescriptorPtr;
 
     if (sinkType == "Print") {
         sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
