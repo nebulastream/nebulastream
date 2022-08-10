@@ -20,8 +20,6 @@ if ! [  -f "/nebulastream/CMakeLists.txt" ]; then
   exit 1
 fi
 
-
-
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
 if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${RequireBuild}; fi
@@ -61,7 +59,7 @@ then
       # timeout after 240 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 60m make ccov-all-report
+      timeout 60m make ccov-all-export
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
@@ -74,6 +72,8 @@ then
           echo "Optional Tests Failed"
           exit 0
         fi
+      else
+        lcov_cobertura ccov/coverage.lcov --output coverage.xml
       fi
     fi
 else

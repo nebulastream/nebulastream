@@ -582,8 +582,8 @@ function(add_code_coverage_all_targets)
                     ${LLVM_COV_PATH} export `cat
                     ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list`
                     -instr-profile=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
-                    -format="text" ${EXCLUDE_REGEX} >
-                    ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/coverage.json
+                    -format="lcov" ${EXCLUDE_REGEX} >
+                    ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/coverage.lcov
                     DEPENDS ccov-all-processing)
 
             # Generate HTML output of all added targets for perusal
