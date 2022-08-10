@@ -66,6 +66,7 @@
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/MC/MCSubtargetInfo.h>
 // #include <llvm-c/ExternC.h>
 // #include <llvm-c/Target.h>
 // #include <llvm-c/Types.h>
@@ -335,40 +336,33 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             // newTriple.setTriple("x86_64-pc-linux-gnu");
             // std::string dataLayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
 
-            // llvm::Target newTarget;
+            // llvm::StringMap<bool> FeatureMap;
+            // llvm::sys::getHostCPUFeatures(FeatureMap);
+            
+            // std::string targetFeatures;
+            // for(auto string : FeatureMap.keys()) {
+            //     if(FeatureMap[string]) {
+            //         targetFeatures += '+' + string.str() + ',';
+            //     }
+            // }
+            // std::string errorString = "Target not found";
+            // auto target = llvm::TargetRegistry::lookupTarget("x86_64-unknown-linux-gnu", errorString);
             // llvm::TargetOptions newTargetOptions;
             // llvm::Optional<llvm::Reloc::Model> relocModel;
-            // TargetMachineConstructor newTargetMachineConstructor(newTarget, dataLayout, newTriple, cpuInfo, targetFeatures, newTargetOptions);
-            // llvm::TargetMachine newTargetMachine(newTarget, dataLayout, newTriple, cpuInfo, targetFeatures, newTargetOptions);
-            // auto optPipeline = mlir::makeOptimizingTransformer(3, 3, &newTargetMachineConstructor);
-            // llvm::TargetMachine *newTargetMachine = newTarget.createTargetMachine("x86_64-pc-linux-gnu", "", "", newTargetOptions, relocModel);
-            // std::cout << "Target CPU: " << newTargetMachine->getTargetCPU().str() << '\n';
-            llvm::StringMap<bool> FeatureMap;
-            llvm::sys::getHostCPUFeatures(FeatureMap);
-            // std::cout << "FeatureMap: \n";
-            llvm::SmallVector<std::string> test(40);
-            for(auto string : FeatureMap.keys()) {
-                if(FeatureMap[string]) {
-                    test.emplace_back(string.str());
-                }
-            }
-            std::string cpuInfo = "skylake";
-            std::string architecture = "x86-64";
-            llvm::Triple newTriple("x86_64-pc-linux-gnu");
-            llvm::EngineBuilder engineBuilder;
-            auto targetMachine = engineBuilder.selectTarget(newTriple, architecture, cpuInfo, test);
-            std::function<llvm::Error (llvm::Module *)> optPipeline;
+            // auto targetMachine = target->createTargetMachine("x86_64-pc-linux-gnu", "skylake", targetFeatures, newTargetOptions, relocModel);
+            // std::function<llvm::Error (llvm::Module *)> optPipeline;
+            std::function<llvm::Error (llvm::Module *)> optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);;
 
-            if(targetMachine) {
-                std::cout << "Using Target Machine\n";
-                optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
-            } else {
-                std::cout << "Not using Target Machine\n";
-                optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
-            }
+            // if(targetMachine) {
+            //     std::cout << "Using Target Machine\n";
+            //     optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
+            // } else {
+            //     std::cout << "Not using Target Machine\n";
+            //     // optPipeline = mlir::makeOptimizingTransformer(3, 3, targetMachine);
+            // }
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::outs(), nullptr);
 
+            // llvmIRModule->print(llvm::outs(), nullptr);
             std::string llvmIRString;
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
             llvmIRModule->print(llvmStringStream, nullptr);
@@ -376,7 +370,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
             auto* basicError = new std::error_code();
             //Todo Also use CMake parameter for generated file.
             llvm::raw_fd_ostream fileStream("generated.ll", *basicError);
-            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
+            fileStream.write(llvmStringStream.str().c_str(), llvmStringStream.str().length());
             return optimizedModule;
         };
     }
@@ -408,47 +402,18 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
         // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
     };
 
-    // Initialize LLVM targets.
+        
+    // Initialize LLVM targets. This can e.g. lead to registering a x86 target machine, with that machine's features.
+    // https://llvm.org/doxygen/X86TargetMachine_8cpp_source.html#l00067
     llvm::InitializeNativeTarget();
-    llvm::InitializeAllTargetInfos();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    //Todo EngineBuilder allows to set 'march' -> could use to set 'march=native'
-    // llvm::SMDiagnostic Err;
-    // llvm::LLVMContext context;
-    // auto someModule = std::unique_ptr<llvm::Module>(llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR), Err, context));
-
-    // llvm::EngineBuilder engineBuilder;
-    // engineBuilder();
-    // engineBuilder.setMCPU(llvm::sys::getHostCPUName());
-    // engineBuilder.setEngineKind(llvm::EngineKind::JIT);
-    // engineBuilder.setOptLevel(llvm::CodeGenOpt::Aggressive);
-    // std::string builderError = "builderError";
-    // engineBuilder.setErrorStr(&builderError);
-    // auto testEngine = engineBuilder.create();
-
-    // llvm::StringMap<bool> FeatureMap;
-    // llvm::sys::getHostCPUFeatures(FeatureMap);
-    // // std::cout << "FeatureMap: \n";
-    // llvm::SmallVector<std::string> test(40);
-    // for(auto string : FeatureMap.keys()) {
-    //     if(FeatureMap[string]) {
-    //         test.emplace_back(string.str());
-    //     }
-    // }
-    // std::string cpuInfo = "skylake";
-    // llvm::Triple newTriple;
-    // newTriple.setTriple("x86_64-pc-linux-gnu");
-    
-    // auto targetMachine = engineBuilder.selectTarget(newTriple, "", cpuInfo, test);
-    // auto targetMach = testEngine->getTargetMachine();
-    // if(targetMachine) {
-    //     std::cout << "Target Mach!\n";
-    //     std::cout << "Feature strings: " << targetMachine->getTargetFeatureString().str() << '\n';
-    // } else {
-    //     std::cout << "No Target Mach :(!\n";
-        // std::cout << "error: " << testEngine->getErrorMessage() << '\n';
-    // }
+    // Attempt at registering sub target info for existing target(machine)
+    // std::string errorString = "Target not found";
+    // auto testTarget = *llvm::TargetRegistry::targets().begin()++;
+    // llvm::Target::MCSubtargetInfoCtorFnTy test = (llvm::MCSubtargetInfo *(*)(const llvm::Triple&, llvm::StringRef, llvm::StringRef)) 
+    //     llvm::TargetRegistry::lookupTarget("x86_64-unknown-linux-gnu", errorString)->createMCSubtargetInfo("x86_64-pc-linux-gnu", "skylake", "+avx2");
+    // llvm::TargetRegistry::RegisterMCSubtargetInfo(testTarget, test);
 
     // Register and execute the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*module->getContext());
