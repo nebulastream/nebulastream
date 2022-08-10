@@ -24,5 +24,6 @@ std::unique_ptr<Float> Float::mul(const Float& otherValue) const { return create
 std::unique_ptr<Float> Float::div(const Float& otherValue) const { return create<Float>(value / otherValue.value); }
 std::unique_ptr<Boolean> Float::equals(const Float& otherValue) const { return create<Boolean>(value == otherValue.value); }
 std::unique_ptr<Boolean> Float::lessThan(const Float& otherValue) const { return create<Boolean>(value < otherValue.value); }
+std::unique_ptr<Boolean> Float::greaterThan(const Float& otherValue) const { return create<Boolean>(value > otherValue.value); }
 float Float::getValue() const { return value; }
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

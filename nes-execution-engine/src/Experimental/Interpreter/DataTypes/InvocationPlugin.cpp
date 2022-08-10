@@ -22,6 +22,7 @@ std::optional<Value<>> InvocationPlugin::Sub(const Value<>&, const Value<>&) con
 std::optional<Value<>> InvocationPlugin::Div(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::Equals(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::LessThan(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::GreaterThan(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::Negate(const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::And(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) const { return std::nullopt; }
