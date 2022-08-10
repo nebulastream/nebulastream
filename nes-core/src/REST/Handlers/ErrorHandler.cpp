@@ -22,7 +22,7 @@ ErrorHandler::ErrorHandler(const std::shared_ptr<oatpp::data::mapping::ObjectMap
 
 std::shared_ptr<ErrorHandler::OutgoingResponse>
 ErrorHandler::handleError(const Status& status, const oatpp::String& message, const Headers& headers) {
-    auto error = ErrorMessage::createShared();
+    auto error = REST::DTO::ErrorMessage::createShared();
     error->status = "ERROR";
     error->code = status.code;
     error->message = message;

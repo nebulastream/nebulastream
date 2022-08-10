@@ -22,6 +22,8 @@
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
+namespace REST{
+namespace DTO {
 
 /**
  * Message Data-Transfer-Object
@@ -32,6 +34,8 @@ class ConnectivityResponse : public oatpp::DTO {
     DTO_FIELD(Boolean, success); // Message field
 };
 
+}// namespace DTO
+}// namespace REST
 }// namespace NES
 
 /* End DTO code-generation */

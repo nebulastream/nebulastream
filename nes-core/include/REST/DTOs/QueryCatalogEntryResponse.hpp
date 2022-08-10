@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYINFO_HPP_
-#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYINFO_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGENTRYRESPONSE_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGENTRYRESPONSE_HPP_
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 
@@ -21,21 +21,25 @@
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
+namespace REST{
+namespace DTO {
 
 /**
  * Message Data-Transfer-Object
  */
-class QueryInfo : public oatpp::DTO {
-    DTO_INIT(QueryInfo, DTO /* Extends */)
-    DTO_FIELD(UInt64 , queryId, "queryId");
-    DTO_FIELD(String, queryString,"queryString");
+class QueryCatalogEntryResponse : public oatpp::DTO {
+    DTO_INIT(QueryCatalogEntryResponse, DTO /* Extends */)
+    DTO_FIELD(UInt64, queryId, "queryId");
+    DTO_FIELD(String, queryString, "queryString");
     DTO_FIELD(String, queryStatus, "queryStatus");
     DTO_FIELD(String, queryPlan, "queryPlan");
     DTO_FIELD(String, queryMetaData, "queryInfo");
 };
 
+}// namespace DTO
+}// namespace REST
 }// namespace NES
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif//NES_NES_CORE_INCLUDE_REST_DTOS_QUERYINFO_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGENTRYRESPONSE_HPP_

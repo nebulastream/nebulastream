@@ -11,13 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Compiler/CPPCompiler/CPPCompiler.hpp"
-#include "NesBaseTest.hpp"
-#include "Plans/Utils/PlanIdGenerator.hpp"
-#include <Plans/Query/QueryPlan.hpp>
-#include "REST/ServerTypes.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestUtils.hpp"
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <NesBaseTest.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
+#include <REST/ServerTypes.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <cpr/cpr.h>
@@ -43,7 +42,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
 
@@ -53,7 +52,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
 
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
-    EXPECT_EQ(r.status_code, 204l);
+    EXPECT_EQ(r.status_code, 200l);
 
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -80,7 +79,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
 
@@ -118,7 +117,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){
@@ -156,7 +155,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){

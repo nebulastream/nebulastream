@@ -139,7 +139,6 @@ class RestServer {
     NesCoordinatorWeakPtr coordinator;
     GlobalQueryPlanPtr globalQueryPlan;
 
-
     std::condition_variable cvar;
     std::mutex mutex;
 

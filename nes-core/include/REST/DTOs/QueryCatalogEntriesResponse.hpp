@@ -13,23 +13,27 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGALLREGISTEREDQUERIESRESPONSE_H_
 #define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYCATALOGALLREGISTEREDQUERIESRESPONSE_H_
+#include <REST/DTOs/QueryCatalogEntryResponse.hpp>
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
-#include <REST/DTOs/QueryInfo.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
+namespace REST{
+namespace DTO {
 
 /**
  * Message Data-Transfer-Object
  */
-class QueryCatalogControllerCollectionResponse : public oatpp::DTO {
-    DTO_INIT(QueryCatalogControllerCollectionResponse, DTO /* Extends */)
-    DTO_FIELD(List<Object<QueryInfo>>, queries);
+class QueryCatalogEntriesResponse : public oatpp::DTO {
+    DTO_INIT(QueryCatalogEntriesResponse, DTO /* Extends */)
+    DTO_FIELD(List<Object<QueryCatalogEntryResponse>>, queries);
 };
 
+}// namespace DTO
+}// namespace REST
 }// namespace NES
 
 /* End DTO code-generation */

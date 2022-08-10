@@ -31,13 +31,15 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      */
     ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, oatpp::String completeRouterPrefix)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix) {}
 
     /**
      * Create a shared object of the API controller
-     * @param objectMapper
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
     static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, std::string routerPrefixAddition) {
@@ -46,7 +48,7 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/check", root) {
-        auto dto = ConnectivityResponse::createShared();
+        auto dto = DTO::ConnectivityResponse::createShared();
         dto->statusCode = 200;
         dto->success = true;
         return createDtoResponse(Status::CODE_200, dto);
