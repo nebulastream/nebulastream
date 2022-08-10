@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-#include <../util/NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

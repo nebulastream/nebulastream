@@ -13,7 +13,7 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include "../../../tests/util/MetricValidator.hpp"
+#include <Util/MetricValidator.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>

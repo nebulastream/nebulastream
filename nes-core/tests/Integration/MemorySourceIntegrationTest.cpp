@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>

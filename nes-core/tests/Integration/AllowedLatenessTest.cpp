@@ -24,8 +24,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 
-#include "../util/NesBaseTest.hpp"
-
 using namespace std;
 
 namespace NES {

@@ -13,7 +13,6 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include "../util/NesBaseTest.hpp"
 #include <NesBaseTest.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -16,7 +16,7 @@
 
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <NesBaseTest.hpp>
-#include <ProtobufMessageFactory.hpp>
+#include <Util/ProtobufMessageFactory.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/http_client.h>

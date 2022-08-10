@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../../../util/TestQuery.hpp"
+#include <Util/TestQuery.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>

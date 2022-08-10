@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

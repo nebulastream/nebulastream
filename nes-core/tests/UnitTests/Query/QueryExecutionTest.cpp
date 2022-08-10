@@ -14,10 +14,10 @@
 // clang-format: off
 #include "gtest/gtest.h"
 // clang-format: on
-#include "../../util/DummySink.hpp"
-#include "../../util/TestQuery.hpp"
-#include "../../util/TestQueryCompiler.hpp"
-#include "../../util/TestSink.hpp"
+#include <Util/DummySink.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
+#include <Util/TestSink.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

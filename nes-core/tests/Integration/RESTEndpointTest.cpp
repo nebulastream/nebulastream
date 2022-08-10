@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
-#include "../util/ProtobufMessageFactory.hpp"
+#include <Util/ProtobufMessageFactory.hpp>
 #include "SerializableQueryPlan.pb.h"
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>

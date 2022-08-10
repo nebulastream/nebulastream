@@ -40,7 +40,7 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     if(!success){
         FAIL() << "REST Server failed to start";
     }

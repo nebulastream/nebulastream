@@ -55,10 +55,10 @@
 #include <random>
 #include <utility>
 
-#include "../util/NesBaseTest.hpp"
-#include "../util/TestQuery.hpp"
-#include "../util/TestQueryCompiler.hpp"
-#include "Sinks/Mediums/NullOutputSink.hpp"
+#include <NesBaseTest.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 
 using namespace std;
 

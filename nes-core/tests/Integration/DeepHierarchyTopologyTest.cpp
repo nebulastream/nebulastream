@@ -15,7 +15,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
