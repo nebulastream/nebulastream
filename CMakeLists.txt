@@ -602,7 +602,6 @@ endif ()
 
 # code cov
 
-
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
