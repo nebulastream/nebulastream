@@ -62,7 +62,9 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
                 sharedQueryPlan->setStatus(SharedQueryPlanStatus::Stopped);
             } else {
                 // Mark SQP as updated if after stop more queries are remaining
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+                if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Deployed) {
+                    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+                }
             }
 
             //Remove from the queryId to shared query id map
@@ -108,7 +110,9 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     //Mark the shared query plan as updated post merging new queries
-    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Deployed) {
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+    }
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
     for (auto queryId : sharedQueryPlan->getQueryIds()) {
