@@ -44,14 +44,14 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
 
     if(!success){
         FAIL() << "Rest server failed to start";
     }
 
     cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     EXPECT_EQ(r.status_code, 200l);
 
     std::string queryString =
@@ -66,7 +66,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     cpr::Response re =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     std::cout << re.text; //TODO: do some text comparsion?
     EXPECT_EQ(re.status_code, 200l);
 
@@ -81,13 +81,13 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
 
     if(!success){
         FAIL() << "Rest server failed to start";
     }
     cpr::Response r1 =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"});
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"});
     EXPECT_EQ(r1.status_code, 400l);
     cpr::Response r2=
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
@@ -119,7 +119,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){
         FAIL() << "Rest server failed to start";
     }
@@ -157,7 +157,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){
         FAIL() << "Rest server failed to start";
     }

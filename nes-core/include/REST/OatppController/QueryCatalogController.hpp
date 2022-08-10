@@ -82,7 +82,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                                 std::string routerPrefixAddition,
                                                                 ErrorHandlerPtr errorHandler) {
-        oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<QueryCatalogController>(objectMapper,
                                                         queryCatalogService,
                                                         coordinator,
@@ -95,7 +95,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         auto dto = DTO::QueryCatalogEntriesResponse::createShared();
         oatpp::List<oatpp::Object<DTO::QueryCatalogEntryResponse>> list({});
         try{
-        std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
+        std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
             auto entry = DTO::QueryCatalogEntryResponse::createShared();
             entry->queryId = queryId;
@@ -143,7 +143,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64 , queryId, "queryId")) {
         try {
             NES_DEBUG("Get current status of the query");
-            const QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
+            const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto entry = DTO::QueryCatalogEntryResponse::createShared();
             entry->queryId = queryId;
             entry->queryString = catalogEntry->getQueryString();

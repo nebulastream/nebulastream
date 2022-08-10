@@ -662,7 +662,7 @@ template<typename T>
    * @param outputFilePath
    * @return true if successful
    */
-[[nodiscard]] bool checkRESTServerCreationOrTimeout(uint64_t restPort, uint64_t customTimeout = 0) {
+[[nodiscard]] bool checkRESTServerStartedOrTimeout(uint64_t restPort, uint64_t customTimeout = 0) {
     std::chrono::seconds timeoutInSec;
     if (customTimeout == 0) {
         timeoutInSec = std::chrono::seconds(defaultTimeout);
