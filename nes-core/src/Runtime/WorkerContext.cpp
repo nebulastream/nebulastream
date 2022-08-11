@@ -28,19 +28,19 @@ WorkerContext::WorkerContext(uint32_t workerId,
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
-    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
-    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
-    statisticsFile << "time, latency\n";
-    storageFile << "time, numberOfBuffers\n";
+//    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
+//    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
+//    statisticsFile << "time, latency\n";
+//    storageFile << "time, numberOfBuffers\n";
 }
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
     storage.clear();
-    statisticsFile.flush();
-    statisticsFile.close();
-    storageFile.flush();
-    storageFile.close();
+//    statisticsFile.flush();
+//    statisticsFile.close();
+//    storageFile.flush();
+//    storageFile.close();
 }
 
 size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
@@ -58,8 +58,8 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
+//    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+//    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
@@ -99,8 +99,8 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
     storage[nesPartitionId].push(buffer);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    storageFile << getStorageSize(nesPartitionId) << "\n";
+//    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+//    storageFile << getStorageSize(nesPartitionId) << "\n";
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
