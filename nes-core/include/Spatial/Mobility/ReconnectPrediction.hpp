@@ -20,7 +20,7 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
- * @brief a struct conteining data about the predicted next reconnect of a mobile worker
+ * @brief a struct containing data about the predicted next reconnect of a mobile worker
  */
 struct ReconnectPrediction {
     uint64_t expectedNewParentId;

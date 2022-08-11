@@ -28,21 +28,21 @@ namespace Util {
     /**
      * @brief utility functions for handling google s2 datatypes
      */
-    class S2Utilities {
-      public:
+class S2Utilities {
+  public:
     /**
      * Converts a Location object to and s2 point
      * @param location the location object
      * @return an s2 point representing the location as the input object
      */
-        static S2Point locationToS2Point(Index::Experimental::Location location);
+    static S2Point locationToS2Point(Index::Experimental::Location location);
 
     /**
      * Converts an s2 point to a location object
      * @param point the s2 point
      * @return a location object representing the some location as the input object
      */
-        static Index::Experimental::Location s2pointToLocation(S2Point point);
+    static Index::Experimental::Location s2pointToLocation(S2Point point);
     };
 }
 }

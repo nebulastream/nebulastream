@@ -117,7 +117,7 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
 
 Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
 
-const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& LocationProviderCSV::getWaypoints() {
+const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& LocationProviderCSV::getWaypoints() const {
     return waypoints;
 }
 }// namespace NES::Spatial::Mobility::Experimental

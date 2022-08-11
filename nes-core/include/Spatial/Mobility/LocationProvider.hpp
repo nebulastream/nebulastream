@@ -102,7 +102,8 @@ class LocationProvider {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord,
+
+    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord,
                                                                                       double radius);
 
     /**
@@ -111,7 +112,7 @@ class LocationProvider {
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
+    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
