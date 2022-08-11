@@ -18,6 +18,10 @@
 
 namespace NES::Spatial::Util {
 
+/**
+ * @brief this class contains functions to convert a spatial node type enum to its equivalent protobuf type and vice versa
+ * as well as functions to convert the node type enum to/from string
+ */
 class NodeTypeUtilities {
   public:
     static Index::Experimental::NodeType stringToNodeType(const std::string nodeTypeString);

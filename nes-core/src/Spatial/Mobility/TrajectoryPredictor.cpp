@@ -106,11 +106,11 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::Location curre
 #ifdef S2DEF
     NES_DEBUG("Downloading nodes in range")
     //get current position and download node information from coordinator
-    auto nodeList = locationProvider->getNodeIdsInRange(currentLocation, nodeInfoDownloadRadius / 1000);
+    auto nodeMapPtr = locationProvider->getNodeIdsInRange(currentLocation, nodeInfoDownloadRadius / 1000);
 
     //if we actually received nodes in our vicinity, we can clear the old nodes
     std::unique_lock nodeIndexLock(nodeIndexMutex);
-    if (!nodeList.empty()) {
+    if (!nodeMapPtr->empty()) {
         fieldNodeMap.clear();
         fieldNodeIndex.Clear();
     } else {
@@ -118,7 +118,7 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::Location curre
     }
 
     //insert node info into spatial index and map on node ids
-    for (auto [nodeId, location] : nodeList) {
+    for (auto [nodeId, location] : *nodeMapPtr) {
         NES_TRACE("adding node " << nodeId << " with location " << location.toString())
         fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
         fieldNodeMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});

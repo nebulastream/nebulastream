@@ -141,6 +141,7 @@ class TrajectoryPredictor {
      * @brief return position and time at which the last reconnect happened
      * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
      */
+     //todo 2951: change return type to struct
     std::pair<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
 
   private:

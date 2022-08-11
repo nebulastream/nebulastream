@@ -51,12 +51,16 @@ Index::Experimental::LocationPtr LocationProvider::getLocation() {
     }
 }
 
-std::vector<std::pair<uint64_t, Index::Experimental::Location>>
+std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
 LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
-    return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
+    auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(coord, radius);
+    return std::make_shared<std::unordered_map<uint64_t, Index::Experimental::Location>>(nodeVector.begin(), nodeVector.end());
+    /*
+    auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(coord, radius);
+     */
 }
 
-std::vector<std::pair<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
+std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
     if (coord && coord->isValid()) {
         //todo  #2918: pass pointer
