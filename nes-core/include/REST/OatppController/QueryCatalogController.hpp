@@ -105,10 +105,15 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             entry->queryMetaData = catalogEntry->getMetaInformation();
             list->push_back(entry);
         }
-        dto->queries= list;
+        dto->entries= list;
         return createDtoResponse(Status::CODE_200, dto);
         }
-        catch(...){
+        catch (const std::exception& exc) {
+            NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
+                      "query plan for user request:"
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_400, "Exception occurred while building query plans for user request" + std::string(exc.what()));
+        }catch(...){
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
 
         }
@@ -129,7 +134,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                 entry->queryMetaData = catalogEntry->getMetaInformation();
                 list->push_back(entry);
             }
-            dto->queries=list;
+            dto->entries=list;
             return createDtoResponse(Status::CODE_200, dto);
         }
         catch (InvalidArgumentException e){

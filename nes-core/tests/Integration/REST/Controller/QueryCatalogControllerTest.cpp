@@ -69,6 +69,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     //TODO:: compare content of response to expected values. To be added once json library found #2950
     EXPECT_EQ(re.status_code, 200l);
+    std::cout << re.text;
 
 }
 
