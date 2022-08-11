@@ -83,6 +83,9 @@ class QueryPlacementPhase {
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
+    static void checkActiveStandby(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryId queryId);
+    static bool otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId);
+
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
@@ -117,6 +120,8 @@ class QueryPlacementPhase {
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
     bool queryReconfiguration;
+    int getChildrenCount(OperatorNodePtr operatorNode);
+
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

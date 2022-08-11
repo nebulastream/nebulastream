@@ -56,7 +56,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     z3::ContextPtr z3Context;
     SourceCatalogPtr sourceCatalog;
@@ -66,12 +66,12 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
+    static void SetUpTestCase() { std::cout << "Setup QueryPlacementTestSandbox test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup QueryPlacementTest test case." << std::endl;
+        NES::Logger::setupLogging("QueryPlacementTestSandbox.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup QueryPlacementTestSandbox test case." << std::endl;
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -80,10 +80,10 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Setup QueryPlacementTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Setup QueryPlacementTestSandbox test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTestSandbox test class." << std::endl; }
 
     void setupTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
 
@@ -142,11 +142,14 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 };
 
 /* Test query placement with bottom up strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    NES_INFO("=========== RESOURCES =============")
+    NES_INFO(topology->toString());
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
@@ -165,10 +168,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
 
+    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology,sharedQueryPlan->getSharedQueryId());
 
-    for(auto& node : executionNodes){
-        NES_INFO("lololol " + node->toString());
-    }
+
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -201,8 +203,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     }
 }
 
+
+
+
+
 /* Test query placement with top down strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -261,7 +267,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 }
 
 /* Test query placement of query with multiple sinks with bottom up strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -338,7 +344,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 }
 
 /* Test query placement of query with multiple sinks and multiple source operators with bottom up strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithBottomUpStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -412,7 +418,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 }
 
 /* Test query placement of query with multiple sinks with TopDown strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -487,7 +493,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 }
 
 /* Test query placement of query with multiple sinks with Bottom up strategy  */
-TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -597,7 +603,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     }
 }
 
-TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({10, 4, 4});
 
@@ -699,7 +705,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
 }
 
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */
-TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithTopDownStrategy) {
+TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
@@ -772,7 +778,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 }
 
 // Test manual placement
-TEST_F(QueryPlacementTest, testManualPlacement) {
+TEST_F(QueryPlacementTestSandbox, testManualPlacement) {
     setupTopologyAndSourceCatalog({4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -833,7 +839,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
 
 // Test manual placement with limited resources. The manual placement should place the operator depending on the mapping
 // without considering availability of the topology nodes
-TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
+TEST_F(QueryPlacementTestSandbox, testManualPlacementLimitedResources) {
     setupTopologyAndSourceCatalog({1, 1, 1});// each node only has a capacity of 1
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -893,7 +899,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
 }
 
 // Test manual placement to place expanded operators in the same topology node
-TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
+TEST_F(QueryPlacementTestSandbox, testManualPlacementExpandedOperatorInASingleNode) {
     setupTopologyAndSourceCatalog({1, 1, 1});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -958,7 +964,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
  * Query: SinkOp---MapOp---SourceOp
  */
 //TODO: enable this test after fixing #2486
-TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
+TEST_F(QueryPlacementTestSandbox, DISABLED_testIFCOPPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -1081,7 +1087,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
  * Query: SinkOp---MapOp---SourceOp
  */
 //TODO: enable this test after fixing #2486
-TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
+TEST_F(QueryPlacementTestSandbox, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     // Setup the topology
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
@@ -1102,7 +1108,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
     ASSERT_TRUE(midNode2->containAsChild(srcNode2));
 
-    NES_DEBUG("QueryPlacementTest:: topology: " << topology->toString());
+    NES_DEBUG("QueryPlacementTestSandbox:: topology: " << topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1224,7 +1230,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
  *
  *
  */
-TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
+TEST_F(QueryPlacementTestSandbox, testTopDownPlacementOfSelfJoinQuery) {
     // Setup the topology
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
@@ -1239,7 +1245,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
 
-    NES_DEBUG("QueryPlacementTest:: topology: " << topology->toString());
+    NES_DEBUG("QueryPlacementTestSandbox:: topology: " << topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1337,7 +1343,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
  *
  *
  */
-TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
+TEST_F(QueryPlacementTestSandbox, testBottomUpPlacementOfSelfJoinQuery) {
     // Setup the topology
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
@@ -1352,7 +1358,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
 
-    NES_DEBUG("QueryPlacementTest:: topology: " << topology->toString());
+    NES_DEBUG("QueryPlacementTestSandbox:: topology: " << topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"

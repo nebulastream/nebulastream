@@ -24,6 +24,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 
 namespace NES::Optimizer {
 
@@ -145,4 +146,123 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     }
     return downStreamPinnedOperators;
 }
+
+void QueryPlacementPhase::checkActiveStandby(GlobalExecutionPlanPtr globalExecutionPlan,
+                                             TopologyPtr topology,
+                                             QueryId queryId) {
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    double totalQueryCost = 0;
+    double operatorCount = 0;
+    double avgOperatorCost = 0;
+
+    double nodesCount = 0;
+    double totalAvailableResources = 0;
+    double totalUsedResources = 0;
+    double totalResourceCapacity = 0;
+
+    if(!otherNodesAvailable(globalExecutionPlan,queryId)){
+        NES_WARNING("\nFAULT-TOLERANCE NOT POSSIBLE. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
+        return;
+    }
+
+
+    for (auto& node : executionNodes) {
+        double localNodeId = node->getId();
+        nodesCount += 1;
+
+        double localAvailableResources = topology->findNodeWithId(node->getId())->getAvailableResources();
+        totalAvailableResources += localAvailableResources;
+
+        double localUsedResources = node->getOccupiedResources(queryId);
+        totalUsedResources += localUsedResources;
+
+        double localResourceCapacity = localAvailableResources + localUsedResources;
+        totalResourceCapacity += localResourceCapacity;
+
+        NES_INFO("\n NodeID: " + std::to_string(localNodeId));
+        NES_INFO("\nRESOURCE CAPACITY: "
+                 + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()
+                                  + node->getOccupiedResources(queryId)))
+        NES_INFO("\nAVAILABLE RESOURCES: " + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()));
+        NES_INFO("\nUSED RESOURCES: " + std::to_string(node->getOccupiedResources(queryId)));
+    }
+
+    double availableNodesCount = globalExecutionPlan->getAllExecutionNodes().size();
+    double globalAvailableResources = 0;
+    double globalUsedResources = 0;
+    double globalResourceCapacity = 0;
+
+    for (auto& node : globalExecutionPlan->getAllExecutionNodes()) {
+        double localAvailableResources = topology->findNodeWithId(node->getId())->getAvailableResources();
+        globalAvailableResources += localAvailableResources;
+
+        double localUsedResources = node->getOccupiedResources(queryId);
+        globalUsedResources += localUsedResources;
+
+        double localResourceCapacity = localAvailableResources + localUsedResources;
+        globalResourceCapacity += localResourceCapacity;
+
+        NES_INFO("\n NodeID: " + std::to_string(node->getId()));
+        NES_INFO("\nRESOURCE CAPACITY: "
+                 + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()
+                                  + node->getOccupiedResources(queryId)))
+        NES_INFO("\nAVAILABLE RESOURCES: " + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()));
+        NES_INFO("\nUSED RESOURCES: " + std::to_string(node->getOccupiedResources(queryId)));
+    }
+
+    double avgCostPerNode = totalUsedResources / nodesCount;
+
+    NES_INFO("\nNumber of Nodes available: " + std::to_string(availableNodesCount) + " | Global Resource Capacity: "
+             + std::to_string(globalResourceCapacity) + " | Globally available resource after deployment of query#"
+             + std::to_string(queryId) + ": " + std::to_string(globalResourceCapacity - totalUsedResources));
+    NES_INFO("\nNumber of Nodes used for query#" + std::to_string(queryId) + ": " + std::to_string(nodesCount)
+             + " | Average resource cost per node: " + std::to_string(totalUsedResources / nodesCount));
+
+    std::vector<ExecutionNodePtr> allNodes = globalExecutionPlan->getAllExecutionNodes();
+
+    bool activeStandbyPossible = false;
+
+    for (auto& executionNode : globalExecutionPlan->getAllExecutionNodes()) {
+        if (topology->findNodeWithId(executionNode->getId())->getAvailableResources() < avgCostPerNode) {
+            NES_WARNING("A_S not possible because node#" + std::to_string(executionNode->getId()) + " only has "
+                        + std::to_string(topology->findNodeWithId(executionNode->getId())->getAvailableResources()) + " when "
+                        + std::to_string(avgCostPerNode) + " was needed.")
+            break;
+        } else {
+            activeStandbyPossible = true;
+        }
+    }
+
+    if (activeStandbyPossible) {
+        NES_WARNING("\nACTIVE_STANDBY POSSIBLE");
+    } else {
+        NES_WARNING("\nACTIVE_STANDBY NOT POSSIBLE. WEIGHT OF " + std::to_string(avgCostPerNode) + " CANNOT BE SUPPORTED. ");
+    }
+
+}
+
+/**
+ * returns true if there are other nodes within the globalExecutionPlan on which the specified SubQuery is not deployed.
+ * @param globalExecutionPlan
+ * @param queryId
+ * @return
+ */
+bool QueryPlacementPhase::otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
+
+    bool othersAvailable = false;
+
+    for (auto& executionNode : globalExecutionPlan->getAllExecutionNodes()) {
+        if (!(std::find(globalExecutionPlan->getExecutionNodesByQueryId(queryId).begin(),
+                        globalExecutionPlan->getExecutionNodesByQueryId(queryId).end(),
+                        executionNode)
+              != globalExecutionPlan->getExecutionNodesByQueryId(queryId).end())) {
+            return true;
+        }
+    }
+
+    return othersAvailable;
+}
+
 }// namespace NES::Optimizer
