@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 
 namespace NES::Optimizer {
 
@@ -149,7 +150,22 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
 
 void QueryPlacementPhase::checkActiveStandby(GlobalExecutionPlanPtr globalExecutionPlan,
                                              TopologyPtr topology,
+                                             SourceCatalogPtr sourceCatalog,
                                              QueryId queryId) {
+
+    std::vector<TopologyNodePtr> topologyNodes = std::vector<TopologyNodePtr>();
+    std::vector<long> topologyIds;
+
+    for (auto& entry : sourceCatalog->getAllLogicalSourceAsString()){
+
+        for (auto& source : sourceCatalog->getPhysicalSources(entry.first)){
+            NES_INFO(entry.first + " SOURCY: " + source->getNode()->toString());
+            topologyNodes.push_back(source->getNode());
+            topologyIds.push_back(source->getNode()->getId());
+        }
+    }
+
+
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
@@ -162,8 +178,8 @@ void QueryPlacementPhase::checkActiveStandby(GlobalExecutionPlanPtr globalExecut
     double totalUsedResources = 0;
     double totalResourceCapacity = 0;
 
-    if(!otherNodesAvailable(globalExecutionPlan,queryId)){
-        NES_WARNING("\nFAULT-TOLERANCE NOT POSSIBLE. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
+    if(!otherNodesAvailable(globalExecutionPlan, topologyIds,queryId)){
+        NES_WARNING("\nFAULT-TOLERANCE CANNOT BE PROVIDED. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
         return;
     }
 
@@ -221,22 +237,28 @@ void QueryPlacementPhase::checkActiveStandby(GlobalExecutionPlanPtr globalExecut
              + " | Average resource cost per node: " + std::to_string(totalUsedResources / nodesCount));
 
     std::vector<ExecutionNodePtr> allNodes = globalExecutionPlan->getAllExecutionNodes();
+    std::vector<int> candidateIds;
 
     bool activeStandbyPossible = false;
 
-    for (auto& executionNode : globalExecutionPlan->getAllExecutionNodes()) {
+    for (auto& executionNode : topologyNodes) {
         if (topology->findNodeWithId(executionNode->getId())->getAvailableResources() < avgCostPerNode) {
             NES_WARNING("A_S not possible because node#" + std::to_string(executionNode->getId()) + " only has "
                         + std::to_string(topology->findNodeWithId(executionNode->getId())->getAvailableResources()) + " when "
                         + std::to_string(avgCostPerNode) + " was needed.")
             break;
         } else {
+            candidateIds.push_back(executionNode->getId());
+            NES_INFO("\nACTIVE_STANDBY: FOUND NODE#" + std::to_string(executionNode->getId()) + " WITH "
+                     + std::to_string(executionNode->getAvailableResources()) + " AVAILABLE RESOURCES. "
+                     + std::to_string(avgCostPerNode) + " NEEDED.")
             activeStandbyPossible = true;
         }
     }
 
+
     if (activeStandbyPossible) {
-        NES_WARNING("\nACTIVE_STANDBY POSSIBLE");
+        NES_WARNING("\nACTIVE_STANDBY POSSIBLE [" + std::to_string(candidateIds.size()) + " candidate Node(s)]");
     } else {
         NES_WARNING("\nACTIVE_STANDBY NOT POSSIBLE. WEIGHT OF " + std::to_string(avgCostPerNode) + " CANNOT BE SUPPORTED. ");
     }
@@ -249,15 +271,21 @@ void QueryPlacementPhase::checkActiveStandby(GlobalExecutionPlanPtr globalExecut
  * @param queryId
  * @return
  */
-bool QueryPlacementPhase::otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
+bool QueryPlacementPhase::otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, std::vector<long> topologyIds, QueryId queryId) {
 
     bool othersAvailable = false;
+    std::vector<long> executionIds = std::vector<long>();
 
-    for (auto& executionNode : globalExecutionPlan->getAllExecutionNodes()) {
-        if (!(std::find(globalExecutionPlan->getExecutionNodesByQueryId(queryId).begin(),
-                        globalExecutionPlan->getExecutionNodesByQueryId(queryId).end(),
-                        executionNode)
-              != globalExecutionPlan->getExecutionNodesByQueryId(queryId).end())) {
+    for(auto& node : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
+        executionIds.push_back(node->getId());
+            }
+
+    for (auto& id : topologyIds) {
+
+        if (!(std::find(executionIds.begin(),
+                        executionIds.end(),
+                        id)
+              != executionIds.end())) {
             return true;
         }
     }

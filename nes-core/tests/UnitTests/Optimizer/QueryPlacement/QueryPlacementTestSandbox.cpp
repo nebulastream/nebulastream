@@ -98,26 +98,59 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                             "->addField(\"value\", BasicType::UINT64);";
-        const std::string sourceName = "car";
+        TopologyNodePtr sourceNode3 = TopologyNode::create(12, "localhost", 123, 124, resources[3]);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode3);
+
+        TopologyNodePtr sourceNode4 = TopologyNode::create(13, "localhost", 125, 126, resources[4]);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode4);
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-        sourceCatalog->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+
+        //SCHEMA 1
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+        sourceCatalog->addLogicalSource(sourceName, schema);
+
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
         auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
         SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+
         SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+
+        //SCHEMA 2
+        std::string schema2 = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName2 = "truck";
+        sourceCatalog->addLogicalSource(sourceName2, schema2);
+
+        auto logicalSource2 = sourceCatalog->getLogicalSource(sourceName2);
+
+        auto physicalSource2 = PhysicalSource::create(sourceName2, "test2", csvSourceType);
+
+        SourceCatalogEntryPtr sourceCatalogEntry3 =
+            std::make_shared<SourceCatalogEntry>(physicalSource2, logicalSource2, sourceNode3);
+
+        SourceCatalogEntryPtr sourceCatalogEntry4 =
+            std::make_shared<SourceCatalogEntry>(physicalSource2, logicalSource2, sourceNode4);
+
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
+        sourceCatalog->addPhysicalSource(sourceName2, sourceCatalogEntry4);
+
+
+
+
 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -144,12 +177,33 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
 /* Test query placement with bottom up strategy  */
 TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
 
-    setupTopologyAndSourceCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     NES_INFO("=========== RESOURCES =============")
     NES_INFO(topology->toString());
+    NES_INFO("SOURCE: " + queryPlan->getSourceConsumed());
+    //NES_INFO("PHYSICAL SOURCE: " + sourceCatalog->getPhysicalSources(queryPlan->getSourceConsumed())[0]->getNode()->toString();)
+
+    std::vector<TopologyNodePtr> topologyNodes;
+
+    for (auto& entry : sourceCatalog->getAllLogicalSourceAsString()){
+
+        for (auto& source : sourceCatalog->getPhysicalSources(entry.first)){
+            NES_INFO(entry.first + " SOURCY: " + source->getNode()->toString());
+            topologyNodes.push_back(source->getNode());
+        }
+    }
+
+    NES_INFO("sizey: " + std::to_string(topologyNodes.size()));
+
+
+
+    for (auto& source : sourceCatalog->getPhysicalSources(queryPlan->getSourceConsumed())){
+        NES_INFO("SOURCY: " + source->getNode()->toString())
+    }
+
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
@@ -168,7 +222,12 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
 
-    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology,sharedQueryPlan->getSharedQueryId());
+    for(auto& node : globalExecutionPlan->getAllExecutionNodes()){
+        NES_INFO("NODEY: " + node->toString());
+    }
+
+
+    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
 
 
 
@@ -233,6 +292,8 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithTopDownStrategy) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology,sourceCatalog, sharedQueryPlan->getSharedQueryId());
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -303,6 +364,8 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithMultipleSinkOperatorsWithB
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -1094,6 +1157,8 @@ TEST_F(QueryPlacementTestSandbox, DISABLED_testIFCOPPlacementOnBranchedTopology)
     auto midNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
     auto srcNode1 = TopologyNode::create(3, "localhost", 4003, 5003, 4);
     auto srcNode2 = TopologyNode::create(4, "localhost", 4004, 5004, 4);
+    auto srcNode3 = TopologyNode::create(4, "localhost", 4004, 5004, 4);
+    auto srcNode4 = TopologyNode::create(4, "localhost", 4004, 5004, 4);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -1102,11 +1167,13 @@ TEST_F(QueryPlacementTestSandbox, DISABLED_testIFCOPPlacementOnBranchedTopology)
     topology->addNewTopologyNodeAsChild(sinkNode, midNode2);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
     topology->addNewTopologyNodeAsChild(midNode2, srcNode2);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode3);
+    topology->addNewTopologyNodeAsChild(midNode2, srcNode4);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(sinkNode->containAsChild(midNode2));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
-    ASSERT_TRUE(midNode2->containAsChild(srcNode2));
+    ASSERT_TRUE(midNode1->containAsChild(srcNode3));
+    ASSERT_TRUE(midNode2->containAsChild(srcNode4));
 
     NES_DEBUG("QueryPlacementTestSandbox:: topology: " << topology->toString());
 
@@ -1124,8 +1191,12 @@ TEST_F(QueryPlacementTestSandbox, DISABLED_testIFCOPPlacementOnBranchedTopology)
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
     SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
     SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    SourceCatalogEntryPtr sourceCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode3);
+    SourceCatalogEntryPtr sourceCatalogEntry4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode4);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry4);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
