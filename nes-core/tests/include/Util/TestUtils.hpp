@@ -47,6 +47,7 @@ class value;
 }// namespace web
 
 namespace NES {
+static const std::string BASE_URL = "http://127.0.0.1:";
 
 /**
  * @brief this is a util class for the tests
@@ -622,7 +623,7 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         NES_TRACE("check if NES REST interface is up");
-        cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
         if (r.status_code == 200l) {
             return true;
         }
@@ -757,7 +758,7 @@ template<typename T>
 [[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
     web::json::value json_return;
 
-    web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
+    web::http::client::http_client client(BASE_URL + restPort + "/v1/nes/query/stop-query");
     web::uri_builder builder(("/"));
     builder.append_query(("queryId"), queryId);
     client.request(web::http::methods::DEL, builder.to_string())
@@ -789,7 +790,7 @@ template<typename T>
 [[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081") {
     web::json::value json_return;
 
-    web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
+    web::http::client::http_client clientQ1(BASE_URL + restPort + "/v1/nes/");
     clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");
@@ -820,7 +821,7 @@ template<typename T>
 [[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081") {
     web::json::value json_return;
 
-    web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
+    web::http::client::http_client clientQ1(BASE_URL + restPort + "/v1/nes/");
     clientQ1.request(web::http::methods::GET, "monitoring/" + restCall)
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");
@@ -850,7 +851,7 @@ template<typename T>
 [[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081") {
     web::json::value json_returnSchema;
 
-    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/sourceCatalog/addLogicalSource");
+    web::http::client::http_client clientSchema(BASE_URL + restPort + "/v1/nes/sourceCatalog/addLogicalSource");
     clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");
