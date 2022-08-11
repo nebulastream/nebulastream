@@ -15,127 +15,35 @@
 if (NES_BUILD_BENCHMARKS)
     message("---Building benchmarks...")
     include(ExternalProject)
-    ExternalProject_Add(
-            gbenchmark
-            URL https://github.com/google/benchmark/archive/v1.6.1.zip
-            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gbenchmark
-            # Disable install step
-            INSTALL_COMMAND ""
-            URL_HASH SHA256=367e963b8620080aff8c831e24751852cffd1f74ea40f25d9cc1b667a9dd5e45
-            #Line below is only necessary if someone wants to run the provided tests by gtests
-            #CMAKE_ARGS -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=Release
-            CMAKE_ARGS -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-    )
 
-    find_package(OpenMP)
-    if (OPENMP_FOUND)
-        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    endif()
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -L/usr/lib/llvm-10/lib/")
+#    find_package(OpenMP)
+#    if (OPENMP_FOUND)
+#        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#    endif()
 
-    # Get GBenchmark source and binary directories from CMake project
-    ExternalProject_Get_Property(gbenchmark source_dir binary_dir)
-    message("gbenchmark ${source_dir} ${binary_dir}")
-
-    #Create a libgbenchmark target as a dependency by benchmark programs
-    add_library(libgbenchmark IMPORTED STATIC GLOBAL)
-    add_dependencies(libgbenchmark gbenchmark gbenchmark_main)
-
-    set_target_properties(libgbenchmark PROPERTIES
-            "IMPORTED_LOCATION" "${binary_dir}/src/libbenchmark.a"
-            "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-            )
-
-    #Create a libgbenchmark_main target as a dependency by benchmark programs
-    add_library(libgbenchmark_main IMPORTED STATIC GLOBAL)
-    add_dependencies(libgbenchmark_main gbenchmark_main)
-
-    set_target_properties(libgbenchmark_main PROPERTIES
-            "IMPORTED_LOCATION" "${binary_dir}/src/libbenchmark_main.a"
-            "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-            )
-
-    set(GBENCHMARK_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgbenchmark libgbenchmark_main)
-    include_directories("${source_dir}/include/")
-    include_directories("include/")
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
     #-------------------------------##################------------------------------
-    #-------------------------------# Micro Benchmark Suite#-----------------------------
-
-    ### Statemanager Benchmark ###
-#    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
-#    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
-
-    ### MemorySource Benchmark ###
-    add_executable(memorysource-benchmark "src/Micro-Benchmarks/BenchmarkMemorySource.cpp")
-    target_link_libraries(memorysource-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=csv)
-
-#
-#    ### Benchmark Uniform Data Benchmark ###
-#    add_executable(uniformdata-benchmark "src/Micro-Benchmarks/BenchmarkCreateUniformData.cpp")
-#    target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
-#
-#    ### Tuple Buffer Benchmark ###
-#    add_executable(tuplebuffer-benchmark "src/Micro-Benchmarks/TupleBufferBenchmark.cpp")
-#    target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
-#
-#    ### Filter Queries Benchmark ###
-#    add_executable(filter-query-benchmark "src/Micro-Benchmarks/FilterQueryBenchmarks.cpp")
-#    target_link_libraries(filter-query-benchmark nes)
-#    target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### Filter Queries Benchmark ###
-#    add_executable(ysb-query "src/Micro-Benchmarks/YSBSelect.cpp")
-#    target_link_libraries(ysb-query nes)
-#    target_sources(ysb-query PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME ysb-query COMMAND ysb-query --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### Map Queries Benchmark ###
-#    add_executable(map-query-benchmark "src/Micro-Benchmarks/MapQueryBenchmarks.cpp")
-#    target_link_libraries(map-query-benchmark nes)
-#    target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### BufferSize Query Benchmark ###
-#    add_executable(buffer-size-query-benchmark "src/Micro-Benchmarks/QueryBufferSizesBenchmark.cpp")
-#    target_link_libraries(buffer-size-query-benchmark nes)
-#    target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### TupleSize Query Benchmark ###
-#    add_executable(tuple-size-query-benchmark "src/Micro-Benchmarks/QueryTupleSizesBenchmark.cpp")
-#    target_link_libraries(tuple-size-query-benchmark nes)
-#    target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
-
-    ### Memory Layout Benchmark ###
-    #add_executable(memory-layout-benchmark "src/Micro-Benchmarks/BenchmarkMemoryLayout.cpp")
-    #target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
-    #add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
-
-    ### Dynamic Memory Layout Benchmark ###
-    #add_executable(dynamic-memory-layout-benchmark "src/Micro-Benchmarks/BenchmarkDynamicMemoryLayout.cpp")
-    #target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
-    #add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
+    #-------------------------------# Micro Benchmarks#-----------------------------
 
     ### Query Merger Benchmark ###
-    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
+    add_executable(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
     target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json)
 
-    add_executable(output-channel-benchmark "src/Micro-Benchmarks/BenchmarkOutputChannel.cpp")
+    ### Incremental Placement Benchmark ###
+    add_executable(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp")
+    target_link_libraries(incremental-placement-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME incremental-placement-benchmark COMMAND incremental-placement-benchmark --benchmark_out=BenchmarkIncrementalPlacement.log --benchmark_out_format=json)
+
+    add_executable(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
     target_link_libraries(output-channel-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json)
 
     message("---Done building benchmarks")
-
 else (NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")
 endif ()
