@@ -29,7 +29,7 @@ namespace DTO {
  */
 class QueryCatalogEntriesResponse : public oatpp::DTO {
     DTO_INIT(QueryCatalogEntriesResponse, DTO /* Extends */)
-    DTO_FIELD(List<Object<QueryCatalogEntryResponse>>, queries);
+    DTO_FIELD(List<Object<QueryCatalogEntryResponse>>,entries);
 };
 
 }// namespace DTO
