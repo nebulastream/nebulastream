@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.80](https://github.com/nebulastream/nebulastream/tree/v0.2.80) (2022-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.79...v0.2.80)
+
+#### Build Management
+
+- \[Feature\] Add pip and lcov\_cobertura to docker images [\#2945](https://github.com/nebulastream/nebulastream/issues/2945)
+
+### Miscellaneous Issues ✌️
+
+- Make ConnectivityController an oatpp endpoint \(Move to oatapp REST server\) [\#2836](https://github.com/nebulastream/nebulastream/issues/2836)
+
 ## [v0.2.79](https://github.com/nebulastream/nebulastream/tree/v0.2.79) (2022-08-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.78...v0.2.79)
