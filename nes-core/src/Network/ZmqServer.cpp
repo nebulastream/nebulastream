@@ -299,6 +299,9 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
+                    NES_ASSERT2_FMT(bufferHeader->payloadSize <= buffer.getBufferSize(),
+                                    "Buffer size [" << buffer.getBufferSize() << " is smaller than payload "
+                                                    << bufferHeader->payloadSize);
                     auto optRetSize = dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->payloadSize),
                                                             kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
