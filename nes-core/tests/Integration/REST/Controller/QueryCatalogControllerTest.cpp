@@ -67,7 +67,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     cpr::Response re =
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
-    std::cout << re.text; //TODO: do some text comparsion?
+    //TODO:: compare content of response to expected values. To be added once json library found #2950
     EXPECT_EQ(re.status_code, 200l);
 
 }
@@ -90,9 +90,9 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"});
     EXPECT_EQ(r1.status_code, 400l);
     cpr::Response r2=
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
                  cpr::Parameters{{"status", "REGISTERED"}});
-    EXPECT_EQ(r2.status_code, 204l);
+    EXPECT_EQ(r2.status_code, 200l);
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -105,9 +105,10 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     cpr::Response r3=
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
                  cpr::Parameters{{"status", "REGISTERED"}});
     EXPECT_EQ(r3.status_code, 200l);
+    //TODO:: compare content of response to expected values. To be added once json library found #2950
 
 }
 TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
@@ -125,12 +126,12 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     }
 
     cpr::Response r1 =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"});
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"});
     EXPECT_EQ(r1.status_code, 400l);
-    cpr::Response r2=
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
+    cpr::Response r2 =
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
                  cpr::Parameters{{"queryId", "1"}});
-    EXPECT_EQ(r2.status_code, 204l);
+    EXPECT_EQ(r2.status_code, 404l);
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -143,10 +144,10 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     cpr::Response r3=
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
                  cpr::Parameters{{"queryId", std::to_string(queryId)}});
     EXPECT_EQ(r3.status_code, 200l);
-    std::cout << r3.text; //TODO: do some text comparsion?
+    //TODO:: compare content of response to expected values. To be added once json library found #2950
 }
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
@@ -163,15 +164,28 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     }
 
     cpr::Response r1 =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"});
-    EXPECT_EQ(r1.status_code, 400);
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"});
+    EXPECT_EQ(r1.status_code, 400l);
     cpr::Response r2=
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
                  cpr::Parameters{{"queryId", "1"}});
-    EXPECT_EQ(r2.status_code, 204l);
+    EXPECT_EQ(r2.status_code, 404l);
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-  //TODO: add test for buffer production
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    auto queryCatalogService = coordinator->getQueryCatalogService();
+    QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    const QueryPlanPtr queryPlan = query->getQueryPlan();
+    queryPlan->setQueryId(queryId);
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    cpr::Response r3=
+        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
+                 cpr::Parameters{{"queryId", "1"}});
+    EXPECT_EQ(r3.status_code, 404l);
+    //TODO:: compare content of response to expected values. To be added once json library found #2950
 }
 
 }//namespace NES
