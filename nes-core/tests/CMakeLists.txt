@@ -405,7 +405,7 @@ add_nes_unit_test(z3-signature-based-partial-query-merger-bottom-up-rule-test "U
 
 
 ### String Signature Based Complete Query Merger Rule Test ###
-add_nes_unit_test(string-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRuleTest.cpp")
+add_nes_unit_test(hash-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRuleTest.cpp")
 
 ### Join Handler Tests ###
 add_nes_unit_test(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
