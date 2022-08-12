@@ -64,6 +64,7 @@ jobs:
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
   build-x64-linux-code-coverage:
+    name: "Code Coverage Pipeline"
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
