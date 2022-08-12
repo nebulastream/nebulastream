@@ -66,6 +66,7 @@ class WorkerContext {
 
     std::ofstream statisticsFile;
     std::ofstream storageFile;
+    uint64_t currentEpoch;
 
   public:
     explicit WorkerContext(uint32_t workerId,
