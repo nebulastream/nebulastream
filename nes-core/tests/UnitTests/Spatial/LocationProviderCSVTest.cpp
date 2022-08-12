@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <chrono>
-#include <gtest/gtest.h>
 #include <thread>
 
 namespace NES {
