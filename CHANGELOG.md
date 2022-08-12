@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.82](https://github.com/nebulastream/nebulastream/tree/v0.2.82) (2022-08-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.81...v0.2.82)
+
+### Miscellaneous Issues ✌️
+
+- Make QueryCatalogController an oatpp endpoint \(Move to oatapp REST server\) [\#2839](https://github.com/nebulastream/nebulastream/issues/2839)
+
 ## [v0.2.81](https://github.com/nebulastream/nebulastream/tree/v0.2.81) (2022-08-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.80...v0.2.81)
