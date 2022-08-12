@@ -59,7 +59,8 @@ RestServer::RestServer(std::string host,
                                               udfCatalog,
                                               bufferManager,
                                               locationService)),
-      host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {}
+      host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator),
+      globalQueryPlan(globalQueryPlan) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {

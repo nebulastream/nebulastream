@@ -15,11 +15,6 @@
 // clang-format: off
 #include "gtest/gtest.h"
 // clang-format: on
-#include <Util/DummySink.hpp>
-#include <Util/SchemaSourceDescriptor.hpp>
-#include <Util/TestQuery.hpp>
-#include <Util/TestQueryCompiler.hpp>
-#include <Util/TestSink.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -45,7 +40,12 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SchemaSourceDescriptor.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
+#include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>

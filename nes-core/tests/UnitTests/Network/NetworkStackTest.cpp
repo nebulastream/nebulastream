@@ -36,8 +36,6 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <Util/TestQuery.hpp>
-#include <Util/TestQueryCompiler.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <NesBaseTest.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -48,6 +46,8 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <random>

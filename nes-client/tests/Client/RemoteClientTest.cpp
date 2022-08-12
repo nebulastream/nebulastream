@@ -14,7 +14,6 @@
 
 #include <gtest/gtest.h>
 
-#include <Util/TestUtils.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
@@ -30,6 +29,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <unistd.h>
 
 using namespace std;

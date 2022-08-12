@@ -56,9 +56,9 @@
 #include <utility>
 
 #include <NesBaseTest.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
-#include <Sinks/Mediums/NullOutputSink.hpp>
 
 using namespace std;
 

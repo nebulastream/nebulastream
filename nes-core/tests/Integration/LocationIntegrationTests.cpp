@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-#include <NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -24,6 +23,7 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NesBaseTest.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>

@@ -15,7 +15,6 @@
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
-#include <Util/ProtobufMessageFactory.hpp>
 #include "SerializableQueryPlan.pb.h"
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -27,6 +26,7 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>

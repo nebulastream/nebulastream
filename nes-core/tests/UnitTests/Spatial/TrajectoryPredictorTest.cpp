@@ -13,8 +13,8 @@
 */
 #include <gtest/gtest.h>
 
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <thread>

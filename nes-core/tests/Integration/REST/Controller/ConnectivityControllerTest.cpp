@@ -41,7 +41,7 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if(!success){
+    if (!success) {
         FAIL() << "REST Server failed to start";
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/connectivity/check"});

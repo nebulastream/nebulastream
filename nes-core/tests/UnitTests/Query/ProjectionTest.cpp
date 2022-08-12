@@ -14,9 +14,6 @@
 
 #include "gtest/gtest.h"
 
-#include <Util/DummySink.hpp>
-#include <Util/TestQuery.hpp>
-#include <Util/TestSink.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -39,15 +36,18 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestSink.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <utility>
 
-#include <Util/TestQueryCompiler.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Util/TestQueryCompiler.hpp>
 
 #include <NesBaseTest.hpp>
 #include <Util/TestUtils.hpp>

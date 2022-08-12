@@ -14,10 +14,6 @@
 // clang-format: off
 #include "gtest/gtest.h"
 // clang-format: on
-#include <Util/DummySink.hpp>
-#include <Util/TestQuery.hpp>
-#include <Util/TestQueryCompiler.hpp>
-#include <Util/TestSink.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -49,7 +45,11 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
+#include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>

@@ -15,10 +15,10 @@
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_CONNECTIVITYCONTROLLER_HPP_
 
 #include <REST/DTOs/ConnectivityResponse.hpp>
+#include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <REST/OatppController/BaseRouterPrefix.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -42,7 +42,8 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
-    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, std::string routerPrefixAddition) {
+    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                                std::string routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<ConnectivityController>(objectMapper, completeRouterPrefix);
     }

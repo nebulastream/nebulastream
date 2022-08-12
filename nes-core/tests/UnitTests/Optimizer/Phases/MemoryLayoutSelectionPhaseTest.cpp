@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/TestQuery.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -40,6 +39,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestQuery.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;

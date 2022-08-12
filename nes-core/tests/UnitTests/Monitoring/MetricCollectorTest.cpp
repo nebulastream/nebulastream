@@ -17,7 +17,6 @@
 #include <gtest/gtest.h>
 // clang-format: on
 
-#include <Util/MetricValidator.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
@@ -34,6 +33,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
 
 namespace NES {
 
