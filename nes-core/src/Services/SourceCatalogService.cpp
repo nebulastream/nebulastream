@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include "Catalogs/Source/SourceCatalogEntry.hpp"
 #include <API/Schema.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/SourceCatalogService.hpp>
-#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -99,6 +98,12 @@ bool SourceCatalogService::unregisterLogicalSource(const std::string& logicalSou
     NES_DEBUG("SourceCatalogService::unregisterLogicalSource: register logical source=" << logicalSourceName);
     bool success = sourceCatalog->removeLogicalSource(logicalSourceName);
     return success;
+}
+
+LogicalSourcePtr SourceCatalogService::getLogicalSource(const std::string& logicalSourceName) {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+    return std::make_shared<LogicalSource>(*logicalSource);
 }
 
 }//namespace NES
