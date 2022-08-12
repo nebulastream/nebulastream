@@ -58,6 +58,7 @@ class WorkerContext {
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
     std::ofstream statisticsFile;
     std::ofstream storageFile;
+    uint64_t currentEpoch;
 
   public:
     explicit WorkerContext(uint32_t workerId,

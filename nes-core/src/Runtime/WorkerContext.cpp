@@ -28,6 +28,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
+    currentEpoch = 0;
 //    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
 //    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
 //    statisticsFile << "time, latency\n";
@@ -96,6 +97,7 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
+    NES_ASSERT(buffer.getWatermark() < currentEpoch, "Trying to insert watermark smaller than epoch");
     storage[nesPartitionId].push(buffer);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
@@ -104,6 +106,7 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
+    currentEpoch = timestamp;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
