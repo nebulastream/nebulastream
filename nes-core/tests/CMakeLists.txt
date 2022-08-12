@@ -157,10 +157,8 @@ add_nes_unit_test(zmq-tests "UnitTests/Source/ZMQTest.cpp")
 ### Source Tests ###
 add_nes_integration_test(source-tests "UnitTests/Source/SourceTest.cpp")
 
-
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
-
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
