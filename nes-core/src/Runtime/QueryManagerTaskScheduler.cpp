@@ -287,7 +287,9 @@ void AbstractQueryManager::updateStatistics(const Task& task,
                 .count();
         auto diff = now - creation;
         //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
-        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
+        if (creation <= (unsigned long) now) {
+            diff = 0;
+        }
         statistics->incLatencySum(diff);
 
         for (auto& bufferManager : bufferManagers) {
