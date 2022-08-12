@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.81](https://github.com/nebulastream/nebulastream/tree/v0.2.81) (2022-08-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.80...v0.2.81)
+
+### Miscellaneous Issues ✌️
+
+- Add Reconnect Planner class to Worker [\#2703](https://github.com/nebulastream/nebulastream/issues/2703)
+
 ## [v0.2.80](https://github.com/nebulastream/nebulastream/tree/v0.2.80) (2022-08-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.79...v0.2.80)
