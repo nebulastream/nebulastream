@@ -367,8 +367,8 @@ function(target_code_coverage TARGET_NAME)
                         COMMAND
                         ${LLVM_COV_PATH} export $<TARGET_FILE:${TARGET_NAME}> ${SO_OBJECTS}
                         -instr-profile=${target_code_coverage_COVERAGE_TARGET_NAME}.profdata
-                        -format="text" ${EXCLUDE_REGEX} >
-                        ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/${target_code_coverage_COVERAGE_TARGET_NAME}.json
+                        -format="lcov" ${EXCLUDE_REGEX} >
+                        ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/${target_code_coverage_COVERAGE_TARGET_NAME}.lcov
                         DEPENDS ccov-processing-${target_code_coverage_COVERAGE_TARGET_NAME})
 
                 # Generates HTML output of the coverage information for perusal
