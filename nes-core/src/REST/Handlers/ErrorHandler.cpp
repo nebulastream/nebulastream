@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <REST/DTOs/ErrorMessage.hpp>
+#include <REST/DTOs/ErrorResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 
 namespace NES {
@@ -22,7 +22,7 @@ ErrorHandler::ErrorHandler(const std::shared_ptr<oatpp::data::mapping::ObjectMap
 
 std::shared_ptr<ErrorHandler::OutgoingResponse>
 ErrorHandler::handleError(const Status& status, const oatpp::String& message, const Headers& headers) {
-    auto error = REST::DTO::ErrorMessage::createShared();
+    auto error = REST::DTO::ErrorResponse::createShared();
     error->status = "ERROR";
     error->code = status.code;
     error->message = message;

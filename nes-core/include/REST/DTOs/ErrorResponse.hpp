@@ -24,9 +24,9 @@ namespace NES {
 namespace REST{
 namespace DTO {
 
-class ErrorMessage : public oatpp::DTO {
+class ErrorResponse : public oatpp::DTO {
 
-    DTO_INIT(ErrorMessage, DTO)
+    DTO_INIT(ErrorResponse, DTO)
 
     DTO_FIELD_INFO(status) { info->description = "Short status text"; }
     DTO_FIELD(String, status);
