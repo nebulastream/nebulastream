@@ -12,9 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGSTRINGRESPONSE_HPP_
-#define NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGSTRINGRESPONSE_HPP_
-
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGBOOLRESPONSE_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGBOOLRESPONSE_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -27,12 +26,12 @@ namespace NES {
 /**
  * Message Data-Transfer-Object containing information as string
  */
-class SourceCatalogStringResponse: public oatpp::DTO {
-    DTO_INIT(SourceCatalogStringResponse, DTO /* Extends */)
-    DTO_FIELD_INFO(sourceInformation) { info->description = "requested data from source catalog"; }
-    DTO_FIELD(String, sourceInformation);
+class SourceCatalogBoolResponse: public oatpp::DTO {
+    DTO_INIT(SourceCatalogBoolResponse, DTO /* Extends */)
+    DTO_FIELD_INFO(success) { info->description = "true if logical source was added successfully"; }
+    DTO_FIELD(Boolean, success);
 };
-}//namespace NES
+} //namespace NES
 #include OATPP_CODEGEN_END(DTO)
 
-#endif//NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGSTRINGRESPONSE_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_DTOS_SOURCECATALOGBOOLRESPONSE_HPP_

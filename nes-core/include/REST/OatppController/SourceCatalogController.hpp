@@ -18,6 +18,7 @@
 #include <REST/DTOs/LogicalSourceResponse.hpp>
 #include <REST/DTOs/LogicalSourceInfo.hpp>
 #include <REST/DTOs/SourceCatalogStringResponse.hpp>
+#include <REST/DTOs/SourceCatalogBoolResponse.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -28,6 +29,7 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <SerializableOperator.pb.h>
 #include <oatpp/core/parser/Caret.hpp>
+#include <utility>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -133,6 +135,70 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
+        }
+    }
+
+    ENDPOINT("POST", "addLogicalSource", addLogicalSource,
+             BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
+        //OATPP_LOGV(TAG, "POST body %s", body->c_str());
+        auto dto = SourceCatalogBoolResponse::createShared();
+        NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: REST received request to add new Logical Source.");
+        try {
+            // TODO make oatpp string format compatibel to String
+           // NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Try to add new Logical Source "
+           //           << logicalSourceName << " and" << schema);
+            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
+            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
+                      << added);
+            //Prepare the response
+            if (added){
+                dto->success = added;
+                return createDtoResponse(Status::CODE_200, dto);
+            }
+            else{
+                return errorHandler->handleError(Status::CODE_400, "Logical Source with same name already exists!");
+            }
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: handlePost -addLogicalSource: Exception occurred while trying to add new "
+                      "logical source"
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
+        }
+        // TODO Do I need a wait() here?
+    }
+
+
+    ENDPOINT("POST", "updateLogicalSource", updateLogicalSource,
+             BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
+        //OATPP_LOGV(TAG, "POST body %s", body->c_str());
+        auto dto = SourceCatalogBoolResponse::createShared();
+        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update the given Logical Source.");
+        try {
+            // TODO make oatpp string format compatibel to String
+            // NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Try to update  Logical Source "
+            //           << logicalSourceName << " and" << schema);
+            // TODO Same problem with string format
+            bool updated = sourceCatalog->updatedLogicalSource(logicalSourceName, schema);
+            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
+                      << updated);
+            // Prepare the response
+            if (updated){
+                dto->success = updated;
+                return createDtoResponse(Status::CODE_200, dto);
+            }
+            else{
+                NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: unable to find given source");
+                return errorHandler->handleError(Status::CODE_400, "Unable to update logical source.");
+            }
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while updating "
+                      "Logical Source."
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
         }
     }
 
