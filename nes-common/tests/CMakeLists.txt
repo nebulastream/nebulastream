@@ -24,10 +24,10 @@ target_include_directories(nes-tests-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ut
 target_link_libraries(nes-tests-util PUBLIC ${GTEST_LIBRARIES} nes-common)
 
 ### Thread Naming Test ###
-add_nes_ut_test(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
+add_nes_unit_test(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
 
 ### Non Blocking Monotonic Seq Queue ###
-add_nes_ut_test(non-blocking-monotonic-seq-queue "UnitTests/Util/NonBlockingMonotonicSeqQueueTest.cpp")
+add_nes_unit_test(non-blocking-monotonic-seq-queue "UnitTests/Util/NonBlockingMonotonicSeqQueueTest.cpp")
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

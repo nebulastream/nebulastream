@@ -15,11 +15,11 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-add_nes_ut_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
+add_nes_unit_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
 
-add_nes_ut_test(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
+add_nes_unit_test(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
 
-add_nes_ut_test(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
+add_nes_unit_test(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
