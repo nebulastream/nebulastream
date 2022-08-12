@@ -17,6 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
+#include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/QueryController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
@@ -63,8 +64,8 @@ RestServer::RestServer(std::string host,
                                               bufferManager,
                                               locationService)),
       host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
-      globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan), topology(topology),
-      udfCatalog(udfCatalog) {}
+      globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
+      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -170,10 +171,14 @@ void RestServer::run() {
                                                                      errorHandler);
     auto udfCatalogController =
         REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
+    auto sourceCatalogController =
+        REST::Controller::SourceCatalogController::createShared(objectMapper, sourceCatalog, errorHandler, "/sourceCatalog");
+
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(queryController);
     router->addController(topologyController);
+    router->addController(sourceCatalogController);
     router->addController(udfCatalogController);
 
     /* Create HTTP connection handler with router */

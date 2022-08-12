@@ -140,6 +140,7 @@ class RestServer {
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryServicePtr queryService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
 
