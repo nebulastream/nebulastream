@@ -11,28 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <utility>
 #ifdef S2DEF
-#include <s2/s2point.h>
 #include <s2/s1angle.h>
-#include <s2/s2latlng.h>
 #include <s2/s2earth.h>
+#include <s2/s2latlng.h>
+#include <s2/s2point.h>
 #endif
 
 namespace NES {
 NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurator(
-        NesWorker& worker,
-        CoordinatorRPCClientPtr coordinatorRpcClient,
-        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration) :
-                                                                                                                    worker(worker),
-                                                                                                                    coordinatorRpcClient(std::move(coordinatorRpcClient)) {
+    NesWorker& worker,
+    CoordinatorRPCClientPtr coordinatorRpcClient,
+    const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration)
+    : worker(worker), coordinatorRpcClient(std::move(coordinatorRpcClient)) {
     locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
     sendUpdates = false;
 #ifdef S2DEF
@@ -56,7 +55,8 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
             NES_DEBUG("transmitting predicted reconnect point. previous prediction did not exist")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
             predictionChanged = true;
-        } else if (reconnectId != lastTransmittedReconnectPrediction.value().expectedNewParentId || timestamp != lastTransmittedReconnectPrediction.value().expectedTime) {
+        } else if (reconnectId != lastTransmittedReconnectPrediction.value().expectedNewParentId
+                   || timestamp != lastTransmittedReconnectPrediction.value().expectedTime) {
             // there was a previous prediction but its values differ from the current one. Inform coordinator about the new prediciton
             NES_DEBUG("transmitting predicted reconnect point. current prediction differs from previous prediction")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
@@ -67,7 +67,8 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
         // a previous trajectory led to the calculation of a prediction. But there is no prediction (yet) for the current trajectory
         // inform coordinator, that the old prediction is not valid anymore
         NES_DEBUG("no reconnect point found after recalculation, telling coordinator to discard old reconnect")
-        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), NES::Spatial::Mobility::Experimental::ReconnectPrediction {0, 0});
+        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(),
+                                                      NES::Spatial::Mobility::Experimental::ReconnectPrediction{0, 0});
         predictionChanged = true;
     }
     lastTransmittedReconnectPrediction = scheduledReconnect;
@@ -93,7 +94,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
         if (S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold) {
             NES_DEBUG("device has moved further then threshold, sending location")
             //todo: make pointer here
-            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second} );
+            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second});
             lastTransmittedLocation = currentPoint;
         } else {
             NES_DEBUG("device has not moved further than threshold, location will not be transmitted")
@@ -129,4 +130,4 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::stopPeriodicUp
     return true;
 }
 
-}
+}// namespace NES

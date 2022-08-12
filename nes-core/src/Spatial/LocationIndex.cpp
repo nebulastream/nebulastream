@@ -195,7 +195,7 @@ bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::
     std::unique_lock lock(locationIndexMutex);
     if (mobileNodes.contains(mobileWorkerId)) {
         NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << mobileWorkerId)
-        NES_DEBUG("New reconnect prediction: id=" << prediction.expectedNewParentId  << " time=" << prediction.expectedTime)
+        NES_DEBUG("New reconnect prediction: id=" << prediction.expectedNewParentId << " time=" << prediction.expectedTime)
         reconnectPredictionMap[mobileWorkerId] = prediction;
         return true;
     }
@@ -203,10 +203,10 @@ bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::
     return false;
 }
 std::optional<Mobility::Experimental::ReconnectPrediction> LocationIndex::getScheduledReconnect(uint64_t nodeId) {
-   std::unique_lock lock(locationIndexMutex);
-   if (reconnectPredictionMap.contains(nodeId)) {
-       return reconnectPredictionMap[nodeId];
-   }
-   return {};
+    std::unique_lock lock(locationIndexMutex);
+    if (reconnectPredictionMap.contains(nodeId)) {
+        return reconnectPredictionMap[nodeId];
+    }
+    return {};
 }
 }// namespace NES::Spatial::Index::Experimental

@@ -14,16 +14,16 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
@@ -492,16 +492,23 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
             auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
-            vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(Spatial::Mobility::Experimental::ReconnectPoint {loc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectData.reconnectprediction().id(), reconnectData.reconnectprediction().time()}}));
+            vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
+                Spatial::Mobility::Experimental::ReconnectPoint{
+                    loc,
+                    NES::Spatial::Mobility::Experimental::ReconnectPrediction{reconnectData.reconnectprediction().id(),
+                                                                              reconnectData.reconnectprediction().time()}}));
         }
 
         //construct a schedule from the received data
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
-            start, end, lastUpdatePosition, vec);
+                                                                                         start,
+                                                                                         end,
+                                                                                         lastUpdatePosition,
+                                                                                         vec);
     }
     //if no schedule was received, return an empty schedule
-    return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
+    return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(
+        Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
 }
-
 
 }// namespace NES

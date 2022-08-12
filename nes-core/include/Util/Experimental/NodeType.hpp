@@ -13,8 +13,8 @@
 */
 #ifndef NES_UTIL_EXPERIMENTAL_NODETYPE_HPP
 #define NES_UTIL_EXPERIMENTAL_NODETYPE_HPP
-#include <string>
 #include <WorkerLocation.grpc.pb.h>
+#include <string>
 
 namespace NES::Spatial::Index::Experimental {
 
@@ -22,11 +22,11 @@ namespace NES::Spatial::Index::Experimental {
  * this enum defines different types workers can have regarding their spatial information
  */
 enum class NodeType {
-    NO_LOCATION = 0, //the worker does not have a known location
-    FIXED_LOCATION = 1, //the worker has a known fixed location that will not change after its creation
-    MOBILE_NODE = 2, //the worker runs on a mobile device which might change its location anytime
-    INVALID = 3 //no valid worker type
+    NO_LOCATION = 0,   //the worker does not have a known location
+    FIXED_LOCATION = 1,//the worker has a known fixed location that will not change after its creation
+    MOBILE_NODE = 2,   //the worker runs on a mobile device which might change its location anytime
+    INVALID = 3        //no valid worker type
 };
-}
+}// namespace NES::Spatial::Index::Experimental
 
 #endif//NES_UTIL_EXPERIMENTAL_NODETYPE_HPP

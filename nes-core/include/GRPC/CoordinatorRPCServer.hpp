@@ -49,7 +49,7 @@ using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}
+}// namespace Spatial::Index::Experimental
 
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
@@ -242,7 +242,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply : sent from coordinator to worker not containing any data
      * @return OK if the coordinator succesfully recorded the data, CANCELLED otherwise
      */
-    Status SendScheduledReconnect(ServerContext*, const SendScheduledReconnectRequest* request, SendScheduledReconnectReply* reply) override;
+    Status SendScheduledReconnect(ServerContext*,
+                                  const SendScheduledReconnectRequest* request,
+                                  SendScheduledReconnectReply* reply) override;
 
     /**
      * @brief inform the coordinator that the devices location has changed

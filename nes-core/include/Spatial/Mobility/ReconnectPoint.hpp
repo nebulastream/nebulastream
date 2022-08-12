@@ -27,5 +27,5 @@ struct ReconnectPoint {
     Index::Experimental::Location predictedReconnectLocation;
     ReconnectPrediction reconnectPrediction;
 };
-}
+}// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_RECONNECTPOINT_HPP

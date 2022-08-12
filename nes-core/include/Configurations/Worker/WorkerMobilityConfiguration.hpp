@@ -14,11 +14,10 @@
 #ifndef NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
 #define NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
 
-
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <memory>
 #include <Util/Experimental/LocationProviderType.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -57,16 +56,18 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
     /**
      * @brief defines after how many path prediction update steps a new location should be saved to the buffer
      */
-    UIntOption locationBufferSaveRate = {LOCATION_BUFFER_SAVE_RATE_CONFIG,
-                           4,
-                           "Determines after how many location updates a new location will be inserted in the location buffer"};
+    UIntOption locationBufferSaveRate = {
+        LOCATION_BUFFER_SAVE_RATE_CONFIG,
+        4,
+        "Determines after how many location updates a new location will be inserted in the location buffer"};
 
     /**
      * @brief defines the minimum distance in meters between the current predicted path and the device position that will lead to a recalculation of the prediction
      */
     UIntOption pathDistanceDelta = {PATH_DISTANCE_DELTA_CONFIG,
                                     20,
-                                    "when deviating further than delta meters from the current predicted path, an update of the prediction will be triggered"};
+                                    "when deviating further than delta meters from the current predicted path, an update of the "
+                                    "prediction will be triggered"};
 
     /**
      * @brief defines the radius of the circle used to determine the area within which all field node data will be downloaded during an update of the local index
@@ -82,7 +83,8 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      */
     UIntOption nodeIndexUpdateThreshold = {NODE_INDEX_UPDATE_THRESHOLD_CONFIG,
                                            2000,
-                                           "Trigger download of new node info when the device is less than threshold away from the boundary of the area covered by the current info"};
+                                           "Trigger download of new node info when the device is less than threshold away from "
+                                           "the boundary of the area covered by the current info"};
 
     /**
      * @brief the distance in meters from the geographical position of a field node within which we assume the connection
@@ -95,22 +97,23 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
     /**
      * @brief the length of the path to be predicted
      */
-    UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH_CONFIG,
-                                       10000,
-                                       "The Length of the predicted path to be computed"};
+    UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH_CONFIG, 10000, "The Length of the predicted path to be computed"};
 
     /**
      * @brief the allowed factor for speed changes before a recalculation of the predictions is triggered
      */
-    ScalarOption<double> speedDifferenceThresholdFactor = {SPEED_DIFFERENCE_THRESHOLD_FACTOR_CONFIG,
-                                                 0.00001, "The factor by which the speed needs to change to trigger a recalculation of reconnect predictions"};
+    ScalarOption<double> speedDifferenceThresholdFactor = {
+        SPEED_DIFFERENCE_THRESHOLD_FACTOR_CONFIG,
+        0.00001,
+        "The factor by which the speed needs to change to trigger a recalculation of reconnect predictions"};
 
     /**
      * @brief the distance in meters which a device has to move before it informs the coordinator about the location change
      */
-    UIntOption sendDevicePositionUpdateThreshold = {SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
-                                                    100,
-                                                    "The distance in meters after which the device will report it's new position in meters"};
+    UIntOption sendDevicePositionUpdateThreshold = {
+        SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
+        100,
+        "The distance in meters after which the device will report it's new position in meters"};
 
     /**
      * @brief a boolean to define if the worker should inform the coordinator about a change in position which is larger than a certain threshold
@@ -123,9 +126,10 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * @brief the time between 2 checks if the location has changes more than the defined threshold and a location update might
      * have to be sent to the coordinator
      */
-    UIntOption sendLocationUpdateInterval = {SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
-                                             10000,
-                                             "the sleep amount between 2 checks if a location update should be sent to the coordinator"};
+    UIntOption sendLocationUpdateInterval = {
+        SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
+        10000,
+        "the sleep amount between 2 checks if a location update should be sent to the coordinator"};
 
     /**
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
@@ -159,6 +163,6 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &locationProviderConfig};
     }
 };
-}
-}
+}// namespace Configurations::Spatial::Mobility::Experimental
+}// namespace NES
 #endif//NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H

@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
-#include <Spatial/Index/Location.hpp>
 #include <Nodes/Node.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>
 #include <map>
@@ -29,12 +29,12 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
 enum class NodeType;
-}
+}// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
-}
+}// namespace Spatial::Mobility::Experimental
 
 /**
  * @brief This class represents information about a physical node participating in the NES infrastructure

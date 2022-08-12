@@ -15,8 +15,8 @@
 #ifndef NES_TRAJECTORYPREDICTOR_HPP
 #define NES_TRAJECTORYPREDICTOR_HPP
 
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <deque>
@@ -28,18 +28,17 @@
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
-#include <s2/s2point.h>
-#include <s2/s2point_index.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
 #include <s2/s2point.h>
+#include <s2/s2point_index.h>
 #include <s2/s2polyline.h>
 #endif
 
 namespace NES::Configurations::Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}
+}// namespace NES::Configurations::Spatial::Mobility::Experimental
 
 #ifdef S2DEF
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
@@ -70,7 +69,9 @@ using ReconnectPointPtr = std::shared_ptr<ReconnectPoint>;
  */
 class TrajectoryPredictor {
   public:
-    TrajectoryPredictor(LocationProviderPtr locationProvider, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration, uint64_t parentId);
+    TrajectoryPredictor(LocationProviderPtr locationProvider,
+                        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration,
+                        uint64_t parentId);
 
     /**
      * Experimental
@@ -141,7 +142,7 @@ class TrajectoryPredictor {
      * @brief return position and time at which the last reconnect happened
      * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
      */
-     //todo 2951: change return type to struct
+    //todo 2951: change return type to struct
     std::pair<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
 
   private:
@@ -152,7 +153,8 @@ class TrajectoryPredictor {
      * @param currentLocation : the current device position
      * @return true if the trajectory was recalculated, false if the device did not deviate further than the threshold
      */
-    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& newPathStart, const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
+    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& newPathStart,
+                             const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
 
     /**
      * @brief find the minimal covering set of field nodes covering the predicted path. This represents the reconnect schedule
@@ -224,5 +226,5 @@ class TrajectoryPredictor {
     double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
-}
+}// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_TRAJECTORYPREDICTOR_HPP

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <Services/LocationService.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Services/LocationService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
@@ -75,7 +75,6 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
     return locMapJson;
 }
 
-
 web::json::value LocationService::convertLocationToJson(Location location) {
     web::json::value locJson;
     if (location.isValid()) {
@@ -95,11 +94,11 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     return nodeInfo;
 }
 bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction) {
-   if (locationIndex->updatePredictedReconnect(mobileWorkerId, prediction)) {
-       return true;
-   } else if (topology->findNodeWithId(prediction.expectedNewParentId)) {
-       NES_WARNING("node exists but is not a mobile node")
-   }
-   return false;
+    if (locationIndex->updatePredictedReconnect(mobileWorkerId, prediction)) {
+        return true;
+    } else if (topology->findNodeWithId(prediction.expectedNewParentId)) {
+        NES_WARNING("node exists but is not a mobile node")
+    }
+    return false;
 }
 }// namespace NES::Spatial::Index::Experimental

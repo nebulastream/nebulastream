@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -24,6 +23,7 @@
 #include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,27 +38,30 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            ReplicationServicePtr replicationService,
                                            Spatial::Index::Experimental::LocationServicePtr locationService)
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
-      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService), locationService(locationService) {};
+      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
+      locationService(locationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     uint64_t id;
     if (request->has_coordinates()) {
         NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                         NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-                                                  NES::Spatial::Index::Experimental::Location(request->coordinates()));
+        id = topologyManagerService->registerNode(
+            request->address(),
+            request->grpcport(),
+            request->dataport(),
+            request->numberofslots(),
+            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
+            NES::Spatial::Index::Experimental::Location(request->coordinates()));
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
         of geographical location */
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                         NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-                                                  NES::Spatial::Index::Experimental::Location());
+        id = topologyManagerService->registerNode(
+            request->address(),
+            request->grpcport(),
+            request->dataport(),
+            request->numberofslots(),
+            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
+            NES::Spatial::Index::Experimental::Location());
     }
 
     auto registrationMetrics =
@@ -353,7 +356,9 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
     auto coordinates = request->coord();
-    NES_DEBUG("Coordinator received location update from node with id " << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS " << request->time());
+    NES_DEBUG("Coordinator received location update from node with id "
+              << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
+              << request->time());
     //todo #2862: update coordinator trajectory prediction
     reply->set_success(true);
     return Status::OK;

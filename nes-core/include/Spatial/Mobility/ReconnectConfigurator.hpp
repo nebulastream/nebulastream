@@ -14,8 +14,8 @@
 #ifndef NES_RECONNECTCONFIGURATOR_HPP
 #define NES_RECONNECTCONFIGURATOR_HPP
 
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>
@@ -24,8 +24,8 @@
 #include <thread>
 
 #ifdef S2DEF
-#include <s2/s2point.h>
 #include <s2/s1angle.h>
+#include <s2/s2point.h>
 #endif
 
 namespace NES {
@@ -38,16 +38,16 @@ using CoordinatorRPCCLientPtr = std::shared_ptr<CoordinatorRPCClient>;
 namespace Configurations::Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}
+}// namespace Configurations::Spatial::Mobility::Experimental
 
 namespace Spatial {
 namespace Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}
+}// namespace Index::Experimental
 
 namespace Mobility::Experimental {
-    /**
+/**
      * @brief runs at worker side and sends periodic updates about location and reconnect predictions to the coordinator. Also
      * allows to trigger a change of the workers parent (reconnect)
      */
@@ -59,8 +59,10 @@ class ReconnectConfigurator {
      * @param coordinatorRpcClient This workers rpc client for communicating with the coordinator
      * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
      */
-    explicit ReconnectConfigurator(NesWorker& worker,
-        CoordinatorRPCCLientPtr coordinatorRpcClient, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
+    explicit ReconnectConfigurator(
+        NesWorker& worker,
+        CoordinatorRPCCLientPtr coordinatorRpcClient,
+        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
 
     /**
      * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
@@ -96,7 +98,7 @@ class ReconnectConfigurator {
      * @param newParent : the mobile workers new parent
      * @return true if the parents were successfully exchanged
      */
-     //TODO #2864: buffer data until reconnect is finished
+    //TODO #2864: buffer data until reconnect is finished
     bool reconnect(uint64_t oldParent, uint64_t newParent);
 
   private:
@@ -113,9 +115,8 @@ class ReconnectConfigurator {
     std::shared_ptr<std::thread> sendLocationUpdateThread;
 };
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
-}
-}
-}
-
+}// namespace Mobility::Experimental
+}// namespace Spatial
+}// namespace NES
 
 #endif//NES_RECONNECTCONFIGURATOR_HPP

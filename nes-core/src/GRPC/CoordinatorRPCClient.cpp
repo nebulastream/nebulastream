@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -606,7 +606,7 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
 }
 
 bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
-    Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
+                                                   Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
@@ -620,7 +620,8 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, std::pair<Spatial::Index::Experimental::Location, Timestamp> locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId,
+                                              std::pair<Spatial::Index::Experimental::Location, Timestamp> locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;

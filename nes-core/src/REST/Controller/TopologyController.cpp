@@ -204,7 +204,8 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
                 currentNodeJsonValue["location"] = web::json::value::null();
             }
         }
-        currentNodeJsonValue["nodeType"] = web::json::value::string(Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType()));
+        currentNodeJsonValue["nodeType"] =
+            web::json::value::string(Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType()));
 
         for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node

@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/Index/Location.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/LocationFactory.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 

@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
 #include <iostream>
-#include <Util/Experimental/S2Utilities.hpp>
 #ifdef S2DEF
 #include <s2/s2point.h>
 #include <s2/s2polyline.h>
@@ -25,7 +25,8 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProvider(Index::Experimental::NodeType::MOBILE_NODE, {}) {
+LocationProviderCSV::LocationProviderCSV(const std::string& csvPath)
+    : LocationProvider(Index::Experimental::NodeType::MOBILE_NODE, {}) {
     startTime = getTimestamp();
     readMovementSimulationDataFromCsv(csvPath);
 }

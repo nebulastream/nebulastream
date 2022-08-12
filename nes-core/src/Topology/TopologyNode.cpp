@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <algorithm>
@@ -145,10 +145,8 @@ Spatial::Index::Experimental::Location TopologyNode::getCoordinates() {
         case Spatial::Index::Experimental::NodeType::MOBILE_NODE:
             NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
             return WorkerRPCClient::getLocation(destAddress);
-        case Spatial::Index::Experimental::NodeType::FIXED_LOCATION:
-            return fixedCoordinates;
-        case Spatial::Index::Experimental::NodeType::NO_LOCATION:
-            return {};
+        case Spatial::Index::Experimental::NodeType::FIXED_LOCATION: return fixedCoordinates;
+        case Spatial::Index::Experimental::NodeType::NO_LOCATION: return {};
         case Spatial::Index::Experimental::NodeType::INVALID:
             NES_WARNING("trying to access location of a node with invalid spatial type")
             return {};
@@ -168,11 +166,11 @@ void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
     setFixedCoordinates(Spatial::Index::Experimental::Location(latitude, longitude));
 }
 
-void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) {
-    fixedCoordinates = geoLoc;
-}
+void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) { fixedCoordinates = geoLoc; }
 
-void TopologyNode::setSpatialNodeType(Spatial::Index::Experimental::NodeType workerSpatialType) { this->spatialType = workerSpatialType; }
+void TopologyNode::setSpatialNodeType(Spatial::Index::Experimental::NodeType workerSpatialType) {
+    this->spatialType = workerSpatialType;
+}
 
 Spatial::Index::Experimental::NodeType TopologyNode::getSpatialNodeType() { return spatialType; }
 }// namespace NES

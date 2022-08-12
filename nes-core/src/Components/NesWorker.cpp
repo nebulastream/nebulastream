@@ -12,10 +12,6 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectConfigurator.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
@@ -32,6 +28,10 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
+#include <Spatial/Index/Location.hpp>
+#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/ReconnectConfigurator.hpp>
+#include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,7 +55,9 @@ namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
-      metricStore(metricStore), parentId(workerConfig->parentId), mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(workerConfig->mobilityConfiguration)) {
+      metricStore(metricStore), parentId(workerConfig->parentId),
+      mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
+          workerConfig->mobilityConfiguration)) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");

@@ -19,7 +19,7 @@
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}
+}// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
 struct ReconnectPrediction;
@@ -38,7 +38,9 @@ class ReconnectSchedule {
      * was downloaded from the coordinator
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
-    ReconnectSchedule(uint64_t currentParentId, Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
+    ReconnectSchedule(uint64_t currentParentId,
+                      Index::Experimental::LocationPtr pathBeginning,
+                      Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector);
 
@@ -52,7 +54,7 @@ class ReconnectSchedule {
      * @brief getter function for the end location of the current predicted path
      * @return a smart pointer to a location object with the coordinates of the path end
      */
-    [[nodiscard]] Index::Experimental::LocationPtr getPathEnd() const ;
+    [[nodiscard]] Index::Experimental::LocationPtr getPathEnd() const;
 
     /**
      * @brief getter function for the location at which the device was located when the last download of field node location data
@@ -82,6 +84,6 @@ class ReconnectSchedule {
     Index::Experimental::LocationPtr lastIndexUpdatePosition;
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
 };
-}
+}// namespace NES::Spatial::Mobility::Experimental
 
 #endif//NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP

@@ -13,9 +13,9 @@
 */
 #ifndef NES_RECONNECTPREDICTION_HPP
 #define NES_RECONNECTPREDICTION_HPP
-#include <cstdint>
-#include <Util/TimeMeasurement.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <cstdint>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -26,5 +26,5 @@ struct ReconnectPrediction {
     uint64_t expectedNewParentId;
     Timestamp expectedTime;
 };
-}
+}// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_RECONNECTPREDICTION_HPP

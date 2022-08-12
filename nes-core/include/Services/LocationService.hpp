@@ -113,7 +113,6 @@ class LocationService {
     bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction);
 
   private:
-
     /**
      * @brief convert a Location to a json representing the same coordinates
      * @param location : The location object to convert
