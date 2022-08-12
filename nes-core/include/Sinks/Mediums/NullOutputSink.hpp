@@ -20,12 +20,14 @@
 #include <sstream>
 #include <Runtime/NodeEngine.hpp>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
 
 namespace NES {
-
+using namespace std::chrono_literals;
 /**
  * @brief this class provides a print sink
  */
