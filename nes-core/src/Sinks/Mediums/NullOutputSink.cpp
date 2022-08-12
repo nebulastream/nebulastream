@@ -39,7 +39,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
     }
     trimmingThread = std::make_shared<std::thread>(([this]() {
         while(this->nodeEngine->getQueryStatus(this->queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
-            sleep(100);
+            std::this_thread::sleep_for(100ms);
             auto timestamp = this->watermarkProcessor->getCurrentWatermark();
             if(timestamp) {
                 notifyEpochTermination(timestamp);
