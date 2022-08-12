@@ -21,7 +21,7 @@
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
-namespace REST{
+namespace REST {
 namespace DTO {
 
 /**
@@ -29,7 +29,7 @@ namespace DTO {
  */
 class QueryCatalogEntriesResponse : public oatpp::DTO {
     DTO_INIT(QueryCatalogEntriesResponse, DTO /* Extends */)
-    DTO_FIELD(List<Object<QueryCatalogEntryResponse>>,entries);
+    DTO_FIELD(List<Object<QueryCatalogEntryResponse>>, entries);
 };
 
 }// namespace DTO

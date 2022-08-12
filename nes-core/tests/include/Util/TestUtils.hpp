@@ -18,9 +18,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <cpr/cpr.h>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -30,6 +27,9 @@
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
+#include <cpr/cpr.h>
 #include <fstream>
 #include <iostream>
 #include <memory>

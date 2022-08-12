@@ -13,7 +13,6 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include <Util/MetricValidator.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
@@ -27,6 +26,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
 #include <cstring>
 #include <iostream>
 #include <limits>

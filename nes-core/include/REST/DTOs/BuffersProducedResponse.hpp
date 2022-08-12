@@ -21,7 +21,7 @@
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
-namespace REST{
+namespace REST {
 namespace DTO {
 
 /**
@@ -29,7 +29,7 @@ namespace DTO {
  */
 class BuffersProducedResponse : public oatpp::DTO {
     DTO_INIT(BuffersProducedResponse, DTO /* Extends */)
-    DTO_FIELD(UInt64 , producedBuffers, "producedBuffers");
+    DTO_FIELD(UInt64, producedBuffers, "producedBuffers");
 };
 
 }// namespace DTO

@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/Query.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <API/Query.hpp>
 
 namespace NES {
 class QueryCatalogControllerTest : public Testing::NESBaseTest {
@@ -44,14 +44,13 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if(!success){
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
 
-    cpr::Response r =
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     EXPECT_EQ(r.status_code, 200l);
 
     std::string queryString =
@@ -65,12 +64,10 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    cpr::Response re =
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    cpr::Response re = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     //TODO:: compare content of response to expected values. To be added once json library found #2950
     EXPECT_EQ(re.status_code, 200l);
     std::cout << re.text;
-
 }
 
 TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
@@ -82,17 +79,15 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if(!success){
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r1 =
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"});
+    cpr::Response r1 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"});
     EXPECT_EQ(r1.status_code, 400l);
-    cpr::Response r2=
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                 cpr::Parameters{{"status", "REGISTERED"}});
+    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
+                                cpr::Parameters{{"status", "REGISTERED"}});
     EXPECT_EQ(r2.status_code, 200l);
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -105,12 +100,10 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    cpr::Response r3=
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                 cpr::Parameters{{"status", "REGISTERED"}});
+    cpr::Response r3 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
+                                cpr::Parameters{{"status", "REGISTERED"}});
     EXPECT_EQ(r3.status_code, 200l);
     //TODO:: compare content of response to expected values. To be added once json library found #2950
-
 }
 TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
@@ -121,17 +114,15 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
 
-    cpr::Response r1 =
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"});
+    cpr::Response r1 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"});
     EXPECT_EQ(r1.status_code, 400l);
-    cpr::Response r2 =
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                 cpr::Parameters{{"queryId", "1"}});
+    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
+                                cpr::Parameters{{"queryId", "1"}});
     EXPECT_EQ(r2.status_code, 404l);
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -144,9 +135,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    cpr::Response r3=
-        cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                 cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    cpr::Response r3 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
+                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
     EXPECT_EQ(r3.status_code, 200l);
     //TODO:: compare content of response to expected values. To be added once json library found #2950
 }
@@ -159,15 +149,15 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
 
     cpr::Response r1 =
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"});
     EXPECT_EQ(r1.status_code, 400l);
-    cpr::Response r2=
+    cpr::Response r2 =
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
                  cpr::Parameters{{"queryId", "1"}});
     EXPECT_EQ(r2.status_code, 404l);
@@ -182,7 +172,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    cpr::Response r3=
+    cpr::Response r3 =
         cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
                  cpr::Parameters{{"queryId", "1"}});
     EXPECT_EQ(r3.status_code, 404l);

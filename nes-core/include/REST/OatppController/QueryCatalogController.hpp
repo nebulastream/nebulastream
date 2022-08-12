@@ -62,10 +62,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                            GlobalQueryPlanPtr globalQueryPlan,
                            oatpp::String completeRouterPrefix,
                            ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          queryCatalogService(queryCatalogService),coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler){
-
-    }
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalogService(queryCatalogService),
+          coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -94,32 +92,33 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
         auto dto = DTO::QueryCatalogEntriesResponse::createShared();
         oatpp::List<oatpp::Object<DTO::QueryCatalogEntryResponse>> list({});
-        try{
-        std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
+        try {
+            std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries =
+                queryCatalogService->getAllQueryCatalogEntries();
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
-            auto entry = DTO::QueryCatalogEntryResponse::createShared();
-            entry->queryId = queryId;
-            entry->queryString = catalogEntry->getQueryString();
-            entry->queryStatus = catalogEntry->getQueryStatusAsString();
-            entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
-            entry->queryMetaData = catalogEntry->getMetaInformation();
-            list->push_back(entry);
-        }
-        dto->entries= list;
-        return createDtoResponse(Status::CODE_200, dto);
-        }
-        catch (const std::exception& exc) {
+                auto entry = DTO::QueryCatalogEntryResponse::createShared();
+                entry->queryId = queryId;
+                entry->queryString = catalogEntry->getQueryString();
+                entry->queryStatus = catalogEntry->getQueryStatusAsString();
+                entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
+                entry->queryMetaData = catalogEntry->getMetaInformation();
+                list->push_back(entry);
+            }
+            dto->entries = list;
+            return createDtoResponse(Status::CODE_200, dto);
+        } catch (const std::exception& exc) {
             NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
                       "query plan for user request:"
                       << exc.what());
-            return errorHandler->handleError(Status::CODE_400, "Exception occurred while building query plans for user request" + std::string(exc.what()));
-        }catch(...){
+            return errorHandler->handleError(Status::CODE_400,
+                                             "Exception occurred while building query plans for user request"
+                                                 + std::string(exc.what()));
+        } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
-
         }
     }
 
-    ENDPOINT("GET", "/queries", getQueriesWithASpecificStatus, QUERY(String, status, "status")){
+    ENDPOINT("GET", "/queries", getQueriesWithASpecificStatus, QUERY(String, status, "status")) {
         try {
             std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus(status);
             auto dto = DTO::QueryCatalogEntriesResponse::createShared();
@@ -134,18 +133,16 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                 entry->queryMetaData = catalogEntry->getMetaInformation();
                 list->push_back(entry);
             }
-            dto->entries=list;
+            dto->entries = list;
             return createDtoResponse(Status::CODE_200, dto);
-        }
-        catch (InvalidArgumentException e){
-            return errorHandler->handleError(Status ::CODE_400,"Invalid Status provided");
-        }
-        catch(...){
+        } catch (InvalidArgumentException e) {
+            return errorHandler->handleError(Status ::CODE_400, "Invalid Status provided");
+        } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
     }
 
-    ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64 , queryId, "queryId")) {
+    ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
@@ -156,27 +153,27 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
             entry->queryMetaData = catalogEntry->getMetaInformation();
             return createDtoResponse(Status::CODE_200, entry);
-        } catch (QueryNotFoundException e ) {
+        } catch (QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
-        }
-        catch (...) {
+        } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
     }
 
-    ENDPOINT("GET", "/getNumberOfProducedBuffers", getNumberOfProducedBuffers, QUERY(UInt64 , queryId, "queryId")) {
+    ENDPOINT("GET", "/getNumberOfProducedBuffers", getNumberOfProducedBuffers, QUERY(UInt64, queryId, "queryId")) {
         try {
             NES_DEBUG("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
             SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-            if(sharedQueryId == INVALID_SHARED_QUERY_ID){
+            if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
                 return errorHandler->handleError(Status::CODE_404, "no query found with ID: " + std::to_string(queryId));
             }
             uint64_t processedBuffers = 0;
             if (auto shared_back_reference = coordinator.lock()) {
                 std::vector<Runtime::QueryStatisticsPtr> statistics = shared_back_reference->getQueryStatistics(sharedQueryId);
-                if(statistics.empty()){
-                    return errorHandler->handleError(Status::CODE_404, "no statistics available for query with ID: " + std::to_string(queryId));
+                if (statistics.empty()) {
+                    return errorHandler->handleError(Status::CODE_404,
+                                                     "no statistics available for query with ID: " + std::to_string(queryId));
                 }
                 processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
             }
