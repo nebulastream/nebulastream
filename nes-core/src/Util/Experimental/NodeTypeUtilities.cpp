@@ -29,16 +29,11 @@ Index::Experimental::NodeType NodeTypeUtilities::stringToNodeType(const std::str
 
 Index::Experimental::NodeType NodeTypeUtilities::protobufEnumToNodeType(NodeType nodeType) {
     switch (nodeType) {
-        case NodeType::NO_LOCATION:
-            return Index::Experimental::NodeType::NO_LOCATION;
-        case NodeType::FIXED_LOCATION:
-            return Index::Experimental::NodeType::FIXED_LOCATION;
-        case NodeType::MOBILE_NODE:
-            return Index::Experimental::NodeType::MOBILE_NODE;
-        case NodeType_INT_MIN_SENTINEL_DO_NOT_USE_:
-            return Index::Experimental::NodeType::INVALID;
-        case NodeType_INT_MAX_SENTINEL_DO_NOT_USE_:
-            return Index::Experimental::NodeType::INVALID;
+        case NodeType::NO_LOCATION: return Index::Experimental::NodeType::NO_LOCATION;
+        case NodeType::FIXED_LOCATION: return Index::Experimental::NodeType::FIXED_LOCATION;
+        case NodeType::MOBILE_NODE: return Index::Experimental::NodeType::MOBILE_NODE;
+        case NodeType_INT_MIN_SENTINEL_DO_NOT_USE_: return Index::Experimental::NodeType::INVALID;
+        case NodeType_INT_MAX_SENTINEL_DO_NOT_USE_: return Index::Experimental::NodeType::INVALID;
     }
     return Index::Experimental::NodeType::INVALID;
 }
@@ -54,15 +49,12 @@ std::string NodeTypeUtilities::toString(const Index::Experimental::NodeType node
 
 NodeType NodeTypeUtilities::toProtobufEnum(Index::Experimental::NodeType nodeType) {
     switch (nodeType) {
-        case Index::Experimental::NodeType::NO_LOCATION:
-            return NodeType::NO_LOCATION;
-        case Index::Experimental::NodeType::FIXED_LOCATION:
-            return NodeType::FIXED_LOCATION;
-        case Index::Experimental::NodeType::MOBILE_NODE:
-            return NodeType::MOBILE_NODE;
+        case Index::Experimental::NodeType::NO_LOCATION: return NodeType::NO_LOCATION;
+        case Index::Experimental::NodeType::FIXED_LOCATION: return NodeType::FIXED_LOCATION;
+        case Index::Experimental::NodeType::MOBILE_NODE: return NodeType::MOBILE_NODE;
         case Index::Experimental::NodeType::INVALID:
             NES_FATAL_ERROR("cannot construct protobuf enum from invalid spatial type, exiting")
             exit(EXIT_FAILURE);
     }
 }
-}// namespace NES
+}// namespace NES::Spatial::Util

@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/LocationIndex.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
@@ -74,7 +74,8 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (fixedCoordinates.isValid() && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
+    if (fixedCoordinates.isValid()
+        && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
                                                             << fixedCoordinates.getLongitude());
         topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, fixedCoordinates);

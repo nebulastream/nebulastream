@@ -15,8 +15,8 @@
 #define NES_S2UTILITIES_HPP
 
 #ifdef S2DEF
-#include <s2/s2point.h>
 #include <s2/s2latlng.h>
+#include <s2/s2point.h>
 namespace NES::Spatial {
 
 namespace Index::Experimental {
@@ -25,7 +25,7 @@ class Location;
 
 namespace Util {
 
-    /**
+/**
      * @brief utility functions for handling google s2 datatypes
      */
 class S2Utilities {
@@ -43,8 +43,8 @@ class S2Utilities {
      * @return a location object representing the some location as the input object
      */
     static Index::Experimental::Location s2pointToLocation(S2Point point);
-    };
-}
-}
+};
+}// namespace Util
+}// namespace NES::Spatial
 #endif
 #endif//NES_S2UTILITIES_HPP

@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
-#include <Spatial/Index/Location.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/LocationFactory.hpp>
@@ -23,6 +22,7 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <map>
 #include <string>
@@ -181,15 +181,17 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify if the worker is running on a mobile device, if it is a node with a known fixed loction, or if it
      * does not have a known location.
      */
-    EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {SPATIAL_TYPE_CONFIG,
-                                                                                    NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
-                                                                                    "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
+    EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {
+        SPATIAL_TYPE_CONFIG,
+        NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
+        "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
 
     /**
      * @brief specifies the path to a yaml file containing a mobility configuration
      */
-     Spatial::Mobility::Experimental::WorkerMobilityConfiguration mobilityConfiguration = {
-        MOBILITY_CONFIG_CONFIG, "the configuration data for the location provider class"};
+    Spatial::Mobility::Experimental::WorkerMobilityConfiguration mobilityConfiguration = {
+        MOBILITY_CONFIG_CONFIG,
+        "the configuration data for the location provider class"};
 
     /**
      * @brief Configuration yaml path.

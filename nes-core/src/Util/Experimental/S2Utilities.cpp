@@ -18,13 +18,13 @@
 #include <s2/s2point.h>
 namespace NES::Spatial::Util {
 
-    S2Point S2Utilities::locationToS2Point(Index::Experimental::Location location) {
-        return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
-    }
-
-    Index::Experimental::Location S2Utilities::s2pointToLocation(S2Point point) {
-        S2LatLng latLng(point);
-        return {latLng.lat().degrees(), latLng.lng().degrees()};
-    }
+S2Point S2Utilities::locationToS2Point(Index::Experimental::Location location) {
+    return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
 }
+
+Index::Experimental::Location S2Utilities::s2pointToLocation(S2Point point) {
+    S2LatLng latLng(point);
+    return {latLng.lat().degrees(), latLng.lng().degrees()};
+}
+}// namespace NES::Spatial::Util
 #endif

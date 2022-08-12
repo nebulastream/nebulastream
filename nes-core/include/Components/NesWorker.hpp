@@ -53,10 +53,10 @@ using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 enum class LocationProviderType;
 }// namespace Spatial::Mobility::Experimental
 
-namespace Configurations::Spatial::Mobility::Experimental{
+namespace Configurations::Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}
+}// namespace Configurations::Spatial::Mobility::Experimental
 
 class WorkerRPCServer;
 class CoordinatorRPCClient;

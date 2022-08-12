@@ -39,7 +39,7 @@ using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
-}
+}// namespace Spatial::Mobility::Experimental
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
@@ -69,7 +69,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
-    Status GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) override;
+    Status
+    GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

@@ -33,6 +33,6 @@ class NodeTypeUtilities {
     static NodeType toProtobufEnum(Index::Experimental::NodeType nodeType);
 };
 
-}// namespace NES
+}// namespace NES::Spatial::Util
 
 #endif//NES_NODETYPEUTILITIES_HPP

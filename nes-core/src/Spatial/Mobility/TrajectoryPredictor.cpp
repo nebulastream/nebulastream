@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
+#include <Spatial/Mobility/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
@@ -28,13 +28,19 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration, uint64_t parentId) : locationProvider(std::move(locationProvider)) {
+TrajectoryPredictor::TrajectoryPredictor(
+    LocationProviderPtr locationProvider,
+    const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration,
+    uint64_t parentId)
+    : locationProvider(std::move(locationProvider)) {
 #ifdef S2DEF
-    if (!(configuration->defaultCoverageRadius.getValue() < configuration->nodeIndexUpdateThreshold.getValue() < configuration-> nodeInfoDownloadRadius.getValue())) {
-        NES_FATAL_ERROR("Default Coverage Radius: " << configuration->defaultCoverageRadius.getValue()
-                                                    << ", node index update threshold: " << configuration->nodeIndexUpdateThreshold.getValue()
-                                                    << ", node info download radius: " << configuration->nodeInfoDownloadRadius.getValue()
-                                                    << std::endl << "These values will lead to gaps in reconnect planning. Exiting");
+    if (!(configuration->defaultCoverageRadius.getValue() < configuration->nodeIndexUpdateThreshold.getValue()
+          < configuration->nodeInfoDownloadRadius.getValue())) {
+        NES_FATAL_ERROR("Default Coverage Radius: "
+                        << configuration->defaultCoverageRadius.getValue()
+                        << ", node index update threshold: " << configuration->nodeIndexUpdateThreshold.getValue()
+                        << ", node info download radius: " << configuration->nodeInfoDownloadRadius.getValue() << std::endl
+                        << "These values will lead to gaps in reconnect planning. Exiting");
         exit(EXIT_FAILURE);
     }
     pathPredictionUpdateInterval = configuration->pathPredictionUpdateInterval.getValue();
@@ -44,7 +50,8 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, c
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(configuration->defaultCoverageRadius.getValue());
     predictedPathLengthAngle = S2Earth::MetersToAngle(configuration->pathPredictionLength);
-    coveredRadiusWithoutThreshold = S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
+    coveredRadiusWithoutThreshold =
+        S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
     this->parentId = parentId;
     updatePrediction = false;
     speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
@@ -74,8 +81,8 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
         lineLock.unlock();
     } else {
         //todo #2918: make create method
-       start = std::make_shared<Index::Experimental::Location>();
-       end = std::make_shared<Index::Experimental::Location>();
+        start = std::make_shared<Index::Experimental::Location>();
+        end = std::make_shared<Index::Experimental::Location>();
     }
 
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
@@ -87,15 +94,15 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
     Index::Experimental::LocationPtr indexUpdatePointer;
     std::unique_lock indexUpdatePosLock(indexUpdatePositionMutex);
     if (positionOfLastNodeIndexUpdate) {
-        indexUpdatePointer = std::make_shared<Index::Experimental::Location>(Spatial::Util::S2Utilities::s2pointToLocation(positionOfLastNodeIndexUpdate.value()));
+        indexUpdatePointer = std::make_shared<Index::Experimental::Location>(
+            Spatial::Util::S2Utilities::s2pointToLocation(positionOfLastNodeIndexUpdate.value()));
     } else {
         indexUpdatePointer = nullptr;
     }
     indexUpdatePosLock.unlock();
 
     //construct a schedule object and return it
-    return std::make_shared<Mobility::Experimental::ReconnectSchedule>(parentId, start, end, indexUpdatePointer,
-        reconnectVector);
+    return std::make_shared<Mobility::Experimental::ReconnectSchedule>(parentId, start, end, indexUpdatePointer, reconnectVector);
 #else
     NES_WARNING("trying to get reconnect schedule but s2 library is not used")
     return nullptr;
@@ -159,7 +166,7 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
     std::unique_lock nodeIndexLock(nodeIndexMutex);
     auto iterator = S2PointIndex<uint64_t>::Iterator(&fieldNodeIndex);
     iterator.Begin();
-    while(!iterator.done()) {
+    while (!iterator.done()) {
         if (iterator.data() == parentId) {
             currentParentLocation = iterator.point();
             break;
@@ -224,7 +231,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
         //update average movement speed
         bool speedChanges = updateAverageMovementSpeed();
         //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
-        if (indexUpdated ||  pathUpdated || speedChanges) {
+        if (indexUpdated || pathUpdated || speedChanges) {
             NES_INFO("reconnect prediction data has changed")
             //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
             scheduleReconnects();
@@ -249,12 +256,11 @@ void TrajectoryPredictor::startReconnectPlanning() {
 
         std::unique_lock reconnectVectorLock(reconnectVectorMutex);
         //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
-        S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first)),currentParentLocation);
-        if (!reconnectVector->empty() &&
-               currentDistFromParent >= S1Angle(defaultCoverageRadiusAngle)) {
+        S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first)),
+                                      currentParentLocation);
+        if (!reconnectVector->empty() && currentDistFromParent >= S1Angle(defaultCoverageRadiusAngle)) {
             auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first));
             auto nextReconnect = getNextPredictedReconnect();
-
 
             //if the next expected parent is closer than the current one: reconnect
             if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
@@ -301,16 +307,17 @@ bool TrajectoryPredictor::updateAverageMovementSpeed() {
 #ifdef S2DEF
     //calculate the movement speed based on the locations and timestamps in the locationBuffer
     Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;
-    S1Angle bufferDistance(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.front().first)), Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)));
+    S1Angle bufferDistance(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.front().first)),
+                           Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)));
     double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
 
     //check if there is a speed difference which surpasses the threshold compared to the previously calculated speed
     //if this is the case, update the value
     if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * speedDifferenceThresholdFactor) {
-       bufferAverageMovementSpeed = meanDegreesPerNanosec;
-       NES_TRACE("average movement speed was updated to " << bufferAverageMovementSpeed)
-       NES_TRACE("threshhold is " << bufferAverageMovementSpeed * speedDifferenceThresholdFactor)
-       return true;
+        bufferAverageMovementSpeed = meanDegreesPerNanosec;
+        NES_TRACE("average movement speed was updated to " << bufferAverageMovementSpeed)
+        NES_TRACE("threshhold is " << bufferAverageMovementSpeed * speedDifferenceThresholdFactor)
+        return true;
     }
     return false;
 #else
@@ -353,7 +360,8 @@ bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Locatio
 #endif
 }
 
-bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental::LocationPtr& newPathStart, const Spatial::Index::Experimental::LocationPtr& currentLocation) {
+bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental::LocationPtr& newPathStart,
+                                              const Spatial::Index::Experimental::LocationPtr& currentLocation) {
 #ifdef S2DEF
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
@@ -370,7 +378,8 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
     //if a predicted path exists and the current position is further away than delta: recompute the path
     //if no path exists: only calculate one if the location buffer is already filled
     //todo 2815: instead of just using points, calculate central points
-    if ((trajectoryLine && distAngle > pathDistanceDeltaAngle) || (!trajectoryLine && locationBuffer.size() == locationBufferSize)) {
+    if ((trajectoryLine && distAngle > pathDistanceDeltaAngle)
+        || (!trajectoryLine && locationBuffer.size() == locationBufferSize)) {
         NES_DEBUG("updating trajectory");
         S2Point oldPoint = Util::S2Utilities::locationToS2Point(*newPathStart);
         auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
@@ -391,7 +400,8 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
 }
 
 #ifdef S2DEF
-std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
+std::pair<S2Point, S1Angle>
+TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
     int vertexIndex = 0;
     auto projectedPoint = path->Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
@@ -438,7 +448,10 @@ void TrajectoryPredictor::scheduleReconnects() {
     auto currentParentPathCoverageEnd = reconnectionPointTuple.first;
 
     //find the expected time of arrival at the end of coverage of our current parent
-    remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)), currentParentPathCoverageEnd).degrees() / bufferAverageMovementSpeed;
+    remainingTime =
+        S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)), currentParentPathCoverageEnd)
+            .degrees()
+        / bufferAverageMovementSpeed;
     auto endOfCoverageETA = locationBuffer.back().second + remainingTime;
 
     auto reconnectLocationOnPath = currentParentPathCoverageEnd;
@@ -472,7 +485,10 @@ void TrajectoryPredictor::scheduleReconnects() {
                 nextReconnectLocationOnPath = coverageTuple.first;
                 reconnectParentId = result.data();
                 minimumUncoveredRemainingPathDistance = currentUncoveredRemainingPathDistance;
-                remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)), nextReconnectLocationOnPath).degrees() / bufferAverageMovementSpeed;
+                remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*(locationBuffer.back().first)),
+                                        nextReconnectLocationOnPath)
+                                    .degrees()
+                    / bufferAverageMovementSpeed;
                 nextEstimatedReconnectTime = locationBuffer.back().second + remainingTime;
             }
         }
@@ -482,7 +498,11 @@ void TrajectoryPredictor::scheduleReconnects() {
             auto currLatLng = S2LatLng(reconnectLocationOnPath);
             auto currLoc =
                 std::make_shared<Index::Experimental::Location>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
-            reconnectVector->emplace_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(NES::Spatial::Mobility::Experimental::ReconnectPoint {*currLoc, NES::Spatial::Mobility::Experimental::ReconnectPrediction {reconnectParentId, (uint64_t) estimatedReconnectTime}}));
+            reconnectVector->emplace_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
+                NES::Spatial::Mobility::Experimental::ReconnectPoint{
+                    *currLoc,
+                    NES::Spatial::Mobility::Experimental::ReconnectPrediction{reconnectParentId,
+                                                                              (uint64_t) estimatedReconnectTime}}));
             NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
             reconnectLocationOnPath = nextReconnectLocationOnPath;
             estimatedReconnectTime = nextEstimatedReconnectTime;
@@ -521,9 +541,8 @@ size_t TrajectoryPredictor::getSizeOfSpatialIndex() {
 }
 #endif
 
-std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>
-TrajectoryPredictor::getLastReconnectLocationAndTime() {
+std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> TrajectoryPredictor::getLastReconnectLocationAndTime() {
     std::unique_lock lock(lastReconnectTupleMutex);
     return devicePositionTupleAtLastReconnect;
 }
-}
+}// namespace NES::Spatial::Mobility::Experimental

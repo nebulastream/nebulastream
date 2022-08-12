@@ -20,10 +20,10 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
-#include <Util/TimeMeasurement.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -238,6 +238,7 @@ class CoordinatorRPCClient {
      * @return true if the information has benn succesfully processed
      */
     bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::Location, Timestamp> locationUpdate);
+
   private:
     uint64_t workerId;
     std::string address;

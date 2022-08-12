@@ -40,7 +40,7 @@ namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
-}// namespace NES::Spatial::Index::Experimental
+}// namespace Spatial::Index::Experimental
 
 namespace Configurations {
 
@@ -50,8 +50,8 @@ using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 namespace Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}
-}
+}// namespace Spatial::Mobility::Experimental
+}// namespace Configurations
 }// namespace NES
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -103,8 +103,8 @@ class LocationProvider {
      * @return list of node IDs and their corresponding GeographicalLocations
      */
 
-    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord,
-                                                                                      double radius);
+    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
+    getNodeIdsInRange(Index::Experimental::Location coord, double radius);
 
     /**
      * Experimental
