@@ -59,7 +59,7 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
     statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
+    statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
