@@ -18,6 +18,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -31,8 +32,8 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <Utils/BenchmarkUtils.hpp>
 #include <fstream>
-#include <util/BenchmarkUtils.hpp>
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -43,13 +44,13 @@ std::vector<uint64_t> noOfPhysicalSources;
 uint64_t noOfMeasurementsToCollect;
 uint64_t numberOfDistinctSources;
 uint64_t startupSleepIntervalInSeconds;
-NES::DebugLevel loglevel;
 std::vector<std::string> queryMergerRules;
 std::vector<bool> enableQueryMerging;
 std::vector<uint64_t> batchSizes;
 std::string querySetLocation;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
+std::string logLevel;
 
 /**
  * @brief Set up the physical sources for the benchmark
@@ -57,7 +58,7 @@ NES::NesCoordinatorPtr coordinator;
  * @param noOfPhysicalSource : number of physical sources
  */
 void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource) {
-    Catalogs::Source::SourceCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
+    Catalogs::Source::SourceCatalogPtr streamCatalog = nesCoordinator->getSourceCatalog();
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
                                  ->addField("a", NES::UINT64)
@@ -98,14 +99,14 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
         //When the counter is 3 we add the logical stream with schema type 3
 
         if (counter == 1) {
-            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema1);
+            streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema1);
         } else if (counter == 2) {
-            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema2);
+            streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema2);
         } else if (counter == 3) {
-            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema3);
+            streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema3);
             counter = 0;
         }
-        LogicalSourcePtr logicalSource = streamCatalog->getStreamForLogicalStream("example" + std::to_string(j + 1));
+        LogicalSourcePtr logicalSource = streamCatalog->getLogicalSource("example" + std::to_string(j + 1));
         counter++;
 
         // Add Physical topology node and stream catalog entry
@@ -129,8 +130,11 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
 void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
-    coordinatorConfig->setQueryMergerRule(queryMergerRule);
-    coordinatorConfig->setQueryBatchSize(batchSize);
+    OptimizerConfiguration optimizerConfiguration;
+    optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
+    optimizerConfiguration.queryBatchSize = batchSize;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+    coordinatorConfig->logLevel = magic_enum::enum_cast<LogLevel>(logLevel).value();
     coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     coordinator->startCoordinator(/**blocking**/ false);
     setupSources(coordinator, noOfPhysicalSources);
@@ -194,8 +198,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
                 batchSizes.emplace_back(std::stoi(item));
             }
 
-            //Log level
-            loglevel = NES::getDebugLevelFromString(config["logLevel"].As<std::string>());
+            logLevel = config["logLevel"].As<std::string>();
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }
@@ -210,7 +213,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
  */
 int main(int argc, const char* argv[]) {
 
-    NES::Logger::setupLogging("BenchmarkQueryMerger.log", NES::LOG_INFO);
+    NES::Logger::setupLogging("BenchmarkQueryMerger.log", NES::LogLevel::LOG_INFO);
     std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
     std::stringstream benchmarkOutput;
     benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
@@ -237,7 +240,7 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
-    NES::Logger::setupLogging("BM.log", loglevel);
+    NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
 
     //Load individual query set from the query set location and run the benchmark
     for (const auto& file : directory_iterator(querySetLocation)) {
@@ -278,7 +281,7 @@ int main(int argc, const char* argv[]) {
                 //Setup coordinator for the experiment
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
                 NES::QueryServicePtr queryService = coordinator->getQueryService();
-                NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
+                auto queryCatalogService = coordinator->getQueryCatalogService();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments
                 sleep(startupSleepIntervalInSeconds);
@@ -294,7 +297,7 @@ int main(int argc, const char* argv[]) {
                 }
 
                 //Fetch the last query for the query catalog
-                auto lastQuery = queryCatalog->getQueryCatalogEntry(noOfQueries);
+                auto lastQuery = queryCatalogService->getEntryForQuery(noOfQueries);
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryStatus() != QueryStatus::Running) {
                     //Sleep for 100 milliseconds
@@ -307,7 +310,6 @@ int main(int argc, const char* argv[]) {
                 //Fetch the global query plan and count the number of operators produced post merging the queries
                 auto gqp = coordinator->getGlobalQueryPlan();
                 auto allSQP = gqp->getAllSharedQueryPlans();
-                std::cout << "Number of Origins : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
                 uint64_t mergedOperators = 0;
                 for (auto sqp : allSQP) {
                     unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();

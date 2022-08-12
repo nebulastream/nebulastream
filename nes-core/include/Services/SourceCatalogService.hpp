@@ -83,6 +83,13 @@ class SourceCatalogService {
      */
     bool unregisterLogicalSource(const std::string& logicalSourceName);
 
+    /**
+     * @brief method returns a copy of logical source
+     * @param logicalSourceName: name of the logical source
+     * @return copy of the logical source
+     */
+    LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
+
   private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::mutex addRemoveLogicalSource;
