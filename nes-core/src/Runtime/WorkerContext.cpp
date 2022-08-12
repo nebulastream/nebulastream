@@ -97,7 +97,7 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    NES_ASSERT(buffer.getWatermark() < currentEpoch, "Trying to insert watermark smaller than epoch");
+    NES_ASSERT(buffer.getWatermark() > currentEpoch, "Trying to insert watermark" << buffer.getWatermark() << "smaller than epoch" << currentEpoch);
     storage[nesPartitionId].push(buffer);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
