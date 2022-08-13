@@ -35,6 +35,8 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
 using namespace NES;
 
@@ -65,6 +67,8 @@ class FaultToleranceBasedQueryMergerRuleTest : public Testing::TestWithErrorHand
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
         udfCatalog = Catalogs::UdfCatalog::create();
+
+        GlobalExecutionPlanPtr globalExecutionPlan;
     }
 
     /* Will be called before a test is executed. */
@@ -79,34 +83,54 @@ class FaultToleranceBasedQueryMergerRuleTest : public Testing::TestWithErrorHand
  */
 TEST_F(FaultToleranceBasedQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    SinkDescriptorPtr printSinkDescriptor1 = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .filter(Attribute("id") < 45)
                        .filter(Attribute("id") < 45)
                        .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+                       .sink(printSinkDescriptor1);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
+    queryPlan1->setFaultToleranceType(NES::FaultToleranceType::AT_MOST_ONCE);
 
+    SinkDescriptorPtr printSinkDescriptor2 = PrintSinkDescriptor::create();
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .filter(Attribute("id") < 45)
                        .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+                       .filter(Attribute("value") < 5)
+                       .filter(Attribute("id") < 30)
+                       .sink(printSinkDescriptor2);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
+    queryPlan2->setFaultToleranceType(NES::FaultToleranceType::AT_LEAST_ONCE);
+
+    SinkDescriptorPtr printSinkDescriptor3 = PrintSinkDescriptor::create();
+    Query query3 = Query::from("car")
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("value") < 20)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor3);
+    QueryPlanPtr queryPlan3 = query3.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator3 = queryPlan3->getSinkOperators()[0];
+    QueryId queryId3 = PlanIdGenerator::getNextQueryId();
+    queryPlan3->setQueryId(queryId3);
+    queryPlan3->setFaultToleranceType(NES::FaultToleranceType::EXACTLY_ONCE);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
+    typeInferencePhase->execute(queryPlan3);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto signatureInferencePhase =
@@ -114,14 +138,31 @@ TEST_F(FaultToleranceBasedQueryMergerRuleTest, testMergingEqualQueries) {
                                                    Optimizer::QueryMergerRule::FaultToleranceBasedQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
+    signatureInferencePhase->execute(queryPlan3);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
+    globalQueryPlan->addQueryPlan(queryPlan3);
+
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryPlan1->getQueryId());
+
+    for(auto& node : executionNodes){
+        NES_INFO("lololol " + node->toString());
+    }
 
     //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::FaultToleranceBasedQueryMergerRule::create();
-    stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+    auto faultToleranceBasedQueryMergerRule = Optimizer::FaultToleranceBasedQueryMergerRule::create();
+    faultToleranceBasedQueryMergerRule->apply(globalQueryPlan);
+
+    for(auto& node : executionNodes){
+        NES_INFO("lololol " + node->toString());
+    }
+
+
+
+
 
     //assert
     /*auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();

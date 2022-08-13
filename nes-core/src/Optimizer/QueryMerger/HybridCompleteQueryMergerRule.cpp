@@ -121,6 +121,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
+
                 // exit the for loop as we found a matching address shared query meta data
                 matched = true;
                 break;

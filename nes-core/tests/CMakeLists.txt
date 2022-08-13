@@ -54,6 +54,11 @@ add_executable(fault-tolerance-based-query-merger-test "UnitTests/Optimizer/Quer
 target_link_libraries(fault-tolerance-based-query-merger-test nes-tests)
 add_test(NAME fault-tolerance-based-query-merger-test COMMAND fault-tolerance-based-query-merger-test)
 
+### Query Placement Test Sandbox ###
+add_executable(query-placement-test-sandbox "UnitTests/Optimizer/QueryPlacement/QueryPlacementTestSandbox.cpp")
+target_link_libraries(query-placement-test-sandbox nes-tests)
+add_test(NAME query-placement-test-sandbox COMMAND query-placement-test-sandbox)
+
 add_executable(udf-catalog-controller-test "UnitTests/REST/Controller/UdfCatalogControllerTest.cpp")
 target_link_libraries(udf-catalog-controller-test nes-tests)
 add_test(NAME udf-catalog-controller-test COMMAND udf-catalog-controller-test)

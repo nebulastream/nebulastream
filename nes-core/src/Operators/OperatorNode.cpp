@@ -161,6 +161,9 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     return nullptr;
 }
 
+int count = 0;
+std::vector<OperatorNode> test;
+
 void OperatorNode::addProperty(const std::string& key, const std::any value) { properties[key] = value; }
 
 std::any OperatorNode::getProperty(const std::string& key) { return properties[key]; }

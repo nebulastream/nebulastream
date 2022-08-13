@@ -36,6 +36,9 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
@@ -83,7 +86,8 @@ class QueryPlacementPhase {
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
-    static void checkActiveStandby(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, SourceCatalogPtr sourceCatalog, QueryId queryId);
+    static void checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, SourceCatalogPtr sourceCatalog, QueryId queryId);
+
 
 
   private:

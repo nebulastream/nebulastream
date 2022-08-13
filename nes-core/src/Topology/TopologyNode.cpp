@@ -38,6 +38,10 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
+uint16_t TopologyNode::getUsedResources() const { return usedResources; }
+
+uint16_t TopologyNode::getResourceCapacity() const { return resources; }
+
 bool TopologyNode::getMaintenanceFlag() const { return maintenanceFlag; };
 
 void TopologyNode::setMaintenanceFlag(bool flag) { maintenanceFlag = flag; }

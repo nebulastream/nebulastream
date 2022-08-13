@@ -73,8 +73,13 @@ class FaultToleranceBasedQueryMergerRule final : public BaseQueryMergerRule {
 
     ~FaultToleranceBasedQueryMergerRule() final = default;
 
+
+
   private:
     SignatureEqualityUtilPtr signatureEqualityUtil{nullptr};
+
+    void calculateCheckpointing();
+
 };
 }// namespace NES::Optimizer
 

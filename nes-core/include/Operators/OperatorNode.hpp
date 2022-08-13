@@ -189,6 +189,7 @@ class OperatorNode : public Node {
      * @brief Map of properties of the current node
      */
     std::unordered_map<std::string, std::any> properties;
+
 };
 
 }// namespace NES

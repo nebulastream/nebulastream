@@ -11,26 +11,44 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
+#include "Optimizer/QueryMerger/DefaultQueryMergerRule.hpp"
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryMerger/FaultToleranceBasedQueryMergerRule.hpp>
+#include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <chrono>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <thread>
+#include <z3++.h>
 
 using namespace utility;
 using namespace std;
@@ -70,8 +88,11 @@ class BasicTest : public Testing::NESBaseTest {
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->optimizer.queryMergerRule = Optimizer::QueryMergerRule::FaultToleranceBasedQueryMergerRule;
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+
+
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
@@ -90,6 +111,25 @@ class BasicTest : public Testing::NESBaseTest {
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
+
+        std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+        SourceCatalogPtr sourceCatalog;
+        SchemaPtr schema = Schema::create()
+                     ->addField("ts", BasicType::UINT32)
+                     ->addField("type", BasicType::UINT32)
+                     ->addField("id", BasicType::UINT32)
+                     ->addField("value", BasicType::UINT64)
+                     ->addField("id1", BasicType::UINT32)
+                     ->addField("value1", BasicType::UINT64);
+        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog->addLogicalSource("car", schema);
+        sourceCatalog->addLogicalSource("bike", schema);
+        sourceCatalog->addLogicalSource("truck", schema);
+
+
+
+
+
     }
 };
 
@@ -114,11 +154,6 @@ TEST_F(BasicTest, firstTest) {
     EXPECT_TRUE(retStart1);
     NES_INFO("BasicTest: Worker1 started successfully");
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("BasicTest: Worker2 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -127,62 +162,102 @@ TEST_F(BasicTest, firstTest) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("BasicTest: Submit query");
-    string query =
-        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    SinkDescriptorPtr printSinkDescriptor1 = PrintSinkDescriptor::create();
+    Query query1 = Query::from("car")
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor1);
 
-    /*GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));*/
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+    queryPlan1->setFaultToleranceType(NES::FaultToleranceType::AT_MOST_ONCE);
 
-    /*auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
-    for (auto querySubPlanId : querySubPlanIds) {
-        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
-        for (auto& sink : sinks) {
-            auto buffer1 = bufferManager->getUnpooledBuffer(timestamp);
-            buffer1->setWatermark(timestamp);
-            buffer1->setSequenceNumber(1);
-            sink->updateWatermark(buffer1.value());
-            auto buffer2 = bufferManager->getUnpooledBuffer(timestamp);
-            buffer2->setWatermark(timestamp);
-            buffer2->setOriginId(1);
-            buffer2->setSequenceNumber(1);
-            sink->updateWatermark(buffer2.value());
-            auto currentTimestamp = sink->getCurrentEpochBarrier();
-            while (currentTimestamp == 0) {
-                NES_INFO("BasicTest: current timestamp: " << currentTimestamp);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                currentTimestamp = sink->getCurrentEpochBarrier();
-            }
-            EXPECT_TRUE(currentTimestamp == timestamp);
+    /*SinkDescriptorPtr printSinkDescriptor2 = PrintSinkDescriptor::create();
+    Query query2 = Query::from("car")
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("value") < 5)
+                       .filter(Attribute("id") < 30)
+                       .sink(printSinkDescriptor2);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+    queryPlan2->setFaultToleranceType(NES::FaultToleranceType::AT_LEAST_ONCE);*/
+
+
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::FaultToleranceBasedQueryMergerRule);
+    signatureInferencePhase->execute(queryPlan1);
+    //signatureInferencePhase->execute(queryPlan2);
+    //signatureInferencePhase->execute(queryPlan3);
+
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    //globalQueryPlan->addQueryPlan(queryPlan2);
+    //globalQueryPlan->addQueryPlan(queryPlan3);
+
+    //execute
+    auto faultToleranceBasedQueryMergerRule = Optimizer::DefaultQueryMergerRule::create();
+    faultToleranceBasedQueryMergerRule->apply(globalQueryPlan);
+
+    NES_INFO("==================FT RELEVANT DATA=====================");
+    NES_INFO("Worker CPU Slots: " + std::to_string(wrk1->getWorkerConfiguration()->numberOfSlots.getValue()));
+    NES_INFO("Leafs: " +  std::to_string(queryPlan1->getLeafOperators().size()));
+    NES_INFO("Roots: " +  std::to_string(queryPlan1->getRootOperators().size()));
+    NES_INFO("Source: " +  std::to_string(queryPlan1->getSourceOperators().size()));
+    NES_INFO("Sink: " +  std::to_string(queryPlan1->getSinkOperators().size()));
+    NES_INFO(queryPlan1->getLeafOperators()[0]->toString());
+    NES_INFO(queryPlan1->getRootOperators()[0]->toString());
+    NES_INFO(queryPlan1->getSinkOperators()[0]->toString());
+
+    NES_INFO("Topology toString: " + crd->getTopology()->toString())
+    NES_INFO("Root toString: " + crd->getTopology()->getRoot()->toString())
+
+
+
+    for (auto& sinkOperator : queryPlan1->getSinkOperators()){
+        for (auto& parent : sinkOperator->getChildren()){
+            NES_INFO("PARENT: " + parent->toString())
+
         }
-    }*/
 
-    /*NES_INFO("BasicTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));*/
-
-    for (int i= 1; i<= 50; i++) {
-        //std::cout << "\n" << i;
-        NES_INFO("XDXDXDXDXD");
-        NES_INFO(wrk1->getWorkerConfiguration()->numberOfSlots.getValue())
+    }
 
 
-        QueryCatalogEntryPtr qptr1 = crd->getQueryCatalogService()->getEntryForQuery(queryId);
-        NES_INFO(qptr1->getQueryString());
-        //QueryCatalogPtr qqp = crd->getGlobalQueryPlan().get
+
+
+    //NES_INFO(queryPlan2->toString());
+
+    //NES_INFO("IDDD: " + to_string(globalQueryPlan->getSharedQueryId(queryId2)));
+
+    if(globalQueryPlan->getQueryPlansToAdd().empty()){
+        NES_WARNING("SharedQueryPlans empty")
+    }
+
+    if(globalQueryPlan->getAllSharedQueryPlans().empty()){
+        NES_WARNING("SharedQueryPlans empty")
+    }
+
+    for(auto& sharedQueryPlan : globalQueryPlan->getAllSharedQueryPlans()){
+        NES_INFO("SharedQueryPlan ID: " + std::to_string(sharedQueryPlan->getSharedQueryId()) + " | SharedQueryPlan to String: \n" + sharedQueryPlan->getQueryPlan()->toString());
     }
 
     NES_INFO("BasicTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("BasicTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("BasicTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

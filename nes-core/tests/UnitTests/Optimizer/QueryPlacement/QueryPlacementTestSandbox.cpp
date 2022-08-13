@@ -175,7 +175,7 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
 };
 
 /* Test query placement with bottom up strategy  */
-TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
+TEST_F(QueryPlacementTestSandbox, activeStandbyTest) {
 
     setupTopologyAndSourceCatalog({4, 4, 4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
@@ -196,13 +196,6 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
         }
     }
 
-    NES_INFO("sizey: " + std::to_string(topologyNodes.size()));
-
-
-
-    for (auto& source : sourceCatalog->getPhysicalSources(queryPlan->getSourceConsumed())){
-        NES_INFO("SOURCY: " + source->getNode()->toString())
-    }
 
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -222,13 +215,8 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
 
-    for(auto& node : globalExecutionPlan->getAllExecutionNodes()){
-        NES_INFO("NODEY: " + node->toString());
-    }
-
-
-    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
-
+    //Active Standby
+    Optimizer::QueryPlacementPhase::checkFaultTolerance(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
 
 
     //Assertion
@@ -263,7 +251,78 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithBottomUpStrategy) {
 }
 
 
+TEST_F(QueryPlacementTestSandbox, checkpointingTest) {
 
+    setupTopologyAndSourceCatalog({4, 4, 4, 4, 4});
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    NES_INFO("\n" + topology->toString());
+
+    NES_INFO("\n" + std::to_string(executionNodes.size()));
+
+    for (auto& node : executionNodes){
+        NES_INFO("\nnode#" + std::to_string(node->getId()) + ": " + node->getQuerySubPlans(queryId)[0]->getSourceOperators()[0]->getSourceDescriptor()->toString())
+    }
+
+    //Active Standby
+    Optimizer::QueryPlacementPhase::checkFaultTolerance(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
+
+
+
+
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 4u);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1u) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
+            ASSERT_EQ(sourceOperators.size(), 2u);
+            for (const auto& sourceOperator : sourceOperators) {
+                EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        }
+    }
+}
 
 
 /* Test query placement with top down strategy  */
@@ -293,7 +352,7 @@ TEST_F(QueryPlacementTestSandbox, testPlacingQueryWithTopDownStrategy) {
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
-    Optimizer::QueryPlacementPhase::checkActiveStandby(globalExecutionPlan,topology,sourceCatalog, sharedQueryPlan->getSharedQueryId());
+
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);

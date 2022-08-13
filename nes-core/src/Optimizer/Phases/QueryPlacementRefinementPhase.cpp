@@ -29,6 +29,7 @@ QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlan
 
 bool QueryPlacementRefinementPhase::execute(QueryId queryId) {
     NES_DEBUG("QueryPlacementRefinementPhase() execute for query " << queryId);
+
     return true;
 }
 
