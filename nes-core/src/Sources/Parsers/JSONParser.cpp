@@ -39,20 +39,17 @@ void JSONParser::writeFieldValueToTupleBuffer(
             BasicPhysicalType::NativeType nativeType = basicPhysicalType->nativeType;
             switch (nativeType) {
                 case BasicPhysicalType::UINT_8: {
-                    uint64_t value64 = element[jsonKey];
-                    uint8_t value8 = static_cast<uint8_t>(value64);// TODO safe?
+                    uint8_t value8 = static_cast<uint8_t>(element[jsonKey].get_uint64());
                     tupleBuffer[tupleIndex][fieldIndex].write<uint8_t>(value8);
                     break;
                 }
                 case BasicPhysicalType::UINT_16: {
-                    uint64_t value64 = element[jsonKey];
-                    uint16_t value16 = static_cast<uint16_t>(value64);// TODO safe?
+                    uint16_t value16 = static_cast<uint16_t>(element[jsonKey].get_uint64());
                     tupleBuffer[tupleIndex][fieldIndex].write<uint16_t>(value16);
                     break;
                 }
                 case BasicPhysicalType::UINT_32: {
-                    uint64_t value64 = element[jsonKey];
-                    uint32_t value32 = static_cast<uint32_t>(value64);// TODO safe?
+                    uint32_t value32 = static_cast<uint32_t>(element[jsonKey].get_uint64());
                     tupleBuffer[tupleIndex][fieldIndex].write<uint32_t>(value32);
                     break;
                 }
@@ -62,20 +59,17 @@ void JSONParser::writeFieldValueToTupleBuffer(
                     break;
                 }
                 case BasicPhysicalType::INT_8: {
-                    int64_t value64 = element[jsonKey];
-                    int8_t value8 = static_cast<int8_t>(value64);// TODO safe?
+                    int8_t value8 = static_cast<int8_t>(element[jsonKey].get_int64());
                     tupleBuffer[tupleIndex][fieldIndex].write<int8_t>(value8);
                     break;
                 }
                 case BasicPhysicalType::INT_16: {
-                    int64_t value64 = element[jsonKey];
-                    int16_t value16 = static_cast<int16_t>(value64);// TODO safe?
+                    int16_t value16 = static_cast<int16_t>(element[jsonKey].get_int64());
                     tupleBuffer[tupleIndex][fieldIndex].write<int16_t>(value16);
                     break;
                 }
                 case BasicPhysicalType::INT_32: {
-                    int64_t value64 = element[jsonKey];
-                    int32_t value32 = static_cast<int32_t>(value64);// TODO safe?
+                    int32_t value32 = static_cast<int32_t>(element[jsonKey].get_int64());
                     tupleBuffer[tupleIndex][fieldIndex].write<int32_t>(value32);
                     break;
                 }
@@ -85,21 +79,25 @@ void JSONParser::writeFieldValueToTupleBuffer(
                     break;
                 }
                 case BasicPhysicalType::FLOAT: {
-                    double valueD = element[jsonKey];
-                    float valueF = static_cast<float>(valueD);// TODO safe?
+                    float valueF = static_cast<float>(element[jsonKey].get_double());
                     tupleBuffer[tupleIndex][fieldIndex].write<float>(valueF);
                     break;
                 }
-                case BasicPhysicalType::DOUBLE: {
+                case BasicPhysicalType::DOUBLE: {// TODO is Float
+                    /*
+                    auto value = element[jsonKey]; // ← correct value
+                    std::cout << "value: " << value << std::endl;
+                    double d = value.get_double(); // ← cropped
+                    std::cout << "value d: " << d << std::endl;
+                    */
+
                     double value = element[jsonKey];
                     tupleBuffer[tupleIndex][fieldIndex].write<double>(value);
                     break;
                 }
                 case BasicPhysicalType::CHAR: {
-                    std::string_view value = element[jsonKey];
-                    std::string str = {value.begin(), value.end()};
-                    char c = str.at(0);
-                    tupleBuffer[tupleIndex][fieldIndex].write<char>(c);
+                    const char* c = element[jsonKey].get_c_str();
+                    tupleBuffer[tupleIndex][fieldIndex].write<char>(c[0]);
                     break;
                 }
                 case BasicPhysicalType::BOOLEAN: {

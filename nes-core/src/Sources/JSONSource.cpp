@@ -37,6 +37,10 @@ JSONSource::JSONSource(SchemaPtr schema,
     this->inputParser = std::make_shared<JSONParser>(physicalTypes);
 
     json = simdjson::padded_string::load(filePath);
+
+    auto cpuImpl = "simdjson CPU architecture implementation: " + simdjson::active_implementation->name() + " ("
+        + simdjson::active_implementation->description() + ")";
+    NES_INFO(cpuImpl);
 }
 
 std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
@@ -52,17 +56,15 @@ std::optional<Runtime::TupleBuffer> JSONSource::receiveData() {
     return buffer.getBuffer();
 }
 
-void JSONSource::fillBuffer([[maybe_unused]] Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    uint64_t numOverwrites = 1;// TODO
+void JSONSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+    uint64_t numOverwrites = 1;
     uint64_t tupleIndex = 0;
     for (simdjson::simdjson_result result : parser.parse_many(json)) {
         auto error = result.error();
         if (error) {
-            // TODO
             NES_ERROR("Error reading JSON file")
             throw std::logic_error(error_message(error));
         }
-        //        std::cout << result << std::endl;
         if (tupleIndex >= buffer.getCapacity()) {
             if (numBuffersToProcess == 0) {
                 // read source until buffer is full
