@@ -17,7 +17,9 @@
 #ifdef ENABLE_PARQUET_BUILD
 #include <Catalogs/Source/PhysicalSourceTypes/ParquetSourceType.hpp>
 #include <Sources/DataSource.hpp>
+#include <arrow/io/api.h>
 #include <arrow/io/file.h>
+#include <parquet/api/io.h>
 #include <parquet/stream_reader.h>
 #include <Sources/Parsers/ParquetParser.hpp>
 
