@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sensors/Values/SingleSensor.hpp>
+#include <Sensors/Values/SmartgridSensor.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -265,7 +265,7 @@ std::chrono::milliseconds KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuff
     if (!!tupleBuffer) {
         Eigen::VectorXd valueVector(1);
         auto numOfTuples = tupleBuffer.getNumberOfTuples();
-        auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();
+        auto records = tupleBuffer.getBuffer<Sensors::SmartgridSensor>();
         for (uint64_t i = 0; i < numOfTuples; ++i) {
             valueVector << records[i].value;
             this->update(valueVector);

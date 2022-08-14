@@ -29,25 +29,31 @@ namespace Sensors {
  * of passing around a schema that is not defined
  * across the codebase.
  */
-struct __attribute__((packed)) SingleSensor {
-    uint64_t id;
-    uint64_t value;
-    uint64_t payload;
+struct __attribute__((packed)) SmartgridSensor {
     uint64_t timestamp;
+    uint64_t value;
+    uint64_t property;
+    uint64_t id;
+    uint64_t household;
+    uint64_t house;
 
     // default c-tor
-    SingleSensor() {
-        id = 0;
-        value = 0;
-        payload = 0;
+    SmartgridSensor() {
         timestamp = 0;
+        value = 0;
+        property = 0;
+        id = 0;
+        household = 0;
+        house = 0;
     }
 
-    SingleSensor(const SingleSensor& rhs) {
-        id = rhs.id;
-        value = rhs.value;
-        payload = rhs.payload;
+    SmartgridSensor(const SmartgridSensor& rhs) {
         timestamp = rhs.timestamp;
+        value = rhs.value;
+        property = rhs.property;
+        id = rhs.id;
+        household = rhs.household;
+        house = rhs.house;
     }
 };
 
