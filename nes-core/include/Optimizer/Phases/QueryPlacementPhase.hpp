@@ -86,9 +86,6 @@ class QueryPlacementPhase {
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
-    static void checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, SourceCatalogPtr sourceCatalog, QueryId queryId);
-
-
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -126,8 +123,6 @@ class QueryPlacementPhase {
     bool queryReconfiguration;
     int getChildrenCount(OperatorNodePtr operatorNode);
 
-
-    static bool otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, std::vector<long> topologyIds, QueryId queryId);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

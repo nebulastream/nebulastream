@@ -104,6 +104,9 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         TopologyNodePtr sourceNode4 = TopologyNode::create(13, "localhost", 125, 126, resources[4]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode4);
 
+        TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 125, 126, 1);
+        topology->addNewTopologyNodeAsChild(sourceNode4, sourceNode5);
+
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
@@ -188,13 +191,7 @@ TEST_F(QueryPlacementTestSandbox, activeStandbyTest) {
 
     std::vector<TopologyNodePtr> topologyNodes;
 
-    for (auto& entry : sourceCatalog->getAllLogicalSourceAsString()){
 
-        for (auto& source : sourceCatalog->getPhysicalSources(entry.first)){
-            NES_INFO(entry.first + " SOURCY: " + source->getNode()->toString());
-            topologyNodes.push_back(source->getNode());
-        }
-    }
 
 
 
@@ -216,7 +213,7 @@ TEST_F(QueryPlacementTestSandbox, activeStandbyTest) {
 
 
     //Active Standby
-    Optimizer::QueryPlacementPhase::checkFaultTolerance(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
+    //Optimizer::QueryPlacementPhase::checkFaultTolerance(globalExecutionPlan,topology,sharedQueryPlan->getSharedQueryId());
 
 
     //Assertion
@@ -284,12 +281,6 @@ TEST_F(QueryPlacementTestSandbox, checkpointingTest) {
     for (auto& node : executionNodes){
         NES_INFO("\nnode#" + std::to_string(node->getId()) + ": " + node->getQuerySubPlans(queryId)[0]->getSourceOperators()[0]->getSourceDescriptor()->toString())
     }
-
-    //Active Standby
-    Optimizer::QueryPlacementPhase::checkFaultTolerance(globalExecutionPlan,topology, sourceCatalog, sharedQueryPlan->getSharedQueryId());
-
-
-
 
 
     //Assertion

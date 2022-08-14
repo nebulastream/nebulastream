@@ -23,7 +23,10 @@ enum class FaultToleranceType : int8_t {
     AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
     AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
     EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
-    INVALID = 4
+    INVALID = 4,
+    ACTIVE_STANDBY = 5,
+    CHECKPOINTING = 6,
+    UPSTREAM_BACKUP = 7
 };
 
 std::string toString(const FaultToleranceType faultToleranceMode);

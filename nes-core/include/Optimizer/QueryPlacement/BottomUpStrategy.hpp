@@ -71,6 +71,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
                        const OperatorNodePtr& operatorNode,
                        TopologyNodePtr candidateTopologyNode,
                        const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+    FaultToleranceType checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryId queryId);
+    bool otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, std::vector<long> topologyIds, QueryId queryId);
 };
 }// namespace NES::Optimizer
 

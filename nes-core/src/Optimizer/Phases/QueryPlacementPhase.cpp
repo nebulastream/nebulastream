@@ -77,12 +77,18 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
         throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
     }
 
+    //checkFaultTolerance(globalExecutionPlan,topology,queryId);
+
+
+
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
                                                                    faultToleranceType,
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+
+    NES_INFO("\nTOPOLOGY ENDING:" + topology->toString())
 
     return success;
 }
@@ -147,195 +153,4 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     }
     return downStreamPinnedOperators;
 }
-
-void QueryPlacementPhase::checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan,
-                                             TopologyPtr topology,
-                                             SourceCatalogPtr sourceCatalog,
-                                             QueryId queryId) {
-
-    std::vector<TopologyNodePtr> topologyNodes = std::vector<TopologyNodePtr>();
-    std::vector<long> topologyIds;
-
-    //Get IDs of all nodes in the topology
-    for (auto& entry : sourceCatalog->getAllLogicalSourceAsString()){
-
-        for (auto& source : sourceCatalog->getPhysicalSources(entry.first)){
-            //NES_INFO(entry.first + " SOURCE: " + source->getNode()->toString());
-            topologyNodes.push_back(source->getNode());
-            topologyIds.push_back(source->getNode()->getId());
-        }
-    }
-
-
-
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    double totalQueryCost = 0;
-    double operatorCount = 0;
-    double avgOperatorCost = 0;
-
-    double nodesCount = 0;
-    double totalAvailableResources = 0;
-    double totalUsedResources = 0;
-    double totalResourceCapacity = 0;
-
-    if(!otherNodesAvailable(globalExecutionPlan, topologyIds,queryId)){
-        NES_WARNING("\nFAULT-TOLERANCE CANNOT BE PROVIDED. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
-        return;
-    }
-
-    double highestCost = 0;
-
-
-    //Determine resource values of nodes from the Global Execution Plan after placing the query.
-    for (auto& node : executionNodes) {
-
-        if(node->getOccupiedResources(queryId) > highestCost){
-            highestCost = node->getOccupiedResources(queryId);
-        }
-
-        double localNodeId = node->getId();
-        nodesCount += 1;
-
-        double localAvailableResources = topology->findNodeWithId(node->getId())->getAvailableResources();
-        totalAvailableResources += localAvailableResources;
-
-        double localUsedResources = node->getOccupiedResources(queryId);
-        totalUsedResources += localUsedResources;
-
-        double localResourceCapacity = localAvailableResources + localUsedResources;
-        totalResourceCapacity += localResourceCapacity;
-
-        NES_INFO("\n NodeID: " + std::to_string(localNodeId));
-        NES_INFO("\nRESOURCE CAPACITY: "
-                 + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()
-                                  + node->getOccupiedResources(queryId)))
-        NES_INFO("\nAVAILABLE RESOURCES: " + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()));
-        NES_INFO("\nUSED RESOURCES: " + std::to_string(node->getOccupiedResources(queryId)));
-    }
-
-    double availableNodesCount = topologyNodes.size();
-    double globalAvailableResources = 0;
-    double globalUsedResources = 0;
-    double globalResourceCapacity = 0;
-
-    //Determine resource values of all nodes in the topology.
-    for (auto& node : globalExecutionPlan->getAllExecutionNodes()) {
-        double localAvailableResources = topology->findNodeWithId(node->getId())->getAvailableResources();
-        globalAvailableResources += localAvailableResources;
-
-        double localUsedResources = node->getOccupiedResources(queryId);
-        globalUsedResources += localUsedResources;
-
-        double localResourceCapacity = localAvailableResources + localUsedResources;
-        globalResourceCapacity += localResourceCapacity;
-
-        NES_INFO("\n NodeID: " + std::to_string(node->getId()));
-        NES_INFO("\nRESOURCE CAPACITY: "
-                 + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()
-                                  + node->getOccupiedResources(queryId)))
-        NES_INFO("\nAVAILABLE RESOURCES: " + std::to_string(topology->findNodeWithId(node->getId())->getAvailableResources()));
-        NES_INFO("\nUSED RESOURCES: " + std::to_string(node->getOccupiedResources(queryId)));
-    }
-
-    double avgCostPerNode = totalUsedResources / nodesCount;
-
-
-    NES_INFO("\n==========QUERY SUMMARY========")
-    NES_INFO("\nNumber of Nodes available: " + std::to_string(availableNodesCount + 1) + " | Global Resource Capacity: "
-             + std::to_string(globalResourceCapacity) + " | Globally available resource after deployment of query#"
-             + std::to_string(queryId) + ": " + std::to_string(globalResourceCapacity - totalUsedResources));
-    NES_INFO("\nNumber of Nodes used for query#" + std::to_string(queryId) + ": " + std::to_string(nodesCount)
-             + " | Average resource cost per node: " + std::to_string(totalUsedResources / nodesCount));
-
-    std::vector<ExecutionNodePtr> allNodes = globalExecutionPlan->getAllExecutionNodes();
-    std::vector<int> activeStandbyCandidateIds;
-    std::vector<int> checkpointingCandidateIds;
-    bool activeStandbyPossible = false;
-    bool checkpointingPossible = false;
-
-
-    //Check if there are nodes in the topology that can support the maximum query fragment cost. If there are such nodes, choose active standby.
-    //TODO Potentially change the if condition so that only nodes are considered on which there is no fragment of the same query already running.
-    for (auto& topologyNode : topologyNodes) {
-
-
-
-        if (topology->findNodeWithId(topologyNode->getId())->getAvailableResources() < highestCost /*&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))*/) {
-            NES_WARNING("\n[CPU] A_S not possible on node#" + std::to_string(topologyNode->getId()) + " because it only has "
-                        + std::to_string(topology->findNodeWithId(topologyNode->getId())->getAvailableResources()) + " available resources when "
-                        + std::to_string(highestCost) + " was needed.")
-
-        } else {
-            activeStandbyCandidateIds.push_back(topologyNode->getId());
-            NES_INFO("\n[CPU] ACTIVE_STANDBY: FOUND NODE#" + std::to_string(topologyNode->getId()) + " WITH "
-                     + std::to_string(topologyNode->getAvailableResources()) + " AVAILABLE RESOURCES. "
-                     + std::to_string(highestCost) + " NEEDED.")
-            activeStandbyPossible = true;
-        }
-
-        if (topologyNode->getResourceCapacity() < highestCost /*&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))*/) {
-            NES_WARNING("\n[CPU] CHECKPOINTING not possible on node#" + std::to_string(topologyNode->getId()) + " because it only has a capacity of "
-                        + std::to_string(topology->findNodeWithId(topologyNode->getId())->getAvailableResources()) + " when "
-                        + std::to_string(highestCost) + " was needed.")
-
-        } else {
-            checkpointingCandidateIds.push_back(topologyNode->getId());
-            NES_INFO("\n[CPU] CHECKPOINTING: FOUND NODE#" + std::to_string(topologyNode->getId()) + " WITH "
-                     + std::to_string(topologyNode->getResourceCapacity()) + " CAPACITY. "
-                     + std::to_string(highestCost) + " NEEDED.")
-            checkpointingPossible = true;
-        }
-    }
-
-
-
-    //Print results.
-    if (activeStandbyPossible) {
-        NES_WARNING("\n[CPU] ACTIVE_STANDBY POSSIBLE [" + std::to_string(activeStandbyCandidateIds.size()) + " candidate Node(s)]. CPU_WEIGHT = "
-                    + std::to_string(highestCost));
-    } else {
-        NES_WARNING("\n[CPU] ACTIVE_STANDBY NOT POSSIBLE. WEIGHT OF " + std::to_string(highestCost) + " CANNOT BE SUPPORTED. ");
-    }
-
-    //Print results.
-    if (checkpointingPossible) {
-        NES_WARNING("\n[CPU] CHECKPOINTING POSSIBLE [" + std::to_string(checkpointingCandidateIds.size()) + " candidate Node(s)]. CPU_WEIGHT = 0.");
-    } else {
-        NES_WARNING("\n[CPU] CHECKPOINTING NOT POSSIBLE. NO CANDIDATE NODES WERE FOUND. ");
-    }
-
-}
-
-/**
- * returns true if there are other nodes within the globalExecutionPlan on which the specified SubQuery is not deployed.
- * @param globalExecutionPlan
- * @param queryId
- * @return
- */
-bool QueryPlacementPhase::otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, std::vector<long> topologyIds, QueryId queryId) {
-
-    bool othersAvailable = false;
-    std::vector<long> executionIds = std::vector<long>();
-
-    for(auto& node : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
-        executionIds.push_back(node->getId());
-            }
-
-    for (auto& id : topologyIds) {
-
-        if (!(std::find(executionIds.begin(),
-                        executionIds.end(),
-                        id)
-              != executionIds.end())) {
-            return true;
-        }
-    }
-
-    return othersAvailable;
-}
-
-
-
-
 }// namespace NES::Optimizer

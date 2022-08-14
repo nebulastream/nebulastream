@@ -25,6 +25,12 @@ FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranc
         return FaultToleranceType::AT_LEAST_ONCE;
     } else if (faultToleranceMode == "EXACTLY_ONCE") {
         return FaultToleranceType::EXACTLY_ONCE;
+    } else if (faultToleranceMode == "ACTIVE_STANDBY"){
+        return FaultToleranceType::ACTIVE_STANDBY;
+    } else if (faultToleranceMode == "CHECKPOINTING"){
+        return FaultToleranceType::CHECKPOINTING;
+    } else if (faultToleranceMode == "UPSTREAM_BACKUP"){
+        return FaultToleranceType::UPSTREAM_BACKUP;
     } else {
         return FaultToleranceType::INVALID;
     }
@@ -36,6 +42,9 @@ std::string toString(const FaultToleranceType faultToleranceMode) {
         case FaultToleranceType::AT_MOST_ONCE: return "AT_MOST_ONCE";
         case FaultToleranceType::AT_LEAST_ONCE: return "AT_LEAST_ONCE";
         case FaultToleranceType::EXACTLY_ONCE: return "EXACTLY_ONCE";
+        case FaultToleranceType::ACTIVE_STANDBY: return "ACTIVE_STANDBY";
+        case FaultToleranceType::CHECKPOINTING: return "CHECKPOINTING";
+        case FaultToleranceType::UPSTREAM_BACKUP: return "UPSTREAM_BACKUP";
         case FaultToleranceType::INVALID: return "INVALID";
     }
 }
