@@ -485,8 +485,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
 
                 if (this->gatheringInterval.count() != 0) {
                     NES_TRACE("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
-                    this->kFilter->updateFromTupleBuffer(buf);
-                    this->gatheringInterval = this->kFilter->getNewGatheringInterval();
+                    this->gatheringInterval = this->kFilter->updateFromTupleBuffer(buf);
                     NES_TRACE("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                 }
 

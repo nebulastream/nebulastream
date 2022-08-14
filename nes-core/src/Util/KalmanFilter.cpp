@@ -260,7 +260,7 @@ double KalmanFilter::getMagnitudeFromLastValues(double oldValue, double newValue
     return std::trunc(suggestedMagnitudeMultiplier);
 }
 
-void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
+std::chrono::milliseconds KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
     if (!!tupleBuffer) {
         Eigen::VectorXd valueVector(1);
@@ -269,9 +269,11 @@ void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
         for (uint64_t i = 0; i < numOfTuples; ++i) {
             valueVector << records[i].value;
             this->update(valueVector);
+            this->gatheringInterval = this->getExponentialFrequencyWithHalfLimit();
         }
         NES_DEBUG("KalmanFilter::updateFromTupleBuffer: consumed a whole buffer");
     }
+    return this->gatheringInterval;
 }
 
 double KalmanFilter::getCurrentStep() { return currentTime; }

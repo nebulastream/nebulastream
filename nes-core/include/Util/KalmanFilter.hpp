@@ -103,7 +103,7 @@ class KalmanFilter {
      * Update method, using a full tuple buffer as input.
      * @param buffer
      */
-    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);
+    std::chrono::milliseconds updateFromTupleBuffer(Runtime::TupleBuffer& buffer);
 
     // simple setters/getters for individual fields
     double getCurrentStep();
