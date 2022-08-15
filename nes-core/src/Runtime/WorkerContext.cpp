@@ -30,9 +30,9 @@ WorkerContext::WorkerContext(uint32_t workerId,
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
     currentEpoch = 0;
 //    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
-//    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
+    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
 //    statisticsFile << "time, latency\n";
-//    storageFile << "time, numberOfBuffers\n";
+    storageFile << "time, numberOfBuffers\n";
 }
 
 WorkerContext::~WorkerContext() {
@@ -40,8 +40,8 @@ WorkerContext::~WorkerContext() {
     storage.clear();
 //    statisticsFile.flush();
 //    statisticsFile.close();
-//    storageFile.flush();
-//    storageFile.close();
+    storageFile.flush();
+    storageFile.close();
 }
 
 size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
@@ -104,17 +104,17 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     currentEpoch = timestamp;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
-    auto oldStorageSize = getStorageSize(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
+        auto oldStorageSize = this->storage[nesPartitionId].size();
         while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
             NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
             iteratorPartitionId->second.pop();
         }
+        auto ts = std::chrono::system_clock::now();
+        auto timeNow = std::chrono::system_clock::to_time_t(ts);
+        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+        storageFile << oldStorageSize - this->storage[nesPartitionId].size() << "\n";
     }
-    auto ts = std::chrono::system_clock::now();
-    auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    storageFile << oldStorageSize - getStorageSize(nesPartitionId) << "\n";
 }
     
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
