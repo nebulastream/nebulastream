@@ -752,7 +752,6 @@ template<typename T>
 [[nodiscard]] bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort = "8081") {
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
-    uint64_t currentResult = 0;
     web::json::value json_return;
     std::string currentStatus;
 
