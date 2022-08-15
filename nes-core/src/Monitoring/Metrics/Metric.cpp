@@ -41,7 +41,7 @@ void readFromBuffer(std::string&, Runtime::TupleBuffer&, uint64_t) {
 
 void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     readFromBuffer(*metrics, buf, tupleIndex);
-}       //nummer 1
+}
 
 web::json::value asJson(uint64_t intMetric) {
     web::json::value metricsJson{};

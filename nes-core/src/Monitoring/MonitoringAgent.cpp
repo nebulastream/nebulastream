@@ -79,6 +79,7 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
         for (auto type : monitoringPlan->getMetricTypes()) {
             NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));
             auto collector = catalog->getMetricCollector(type);
+            NES_DEBUG("MonitoringAgent: getMetricsAsJson: The collector has the schema: " + collector->getSchema()->toString());
             collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
             metricsJson[toString(metric->getMetricType())] = asJson(metric);

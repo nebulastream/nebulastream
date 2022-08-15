@@ -131,7 +131,11 @@ web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId)
 
     NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
-
+//    web::json::value configurationMonitoringJson =
+//        MetricUtils::parseMonitoringConfigStringToJson(" - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 50 ");
+    web::json::value configurationMonitoringJson =
+          MetricUtils::parseMonitoringConfigStringToJson(" - cpu: attributes: \"coreNum, user, system\" sampleRate: 60 ");
+    plan = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
     //getMonitoringPlan(..) checks if node exists, so no further check necessary
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
     auto nodeIp = node->getIpAddress();

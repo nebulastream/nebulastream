@@ -238,23 +238,57 @@ web::json::value NetworkMetrics::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["R_BYTES"] = web::json::value::number(rBytes);
-    metricsJson["R_PACKETS"] = web::json::value::number(rPackets);
-    metricsJson["R_ERRS"] = web::json::value::number(rErrs);
-    metricsJson["R_DROP"] = web::json::value::number(rDrop);
-    metricsJson["R_FIFO"] = web::json::value::number(rFifo);
-    metricsJson["R_FRAME"] = web::json::value::number(rFrame);
-    metricsJson["R_COMPRESSED"] = web::json::value::number(rCompressed);
-    metricsJson["R_MULTICAST"] = web::json::value::number(rMulticast);
-
-    metricsJson["T_BYTES"] = web::json::value::number(tBytes);
-    metricsJson["T_PACKETS"] = web::json::value::number(tPackets);
-    metricsJson["T_ERRS"] = web::json::value::number(tErrs);
-    metricsJson["T_DROP"] = web::json::value::number(tDrop);
-    metricsJson["T_FIFO"] = web::json::value::number(tFifo);
-    metricsJson["T_COLLS"] = web::json::value::number(tColls);
-    metricsJson["T_CARRIER"] = web::json::value::number(tCarrier);
-    metricsJson["T_COMPRESSED"] = web::json::value::number(tCompressed);
+    if (schema->contains("interfaceName")) {
+        metricsJson["INTERFACENAME"] = web::json::value::number(interfaceName);
+    }
+    if (schema->contains("rBytes")) {
+        metricsJson["R_BYTES"] = web::json::value::number(rBytes);
+    }
+    if (schema->contains("rPackets")) {
+        metricsJson["R_PACKETS"] = web::json::value::number(rPackets);
+    }
+    if (schema->contains("rErrs")) {
+        metricsJson["R_ERRS"] = web::json::value::number(rErrs);
+    }
+    if (schema->contains("rDrop")) {
+        metricsJson["R_DROP"] = web::json::value::number(rDrop);
+    }
+    if (schema->contains("rFifo")) {
+        metricsJson["R_FIFO"] = web::json::value::number(rFifo);
+    }
+    if (schema->contains("rFrame")) {
+        metricsJson["R_FRAME"] = web::json::value::number(rFrame);
+    }
+    if (schema->contains("rCompressed")) {
+        metricsJson["R_COMPRESSED"] = web::json::value::number(rCompressed);
+    }
+    if (schema->contains("rMulticast")) {
+        metricsJson["R_MULTICAST"] = web::json::value::number(rMulticast);
+    }
+    if (schema->contains("tBytes")) {
+        metricsJson["T_BYTES"] = web::json::value::number(tBytes);
+    }
+    if (schema->contains("tPackets")) {
+        metricsJson["T_PACKETS"] = web::json::value::number(tPackets);
+    }
+    if (schema->contains("tErrs")) {
+        metricsJson["T_ERRS"] = web::json::value::number(tErrs);
+    }
+    if (schema->contains("tDrop")) {
+        metricsJson["T_DROP"] = web::json::value::number(tDrop);
+    }
+    if (schema->contains("tFifo")) {
+        metricsJson["T_FIFO"] = web::json::value::number(tFifo);
+    }
+    if (schema->contains("tColls")) {
+        metricsJson["T_COLLS"] = web::json::value::number(tColls);
+    }
+    if (schema->contains("tCarrier")) {
+        metricsJson["T_CARRIER"] = web::json::value::number(tCarrier);
+    }
+    if (schema->contains("tCompressed")) {
+        metricsJson["T_COMPRESSED"] = web::json::value::number(tCompressed);
+    }
 
     return metricsJson;
 }

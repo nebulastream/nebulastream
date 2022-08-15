@@ -97,11 +97,13 @@ uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
 CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
 
 web::json::value CpuMetricsWrapper::toJson() const {
+    NES_DEBUG("CpuMetricsWrapper: toJson(): I Am her now!");
     web::json::value metricsJsonWrapper{};
     metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
 
     web::json::value metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+        cpuMetrics[i].setSchema();
         if (i == 0) {
             metricsJson["TOTAL"] = cpuMetrics[i].toJson();
         } else {
@@ -111,6 +113,8 @@ web::json::value CpuMetricsWrapper::toJson() const {
     metricsJsonWrapper["values"] = metricsJson;
     return metricsJson;
 }
+
+
 
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {

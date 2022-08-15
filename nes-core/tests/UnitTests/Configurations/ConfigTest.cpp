@@ -103,20 +103,20 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
     int sampleDisk = 50;
     SchemaPtr schemaDisk = DiskMetrics::createSchema("", configuredDisk);
-//    std::list<std::string> configuredCpu = {"coreNum", "user", "system"};
-//    int sampleCpu = 60;
-//    SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
-//    std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
-//    int sampleMem = 40;
-//    SchemaPtr schemaMem = MemoryMetrics::createSchema("", configuredMem);
-//    std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
-//    int sampleNetwork = 30;
-//    SchemaPtr schemaNetwork = NetworkMetrics::createSchema("", configuredNetwork);
+    std::list<std::string> configuredCpu = {"coreNum", "user", "system"};
+    int sampleCpu = 60;
+    SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
+    std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
+    int sampleMem = 40;
+    SchemaPtr schemaMem = MemoryMetrics::createSchema("", configuredMem);
+    std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
+    int sampleNetwork = 30;
+    SchemaPtr schemaNetwork = NetworkMetrics::createSchema("", configuredNetwork);
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
-//   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+//    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 
     // Json Kram
     std::string tempString = workerConfigPtr->monitoringConfiguration.getValue();
@@ -125,10 +125,10 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
     MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlanJson);
 
-//    ASSERT_TRUE(monitoringPlanJson->getSchema(CpuMetric)->equals(schemaCpu, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(WrappedCpuMetrics)->equals(schemaCpu, false));
     ASSERT_TRUE(monitoringPlanJson->getSchema(DiskMetric)->equals(schemaDisk, false));
-//    ASSERT_TRUE(monitoringPlanJson->getSchema(MemoryMetric)->equals(schemaMem, false));
-//    ASSERT_TRUE(monitoringPlanJson->getSchema(NetworkMetric)->equals(schemaNetwork, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(MemoryMetric)->equals(schemaMem, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(WrappedNetworkMetrics)->equals(schemaNetwork, false));
 
     // TODO: check if Catalog is init right; check the schema for each MetricType
 

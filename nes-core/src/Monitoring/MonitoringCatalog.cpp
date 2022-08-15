@@ -50,7 +50,7 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     std::unordered_map<MetricType, MetricCollectorPtr> metrics;
     if(monitoringPlan->hasMetric(WrappedCpuMetrics)) {
         metrics.insert({MetricType::WrappedCpuMetrics,
-                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(CpuMetric)))});
+                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics)))});
     }
     if (monitoringPlan->hasMetric(DiskMetric)) {
         metrics.insert({MetricType::DiskMetric,
@@ -62,7 +62,7 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     }
     if (monitoringPlan->hasMetric(WrappedNetworkMetrics)) {
         metrics.insert({MetricType::WrappedNetworkMetrics,
-                        std::shared_ptr<MetricCollector>(new NetworkCollector(monitoringPlan->getSchema(NetworkMetric)))});
+                        std::shared_ptr<MetricCollector>(new NetworkCollector(monitoringPlan->getSchema(WrappedNetworkMetrics)))});
     }
     // TODO: add Registration and Runtime Metrics
 

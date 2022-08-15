@@ -55,6 +55,7 @@ SchemaPtr CpuCollector::getSchema() { return schema; }
 
 const MetricPtr CpuCollector::readMetric() const {
     CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
+    NES_DEBUG("CpuCollector: readMetric: The collector has the schema: " + this->schema->toString());
     wrapper.setSchema(this->schema);
     wrapper.setNodeId(getNodeId());
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);

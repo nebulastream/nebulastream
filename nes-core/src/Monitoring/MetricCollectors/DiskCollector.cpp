@@ -58,6 +58,7 @@ SchemaPtr DiskCollector::getSchema() { return schema; }
 
 const MetricPtr DiskCollector::readMetric() const {
     DiskMetrics metrics = resourceReader->readDiskStats();
+    NES_DEBUG("DiskCollector: Schema of collector is: " + this->schema->toString());
     metrics.setSchema(this->schema);
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);

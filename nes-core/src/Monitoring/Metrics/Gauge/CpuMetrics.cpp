@@ -193,19 +193,42 @@ std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
 }
 
 web::json::value CpuMetrics::toJson() const {
+    NES_DEBUG("CpuMetrics: toJson: I Am here to compare the schema: " + schema->toString());
     web::json::value metricsJson{};
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
-    metricsJson["USER"] = web::json::value::number(user);
-    metricsJson["NICE"] = web::json::value::number(nice);
-    metricsJson["SYSTEM"] = web::json::value::number(system);
-    metricsJson["IDLE"] = web::json::value::number(idle);
-    metricsJson["IOWAIT"] = web::json::value::number(iowait);
-    metricsJson["IRQ"] = web::json::value::number(irq);
-    metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
-    metricsJson["STEAL"] = web::json::value::number(steal);
-    metricsJson["GUEST"] = web::json::value::number(guest);
-    metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
+    if (schema->contains("coreNum")) {
+        metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
+    }
+    if (schema->contains("user")) {
+        metricsJson["USER"] = web::json::value::number(user);
+    }
+    if (schema->contains("nice")) {
+        metricsJson["NICE"] = web::json::value::number(nice);
+    }
+    if (schema->contains("system")) {
+        metricsJson["SYSTEM"] = web::json::value::number(system);
+    }
+    if (schema->contains("idle")) {
+        metricsJson["IDLE"] = web::json::value::number(idle);
+    }
+    if (schema->contains("iowait")) {
+        metricsJson["IOWAIT"] = web::json::value::number(iowait);
+    }
+    if (schema->contains("irq")) {
+        metricsJson["IRQ"] = web::json::value::number(irq);
+    }
+    if (schema->contains("softirq")) {
+        metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
+    }
+    if (schema->contains("steal")) {
+        metricsJson["STEAL"] = web::json::value::number(steal);
+    }
+    if (schema->contains("guest")) {
+        metricsJson["GUEST"] = web::json::value::number(guest);
+    }
+    if (schema->contains("guestnice")) {
+        metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
+    }
 
     return metricsJson;
 }

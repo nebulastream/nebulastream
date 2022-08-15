@@ -205,19 +205,46 @@ bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs ==
 web::json::value MemoryMetrics::toJson() const {
     web::json::value metricsJson{};
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
-    metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
-    metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
-    metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
-    metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
-    metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
-    metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
-    metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
-    metricsJson["PROCS"] = web::json::value::number(PROCS);
-    metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
-    metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
-    metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
-    metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+    if (schema->contains("TOTAL_RAM")) {
+        metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
+    }
+    if (schema->contains("TOTAL_SWAP")) {
+        metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
+    }
+    if (schema->contains("FREE_RAM")) {
+        metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
+    }
+    if (schema->contains("SHARED_RAM")) {
+        metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
+    }
+    if (schema->contains("BUFFER_RAM")) {
+        metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
+    }
+    if (schema->contains("FREE_SWAP")) {
+        metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
+    }
+    if (schema->contains("TOTAL_HIGH")) {
+        metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
+    }
+    if (schema->contains("FREE_HIGH")) {
+        metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
+    }
+    if (schema->contains("PROCS")) {
+        metricsJson["PROCS"] = web::json::value::number(PROCS);
+    }
+    if (schema->contains("MEM_UNIT")) {
+        metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
+    }
+    if (schema->contains("LOADS_1MIN")) {
+        metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
+    }
+    if (schema->contains("LOADS_5MIN")) {
+        metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
+    }
+    if (schema->contains("LOADS_15MIN")) {
+        metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+    }
+
     return metricsJson;
 }
 

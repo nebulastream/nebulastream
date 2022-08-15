@@ -46,6 +46,7 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
 
 web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     web::json::value metricsJson{};
+    NES_DEBUG("MetricUtils: Vector get used!");
     for (const auto& metric : metrics) {
         auto jMetric = asJson(metric);
         metricsJson[toString(metric->getMetricType())] = jMetric;
@@ -54,6 +55,7 @@ web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {
 }
 
 web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
+    NES_DEBUG("MetricUtils: Unordered map get used!");
     web::json::value metricsJson{};
     for (const auto& metric : metrics) {
         web::json::value jMetric = asJson(metric.second);
@@ -63,6 +65,7 @@ web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_
 }
 
 web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
+    NES_DEBUG("MetricUtils: SotredNodeMetricsPtr get used!");
     web::json::value metricsJson{};
     for (auto metricTypeEntry : *metrics.get()) {
         std::shared_ptr<std::vector<TimestampMetricPtr>> metricVec = metricTypeEntry.second;
