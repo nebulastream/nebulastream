@@ -26,10 +26,22 @@
 
 namespace NES {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
+    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedCpuMetrics,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(DiskMetric,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(MemoryMetric,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedNetworkMetrics,0));
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
 MonitoringPlan::MonitoringPlan(const std::map<MetricType, SchemaPtr>& metrics) : monitoringPlan(metrics) {
+    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedCpuMetrics,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(DiskMetric,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(MemoryMetric,0));
+    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedNetworkMetrics,0));
+    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
+}
+
+MonitoringPlan::MonitoringPlan(const std::map<MetricType, SchemaPtr>& metrics, const std::map<MetricType, uint64_t>& sample) : monitoringPlan(metrics), sampleRate(sample) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
@@ -39,6 +51,11 @@ MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
 
 MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>& monitoringPlan) {
     return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan));
+}
+
+MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>& monitoringPlan,
+                                         const std::map<MetricType, uint64_t>& sample) {
+    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan, sample));
 }
 
 //set the MonitoringPlan for the Yaml Konfiguration
@@ -76,22 +93,51 @@ MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>&
 
 MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
     std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
+    std::map <MetricType, uint64_t> configuredSampleRates;
     SchemaPtr schema;
     web::json::value attributesArray;
     std::list<std::string> attributesList;
-    if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
+    if (configuredMetrics["cpu"].is_object()) {
+        if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(WrappedCpuMetrics,configuredMetrics["cpu"]["sampleRate"].as_integer()));
+        } else {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(WrappedCpuMetrics,0));
+        }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["cpu"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
                                                   SchemaPtr>(WrappedCpuMetrics, CpuMetrics::createSchema("", attributesList)));
-    } if (configuredMetrics["disk"]["sampleRate"].is_number()) {
+    } if (configuredMetrics["disk"].is_object()) {
+        if (configuredMetrics["disk"]["sampleRate"].is_number()) {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(DiskMetric,configuredMetrics["disk"]["sampleRate"].as_integer()));
+        } else {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(DiskMetric,0));
+        }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["disk"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
                                                   SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", attributesList)));
-    } if (configuredMetrics["memory"]["sampleRate"].is_number()) {
+    } if (configuredMetrics["memory"].is_object()) {
+        if (configuredMetrics["memory"]["sampleRate"].is_number()) {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(MemoryMetric, configuredMetrics["memory"]["sampleRate"].as_integer()));
+        } else {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(MemoryMetric,0));
+        }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["memory"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
                                                   SchemaPtr>(MemoryMetric, MemoryMetrics::createSchema("", attributesList)));
-    } if (configuredMetrics["network"]["sampleRate"].is_number()) {
+    } if (configuredMetrics["network"].is_object()) {
+        if (configuredMetrics["network"]["sampleRate"].is_number()) {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(WrappedNetworkMetrics,configuredMetrics["network"]["sampleRate"].as_integer()));
+        } else {
+            configuredSampleRates.insert(std::pair<MetricType,
+                                                   uint64_t>(WrappedNetworkMetrics,0));
+        }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["network"]["attributes"]);
         configuredMonitoringPlan.insert(std::pair<MetricType,
                                                   SchemaPtr>(WrappedNetworkMetrics, NetworkMetrics::createSchema("", attributesList)));
@@ -106,12 +152,16 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
 //                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", attributesList)));
 //    }
 
-    return MonitoringPlan::create(configuredMonitoringPlan);
+    return MonitoringPlan::create(configuredMonitoringPlan, configuredSampleRates);
 }
 
 SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
     // TODO: auffangen, falls MetricType nicht in MonitoringPlan vorhanden
     return monitoringPlan.find(metric)->second;
+}
+
+uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
+    return sampleRate.find(metric)->second;
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {

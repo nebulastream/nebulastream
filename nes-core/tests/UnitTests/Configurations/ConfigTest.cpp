@@ -101,16 +101,16 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testWorkerConfigLennart) {
     // schema zum Vergleich
     std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
-    int sampleDisk = 50;
+    uint64_t sampleDisk = 5000;
     SchemaPtr schemaDisk = DiskMetrics::createSchema("", configuredDisk);
     std::list<std::string> configuredCpu = {"coreNum", "user", "system"};
-    int sampleCpu = 60;
+    uint64_t sampleCpu = 6000;
     SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
     std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
-    int sampleMem = 40;
+    uint64_t sampleMem = 4000;
     SchemaPtr schemaMem = MemoryMetrics::createSchema("", configuredMem);
     std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
-    int sampleNetwork = 30;
+    uint64_t sampleNetwork = 3000;
     SchemaPtr schemaNetwork = NetworkMetrics::createSchema("", configuredNetwork);
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
@@ -129,6 +129,12 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     ASSERT_TRUE(monitoringPlanJson->getSchema(DiskMetric)->equals(schemaDisk, false));
     ASSERT_TRUE(monitoringPlanJson->getSchema(MemoryMetric)->equals(schemaMem, false));
     ASSERT_TRUE(monitoringPlanJson->getSchema(WrappedNetworkMetrics)->equals(schemaNetwork, false));
+
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(WrappedCpuMetrics), sampleCpu);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(DiskMetric), sampleDisk);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(MemoryMetric), sampleMem);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(WrappedNetworkMetrics), sampleNetwork);
+
 
     // TODO: check if Catalog is init right; check the schema for each MetricType
 

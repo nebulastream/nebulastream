@@ -363,7 +363,7 @@ std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::random
     std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
     return returnTuple;
 }
-std::list<std::string> MetricUtils::jsonArrayToList(web::json::value jsonAttributes) {
+std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttributes) {
     std::list<std::string> attributesList;
     int i;
     auto arrayLength = jsonAttributes.size();

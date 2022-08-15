@@ -26,16 +26,16 @@ numberOfBuffersInSourceLocalBufferPool: 128
 monitoringConfiguration: '
   - cpu:
     attributes: "coreNum, user, system"
-    sampleRate: 60
+    sampleRate: 6000
   - disk:
     attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
-    sampleRate: 50
+    sampleRate: 5000
   - memory:
     attributes: "FREE_RAM, FREE_SWAP, TOTAL_RAM"
-    sampleRate: 40
+    sampleRate: 4000
   - network:
     attributes: "rBytes, rFifo, tPackets"
-    sampleRate: 30
+    sampleRate: 3000
 '
 
 #monitoringConfiguration: '

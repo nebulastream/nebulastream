@@ -150,6 +150,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
         workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
         workerConfig->monitoringConfiguration = workerConfigPtr->monitoringConfiguration.getValue();
+
         if ((workerConfig->monitoringConfiguration.getValue().empty())) {
           monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
@@ -157,6 +158,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         else {
           web::json::value configurationMonitoringJson =
               MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
+
           MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
           MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
           std::vector<uint64_t> nodeIdVector {topologyNodeId};

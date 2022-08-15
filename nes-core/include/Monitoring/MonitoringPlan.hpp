@@ -37,6 +37,8 @@ class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
     static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics,
+                                    const std::map<MetricType, uint64_t>& sample);
     static MonitoringPlanPtr defaultPlan();
 
 //    static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
@@ -45,6 +47,8 @@ class MonitoringPlan {
 
 
     SchemaPtr getSchema(MetricType metric);
+
+    uint64_t getSampleRate(MetricType metric);
 
     /**
      * @brief Returns the default collectors of the plan.
@@ -89,10 +93,12 @@ class MonitoringPlan {
   private:
     explicit MonitoringPlan(const std::set<MetricType>& metrics);
     explicit MonitoringPlan(const std::map <MetricType, SchemaPtr>& metrics);
+    explicit MonitoringPlan(const std::map <MetricType, SchemaPtr>& metrics, const std::map<MetricType, uint64_t>& sample);
 
     //enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
     std::map <MetricType, SchemaPtr> monitoringPlan;
+    std::map <MetricType, uint64_t> sampleRate;
 };
 
 }// namespace NES
