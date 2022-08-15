@@ -43,6 +43,9 @@ NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) 
 NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr, SchemaPtr schemaNew) {
     if (!arr.empty()) {
         networkMetrics = std::move(arr);
+        for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+            networkMetrics[i].setSchema(schemaNew);
+        }
         schema = std::move(schemaNew);
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
@@ -50,9 +53,19 @@ NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr, 
     NES_TRACE("NetworkMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
 }
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(SchemaPtr schema) : schema(std::move(schema)) {}
+NetworkMetricsWrapper::NetworkMetricsWrapper(SchemaPtr schema) : schema(std::move(schema)) {
+    for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+        networkMetrics[i].setSchema(schema);
+    }
+}
 
-void NetworkMetricsWrapper::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
+void NetworkMetricsWrapper::setSchema(SchemaPtr newSchema) {
+    for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+        networkMetrics[i].setSchema(newSchema);
+    }
+    this->schema = std::move(newSchema);
+}
+
 SchemaPtr NetworkMetricsWrapper::getSchema() const { return this->schema; }
 
 void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {

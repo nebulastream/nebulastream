@@ -18,25 +18,25 @@ numberOfBuffersInGlobalBufferManager: 2048
 numberOfBuffersInSourceLocalBufferPool: 128
 
  Monitoring Configuration
+#monitoringConfiguration: '
+#  - cpu:
+#    attributes: "irq, user, system"
+#    sampleRate: 60
+#'
 monitoringConfiguration: '
   - cpu:
     attributes: "coreNum, user, system"
     sampleRate: 60
+  - disk:
+    attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
+    sampleRate: 50
+  - memory:
+    attributes: "FREE_RAM, FREE_SWAP, TOTAL_RAM"
+    sampleRate: 40
+  - network:
+    attributes: "rBytes, rFifo, tPackets"
+    sampleRate: 30
 '
-#monitoringConfiguration: '
-#  - cpu:
-#    attributes: "coreNum, user, system"
-#    sampleRate: 60
-#  - disk:
-#    attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
-#    sampleRate: 50
-#  - memory:
-#    attributes: "FREE_RAM, FREE_SWAP, TOTAL_RAM"
-#    sampleRate: 40
-#  - network:
-#    attributes: "rBytes, rFifo, tPackets"
-#    sampleRate: 30
-#'
 
 #monitoringConfiguration: '
 #  - disk:

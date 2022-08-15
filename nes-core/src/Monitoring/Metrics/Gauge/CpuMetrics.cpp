@@ -53,19 +53,18 @@ SchemaPtr CpuMetrics::getDefaultSchema(const std::string& prefix) {
 }
 
 std::vector<std::string> CpuMetrics::getAttributesVector() {
-    std::vector<std::string> attributesVector { "coreNum", "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal",
+    std::vector<std::string> attributesVector { "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal",
                                               "guest", "guestnice"};
     return attributesVector;
 }
 
 SchemaPtr CpuMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64);
+                           ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "coreNum", BasicType::UINT64);
 
     for (const auto& metric : configuredMetrics) {
-        if (metric == "coreNum") {
-            schema->addField(prefix + "coreNum", BasicType::UINT64);
-        } else if (metric == "user") {
+        if (metric == "user") {
             schema->addField(prefix + "user", BasicType::UINT64);
         } else if (metric == "nice") {
             schema->addField(prefix + "nice", BasicType::UINT64);
@@ -103,9 +102,7 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
-    if (schema->contains("coreNum")) {
-        buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
-    }
+    buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
     if (schema->contains("user")) {
         buffer[tupleIndex][cnt++].write<uint64_t>(user);
     }
@@ -149,9 +146,8 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
 
     int cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
-    if (schema->contains("coreNum")) {
-        coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
-    }
+    coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
+
     if (schema->contains("user")) {
         user = buffer[tupleIndex][cnt++].read<uint64_t>();
     }
@@ -196,9 +192,8 @@ web::json::value CpuMetrics::toJson() const {
     NES_DEBUG("CpuMetrics: toJson: I Am here to compare the schema: " + schema->toString());
     web::json::value metricsJson{};
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    if (schema->contains("coreNum")) {
-        metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
-    }
+    metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
+
     if (schema->contains("user")) {
         metricsJson["USER"] = web::json::value::number(user);
     }

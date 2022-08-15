@@ -62,12 +62,11 @@ SchemaPtr NetworkMetrics::getDefaultSchema(const std::string& prefix) {
 
 SchemaPtr NetworkMetrics::createSchema(const std::string& prefix, std::list<std::string> configuredMetrics) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64);
+                           ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "interfaceName", BasicType::UINT64);
 
     for (const auto& metric : configuredMetrics) {
-        if (metric == "interfaceName") {
-            schema->addField(prefix + "interfaceName", BasicType::UINT64);
-        } else if (metric == "rBytes") {
+        if (metric == "rBytes") {
             schema->addField(prefix + "rBytes", BasicType::UINT64);
         } else if (metric == "rPackets") {
             schema->addField(prefix + "rPackets", BasicType::UINT64);
@@ -120,9 +119,7 @@ void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
-    if (schema->contains("interfaceName")) {
-        buffer[tupleIndex][cnt++].write<uint64_t>(interfaceName);
-    }
+    buffer[tupleIndex][cnt++].write<uint64_t>(interfaceName);
     if (schema->contains("rBytes")) {
         buffer[tupleIndex][cnt++].write<uint64_t>(rBytes);
     }
@@ -181,9 +178,8 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
 
     uint64_t cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
-    if (schema->contains("interfaceName")) {
-        interfaceName = buffer[tupleIndex][cnt++].read<uint64_t>();
-    }
+    interfaceName = buffer[tupleIndex][cnt++].read<uint64_t>();
+
     if (schema->contains("rBytes")) {
         rBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
     }
@@ -238,9 +234,8 @@ web::json::value NetworkMetrics::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    if (schema->contains("interfaceName")) {
-        metricsJson["INTERFACENAME"] = web::json::value::number(interfaceName);
-    }
+    metricsJson["INTERFACENAME"] = web::json::value::number(interfaceName);
+
     if (schema->contains("rBytes")) {
         metricsJson["R_BYTES"] = web::json::value::number(rBytes);
     }
@@ -313,7 +308,7 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
 web::json::value asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
 
 std::vector<std::string> NetworkMetrics::getAttributesVector() {
-    std::vector<std::string> attributesVector { "interfaceName", "rBytes", "rPackets", "rErrs", "rDrop", "rFifo", "rFrame", "rCompressed",
+    std::vector<std::string> attributesVector { "rBytes", "rPackets", "rErrs", "rDrop", "rFifo", "rFrame", "rCompressed",
                                               "rMulticast", "tBytes", "tPackets", "tErrs", "tDrop", "tFifo", "tColls", "tCarrier",
                                               "tCompressed"};
     return attributesVector;

@@ -37,11 +37,19 @@ CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     NES_TRACE("CpuMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
 }
 
-CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId, SchemaPtr schema) : nodeId(nodeId), schema(std::move(schema)) {}
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId, SchemaPtr schema) : nodeId(nodeId), schema(std::move(schema)) {
+    NES_DEBUG("CpuMetricsWrapper: Constructor: Allocating a CpuMetricsWrapper!");
+    for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+        cpuMetrics[i].setSchema(schema);
+    }
+}
 
 CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr, SchemaPtr schemaNew) {
     if (!arr.empty()) {
         cpuMetrics = std::move(arr);
+        for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+            cpuMetrics[i].setSchema(schemaNew);
+        }
         schema = std::move(schemaNew);
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
@@ -58,7 +66,12 @@ CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const {
     return cpuMetric;
 }
 
-void CpuMetricsWrapper::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
+void CpuMetricsWrapper::setSchema(SchemaPtr newSchema) {
+    for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+        cpuMetrics[i].setSchema(newSchema);
+    }
+    this->schema = std::move(newSchema);
+}
 SchemaPtr CpuMetricsWrapper::getSchema() const { return this->schema; }
 
 void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
@@ -100,10 +113,10 @@ web::json::value CpuMetricsWrapper::toJson() const {
     NES_DEBUG("CpuMetricsWrapper: toJson(): I Am her now!");
     web::json::value metricsJsonWrapper{};
     metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
-
+    SchemaPtr schemaTemp = this->schema;
     web::json::value metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
-        cpuMetrics[i].setSchema();
+//        cpuMetrics[i].setSchema(schemaTemp);
         if (i == 0) {
             metricsJson["TOTAL"] = cpuMetrics[i].toJson();
         } else {
