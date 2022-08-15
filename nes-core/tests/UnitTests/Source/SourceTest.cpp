@@ -273,6 +273,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     Runtime::TupleBuffer getRecyclableBuffer() {
         auto* p = new uint8_t[5];
         auto fakeBuffer = Runtime::TupleBuffer::wrapMemory(p, sizeof(uint8_t) * 5, this);
+        fakeBuffer.setNumberOfTuples(5);
         return fakeBuffer;
     }
 
@@ -1032,6 +1033,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     }));
     mDataSource->runningRoutine();
     EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
+    EXPECT_GE(mDataSource->gatheringInterval.count(), oldInterval.count() / 2);
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
