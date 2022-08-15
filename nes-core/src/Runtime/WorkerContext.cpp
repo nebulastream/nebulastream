@@ -40,7 +40,6 @@ WorkerContext::~WorkerContext() {
     storage.clear();
 //    statisticsFile.flush();
 //    statisticsFile.close();
-    storageFile.flush();
     storageFile.close();
 }
 
@@ -114,6 +113,7 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         auto timeNow = std::chrono::system_clock::to_time_t(ts);
         storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
         storageFile << oldStorageSize - this->storage[nesPartitionId].size() << "\n";
+        storageFile.flush();
     }
 }
     
