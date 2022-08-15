@@ -99,21 +99,22 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
     NES_ASSERT(buffer.getWatermark() > currentEpoch, "Trying to insert watermark" << buffer.getWatermark() << "smaller than epoch" << currentEpoch);
     storage[nesPartitionId].push(buffer);
-    auto ts = std::chrono::system_clock::now();
-    auto timeNow = std::chrono::system_clock::to_time_t(ts);
-//    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-//    storageFile << getStorageSize(nesPartitionId) << "\n";
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     currentEpoch = timestamp;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
+    auto oldStorageSize = getStorageSize(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
             NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
             iteratorPartitionId->second.pop();
         }
     }
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    storageFile << oldStorageSize - getStorageSize(nesPartitionId) << "\n";
 }
     
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
