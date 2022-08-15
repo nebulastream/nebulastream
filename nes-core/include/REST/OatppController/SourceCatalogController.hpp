@@ -58,7 +58,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<SourceCatalogController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, Catalogs::Source::SourceCatalogPtr sourceCatalog,  ErrorHandlerPtr errorHandler, std::string routerPrefixAddition){
-        oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog, errorHandler, completeRouterPrefix);
     }
 
@@ -109,7 +109,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             dto->sourceInformation = result.to_string();
             return createDtoResponse(Status::CODE_200, dto);
         } catch (const std::exception& exc) {
-            NES_ERROR("SourceCatalogController: handleGet -allPhysicalSource: Exception occurred while building the query plan for user request.");
+            NES_ERROR("SourceCatalogController: get allPhysicalSource: Exception occurred while building the query plan for user request.");
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
@@ -130,7 +130,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             return createDtoResponse(Status::CODE_200, dto);
         } catch (const std::exception& exc) {
             NES_ERROR(
-                "SourceCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical source"
+                "SourceCatalogController: get schema: Exception occurred while retrieving the schema for a logical source"
                 << exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
@@ -142,13 +142,14 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
              BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
-        NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: REST received request to add new Logical Source.");
+        NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
         try {
-            // TODO make oatpp string format compatibel to String
-           // NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Try to add new Logical Source "
-           //           << logicalSourceName << " and" << schema);
+            std::string sourceName = logicalSourceName->c_str();
+            std::string schemaName = schema->c_str();
+            NES_DEBUG("SourceCatalogController: addLogicalSource: Try to add new Logical Source "
+                      << sourceName << " and " << schemaName);
             bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
-            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
+            NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?"
                       << added);
             //Prepare the response
             if (added){
@@ -159,7 +160,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                 return errorHandler->handleError(Status::CODE_400, "Logical Source with same name already exists!");
             }
         } catch (const std::exception& exc) {
-            NES_ERROR("SourceCatalogController: handlePost -addLogicalSource: Exception occurred while trying to add new "
+            NES_ERROR("SourceCatalogController: addLogicalSource: Exception occurred while trying to add new "
                       "logical source"
                       << exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
@@ -174,14 +175,14 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
              BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
-        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update the given Logical Source.");
+        NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
         try {
-            // TODO make oatpp string format compatibel to String
-            // NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Try to update  Logical Source "
-            //           << logicalSourceName << " and" << schema);
-            // TODO Same problem with string format
-            bool updated = sourceCatalog->updatedLogicalSource(logicalSourceName, schema);
-            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
+            std::string sourceName = logicalSourceName->c_str();
+            std::string schemaName = schema->c_str();
+            NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source "
+                       << sourceName << " and" << schemaName);
+            bool updated = sourceCatalog->updatedLogicalSource(sourceName, schemaName);
+            NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?"
                       << updated);
             // Prepare the response
             if (updated){
@@ -189,16 +190,45 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                 return createDtoResponse(Status::CODE_200, dto);
             }
             else{
-                NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: unable to find given source");
+                NES_DEBUG("SourceCatalogController: updateLogicalSource: unable to find given source");
                 return errorHandler->handleError(Status::CODE_400, "Unable to update logical source.");
             }
         } catch (const std::exception& exc) {
-            NES_ERROR("SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while updating "
+            NES_ERROR("SourceCatalogController: updateLogicalSource: Exception occurred while updating "
                       "Logical Source."
                       << exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
+        }
+    }
+
+    ENDPOINT("DELETE", "deleteLogicalSource", deleteLogicalSource,
+             PATH(String, logicalSourceName)) {
+        if (logicalSourceName == "") {
+            NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the delete request");
+            return errorHandler->handleError(Status::CODE_400, "Bad Request: Parameter logicalSourceName must be provided");
+        }
+        auto dto = SourceCatalogBoolResponse::createShared();
+        NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
+        try {
+            bool deleted = sourceCatalog->removeLogicalSource(logicalSourceName);
+            NES_DEBUG("SourceCatalogController: deleteLogicalSource: Successfully deleted the given logical Source: "
+                      << deleted);
+            // Prepare the response
+            if (deleted){
+                dto->success = deleted;
+                return createDtoResponse(Status::CODE_200, dto);
+            }
+            else{
+                NES_DEBUG("SourceCatalogController: deleteLogicalSource: unable to find given source");
+                return errorHandler->handleError(Status::CODE_400, "Unable to delete logical source.");
+            }
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: deleteLogicalSource: Exception occurred while building the query plan for user request.");
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
         }
     }
 
