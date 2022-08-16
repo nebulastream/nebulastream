@@ -40,11 +40,11 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
 }
 
 bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const {
+    std::unique_lock lock(watermarkLatch);
     auto iter = localWatermarkProcessor.find(originId);
     if (iter != localWatermarkProcessor.end()) {
         return iter->second->isWatermarkSynchronized();
     }
-    NES_ERROR("The watermark processor doesn't have given origin id")
     return false;
 }
 
