@@ -102,12 +102,13 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
-        auto oldStorageSize = this->storage[nesPartitionId].size();
-        while (!iteratorPartitionId->second.empty()) {
-            auto topWatermark = iteratorPartitionId->second.top().getWatermark();
+        auto& [nesPar, pq] = *iteratorPartitionId;
+        auto oldStorageSize = pq.size();
+        while (!pq.empty()) {
+            auto topWatermark = pq.top().getWatermark();
             if (topWatermark <= timestamp) {
                 NES_DEBUG("BufferStorage: Delete tuple with watermark" << topWatermark);
-                iteratorPartitionId->second.pop();
+                pq.pop();
             }
             else {
                 break;
@@ -116,7 +117,7 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         auto ts = std::chrono::system_clock::now();
         auto timeNow = std::chrono::system_clock::to_time_t(ts);
         storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-        storageFile << oldStorageSize - this->storage[nesPartitionId].size() << "\n";
+        storageFile << oldStorageSize - pq.size() << "\n";
         storageFile.flush();
     }
 }
