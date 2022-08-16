@@ -56,7 +56,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
 //        auto timestamp = watermarkProcessor->getCurrentWatermark();
         if(currentTimestamp) {
 //            auto t1 = std::chrono::high_resolution_clock::now();
-            notifyEpochTermination(currentTimestamp);
+            notifyEpochTermination(currentTimestamp + 5000);
 //            auto t2 = std::chrono::high_resolution_clock::now();
 //            auto ts = std::chrono::system_clock::now();
 //            auto timeNow = std::chrono::system_clock::to_time_t(ts);
