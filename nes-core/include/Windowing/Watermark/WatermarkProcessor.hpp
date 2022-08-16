@@ -51,6 +51,8 @@ class WatermarkProcessor {
      */
     WatermarkTs getCurrentWatermark() const;
 
+    bool isWatermarkSynchronized() const;
+
   private:
     struct WatermarkBarrierComparator {
         bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2) {

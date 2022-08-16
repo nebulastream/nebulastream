@@ -193,6 +193,9 @@ class SinkMedium : public Runtime::Reconfigurable {
     FaultToleranceType::Value faultToleranceType;
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
+    uint64_t buffersPerEpoch;
+    bool isWaiting;
+//    std::ofstream statisticsFile;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
     uint64_t sentBuffer{0};// TODO check thread safety

@@ -71,6 +71,8 @@ class MultiOriginWatermarkProcessor {
      */
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
+    bool isWatermarkSynchronized(OriginId originId) const;
+
   private:
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
