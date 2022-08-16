@@ -220,6 +220,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransfo
                                                       Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
 
+
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
 

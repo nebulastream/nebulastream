@@ -183,6 +183,10 @@ class Hashmap {
 
     Entry** entries;
 
+    uint64_t numberOfEntries(){
+        return currentSize;
+    }
+
   private:
     using ptr_t = uint64_t;
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
@@ -226,6 +230,8 @@ void inline Hashmap::insert(Entry* entry, hash_t hash) {
     entries[pos] = entry;
     this->currentSize++;
 }
+
+
 
 inline Hashmap::Entry* Hashmap::find_chain_tagged(hash_t hash) {
     //static_assert(sizeof(hash_t) == 8, "Hashtype not supported");
@@ -341,6 +347,10 @@ class HashMapFactory {
                    size_t valueSize,
                    size_t nrEntries);
     Hashmap create();
+    std::unique_ptr<Hashmap> createPtr();
+
+    size_t getKeySize();
+    size_t getValueSize();
 
   private:
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;

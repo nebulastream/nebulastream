@@ -114,5 +114,6 @@ void RecordBuffer::setNumRecords(Value<UInt64> value) {
 Value<MemRef> RecordBuffer::getBuffer() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
 }
+const Value<MemRef>& RecordBuffer::getReference() { return tupleBufferRef; }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -1,0 +1,87 @@
+#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Experimental/Interpreter/Util/HashMap.hpp>
+
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
+    : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
+
+extern "C" void* getNextEntry(void* entryPtr) {
+    auto entry = (NES::Experimental::Hashmap::Entry*) entryPtr;
+    return entry->next;
+}
+HashMap::Entry HashMap::Entry::getNext() {
+    auto value = FunctionCall<>("getNextEntry", getNextEntry, ref);
+    return Entry(value, keyOffset, valueOffset);
+}
+Value<MemRef> HashMap::Entry::getKeyPtr() { return (ref + keyOffset).as<MemRef>(); }
+Value<MemRef> HashMap::Entry::getValuePtr() { return (ref + valueOffset).as<MemRef>(); }
+Value<Any> HashMap::Entry::isNull() { return ref == 0; }
+
+extern "C" void* getHashEntry(void* state, uint64_t hash) {
+    auto hashMap = (NES::Experimental::Hashmap*) state;
+    auto entry = hashMap->find_chain(hash);
+    return entry;
+}
+extern "C" void* createEntryProxy(void* state, uint64_t hash) {
+    auto hashMap = (NES::Experimental::Hashmap*) state;
+    return hashMap->insertEntry(hash);
+}
+
+Value<> HashMap::compareKeys(std::vector<Value<>> keyValues, Value<MemRef> ref) const {
+    Value<Boolean> equals = true;
+    for (auto& keyValue : keyValues) {
+        equals = equals && keyValue == ref.load<Int64>();
+        ref = ref + 8ul;
+    }
+    return equals;
+}
+
+HashMap::Entry HashMap::getEntryFromHashTable(Value<UInt64> hash) const {
+    auto entry = FunctionCall<>("getHashEntry", getHashEntry, hashTableRef, hash);
+    return Entry(entry, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize+ valueOffset);
+}
+
+extern "C" uint64_t calculateHashProxy(int64_t value, uint64_t hash) {
+    const NES::Experimental::Hash<NES::Experimental::MurMurHash3> hasher =
+        NES::Experimental::Hash<NES::Experimental::MurMurHash3>();
+    return hasher(value, hash);
+}
+
+Value<UInt64> HashMap::calculateHash(std::vector<Value<>> keys) {
+    Value<UInt64> hash = NES::Experimental::MurMurHash3::SEED;
+    for (auto& keyValue : keys) {
+        hash = FunctionCall<>("calculateHashProxy", calculateHashProxy, keyValue.as<Int64>(), hash);
+    }
+    return hash;
+}
+
+HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> hash) {
+    auto entryRef = FunctionCall<>("createEntryProxy", createEntryProxy, hashTableRef, hash);
+    auto entry = Entry(entryRef, NES::Experimental::Hashmap::headerSize, valueOffset);
+    entry.getKeyPtr().store(keys[0]);
+    return entry;
+}
+
+HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
+    // calculate hash
+    auto hash = calculateHash(keys);
+
+    // return entry if it exists
+    auto entry = getEntryFromHashTable(hash);
+    for (; !entry.isNull(); entry = entry.getNext()) {
+        if (compareKeys(keys, entry.getKeyPtr())) {
+            return entry;
+        }
+    }
+    // creates a new hashmap entry and place it to the right spot.
+    entry = createEntry(keys, hash);
+    return entry;
+}
+HashMap::HashMap(Value<MemRef> hashTableRef,
+                 int64_t valueOffset,
+                 std::vector<IR::Types::StampPtr> keyTypes,
+                 std::vector<IR::Types::StampPtr> valueTypes)
+    : hashTableRef(hashTableRef), valueOffset(valueOffset), keyTypes(keyTypes), valueTypes(valueTypes) {}
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

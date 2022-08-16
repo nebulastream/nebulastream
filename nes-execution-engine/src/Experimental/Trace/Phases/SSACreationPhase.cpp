@@ -29,6 +29,7 @@ SSACreationPhase::SSACreationPhaseContext::SSACreationPhaseContext(std::shared_p
     : trace(std::move(trace)) {}
 
 std::shared_ptr<ExecutionTrace> SSACreationPhase::SSACreationPhaseContext::process() {
+    trace->getBlock(0).arguments = trace->getArguments();
     // In the first step we get the return block, which contains the return call.
     // Starting with this block we trace all inputs
     auto& returnBlock = trace->getBlock(trace->returnRef->blockId);

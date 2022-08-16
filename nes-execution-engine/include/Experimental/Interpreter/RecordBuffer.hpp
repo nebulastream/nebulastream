@@ -33,7 +33,7 @@ class RecordBuffer {
     Value<UInt64> getNumRecords();
     Value<MemRef> getBuffer();
     void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
-
+    const Value<MemRef>& getReference();
   public:
     Value<MemRef> tupleBufferRef;
     void setNumRecords(Value<UInt64> value);

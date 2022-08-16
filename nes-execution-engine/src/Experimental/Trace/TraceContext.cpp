@@ -24,9 +24,10 @@
 #include <map>
 namespace NES::ExecutionEngine::Experimental::Trace {
 
-static thread_local TraceContext threadLocalTraceContext;
-void initThreadLocalTraceContext() { threadLocalTraceContext = TraceContext(); }
-TraceContext* getThreadLocalTraceContext() { return &threadLocalTraceContext; }
+static thread_local TraceContext* threadLocalTraceContext;
+void initThreadLocalTraceContext() { threadLocalTraceContext = new TraceContext(); }
+void disableThreadLocalTraceContext() {  }
+TraceContext* getThreadLocalTraceContext() { return threadLocalTraceContext; }
 
 TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
     reset();
@@ -194,6 +195,10 @@ void TraceContext::trace(Operation& operation) {
                 // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
                 //           << ")-----------" << std::endl;
                 std::cout << *executionTrace.get() << std::endl;
+                if(executionTrace->localTagMap.contains(tag)){
+                    std::cout << "----------- Found local repeating node ------------" << std::endl;
+                    std::cout << "This is a loop head " << ref->blockId << std::endl;
+                }
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
                 auto mergeOperation = mergeBlock.operations.front();
                 currentOperationCounter = 1;
@@ -209,6 +214,9 @@ void TraceContext::trace(Operation& operation) {
     currentOperationCounter++;
 }
 
+void TraceContext::addTraceArgument(const ValueRef& value) {
+    executionTrace->addArgument(value);
+}
 
 /*
 void TraceContext::trace(OpCode op, const Value& input, Value& result) {
@@ -312,9 +320,9 @@ bool ValueRef::operator==(const ValueRef& rhs) const { return blockId == rhs.blo
 bool ValueRef::operator!=(const ValueRef& rhs) const { return !(rhs == *this); }
 
 std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace) {
-
     for (size_t i = 0; i < executionTrace.blocks.size(); i++) {
-        os << "Block" << i << "";
+        os << "Block" << i ;
+
         os << executionTrace.blocks[i];
     }
     return os;
@@ -324,8 +332,12 @@ void ExecutionTrace::traceAssignment(ValueRef srcRef, ValueRef valueRef) {
     frame[srcRef] = valueRef;
 }
 
+std::vector<ValueRef> ExecutionTrace::getArguments() {
+    return arguments;
+}
+
 std::ostream& operator<<(std::ostream& os, const BlockRef& block) {
-    os << "B" << block.block << "(";
+    os << "Block" << block.block << "(";
     for (auto argument : block.arguments) {
         os << argument << ",";
     }
