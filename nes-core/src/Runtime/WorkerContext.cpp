@@ -105,9 +105,15 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         auto oldStorageSize = this->storage[nesPartitionId].size();
-        while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
-            NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
-            iteratorPartitionId->second.pop();
+        while (!iteratorPartitionId->second.empty()) {
+            auto topWatermark = iteratorPartitionId->second.top().getWatermark();
+            if (topWatermark <= timestamp) {
+                NES_DEBUG("BufferStorage: Delete tuple with watermark" << topWatermark);
+                iteratorPartitionId->second.pop();
+            }
+            else {
+                break;
+            }
         }
         auto ts = std::chrono::system_clock::now();
         auto timeNow = std::chrono::system_clock::to_time_t(ts);
