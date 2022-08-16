@@ -39,7 +39,7 @@ Value<> HashMap::compareKeys(std::vector<Value<>> keyValues, Value<MemRef> ref) 
 
 HashMap::Entry HashMap::getEntryFromHashTable(Value<UInt64> hash) const {
     auto entry = FunctionCall<>("getHashEntry", getHashEntry, hashTableRef, hash);
-    return Entry(entry, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize+ valueOffset);
+    return Entry(entry, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize + valueOffset);
 }
 
 extern "C" uint64_t calculateHashProxy(int64_t value, uint64_t hash) {
@@ -59,7 +59,11 @@ Value<UInt64> HashMap::calculateHash(std::vector<Value<>> keys) {
 HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> hash) {
     auto entryRef = FunctionCall<>("createEntryProxy", createEntryProxy, hashTableRef, hash);
     auto entry = Entry(entryRef, NES::Experimental::Hashmap::headerSize, valueOffset);
-    entry.getKeyPtr().store(keys[0]);
+    auto keyPtr = entry.getKeyPtr();
+    for (auto i = 0ul; i < keys.size(); i++) {
+        keyPtr.store(keys[i]);
+        keyPtr = keyPtr + 8ul;
+    }
     return entry;
 }
 
