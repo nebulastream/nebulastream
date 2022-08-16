@@ -337,7 +337,7 @@ TEST_P(QueryExecutionTest, aggQueryTest) {
 }
 
 TEST_P(QueryExecutionTest, tpchQ1) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto bm = std::make_shared<Runtime::BufferManager>();
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
@@ -405,14 +405,16 @@ TEST_P(QueryExecutionTest, tpchQ1) {
     //  count() as avg_price,
     auto sumAggFunction8 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
 
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction1,
-                                                                   sumAggFunction2,
-                                                                   sumAggFunction3,
-                                                                   sumAggFunction4,
-                                                                   sumAggFunction5,
-                                                                   sumAggFunction6,
-                                                                   sumAggFunction7,
-                                                                   sumAggFunction8};
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {
+        sumAggFunction1,
+        sumAggFunction2,
+        sumAggFunction3,
+        sumAggFunction4,
+        sumAggFunction5,
+        sumAggFunction6,
+        sumAggFunction7,
+        sumAggFunction8,
+    };
     std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
     NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 64, 1000);
     auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
@@ -441,6 +443,35 @@ TEST_P(QueryExecutionTest, tpchQ1) {
 
     auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
 
+    struct REntry {
+        void* next;
+        std::int64_t hash;
+        std::int64_t k1;
+        std::int64_t k2;
+        std::int64_t ag1;
+        std::int64_t ag2;
+        std::int64_t ag3;
+        std::int64_t ag4;
+        std::int64_t ag5;
+        std::int64_t ag6;
+        std::int64_t ag7;
+        std::int64_t ag8;
+    };
+
+    auto entries = entryBuffer[0].getBuffer<REntry>();
+    NES_DEBUG("K1 " << entries[0].k1);
+    NES_DEBUG("K2 " << entries[0].k2);
+
+    NES_DEBUG("K1 " << entries[1].k1);
+    NES_DEBUG("K2 " << entries[1].k2);
+
+    NES_DEBUG("K1 " << entries[2].k1);
+    NES_DEBUG("K2 " << entries[2].k2);
+
+    NES_DEBUG("K1 " << entries[3].k1);
+    NES_DEBUG("K2" << entries[3].k2);
+    //ASSERT_EQ(entries[0].ag1, 37719753);
+    //ASSERT_EQ(entries[0].ag2, 5656804138090);
 }
 
 TEST_P(QueryExecutionTest, tpchQ6_agg) {
