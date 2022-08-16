@@ -58,8 +58,8 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
-        auto timestamp = watermarkProcessor->getCurrentWatermark();
-        if (timestamp) {
+        currentTimestamp = std::max(currentTimestamp, inputBuffer.getWatermark());
+        if(currentTimestamp) {
             notifyEpochTermination(timestamp);
         }
     }
