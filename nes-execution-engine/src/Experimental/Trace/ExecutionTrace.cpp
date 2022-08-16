@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/OperationRef.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
 
@@ -29,10 +29,23 @@ void ExecutionTrace::addOperation(Operation& operation) {
     if (operation.op == RETURN) {
         returnRef = operation.operationRef;
     }
+}
 
+void ExecutionTrace::addArgument(const ValueRef& argument) {
+    if (std::find(arguments.begin(), arguments.end(), argument) == arguments.end()) {
+        this->arguments.emplace_back(argument);
+    }
 }
 
 uint32_t ExecutionTrace::createBlock() {
+
+    // add first block
+    if (blocks.empty()) {
+        // add arguments to first block
+        blocks.emplace_back(blocks.size());
+        blocks[0].arguments = arguments;
+        return blocks.size() - 1;
+    }
     blocks.emplace_back(blocks.size());
     return blocks.size() - 1;
 }
@@ -90,8 +103,14 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 
     for (uint32_t opIndex = operationIndex; opIndex < oldBlock.operations.size(); opIndex++) {
         auto sourceOperation = oldBlock.operations[opIndex];
+        if (sourceOperation.operationRef == nullptr) {
+            sourceOperation.operationRef = std::make_shared<OperationRef>(0, 0);
+        }
+        // if(sourceOperation.operationRef != nullptr){
+
         sourceOperation.operationRef->blockId = mergedBlockId;
         sourceOperation.operationRef->operationId = mergeBlock.operations.size();
+        //}
         mergeBlock.operations.emplace_back(sourceOperation);
     }
 
@@ -206,6 +225,4 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
     }
 }
 
-
-
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Trace

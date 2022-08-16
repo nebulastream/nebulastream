@@ -144,7 +144,7 @@ SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experi
         }
     }
     NES_DEBUG("Symbolic Execution: iterations " << iterations);
-
+    disableThreadLocalTraceContext();
     return tracCtx->getExecutionTrace();
 }
 

@@ -25,6 +25,9 @@ class AddExpression : public Expression {
     ExpressionPtr rightSubExpression;
 
   public:
+    AddExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+
+  public:
     Value<> execute(Record& record) override;
 };
 

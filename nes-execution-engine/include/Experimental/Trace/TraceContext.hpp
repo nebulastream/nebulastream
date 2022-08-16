@@ -44,6 +44,7 @@ class TraceContext {
     std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
     std::shared_ptr<ExecutionTrace> getExecutionTrace();
     ValueRef createNextRef(IR::Types::StampPtr type);
+    void addTraceArgument(const ValueRef& value);
 
   private:
     uint64_t createStartAddress();
@@ -55,6 +56,7 @@ class TraceContext {
 
 TraceContext* getThreadLocalTraceContext();
 void initThreadLocalTraceContext();
+void disableThreadLocalTraceContext();
 
 
 template<typename Functor>

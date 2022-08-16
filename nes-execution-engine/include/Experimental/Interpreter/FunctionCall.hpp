@@ -118,6 +118,9 @@ auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, uint8_t*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
     }
+    if constexpr (std::is_same<Arg, bool>::value) {
+        return Value<Boolean>(std::make_unique<Boolean>((bool) argument));
+    }
 }
 
 template<typename R>
@@ -127,6 +130,9 @@ auto createDefault() {
     }
     if constexpr (std::is_same<R, uint64_t>::value) {
         return Value<UInt64>(std::make_unique<UInt64>(0));
+    }
+    if constexpr (std::is_same<R, bool>::value) {
+        return Value<Boolean>(std::make_unique<Boolean>(false));
     }
     if constexpr (std::is_same<R, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));

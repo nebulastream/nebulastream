@@ -66,12 +66,11 @@ std::unique_ptr<AggregationState> SumFunction::createState() {
     NES_THROW_RUNTIME_ERROR("Sum state on " << stamp->toString() << " is not supported.");
 }
 
-SumFunction::SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression, IR::Types::StampPtr stamp)
-    : readFieldExpression(readFieldExpression), stamp(stamp) {}
+SumFunction::SumFunction(ExpressionPtr expression, IR::Types::StampPtr stamp) : expression(expression), stamp(stamp) {}
 
 void SumFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& record) {
     auto sumState = (SumState*) state.get();
-    auto value = readFieldExpression->execute(record);
+    auto value = expression->execute(record);
     sumState->currentSum = sumState->currentSum + value;
 }
 
