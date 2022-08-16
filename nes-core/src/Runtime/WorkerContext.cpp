@@ -96,12 +96,10 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    NES_ASSERT(buffer.getWatermark() > currentEpoch, "Trying to insert watermark" << buffer.getWatermark() << "smaller than epoch" << currentEpoch);
     storage[nesPartitionId].push(buffer);
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
-    currentEpoch = timestamp;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         auto oldStorageSize = this->storage[nesPartitionId].size();
