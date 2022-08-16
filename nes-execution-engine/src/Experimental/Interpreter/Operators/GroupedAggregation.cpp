@@ -62,6 +62,7 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
         auto state = aggregationFunction->loadState(valuePtr);
         aggregationFunction->liftCombine(state, record);
         aggregationFunction->storeState(valuePtr, state);
+        valuePtr = valuePtr + 8ul;
     }
 }
 
