@@ -50,10 +50,10 @@ uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
 void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
+    currentTimestamp = std::max(currentTimestamp, inputBuffer.getWatermark());
     //watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
 //        auto timestamp = watermarkProcessor->getCurrentWatermark();
-        currentTimestamp = std::max(currentTimestamp, inputBuffer.getWatermark());
         if(currentTimestamp) {
 //            auto t1 = std::chrono::high_resolution_clock::now();
             notifyEpochTermination(currentTimestamp);
