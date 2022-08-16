@@ -580,16 +580,15 @@ endif ()
 ###########################################################################################
 
 # Add tests with command
+include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
-    include(cmake/NebulaStreamTest.cmake)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
     if (NES_CODE_COVERAGE)
         set(CODE_COVERAGE ON)
         include(cmake/CodeCoverage.cmake)
-        include(cmake/NebulaStreamTest.cmake)
         enable_extra_test_features()
         message(STATUS "Tests are enabled with code coverage")
     endif ()
