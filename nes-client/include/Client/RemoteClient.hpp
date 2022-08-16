@@ -17,6 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Util/QueryStatus.hpp>
 #include <chrono>
 

@@ -158,8 +158,6 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
 
-message(STATUS "Compile defs contain: " ${MYDEFS})
-
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
 # Currently we support the following log levels:
 # TRACE, DEBUG, INFO, WARN, ERROR, FATAL_ERROR, and NONE.
