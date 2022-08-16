@@ -187,7 +187,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     // check if we jump to a loop head:
     if (targetBlock.operations.back().op == CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
-        if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
+        /*if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
             NES_DEBUG("1. found loop");
             auto loopOperator = std::make_shared<IR::Operations::LoopOperation>(IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<IR::Operations::DefaultLoopInfo>());
@@ -201,7 +201,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
             blockMap[blockRef.block] = loopHeadBlock;
             block->addOperation(loopOperator);
             return;
-        }
+        }*/
     }
 
     auto resultTargetBlock = processBlock(scope - 1, trace->getBlock(blockRef.block));

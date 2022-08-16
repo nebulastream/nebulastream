@@ -45,7 +45,11 @@ std::ostream& operator<<(std::ostream& os, const Block& block) {
     for (size_t i = 0; i < block.arguments.size(); i++) {
         os << block.arguments[i] << ",";
     }
-    os << ")\n";
+    os << ")";
+    if(block.type==Block::ControlFlowMerge){
+        os << " ControlFlowMerge";
+    }
+    os << "\n";
     for (size_t i = 0; i < block.operations.size(); i++) {
         os << "\t" << block.operations[i] << "\n";
     }

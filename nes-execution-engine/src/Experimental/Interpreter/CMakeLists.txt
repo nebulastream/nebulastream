@@ -15,6 +15,7 @@ add_subdirectory(Expressions)
 add_subdirectory(Operators)
 add_subdirectory(DataTypes)
 add_subdirectory(Exceptions)
+add_subdirectory(Utils)
 
 
 add_source_files(nes-execution-engine

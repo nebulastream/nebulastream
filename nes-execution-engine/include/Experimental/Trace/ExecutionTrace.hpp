@@ -23,6 +23,7 @@ class ExecutionTrace {
     ExecutionTrace();
     ~ExecutionTrace() = default;
     void addOperation(Operation& operation);
+    void addArgument(const ValueRef& argument);
 
     uint32_t createBlock();
 
@@ -46,10 +47,11 @@ class ExecutionTrace {
 
     void traceAssignment(ValueRef value, ValueRef value1);
     std::shared_ptr<OperationRef> returnRef;
-
+    std::vector<ValueRef> getArguments();
   private:
     uint32_t currentBlock;
     std::vector<Block> blocks;
+    std::vector<ValueRef> arguments;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

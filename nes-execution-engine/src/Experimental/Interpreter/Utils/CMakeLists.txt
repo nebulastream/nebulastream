@@ -11,10 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 add_source_files(nes-execution-engine
-        CastUtils.cpp
-        NESIRDumpHandler.cpp
-        PluginRegistry.cpp
-        TPCHUtil.cpp
+        HashMap.cpp
         )

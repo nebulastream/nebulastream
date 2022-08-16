@@ -20,4 +20,5 @@ add_source_files(nes-execution-engine
         Map.cpp
         Aggregation.cpp
         AggregationFunction.cpp
+        GroupedAggregation.cpp
         )
