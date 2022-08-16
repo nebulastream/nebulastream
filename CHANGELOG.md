@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.83](https://github.com/nebulastream/nebulastream/tree/v0.2.83) (2022-08-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.82...v0.2.83)
+
+### Miscellaneous Issues ✌️
+
+- Enable Code Coverage [\#1195](https://github.com/nebulastream/nebulastream/issues/1195)
+
 ## [v0.2.82](https://github.com/nebulastream/nebulastream/tree/v0.2.82) (2022-08-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.81...v0.2.82)
