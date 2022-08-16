@@ -20,5 +20,7 @@ Value<> DivExpression::execute(Record& record) {
     Value rightValue = rightSubExpression->execute(record);
     return leftValue / rightValue;
 }
+DivExpression::DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
+    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

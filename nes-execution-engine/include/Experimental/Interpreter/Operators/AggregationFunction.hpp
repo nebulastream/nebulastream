@@ -47,7 +47,7 @@ class AggregationFunction {
 
 class SumFunction : public AggregationFunction {
   public:
-    SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression, IR::Types::StampPtr stamp);
+    SumFunction(ExpressionPtr expression, IR::Types::StampPtr stamp);
     std::unique_ptr<AggregationState> createGlobalState() override;
     std::unique_ptr<AggregationState> createState() override;
     void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) override;
@@ -57,7 +57,7 @@ class SumFunction : public AggregationFunction {
     void storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) override;
 
   private:
-    std::shared_ptr<ReadFieldExpression> readFieldExpression;
+    ExpressionPtr expression;
     IR::Types::StampPtr stamp;
 };
 

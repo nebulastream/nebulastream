@@ -52,6 +52,8 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
     // generate trace
     auto executionTrace = Trace::traceFunctionSymbolically([&rootOperator, &executionContext, &recordBuffer]() {
+        Trace::getThreadLocalTraceContext()->addTraceArgument(executionContext.getReference().ref);
+        Trace::getThreadLocalTraceContext()->addTraceArgument(recordBuffer.getReference().ref);
         rootOperator->open(executionContext, recordBuffer);
         rootOperator->close(executionContext, recordBuffer);
     });
@@ -60,7 +62,8 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     timer.snapshot("TraceGeneration");
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("NESIRGeneration");
-    //std::cout << ir->toString() << std::endl;
+    std::cout << ir->toString() << std::endl;
+    std::cout <<timer << std::endl;
     //ir = loopInferencePhase.apply(ir);
 
     return backend->compile(pipelineContext, physicalOperatorPipeline, ir);

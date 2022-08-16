@@ -24,6 +24,7 @@ class MulExpression : public Expression {
     ExpressionPtr rightSubExpression;
 
   public:
+    MulExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
     Value<> execute(Record& record) override;
 };
 

@@ -21,6 +21,11 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class DivExpression : public Expression {
   private:
     ExpressionPtr leftSubExpression;
+
+  public:
+    DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+
+  private:
     ExpressionPtr rightSubExpression;
 
   public:

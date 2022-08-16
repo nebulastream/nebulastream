@@ -38,6 +38,7 @@ class RuntimeExecutionContext {
     OperatorState* getLocalState(const Operator* op);
     WorkerContext getWorkerContext();
     PipelineContext getPipelineContext();
+    const Value<MemRef>& getReference();
 
   private:
     std::unordered_map<const Operator*, std::unique_ptr<OperatorState>> localStateMap;

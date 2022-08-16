@@ -63,4 +63,8 @@ PipelineContext RuntimeExecutionContext::getPipelineContext() {
     return PipelineContext(pipelineContextRef);
 }
 
+const Value<MemRef>& RuntimeExecutionContext::getReference() {
+    return this->executionContext;
+}
+
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
