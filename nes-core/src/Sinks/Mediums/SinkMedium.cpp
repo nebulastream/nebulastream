@@ -62,7 +62,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
 //        auto timestamp = watermarkProcessor->getCurrentWatermark();
         if(currentTimestamp) {
-            notifyEpochTermination(timestamp);
+            notifyEpochTermination(currentTimestamp);
         }
     }
     bufferCount++;
