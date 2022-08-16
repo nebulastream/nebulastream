@@ -198,6 +198,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety
     std::mutex writeMutex; // TODO remove the mutex
+    uint64_t currentTimestamp;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

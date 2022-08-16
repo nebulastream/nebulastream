@@ -37,6 +37,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
+    currentTimestamp = 0;
 //    statisticsFile.open("sinkMedium.csv", std::ios::out);
 //    statisticsFile << "time, waitingTime\n";
 }
@@ -52,10 +53,10 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     //watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
 //        auto timestamp = watermarkProcessor->getCurrentWatermark();
-        auto timestamp = inputBuffer.getWatermark();
-        if(timestamp) {
+        currentTimestamp = std::max(currentTimestamp, inputBuffer.getWatermark());
+        if(currentTimestamp) {
 //            auto t1 = std::chrono::high_resolution_clock::now();
-            notifyEpochTermination(timestamp);
+            notifyEpochTermination(currentTimestamp);
 //            auto t2 = std::chrono::high_resolution_clock::now();
 //            auto ts = std::chrono::system_clock::now();
 //            auto timeNow = std::chrono::system_clock::to_time_t(ts);
