@@ -196,6 +196,35 @@ TEST_F(SymbolicExecutionTest, logicalExpressionGreaterEqualsTest) {
     ASSERT_EQ(block0.operations[3].op, Trace::NEGATE);
 }
 
+Value<> logicalAssignTest() {
+    Value<Boolean> res = true;
+    Value x = Value(1);
+    res = res && x == 42;
+    Value y = Value(1);
+    res = res && y == 42;
+    Value z = Value(1);
+    res = res && z == 42;
+    if (res) {
+        return 42;
+    } else {
+        return 1;
+    }
+}
+
+TEST_F(SymbolicExecutionTest, logicalAssignEqualsTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return logicalAssignTest();
+    });
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    auto basicBlocks = executionTrace->getBlocks();
+    std::cout << *executionTrace.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[2].op, Trace::CONST);
+}
+
 void logicalExpression() {
     Value iw = Value(1);
     auto result = iw == 2 && iw < 1 || true;
