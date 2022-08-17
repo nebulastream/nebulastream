@@ -124,6 +124,15 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
         std::unordered_map<ValueRef, ValueRef, ValueRefHasher> assignmentMap;
         for (uint64_t i = 0; i < block.operations.size(); i++) {
             auto& operation = block.operations[i];
+            if (operation.op == CMP) {
+                if (auto* valueRef = std::get_if<ValueRef>(&operation.result)) {
+                    auto foundAssignment = assignmentMap.find(*valueRef);
+                    if (foundAssignment != assignmentMap.end()) {
+                        valueRef->blockId = foundAssignment->second.blockId;
+                        valueRef->operationId = foundAssignment->second.operationId;
+                    }
+                }
+            }
             if (operation.op == ASSIGN) {
                 assignmentMap[get<ValueRef>(operation.result)] = get<ValueRef>(operation.input[0]);
             } else {

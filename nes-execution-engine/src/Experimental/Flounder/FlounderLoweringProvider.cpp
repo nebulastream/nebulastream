@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp"
+#include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
@@ -24,8 +26,8 @@
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <flounder/compiler.h>
 #include <flounder/executable.h>
+#include <flounder/program.h>
 #include <flounder/statement.h>
-
 namespace NES::ExecutionEngine::Experimental::Flounder {
 
 FlounderLoweringProvider::FlounderLoweringProvider(){};
@@ -170,7 +172,8 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     flounder::Node* leftFlounderRef = frame.getValue(leftInput->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
 
-    if (leftInput->getStamp()->isAddress() && addOpt->getUsages()[0]->getOperationType() == IR::Operations::Operation::LoadOp) {
+    if (leftInput->getStamp()->isAddress() && addOpt->getUsages().size() == 1
+        && addOpt->getUsages()[0]->getOperationType() == IR::Operations::Operation::LoadOp) {
         auto result = program.mem_add(leftFlounderRef, rightInput);
         frame.setValue(addOpt->getIdentifier(), result);
         return;
@@ -218,9 +221,31 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     return;
 }
 
-void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::CompareOperation> opt,
+void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::SubOperation> addOpt,
                                                         FlounderFrame& frame) {
-    auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
+    auto leftInput = addOpt->getLeftInput();
+    flounder::Node* leftFlounderRef = frame.getValue(leftInput->getIdentifier());
+
+    if (leftInput->getUsages().size() > 1 || leftFlounderRef->type() != flounder::VREG) {
+        // the operation has shared access to the left input -> create new result register
+        auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
+        program << program.mov(result, leftFlounderRef);
+        leftFlounderRef = result;
+    }
+    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
+
+    auto addFOp = program.sub(leftFlounderRef, rightInput);
+    frame.setValue(addOpt->getIdentifier(), leftFlounderRef);
+    program << addFOp;
+    // clear registers if we dont used them
+    if (addOpt->getRightInput()->getUsages().size() == 1 && rightInput->type() == flounder::VREG) {
+        // program << program.clear(static_cast<flounder::VirtualRegisterIdentifierNode*>(rightInput));
+    }
+    return;
+}
+
+void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::CompareOperation>, FlounderFrame&) {
+    /*auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
 
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
@@ -231,7 +256,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
         program << program.clear(tempVreg);
     } else {
         program << program.cmp(leftInput, rightInput);
-    }
+    }*/
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame) {
@@ -244,14 +269,14 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     program << program.or_(leftInput, rightInput);
 }
 
-void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame) {
-    auto resultVreg = createVreg(opt->getIdentifier(), opt->getStamp(), frame);
+void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::AndOperation>, FlounderFrame&) {
+    /*auto resultVreg = createVreg(opt->getIdentifier(), opt->getStamp(), frame);
     auto leftInput = frame.getValue(opt->getLeftInput()->getIdentifier());
     program << program.mov(resultVreg, leftInput);
     auto rightInput = frame.getValue(opt->getRightInput()->getIdentifier());
     // cmp
     program << program.and_(resultVreg, rightInput);
-    frame.setValue(opt->getIdentifier(), resultVreg);
+    frame.setValue(opt->getIdentifier(), resultVreg);*/
 }
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::LoadOperation> opt,
@@ -278,11 +303,57 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
     processInline(branchOp->getNextBlockInvocation().getBlock(), targetFrame);
 }
 
+void FlounderLoweringProvider::LoweringContext::processAnd(std::shared_ptr<IR::Operations::AndOperation> andOpt,
+                                                           FlounderFrame& frame,
+                                                           flounder::LabelNode* falseCase) {
+    if (andOpt->getLeftInput()->getOperationType() == IR::Operations::Operation::CompareOp) {
+        auto left = std::static_pointer_cast<IR::Operations::CompareOperation>(andOpt->getLeftInput());
+        processCmp(left, frame, falseCase);
+    } else if (andOpt->getLeftInput()->getOperationType() == IR::Operations::Operation::AndOp) {
+        auto left = std::static_pointer_cast<IR::Operations::AndOperation>(andOpt->getLeftInput());
+        processAnd(left, frame, falseCase);
+    } else if (andOpt->getLeftInput()->getOperationType() == IR::Operations::Operation::ConstBooleanOp) {
+
+    } else {
+        NES_THROW_RUNTIME_ERROR("Left is not a compare operation but a " << andOpt->getLeftInput()->toString());
+    }
+
+    if (andOpt->getRightInput()->getOperationType() == IR::Operations::Operation::CompareOp) {
+        auto right = std::static_pointer_cast<IR::Operations::CompareOperation>(andOpt->getRightInput());
+        processCmp(right, frame, falseCase);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Right is not a compare operation but a " << andOpt->getRightInput()->toString());
+    }
+}
+
+void FlounderLoweringProvider::LoweringContext::processCmp(std::shared_ptr<IR::Operations::CompareOperation> compOpt,
+                                                           FlounderFrame& frame,
+                                                           flounder::LabelNode* falseCase) {
+    auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
+    if (leftInput->type() != flounder::VREG) {
+        auto tempVreg = createVreg(compOpt->getIdentifier(), compOpt->getStamp(), frame);
+        program << program.mov(tempVreg, leftInput);
+        program << program.cmp(tempVreg, rightInput);
+        program << program.clear(tempVreg);
+    } else {
+        program << program.cmp(leftInput, rightInput);
+    }
+
+    switch (compOpt->getComparator()) {
+        case IR::Operations::CompareOperation::IEQ: program << program.jne(falseCase); break;
+        case IR::Operations::CompareOperation::ISLT: program << program.jge(falseCase); break;
+        case IR::Operations::CompareOperation::INE: program << program.je(falseCase); break;
+        default: NES_THROW_RUNTIME_ERROR("No handler for comp");
+    }
+}
+
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::IfOperation> ifOpt,
                                                         FlounderFrame& frame) {
     auto trueLabel = program.label("Block_" + ifOpt->getTrueBlockInvocation().getBlock()->getIdentifier());
     auto falseLabel = program.label("Block_" + ifOpt->getFalseBlockInvocation().getBlock()->getIdentifier());
     // clear all non args
+    auto falseBlockFrame = processBlockInvocation(ifOpt->getFalseBlockInvocation(), frame);
     auto trueBlockFrame = processBlockInvocation(ifOpt->getTrueBlockInvocation(), frame);
 
     auto booleanValue = ifOpt->getValue();
@@ -290,20 +361,18 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
         program << program.jnz(trueLabel);
     } else if (booleanValue->getOperationType() == IR::Operations::Operation::AndOp) {
         auto comp = std::static_pointer_cast<IR::Operations::AndOperation>(ifOpt->getValue());
-        auto andValue = frame.getValue(comp->getIdentifier());
-        program << program.test(andValue, program.constant64(INT64_MAX));
-        program << program.jnz(trueLabel);
+        processAnd(comp, frame, falseLabel);
+        program << program.jmp(trueLabel);
+    } else if (booleanValue->getOperationType() == IR::Operations::Operation::NegateOp) {
+        auto negateOperation = std::static_pointer_cast<IR::Operations::NegateOperation>(ifOpt->getValue());
+        auto comp = std::static_pointer_cast<IR::Operations::CompareOperation>(negateOperation->getInput());
+        processCmp(comp, frame, trueLabel);
+        program << program.jmp(falseLabel);
     } else {
         auto comp = std::static_pointer_cast<IR::Operations::CompareOperation>(ifOpt->getValue());
-        switch (comp->getComparator()) {
-            case IR::Operations::CompareOperation::IEQ: program << program.je(trueLabel); break;
-            case IR::Operations::CompareOperation::ISLT: program << program.jl(trueLabel); break;
-            default: NES_THROW_RUNTIME_ERROR("No handler for comp");
-        }
+        processCmp(comp, frame, falseLabel);
+        program << program.jmp(trueLabel);
     }
-    auto falseBlockFrame = processBlockInvocation(ifOpt->getFalseBlockInvocation(), frame);
-
-    program << program.jmp(falseLabel);
 
     process(ifOpt->getTrueBlockInvocation().getBlock(), trueBlockFrame);
     /*for (auto& item : trueBlockFrame.getContent()) {
@@ -355,6 +424,12 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
 
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::Operation> opt, FlounderFrame& frame) {
     switch (opt->getOperationType()) {
+        case IR::Operations::Operation::ConstBooleanOp: {
+            auto constInt = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
+            auto flounderConst = program.constant64(constInt->getValue() ? 1 : 0);
+            frame.setValue(constInt->getIdentifier(), flounderConst);
+            return;
+        }
         case IR::Operations::Operation::ConstIntOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
             auto flounderConst = program.constant64(constInt->getConstantIntValue());
@@ -369,6 +444,11 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
         case IR::Operations::Operation::MulOp: {
             auto mulOpt = std::static_pointer_cast<IR::Operations::MulOperation>(opt);
             process(mulOpt, frame);
+            return;
+        }
+        case IR::Operations::Operation::SubOp: {
+            auto subOpt = std::static_pointer_cast<IR::Operations::SubOperation>(opt);
+            process(subOpt, frame);
             return;
         }
         case IR::Operations::Operation::CompareOp: {
@@ -430,6 +510,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
             return;
         }
         default: {
+            //  NES_THROW_RUNTIME_ERROR("Operation " << opt->toString() << " not handled");
             return;
         }
     }
