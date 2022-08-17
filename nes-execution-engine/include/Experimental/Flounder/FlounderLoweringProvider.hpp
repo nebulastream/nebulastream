@@ -18,6 +18,7 @@
 #include <Experimental/NESIR/NESIR.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
@@ -29,10 +30,13 @@
 #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
+
 #include <flounder/compiler.h>
-#include <flounder/executable.h>
-#include <flounder/program.h>
 #include <set>
+
+namespace flounder{
+class Executable;
+}
 namespace NES::ExecutionEngine::Experimental::Flounder {
 
 class FlounderLoweringProvider {
@@ -64,6 +68,7 @@ class FlounderLoweringProvider {
         std::set<std::string> activeBlocks;
         void process(std::shared_ptr<IR::Operations::AddOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::MulOperation> opt, FlounderFrame& frame);
+        void process(std::shared_ptr<IR::Operations::SubOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::IfOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::BranchOperation> opt, FlounderFrame& frame);
@@ -73,6 +78,8 @@ class FlounderLoweringProvider {
         void process(std::shared_ptr<IR::Operations::ProxyCallOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
+        void processAnd(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
+        void processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
     };
 };
 
