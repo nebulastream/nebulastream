@@ -671,7 +671,7 @@ TEST_P(QueryExecutionTest, tpchQ6and) {
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         QueryExecutionTest,
-                        ::testing::Values("MLIR", "Flounder"),
+                        ::testing::Values("FLOUNDER"),
                         [](const testing::TestParamInfo<QueryExecutionTest::ParamType>& info) {
                             return info.param;
                         });

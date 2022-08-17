@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Flounder/FlounderLoweringProvider.hpp>
-#include <gtest/gtest.h>
-#include <Experimental/Babelfish/IRSerialization.hpp>
 #include <API/Schema.hpp>
+
+#include <gtest/gtest.h>
+#include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
@@ -37,8 +37,9 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+
 #include <Util/Logger/Logger.hpp>
-#include <babelfish.h>
+//#include <babelfish.h>
 #include <execinfo.h>
 #include <memory>
 
@@ -92,27 +93,25 @@ TEST_F(FlounderExpressionExecutionTest, addI8Test) {
 Value<> addExpressionConst() {
     Value<Int64> y = 58l;
     Value<Int64> x = 42l;
-    auto r =  x + y;
+    auto r = x + y;
     if (r == 42l) {
         r = r + 1l;
     }
     return r + 42l;
 }
 
-int64_t test(int64_t){
-    return 10;
-};
+int64_t test(int64_t) { return 10; };
 
 Value<> sumLoop(Value<MemRef> ptr) {
     auto agg = ptr.load<Int64>();
     //agg = FunctionCall<>("callUDFProxyFunction", test, agg);
     //for (Value start = 0l; start < 10l; start = start + 1l) {
-        agg = agg + 10l;
+    agg = agg + 10l;
     //}
     ptr.store(agg);
     return agg;
 }
-
+/*
 TEST_F(FlounderExpressionExecutionTest, bftest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
@@ -138,6 +137,7 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
         executePipeline(thread, pipeline,  &valI, nullptr);
     }
 }
+ */
 
 Value<> longExpression(Value<Int64> i1) {
     auto i2 = i1 + 1l;
@@ -285,7 +285,6 @@ TEST_F(FlounderExpressionExecutionTest, nestedIFThenElseConditionTest) {
     ASSERT_EQ(ex->execute<std::int64_t>(), 5);
 }
 
-
 /*
 TEST_F(FlounderExpressionExecutionTest, sumLoopTest) {
     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
@@ -399,6 +398,34 @@ TEST_F(FlounderExpressionExecutionTest, addIntFunctionTest) {
 
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return addIntFunction();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto lp = Flounder::FlounderLoweringProvider();
+    auto ex = lp.lower(ir);
+    constexpr std::int64_t argument = 11;
+    std::cout << " == Execute == " << std::endl;
+    ASSERT_EQ(ex->execute<int64_t>(), 5);
+}
+
+Value<> andIfFunction() {
+    auto x = Value<Int64>(2l);
+    auto y = Value<Int64>(3l);
+    if (x == 42l && y == 42l) {
+        x = x + y;
+    }
+    return x;
+}
+
+TEST_F(FlounderExpressionExecutionTest, andIfFunctionTest) {
+
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return andIfFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
