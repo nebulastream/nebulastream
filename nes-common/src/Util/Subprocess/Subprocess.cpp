@@ -70,7 +70,7 @@ Subprocess::~Subprocess() {
 }
 
 bool Subprocess::kill() {
-    NES_DEBUG("Killling pid=" << pid);
+    NES_DEBUG("Killing pid=" << pid);
     auto res = ::kill(pid, SIGKILL);
     NES_ASSERT(res == 0, "process could not be killed");
     NES_DEBUG("Process pid=" << pid << " successfully killed");
