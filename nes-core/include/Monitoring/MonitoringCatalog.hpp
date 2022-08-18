@@ -53,6 +53,8 @@ class MonitoringCatalog {
      */
     MetricCollectorPtr getMetricCollector(MetricType metricType);
 
+//    SchemaPtr getCollectorSchema(MetricTyp)
+
     [[nodiscard]] bool hasMetric(MetricType metric) const;
 
   private:

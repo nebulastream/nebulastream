@@ -93,6 +93,8 @@ class MetricUtils {
 
 //    static std::map<MetricType, std::list<std::string>> parseMonitoringConfigStringToMap(std::string rawConfigString);
 
+    static SchemaPtr defaultSchema(MetricType metricType);
+
     /**
      *
      * @param mapConfigurationMonitoring

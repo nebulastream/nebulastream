@@ -143,10 +143,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
 //        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->physicalSources.getValues());
         workerConfig->monitoringConfiguration = " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 50 ";
-//        workerConfig->monitoringConfiguration = " - cpu: attributes: \"coreNum, user, system\" sampleRate: 60 "
-//                                                "- disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 50 "
-//                                                "- memory: attributes: \"FREE_RAM, FREE_SWAP, TOTAL_RAM\" sampleRate: 40 "
-//                                                "- network: attributes: \"rBytes, rFifo, tPackets\" sampleRate: 30 ";
         WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
         workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
         workerConfig->monitoringConfiguration = workerConfigPtr->monitoringConfiguration.getValue();

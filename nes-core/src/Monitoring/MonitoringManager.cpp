@@ -107,7 +107,9 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 
             if (success) {
                 NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
-                monitoringPlanMap[nodeId] = monitoringPlan;
+                // TODO: register the MonitoringPlans and add LogicalStreamNames
+                std::list<std::string> emptyList;
+                monitoringPlanMap[nodeId] = std::make_pair(monitoringPlan, emptyList);
             } else {
                 NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
                 return false;
@@ -179,13 +181,15 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
                                 + " failed. Node does not exist in topology.");
     } else {
-        return monitoringPlanMap[nodeId];
+        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeId];
+
+        return tempPair.first;
     }
 }
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
+bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
     if (enableMonitoring) {
         for (auto collectorType : monitoringCollectors) {   //Collectoren erzeugen die Logicalstreams;
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
@@ -352,6 +356,42 @@ bool MonitoringManager::isMonitoringStream(std::string streamName) const { retur
 
 const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMonitoringQueries() const {
     return deployedMonitoringQueries;
+}
+
+std::string MonitoringManager::logicalSourceCheck(MetricType metric, SchemaPtr schema, uint64_t nodeId) {
+    std::string schemaString = schema->toString();
+    std::string logicalSourceName;
+
+    if (configuredLogicalSources[metric].count(schemaString) > 0) {
+        uint64_t nodeIdTemp = configuredLogicalSources[metric][schemaString].front();
+        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeIdTemp];
+        for (auto logicalSource : tempPair.second) {
+            if (logicalSource.starts_with(toString(metric))) {
+                return logicalSource;
+            }
+        }
+        // TODO: add the nodeId to all relevant catalogs
+        // TODO: exception if Problems
+    } else {
+        // TODO: create a logicalSource with all given Parameters
+        return logicalSourceName;
+    }
+
+    return 0;
+}
+
+std::string MonitoringManager::registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId) {
+    std::string logicalSourceName;
+    if (enableMonitoring) {
+        // auto generate the specifics
+        std::string metricString = NES::toString(metric);
+        // TODO: create the right name for the LogicalSoureName
+        NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
+        // TODO: add all the info to the right places
+//            config->logicalSources.add(LogicalSource::create(logicalSourceName, schema));
+    }
+    NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
+    return logicalSourceName;
 }
 
 }// namespace NES

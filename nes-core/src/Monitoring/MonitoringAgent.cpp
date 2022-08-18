@@ -101,14 +101,28 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
 bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
     if (enabled) {
         for (auto metricType : monitoringPlan->getMetricTypes()) {
-            // auto generate the specifics
-            MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
-            std::string metricTypeString = NES::toString(metricType);
-
-            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
-            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
-            workerConfig->physicalSources.add(source);
+            MonitoringSourceTypePtr sourceType;
+            uint64_t sampleRate = monitoringPlan->getSampleRate(metricType);
+            if (sampleRate > 0) {
+                sourceType = MonitoringSourceType::create(
+                    MetricUtils::createCollectorTypeFromMetricType(metricType),
+                         std::chrono::milliseconds(sampleRate));
+            } else {
+                sourceType = MonitoringSourceType::create(
+                    MetricUtils::createCollectorTypeFromMetricType(metricType));
+            }
+            SchemaPtr defaultSchema = MetricUtils::defaultSchema(metricType);
+            if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
+                // TODO: save in MonitoringManager that this node is using default Schema
+                std::string metricTypeString = NES::toString(metricType);
+                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
+                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
+                workerConfig->physicalSources.add(source);
+            } else {
+                // TODO: check if LogicalSource with same config already exists, if not create a logicalSource with the config
+//              // TODO: gRPC Call zu MonitoringManager -> LogicalSourceCheck; returned 0 oder die NodeId eines Knoten, welches das Schema hat
+                // Problem: has to communicate each time new: so max. 4 Transmissions
+            }
         }
         return true;
     }

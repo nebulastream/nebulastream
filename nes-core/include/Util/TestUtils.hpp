@@ -122,6 +122,9 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--" + MONITORING_CONFIG + "=" + config;
 }
 
+[[nodiscard]] std::string configPath(std::string path) {
+    return "--" + CONFIG_PATH + "=" + path;
+}
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags

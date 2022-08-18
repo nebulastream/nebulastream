@@ -19,7 +19,9 @@
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
@@ -372,5 +374,19 @@ std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttrib
     }
 
     return attributesList;
+}
+SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
+    SchemaPtr defaultSchema;
+    if (metricType == CpuMetric || metricType == WrappedCpuMetrics) {
+        defaultSchema = CpuMetrics::getDefaultSchema("");
+    } else if (metricType == NetworkMetric || metricType == WrappedNetworkMetrics) {
+        defaultSchema = NetworkMetrics::getDefaultSchema("");
+    } else if (metricType == DiskMetric) {
+        defaultSchema = DiskMetrics::getDefaultSchema("");
+    } else if (metricType == MemoryMetric) {
+        defaultSchema = MemoryMetrics::getDefaultSchema("");
+    }
+
+    return defaultSchema;
 }
 }// namespace NES

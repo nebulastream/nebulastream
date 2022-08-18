@@ -25,6 +25,8 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <map>
+#include <list>
 
 namespace NES {
 
@@ -152,7 +154,7 @@ class MonitoringManager {
      * @brief Registers the logical monitoring streams at the coordinator.
      * @return true if monitoring is disabled or if the streams have been registered successfully, else false
      */
-    bool registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config);
+    bool registerLogicalMonitoringStreamsDefault(const Configurations::CoordinatorConfigurationPtr config);
 
     /**
      * @brief Starts or redeploys monitoring queries at the coordinator
@@ -202,13 +204,18 @@ class MonitoringManager {
      */
     const std::unordered_map<std::string, QueryId>& getDeployedMonitoringQueries() const;
 
+    std::string logicalSourceCheck(MetricType metric,SchemaPtr schema, uint64_t nodeId);
+
+    std::string registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId);
+
+
   private:
     bool waitForQueryToStart(QueryId queryId, std::chrono::seconds timeout);
     bool checkStoppedOrTimeout(QueryId queryId, std::chrono::seconds timeout);
 
   private:
     MetricStorePtr metricStore;
-    std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    std::unordered_map<uint64_t, std::pair<MonitoringPlanPtr, std::list<std::string>>> monitoringPlanMap;
     std::unordered_map<std::string, QueryId> deployedMonitoringQueries;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
@@ -217,6 +224,8 @@ class MonitoringManager {
     std::set<std::string> logicalMonitoringSources;
     QueryServicePtr queryService;
     QueryCatalogServicePtr catalogService;
+    std::map<MetricType, std::map<std::string, std::list<uint64_t>>> configuredLogicalSources;
+
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
