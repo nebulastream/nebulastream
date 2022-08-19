@@ -130,6 +130,9 @@ add_nes_integration_test(udf-catalog-controller-tests "Integration/REST/Controll
 ### NES Query Controller Test ###
 add_nes_integration_test(query-controller-integration-tests "Integration/REST/Controller/QueryControllerTest.cpp")
 
+### NES Source Catalog Controller Test ###
+add_nes_integration_test(source-catalog-controller-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
+
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
 
