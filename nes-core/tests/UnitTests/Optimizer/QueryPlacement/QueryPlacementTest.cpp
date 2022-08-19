@@ -165,11 +165,6 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
 
-
-    for(auto& node : executionNodes){
-        NES_INFO("lololol " + node->toString());
-    }
-
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {

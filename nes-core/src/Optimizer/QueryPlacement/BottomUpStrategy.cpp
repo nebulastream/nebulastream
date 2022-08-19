@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "GRPC/WorkerRPCClient.hpp"
 #include "Plans/Global/Query/GlobalQueryPlan.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
@@ -24,8 +25,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 
@@ -57,14 +58,15 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 2. Place operators on the selected path
         performOperatorPlacement(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        //2a. Check fault tolerance
-        FaultToleranceType ftApproach = checkFaultTolerance(globalExecutionPlan, topology, queryId);
-        NES_INFO("\nCHOSEN FAULT-TOLERANCE APPROACH: " + toString(ftApproach));
+        //3. Check fault tolerance
+        //FaultToleranceType ftApproach = checkFaultTolerance(globalExecutionPlan, topology, queryId);
+        faultToleranceType = checkFaultTolerance(globalExecutionPlan, topology, queryId);
+        NES_INFO("\nCHOSEN FAULT-TOLERANCE APPROACH: " + toString(faultToleranceType));
 
-        // 3. add network source and sink operators
+        // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 4. Perform type inference on all updated query plans
+        // 5. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
@@ -302,7 +304,6 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
     double highestCost = 0;
 
-
     //Determine resource values of nodes from the Global Execution Plan after placing the query.
     for (auto& node : executionNodes) {
 
@@ -330,7 +331,6 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
         NES_INFO("\nUSED RESOURCES: " + std::to_string(node->getOccupiedResources(queryId)));
     }
 
-    double availableNodesCount = topologyNodes.size();
     double globalAvailableResources = 0;
     double globalUsedResources = 0;
     double globalResourceCapacity = 0;
@@ -378,7 +378,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
 
         if (topology->findNodeWithId(topologyId)->getAvailableResources() < highestCost /*&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))*/) {
-            NES_WARNING("\n[CPU] A_S not possible on node#" + std::to_string(topologyId) + " because it only has "
+            NES_WARNING("\n[CPU] ACTIVE_STANDBY not possible on node#" + std::to_string(topologyId) + " because it only has "
                         + std::to_string(topology->findNodeWithId(topologyId)->getAvailableResources()) + " available resources when "
                         + std::to_string(highestCost) + " was needed.")
 
@@ -405,6 +405,21 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     }
 
 
+    /*NES_WARNING("TEST")
+    WorkerRPCClientPtr workerClient;
+    TopologyNodePtr node = topology->findNodeWithId(executionNodes[1]->getId());
+    auto nodeIp = node->getIpAddress();
+    auto nodeGrpcPort = node->getGrpcPort();
+    std::string destAddress = "localhost";
+
+    if(workerClient->unregisterQuery(destAddress,queryId)){
+        NES_WARNING("unregistered successfully");
+    }else{
+        NES_WARNING("failed to unregister");
+    }
+
+    NES_WARNING("data: " + workerClient->requestMonitoringData(destAddress));*/
+
 
     //Print results.
     if (activeStandbyPossible) {
@@ -422,6 +437,9 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     } else {
         NES_WARNING("\n[CPU] CHECKPOINTING NOT POSSIBLE. NO CANDIDATE NODES WERE FOUND. ");
     }
+
+
+
 
     return FaultToleranceType::NONE;
 

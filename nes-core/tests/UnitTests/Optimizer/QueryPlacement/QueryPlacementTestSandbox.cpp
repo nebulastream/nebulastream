@@ -92,19 +92,19 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 125, 126, resources[1]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 127, 128, resources[2]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        TopologyNodePtr sourceNode3 = TopologyNode::create(12, "localhost", 123, 124, resources[3]);
+        TopologyNodePtr sourceNode3 = TopologyNode::create(12, "localhost", 129, 130, resources[3]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode3);
 
-        TopologyNodePtr sourceNode4 = TopologyNode::create(13, "localhost", 125, 126, resources[4]);
+        TopologyNodePtr sourceNode4 = TopologyNode::create(13, "localhost", 131, 132, resources[4]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode4);
 
-        TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 125, 126, 1);
+        TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 133, 134, 1);
         topology->addNewTopologyNodeAsChild(sourceNode4, sourceNode5);
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
@@ -278,9 +278,9 @@ TEST_F(QueryPlacementTestSandbox, checkpointingTest) {
 
     NES_INFO("\n" + std::to_string(executionNodes.size()));
 
-    for (auto& node : executionNodes){
+    /*for (auto& node : executionNodes){
         NES_INFO("\nnode#" + std::to_string(node->getId()) + ": " + node->getQuerySubPlans(queryId)[0]->getSourceOperators()[0]->getSourceDescriptor()->toString())
-    }
+    }*/
 
 
     //Assertion
