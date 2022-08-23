@@ -16,6 +16,7 @@
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
 #include <API/Query.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/QueryStatus.hpp>
