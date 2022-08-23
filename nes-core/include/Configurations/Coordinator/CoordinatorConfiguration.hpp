@@ -19,6 +19,7 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -148,6 +149,16 @@ class CoordinatorConfiguration : public BaseConfiguration {
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
     /**
+     * @brief Configures different properties of the internal worker in the coordinator configuration file and on the command line.
+     */
+    WorkerConfiguration worker = {WORKER_CONFIG, "Defines the configuration for the worker."};
+
+    /**
+     * @brief Path to a dedicated configuration file for the internal worker.
+     */
+    StringOption workerConfigPath = {WORKER_CONFIG_PATH, "", "Path to a configuration file for the internal worker."};
+
+    /**
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
@@ -178,6 +189,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &enableQueryReconfiguration,
                 &enableMonitoring,
                 &configPath,
+                &worker,
+                &workerConfigPath,
                 &optimizer,
                 &logicalSources,
                 &coordinatorHealthCheckWaitTime,

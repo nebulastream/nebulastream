@@ -175,6 +175,8 @@ const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
+const std::string WORKER_CONFIG = "worker";
+const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SERVER_TYPE = "restServerType";
 

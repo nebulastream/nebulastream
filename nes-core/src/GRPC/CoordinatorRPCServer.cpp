@@ -36,7 +36,7 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService,
-                                           Spatial::Index::Experimental::LocationServicePtr locationService)
+                                           NES::Spatial::Index::Experimental::LocationServicePtr locationService)
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
       locationService(locationService){};
@@ -344,7 +344,7 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
     const SerializableReconnectPrediction& reconnectPoint = request->reconnect();
-    const Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
+    const NES::Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
     bool success = locationService->updatePredictedReconnect(request->deviceid(), prediction);
     reply->set_success(success);
     if (success) {

@@ -42,6 +42,9 @@ using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
  */
 class WorkerConfiguration : public BaseConfiguration {
   public:
+    WorkerConfiguration() : BaseConfiguration() { };
+    WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) { };
+
     /**
      * @brief IP of the Worker.
      */
