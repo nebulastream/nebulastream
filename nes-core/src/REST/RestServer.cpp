@@ -46,7 +46,7 @@ RestServer::RestServer(std::string host,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr& bufferManager,
-                       const Spatial::Index::Experimental::LocationServicePtr& locationService)
+                       const NES::Spatial::Index::Experimental::LocationServicePtr& locationService)
     : restEngine(std::make_shared<RestEngine>(sourceCatalog,
                                               coordinator,
                                               queryCatalogService,
