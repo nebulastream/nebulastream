@@ -63,22 +63,22 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->numberOfSlots.getValue(), coordinatorConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
-              coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(),
-              coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
-              coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerEpoch.getValue(),
-              coordinatorConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
@@ -104,9 +104,9 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
 
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     std::string argv[] = {"--restIp=localhost",
-                          "--numberOfSlots=10",
-                          "--numberOfBuffersInSourceLocalBufferPool=128",
-                          "--bufferSizeInBytes=1024"};
+                          "--worker.numberOfSlots=10",
+                          "--worker.numberOfBuffersInSourceLocalBufferPool=128",
+                          "--worker.bufferSizeInBytes=1024"};
     int argc = 4;
 
     std::map<string, string> commandLineParams;
@@ -124,16 +124,17 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->numberOfSlots.getValue(), coordinatorConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
-              coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(),
-              coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
-              coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
+              coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),

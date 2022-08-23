@@ -79,12 +79,7 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
-      rpcPort(this->coordinatorConfiguration->rpcPort), numberOfSlots(this->coordinatorConfiguration->numberOfSlots),
-      numberOfWorkerThreads(this->coordinatorConfiguration->numWorkerThreads),
-      numberOfBuffersInGlobalBufferManager(this->coordinatorConfiguration->numberOfBuffersInGlobalBufferManager),
-      numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
-      numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
-      bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
+      rpcPort(this->coordinatorConfiguration->rpcPort),
       enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
@@ -195,12 +190,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->coordinatorPort = rpcPort;
         workerConfig->rpcPort = 0;
         workerConfig->dataPort = 0;
-        workerConfig->numberOfSlots = numberOfSlots;
-        workerConfig->numWorkerThreads = numberOfWorkerThreads;
-        workerConfig->bufferSizeInBytes = bufferSizeInBytes;
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = numberOfBuffersInSourceLocalBufferPool;
-        workerConfig->numberOfBuffersPerWorker = numberOfBuffersPerWorker;
-        workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
     }
     auto workerConfigCopy = workerConfig;

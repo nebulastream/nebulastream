@@ -218,11 +218,11 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads = (4);
-    //    coordinatorConfig->setNumberOfBuffersInGlobalBufferManager(3000);
-    //    coordinatorConfig->setNumberOfBuffersInSourceLocalBufferPool(124);
-    //    coordinatorConfig->setNumberOfBuffersPerWorker(124);
-    //    coordinatorConfig->bufferSizeInBytes=(524288);
+    //    coordinatorConfig->worker.setNumberOfBuffersInGlobalBufferManager(3000);
+    //    coordinatorConfig->worker.setNumberOfBuffersInSourceLocalBufferPool(124);
+    //    coordinatorConfig->worker.setNumberOfBuffersPerWorker(124);
+    //    coordinatorConfig->worker.bufferSizeInBytes=(524288);
+    coordinatorConfig->worker.numWorkerThreads = 4;
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
 

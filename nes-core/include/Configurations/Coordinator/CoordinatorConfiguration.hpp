@@ -77,49 +77,6 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                      "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**
-     * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.
-     * This enables the restriction of the amount of concurrently deployed queryIdAndCatalogEntryMapping and operators.
-     */
-    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
-
-    /**
-     * @brief Configures the number of worker threads.
-     */
-    UIntOption numWorkerThreads = {NUM_WORKER_THREADS_CONFIG, 1, "Number of worker threads."};
-
-    /**
-     * @brief The number of buffers in the global buffer manager.
-     * Controls how much memory is consumed by the system.
-     */
-    UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       1024,
-                                                       "Number buffers in global buffer pool."};
-    /**
-     * @brief Indicates how many buffers a single worker thread can allocate.
-     */
-    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, 128, "Number buffers in task local buffer pool."};
-
-    /**
-     * @brief Indicates how many buffers a single data source can allocate.
-     * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
-     */
-    UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
-                                                         64,
-                                                         "Number buffers in source local buffer pool."};
-
-    /**
-      * @brief Indicates how many buffers are stored in one epoch.
-      * This value controls how often the buffer storages trim tuple buffers.
-      */
-    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
-
-    /**
-     * @brief Configures the buffer size of individual TupleBuffers in bytes.
-     * This property has to be the same over a whole deployment.
-     */
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
-
-    /**
      * @brief Indicates if the monitoring stack is enables.
      */
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
@@ -180,14 +137,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &rpcPort,
                 &restPort,
                 &dataPort,
-                &numberOfSlots,
                 &logLevel,
-                &numberOfBuffersInGlobalBufferManager,
-                &numberOfBuffersPerWorker,
-                &numberOfBuffersInSourceLocalBufferPool,
-                &numberOfBuffersPerEpoch,
-                &bufferSizeInBytes,
-                &numWorkerThreads,
                 &enableQueryReconfiguration,
                 &enableMonitoring,
                 &configPath,

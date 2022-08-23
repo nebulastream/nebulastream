@@ -445,7 +445,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->bufferSizeInBytes = 1024;
+    coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
     auto schema = Schema::create()
                       ->addField(createField("id", UINT64))
@@ -635,7 +635,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->bufferSizeInBytes = 1024;
+    coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
     auto schema = Schema::create()
                       ->addField(createField("id", UINT64))
