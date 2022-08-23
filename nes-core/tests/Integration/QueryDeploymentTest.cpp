@@ -455,11 +455,9 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     auto logicalSource = LogicalSource::create("window1", schema);
     coordinatorConfig->logicalSources.add(logicalSource);
 
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->enableSourceSharing = true;
-    workerConfig1->bufferSizeInBytes = 1024;
-    workerConfig1->queryCompiler.outputBufferOptimizationLevel =
+    coordinatorConfig->worker.enableSourceSharing = true;
+    coordinatorConfig->worker.bufferSizeInBytes = 1024;
+    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel =
         QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
@@ -487,9 +485,9 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
+    coordinatorConfig->worker.physicalSources.add(physicalSource1);
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
 
@@ -645,11 +643,9 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     auto logicalSource = LogicalSource::create("window1", schema);
     coordinatorConfig->logicalSources.add(logicalSource);
 
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->enableSourceSharing = true;
-    workerConfig1->bufferSizeInBytes = 1024;
-    workerConfig1->queryCompiler.outputBufferOptimizationLevel =
+    coordinatorConfig->worker.enableSourceSharing = true;
+    coordinatorConfig->worker.bufferSizeInBytes = 1024;
+    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel =
         QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
@@ -677,9 +673,9 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
+    coordinatorConfig->worker.physicalSources.add(physicalSource1);
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
 

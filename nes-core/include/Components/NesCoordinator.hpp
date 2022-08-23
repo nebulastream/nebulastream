@@ -118,8 +118,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
   public:
     explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
 
-    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfiguration);
-
     /**
      * @brief dtor
      * @return
@@ -261,7 +259,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerRPCClientPtr workerRpcClient;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    WorkerConfigurationPtr workerConfig;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;

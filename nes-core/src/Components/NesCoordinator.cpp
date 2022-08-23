@@ -69,11 +69,6 @@ namespace NES {
 
 using namespace Configurations;
 
-NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfiguration)
-    : NesCoordinator(std::move(coordinatorConfig)) {
-    workerConfig = std::move(workerConfiguration);
-}
-
 extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
@@ -180,21 +175,13 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    if (workerConfig) {
-        NES_DEBUG("Use provided external worker config");
-    } else {
-        NES_DEBUG("Use provided default worker config");
-        workerConfig = std::make_shared<WorkerConfiguration>();
-        workerConfig->coordinatorIp = rpcIp;
-        workerConfig->localWorkerIp = rpcIp;
-        workerConfig->coordinatorPort = rpcPort;
-        workerConfig->rpcPort = 0;
-        workerConfig->dataPort = 0;
-        workerConfig->enableMonitoring = enableMonitoring;
-    }
-    auto workerConfigCopy = workerConfig;
-    worker =
-        std::make_shared<NesWorker>(std::move(workerConfigCopy), monitoringService->getMonitoringManager()->getMetricStore());
+    // Unconditionally set IP of internal worker and set IP and port of coordinator.
+    coordinatorConfiguration->worker.coordinatorIp = rpcIp;
+    coordinatorConfiguration->worker.localWorkerIp = rpcIp;
+    coordinatorConfiguration->worker.coordinatorPort = rpcPort;
+    // Create a copy of the worker configuration to pass to the NesWorker.
+    auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
+    worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     NES::Exceptions::installGlobalErrorListener(worker);
