@@ -32,6 +32,17 @@ class SumState : public AggregationState {
     Value<> currentSum;
 };
 
+class GlobalCountState : public AggregationState {
+  public:
+    uint64_t count;
+};
+
+class CountState : public AggregationState {
+  public:
+    CountState(Value<> value) : count(value) {}
+    Value<> count;
+};
+
 class AggregationFunction {
   public:
     AggregationFunction(){};
@@ -43,6 +54,7 @@ class AggregationFunction {
     virtual void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) = 0;
     virtual void combine(std::unique_ptr<AggregationState>& ctx1, std::unique_ptr<AggregationState>& ctx2) = 0;
     virtual Value<Any> lower(std::unique_ptr<AggregationState>& ctx) = 0;
+    virtual uint64_t getStateSize() const = 0;
 };
 
 class SumFunction : public AggregationFunction {
@@ -55,11 +67,26 @@ class SumFunction : public AggregationFunction {
     Value<Any> lower(std::unique_ptr<AggregationState>& ctx) override;
     std::unique_ptr<AggregationState> loadState(Value<MemRef>& ref) override;
     void storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) override;
+    uint64_t getStateSize() const override;
 
   private:
     ExpressionPtr expression;
     IR::Types::StampPtr stamp;
 };
+
+class CountFunction : public AggregationFunction {
+  public:
+    CountFunction();
+    std::unique_ptr<AggregationState> createGlobalState() override;
+    std::unique_ptr<AggregationState> createState() override;
+    void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) override;
+    void combine(std::unique_ptr<AggregationState>& ctx1, std::unique_ptr<AggregationState>& ctx2) override;
+    Value<Any> lower(std::unique_ptr<AggregationState>& ctx) override;
+    std::unique_ptr<AggregationState> loadState(Value<MemRef>& ref) override;
+    void storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) override;
+    uint64_t getStateSize() const override;
+};
+
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_FUNCTION_HPP_

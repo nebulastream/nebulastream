@@ -76,9 +76,7 @@ class Value : BaseValue {
     //    std::cout << "copy temp value" << std::endl;
     //}
 
-    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {
-        std::cout << "copy value" << std::endl;
-    }
+    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {}
 
     // move constructor
     template<class OType>
