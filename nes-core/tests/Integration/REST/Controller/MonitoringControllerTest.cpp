@@ -56,7 +56,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
 
 
 TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
-    uint64_t noWorkers = 2;
+
     uint64_t localBuffers = 64;
     uint64_t globalBuffers = 1024 * 128;
     std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
@@ -66,6 +66,7 @@ TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
@@ -74,49 +75,30 @@ TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
     if(!success){
         FAIL() << "Rest server failed to start";
     }
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test2"),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::enableDebug(),
-                                           TestUtils::numberOfSlots(50),
-                                           TestUtils::numLocalBuffers(localBuffers),
-                                           TestUtils::numGlobalBuffers(globalBuffers)});
-
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test1"),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::enableDebug(),
-                                           TestUtils::numberOfSlots(50),
-                                           TestUtils::numLocalBuffers(localBuffers),
-                                           TestUtils::numGlobalBuffers(globalBuffers)});
 
     // for debugging:
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto jsonMetrics = monitoringService->startMonitoringStreams();
-    NES_INFO("jsonMetrics content:");
-    NES_INFO(jsonMetrics.to_string());
+    auto expected = jsonMetrics.to_string();
 
     // oatpp GET start call
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
-    std::cout << "\n Content of OATPP Response r: ";
-    std::cout << r.text;
+
     EXPECT_EQ(r.status_code, 200);
 
+    // toDo also compare content of r and find out why its not like expected
+/* this still fails:
+    std::cout << "\n Content of OATPP Response r: ";
+    std::cout << r.text;
+    std::cout << "\n Expected content: ";
+    std::cout << "monitoringData:" + expected;
+   // EXPECT_EQ(expected, r.text);
+*/
 }
 
 
-TEST_F(MonitoringControllerTest, DISABLED_testStartMonitoringControllerUnsuccessfully) {
+TEST_F(MonitoringControllerTest, StartMonitoringControllerFailsBecauseMonitoringIsNotEnabled) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -131,27 +113,11 @@ TEST_F(MonitoringControllerTest, DISABLED_testStartMonitoringControllerUnsuccess
         FAIL() << "Rest server failed to start";
     }
 
-    WorkerRPCClientPtr workerClient = std::make_shared<WorkerRPCClient>();
-    auto monitoringService = MonitoringService(workerClient, coordinator->getTopology(), coordinator->getQueryService(), coordinator->getQueryCatalogService());
-    Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
-
-    //just for debugging
-    web::json::value registered = monitoringService.registerMonitoringPlanToAllNodes(monitoringPlan);
-    std::cout << "\n Content of registered Monitoring Plan: ";
-    std::cout << registered.to_string();
-    web::json::value resultJsonStart = monitoringService.startMonitoringStreams();
-    std::cout << "\n Content of startMonitoringStreams value: ";
-    std::cout << resultJsonStart.to_string();
-    web::json::value resultJsonStop = monitoringService.stopMonitoringStreams();
-    std::cout << "\n Content of stopMonitoringStreams value: ";
-    std::cout << resultJsonStop.to_string();
-
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     std::cout << "\n Content of Response r: ";
     std::cout << r.text;
     EXPECT_EQ(r.status_code, 404);
-
 }
 
 }//namespace NES
