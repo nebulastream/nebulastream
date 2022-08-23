@@ -24,8 +24,7 @@ limitations under the License.
 #include <Services/MonitoringService.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <cpprest/json.h>
-#include "../../tests/util/MetricValidator.hpp"
-
+#include <Util/MetricValidator.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -56,9 +55,13 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
 };
 
 
-TEST_F(MonitoringControllerTest, requestAllMetricsViaRestTest) {
+TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
     uint64_t noWorkers = 2;
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    uint64_t localBuffers = 64;
+    uint64_t globalBuffers = 1024 * 128;
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+
+    NES_INFO("Tests for Oatpp Monitoring Contoller: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -67,11 +70,10 @@ TEST_F(MonitoringControllerTest, requestAllMetricsViaRestTest) {
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
 
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){
         FAIL() << "Rest server failed to start";
     }
-
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
@@ -79,9 +81,12 @@ TEST_F(MonitoringControllerTest, requestAllMetricsViaRestTest) {
                                            TestUtils::logicalSourceName("default_logical"),
                                            TestUtils::physicalSourceName("test2"),
                                            TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring()});
-    NES_INFO("Worker 1 started successfully");
-/*
+                                           TestUtils::enableMonitoring(),
+                                           TestUtils::enableDebug(),
+                                           TestUtils::numberOfSlots(50),
+                                           TestUtils::numLocalBuffers(localBuffers),
+                                           TestUtils::numGlobalBuffers(globalBuffers)});
+
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
@@ -89,31 +94,24 @@ TEST_F(MonitoringControllerTest, requestAllMetricsViaRestTest) {
                                            TestUtils::logicalSourceName("default_logical"),
                                            TestUtils::physicalSourceName("test1"),
                                            TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring()});
-   // EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));*/
+                                           TestUtils::enableMonitoring(),
+                                           TestUtils::enableDebug(),
+                                           TestUtils::numberOfSlots(50),
+                                           TestUtils::numLocalBuffers(localBuffers),
+                                           TestUtils::numGlobalBuffers(globalBuffers)});
 
-    //das ist leer. wie kann ich worker da einbinden?
-    WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
-    // ich brauche ein monitoring service object. wie hängt das mit worker zusammen? Wie kann es mit default werten gefüllt sein und nicht leer?
-    auto monitoringService = MonitoringService(workerRpcClient, coordinator->getTopology(), coordinator->getQueryService(), coordinator->getQueryCatalogService(), true);
-    auto jsons = monitoringService.requestMonitoringDataFromAllNodesAsJson();
+    // for debugging:
+    MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
+    auto jsonMetrics = monitoringService->startMonitoringStreams();
+    NES_INFO("jsonMetrics content:");
+    NES_INFO(jsonMetrics.to_string());
 
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
-/*
-    ASSERT_EQ(jsons.size(), noWorkers + 1);
-
-    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
-        auto json = jsons[std::to_string(i)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-        ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-        ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
-    }*/
-
+    // oatpp GET start call
     cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
+        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     std::cout << "\n Content of OATPP Response r: ";
     std::cout << r.text;
+    EXPECT_EQ(r.status_code, 200);
 
 }
 
@@ -128,7 +126,7 @@ TEST_F(MonitoringControllerTest, DISABLED_testStartMonitoringControllerUnsuccess
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
 
-    bool success = TestUtils::checkRESTServerCreationOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
     if(!success){
         FAIL() << "Rest server failed to start";
     }
