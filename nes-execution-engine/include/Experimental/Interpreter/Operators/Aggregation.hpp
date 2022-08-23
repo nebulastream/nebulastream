@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {

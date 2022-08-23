@@ -7,7 +7,6 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class HashMap {
   public:
-
     class Entry {
       public:
         Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset);
@@ -27,6 +26,7 @@ class HashMap {
             std::vector<IR::Types::StampPtr> valueTypes);
 
     Entry findOrCreate(std::vector<Value<>> keys);
+    Entry findOne(std::vector<Value<>> keys);
     Value<UInt64> calculateHash(std::vector<Value<>> keys);
     Entry createEntry(std::vector<Value<>> keys, Value<UInt64> hash);
     Entry getEntryFromHashTable(Value<UInt64> hash) const;

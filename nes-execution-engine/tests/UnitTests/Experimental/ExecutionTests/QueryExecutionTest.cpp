@@ -19,6 +19,7 @@
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp"
 #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
+#include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
 #include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
@@ -42,8 +43,10 @@
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
+#include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
+#include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
 #include <Experimental/Interpreter/Operators/Map.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
@@ -303,6 +306,109 @@ TEST_P(QueryExecutionTest, groupedAggQueryTest) {
     ASSERT_EQ(currentSize, (int64_t) 2);
 }
 
+TEST_P(QueryExecutionTest, joinBuildQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(1000);
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+
+
+    auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    buildSideSchema->addField("key", BasicType::INT64);
+    buildSideSchema->addField("value", BasicType::INT64);
+    auto buildSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(buildSideSchema, bm->getBufferSize());
+
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan buildSideScan = Scan(buildSideMemoryLayout);
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 8, 1000);
+    auto map = factory.createPtr();
+    std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = std::move(map);
+    auto joinBuild = std::make_shared<JoinBuild>(sharedHashMap, joinBuildKeys, joinBuildValues);
+    buildSideScan.setChild(joinBuild);
+    auto buildPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    buildPipeline->setRootOperator(&buildSideScan);
+    auto buildSidePipeline = executionEngine.compile(buildPipeline);
+
+    auto buildSideBuffer = bm->getBufferBlocking();
+    auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
+    for (auto i = 0; i < 10; i++) {
+        buildSideDynBuffer[i]["key"].write((int64_t) i % 2);
+        buildSideDynBuffer[i]["value"].write((int64_t) 1);
+    }
+    buildSideDynBuffer.setNumberOfTuples(10);
+    buildSidePipeline->setup();
+    buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
+
+    auto currentSize = sharedHashMap->numberOfEntries();
+    ASSERT_EQ(currentSize, (int64_t) 10);
+}
+
+TEST_P(QueryExecutionTest, joinBuildAndPropeQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(1000);
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+
+
+    auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    buildSideSchema->addField("key", BasicType::INT64);
+    buildSideSchema->addField("valueLeft", BasicType::INT64);
+    auto buildSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(buildSideSchema, bm->getBufferSize());
+
+    auto probSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    probSideSchema->addField("key", BasicType::INT64);
+    probSideSchema->addField("valueRight", BasicType::INT64);
+    auto probeSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(probSideSchema, bm->getBufferSize());
+
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan buildSideScan = Scan(buildSideMemoryLayout);
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 8, 1000);
+    std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = factory.createPtr();
+    auto joinBuild = std::make_shared<JoinBuild>(sharedHashMap, joinBuildKeys, joinBuildValues);
+    buildSideScan.setChild(joinBuild);
+    auto buildPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    buildPipeline->setRootOperator(&buildSideScan);
+    auto buildSidePipeline = executionEngine.compile(buildPipeline);
+
+    Scan probSideScan = Scan(probeSideMemoryLayout);
+    std::vector<ExpressionPtr> joinProbeKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinProbeValues = {std::make_shared<ReadFieldExpression>(1)};
+    auto joinProb = std::make_shared<JoinProbe>(sharedHashMap, joinBuildKeys);
+    probSideScan.setChild(joinProb);
+    auto probePipeline = std::make_shared<PhysicalOperatorPipeline>();
+    probePipeline->setRootOperator(&probSideScan);
+    auto executablePropePipeline = executionEngine.compile(probePipeline);
+    auto buildSideBuffer = bm->getBufferBlocking();
+    auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
+    for (auto i = 0; i < 10; i++) {
+        buildSideDynBuffer[i]["key"].write((int64_t) i % 2);
+        buildSideDynBuffer[i]["valueLeft"].write((int64_t) 1);
+    }
+    buildSideDynBuffer.setNumberOfTuples(10);
+
+    auto pronbSideBuffer = bm->getBufferBlocking();
+    auto pronbSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(probeSideMemoryLayout, pronbSideBuffer);
+    for (auto i = 0; i < 10; i++) {
+        pronbSideDynBuffer[i]["key"].write((int64_t) i);
+        pronbSideDynBuffer[i]["valueRight"].write((int64_t) 1);
+    }
+    buildSideDynBuffer.setNumberOfTuples(10);
+
+
+    buildSidePipeline->setup();
+    buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
+
+    executablePropePipeline->setup();
+    executablePropePipeline->execute(*runtimeWorkerContext, pronbSideBuffer);
+
+
+    auto currentSize = sharedHashMap->numberOfEntries();
+    ASSERT_EQ(currentSize, (int64_t) 10);
+}
+
+
 TEST_P(QueryExecutionTest, aggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -348,7 +454,7 @@ TEST_P(QueryExecutionTest, tpchQ1) {
      *
      *   1998-09-02
      */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980902);
+    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
     auto readShipdate = std::make_shared<ReadFieldExpression>(10);
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
     auto selection = std::make_shared<Selection>(lessThanExpression1);
@@ -393,30 +499,16 @@ TEST_P(QueryExecutionTest, tpchQ1) {
     auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
     auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
 
-    // avg(l_quantity) as avg_qty,
-    auto sumAggFunction5 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
-
-    //  avg(l_extendedprice) as avg_price,
-    auto sumAggFunction6 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
-
-    //  avg(l_discount) as avg_price,
-    auto sumAggFunction7 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
+    auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
 
     //  count() as avg_price,
-    auto sumAggFunction8 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
+    auto countFunction = std::make_shared<CountFunction>();
 
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {
-        sumAggFunction1,
-        sumAggFunction2,
-        sumAggFunction3,
-        sumAggFunction4,
-        sumAggFunction5,
-        sumAggFunction6,
-        sumAggFunction7,
-        sumAggFunction8,
-    };
+    std::vector<std::shared_ptr<AggregationFunction>> functions =
+        {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, sumAggFunction5, countFunction};
     std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 64, 1000);
+    // 5 * 3 + 3 * 16 = 88 value size
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
     auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
     selection->setChild(aggregation);
 
@@ -448,28 +540,26 @@ TEST_P(QueryExecutionTest, tpchQ1) {
         std::int64_t hash;
         std::int64_t k1;
         std::int64_t k2;
-        std::int64_t ag1;
-        std::int64_t ag2;
-        std::int64_t ag3;
-        std::int64_t ag4;
-        std::int64_t ag5;
-        std::int64_t ag6;
-        std::int64_t ag7;
-        std::int64_t ag8;
+        GlobalSumState ag1;
+        GlobalSumState ag2;
+        GlobalSumState ag3;
+        GlobalSumState ag4;
+        GlobalCountState ag8;
     };
 
     auto entries = entryBuffer[0].getBuffer<REntry>();
-    NES_DEBUG("K1 " << entries[0].k1);
-    NES_DEBUG("K2 " << entries[0].k2);
+    for (auto i = 0; i < 4; i++) {
+        NES_DEBUG("K1 " << entries[i].k1);
+        NES_DEBUG("K2 " << entries[i].k2);
+        NES_DEBUG("ag1 " << entries[i].ag1.sum);
+        NES_DEBUG("ag2 " << entries[i].ag2.sum);
+        NES_DEBUG("ag3 " << entries[i].ag3.sum);
+        NES_DEBUG("ag4 " << entries[i].ag4.sum);
+        NES_DEBUG("ag8 " << entries[i].ag8.count);
+        NES_DEBUG("\n");
+        NES_DEBUG("\n");
+    }
 
-    NES_DEBUG("K1 " << entries[1].k1);
-    NES_DEBUG("K2 " << entries[1].k2);
-
-    NES_DEBUG("K1 " << entries[2].k1);
-    NES_DEBUG("K2 " << entries[2].k2);
-
-    NES_DEBUG("K1 " << entries[3].k1);
-    NES_DEBUG("K2" << entries[3].k2);
     //ASSERT_EQ(entries[0].ag1, 37719753);
     //ASSERT_EQ(entries[0].ag2, 5656804138090);
 }
@@ -671,7 +761,7 @@ TEST_P(QueryExecutionTest, tpchQ6and) {
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         QueryExecutionTest,
-                        ::testing::Values("FLOUNDER"),
+                        ::testing::Values("MLIR"),
                         [](const testing::TestParamInfo<QueryExecutionTest::ParamType>& info) {
                             return info.param;
                         });

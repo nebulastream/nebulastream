@@ -13,13 +13,18 @@
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/GroupedAggregation.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+extern "C" void* getHashMapState(void* state) {
+    auto groupedAggregationState = (GroupedAggregationState*) state;
+    return groupedAggregationState->threadLocalAggregationSlots[0].get();
+}
 
 GroupedAggregation::GroupedAggregation(NES::Experimental::HashMapFactory factory,
                                        std::vector<ExpressionPtr> keyExpressions,
@@ -37,11 +42,6 @@ void GroupedAggregation::setup(RuntimeExecutionContext& executionCtx) const {
 
 void GroupedAggregation::open(RuntimeExecutionContext&, RecordBuffer&) const {
     // executionCtx.getPipelineContext().getGlobalOperatorState(this);
-}
-
-extern "C" void* getHashMapState(void* state) {
-    auto groupedAggregationState = (GroupedAggregationState*) state;
-    return groupedAggregationState->threadLocalAggregationSlots[0].get();
 }
 
 void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& record) const {
@@ -62,7 +62,7 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
         auto state = aggregationFunction->loadState(valuePtr);
         aggregationFunction->liftCombine(state, record);
         aggregationFunction->storeState(valuePtr, state);
-        valuePtr = valuePtr + 8ul;
+        valuePtr = valuePtr + aggregationFunction->getStateSize();
     }
 }
 

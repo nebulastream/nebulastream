@@ -82,10 +82,27 @@ HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
     entry = createEntry(keys, hash);
     return entry;
 }
+
+HashMap::Entry HashMap::findOne(std::vector<Value<>> keys) {
+    // calculate hash
+    auto hash = calculateHash(keys);
+
+    // return entry if it exists
+    auto entry = getEntryFromHashTable(hash);
+    for (; !entry.isNull(); entry = entry.getNext()) {
+        if (compareKeys(keys, entry.getKeyPtr())) {
+            return entry;
+        }
+    }
+    return entry;
+}
+
 HashMap::HashMap(Value<MemRef> hashTableRef,
                  int64_t valueOffset,
                  std::vector<IR::Types::StampPtr> keyTypes,
                  std::vector<IR::Types::StampPtr> valueTypes)
     : hashTableRef(hashTableRef), valueOffset(valueOffset), keyTypes(keyTypes), valueTypes(valueTypes) {}
+
+
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
