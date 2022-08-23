@@ -127,6 +127,7 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 }
 
 Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
+    NES_INFO("epoch3")
     try {
         NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
                   << request->timestamp() << " and a queryId " << request->queryid());
@@ -138,6 +139,49 @@ Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNot
         return Status::CANCELLED;
     }
 }
+
+Status WorkerRPCServer::sayHi(ServerContext*, const sayHiNotification* request, sayHiReply* reply) {
+    NES_INFO("sayHi3")
+    try {
+        NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
+                  << request->timestamp() << " and a queryId " << request->queryid());
+        reply->set_success(true);
+        nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
+        for(auto& statistic : nodeEngine->getQueryStatistics(false)){
+            NES_INFO("STATS: " + std::to_string(statistic.getProcessedBuffers()) + ", AVAILABLE BUFFERS: " + std::to_string(nodeEngine->getBufferManager()->getAvailableBuffers())
+                     + ", AVAILABLE FIXED BUFFERS: " + std::to_string(nodeEngine->getBufferManager()->getAvailableBuffersInFixedSizePools())
+                     + ", RATIO: " + std::to_string(statistic.getProcessedBuffers() / nodeEngine->getBufferManager()->getAvailableBuffers()))
+            NES_INFO("STATS2: " + statistic.getQueryStatisticsAsString());
+
+        }
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+
+    return Status::OK;
+}
+}
+
+/*Status WorkerRPCServer::checkMemoryLoad(ServerContext*, const sayHiNotification* request, sayHiReply* reply) {
+    NES_INFO("sayHi3")
+    try {
+        NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
+                  << request->timestamp() << " and a queryId " << request->queryid());
+        reply->set_success(true);
+        nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
+        for(auto& statistic : nodeEngine->getQueryStatistics(false)){
+            NES_INFO("STATTY: " + std::to_string(statistic.getProcessedBuffers()) + ", AVAILABLE BUFFERS: " + std::to_string(nodeEngine->getBufferManager()->getAvailableBuffers())
+                     + ", AVAILABLE FIXED BUFFERS: " + std::to_string(nodeEngine->getBufferManager()->getAvailableBuffersInFixedSizePools()))
+            NES_INFO("STATTY2: " + statistic.getQueryStatisticsAsString())
+
+        }
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}*/
 
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");

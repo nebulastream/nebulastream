@@ -105,6 +105,7 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode4);
 
         TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 133, 134, 1);
+        sourceNode5->removeParent(rootNode);
         topology->addNewTopologyNodeAsChild(sourceNode4, sourceNode5);
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
@@ -273,6 +274,7 @@ TEST_F(QueryPlacementTestSandbox, checkpointingTest) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
 
     NES_INFO("\n" + topology->toString());
 

@@ -148,6 +148,9 @@ Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
     return fixedCoordinates;
 }
 
+
+
+
 void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
     setFixedCoordinates(Spatial::Index::Experimental::Location(latitude, longitude));
 }

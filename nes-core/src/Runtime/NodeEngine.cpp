@@ -377,6 +377,7 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
 }
 
 void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const {
+    NES_INFO("epoch4")
     std::unique_lock lock(engineMutex);
     std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
@@ -384,6 +385,23 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
         auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
         for (auto& source : sources) {
             if (source->injectEpochBarrier(timestamp, queryId)) {
+                NES_DEBUG("NodeEngine: Inject epoch barrier " << timestamp << "to the query " << queryId);
+            } else {
+                NES_ERROR("NodeEngine: Couldn't inject epoch barrier to the query" << queryId);
+            }
+        }
+    }
+}
+
+void NodeEngine::sayHi(uint64_t timestamp, uint64_t queryId) const {
+    NES_INFO("sayHi0")
+    std::unique_lock lock(engineMutex);
+    std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
+    for (auto& subQueryPlanId : subQueryPlanIds) {
+        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId " << subQueryPlanId);
+        auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
+        for (auto& source : sources) {
+            if (source->sayHi(timestamp, queryId)) {
                 NES_DEBUG("NodeEngine: Inject epoch barrier " << timestamp << "to the query " << queryId);
             } else {
                 NES_ERROR("NodeEngine: Couldn't inject epoch barrier to the query" << queryId);

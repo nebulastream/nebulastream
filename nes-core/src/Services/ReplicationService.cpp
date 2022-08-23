@@ -81,7 +81,9 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                     auto ipAddress = sourceLocation->getIpAddress();
                     auto grpcPort = sourceLocation->getGrpcPort();
                     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+                    NES_INFO("epoch1, ip: " + rpcAddress);
                     success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, rpcAddress);
+                    //bool success2 = workerRpcClient->sayHi(epochBarrier,queryId,rpcAddress);
                     NES_ASSERT(success, false);
                     NES_DEBUG("ReplicationService: success=" << success);
                 }

@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include "Components/NesCoordinator.hpp"
 #include "GRPC/WorkerRPCClient.hpp"
 #include "Plans/Global/Query/GlobalQueryPlan.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -297,10 +299,11 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     double totalUsedResources = 0;
     double totalResourceCapacity = 0;
 
-    if(!otherNodesAvailable(globalExecutionPlan, topologyIds,queryId)){
+    /*if(!otherNodesAvailable(globalExecutionPlan, topologyIds,queryId)){
         NES_WARNING("\nFAULT-TOLERANCE CANNOT BE PROVIDED. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
         return FaultToleranceType::NONE;
-    }
+    }*/
+
 
     double highestCost = 0;
 
@@ -405,20 +408,41 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     }
 
 
-    /*NES_WARNING("TEST")
-    WorkerRPCClientPtr workerClient;
-    TopologyNodePtr node = topology->findNodeWithId(executionNodes[1]->getId());
-    auto nodeIp = node->getIpAddress();
-    auto nodeGrpcPort = node->getGrpcPort();
-    std::string destAddress = "localhost";
+    NES_WARNING("sayHi1")
 
-    if(workerClient->unregisterQuery(destAddress,queryId)){
-        NES_WARNING("unregistered successfully");
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+    TopologyNodePtr node = topology->findNodeWithId(executionNodes[0]->getId());
+
+
+
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    uint64_t x = 0;
+
+    NES_INFO("ADDY: " + rpcAddress);
+
+    bool success = workerRpcClient->sayHi(x,queryId,rpcAddress);
+
+    if(success){
+        NES_INFO("sayHiTrue");
     }else{
-        NES_WARNING("failed to unregister");
+        NES_INFO("sayHiFalse")
     }
 
-    NES_WARNING("data: " + workerClient->requestMonitoringData(destAddress));*/
+
+
+    NES_INFO("top size: " + std::to_string(executionNodes.size()) + "\n ipaddress: " + rpcAddress);
+
+
+
+
+    //workerClient->sayHi();
+
+
+
+
 
 
     //Print results.

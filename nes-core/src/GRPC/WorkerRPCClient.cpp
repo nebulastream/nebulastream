@@ -226,6 +226,7 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     throw log4cxx::helpers::Exception("Error while WorkerRPCClient::startQuery");
 }
 
+
 bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
 
@@ -369,6 +370,26 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
+    NES_INFO("epoch2")
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        return true;
+    }
+    return false;
+}
+
+bool WorkerRPCClient::sayHi(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+
+    sayHiNotification request;
+    request.set_timestamp(timestamp);
+    request.set_queryid(queryId);
+    sayHiReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->sayHi(&context, request, &reply);
+    NES_INFO("sayHi2");
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;

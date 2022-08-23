@@ -221,7 +221,7 @@ class WorkerRPCClient {
      */
     static NES::Spatial::Index::Experimental::LocationPtr getLocation(const std::string& adress);
 
-  private:
+    bool sayHi(uint64_t timestamp, uint64_t queryId, const std::string& address);
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 

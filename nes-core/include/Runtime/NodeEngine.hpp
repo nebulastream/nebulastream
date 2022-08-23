@@ -221,6 +221,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
 
     /**
+     * @brief method to inject new epoch timestamp to data stream
+     * @param timestamp: max timestamp of current epoch
+     * @param queryId: identifies what query sends punctuation
+     */
+    void sayHi(uint64_t timestamp, uint64_t queryId) const;
+
+    /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return vector of queryStatistics
