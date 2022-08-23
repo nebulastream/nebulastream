@@ -25,21 +25,30 @@
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <string>
+#include <iostream>
+#include <utility>
+#include <vector>
 
 namespace NES {
 
 using namespace Configurations;
 
-class ConfigTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ConfigTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Configuration test class.");
     }
 
-    void SetUp() override {}
+    static std::vector<const char*> makePosixArgs(const std::vector<std::string>& args) {
+        static const char* empty = "";
+        std::vector<const char*> argv(args.size() + 1);
+        argv[0] = empty;
+        std::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg){return arg.c_str();});
+        return argv;
+    }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Configuration test class."); }
 };
 
 /**
@@ -418,6 +427,108 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     auto csvSourceType = workerConfigPtr->physicalSources.getValues()[0].getValue()->getPhysicalSourceType()->as<CSVSourceType>();
     EXPECT_NE(csvSourceType->getGatheringMode()->getValue(), csvSourceType->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
+}
+
+TEST_F(ConfigTest, parseWorkerOptionInCoordinatorConfigFile) {
+    // This test checks if a worker configuration option can be set in the coordinator configuration file.
+    // given: Set up the coordinator configuration file with the worker option numWorkerThreads.
+    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
+    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
+    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl
+                          << "  " << NUM_WORKER_THREADS_CONFIG << ": 99" << std::endl;
+    coordinatorConfigFile.close();
+    // given: Specify the coordinator configuration file on the command line.
+    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
+    auto posixArgs = makePosixArgs(args);
+    // then
+    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
+    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 99);
+}
+
+
+TEST_F(ConfigTest, parseWorkerOptionInWorkerConfigFileSpecifiedInCoordinatorConfigFile) {
+    // This test checks if a worker configuration can be set in a worker configuration file,
+    // that is specified in the option workerConfigPath in the coordinator configuration file.
+    // The options set in the worker configuration file should have precedence over any worker options
+    // that are set in the coordinator configuration file.
+    // given: Set up the worker configuration file.
+    auto workerConfigPath = getTestResourceFolder() / "worker.yml";
+    std::ofstream workerConfigFile(workerConfigPath);
+    workerConfigFile << NUM_WORKER_THREADS_CONFIG << ": 35" << std::endl;
+    workerConfigFile.close();
+    // given: Set up the coordinator configuration file.
+    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
+    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
+    coordinatorConfigFile
+        << WORKER_CONFIG << ":" << std::endl
+        << "  " << NUM_WORKER_THREADS_CONFIG << ": 15" << std::endl
+        << "  " << NUMBER_OF_SLOTS_CONFIG << ": 25" << std::endl
+        << WORKER_CONFIG_PATH << ": " << workerConfigPath << std::endl;
+    coordinatorConfigFile.close();
+    // given: Specify the coordinator configuration file on the command line.
+    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
+    auto posixArgs = makePosixArgs(args);
+    // then: The value in the worker configuration file takes precedence.
+    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
+    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 35);
+    // then: Other options set in the coordinator configuration file are still processed.
+    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 25);
+}
+
+TEST_F(ConfigTest, parserWorkerOptionInWorkerConfigFileSpecifiedOnCommmandLine) {
+    // This test checks if a worker configuration file can be set on the command line
+    // using the workerConfig option.
+    // The options that are set in this worker configuration file should take precedence
+    // over any worker options set in a coordinator configuration file
+    // (and by implication options set in the coordinator configuration file).
+    // Given: Set up the first worker configuration file.
+    auto workerConfigPath1 = getTestResourceFolder() / "worker-1.yml";
+    std::ofstream workerConfigFile1(workerConfigPath1);
+    workerConfigFile1 << NUM_WORKER_THREADS_CONFIG << ": 66" << std::endl;
+    workerConfigFile1.close();
+    // Given: Set up the second worker configuration file.
+    auto workerConfigPath2 = getTestResourceFolder() / "worker-2.yml";
+    std::ofstream workerConfigFile2(workerConfigPath2);
+    workerConfigFile2
+        << NUM_WORKER_THREADS_CONFIG << ": 50" << std::endl
+        << NUMBER_OF_SLOTS_CONFIG << ": 83" << endl;
+    workerConfigFile2.close();
+    // Given: Set up a coordinator configuration file that references the second worker file.
+    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
+    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
+    coordinatorConfigFile
+        << WORKER_CONFIG_PATH << ": " << workerConfigPath2 << std::endl;
+    coordinatorConfigFile.close();
+    // given: Specify the first worker configuration file on the command line.
+    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath),
+                                     TestUtils::workerConfigPath(workerConfigPath1)};
+    auto posixArgs = makePosixArgs(args);
+    // then: The value in the first worker configuration file takes precedence.
+    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
+    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 66);
+    // then: Other options set in the second worker configuration file are still processed.
+    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 83);
+}
+
+TEST_F(ConfigTest, parseWorkerOptionOnCommandline) {
+    // This test checks if a worker option can be set on the command line of the coordinator.
+    // These options take precedence over any option set in a worker configuration file.
+    // Given: Set up the worker configuration file.
+    auto workerConfigPath = getTestResourceFolder() / "worker.yml";
+    std::ofstream workerConfigFile(workerConfigPath);
+    workerConfigFile
+        << NUM_WORKER_THREADS_CONFIG << ": 59" << std::endl
+        << NUMBER_OF_SLOTS_CONFIG << ": 28" << endl;
+    workerConfigFile.close();
+    // Given: Set up coordinator command line
+    std::vector<std::string> args = {"--worker.numWorkerThreads=68",
+                                     TestUtils::workerConfigPath(workerConfigPath)};
+    auto posixArgs = makePosixArgs(args);
+    // then: The value set on the command line takes precedence.
+    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
+    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 68);
+    // then: Other options set in the worker configuration file are still processed.
+    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 28);
 }
 
 }// namespace NES

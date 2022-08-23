@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
-#include <map>
 #include <vector>
 
 using namespace NES;
@@ -42,23 +41,8 @@ int main(int argc, const char* argv[]) {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
         NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
-        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create(argc, argv);
 
-        map<string, string> commandLineParams;
-        for (int i = 1; i < argc; ++i) {
-            commandLineParams.insert(std::make_pair<string, string>(
-                string(argv[i]).substr(0, string(argv[i]).find('=')),
-                string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-        }
-
-        auto configPath = commandLineParams.find("--configPath");
-        if (configPath != commandLineParams.end()) {
-            coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
-        }
-
-        if (argc > 1) {
-            coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
-        }
         NES::Logger::getInstance()->setLogLevel(coordinatorConfig->logLevel.getValue());
 
         NES_INFO("start coordinator with " << coordinatorConfig->toString());

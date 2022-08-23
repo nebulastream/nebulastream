@@ -59,6 +59,14 @@ static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// st
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
 
+[[nodiscard]] std::string configPath(const std::string& filename) {
+    return "--" + CONFIG_PATH + "=" + filename;
+}
+
+[[nodiscard]] std::string workerConfigPath(const std::string& filename) {
+    return "--" + WORKER_CONFIG_PATH + "=" + filename;
+}
+
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
 }
