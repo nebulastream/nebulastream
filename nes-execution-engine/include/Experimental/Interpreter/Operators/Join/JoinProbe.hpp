@@ -11,43 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GROUPED_AGGREGATION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GROUPED_AGGREGATION_HPP_
-#include <Experimental/Interpreter/ExecutionContext.hpp>
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINPROBE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINPROBE_HPP_
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Util/Experimental/HashMap.hpp>
+#include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
-class AggregationFunction;
-class AggregationState;
 
-
-class GroupedAggregationState : public OperatorState {
+class JoinProbe : public ExecutableOperator {
   public:
-    GroupedAggregationState() {}
-    std::vector<std::unique_ptr<NES::Experimental::Hashmap>> threadLocalAggregationSlots;
-};
-
-class GroupedAggregation : public ExecutableOperator {
-  public:
-    GroupedAggregation(NES::Experimental::HashMapFactory factory,
-                       std::vector<ExpressionPtr> keyExpressions,
-                       std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions);
+    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions);
     void setup(RuntimeExecutionContext& executionCtx) const override;
     void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
 
   private:
-    mutable NES::Experimental::HashMapFactory factory;
+    std::shared_ptr<NES::Experimental::Hashmap> hashMap;
     const std::vector<ExpressionPtr> keyExpressions;
-    const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     const std::vector<IR::Types::StampPtr> keyTypes;
     const std::vector<IR::Types::StampPtr> valueTypes;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINPROBE_HPP_

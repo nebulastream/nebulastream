@@ -14,7 +14,7 @@
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 

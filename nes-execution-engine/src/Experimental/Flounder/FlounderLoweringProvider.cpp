@@ -130,16 +130,27 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
     auto blockInputArguments = bi.getArguments();
     auto blockTargetArguments = bi.getBlock()->getArguments();
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
-        auto parentFrameFlounderValue = parentFrame.getValue(blockInputArguments[i]->getIdentifier());
+        auto blockArgument = blockInputArguments[i]->getIdentifier();
+        auto blockTargetArgument = blockTargetArguments[i]->getIdentifier();
+        auto parentFrameFlounderValue = parentFrame.getValue(blockArgument);
         // if the value is no a vrec, we have to materialize it before invoicing the subframe.
         if (parentFrameFlounderValue->type() != flounder::VREG) {
-            auto targetVreg = program.vreg(blockTargetArguments[i]->getIdentifier());
-            program << program.request_vreg64(targetVreg);
-            program << program.mov(targetVreg, parentFrameFlounderValue);
-            parentFrameFlounderValue = targetVreg;
+            auto argumentVreg = program.vreg(blockArgument.data());
+            program << program.request_vreg64(argumentVreg);
+            program << program.mov(argumentVreg, parentFrameFlounderValue);
+            parentFrameFlounderValue = argumentVreg;
         }
 
-        blockFrame.setValue(blockTargetArguments[i]->getIdentifier(), parentFrameFlounderValue);
+        if (parentFrame.contains(blockTargetArgument.data())) {
+            auto targetFrameFlounderValue = parentFrame.getValue(blockTargetArgument.data());
+            program << program.mov(targetFrameFlounderValue, parentFrameFlounderValue);
+            blockFrame.setValue(blockTargetArgument.data(), parentFrameFlounderValue);
+        } else {
+            auto targetVreg = program.vreg(blockTargetArgument.data());
+            program << program.request_vreg64(targetVreg);
+            program << program.mov(targetVreg, parentFrameFlounderValue);
+            blockFrame.setValue(blockTargetArgument.data(), targetVreg);
+        }
     }
     return blockFrame;
 }

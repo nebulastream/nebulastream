@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/NESIR/Types/FloatStamp.hpp>
 #include <Experimental/NESIR/Types/IntegerStamp.hpp>
 
@@ -133,5 +133,38 @@ void SumFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationStat
     auto sumState = (SumState*) state.get();
     ref.store(sumState->currentSum);
 }
+uint64_t SumFunction::getStateSize() const { return 8; }
+
+std::unique_ptr<AggregationState> CountFunction::createGlobalState() { return std::make_unique<GlobalCountState>(); }
+
+std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0l)); }
+
+CountFunction::CountFunction() {}
+
+void CountFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record&) {
+    auto countState = (CountState*) state.get();
+    countState->count = countState->count + 1l;
+}
+
+Value<Any> CountFunction::lower(std::unique_ptr<AggregationState>& ctx) {
+    auto countState = (CountState*) ctx.get();
+    return countState->count;
+}
+
+std::unique_ptr<AggregationState> CountFunction::loadState(Value<MemRef>& ref) {
+    return std::make_unique<CountState>(ref.load<Int64>());
+}
+
+void CountFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) {
+    auto countState = (CountState*) state.get();
+    ref.store(countState->count);
+}
+
+void CountFunction::combine(std::unique_ptr<AggregationState>& ctx1, std::unique_ptr<AggregationState>& ctx2) {
+    auto countState1 = (CountState*) ctx1.get();
+    auto countState2 = (CountState*) ctx2.get();
+    countState1->count = countState1->count + countState2->count;
+}
+uint64_t CountFunction::getStateSize() const { return 8; }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
