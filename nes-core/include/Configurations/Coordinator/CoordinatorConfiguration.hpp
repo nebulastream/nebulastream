@@ -171,6 +171,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
+    static CoordinatorConfigurationPtr create(const int argc, const char** argv);
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&restIp,
