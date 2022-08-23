@@ -260,7 +260,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
-    bool sayHi(uint64_t epochBarrier, uint64_t queryId);
+    bool sayHi(uint64_t epochBarrier, uint64_t queryId, int l);
 
   protected:
     Runtime::QueryManagerPtr queryManager;

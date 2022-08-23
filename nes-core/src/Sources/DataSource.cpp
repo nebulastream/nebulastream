@@ -531,8 +531,9 @@ bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
     return queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
 }
 
-bool DataSource::sayHi(uint64_t epochBarrier, uint64_t queryId) {
+bool DataSource::sayHi(uint64_t epochBarrier, uint64_t queryId, int l) {
     NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << epochBarrier << "with queryId " << queryId);
+    NES_INFO(std::to_string(l));
     return queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
 }
 

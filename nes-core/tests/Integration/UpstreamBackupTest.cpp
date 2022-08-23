@@ -340,10 +340,9 @@ TEST_F(UpstreamBackupTest, faultToleranceTest) {
     string query =
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    auto topology = crd->getTopology();
-
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

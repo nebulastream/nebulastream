@@ -378,7 +378,7 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     return false;
 }
 
-bool WorkerRPCClient::sayHi(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+int WorkerRPCClient::sayHi(uint64_t timestamp, uint64_t queryId, const std::string& address) {
 
     sayHiNotification request;
     request.set_timestamp(timestamp);
@@ -389,12 +389,12 @@ bool WorkerRPCClient::sayHi(uint64_t timestamp, uint64_t queryId, const std::str
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->sayHi(&context, request, &reply);
-    NES_INFO("sayHi2");
+    NES_INFO("sayHi2 ");
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
-        return true;
+        return reply.mogus();
     }
-    return false;
+    return reply.mogus();
 }
 
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {

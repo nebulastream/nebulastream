@@ -113,6 +113,7 @@ message EpochBarrierNotification{
 message sayHiNotification{
   uint64 timestamp = 1;
   uint64 queryId = 2;
+  uint64 l = 3;
 }
 
 message EpochBarrierReply{
@@ -120,7 +121,7 @@ message EpochBarrierReply{
 }
 
 message sayHiReply{
-  bool success = 1;
+  uint64 mogus = 1;
 }
 
 message UpdateNetworkSinkRequest{

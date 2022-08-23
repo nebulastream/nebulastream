@@ -68,6 +68,9 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
+
+
+
         // 5. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (log4cxx::helpers::Exception& ex) {
@@ -410,11 +413,28 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
     NES_WARNING("sayHi1")
 
+
+
+
+
+    /*if(success){
+        NES_INFO("sayHiTrue");
+    }else{
+        NES_INFO("sayHiFalse")
+    }*/
+
+
+
+    //NES_INFO("top size: " + std::to_string(executionNodes.size()) + "\n ipaddress: " + rpcAddress);
+
+
+
+
+    //workerClient->sayHi();
+
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
 
-    TopologyNodePtr node = topology->findNodeWithId(executionNodes[0]->getId());
-
-
+    TopologyNodePtr node = topology->findNodeWithId(1);
 
     auto ipAddress = node->getIpAddress();
     auto grpcPort = node->getGrpcPort();
@@ -423,24 +443,9 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
     NES_INFO("ADDY: " + rpcAddress);
 
-    bool success = workerRpcClient->sayHi(x,queryId,rpcAddress);
+    int success = workerRpcClient->sayHi(x,queryId,rpcAddress);
 
-    if(success){
-        NES_INFO("sayHiTrue");
-    }else{
-        NES_INFO("sayHiFalse")
-    }
-
-
-
-    NES_INFO("top size: " + std::to_string(executionNodes.size()) + "\n ipaddress: " + rpcAddress);
-
-
-
-
-    //workerClient->sayHi();
-
-
+    NES_INFO("SUCCY: " + std::to_string(success));
 
 
 
