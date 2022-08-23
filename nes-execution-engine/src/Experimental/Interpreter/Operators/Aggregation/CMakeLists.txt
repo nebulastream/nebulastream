@@ -12,15 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution-engine
-        ExecuteOperator.cpp
-        Operator.cpp
-        Scan.cpp
-        Selection.cpp
-        Emit.cpp
-        Map.cpp
-        Aggregation.cpp
-        GroupedAggregation.cpp
+        AggregationFunction.cpp
+        AvgFunction.cpp
         )
-
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
