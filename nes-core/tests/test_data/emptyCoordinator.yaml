@@ -5,12 +5,13 @@
 restIp: localhost
 
 # ~~ Processing Configurations ~~
-# Set the number of computing slots in NES Coordinator
-# 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots: 10
+worker:
+  # Set the number of computing slots in NES Coordinator
+  # 0 is a place holder, default is number of processors installed in host machine
+  numberOfSlots: 10
 
-# Number buffers in source local buffer pool
-numberOfBuffersInSourceLocalBufferPool: 128
+  # Number buffers in source local buffer pool
+  numberOfBuffersInSourceLocalBufferPool: 128
 
-# Size of buffer to pass data through the system
-bufferSizeInBytes: 1024
+  # Size of buffer to pass data through the system
+  bufferSizeInBytes: 1024

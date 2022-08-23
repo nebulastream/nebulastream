@@ -49,12 +49,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (coordinatorNumberOfSlots);
+    coordinatorConfig->worker.numberOfSlots = (coordinatorNumberOfSlots);
 
     workerConfig1->numberOfSlots = (workerNumberOfSlots);
     workerConfig2->numberOfSlots = (workerNumberOfSlots);
 
-    coordinatorConfig->numberOfSlots = (coordinatorNumberOfSlots);
+    coordinatorConfig->worker.numberOfSlots = (coordinatorNumberOfSlots);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
@@ -133,7 +133,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (coordinatorNumberOfSlots);
+    coordinatorConfig->worker.numberOfSlots = (coordinatorNumberOfSlots);
     workerConfig1->numberOfSlots = (workerNumberOfSlots);
     workerConfig2->numberOfSlots = (workerNumberOfSlots);
 

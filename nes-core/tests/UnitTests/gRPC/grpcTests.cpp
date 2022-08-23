@@ -121,7 +121,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     auto coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfBuffersInGlobalBufferManager = 2 * 1024;
+    coordinatorConfig->worker.numberOfBuffersInGlobalBufferManager = 2 * 1024;
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("Win1", window);

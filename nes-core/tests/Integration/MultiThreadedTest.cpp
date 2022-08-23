@@ -47,7 +47,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -127,7 +127,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -204,7 +204,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -284,8 +284,8 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (12);
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numberOfSlots = 12;
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -361,8 +361,8 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (12);
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numberOfSlots = (12);
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -435,8 +435,8 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (16);
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numberOfSlots = (16);
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -522,8 +522,8 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (16);
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numberOfSlots = (16);
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -626,10 +626,10 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->numberOfSlots = (16);
+    coordinatorConfig->worker.numberOfSlots = (16);
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -783,8 +783,8 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numberOfSlots = (16);
-    coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.numberOfSlots = (16);
+    coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
