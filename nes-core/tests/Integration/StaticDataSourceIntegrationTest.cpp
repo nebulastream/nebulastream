@@ -265,21 +265,19 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
 // Worker on ame node as coordinator. Otherwise equivalent to above.
 TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     crdConf->logicalSources.add(LogicalSource::create("tpch_customer", schema_customer));
     PhysicalSourceTypePtr sourceType =
         StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ false);
     auto physicalSource = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    crdConf->worker.physicalSources.add(physicalSource);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -650,11 +648,9 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("tpch_customer", schema_customer));
@@ -663,16 +659,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    crdConf->worker.physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1218,16 +1214,14 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
 // Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
-    wrkConf->numWorkerThreads = 8;
+    crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
+    crdConf->worker.numWorkerThreads = 8;
 
-    NES_DEBUG("num work " << wrkConf->numWorkerThreads.getValue() << " num buff "
-                          << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
+    NES_DEBUG("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
+                          << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("tpch_customer", schema_customer));
@@ -1236,16 +1230,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    crdConf->worker.physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1308,11 +1302,9 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("static_integers_only_0", schema_integers_0));
@@ -1321,16 +1313,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
     auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    crdConf->worker.physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1392,11 +1384,9 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartitioned) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("static_integers_only_0", schema_integers_0));
@@ -1406,7 +1396,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     // register two physical partitions of the probe side source
     PhysicalSourceTypePtr sourceType1a =
@@ -1415,12 +1405,12 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
         StaticDataSourceType::create(table_path_integers_1b, 0, "wrapBuffer", /* placeholder: */ 0, true);
     auto physicalSource1a = PhysicalSource::create("static_integers_only_1", "static_integers_only_1a", sourceType1a);
     auto physicalSource1b = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1b);
-    wrkConf->physicalSources.add(physicalSource1a);
-    wrkConf->physicalSources.add(physicalSource1b);
+    crdConf->worker.physicalSources.add(physicalSource1a);
+    crdConf->worker.physicalSources.add(physicalSource1b);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1482,11 +1472,9 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperations) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("static_integers_only_0", schema_integers_0));
@@ -1495,16 +1483,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
     auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    crdConf->worker.physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1567,12 +1555,10 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemoteProbeSource) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConfRemote = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("static_integers_only_0", schema_integers_0));
@@ -1581,7 +1567,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
@@ -1590,7 +1576,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1659,17 +1645,15 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
-    wrkConf->numWorkerThreads = 8;
+    crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
+    crdConf->worker.numWorkerThreads = 8;
 
     NES_DEBUG("StaticDataSourceIntegrationTest::testBatchJoinCustomerWithIntTable: num work "
-              << wrkConf->numWorkerThreads.getValue() << " num buff "
-              << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
+              << crdConf->worker.numWorkerThreads.getValue() << " num buff "
+              << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
 
     // use deprecated feature "logicalSources" to register logical streams before physical streams
     crdConf->logicalSources.add(LogicalSource::create("static_integers_only_2",
@@ -1679,16 +1663,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     PhysicalSourceTypePtr sourceType0 =
         StaticDataSourceType::create(table_path_integers_2, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource0 = PhysicalSource::create("static_integers_only_2", "static_integers_only_2", sourceType0);
-    wrkConf->physicalSources.add(physicalSource0);
+    crdConf->worker.physicalSources.add(physicalSource0);
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_customer_s0001", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    crdConf->worker.physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
@@ -1811,16 +1795,14 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
 
             CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
             // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
-            WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-            wrkConf->numberOfBuffersInGlobalBufferManager = 1000000;
-            wrkConf->numWorkerThreads = 2;
+            crdConf->worker.numberOfBuffersInGlobalBufferManager = 1000000;
+            crdConf->worker.numWorkerThreads = 2;
 
-            NES_INFO("num work " << wrkConf->numWorkerThreads.getValue() << " num buff "
-                                 << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
+            NES_INFO("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
+                                 << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
             crdConf->rpcPort = (*rpcCoordinatorPort);
             crdConf->restPort = *restPort;
-            wrkConf->coordinatorPort = crdConf->rpcPort;
 
             // use deprecated feature "logicalSources" to register logical streams before physical streams
             crdConf->logicalSources.add(
@@ -1830,16 +1812,16 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             PhysicalSourceTypePtr sourceType0 =
                 StaticDataSourceType::create(pathBuild, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
             auto physicalSource0 = PhysicalSource::create("build_side", "build_side", sourceType0);
-            wrkConf->physicalSources.add(physicalSource0);
+            crdConf->worker.physicalSources.add(physicalSource0);
 
             PhysicalSourceTypePtr sourceType1 =
                 StaticDataSourceType::create(pathProbe, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
             auto physicalSource1 = PhysicalSource::create("probe_side", "probe_side", sourceType1);
-            wrkConf->physicalSources.add(physicalSource1);
+            crdConf->worker.physicalSources.add(physicalSource1);
 
             NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
-            NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+            NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
             uint64_t port = crd->startCoordinator(/**blocking**/ false);
             EXPECT_NE(port, 0UL);
             NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
