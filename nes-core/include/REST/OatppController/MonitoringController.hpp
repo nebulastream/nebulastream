@@ -70,7 +70,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @return MonitoringController
      */
     static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, MonitoringServicePtr mService, Runtime::BufferManagerPtr bManager, ErrorHandlerPtr errorHandler, std::string routerPrefixAddition) {
-        oatpp::String completeRouterPrefix = baseRouterPrefix + routerPrefixAddition;
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX  + routerPrefixAddition;
         return std::make_shared<MonitoringController>(objectMapper, mService, bManager, errorHandler, completeRouterPrefix);
     }
 
@@ -110,7 +110,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         return errorHandler->handleError(Status::CODE_404, "Getting newest monitoring data from metric store of monitoring service was not successful.");
     }
 
-    ENDPOINT("GET", "/Monitoring/metrics", getMonitoringControllerDataFromAllNodes) {
+    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
         if (dto->monitoringData != "null"){
@@ -118,8 +118,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         return errorHandler->handleError(Status::CODE_404, "Getting monitoring data from all nodes was not successful.");
     }
-
-    ENDPOINT("GET", "/Monitoring/metrics/", getMonitoringControllerDataFromOneNode,
+    // ToDo: Find out if /metrics/ or /metrics
+    ENDPOINT("GET", "/metrics/", getMonitoringControllerDataFromOneNode,
              QUERY(UInt64, nodeId, "queryId")) {
         auto dto = MonitoringControllerStringResponse::createShared();
         try {
