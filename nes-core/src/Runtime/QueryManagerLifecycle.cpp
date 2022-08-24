@@ -177,6 +177,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     // 5. start data sources
+    uint64_t currentGatheringInterval = -1;
     for (const auto& source : qep->getSources()) {
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             continue;
@@ -186,6 +187,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
             NES_WARNING("AbstractQueryManager: source " << source << " could not started as it is already running");
         } else {
             NES_DEBUG("AbstractQueryManager: source " << source << " started successfully");
+            currentGatheringInterval = source->getGatheringIntervalCount();
         }
     }
 
@@ -196,6 +198,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
         statistics->setTimestampQueryStart(now, true);
+        statistics->setCurrentGatheringInterval(currentGatheringInterval);
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");

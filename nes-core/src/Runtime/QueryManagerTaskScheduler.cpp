@@ -279,6 +279,15 @@ void AbstractQueryManager::updateStatistics(const Task& task,
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
+        // TODO: use a map for intervals per source
+        auto currentGatheringInterval = -1;
+        auto sources = this->getQueryExecutionPlan(querySubPlanId)->getSources();
+        for (const auto& source : sources) {
+            if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+                continue;
+            }
+            currentGatheringInterval = source->getGatheringIntervalCount();
+        }
 
         auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -288,6 +297,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->setTimestampLastProcessedTask(now);
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
+        statistics->setCurrentGatheringInterval(currentGatheringInterval);
         auto creation = task.getBufferRef().getCreationTimestamp();
         auto diff = now - creation;
         //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;

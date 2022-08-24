@@ -105,6 +105,12 @@ class QueryStatistics {
     void setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask);
 
     /**
+     * @brief set current gathering interval based on an int
+     * @param newInterval
+     */
+    void setCurrentGatheringInterval(uint64_t newInterval);
+
+    /**
     * @brief increment processedBuffers
     */
     void incProcessedBuffers();
@@ -151,6 +157,12 @@ class QueryStatistics {
      * @return value
      */
     [[nodiscard]] uint64_t getAvailableFixedBufferSum() const;
+
+    /**
+     * @brief get current gathering interval of a single source
+     * @return the interval in milliseconds
+     */
+    uint64_t getCurrentGatheringInterval() const;
 
     /**
     * @brief increment available fixed buffer sum
@@ -227,6 +239,8 @@ class QueryStatistics {
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
+    // TODO: should be an avg or a map per-source?
+    std::atomic<uint64_t> currentGatheringInterval = 0;
 };
 
 }// namespace NES::Runtime

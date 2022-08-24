@@ -38,6 +38,7 @@ uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); 
 
 uint64_t QueryStatistics::getAvailableGlobalBufferSum() const { return availableGlobalBufferSum.load(); }
 uint64_t QueryStatistics::getAvailableFixedBufferSum() const { return availableFixedBufferSum.load(); }
+uint64_t QueryStatistics::getCurrentGatheringInterval() const { return currentGatheringInterval.load(); }
 
 void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
@@ -58,6 +59,10 @@ void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProc
 
 void QueryStatistics::setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask) {
     this->timestampLastProcessedTask = timestampLastProcessedTask;
+}
+
+void QueryStatistics::setCurrentGatheringInterval(uint64_t newInterval) {
+    this->currentGatheringInterval = newInterval;
 }
 
 void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
@@ -91,6 +96,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
        << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     ss << " availableFixedBufferAVG="
        << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << " currentGatheringInterval=" << currentGatheringInterval.load();
     return ss.str();
 }
 
@@ -103,6 +109,7 @@ void QueryStatistics::clear() {
     queueSizeSum = 0;
     availableGlobalBufferSum = 0;
     availableFixedBufferSum = 0;
+    currentGatheringInterval = 0;
 }
 
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
@@ -120,6 +127,7 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     queryId = other.queryId.load();
     subQueryId = other.subQueryId.load();
     tsToLatencyMap = other.tsToLatencyMap;
+    currentGatheringInterval = other.currentGatheringInterval.load();
 }
 
 }// namespace NES::Runtime
