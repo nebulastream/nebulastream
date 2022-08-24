@@ -36,7 +36,6 @@ add_source_files(nes-core
         MaterializedViewManager.cpp
         Allocator/NumaRegionMemoryAllocator.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
-        ThreadSafeBufferStorage.cpp
         )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
