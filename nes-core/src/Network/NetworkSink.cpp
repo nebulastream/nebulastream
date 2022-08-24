@@ -65,13 +65,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //if a mobile node is i nthe process of reconnecting, do not attempt to send data but buffer it instead
     if (reconnectBuffering) {
         NES_DEBUG("context " << workerContext.getId() << " buffering data");
-        //todo: what should the parameters on that message look like?
-        auto reconfigMsg = Runtime::ReconfigurationMessage(0, 0, Runtime::StartBuffering);
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        //todo: thread safety here!
-        //todo: better way than raw pointers?
-        bufferingContexts.insert(&workerContext);
-        //reconfigure(reconfigMsg, workerContext);
         return true;
     }
     /*
@@ -92,29 +86,6 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
-}
-
-void NetworkSink::startBuffering() {
-    reconnectBuffering = true;
-}
-
-void NetworkSink::stopBuffering() {
-    //unsetting this here might lead to changing the order of tuples, but is the easiest way to avoid threading problems
-    reconnectBuffering = false;
-    for (auto& context : bufferingContexts) {
-        //todo: send reconfig msg
-        if (context == nullptr) {
-            NES_WARNING("list of buffering contexts contains null pointer")
-            continue;
-        }
-        NES_DEBUG("reconfiguring context " << context->getId());
-        auto reconfingMsg = Runtime::ReconfigurationMessage(0, 0, Runtime::StopBuffering);
-        reconfigure(reconfingMsg, *context);
-    }
-    bufferingContexts.clear();
-    //todo: just setting this here at the end will cause trouble if new tuples come in, while we are stopping to buffer
-    //it actually caused endless loop
-    //reconnectBuffering = false;
 }
 
 void NetworkSink::preSetup() {
@@ -184,21 +155,17 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::StartBuffering: {
             //todo: what to do here?
-            /*
             if (reconnectBuffering) {
                 NES_WARNING("Requested sink to buffer but it is already buffering")
             } else {
                 this->reconnectBuffering = true;
             }
-             */
         }
         case Runtime::StopBuffering: {
-            //todo: keep bool for every context
-            /*
+            //todo: maybe we need a "draining" boolean to avaid problems when worker keeps writing while we drain?
             if (!reconnectBuffering) {
                 NES_WARNING("Requested sink to stop buffering but it is not buffering")
             } else {
-             */
                 //todo: do we have to look for threadsafety here?
                 //todo: extract to function
                 NES_INFO("stop buffering data for context " << workerContext.getId());
@@ -220,7 +187,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     workerContext.removeTopBufferFromStorage(nesPartition);
                     topBuffer = workerContext.getTopBufferFromStorage(nesPartition);
                 }
-            //}
+            }
         }
         default: {
             break;

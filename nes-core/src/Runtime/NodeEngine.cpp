@@ -597,7 +597,9 @@ bool NodeEngine::bufferAllData() {
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
             if (networkSink) {
                 NES_DEBUG("Starting to buffer on Network Sink" << networkSink->getUniqueNetworkSinkDescriptorId())
-                networkSink->startBuffering();
+                //networkSink->startBuffering();
+                ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::StartBuffering, networkSink);
+                queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             } else {
                 NES_DEBUG("Sink is not a network sink")
             }
@@ -615,7 +617,9 @@ bool NodeEngine::stopBufferingAllData() {
             //todo: check if sink is network sink an tell it to buffer
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
             if (networkSink) {
-                networkSink->stopBuffering();
+                //networkSink->stopBuffering();
+                ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::StopBuffering, networkSink);
+                queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             }
         }
     }

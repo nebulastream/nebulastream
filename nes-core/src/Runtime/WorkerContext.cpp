@@ -137,10 +137,4 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
 }
 std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider() { return localBufferPool; }
 
-bool WorkerContext::isBuffering() { return buffering; }
-
-void WorkerContext::setIsBuffering(bool buffering) {
-    this->buffering = buffering;
-}
-
 }// namespace NES::Runtime
