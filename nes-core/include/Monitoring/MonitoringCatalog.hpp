@@ -60,8 +60,6 @@ class MonitoringCatalog {
   private:
     explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
-//    MonitoringCatalogPtr createCatalog(MonitoringPlanPtr monitoringPlan);
-//    MonitoringCatalogPtr createCatalog(MonitoringPlanPtr monitoringPlan);
 };
 
 }// namespace NES

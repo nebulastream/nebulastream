@@ -292,7 +292,9 @@ uint64_t MemoryMetrics::getValue(const std::string& metricName) const {
         return LOADS_5MIN;
     } else if (metricName == "LOADS_15MIN") {
         return LOADS_15MIN;
-    } else {
+    } else if (metricName == "nodeId") {
+        return nodeId;
+    }else {
         NES_DEBUG("Unknown Metricname: " << metricName);
         //todo: find right exception
         throw std::exception();

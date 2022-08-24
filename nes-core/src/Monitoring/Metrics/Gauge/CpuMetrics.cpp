@@ -269,7 +269,9 @@ uint64_t CpuMetrics::getValue(const std::string& metricName) const {
         return guest;
     } else if (metricName == "guestnice") {
         return guestnice;
-    } else {
+    } else if (metricName == "nodeId") {
+        return nodeId;
+    }else {
         NES_DEBUG("Unknown Metricname: " << metricName);
         //todo: find right exception
         throw std::exception();

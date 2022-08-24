@@ -348,6 +348,8 @@ uint64_t NetworkMetrics::getValue(const std::string& metricName) const {
         return tCarrier;
     } else if (metricName == "tCompressed") {
         return tCompressed;
+    } else if (metricName == "nodeId") {
+        return nodeId;
     }else {
         NES_DEBUG("Unknown Metricname: " << metricName);
         //todo: find right exception

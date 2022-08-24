@@ -479,7 +479,10 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
 
 class SourceTest : public Testing::NESBaseTest {
   public:
+    TopologyNodeId nodeId;
     void SetUp() override {
+        nodeId = TopologyNodeId(1909);
+
         Testing::NESBaseTest::SetUp();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
@@ -1982,6 +1985,34 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
 }
 
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceMemory) {
+    // create metrics and plan for MonitoringSource
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<MemoryCollector>();
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+    MemoryMetrics parsedValues{};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+}
+
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
@@ -2251,6 +2282,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartDisk) {
     monitoringPlan.insert (std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
     auto plan = MonitoringPlan::create(monitoringPlan);
     auto testCollector = std::make_shared<DiskCollector>(DiskCollector(schema));
+    testCollector->setNodeId(nodeId);
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
@@ -2272,6 +2304,8 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartDisk) {
     DiskMetrics parsedValues{testCollector->getSchema()};
     parsedValues.readFromBuffer(buf.value(), 0);
     ASSERT_EQ(parsedValues.getValue("F_BSIZE"), 4096);
+    ASSERT_EQ(parsedValues.getValue("nodeId"), nodeId);
+    testCollector->setNodeId(nodeId);
     for(const std::string& metricName : notConfiguredAttributes) {
         ASSERT_EQ(parsedValues.getValue(metricName), 0);
     }
@@ -2307,6 +2341,147 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartDisk) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
 
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartMemory) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"TOTAL_SWAP", "SHARED_RAM", "TOTAL_HIGH", "BUFFER_RAM", "MEM_UNIT"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = MemoryMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = MemoryMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<MemoryCollector>(MemoryCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+    MemoryMetrics parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(parsedValues.getValue("MEM_UNIT"), 1);
+    ASSERT_EQ(parsedValues.getValue("nodeId"), nodeId);
+    for(const std::string& metricName : notConfiguredAttributes) {
+        ASSERT_EQ(parsedValues.getValue(metricName), 0);
+    }
+//    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartMemory) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"TOTAL_SWAP", "SHARED_RAM", "TOTAL_HIGH", "BUFFER_RAM", "MEM_UNIT"};
+    SchemaPtr schema = MemoryMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<MemoryCollector>(MemoryCollector(schema));
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        MemoryMetrics parsedValues{testCollector->getSchema()};
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartNetwork) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"rBytes", "rPackets", "tBytes", "tPackets", "interfaceName"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = NetworkMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = NetworkMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<NetworkCollector>(NetworkCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+
+    NetworkMetricsWrapper parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(buf->getNumberOfTuples(), parsedValues.size());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
+    for (unsigned int i = 0; i < parsedValues.size(); i++) {
+        for (const std::string& metricName : notConfiguredAttributes) {
+            ASSERT_EQ(parsedValues.getNetworkValue(i).getValue(metricName), 0);
+        }
+        ASSERT_EQ(parsedValues.getNetworkValue(i).getValue("nodeId"), nodeId);
+        ASSERT_EQ(parsedValues.getNetworkValue(i).getValue("interfaceName"), i);
+    }
+
+    //    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartNetwork) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"rBytes", "rPackets", "tBytes", "tPackets", "interfaceName"};
+    SchemaPtr schema = NetworkMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<NetworkCollector>(NetworkCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    NetworkMetricsWrapper parsedValues{testCollector->getSchema()};
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), (2 * parsedValues.size()));
+}
+
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartCPU) {
     // create metrics and plan for MonitoringSource
     std::list<std::string> configuredAttributes {"coreNum", "idle", "system", "iowait"};
@@ -2319,6 +2494,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartCPU) {
     }
     SchemaPtr schema = CpuMetrics::createSchema("", configuredAttributes);
     auto testCollector = std::make_shared<CpuCollector>(CpuCollector(schema));
+    testCollector->setNodeId(nodeId);
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
@@ -2339,14 +2515,16 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartCPU) {
     CpuMetricsWrapper parsedValues{testCollector->getSchema()};
     parsedValues.readFromBuffer(buf.value(), 0);
     ASSERT_EQ(buf->getNumberOfTuples(), parsedValues.size());
-//    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
     for (unsigned int i = 0; i < parsedValues.size(); i++) {
         for (const std::string& metricName : notConfiguredAttributes) {
             ASSERT_EQ(parsedValues.getValue(i).getValue(metricName), 0);
         }
+        ASSERT_EQ(parsedValues.getValue(i).getValue("coreNum"), i);
+        ASSERT_EQ(parsedValues.getValue(i).getValue("nodeId"), nodeId);
     }
 
-//    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    //    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
 }
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartCPU) {
@@ -2376,5 +2554,4 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartCPU) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), (2 * parsedValues.size()));
 }
-
 }// namespace NES

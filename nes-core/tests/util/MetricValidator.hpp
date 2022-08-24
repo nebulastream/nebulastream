@@ -144,6 +144,7 @@ class MetricValidator {
             NES_WARNING("MetricValidator: AbstractReader used for CpuMetricsWrapper. Returning true");
             return true;
         }
+        SchemaPtr schemaCpu = cpuMetrics.getSchema();
 
         if (cpuMetrics.size() <= 0) {
             NES_ERROR("MetricValidator: Wrong getNumCores.");

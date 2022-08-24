@@ -170,6 +170,8 @@ uint64_t DiskMetrics::getValue(std::string metricName) {
         return fBfree;
     } else if (metricName == "F_BAVAIL") {
         return fBavail;
+    } else if (metricName == "nodeId") {
+        return nodeId;
     } else {
         NES_DEBUG("Unknown Metricname: " << metricName);
         //todo: find right exception

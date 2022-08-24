@@ -195,7 +195,7 @@ bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurat
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string logicalSourceName = NES::toString(metricType);
+            std::string logicalSourceName = NES::toString(metricType) + "_default";
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
             config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));             //hier wird der Logicalstream erzeugt
@@ -358,40 +358,40 @@ const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMo
     return deployedMonitoringQueries;
 }
 
-std::string MonitoringManager::logicalSourceCheck(MetricType metric, SchemaPtr schema, uint64_t nodeId) {
-    std::string schemaString = schema->toString();
-    std::string logicalSourceName;
+//std::string MonitoringManager::logicalSourceCheck(MetricType metric, SchemaPtr schema, uint64_t nodeId) {
+//    std::string schemaString = schema->toString();
+//    std::string logicalSourceName;
+//
+//    if (configuredLogicalSources[metric].count(schemaString) > 0) {
+//        uint64_t nodeIdTemp = configuredLogicalSources[metric][schemaString].front();
+//        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeIdTemp];
+//        for (auto logicalSource : tempPair.second) {
+//            if (logicalSource.starts_with(toString(metric))) {
+//                return logicalSource;
+//            }
+//        }
+//        // TODO: add the nodeId to all relevant catalogs
+//        // TODO: exception if Problems
+//    } else {
+//        // TODO: create a logicalSource with all given Parameters
+//        return logicalSourceName;
+//    }
+//
+//    return 0;
+//}
 
-    if (configuredLogicalSources[metric].count(schemaString) > 0) {
-        uint64_t nodeIdTemp = configuredLogicalSources[metric][schemaString].front();
-        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeIdTemp];
-        for (auto logicalSource : tempPair.second) {
-            if (logicalSource.starts_with(toString(metric))) {
-                return logicalSource;
-            }
-        }
-        // TODO: add the nodeId to all relevant catalogs
-        // TODO: exception if Problems
-    } else {
-        // TODO: create a logicalSource with all given Parameters
-        return logicalSourceName;
-    }
-
-    return 0;
-}
-
-std::string MonitoringManager::registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId) {
-    std::string logicalSourceName;
-    if (enableMonitoring) {
-        // auto generate the specifics
-        std::string metricString = NES::toString(metric);
-        // TODO: create the right name for the LogicalSoureName
-        NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
-        // TODO: add all the info to the right places
-//            config->logicalSources.add(LogicalSource::create(logicalSourceName, schema));
-    }
-    NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
-    return logicalSourceName;
-}
+//std::string MonitoringManager::registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId) {
+//    std::string logicalSourceName;
+//    if (enableMonitoring) {
+//        // auto generate the specifics
+//        std::string metricString = NES::toString(metric);
+//        // TODO: create the right name for the LogicalSoureName
+//        NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
+//        // TODO: add all the info to the right places
+////            config->logicalSources.add(LogicalSource::create(logicalSourceName, schema));
+//    }
+//    NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
+//    return logicalSourceName;
+//}
 
 }// namespace NES

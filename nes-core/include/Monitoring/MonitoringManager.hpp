@@ -204,9 +204,9 @@ class MonitoringManager {
      */
     const std::unordered_map<std::string, QueryId>& getDeployedMonitoringQueries() const;
 
-    std::string logicalSourceCheck(MetricType metric,SchemaPtr schema, uint64_t nodeId);
+//    std::string logicalSourceCheck(MetricType metric,SchemaPtr schema, uint64_t nodeId);
 
-    std::string registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId);
+//    std::string registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId);
 
 
   private:
@@ -225,7 +225,6 @@ class MonitoringManager {
     QueryServicePtr queryService;
     QueryCatalogServicePtr catalogService;
     std::map<MetricType, std::map<std::string, std::list<uint64_t>>> configuredLogicalSources;
-
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;

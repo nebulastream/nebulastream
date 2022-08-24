@@ -138,9 +138,8 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
 
     // TODO: check if Catalog is init right; check the schema for each MetricType
 
-    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
 
-    std::cout << "Well done!";
+    MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
