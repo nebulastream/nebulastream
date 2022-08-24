@@ -22,7 +22,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
-#include <unordered_set>
 
 namespace NES {
 namespace Network {
@@ -63,10 +62,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @return true if no error occurred
     */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
-
-    void startBuffering();
-
-    void stopBuffering();
 
   protected:
     /**
@@ -145,8 +140,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     std::atomic<bool> reconnectBuffering;
-    //todo: maybe we do not need this one if we have a message which automtically reconfigures all workerContexts
-    std::unordered_set<Runtime::WorkerContext*> bufferingContexts;
 };
 
 }// namespace Network
