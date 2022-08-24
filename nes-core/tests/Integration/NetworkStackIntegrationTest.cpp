@@ -569,12 +569,14 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
 
         //networkSink->reconfigure()
         //sendEngine...
-        networkSink->startBuffering();
+        //networkSink->startBuffering();
+        sendEngine->bufferAllData();
         for (int i = 0; i < 10; ++i) {
             NES_DEBUG("Count while buffering: " << bufferCnt.load());
             sleep(1);
         }
-        networkSink->stopBuffering();
+        //networkSink->stopBuffering();
+        sendEngine->stopBufferingAllData();
         /*
         while (static_cast<std::size_t>(bufferCnt.load()) < numSendingThreads * totalNumBuffer) {
             if (bufferCnt.load() != prevCount) {

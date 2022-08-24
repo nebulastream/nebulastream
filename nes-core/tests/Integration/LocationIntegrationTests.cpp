@@ -1060,8 +1060,9 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutput) {
 
 TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     NES_INFO(" start coordinator");
-    NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
-    std::string testFile = "exdra.csv";
+    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
+    //std::string testFile = "exdra.csv";
+    std::string testFile = getTestResourceFolder() / "exdra_out.csv";
 
     std::stringstream fileInStream;
     //std::ifstream checkFile(std::string(TEST_DATA_DIRECTORY) + std::string("sequence_check_reading2.csv"));
@@ -1079,7 +1080,7 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraU
     //std::cout << "compstring" << compareString << std::endl;
     //std::cout << "done";
     remove(testFile.c_str());
-    std::system(std::string("/snap/bin/chromium file:///home/x/visualizeNes/mapNodesWithReconnects.html?restPort=" +std::to_string(*restPort)).c_str());
+    //std::system(std::string("/snap/bin/chromium file:///home/x/visualizeNes/mapNodesWithReconnects.html?restPort=" +std::to_string(*restPort)).c_str());
 
     //uint64_t myRestPort = 8081;
     NES_INFO("rest port = " << *restPort);
@@ -1240,9 +1241,17 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraU
                                             */
     //todo: something is fishy with the waitforworkers function. if parent is not set, 61 passes, otherwise we need 62
     //EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 61));
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 62));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 61));
     //EXPECT_TRUE(TestUtils::waitForWorkers(myRestPort, timeout, 1));
 
+    /*
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"seq\").sink(PrintSinkDescriptor::create(),"strategyName" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+    string body = ss.str();
+     */
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
@@ -1252,6 +1261,7 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraU
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
+
     /*
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -1273,8 +1283,13 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraU
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
+    while (true) {
+        std::system(std::string("cat " + std::string(testFile) + " | wc -l").c_str());
+        sleep(1);
+    }
+
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-    std::system(std::string("/snap/bin/chromium http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/query/query-plan?queryId=" + std::to_string(queryId)).c_str());
+    //std::system(std::string("/snap/bin/chromium http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/query/query-plan?queryId=" + std::to_string(queryId)).c_str());
     //std::system(std::string("/snap/bin/chromium http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/topology").c_str());
     //EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(myRestPort)));
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));

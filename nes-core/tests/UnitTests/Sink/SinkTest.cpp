@@ -446,6 +446,7 @@ TEST_F(SinkTest, testTextZMQSink) {
     buffer.release();
 }
 
+/*
 TEST_F(SinkTest, testNetworkSinkBuffering) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
@@ -494,6 +495,7 @@ TEST_F(SinkTest, testNetworkSinkBuffering) {
     receiving_thread.join();
     buffer.release();
 }
+ */
 
 TEST_F(SinkTest, testBinaryZMQSink) {
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
