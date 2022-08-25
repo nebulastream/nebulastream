@@ -79,6 +79,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint64_t oldParent, uint64_t newParent) {
     //todo #2864: tell nesWorker to buffer
     worker.getNodeEngine()->bufferAllData();
+    //todo: trigger replacement of operators
     bool success = worker.replaceParent(oldParent, newParent);
     worker.getNodeEngine()->stopBufferingAllData();
     return success;
