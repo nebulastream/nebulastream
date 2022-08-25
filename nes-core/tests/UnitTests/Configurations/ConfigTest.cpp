@@ -115,10 +115,9 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
-   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-//    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+//   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 
-    // Json Kram
     std::string tempString = workerConfigPtr->monitoringConfiguration.getValue();
     web::json::value configurationMonitoringJson =
         MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
@@ -135,9 +134,7 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     ASSERT_EQ(monitoringPlanJson->getSampleRate(MemoryMetric), sampleMem);
     ASSERT_EQ(monitoringPlanJson->getSampleRate(WrappedNetworkMetrics), sampleNetwork);
 
-
     // TODO: check if Catalog is init right; check the schema for each MetricType
-
 
     MonitoringAgentPtr monitoringAgent = MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
 }

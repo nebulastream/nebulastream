@@ -82,7 +82,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
             sampleRate = 0;
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["network"]["attributes"]);
-        tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(NetworkMetrics::createSchema("", attributesList), sampleRate));
+        tempPair = std::make_pair(WrappedNetworkMetrics, std::make_pair(NetworkMetrics::createSchema("", attributesList), sampleRate));
         configuredMonitoringPlan.insert(tempPair);
     }
 
