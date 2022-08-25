@@ -87,6 +87,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
+        if (!monitoringService->isMonitoringEnabled()){
+            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        }
         auto dto = MonitoringControllerBoolResponse::createShared();
         dto->success = monitoringService->stopMonitoringStreams().as_bool();
         if (dto->success == true){
@@ -96,6 +99,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
+        if (!monitoringService->isMonitoringEnabled()){
+            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->getMonitoringStreams().to_string();
         if (dto->monitoringData != "null"){
@@ -105,6 +111,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
+        if (!monitoringService->isMonitoringEnabled()){
+            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
         if (dto->monitoringData != "null"){
@@ -114,6 +123,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
+        if (!monitoringService->isMonitoringEnabled()){
+            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
         if (dto->monitoringData != "null"){
@@ -123,7 +135,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     }
     // ToDo: Find out if /metrics/ or /metrics
     ENDPOINT("GET", "/metrics/", getMonitoringControllerDataFromOneNode,
-             QUERY(UInt64, nodeId, "queryId")) {
+             QUERY(UInt64, nodeId, "nodeId")) {
+        if (!monitoringService->isMonitoringEnabled()){
+            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        }
         auto dto = MonitoringControllerStringResponse::createShared();
         try {
             dto->monitoringData = monitoringService->requestMonitoringDataAsJson(nodeId).to_string();
