@@ -1058,6 +1058,137 @@ TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
+class line {
+    std::string data;
+  public:
+    friend std::istream &operator>>(std::istream &is, line &l) {
+        std::getline(is, l.data);
+        return is;
+    }
+    operator std::string() const { return data; }
+};
+
+TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
+    NES_INFO(" start coordinator");
+    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
+    std::string testFile = getTestResourceFolder() / "exdra_out.csv";
+
+    std::stringstream fileInStream;
+    std::ifstream checkFile(std::string(TEST_DATA_DIRECTORY) + std::string("sequence_middle_check.csv"));
+    std::string compareString;
+    if (checkFile.is_open()) {
+        if (checkFile.good()) {
+            std::ostringstream oss;
+            oss << checkFile.rdbuf();
+            compareString = oss.str();
+        }
+    }
+    remove(testFile.c_str());
+
+    NES_INFO("rest port = " << *restPort);
+
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
+    coordinatorConfig->restPort.setValue(*restPort);
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully")
+
+    TopologyPtr topology = crd->getTopology();
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    std::stringstream schema;
+    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
+              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    //todo: maybe remove these 2
+    wrkConf1->dataPort.setValue(0);
+    wrkConf1->rpcPort.setValue(0);
+
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+
+    auto stype = CSVSourceType::create();
+    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setNumberOfBuffersToProduce(9999);
+    stype->setNumberOfTuplesToProducePerBuffer(1);
+    stype->setGatheringInterval(1);
+    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sourceExdra);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
+    ss << testFile;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss << R"());","strategyName" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+    string body = ss.str();
+
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    size_t recv_tuples = 0;
+    while (recv_tuples < 5000) {
+        std::ifstream inFile(testFile);
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
+            std::istreambuf_iterator<char>(), '\n');
+        NES_DEBUG("recv before buffering: " << recv_tuples)
+        sleep(1);
+    }
+
+    wrk1->getNodeEngine()->bufferAllData();
+
+    for (int i = 0; i < 10; ++i) {
+        std::ifstream inFile(testFile);
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
+                                 std::istreambuf_iterator<char>(), '\n');
+        NES_DEBUG("recv while buffering: " << recv_tuples)
+        sleep(1);
+    }
+    wrk1->getNodeEngine()->stopBufferingAllData();
+
+    while (recv_tuples < 10000) {
+        std::ifstream inFile(testFile);
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
+                                 std::istreambuf_iterator<char>(), '\n');
+        NES_DEBUG("recv after buffering: " << recv_tuples)
+        sleep(1);
+    }
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+
+    string expectedContent = compareString;
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+
+    int response = remove(testFile.c_str());
+    EXPECT_TRUE(response == 0);
+
+    cout << "stopping worker" << endl;
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    cout << "stopping coordinator" << endl;
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
 TEST_F(LocationIntegrationTests, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     NES_INFO(" start coordinator");
     //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
