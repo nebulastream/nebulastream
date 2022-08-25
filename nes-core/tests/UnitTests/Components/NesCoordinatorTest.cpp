@@ -42,6 +42,25 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
     ASSERT_EQ(92, coordinator->getNesWorker()->getWorkerConfiguration()->numWorkerThreads.getValue());
 }
 
-
+// Test that IP and port of the internal worker are consistent with IP and port from coordinator
+TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
+    // given: Set up the coordinator IP and ports
+    auto configuration = CoordinatorConfiguration::create();
+    configuration->rpcPort = *rpcCoordinatorPort;
+    configuration->restPort = *restPort;
+    configuration->coordinatorIp = "127.0.0.1";
+    // given: Configure the worker with nonsensical IP and port
+    configuration->worker.coordinatorPort = 111; // This port won't be assigned by the line above because it is below 1024.
+    configuration->worker.coordinatorIp = "127.0.0.2";
+    configuration->worker.localWorkerIp = "127.0.0.3";
+    // when
+    auto coordinator = std::make_shared<NesCoordinator>(configuration);
+    coordinator->startCoordinator(false);
+    // then: the IP and port in the worker configuration are overwritten
+    auto workerConfiguration = coordinator->getNesWorker()->getWorkerConfiguration();
+    EXPECT_EQ(configuration->rpcPort.getValue(), workerConfiguration->coordinatorPort.getValue());
+    EXPECT_EQ(configuration->coordinatorIp.getValue(), workerConfiguration->coordinatorIp.getValue());
+    EXPECT_EQ(configuration->coordinatorIp.getValue(), workerConfiguration->localWorkerIp.getValue());
+}
 
 }

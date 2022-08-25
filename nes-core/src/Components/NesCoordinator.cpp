@@ -177,8 +177,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
     coordinatorConfiguration->worker.coordinatorIp = rpcIp;
-    coordinatorConfiguration->worker.localWorkerIp = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
+    coordinatorConfiguration->worker.localWorkerIp = rpcIp;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());
