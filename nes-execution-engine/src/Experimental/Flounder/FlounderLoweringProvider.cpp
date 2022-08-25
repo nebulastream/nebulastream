@@ -332,6 +332,9 @@ void FlounderLoweringProvider::LoweringContext::processAnd(std::shared_ptr<IR::O
     if (andOpt->getRightInput()->getOperationType() == IR::Operations::Operation::CompareOp) {
         auto right = std::static_pointer_cast<IR::Operations::CompareOperation>(andOpt->getRightInput());
         processCmp(right, frame, falseCase);
+    } else if (andOpt->getRightInput()->getOperationType() == IR::Operations::Operation::AndOp) {
+        auto right = std::static_pointer_cast<IR::Operations::AndOperation>(andOpt->getRightInput());
+        processAnd(right, frame, falseCase);
     } else {
         NES_THROW_RUNTIME_ERROR("Right is not a compare operation but a " << andOpt->getRightInput()->toString());
     }

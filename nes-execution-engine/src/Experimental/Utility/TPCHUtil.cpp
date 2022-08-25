@@ -6,9 +6,12 @@
 namespace NES {
 
 std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
-TPCHUtil::getLineitems(std::string rootPath, std::shared_ptr<Runtime::BufferManager> bm, bool useCache) {
+TPCHUtil::getLineitems(std::string rootPath,
+                       std::shared_ptr<Runtime::BufferManager> bm,
+                       Schema::MemoryLayoutType layoutType,
+                       bool useCache) {
 
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    auto schema = Schema::create(layoutType);
     // 1
     schema->addField("l_orderkey", BasicType::INT64);
     // 2
@@ -36,15 +39,109 @@ TPCHUtil::getLineitems(std::string rootPath, std::shared_ptr<Runtime::BufferMana
     // shipinstruct
     // shipmode
     // comment
+    std::string prefix;
+    if (layoutType == Schema::ROW_LAYOUT) {
+        prefix = "row_";
+    } else {
+        prefix = "col_";
+    }
 
     NES_DEBUG("Loading of Lineitem done");
 
-    if (std::filesystem::exists(rootPath + "lineitem.cache") && useCache) {
-        return getFileFromCache(rootPath + "lineitem.cache", bm, schema);
+    if (std::filesystem::exists(rootPath + prefix + "lineitem.cache") && useCache) {
+        return getFileFromCache(rootPath + prefix + "lineitem.cache", bm, schema);
     } else {
         auto result = getLineitemsFromFile(rootPath + "lineitem.tbl", bm, schema);
         if (useCache) {
-            storeBuffer(rootPath + "lineitem.cache", result.second);
+            storeBuffer(rootPath + prefix + "lineitem.cache", result.second);
+        }
+        return result;
+    }
+}
+
+std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
+TPCHUtil::getOrders(std::string rootPath,
+                    std::shared_ptr<Runtime::BufferManager> bm,
+                    Schema::MemoryLayoutType layoutType,
+                    bool useCache) {
+
+    auto schema = Schema::create(layoutType);
+    // 1
+    schema->addField("o_orderkey", BasicType::INT64);
+    // 2
+    schema->addField("o_custkey", BasicType::INT64);
+    // 3
+    schema->addField("o_orderstatus", BasicType::INT64);
+    // 4
+    schema->addField("o_totalprice", BasicType::INT64);
+    // 5
+    schema->addField("o_orderdate", BasicType::INT64);
+    // 6
+    schema->addField("o_clerk", BasicType::INT64);
+    // 7
+    schema->addField("o_shippriority", BasicType::INT64);
+    // 8
+    schema->addField("o_comment", BasicType::INT64);
+
+    NES_DEBUG("Loading of Orders done");
+
+    std::string prefix;
+    if (layoutType == Schema::ROW_LAYOUT) {
+        prefix = "row_";
+    } else {
+        prefix = "col_";
+    }
+
+    if (std::filesystem::exists(rootPath + prefix + "orders.cache") && useCache) {
+        return getFileFromCache(rootPath + prefix + "orders.cache", bm, schema);
+    } else {
+        auto result = getOrdersFromFile(rootPath + "orders.tbl", bm, schema);
+        if (useCache) {
+            storeBuffer(rootPath + prefix + "orders.cache", result.second);
+        }
+        return result;
+    }
+}
+
+std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
+TPCHUtil::getCustomers(std::string rootPath,
+                       std::shared_ptr<Runtime::BufferManager> bm,
+                       Schema::MemoryLayoutType layoutType,
+                       bool useCache) {
+
+    auto schema = Schema::create(layoutType);
+    // 1
+    schema->addField("c_custkey", BasicType::INT64);
+    // 2
+    schema->addField("c_name", BasicType::INT64);
+    // 3
+    schema->addField("c_address", BasicType::INT64);
+    // 4
+    schema->addField("c_nationkey", BasicType::INT64);
+    // 5
+    schema->addField("c_phone", BasicType::INT64);
+    // 6
+    schema->addField("c_acctbal", BasicType::INT64);
+    // 7
+    schema->addField("c_mksegment", BasicType::INT64);
+    // 8
+    schema->addField("c_comment", BasicType::INT64);
+
+    NES_DEBUG("Loading of customer done");
+
+    std::string prefix;
+    if (layoutType == Schema::ROW_LAYOUT) {
+        prefix = "row_";
+    } else {
+        prefix = "col_";
+    }
+
+    if (std::filesystem::exists(rootPath + prefix + "customers.cache") && useCache) {
+        return getFileFromCache(rootPath + prefix + "customers.cache", bm, schema);
+    } else {
+        auto result = getOrdersFromFile(rootPath + "customers.tbl", bm, schema);
+        if (useCache) {
+            storeBuffer(rootPath + prefix + "customers.cache", result.second);
         }
         return result;
     }
@@ -61,7 +158,12 @@ TPCHUtil::getFileFromCache(std::string path, std::shared_ptr<Runtime::BufferMana
     input.read(buf.getBuffer<char>(), size);
     uint64_t generated_tuples_this_pass = size / schema->getSchemaSizeInBytes();
     buf.setNumberOfTuples(generated_tuples_this_pass);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, size);
+    } else {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, size);
+    }
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
@@ -89,7 +191,12 @@ TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::Buffer
 
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    } else {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+    }
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 
     inFile.clear();// clear fail and eof bits
@@ -155,6 +262,161 @@ TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         int64_t l_shipdate = std::stoi(l_shipdateString);
         dynamicBuffer[index][10].write(l_shipdate);
         dynamicBuffer.setNumberOfTuples(index + 1);
+    }
+    inFile.close();
+    return std::make_pair(memoryLayout, dynamicBuffer);
+}
+
+[[maybe_unused]] std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
+TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
+    NES_DEBUG("Load buffer from file" << path);
+
+    std::ifstream inFile(path);
+    uint64_t linecount = 0;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        linecount++;
+    }
+    NES_DEBUG("LOAD orders with " << linecount << " lines");
+
+    auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
+    auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    } else {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+    }
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+
+    inFile.clear();// clear fail and eof bits
+    inFile.seekg(0, std::ios::beg);
+
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        auto index = dynamicBuffer.getNumberOfTuples();
+        auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
+
+        // orderkey
+        auto o_orderkeyString = strings[0];
+        int64_t o_orderkey = std::stoi(o_orderkeyString);
+        dynamicBuffer[index][0].write(o_orderkey);
+
+        // custkey
+        auto o_custkeyString = strings[1];
+        int64_t custkey = std::stoi(o_custkeyString);
+        dynamicBuffer[index][1].write(custkey);
+
+        // orderstatus
+        auto orderstatusString = strings[2];
+        // int64_t l_subpkey = std::stoi(orderstatusString);
+        // dynamicBuffer[index][2].write(l_subpkey);
+
+        // totalprice
+        auto o_totalpriceString = strings[3];
+        //int64_t l_linenumber = std::stoi(o_totalpriceString);
+        //dynamicBuffer[index][3].write(l_linenumber);
+
+        // orderdate
+        auto orderdate = strings[4];
+        //int64_t orderdate = std::stoi(orderdate);
+        //dynamicBuffer[index][4].write(l_quantity);
+
+        // orderpriority
+        //auto l_extendedpriceString = strings[5];
+        //int64_t l_extendedprice = std::stof(l_extendedpriceString) * 100;
+        //dynamicBuffer[index][5].write(l_extendedprice);
+
+        // clerk
+        //auto l_discountString = strings[6];
+        //int64_t l_discount = std::stof(l_discountString) * 100;
+        //dynamicBuffer[index][6].write(l_discount);
+
+        // shippriority
+        //auto l_taxString = strings[7];
+        //int64_t l_tax = std::stof(l_taxString) * 100;
+        //dynamicBuffer[index][7].write(l_tax);
+
+        // comment
+        //auto l_returnflagString = strings[8];
+        //int64_t l_returnflag = (int8_t) l_returnflagString[0];
+        //dynamicBuffer[index][8].write(l_returnflag);
+    }
+    inFile.close();
+    return std::make_pair(memoryLayout, dynamicBuffer);
+}
+
+std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
+TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
+    NES_DEBUG("Load buffer from file" << path);
+
+    std::ifstream inFile(path);
+    uint64_t linecount = 0;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        linecount++;
+    }
+    NES_DEBUG("LOAD customers with " << linecount << " lines");
+
+    auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
+    auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    } else {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+    }
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+
+    inFile.clear();// clear fail and eof bits
+    inFile.seekg(0, std::ios::beg);
+
+    while (std::getline(inFile, line)) {
+        // using printf() in all tests for consistency
+        auto index = dynamicBuffer.getNumberOfTuples();
+        auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
+
+        // custkey
+        auto c_custkeyString = strings[0];
+        int64_t custkey = std::stoi(c_custkeyString);
+        dynamicBuffer[index][0].write(custkey);
+
+        // name
+        //auto o_custkeyString = strings[1];
+        //int64_t custkey = std::stoi(o_custkeyString);
+        //dynamicBuffer[index][1].write(custkey);
+
+        // address
+        // auto orderstatusString = strings[2];
+        // int64_t l_subpkey = std::stoi(orderstatusString);
+        // dynamicBuffer[index][2].write(l_subpkey);
+
+        // nation
+        auto c_nation = strings[3];
+        //int64_t l_linenumber = std::stoi(o_totalpriceString);
+        //dynamicBuffer[index][3].write(l_linenumber);
+
+        // phone
+        auto c_phone = strings[4];
+        //int64_t orderdate = std::stoi(orderdate);
+        //dynamicBuffer[index][4].write(l_quantity);
+
+        // acctbal
+        //auto c_acctbal = strings[5];
+        //int64_t l_extendedprice = std::stof(l_extendedpriceString) * 100;
+        //dynamicBuffer[index][5].write(l_extendedprice);
+
+        // mktsegment
+        //auto c_mktsegment = strings[6];
+        //int64_t l_discount = std::stof(l_discountString) * 100;
+        //dynamicBuffer[index][6].write(l_discount);
+
+        // comment
+        //auto c_comment = strings[7];
+        //int64_t l_tax = std::stof(l_taxString) * 100;
+        //dynamicBuffer[index][7].write(l_tax);
     }
     inFile.close();
     return std::make_pair(memoryLayout, dynamicBuffer);
