@@ -36,9 +36,7 @@ namespace NES {
 class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
-    static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics);
-    static MonitoringPlanPtr create(const std::map <MetricType, SchemaPtr>& metrics,
-                                    const std::map<MetricType, uint64_t>& sample);
+    static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
     static MonitoringPlanPtr defaultPlan();
 
 //    static MonitoringPlanPtr setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetricsYaml);
@@ -92,13 +90,11 @@ class MonitoringPlan {
 
   private:
     explicit MonitoringPlan(const std::set<MetricType>& metrics);
-    explicit MonitoringPlan(const std::map <MetricType, SchemaPtr>& metrics);
-    explicit MonitoringPlan(const std::map <MetricType, SchemaPtr>& metrics, const std::map<MetricType, uint64_t>& sample);
+    explicit MonitoringPlan(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
 
     //enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
-    std::map <MetricType, SchemaPtr> monitoringPlan;
-    std::map <MetricType, uint64_t> sampleRate;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
 };
 
 }// namespace NES

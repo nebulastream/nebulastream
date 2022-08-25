@@ -26,22 +26,11 @@
 
 namespace NES {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
-    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedCpuMetrics,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(DiskMetric,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(MemoryMetric,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedNetworkMetrics,0));
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
-MonitoringPlan::MonitoringPlan(const std::map<MetricType, SchemaPtr>& metrics) : monitoringPlan(metrics) {
-    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedCpuMetrics,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(DiskMetric,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(MemoryMetric,0));
-    sampleRate.insert(std::pair<MetricType, uint64_t>(WrappedNetworkMetrics,0));
-    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
-}
-
-MonitoringPlan::MonitoringPlan(const std::map<MetricType, SchemaPtr>& metrics, const std::map<MetricType, uint64_t>& sample) : monitoringPlan(metrics), sampleRate(sample) {
+MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, uint64_t>>& metrics) : monitoringPlan(metrics) {
+ // TODO: SampleRate hinzufügen
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
@@ -49,119 +38,64 @@ MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
     return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
 }
 
-MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>& monitoringPlan) {
+MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& monitoringPlan) {
     return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan));
 }
 
-MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, SchemaPtr>& monitoringPlan,
-                                         const std::map<MetricType, uint64_t>& sample) {
-    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan, sample));
-}
-
-//set the MonitoringPlan for the Yaml Konfiguration
-//MonitoringPlanPtr MonitoringPlan::setSchema(const std::map <MetricType, std::list<std::string>>& configuredMetrics) {
-//    std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
-////    SchemaPtr schema;
-//    if (configuredMetrics.count(CpuMetric) > 0) {
-//        auto it = configuredMetrics.find(CpuMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(CpuMetric, CpuMetrics::createSchema("", it->second)));
-//    } if (configuredMetrics.count(DiskMetric) > 0) {
-//        auto it = configuredMetrics.find(DiskMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", it->second)));
-//    } if (configuredMetrics.count(MemoryMetric) > 0) {
-//        auto it = configuredMetrics.find(MemoryMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(MemoryMetric, MemoryMetrics::createSchema("", it->second)));
-//    } if (configuredMetrics.count(NetworkMetric) > 0) {
-//        auto it = configuredMetrics.find(NetworkMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(NetworkMetric, NetworkMetrics::createSchema("", it->second)));
-//    } if (configuredMetrics.count(RegistrationMetric) > 0) {
-//        auto it = configuredMetrics.find(RegistrationMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", it->second)));
-//    } if (configuredMetrics.count(RuntimeMetric) > 0) {
-//        auto it = configuredMetrics.find(RuntimeMetric);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", it->second)));
-//    }
-//
-//    return MonitoringPlan::create(configuredMonitoringPlan);
-//}
-
 MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
-    std::map <MetricType, SchemaPtr> configuredMonitoringPlan;
-    std::map <MetricType, uint64_t> configuredSampleRates;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
     SchemaPtr schema;
     web::json::value attributesArray;
     std::list<std::string> attributesList;
+    uint64_t sampleRate = 0;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
     if (configuredMetrics["cpu"].is_object()) {
         if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(WrappedCpuMetrics,configuredMetrics["cpu"]["sampleRate"].as_integer()));
-        } else {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(WrappedCpuMetrics,0));
+            sampleRate = configuredMetrics["cpu"]["sampleRate"].as_integer();
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["cpu"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(WrappedCpuMetrics, CpuMetrics::createSchema("", attributesList)));
+        tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["disk"].is_object()) {
         if (configuredMetrics["disk"]["sampleRate"].is_number()) {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(DiskMetric,configuredMetrics["disk"]["sampleRate"].as_integer()));
+            sampleRate = configuredMetrics["disk"]["sampleRate"].as_integer();
         } else {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(DiskMetric,0));
+            sampleRate = 0;
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["disk"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(DiskMetric, DiskMetrics::createSchema("", attributesList)));
+        tempPair = std::make_pair(DiskMetric, std::make_pair(DiskMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["memory"].is_object()) {
         if (configuredMetrics["memory"]["sampleRate"].is_number()) {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(MemoryMetric, configuredMetrics["memory"]["sampleRate"].as_integer()));
+            sampleRate = configuredMetrics["memory"]["sampleRate"].as_integer();
         } else {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(MemoryMetric,0));
+            sampleRate = 0;
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["memory"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(MemoryMetric, MemoryMetrics::createSchema("", attributesList)));
+        tempPair = std::make_pair(MemoryMetric, std::make_pair(MemoryMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["network"].is_object()) {
         if (configuredMetrics["network"]["sampleRate"].is_number()) {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(WrappedNetworkMetrics,configuredMetrics["network"]["sampleRate"].as_integer()));
+            sampleRate = configuredMetrics["network"]["sampleRate"].as_integer();
+
         } else {
-            configuredSampleRates.insert(std::pair<MetricType,
-                                                   uint64_t>(WrappedNetworkMetrics,0));
+            sampleRate = 0;
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["network"]["attributes"]);
-        configuredMonitoringPlan.insert(std::pair<MetricType,
-                                                  SchemaPtr>(WrappedNetworkMetrics, NetworkMetrics::createSchema("", attributesList)));
+        tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(NetworkMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
     }
-        //    if (configuredMetrics["registration"]["sampleRate"].is_number()) {
-//        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["registration"]["attributes"]);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(RegistrationMetric, RegistrationMetrics::createSchema("", attributesList)));
-//    } if (configuredMetrics["runtime"]["sampleRate"].is_number()) {
-//        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["runtime"]["attributes"]);
-//        configuredMonitoringPlan.insert(std::pair<MetricType,
-//                                                  SchemaPtr>(RuntimeMetric, RuntimeMetrics::createSchema("", attributesList)));
-//    }
 
-    return MonitoringPlan::create(configuredMonitoringPlan, configuredSampleRates);
+    return MonitoringPlan::create(configuredMonitoringPlan);
 }
 
 SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
     // TODO: auffangen, falls MetricType nicht in MonitoringPlan vorhanden
-    return monitoringPlan.find(metric)->second;
+    return monitoringPlan.find(metric)->second.first;
 }
 
 uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
-    return sampleRate.find(metric)->second;
+    return monitoringPlan.find(metric)->second.second;
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
@@ -181,36 +115,68 @@ bool MonitoringPlan::addMetric(MetricType metric) {
     return true;
 }
 
-bool MonitoringPlan::hasMetric(MetricType metric) const { return monitoringPlan.contains(metric); }
+bool MonitoringPlan::hasMetric(MetricType metric) const {
+    if (monitoringPlan.empty()) {
+        return metricTypes.contains(metric);
+    }
+    return monitoringPlan.contains(metric);
+}
 
 std::string MonitoringPlan::toString() const {
     std::stringstream output;
     output << "MonitoringPlan:";
-
-    for (auto metric : metricTypes) {
-        switch (metric) {
-            case MetricType::CpuMetric: {
-                output << "cpu(True);";
-            };
-            case MetricType::DiskMetric: {
-                output << "disk(True);";
-            };
-            case MetricType::MemoryMetric: {
-                output << "memory(True);";
-            };
-            case MetricType::NetworkMetric: {
-                output << "network(True);";
-            };
-            case MetricType::RuntimeMetric: {
-                output << "runtimeMetrics(True);";
-            };
-            case MetricType::RegistrationMetric: {
-                output << "staticMetrics(True);";
-            };
-            default: {
+    if (monitoringPlan.empty()) {
+        for (auto metric : metricTypes) {
+            switch (metric) {
+                case MetricType::CpuMetric: {
+                    output << "cpu(True);";
+                };
+                case MetricType::DiskMetric: {
+                    output << "disk(True);";
+                };
+                case MetricType::MemoryMetric: {
+                    output << "memory(True);";
+                };
+                case MetricType::NetworkMetric: {
+                    output << "network(True);";
+                };
+                case MetricType::RuntimeMetric: {
+                    output << "runtimeMetrics(True);";
+                };
+                case MetricType::RegistrationMetric: {
+                    output << "staticMetrics(True);";
+                };
+                default: {
+                }
+            }
+        }
+    } else {
+        for (auto metric : monitoringPlan) {
+            switch (metric.first) {
+                case MetricType::CpuMetric: {
+                    output << "cpu(True);";
+                };
+                case MetricType::DiskMetric: {
+                    output << "disk(True);";
+                };
+                case MetricType::MemoryMetric: {
+                    output << "memory(True);";
+                };
+                case MetricType::NetworkMetric: {
+                    output << "network(True);";
+                };
+                case MetricType::RuntimeMetric: {
+                    output << "runtimeMetrics(True);";
+                };
+                case MetricType::RegistrationMetric: {
+                    output << "staticMetrics(True);";
+                };
+                default: {
+                }
             }
         }
     }
+
     return output.str();
 }
 
@@ -230,7 +196,6 @@ const std::set<MetricType> MonitoringPlan::getMetricTypes() const {
     }
     return metricTypes;
 }
-
 
 const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {
     std::set<MetricCollectorType> output;
