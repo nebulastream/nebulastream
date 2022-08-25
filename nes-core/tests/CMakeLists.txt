@@ -615,6 +615,11 @@ add_nes_integration_test(grpc-test "UnitTests/gRPC/grpcTests.cpp")
 ### Query Failure Test
 add_nes_integration_test(query-failure-test "Integration/QueryFailureTest.cpp")
 
+### NES Coordinator Test
+add_executable(nes-coordinator-test "UnitTests/Components/NesCoordinatorTest.cpp")
+target_link_libraries(nes-coordinator-test nes-tests)
+add_test(NAME nes-coordinator-test COMMAND nes-coordinator-test)
+
 ### Location Integration Test ###
 if (USE_S2)
     add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
