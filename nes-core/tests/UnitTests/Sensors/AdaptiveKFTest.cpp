@@ -499,29 +499,6 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     EXPECT_GT(abnormalEstimationError, normalEstimationError);
 }
 
-TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMagnitudeTest) {
-    // initial state estimations, values can be random
-    Eigen::VectorXd initialState(3);
-    initialState << 0, measurements[0], measurements[0];
-
-    // empty filter
-    KFProxy kfProxy{10};
-    kfProxy.init(initialState);
-    kfProxy.setGatheringInterval(std::chrono::milliseconds{4000});
-
-    // start measurements vector
-    Eigen::VectorXd y(1);
-
-    // predict and update
-    for(uint64_t i = 1; i < measurements.size(); ++i) {
-        y << measurements[i];
-        kfProxy.update(y);
-        auto newFreq = kfProxy.getValueMagnitudeBasedFrequency();
-    }
-
-    EXPECT_TRUE(true);
-}
-
 TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
     // initial state estimations, values can be random
     Eigen::VectorXd initialState(3);

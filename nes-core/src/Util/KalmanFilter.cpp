@@ -171,18 +171,6 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
     return this->gatheringInterval;
 }
 
-std::chrono::milliseconds KalmanFilter::getValueMagnitudeBasedFrequency() {
-    auto totalEstimationError = this->calculateTotalEstimationError();
-    auto powerOfEuler = (totalEstimationError + lambda) / lambda;
-    auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
-    auto newFreqCandidate = this->gatheringInterval.count() + thetaPart;
-    auto magnitude = this->getMagnitudeFromLastValues(this->lastValuesWindow[1], this->lastValuesWindow[0]);
-    auto canonicalizedFreqCandidate = (magnitude > 0) ? newFreqCandidate / magnitude : newFreqCandidate;
-    // forget upper/lower thresholds or error thresholds for now
-    this->gatheringInterval = std::chrono::milliseconds((int) trunc(canonicalizedFreqCandidate));
-    return this->gatheringInterval;
-}
-
 std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
     /**
      * diff is new - old, negative means new is small
@@ -251,13 +239,6 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequencyWithHalfLimit() {
         }
     }
     return this->gatheringInterval;
-}
-
-double KalmanFilter::getMagnitudeFromLastValues(double oldValue, double newValue) {
-    auto oldValueMod = std::log10(std::abs(oldValue));
-    auto newValueMod = std::log10(std::abs(newValue));
-    auto suggestedMagnitudeMultiplier = std::abs(oldValueMod - newValueMod);
-    return std::trunc(suggestedMagnitudeMultiplier);
 }
 
 std::chrono::milliseconds KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
