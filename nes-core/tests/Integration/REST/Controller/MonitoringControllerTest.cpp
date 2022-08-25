@@ -77,10 +77,11 @@ TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
     }
 
     // for debugging:
+/*
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto jsonMetrics = monitoringService->startMonitoringStreams();
-    auto expected = jsonMetrics.to_string();
-
+    auto expected = monitoringService->startMonitoringStreams().to_string();
+*/
     // oatpp GET start call
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
@@ -88,11 +89,11 @@ TEST_F(MonitoringControllerTest, MonitoringControllerStartEndpointTest) {
     EXPECT_EQ(r.status_code, 200);
 
     // toDo also compare content of r and find out why its not like expected
-/* this still fails:
-    std::cout << "\n Content of OATPP Response r: ";
-    std::cout << r.text;
-    std::cout << "\n Expected content: ";
-    std::cout << "monitoringData:" + expected;
+    NES_INFO("\n Content of OATPP Response r: ");
+    NES_INFO(r.text);
+  //  NES_INFO("\n Expected content: ");
+  //  NES_INFO("monitoringData:" + expected);
+    /* this still fails:
    // EXPECT_EQ(expected, r.text);
 */
 }
@@ -115,9 +116,111 @@ TEST_F(MonitoringControllerTest, StartMonitoringControllerFailsBecauseMonitoring
 
     cpr::Response r =
         cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
-    std::cout << "\n Content of Response r: ";
-    std::cout << r.text;
+    NES_INFO("\n Content of Response r: ");
+    NES_INFO(r.text);
     EXPECT_EQ(r.status_code, 404);
+}
+
+TEST_F(MonitoringControllerTest, requestAllMetricsViaOatpp) {
+
+    NES_INFO("Tests for Oatpp Monitoring Contoller: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+    if(!success){
+        FAIL() << "Rest server failed to start";
+    }
+
+    // auto coordinator = TestUtils::startCoordinator
+    // {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring() /*, TestUtils::restServerType("Oatpp")*/});
+
+    // auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
+    // NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    cpr::Response r =
+        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
+    NES_INFO("\n Content of Response r: ");
+    NES_INFO(r.text);
+    EXPECT_EQ(r.status_code, 200);
+}
+
+TEST_F(MonitoringControllerTest, DISABELD_testGetMonitoringControllerDataFromOneNode) {
+
+    NES_INFO("Tests for Oatpp Monitoring Contoller: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+
+    if(!success){
+        FAIL() << "Rest server failed to start";
+    }
+    cpr::Response r =
+        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
+    cpr::Parameters{{"nodeId", std::to_string(1)}});
+    NES_INFO("\n Content of Response r: ");
+    NES_INFO(r.text);
+    EXPECT_EQ(r.status_code, 200);
+}
+
+TEST_F(MonitoringControllerTest, DISABLED_testgetMonitoringControllerStorage) {
+
+    NES_INFO("Tests for Oatpp Monitoring Contoller: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+
+    if(!success){
+        FAIL() << "Rest server failed to start";
+    }
+    cpr::Response r =
+        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    NES_INFO("\n Content of Response r: ");
+    NES_INFO(r.text);
+    EXPECT_EQ(r.status_code, 200);
+}
+
+TEST_F(MonitoringControllerTest, DISABLED_testgetMonitoringControllerStreams) {
+
+    NES_INFO("Tests for Oatpp Monitoring Contoller: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
+
+    if(!success){
+        FAIL() << "Rest server failed to start";
+    }
+    cpr::Response r =
+        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    NES_INFO("\n Content of Response r: ");
+    NES_INFO(r.text);
+    EXPECT_EQ(r.status_code, 200);
 }
 
 }//namespace NES
