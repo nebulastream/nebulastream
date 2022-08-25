@@ -121,7 +121,6 @@ SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experi
         NES_DEBUG("InflightExecutions: " << symExCtx->inflightExecutionPaths.size())
         // get the next trace and start in follow mode as we first want to follow the execution till we reach the target control-flow split.
         auto trace = symExCtx->inflightExecutionPaths.front();
-        NES_DEBUG(*trace);
         symExCtx->inflightExecutionPaths.pop_front();
         symExCtx->currentMode = SymbolicExecutionContext::FOLLOW;
         symExCtx->currentExecutionPath = trace;
