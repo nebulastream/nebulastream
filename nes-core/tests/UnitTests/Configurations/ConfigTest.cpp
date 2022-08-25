@@ -19,7 +19,6 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -46,6 +45,15 @@ class ConfigTest : public Testing::NESBaseTest {
         argv[0] = empty;
         std::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg){return arg.c_str();});
         return argv;
+    }
+
+    static std::map<std::string, std::string> makeCommandLineArgs(const std::vector<std::string>& args) {
+        std::map<std::string, std::string> result;
+        for (auto arg : args) {
+            auto pos = arg.find('=');
+            result.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
+        }
+        return result;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down Configuration test class."); }
@@ -101,24 +109,17 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
-
+    // given
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    std::string argv[] = {"--restIp=localhost",
-                          "--worker.numberOfSlots=10",
-                          "--worker.numberOfBuffersInSourceLocalBufferPool=128",
-                          "--worker.bufferSizeInBytes=1024"};
-    int argc = 4;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    auto commandLineParams = makeCommandLineArgs({
+        "--restIp=localhost",
+        "--worker.numberOfSlots=10",
+        "--worker.numberOfBuffersInSourceLocalBufferPool=128",
+        "--worker.bufferSizeInBytes=1024"
+    });
+    // when
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-
+    // then
     EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
@@ -193,34 +194,26 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
-
+    // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {"--localWorkerIp=localhost",
-                          "--coordinatorPort=5000",
-                          "--numWorkerThreads=5",
-                          "--numberOfBuffersInGlobalBufferManager=2048",
-                          "--numberOfBuffersInSourceLocalBufferPool=128",
-                          "--queryCompiler.compilationStrategy=FAST",
-                          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-                          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                          "--physicalSources.type=DefaultSource",
-                          "--physicalSources.numberOfBuffersToProduce=5",
-                          "--physicalSources.rowLayout=false",
-                          "--physicalSources.physicalSourceName=x",
-                          "--physicalSources.logicalSourceName=default",
-                          "--fieldNodeLocationCoordinates=23.88,-3.4"};
-    int argc = 14;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    auto commandLineParams = makeCommandLineArgs({
+        "--localWorkerIp=localhost",
+        "--coordinatorPort=5000",
+        "--numWorkerThreads=5",
+        "--numberOfBuffersInGlobalBufferManager=2048",
+        "--numberOfBuffersInSourceLocalBufferPool=128",
+        "--queryCompiler.compilationStrategy=FAST",
+        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+        "--physicalSources.type=DefaultSource",
+        "--physicalSources.numberOfBuffersToProduce=5",
+        "--physicalSources.rowLayout=false",
+        "--physicalSources.physicalSourceName=x",
+        "--physicalSources.logicalSourceName=default",
+        "--fieldNodeLocationCoordinates=23.88,-3.4"});
+    // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-
+    // then
     EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
@@ -245,33 +238,25 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 }
 
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
-
+    // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {"--localWorkerIp=localhost",
-                          "--coordinatorPort=5000",
-                          "--numWorkerThreads=5",
-                          "--numberOfBuffersInGlobalBufferManager=2048",
-                          "--numberOfBuffersInSourceLocalBufferPool=128",
-                          "--queryCompiler.compilationStrategy=FAST",
-                          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-                          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                          "--physicalSources.type=CSVSource",
-                          "--physicalSources.filePath=fileLoc",
-                          "--physicalSources.rowLayout=false",
-                          "--physicalSources.physicalSourceName=x",
-                          "--physicalSources.logicalSourceName=default"};
-    int argc = 13;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    auto commandLineParams = makeCommandLineArgs({
+        "--localWorkerIp=localhost",
+        "--coordinatorPort=5000",
+        "--numWorkerThreads=5",
+        "--numberOfBuffersInGlobalBufferManager=2048",
+        "--numberOfBuffersInSourceLocalBufferPool=128",
+        "--queryCompiler.compilationStrategy=FAST",
+        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+        "--physicalSources.type=CSVSource",
+        "--physicalSources.filePath=fileLoc",
+        "--physicalSources.rowLayout=false",
+        "--physicalSources.physicalSourceName=x",
+        "--physicalSources.logicalSourceName=default"});
+    // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-
+    // then
     EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
@@ -296,21 +281,12 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
-
-    std::string argv[] = {"type=DefaultSource",
-                          "numberOfBuffersToProduce=5",
-                          "rowLayout=false",
-                          "physicalSourceName=x",
-                          "logicalSourceName=default"};
-    int argc = 5;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
+    auto commandLineParams = makeCommandLineArgs({
+        "type=DefaultSource",
+        "numberOfBuffersToProduce=5",
+        "rowLayout=false",
+        "physicalSourceName=x",
+        "logicalSourceName=default"});
 
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
@@ -322,23 +298,14 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               physicalSourceType1->getSourceGatheringInterval()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
-    std::string argv1[] = {"type=KafkaSource",
-                           "physicalSourceName=x",
-                           "logicalSourceName=default",
-                           "topic=newTopic",
-                           "connectionTimeout=100",
-                           "brokers=testBroker",
-                           "groupId=testId"};
-
-    argc = 7;
-
-    std::map<string, string> commandLineParams1;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams1.insert(
-            std::pair<string, string>(string(argv1[i]).substr(0, string(argv1[i]).find('=')),
-                                      string(argv1[i]).substr(string(argv1[i]).find('=') + 1, string(argv1[i]).length() - 1)));
-    }
+    auto commandLineParams1 = makeCommandLineArgs({
+        "type=KafkaSource",
+        "physicalSourceName=x",
+        "logicalSourceName=default",
+        "topic=newTopic",
+        "connectionTimeout=100",
+        "brokers=testBroker",
+        "groupId=testId"});
 
     PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
@@ -355,66 +322,52 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 }
 
 TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
-    std::string argv[] = {"type=DefaultSource",
-                          "numberOfBuffersToProduce=5",
-                          "rowLayout=false",
-                          "physicalSourceName=x",
-                          "logicalSourceName=default"};
-    int argc = 5;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    // given
+    auto commandLineParams = makeCommandLineArgs({
+        "type=DefaultSource",
+        "numberOfBuffersToProduce=5",
+        "rowLayout=false",
+        "physicalSourceName=x",
+        "logicalSourceName=default"});
+    // when
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
+    // then
     EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), physicalSourceType1->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput) {
-    std::string argv[] = {"type=CSVSource",
-                          "numberOfBuffersToProduce=5",
-                          "rowLayout=false",
-                          "physicalSourceName=x",
-                          "logicalSourceName=default",
-                          "filePath=fileLoc"};
-    int argc = 6;
-    std::map<string, string> commandLineParams;
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    // given
+    auto commandLineParams = makeCommandLineArgs({
+        "type=CSVSource",
+        "numberOfBuffersToProduce=5",
+        "rowLayout=false",
+        "physicalSourceName=x",
+        "logicalSourceName=default",
+        "filePath=fileLoc"});
+    // when
     PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    // then
     EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
-    std::string argv[] = {"type=CSVSource",
-                          "numberOfBuffersToProduce=5",
-                          "rowLayout=false",
-                          "physicalSourceName=x",
-                          "logicalSourceName=default",
-                          "filePath=fileLoc",
-                          "sourceGatheringMode=adaptive"};
-    int argc = 7;
-    std::map<string, string> commandLineParams;
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
+    // given
+    auto commandLineParams = makeCommandLineArgs({
+        "type=CSVSource",
+        "numberOfBuffersToProduce=5",
+        "rowLayout=false",
+        "physicalSourceName=x",
+        "logicalSourceName=default",
+        "filePath=fileLoc",
+        "sourceGatheringMode=adaptive"});
+    // when
     PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    // then
     EXPECT_NE(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
 }
@@ -445,7 +398,6 @@ TEST_F(ConfigTest, parseWorkerOptionInCoordinatorConfigFile) {
     auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
     ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 99);
 }
-
 
 TEST_F(ConfigTest, parseWorkerOptionInWorkerConfigFileSpecifiedInCoordinatorConfigFile) {
     // This test checks if a worker configuration can be set in a worker configuration file,
