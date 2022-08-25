@@ -37,6 +37,11 @@ class RecordBuffer {
   public:
     Value<MemRef> tupleBufferRef;
     void setNumRecords(Value<UInt64> value);
+  private:
+    Record
+    readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
+    Record readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
+
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
