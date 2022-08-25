@@ -63,6 +63,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is i nthe process of reconnecting, do not attempt to send data but buffer it instead
+    NES_DEBUG("context " << workerContext.getId() << " writing data");
     if (reconnectBuffering) {
         NES_DEBUG("context " << workerContext.getId() << " buffering data");
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
@@ -160,12 +161,15 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             } else {
                 this->reconnectBuffering = true;
             }
+            break;
         }
         case Runtime::StopBuffering: {
+            //todo: check if this will cause trouble when buffer is empty
             //todo: maybe we need a "draining" boolean to avaid problems when worker keeps writing while we drain?
             if (!reconnectBuffering) {
                 NES_WARNING("Requested sink to stop buffering but it is not buffering")
             } else {
+                reconnectBuffering = false;
                 //todo: do we have to look for threadsafety here?
                 //todo: extract to function
                 NES_INFO("stop buffering data for context " << workerContext.getId());
@@ -188,6 +192,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     topBuffer = workerContext.getTopBufferFromStorage(nesPartition);
                 }
             }
+            break;
         }
         default: {
             break;
