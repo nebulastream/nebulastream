@@ -140,10 +140,10 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 TEST_P(QueryExecutionTest, emitQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
 
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::UINT64);
     schema->addField("f2", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
     Scan scan = Scan(memoryLayout);
     auto emit = std::make_shared<Emit>(memoryLayout);
     scan.setChild(emit);
@@ -310,7 +310,6 @@ TEST_P(QueryExecutionTest, joinBuildQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(1000);
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
 
-
     auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     buildSideSchema->addField("key", BasicType::INT64);
     buildSideSchema->addField("value", BasicType::INT64);
@@ -347,7 +346,6 @@ TEST_P(QueryExecutionTest, joinBuildQueryTest) {
 TEST_P(QueryExecutionTest, joinBuildAndPropeQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(1000);
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-
 
     auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     buildSideSchema->addField("key", BasicType::INT64);
@@ -396,18 +394,15 @@ TEST_P(QueryExecutionTest, joinBuildAndPropeQueryTest) {
     }
     buildSideDynBuffer.setNumberOfTuples(10);
 
-
     buildSidePipeline->setup();
     buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
 
     executablePropePipeline->setup();
     executablePropePipeline->execute(*runtimeWorkerContext, pronbSideBuffer);
 
-
     auto currentSize = sharedHashMap->numberOfEntries();
     ASSERT_EQ(currentSize, (int64_t) 10);
 }
-
 
 TEST_P(QueryExecutionTest, aggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -442,131 +437,9 @@ TEST_P(QueryExecutionTest, aggQueryTest) {
     ASSERT_EQ(sumState->sum, (int64_t) 10);
 }
 
-TEST_P(QueryExecutionTest, tpchQ1) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, true);
-
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
-
-    /*
-     *   l_shipdate <= date '1998-12-01' - interval '90' day
-     *
-     *   1998-09-02
-     */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(10);
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
-    auto selection = std::make_shared<Selection>(lessThanExpression1);
-    scan.setChild(selection);
-
-    /**
-     *
-     * group by
-        l_returnflag,
-        l_linestatus
-
-        sum(l_quantity) as sum_qty,
-        sum(l_extendedprice) as sum_base_price,
-        sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
-        sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-        avg(l_quantity) as avg_qty,
-        avg(l_extendedprice) as avg_price,
-        avg(l_discount) as avg_disc,
-        count(*) as count_order
-     */
-    auto l_returnflagField = std::make_shared<ReadFieldExpression>(8);
-    auto l_linestatusFiled = std::make_shared<ReadFieldExpression>(9);
-
-    //  sum(l_quantity) as sum_qty,
-    auto l_quantityField = std::make_shared<ReadFieldExpression>(4);
-    auto sumAggFunction1 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
-
-    // sum(l_extendedprice) as sum_base_price,
-    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>(5);
-    auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
-
-    // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
-    auto l_discountField = std::make_shared<ReadFieldExpression>(6);
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
-    auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-    auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-    auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
-
-    //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    auto l_taxField = std::make_shared<ReadFieldExpression>(6);
-    auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-    auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
-    auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
-
-    auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
-
-    //  count() as avg_price,
-    auto countFunction = std::make_shared<CountFunction>();
-
-    std::vector<std::shared_ptr<AggregationFunction>> functions =
-        {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, sumAggFunction5, countFunction};
-    std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
-    // 5 * 3 + 3 * 16 = 88 value size
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
-    auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
-    selection->setChild(aggregation);
-
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    executablePipeline->setup();
-
-    auto buffer = lineitemBuffer.second.getBuffer();
-
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 4);
-
-    auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
-
-    struct REntry {
-        void* next;
-        std::int64_t hash;
-        std::int64_t k1;
-        std::int64_t k2;
-        GlobalSumState ag1;
-        GlobalSumState ag2;
-        GlobalSumState ag3;
-        GlobalSumState ag4;
-        GlobalCountState ag8;
-    };
-
-    auto entries = entryBuffer[0].getBuffer<REntry>();
-    for (auto i = 0; i < 4; i++) {
-        NES_DEBUG("K1 " << entries[i].k1);
-        NES_DEBUG("K2 " << entries[i].k2);
-        NES_DEBUG("ag1 " << entries[i].ag1.sum);
-        NES_DEBUG("ag2 " << entries[i].ag2.sum);
-        NES_DEBUG("ag3 " << entries[i].ag3.sum);
-        NES_DEBUG("ag4 " << entries[i].ag4.sum);
-        NES_DEBUG("ag8 " << entries[i].ag8.count);
-        NES_DEBUG("\n");
-        NES_DEBUG("\n");
-    }
-
-    //ASSERT_EQ(entries[0].ag1, 37719753);
-    //ASSERT_EQ(entries[0].ag2, 5656804138090);
-}
-
 TEST_P(QueryExecutionTest, tpchQ6_agg) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm);
+    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, Schema::ROW_LAYOUT);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     Scan scan = Scan(lineitemBuffer.first);
@@ -633,131 +506,6 @@ TEST_P(QueryExecutionTest, tpchQ6_agg) {
     ASSERT_EQ(sumState->sum, (int64_t) 19599269581);
 }
 
-TEST_F(QueryExecutionTest, tpchQ6) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm);
-
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
-    /*
-     *   l_shipdate >= date '1994-01-01'
-     *   and l_shipdate < date '1995-01-01'
-     */
-    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-    auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
-
-    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
-    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-    auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
-
-    // l_quantity < 24
-    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
-    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-    auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
-    auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
-
-    auto selection = std::make_shared<Selection>(andExpression4);
-    scan.setChild(selection);
-
-    // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
-    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<Aggregation>(functions);
-    selection->setChild(aggregation);
-
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    executablePipeline->setup();
-
-    auto buffer = lineitemBuffer.second.getBuffer();
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
-}
-
-TEST_P(QueryExecutionTest, tpchQ6and) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm);
-
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
-    /*
-     *   l_shipdate >= date '1994-01-01'
-     *   and l_shipdate < date '1995-01-01'
-     */
-    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-    auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
-    auto selection1 = std::make_shared<Selection>(andExpression);
-    scan.setChild(selection1);
-
-    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
-    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-    auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
-
-    // l_quantity < 24
-    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
-    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-    auto andExpression3 = std::make_shared<AndExpression>(andExpression2, lessThanExpression5);
-
-    auto selection2 = std::make_shared<Selection>(andExpression3);
-    selection1->setChild(selection2);
-    // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
-    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<Aggregation>(functions);
-    selection2->setChild(aggregation);
-
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    executablePipeline->setup();
-
-    auto buffer = lineitemBuffer.second.getBuffer();
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
-}
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         QueryExecutionTest,
