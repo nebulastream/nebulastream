@@ -37,6 +37,14 @@ class MemRefInvocationPlugin : public InvocationPlugin {
         }
         return std::nullopt;
     }
+
+    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
+        if (left->isType<MemRef>() && right->isType<Int32>()) {
+            auto result = left.getValue().staticCast<MemRef>().value == nullptr;
+            return Value(std::make_unique<Boolean>(result));
+        }
+        return InvocationPlugin::Equals(left, right);
+    }
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<MemRefInvocationPlugin> memRefInvocationPlugin;

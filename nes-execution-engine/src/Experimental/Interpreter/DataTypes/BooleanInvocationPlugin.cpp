@@ -21,9 +21,12 @@ class BooleanInvocationPlugin : public InvocationPlugin {
     BooleanInvocationPlugin() = default;
 
     std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
-        auto& leftVal = left.getValue().staticCast<Boolean>();
-        auto& rightVal = right.getValue().staticCast<Boolean>();
-        return Value(std::make_unique<Boolean>(leftVal == rightVal));
+        if (left->isType<Boolean>() && right->isType<Boolean>()) {
+            auto& leftVal = left.getValue().staticCast<Boolean>();
+            auto& rightVal = right.getValue().staticCast<Boolean>();
+            return Value(std::make_unique<Boolean>(leftVal == rightVal));
+        }
+        return std::nullopt;
     }
 
     std::optional<Value<>> Negate(const Value<>& left) const override {

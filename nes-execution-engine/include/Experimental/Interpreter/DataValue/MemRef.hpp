@@ -37,11 +37,14 @@ class MemRef : public TraceableType {
 
     template<class ResultType>
     std::unique_ptr<ResultType> load() {
-        return std::make_unique<ResultType>(0);
+        auto rawValue = (int64_t*) value;
+        return std::make_unique<ResultType>(*rawValue);
     }
 
-    template<class ValueType>
-    void store(ValueType) {}
+    void store(Any& valueType) {
+        auto v = valueType.staticCast<Int64>();
+        *reinterpret_cast<int64_t*>(value) = v.getValue();
+    }
 
     IR::Types::StampPtr getType() const override { return IR::Types::StampFactory::createAddressStamp(); }
     int8_t* value;
