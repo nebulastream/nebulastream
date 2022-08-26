@@ -110,6 +110,7 @@ Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
     auto tupleSize = rowLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;
+    fieldValues.reserve(rowLayout->getFieldSizes().size());
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (uint64_t i = 0; i < rowLayout->getSchema()->getSize(); i++) {
         auto fieldOffset = rowLayout->getFieldOffSets()[i];

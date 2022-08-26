@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Experimental/ExecutionEngine/ExecutablePipeline.hpp"
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -18,7 +19,9 @@
 
 namespace NES::Runtime::Execution {
 
-void RuntimePipelineContext::dispatchBuffer(Runtime::TupleBuffer&) {}
+void RuntimePipelineContext::dispatchBuffer(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& buffer) {
+    successors[0]->execute(workerContext, buffer);
+}
 
 RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalOperatorState(
     std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
@@ -29,6 +32,10 @@ RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalO
 ExecutionEngine::Experimental::Interpreter::OperatorState*
 RuntimePipelineContext::getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag) {
     return operatorStates[tag].get();
+}
+
+void RuntimePipelineContext::addSuccessorPipeline(std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline> pipeline) {
+    successors.emplace_back(pipeline);
 }
 
 }// namespace NES::Runtime::Execution

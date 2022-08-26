@@ -22,8 +22,9 @@ class WorkerContext {
     WorkerContext(Value<MemRef> workerContextRef);
     Value<UInt64> getWorkerId();
     Value<MemRef> allocateBuffer();
+    Value<MemRef> getWorkerContextRef() const;
   private:
-    Value<MemRef> workerContextRef;
+   mutable Value<MemRef> workerContextRef;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
