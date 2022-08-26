@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
 
         auto workerConfigPath = commandLineParams.find("--configPath");
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
+        NES_DEBUG("nesWorkerStart: main: The configPath is " + workerConfigPath->second);
         if (workerConfigPath != commandLineParams.end()) {
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
         }
@@ -65,6 +66,7 @@ int main(int argc, char** argv) {
         //if command line params are provided that do not contain a path to a yaml file for worker config,
         //command line param physicalSources are used to overwrite default physicalSources
         if (argc >= 1 && !commandLineParams.contains("--configPath")) {
+            NES_DEBUG("nesWorkerStart: main: Uses commandLineParams!");
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
 

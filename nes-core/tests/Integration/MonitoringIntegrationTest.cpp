@@ -137,7 +137,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart) {
         TestUtils::physicalSourceName("test2"),
         TestUtils::workerHealthCheckWaitTime(1),
         TestUtils::enableMonitoring(),
-        TestUtils::configPath("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml"),
+//        TestUtils::configPath("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml"),
         //                                           TestUtils::monitoringConfiguration(" - cpu: attributes: \"coreNum, user, system\" "
         //                                                                              "sampleRate: 60 ")
     });

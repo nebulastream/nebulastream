@@ -143,24 +143,23 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
 
         // Here just hardcoded for the integration test
-        workerConfig->monitoringConfiguration = " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 50 ";
-        WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+//        WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
 //        workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-        workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
+//        workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 
-        workerConfig->monitoringConfiguration = workerConfigPtr->monitoringConfiguration.getValue();
+//        workerConfig->monitoringConfiguration = workerConfigPtr->monitoringConfiguration.getValue();
 
         if ((workerConfig->monitoringConfiguration.getValue().empty())) {
           monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
-        }
-        else {
+        } else {
           web::json::value configurationMonitoringJson =
               MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
 
           MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
           MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
           std::vector<uint64_t> nodeIdVector {topologyNodeId};
+          // TODO: registerRemoteMonitoringPlans
 //          auto success = MonitoringManager::registerRemoteMonitoringPlans(nodeIdVector, monitoringPlan);
           monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with custom monitoring config");
