@@ -156,8 +156,12 @@ Status WorkerRPCServer::sayHi(ServerContext*, const sayHiNotification* request, 
         }*/
 
         int g = request->queryid();
+        reply->set_available_buffers(nodeEngine->getBufferManager()->getAvailableBuffers());
 
-        reply->set_mogus(nodeEngine->getBufferManager()->getAvailableBuffers());
+        //TODO either do not use processed buffers or find a way to call sayHi when the query is running or scheduled
+        reply->set_processed_buffers(0);
+
+        //reply->set_rtt()
         //reply->set_mogus(nodeEngine->getQueryStatistics(false)[0].getProcessedBuffers() / nodeEngine->getBufferManager()->getAvailableBuffers());
         return Status::OK;
     } catch (std::exception& ex) {
@@ -168,6 +172,16 @@ Status WorkerRPCServer::sayHi(ServerContext*, const sayHiNotification* request, 
 }
 }
 
+Status WorkerRPCServer::getRTT(ServerContext* , const ::rttNotification* request, ::rttReply* response) {
+        try {
+        auto x = request;
+        response->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
 
 
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {

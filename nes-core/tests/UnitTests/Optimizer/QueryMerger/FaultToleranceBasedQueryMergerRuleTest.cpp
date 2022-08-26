@@ -146,19 +146,11 @@ TEST_F(FaultToleranceBasedQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan3);
 
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryPlan1->getQueryId());
-
-    for(auto& node : executionNodes){
-        NES_INFO("lololol " + node->toString());
-    }
 
     //execute
     auto faultToleranceBasedQueryMergerRule = Optimizer::FaultToleranceBasedQueryMergerRule::create();
     faultToleranceBasedQueryMergerRule->apply(globalQueryPlan);
 
-    for(auto& node : executionNodes){
-        NES_INFO("lololol " + node->toString());
-    }
 
 
 

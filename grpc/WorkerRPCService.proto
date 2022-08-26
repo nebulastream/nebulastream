@@ -33,6 +33,8 @@ service WorkerRPCService {
 
   rpc sayHi (sayHiNotification) returns (sayHiReply) {}
 
+  rpc getRTT (rttNotification) returns (rttReply) {}
+
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
@@ -111,9 +113,7 @@ message EpochBarrierNotification{
 }
 
 message sayHiNotification{
-  uint64 timestamp = 1;
-  uint64 queryId = 2;
-  uint64 l = 3;
+  uint64 queryId = 1;
 }
 
 message EpochBarrierReply{
@@ -121,7 +121,16 @@ message EpochBarrierReply{
 }
 
 message sayHiReply{
-  uint64 mogus = 1;
+  uint64 available_buffers = 1;
+  uint64 processed_buffers = 2;
+  uint64 rtt = 3;
+}
+
+message rttNotification{
+}
+
+message rttReply{
+  bool success = 1;
 }
 
 message UpdateNetworkSinkRequest{

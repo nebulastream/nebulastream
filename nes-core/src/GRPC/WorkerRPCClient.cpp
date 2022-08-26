@@ -378,23 +378,45 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     return false;
 }
 
-int WorkerRPCClient::sayHi(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+int WorkerRPCClient::sayHi(uint64_t queryId, const std::string& address) {
 
     sayHiNotification request;
-    request.set_timestamp(timestamp);
     request.set_queryid(queryId);
     sayHiReply reply;
     ClientContext context;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
     Status status = workerStub->sayHi(&context, request, &reply);
+
     NES_INFO("sayHi2 ");
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
-        return reply.mogus();
+        return reply.available_buffers();
     }
-    return reply.mogus();
+    return 0;
+}
+
+int WorkerRPCClient::getRTT(const std::string& address){
+
+    rttNotification request;
+    rttReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+    Status status = workerStub->getRTT(&context,request,&reply);
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    if(status.ok()){
+        return ((end_time - start_time)/std::chrono::milliseconds(1));
+    }else{
+        return -1;
+    }
+
 }
 
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {

@@ -108,6 +108,10 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         sourceNode5->removeParent(rootNode);
         topology->addNewTopologyNodeAsChild(sourceNode4, sourceNode5);
 
+        TopologyNodePtr sourceNode6 = TopologyNode::create(15, "localhost", 133, 134, 9);
+        sourceNode6->removeParent(rootNode);
+        topology->addNewTopologyNodeAsChild(sourceNode3, sourceNode6);
+
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
@@ -149,8 +153,16 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         SourceCatalogEntryPtr sourceCatalogEntry4 =
             std::make_shared<SourceCatalogEntry>(physicalSource2, logicalSource2, sourceNode4);
 
+        SourceCatalogEntryPtr sourceCatalogEntry5 =
+            std::make_shared<SourceCatalogEntry>(physicalSource2, logicalSource2, sourceNode5);
+
+        SourceCatalogEntryPtr sourceCatalogEntry6 =
+            std::make_shared<SourceCatalogEntry>(physicalSource2, logicalSource2, sourceNode6);
+
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
         sourceCatalog->addPhysicalSource(sourceName2, sourceCatalogEntry4);
+        sourceCatalog->addPhysicalSource(sourceName2, sourceCatalogEntry5);
+        sourceCatalog->addPhysicalSource(sourceName2, sourceCatalogEntry6);
 
 
 

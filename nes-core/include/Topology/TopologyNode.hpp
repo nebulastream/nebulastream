@@ -65,6 +65,12 @@ class TopologyNode : public Node {
     uint16_t getResourceCapacity() const;
 
     /**
+     *
+     * @return
+     */
+    //uint16_t getEffectivelyUsedResources(GlobalExecutionPlan globalExecutionPlan, uint16_t queryId) const;
+
+    /**
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
      */
@@ -81,6 +87,8 @@ class TopologyNode : public Node {
      * @return ip address
      */
     std::string getIpAddress() const;
+
+    uint64_t getEffectiveRessources() const;
 
     /**
      * @brief Get grpc port for the node
@@ -105,6 +113,8 @@ class TopologyNode : public Node {
      * @param flag
      */
     void setMaintenanceFlag(bool flag);
+
+    void setEffectiveRessources(uint64_t effectiveRessources);
 
     std::string toString() const override;
 
@@ -208,6 +218,8 @@ class TopologyNode : public Node {
      */
     bool isMobileNode();
 
+
+
   private:
     uint64_t id;
     std::string ipAddress;
@@ -215,6 +227,7 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
+    uint16_t effectiveResources;
     bool maintenanceFlag;
     NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
     bool isMobile;
@@ -228,6 +241,7 @@ class TopologyNode : public Node {
      * @brief A field to store a map of linked nodes and its link property
      */
     std::map<TopologyNodePtr, LinkPropertyPtr> linkProperties;
+
 };
 }// namespace NES
 

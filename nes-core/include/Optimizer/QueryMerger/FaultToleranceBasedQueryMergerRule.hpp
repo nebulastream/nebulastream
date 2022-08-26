@@ -80,6 +80,11 @@ class FaultToleranceBasedQueryMergerRule final : public BaseQueryMergerRule {
 
     void calculateCheckpointing();
 
+    std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
+                                                                              const LogicalOperatorNodePtr& hostOperator);
+    std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
+                                                                                const QueryPlanPtr& hostQueryPlan);
+void checkFaultTolerance(GlobalQueryPlanPtr globalQueryPlan, std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> matchedTargetToHostOperatorMap);
 };
 }// namespace NES::Optimizer
 

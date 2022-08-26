@@ -61,6 +61,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status sayHi (ServerContext*, const sayHiNotification* request, sayHiReply* reply) override;
 
+    Status getRTT(ServerContext* context, const rttNotification* request, rttReply* response) override;
+
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;

@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include "Plans/Global/Execution/ExecutionNode.hpp"
+#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
 #include <Common/Location.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
@@ -41,6 +44,36 @@ uint16_t TopologyNode::getAvailableResources() const { return resources - usedRe
 uint16_t TopologyNode::getUsedResources() const { return usedResources; }
 
 uint16_t TopologyNode::getResourceCapacity() const { return resources; }
+
+uint64_t TopologyNode::getEffectiveRessources() const { return effectiveResources; }
+
+/*uint16_t TopologyNode::getEffectivelyUsedResources(GlobalExecutionPlan globalExecutionPlan, uint16_t queryId) const {
+
+    //QueryId queryId1 =
+    int highestChildCapacity = 0;
+    int childCost = 0;
+
+
+
+    if(this->getChildren().empty()){
+        NES_INFO("This node has no children.")
+        return this->usedResources;
+    }
+
+    for (auto& child : this->getChildren()){
+
+
+            if (child->as<TopologyNode>()->getResourceCapacity() >= highestChildCapacity
+            && globalExecutionPlan.getExecutionNodeByNodeId(child->as<TopologyNode>()->getId())->getOccupiedResources(queryId) > 0){
+            highestChildCapacity = child->as<TopologyNode>()->getResourceCapacity();
+            childCost = globalExecutionPlan.getExecutionNodeByNodeId(child->as<TopologyNode>()->getId())->getOccupiedResources(queryId);
+        }
+    }
+    NES_INFO("HIGHEST CHILD CAP: " + std::to_string(highestChildCapacity) + ", RELATION: " + std::to_string(highestChildCapacity) + "/"
+             + std::to_string(this->getResourceCapacity()) + " = " + std::to_string(highestChildCapacity / this->getResourceCapacity()))
+    return (childCost * (highestChildCapacity / this->getResourceCapacity()));
+
+}*/
 
 bool TopologyNode::getMaintenanceFlag() const { return maintenanceFlag; };
 
@@ -162,4 +195,8 @@ void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location ge
 void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
 
 bool TopologyNode::isMobileNode() { return isMobile; }
+
+void TopologyNode::setEffectiveRessources(uint64_t effectiveRessourcesSet){ effectiveResources = effectiveRessourcesSet; }
+
+
 }// namespace NES
