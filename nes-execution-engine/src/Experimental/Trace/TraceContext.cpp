@@ -24,7 +24,7 @@
 #include <map>
 namespace NES::ExecutionEngine::Experimental::Trace {
 
-static thread_local TraceContext* threadLocalTraceContext;
+static TraceContext* threadLocalTraceContext;
 void initThreadLocalTraceContext() { threadLocalTraceContext = new TraceContext(); }
 void disableThreadLocalTraceContext() {  }
 TraceContext* getThreadLocalTraceContext() { return threadLocalTraceContext; }

@@ -12,6 +12,8 @@
 
 add_source_files(nes-execution-engine
         PipelineExecutionEngine.cpp
+        InterpretationBasedPipelineExecutionEngine.cpp
+        InterpretationBasedExecutablePipeline.cpp
         CompilationBasedPipelineExecutionEngine.cpp
         ExecutablePipeline.cpp
         )

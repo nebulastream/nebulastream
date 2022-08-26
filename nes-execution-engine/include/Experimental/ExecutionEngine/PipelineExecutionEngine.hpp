@@ -22,6 +22,7 @@ class PhysicalOperatorPipeline;
 class PipelineExecutionEngine {
 
   public:
+    virtual ~PipelineExecutionEngine() = default;
     /**
      * @brief Compiles a physical operator pipeline to an executable pipeline.
      * Depending on the backend this may involve code generation and compilation

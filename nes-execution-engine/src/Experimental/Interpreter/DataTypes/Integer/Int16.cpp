@@ -43,7 +43,7 @@ const std::unique_ptr<Boolean> Int16::equals(const Int& other) const {
 
 const std::unique_ptr<Boolean> Int16::lessThan(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
-    return create<Boolean>(value > otherValue.value);}
+    return create<Boolean>(value < otherValue.value);}
 
 int16_t Int16::getValue() const { return value; }
 int64_t Int16::getRawInt() const { return value; }

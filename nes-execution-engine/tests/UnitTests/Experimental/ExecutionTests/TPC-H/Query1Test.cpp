@@ -15,6 +15,7 @@
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
+#include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp"
@@ -85,7 +86,7 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
-    std::shared_ptr<ExecutionEngine::Experimental::PipelineCompilerBackend> backend;
+    std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -96,22 +97,27 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        std::cout << "Setup QueryExecutionTest test case." << compiler << std::endl;
-        if (compiler == "MLIR") {
+        std::cout << "Setup Query6Test test case." << compiler << std::endl;
+        if (compiler == "INTERPRETER") {
+            executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
+        } else if (compiler == "MLIR") {
 #ifdef USE_MLIR
-            backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "FLOUNDER") {
 #ifdef USE_FLOUNDER
-            backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            auto backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "BABELFISH") {
 #ifdef USE_BABELFISH
-            backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            auto backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         }
-        if (backend == nullptr) {
-            GTEST_SKIP_("No compiler backend found");
+        if (executionEngine == nullptr) {
+            GTEST_SKIP_("No backend found");
         }
     }
 
@@ -193,11 +199,10 @@ TEST_P(Query1Test, tpchQ1) {
     auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
     selection->setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
-    auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
 
@@ -248,7 +253,7 @@ TEST_P(Query1Test, tpchQ1) {
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                         Query1Test,
-                        ::testing::Combine(::testing::Values("MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {

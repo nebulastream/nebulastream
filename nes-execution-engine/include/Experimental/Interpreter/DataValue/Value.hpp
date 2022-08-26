@@ -31,18 +31,15 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 template<class T>
 Trace::ValueRef createNextRef(std::unique_ptr<T>& t) {
-
-    auto dynCast = dynamic_cast<TraceableType*>(t.get());
-
-    if (dynCast) {
-        auto ctx = Trace::getThreadLocalTraceContext();
-        if (ctx) {
-            return ctx->createNextRef(dynCast->getType());
+    auto ctx = Trace::getThreadLocalTraceContext();
+    if (ctx) {
+        auto dynCast = dynamic_cast<TraceableType*>(t.get());
+        if (dynCast == nullptr) {
+            return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
         }
-        return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
-    } else {
-        return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
+        return ctx->createNextRef(dynCast->getType());
     }
+    return Trace::ValueRef(0, 0, nullptr);
 }
 
 class BaseValue {
@@ -88,8 +85,11 @@ class Value : BaseValue {
     // move assignment
     template<class OType>
     Value& operator=(Value<OType>&& other) noexcept {
-        auto operation = Trace::Operation(Trace::ASSIGN, this->ref, {other.ref});
-        Trace::getThreadLocalTraceContext()->trace(operation);
+        auto ctx = Trace::getThreadLocalTraceContext();
+        if (ctx != nullptr) {
+            auto operation = Trace::Operation(Trace::ASSIGN, this->ref, {other.ref});
+            Trace::getThreadLocalTraceContext()->trace(operation);
+        }
         this->value = cast<ValueType>(other.value);
         return *this;
     }
@@ -105,7 +105,9 @@ class Value : BaseValue {
                 return result;
             } else {
                 auto ctx = Trace::getThreadLocalTraceContext();
-                ctx->traceCMP(ref, boolValue->value);
+                if (ctx != nullptr) {
+                    ctx->traceCMP(ref, boolValue->value);
+                }
                 return boolValue->value;
             }
         }
@@ -134,12 +136,12 @@ class Value : BaseValue {
     }
 
     template<typename InputValue, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
-    auto store(Value<InputValue> value) {
+    auto store(Value<InputValue>& storeValue) {
         if (!Trace::isInSymbolicExecution()) {
-            this->value->store(value);
+            this->value->store(storeValue.getValue());
         }
         if (auto* ctx = Trace::getThreadLocalTraceContext()) {
-            auto operation = Trace::Operation(Trace::STORE, {ref, value.ref});
+            auto operation = Trace::Operation(Trace::STORE, {ref, storeValue.ref});
             ctx->trace(operation);
         }
     }

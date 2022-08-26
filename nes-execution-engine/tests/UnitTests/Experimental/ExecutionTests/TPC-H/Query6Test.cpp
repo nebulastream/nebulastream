@@ -1,4 +1,4 @@
-/*
+ /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
+#include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp"
@@ -85,7 +86,7 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
-    std::shared_ptr<ExecutionEngine::Experimental::PipelineCompilerBackend> backend;
+    std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Query6Test.log", NES::LogLevel::LOG_DEBUG);
@@ -97,21 +98,26 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
         std::cout << "Setup Query6Test test case." << compiler << std::endl;
-        if (compiler == "MLIR") {
+        if (compiler == "INTERPRETER") {
+            executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
+        } else if (compiler == "MLIR") {
 #ifdef USE_MLIR
-            backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "FLOUNDER") {
 #ifdef USE_FLOUNDER
-            backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            auto backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "BABELFISH") {
 #ifdef USE_BABELFISH
-            backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            auto backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         }
-        if (backend == nullptr) {
-            GTEST_SKIP_("No compiler backend found");
+        if (executionEngine == nullptr) {
+            GTEST_SKIP_("No backend found");
         }
     }
 
@@ -163,14 +169,13 @@ TEST_P(Query6Test, tpchQ6) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     selection->setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
-    auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
-
+    NES_INFO("Start Execution");
     auto buffer = lineitemBuffer.second.getBuffer();
     Timer timer("QueryExecutionTime");
     timer.start();
@@ -226,14 +231,13 @@ TEST_P(Query6Test, tpchQ6and) {
     auto aggregation = std::make_shared<Aggregation>(functions);
     selection2->setChild(aggregation);
 
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
-    auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
-
+    NES_INFO("Start Execution");
     auto buffer = lineitemBuffer.second.getBuffer();
     Timer timer("QueryExecutionTime");
     timer.start();
@@ -249,7 +253,7 @@ TEST_P(Query6Test, tpchQ6and) {
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
-                        ::testing::Combine(::testing::Values("MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {

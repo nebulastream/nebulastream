@@ -78,7 +78,7 @@ Value<> evalWithCast(
 Value<> AddOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Add(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && Trace::getThreadLocalTraceContext()) {
             if(dynamic_cast<const TraceableType*>(&result.value().getValue()) != nullptr){
                 TraceOperation(Trace::OpCode::ADD, left, right, result.value());
             }

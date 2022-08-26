@@ -13,9 +13,13 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
-#include <Runtime/TupleBuffer.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <memory>
+
+namespace NES::ExecutionEngine::Experimental{
+class ExecutablePipeline;
+}
 
 namespace NES::Runtime::Execution {
 
@@ -28,11 +32,14 @@ class RuntimePipelineContext : public std::enable_shared_from_this<RuntimePipeli
     using OperatorStateTag = uint32_t;
     RuntimePipelineContext::OperatorStateTag
     registerGlobalOperatorState(std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState);
-    __attribute__((always_inline)) ExecutionEngine::Experimental::Interpreter::OperatorState* getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag);
-    void dispatchBuffer(Runtime::TupleBuffer& tb);
+    __attribute__((always_inline)) ExecutionEngine::Experimental::Interpreter::OperatorState*
+    getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag);
+    void dispatchBuffer(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& tb);
+    void addSuccessorPipeline(std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline> pipeline);
 
   private:
     std::vector<std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState>> operatorStates;
+    std::vector<std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline>> successors;
 };
 
 }// namespace NES::Runtime::Execution
