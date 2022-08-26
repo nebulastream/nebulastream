@@ -34,12 +34,16 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
     auto configuration = CoordinatorConfiguration::create();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
-    configuration->worker.numWorkerThreads = 92;
+    configuration->worker.numWorkerThreads = 3;
     // when
     auto coordinator = std::make_shared<NesCoordinator>(configuration);
+    NES_DEBUG("Starting coordinator.")
     coordinator->startCoordinator(false);
     // then
-    ASSERT_EQ(92, coordinator->getNesWorker()->getWorkerConfiguration()->numWorkerThreads.getValue());
+    ASSERT_EQ(3, coordinator->getNesWorker()->getWorkerConfiguration()->numWorkerThreads.getValue());
+    // Stop coordinator.
+    NES_DEBUG("Stopping coordinator.")
+    EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 
 // Test that IP and port of the internal worker are consistent with IP and port from coordinator
@@ -55,12 +59,16 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     configuration->worker.localWorkerIp = "127.0.0.3";
     // when
     auto coordinator = std::make_shared<NesCoordinator>(configuration);
+    NES_DEBUG("Starting coordinator.")
     coordinator->startCoordinator(false);
     // then: the IP and port in the worker configuration are overwritten
     auto workerConfiguration = coordinator->getNesWorker()->getWorkerConfiguration();
     EXPECT_EQ(configuration->rpcPort.getValue(), workerConfiguration->coordinatorPort.getValue());
     EXPECT_EQ(configuration->coordinatorIp.getValue(), workerConfiguration->coordinatorIp.getValue());
     EXPECT_EQ(configuration->coordinatorIp.getValue(), workerConfiguration->localWorkerIp.getValue());
+    // Stop coordinator.
+    NES_DEBUG("Stopping coordinator.")
+    EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 
 }

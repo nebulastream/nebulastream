@@ -126,8 +126,18 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     EnumOption<ServerType> restServerType = {SERVER_TYPE, ServerType::CPPRestSDK, "Sets the Server Type (Oatpp, CPPRestSDK)"};
 
+    /**
+     * Create a CoordinatorConfiguration object with default values.
+     * @return A CoordinatorConfiguration object with default values.
+     */
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
+    /**
+     * Create a CoordinatorConfiguration object and set values from the POSIX command line parameters stored in argv.
+     * @param argc The argc parameter given to the main function.
+     * @param argv The argv parameter given to the main function.
+     * @return A configured configuration object.
+     */
     static CoordinatorConfigurationPtr create(const int argc, const char** argv);
 
   private:

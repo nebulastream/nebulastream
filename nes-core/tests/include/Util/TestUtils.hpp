@@ -59,6 +59,33 @@ static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// st
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
 
+/**
+ * Create a command line parameter for a configuration option for the coordinator or worker.
+ * @param name The name of the command line option.
+ * @param value The value of the command line option.
+ * @param prefix If true, prefix the name of the option with "worker." to configure the internal worker of the coordinator.
+ * @return A string representing the command line parameter.
+ */
+[[nodiscard]] const std::string configOption(const std::string& name, const std::string& value, bool prefix = false) {
+    const std::string result = prefix ? "--worker." : "--";
+    return result + name + "=" + value;
+}
+
+/**
+ * Create a command line parameter for a configuration option for the coordinator or worker.
+ * @param name The name of the command line option.
+ * @param value The value of the command line option.
+ * @param prefix If true, prefix the name of the option with "worker." to configure the internal worker of the coordinator.
+* @return A string representing the command line parameter.
+ */
+template <typename T> [[nodiscard]] std::string configOption(const std::string& name, T value, bool prefix = false) {
+    return configOption(name, std::to_string(value), prefix);
+}
+
+[[nodiscard]] std::string bufferSizeInBytes(uint64_t size, bool prefix = false) {
+    return configOption(BUFFERS_SIZE_IN_BYTES_CONFIG, size, prefix);
+}
+
 [[nodiscard]] std::string configPath(const std::string& filename) {
     return "--" + CONFIG_PATH + "=" + filename;
 }
@@ -73,16 +100,16 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 
 [[nodiscard]] std::string parentId(uint64_t parentId) { return "--" + PARENT_ID_CONFIG + "=" + std::to_string(parentId); }
 
-[[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort) {
-    return "--" + NUMBER_OF_SLOTS_CONFIG + "=" + std::to_string(coordinatorPort);
+[[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort, bool prefix = false) {
+    return configOption(NUMBER_OF_SLOTS_CONFIG, coordinatorPort, prefix);
 }
 
-[[nodiscard]] std::string numLocalBuffers(uint64_t localBuffers) {
-    return "--" + NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG + "=" + std::to_string(localBuffers);
+[[nodiscard]] std::string numLocalBuffers(uint64_t localBuffers, bool prefix = false) {
+    return configOption(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG, localBuffers, prefix);
 }
 
-[[nodiscard]] std::string numGlobalBuffers(uint64_t globalBuffers) {
-    return "--" + NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG + "=" + std::to_string(globalBuffers);
+[[nodiscard]] std::string numGlobalBuffers(uint64_t globalBuffers, bool prefix = false) {
+    return configOption(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG, globalBuffers, prefix);
 }
 
 [[nodiscard]] std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
@@ -130,7 +157,9 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--healthCheckWaitTime=" + std::to_string(coordinatorWaitTime);
 }
 
-[[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
+[[nodiscard]] std::string enableMonitoring(bool prefix = false) {
+    return configOption(ENABLE_MONITORING_CONFIG, true, prefix);
+}
 
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {

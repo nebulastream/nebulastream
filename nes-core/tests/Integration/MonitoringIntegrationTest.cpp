@@ -84,6 +84,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableMonitoring(),
+                                                    TestUtils::enableMonitoring(true),
                                                     TestUtils::enableDebug()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
@@ -172,9 +173,12 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableMonitoring(),
                                                     TestUtils::enableDebug(),
-                                                    TestUtils::numberOfSlots(50),
-                                                    TestUtils::numLocalBuffers(localBuffers),
-                                                    TestUtils::numGlobalBuffers(globalBuffers)});
+                                                    TestUtils::enableMonitoring(true),
+                                                    TestUtils::bufferSizeInBytes(32768, true),
+                                                    TestUtils::numberOfSlots(50, true),
+                                                    TestUtils::numLocalBuffers(localBuffers, true),
+                                                    TestUtils::numGlobalBuffers(globalBuffers, true)
+    });
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -188,7 +192,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
                                            TestUtils::enableDebug(),
                                            TestUtils::numberOfSlots(50),
                                            TestUtils::numLocalBuffers(localBuffers),
-                                           TestUtils::numGlobalBuffers(globalBuffers)});
+                                           TestUtils::numGlobalBuffers(globalBuffers),
+                                           TestUtils::bufferSizeInBytes(32768)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -201,7 +206,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
                                            TestUtils::enableDebug(),
                                            TestUtils::numberOfSlots(50),
                                            TestUtils::numLocalBuffers(localBuffers),
-                                           TestUtils::numGlobalBuffers(globalBuffers)});
+                                           TestUtils::numGlobalBuffers(globalBuffers),
+                                           TestUtils::bufferSizeInBytes(32768)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));

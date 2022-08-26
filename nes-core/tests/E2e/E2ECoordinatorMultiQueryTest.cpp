@@ -63,7 +63,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableDebug(),
-                                                    TestUtils::numberOfSlots(8)});
+                                                    TestUtils::numberOfSlots(8, true)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
