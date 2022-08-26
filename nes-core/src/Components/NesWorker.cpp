@@ -139,20 +139,16 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
-        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
+      NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
+      NES_INFO("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
 
-        // Here just hardcoded for the integration test
-//        WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-//        workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-//        workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
-
-//        workerConfig->monitoringConfiguration = workerConfigPtr->monitoringConfiguration.getValue();
-
-        if ((workerConfig->monitoringConfiguration.getValue().empty())) {
-          monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
+      if ((workerConfig->monitoringConfiguration.getValue().empty())) {
+          MonitoringPlanPtr monitoringPlan = MonitoringPlan::defaultPlan();
+          MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
+          monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, workerConfig->enableMonitoring);
+//         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
-        } else {
+      } else {
           web::json::value configurationMonitoringJson =
               MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
 
@@ -164,7 +160,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
           monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog, workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with custom monitoring config");
       }
-      monitoringAgent->addMonitoringStreams(workerConfig);
+        monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();

@@ -99,8 +99,23 @@ uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
-    std::set<MetricType> metricTypes{WrappedCpuMetrics, DiskMetric, MemoryMetric, WrappedNetworkMetrics};
-    return MonitoringPlan::create(metricTypes);
+//    std::set<MetricType> metricTypes{WrappedCpuMetrics, DiskMetric, MemoryMetric, WrappedNetworkMetrics};
+//    return MonitoringPlan::create(metricTypes);
+
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
+    uint64_t sampleRate = 0;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+
+    tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(DiskMetric, std::make_pair(DiskMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(MemoryMetric, std::make_pair(MemoryMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(WrappedNetworkMetrics, std::make_pair(NetworkMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+
+    return MonitoringPlan::create(configuredMonitoringPlan);
 }
 
 std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {

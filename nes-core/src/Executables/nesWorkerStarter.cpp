@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
         if (workerConfigPath != commandLineParams.end()) {
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
         }
+        NES_DEBUG("nesWorkerStarter: yaml-parsed Monitoring Configuration =" << workerConfiguration->monitoringConfiguration.getValue());
 
         //if command line params are provided that do not contain a path to a yaml file for worker config,
         //command line param physicalSources are used to overwrite default physicalSources
@@ -69,11 +70,15 @@ int main(int argc, char** argv) {
             NES_DEBUG("nesWorkerStart: main: Uses commandLineParams!");
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
+        NES_DEBUG("nesWorkerStarter: CL-parsed Monitoring Configuration =" << workerConfiguration->monitoringConfiguration.getValue());
 
         NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
+
+        NES_INFO("nesWorkerStarter: moved to NesWorkerPtr Monitoring Configuration =" << nesWorker->getWorkerConfiguration()->monitoringConfiguration.getValue());
+
         Exceptions::installGlobalErrorListener(nesWorker);
 
         if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {

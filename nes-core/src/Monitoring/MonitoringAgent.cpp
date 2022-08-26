@@ -114,7 +114,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
             SchemaPtr defaultSchema = MetricUtils::defaultSchema(metricType);
             if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
                 // TODO: save in MonitoringManager that this node is using default Schema
-                std::string metricTypeString = NES::toString(metricType);
+                std::string metricTypeString = NES::toString(metricType) + "_default";
                 NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
                 auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
                 workerConfig->physicalSources.add(source);
@@ -122,6 +122,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
                 // TODO: check if LogicalSource with same config already exists, if not create a logicalSource with the config
 //              // TODO: gRPC Call zu MonitoringManager -> LogicalSourceCheck; returned 0 oder die NodeId eines Knoten, welches das Schema hat
                 // Problem: has to communicate each time new: so max. 4 Transmissions
+                NES_INFO("MonitoringAgent: Adding physical source to config: Custom!");
             }
         }
         return true;
@@ -129,6 +130,26 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
+
+//bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
+//    if (enabled) {
+//        for (auto metricType : monitoringPlan->getMetricTypes()) {
+//            // auto generate the specifics
+//            MonitoringSourceTypePtr sourceType =
+//                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
+//            std::string metricTypeString = NES::toString(metricType);
+//
+//            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+//            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
+//            workerConfig->physicalSources.add(source);
+//        }
+//        return true;
+//    }
+//    NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
+//    return false;
+//}
+
+
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 

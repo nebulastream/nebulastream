@@ -50,6 +50,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     if (dynamic_cast<BaseConfiguration*>(option)) {
         dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
     } else {
+        NES_DEBUG("BaseConfiguration: parseFromString: identifier lautet: " + identifier)
         optionMap[identifier]->parseFromString(identifier, inputParams);
     }
 }
