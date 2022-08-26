@@ -21,14 +21,20 @@ namespace NES {
 
 namespace Configurations {
 
+// The evaluation order is as follows:
+// 1. A worker option inside coordinator.yml.
+// 2. An option inside worker-1.yml, which was specified inside coordinator.yml.
+// 3. An option inside worker-2.yml, which was specified on the command line.
+// 4. A worker option on the command line.
+// This evaluation follows the expectation that options on the command line (including workerConfigPath)
+// overwrite options in the configuration file.
 CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, const char** argv) {
-    // Convert the POSIX command line arguments to a map of strings
+    // Convert the POSIX command line arguments to a map of strings.
     std::map<std::string, std::string> commandLineParams;
-    // TODO Refactor code: extract to helper method; use unordered map
     for (int i = 1; i < argc; ++i) {
         const int pos = std::string(argv[i]).find('=');
-        commandLineParams.insert({std::string(argv[i]).substr(0, pos),
-                                  std::string(argv[i]).substr(pos + 1, std::string(argv[i]).length() - 1)});
+        const std::string arg{argv[i]};
+        commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
     }
 
     // Create a configuration object with default values.
