@@ -24,15 +24,16 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
-extern "C" __attribute__((always_inline)) void NES__QueryCompiler__PipelineContext__emitBufferProxy(void* pipelineContext, void* tupleBuffer) {
+extern "C" __attribute__((always_inline)) void NES__QueryCompiler__PipelineContext__emitBufferProxy(void* workerContext, void* pipelineContext, void* tupleBuffer) {
+    auto* wc = (Runtime::WorkerContext*) workerContext;
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
-    pc->dispatchBuffer(*tb);
+    pc->dispatchBuffer(*wc, *tb);
     delete tb;
 }
 
-void PipelineContext::emitBuffer(const RecordBuffer& rb) {
-    FunctionCall<>("NES__QueryCompiler__PipelineContext__emitBufferProxy", NES__QueryCompiler__PipelineContext__emitBufferProxy, pipelineContextRef, rb.tupleBufferRef);
+void PipelineContext::emitBuffer(const WorkerContext& workerContext, const RecordBuffer& rb) {
+    FunctionCall<>("NES__QueryCompiler__PipelineContext__emitBufferProxy", NES__QueryCompiler__PipelineContext__emitBufferProxy, workerContext.getWorkerContextRef(), pipelineContextRef, rb.tupleBufferRef);
 }
 
 void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState) {

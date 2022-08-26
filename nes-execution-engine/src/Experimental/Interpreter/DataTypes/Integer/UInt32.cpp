@@ -43,7 +43,7 @@ const std::unique_ptr<Boolean> UInt32::equals(const Int& other) const {
 
 const std::unique_ptr<Boolean> UInt32::lessThan(const Int& other) const {
     auto& otherValue = other.staticCast<UInt32>();
-    return create<Boolean>(value > otherValue.value);}
+    return create<Boolean>(value < otherValue.value);}
 
 uint32_t UInt32::getValue() const { return value; }
 

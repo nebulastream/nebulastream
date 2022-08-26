@@ -18,7 +18,7 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-WorkerContext::WorkerContext(Value<MemRef> workerContextRef): workerContextRef(workerContextRef) {}
+WorkerContext::WorkerContext(Value<MemRef> workerContextRef) : workerContextRef(workerContextRef) {}
 
 void* allocateBufferProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
@@ -29,6 +29,8 @@ void* allocateBufferProxy(void* workerContext) {
 }
 
 Value<MemRef> WorkerContext::allocateBuffer() { return FunctionCall<>("allocateBuffer", allocateBufferProxy, workerContextRef); }
+
+Value<MemRef> WorkerContext::getWorkerContextRef() const { return this->workerContextRef; }
 
 extern "C" uint64_t getWorkerIdProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;

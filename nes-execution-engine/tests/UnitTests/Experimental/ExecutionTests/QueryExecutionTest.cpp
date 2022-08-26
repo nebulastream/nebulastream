@@ -136,42 +136,6 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
-#ifdef USE_MLIR
-TEST_P(QueryExecutionTest, emitQueryTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-
-    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-    schema->addField("f1", BasicType::UINT64);
-    schema->addField("f2", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
-    Scan scan = Scan(memoryLayout);
-    auto emit = std::make_shared<Emit>(memoryLayout);
-    scan.setChild(emit);
-
-    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    RecordBuffer recordBuffer = RecordBuffer(memRef);
-
-    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
-    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX);
-
-    auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
-        scan.open(executionContext, recordBuffer);
-        scan.close(executionContext, recordBuffer);
-    });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    loopInferencePhase.apply(ir);
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-}
-#endif
-
 TEST_P(QueryExecutionTest, longAggregationQueryTest) {
 
     auto bm = std::make_shared<Runtime::BufferManager>();
@@ -436,76 +400,6 @@ TEST_P(QueryExecutionTest, aggQueryTest) {
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 10);
 }
-
-TEST_P(QueryExecutionTest, tpchQ6_agg) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, Schema::ROW_LAYOUT);
-
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
-    /*
-     *   l_shipdate >= date '1994-01-01'
-     *   and l_shipdate < date '1995-01-01'
-     */
-    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-    auto selection1 = std::make_shared<Selection>(lessThanExpression1);
-    scan.setChild(selection1);
-    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-    auto selection2 = std::make_shared<Selection>(lessThanExpression2);
-    selection1->setChild(selection2);
-
-    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
-    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-    auto selection3 = std::make_shared<Selection>(lessThanExpression3);
-    selection2->setChild(selection3);
-    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-    auto selection4 = std::make_shared<Selection>(lessThanExpression4);
-    selection3->setChild(selection4);
-
-    // l_quantity < 24
-    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
-    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-    auto selection5 = std::make_shared<Selection>(lessThanExpression5);
-    selection4->setChild(selection5);
-
-    // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
-    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<Aggregation>(functions);
-    selection5->setChild(aggregation);
-
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    executablePipeline->setup();
-
-    auto buffer = lineitemBuffer.second.getBuffer();
-
-    for (auto i = 0; i < 10; i++) {
-        Timer timer("QueryExecutionTime");
-        timer.start();
-        executablePipeline->execute(*runtimeWorkerContext, buffer);
-        timer.snapshot("QueryExecutionTime");
-        timer.pause();
-        NES_INFO("QueryExecutionTime: " << timer);
-    }
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 19599269581);
-}
-
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         QueryExecutionTest,
