@@ -28,20 +28,30 @@ class RecordBuffer {
   public:
     explicit RecordBuffer(Value<MemRef> tupleBufferRef);
     ~RecordBuffer() = default;
-    Record
-    read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
+    Record read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                const std::vector<uint64_t>& projections,
+                Value<MemRef> bufferAddress,
+                Value<UInt64> recordIndex);
     Value<UInt64> getNumRecords();
     Value<MemRef> getBuffer();
     void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
     const Value<MemRef>& getReference();
+
   public:
     Value<MemRef> tupleBufferRef;
     void setNumRecords(Value<UInt64> value);
-  private:
-    Record
-    readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
-    Record readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
 
+  private:
+    Record readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                         const std::vector<uint64_t>& projections,
+                         Value<MemRef> bufferAddress,
+                         Value<UInt64> recordIndex);
+    Record readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                              const  std::vector<uint64_t>& projections,
+                              Value<MemRef> bufferAddress,
+                              Value<UInt64> recordIndex);
+
+    bool includeField(const std::vector<uint64_t>& projections, uint64_t fieldIndex);
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;

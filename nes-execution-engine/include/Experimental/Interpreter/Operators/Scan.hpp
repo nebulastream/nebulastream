@@ -20,10 +20,11 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class Scan : public Operator {
   public:
-    Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<uint64_t> projections = {});
     void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
   private:
     const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    const std::vector<uint64_t> projections;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
