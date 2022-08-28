@@ -19,7 +19,7 @@ void JoinBuild::setup(RuntimeExecutionContext& executionCtx) const {
 
     globalState->hashTable = this->hashMap;
 
-    executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
+    tag = executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
     Operator::setup(executionCtx);
 }
 

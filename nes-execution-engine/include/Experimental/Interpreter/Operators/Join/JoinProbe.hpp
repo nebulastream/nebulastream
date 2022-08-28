@@ -22,17 +22,17 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class JoinProbe : public ExecutableOperator {
   public:
-    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions);
+    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions, std::vector<ExpressionPtr> valueExpressions, std::vector<IR::Types::StampPtr> hashmapKeyStamps, std::vector<IR::Types::StampPtr> hashmapValueStamps);
     void setup(RuntimeExecutionContext& executionCtx) const override;
-    void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
 
   private:
     std::shared_ptr<NES::Experimental::Hashmap> hashMap;
     const std::vector<ExpressionPtr> keyExpressions;
+    const std::vector<ExpressionPtr> valueExpressions;
     const std::vector<IR::Types::StampPtr> keyTypes;
     const std::vector<IR::Types::StampPtr> valueTypes;
+    mutable uint32_t tag;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

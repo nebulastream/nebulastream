@@ -123,12 +123,14 @@ Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr
 }
 
 void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& rec) {
-    auto fieldSizes = memoryLayout->getFieldSizes();
-    auto tupleSize = memoryLayout->getTupleSize();
+    auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
+    auto fieldSizes = rowLayout->getFieldSizes();
+    auto tupleSize = rowLayout->getTupleSize();
     auto bufferAddress = getBuffer();
+    auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
-        auto fieldOffset = tupleSize * recordIndex + fieldSizes[i];
-        auto fieldAddress = bufferAddress + fieldOffset;
+        auto fieldOffset = rowLayout->getFieldOffSets()[i];
+        auto fieldAddress = recordOffset + fieldOffset;
         auto value = rec.read(i).as<Int64>();
         auto memRef = fieldAddress.as<MemRef>();
         memRef.store(value);

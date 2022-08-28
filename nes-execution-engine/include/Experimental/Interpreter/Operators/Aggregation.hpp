@@ -37,6 +37,7 @@ class Aggregation : public ExecutableOperator {
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
   private:
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
+    mutable uint32_t tag;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

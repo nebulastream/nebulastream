@@ -46,8 +46,6 @@ TPCHUtil::getLineitems(std::string rootPath,
         prefix = "col_";
     }
 
-    NES_DEBUG("Loading of Lineitem done");
-
     if (std::filesystem::exists(rootPath + prefix + "lineitem.cache") && useCache) {
         return getFileFromCache(rootPath + prefix + "lineitem.cache", bm, schema);
     } else {
@@ -136,12 +134,12 @@ TPCHUtil::getCustomers(std::string rootPath,
         prefix = "col_";
     }
 
-    if (std::filesystem::exists(rootPath + prefix + "customers.cache") && useCache) {
-        return getFileFromCache(rootPath + prefix + "customers.cache", bm, schema);
+    if (std::filesystem::exists(rootPath + prefix + "customer.cache") && useCache) {
+        return getFileFromCache(rootPath + prefix + "customer.cache", bm, schema);
     } else {
-        auto result = getOrdersFromFile(rootPath + "customers.tbl", bm, schema);
+        auto result = getCustomersFromFile(rootPath + "customer.tbl", bm, schema);
         if (useCache) {
-            storeBuffer(rootPath + prefix + "customers.cache", result.second);
+            storeBuffer(rootPath + prefix + "customer.cache", result.second);
         }
         return result;
     }
@@ -165,6 +163,7 @@ TPCHUtil::getFileFromCache(std::string path, std::shared_ptr<Runtime::BufferMana
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, size);
     }
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
+    NES_DEBUG("Load buffer from cache done " << path);
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
@@ -319,14 +318,15 @@ TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferMan
         //dynamicBuffer[index][3].write(l_linenumber);
 
         // orderdate
-        auto orderdate = strings[4];
-        //int64_t orderdate = std::stoi(orderdate);
-        //dynamicBuffer[index][4].write(l_quantity);
+        auto orderdateString = strings[4];
+        NES::Util::findAndReplaceAll(orderdateString, "-", "");
+        int64_t o_orderdate = std::stoi(orderdateString);
+        dynamicBuffer[index][4].write(o_orderdate);
 
         // orderpriority
         //auto l_extendedpriceString = strings[5];
         //int64_t l_extendedprice = std::stof(l_extendedpriceString) * 100;
-        //dynamicBuffer[index][5].write(l_extendedprice);
+       // dynamicBuffer[index][5].write(l_extendedprice);
 
         // clerk
         //auto l_discountString = strings[6];
@@ -334,14 +334,15 @@ TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferMan
         //dynamicBuffer[index][6].write(l_discount);
 
         // shippriority
-        //auto l_taxString = strings[7];
-        //int64_t l_tax = std::stof(l_taxString) * 100;
-        //dynamicBuffer[index][7].write(l_tax);
+        auto o_shippriorityString = strings[7];
+        int64_t o_shippriority = std::stoi(o_shippriorityString);
+        dynamicBuffer[index][7].write(o_shippriority);
 
         // comment
         //auto l_returnflagString = strings[8];
         //int64_t l_returnflag = (int8_t) l_returnflagString[0];
         //dynamicBuffer[index][8].write(l_returnflag);
+        dynamicBuffer.setNumberOfTuples(index + 1);
     }
     inFile.close();
     return std::make_pair(memoryLayout, dynamicBuffer);
@@ -409,14 +410,19 @@ TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         //dynamicBuffer[index][5].write(l_extendedprice);
 
         // mktsegment
-        //auto c_mktsegment = strings[6];
-        //int64_t l_discount = std::stof(l_discountString) * 100;
-        //dynamicBuffer[index][6].write(l_discount);
+        auto c_mktsegmentString = strings[6];
+        auto result = c_mktsegmentString.compare("BUILDING");
+        if (result == 0) {
+            dynamicBuffer[index][6].write(1l);
+        } else {
+            dynamicBuffer[index][6].write(0l);
+        }
 
         // comment
         //auto c_comment = strings[7];
         //int64_t l_tax = std::stof(l_taxString) * 100;
         //dynamicBuffer[index][7].write(l_tax);
+        dynamicBuffer.setNumberOfTuples(index + 1);
     }
     inFile.close();
     return std::make_pair(memoryLayout, dynamicBuffer);

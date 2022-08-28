@@ -33,7 +33,7 @@ template<class T>
 Trace::ValueRef createNextRef(std::unique_ptr<T>& t) {
     auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx) {
-        auto dynCast = dynamic_cast<TraceableType*>(t.get());
+        auto dynCast = static_cast<TraceableType*>(t.get());
         if (dynCast == nullptr) {
             return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
         }
@@ -54,18 +54,18 @@ class Value : BaseValue {
 
     Value(std::unique_ptr<ValueType> wrappedValue, Trace::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
 
-    Value(int8_t value) : Value(std::make_unique<Int8>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(int16_t value) : Value(std::make_unique<Int16>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(int32_t value) : Value(std::make_unique<Int32>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(int64_t value) : Value(std::make_unique<Int64>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(uint8_t value) : Value(std::make_unique<UInt8>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(uint16_t value) : Value(std::make_unique<UInt16>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(uint32_t value) : Value(std::make_unique<UInt32>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(uint64_t value) : Value(std::make_unique<UInt64>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(float value) : Value(Any::create<Float>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(double value) : Value(Any::create<Double>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(int8_t* value) : Value(std::make_unique<MemRef>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int8_t value) : Value(std::make_unique<Int8>(value)) { TraceConstOperation(*this, *this); };
+    Value(int16_t value) : Value(std::make_unique<Int16>(value)) { TraceConstOperation(*this, *this); };
+    Value(int32_t value) : Value(std::make_unique<Int32>(value)) { TraceConstOperation(*this, *this); };
+    Value(int64_t value) : Value(std::make_unique<Int64>(value)) { TraceConstOperation(*this, *this); };
+    Value(uint8_t value) : Value(std::make_unique<UInt8>(value)) { TraceConstOperation(*this, *this); };
+    Value(uint16_t value) : Value(std::make_unique<UInt16>(value)) { TraceConstOperation(*this, *this); };
+    Value(uint32_t value) : Value(std::make_unique<UInt32>(value)) { TraceConstOperation(*this, *this); };
+    Value(uint64_t value) : Value(std::make_unique<UInt64>(value)) { TraceConstOperation(*this, *this); };
+    Value(float value) : Value(Any::create<Float>(value)) { TraceConstOperation(*this, *this); };
+    Value(double value) : Value(Any::create<Double>(value)) { TraceConstOperation(*this, *this); };
+    Value(int8_t* value) : Value(std::make_unique<MemRef>(value)) { TraceConstOperation(*this, *this); };
+    Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceConstOperation(*this, *this); };
 
     // copy constructor
     //template<class OType>
@@ -178,10 +178,30 @@ Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, IR::Types::StampPtr toStamp);
 
 template<class ValueType, class ResultType>
+void TraceConstOperation(const Value<ValueType>& input, Value<ResultType>& result) {
+    auto ctx = Trace::getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        // fast case for expected operations
+        if(ctx->isExpectedOperation(Trace::CONST)){
+            ctx->incrementOperationCounter();
+            return;
+        }
+        auto constValue = input.value->copy();
+        auto operation = Trace::Operation(Trace::CONST, result.ref, {Trace::ConstantValue(std::move(constValue))});
+        ctx->trace(operation);
+    }
+};
+
+template<class ValueType, class ResultType>
 void TraceOperation(Trace::OpCode op, const Value<ValueType>& input, Value<ResultType>& result) {
     auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx != nullptr) {
         if (op == Trace::OpCode::CONST) {
+            // fast case for expected operations
+            if(ctx->isExpectedOperation(op)){
+                ctx->incrementOperationCounter();
+                return;
+            }
             auto constValue = input.value->copy();
             auto operation = Trace::Operation(op, result.ref, {Trace::ConstantValue(std::move(constValue))});
             ctx->trace(operation);
@@ -189,6 +209,11 @@ void TraceOperation(Trace::OpCode op, const Value<ValueType>& input, Value<Resul
             //if constexpr (std::is_same_v<ValueType, Any>)
             ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
         } else {
+            // fast case for expected operations
+            if(ctx->isExpectedOperation(op)){
+                ctx->incrementOperationCounter();
+                return;
+            }
             auto operation = Trace::Operation(op, result.ref, {input.ref});
             ctx->trace(operation);
         }
@@ -199,6 +224,11 @@ template<class ValueLeft, class ValueRight, class ValueReturn>
 void TraceOperation(Trace::OpCode op, const Value<ValueLeft>& left, const Value<ValueRight>& right, Value<ValueReturn>& result) {
     auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx != nullptr) {
+        // fast case for expected operations
+        if(ctx->isExpectedOperation(op)){
+            ctx->incrementOperationCounter();
+            return;
+        }
         auto operation = Trace::Operation(op, result.ref, {left.ref, right.ref});
         ctx->trace(operation);
     }
@@ -215,7 +245,7 @@ template<class T>
     requires(std::is_same_v<T, const bool> == true)
 inline auto toValue(T&& t) -> Value<> {
     auto value = Value<Boolean>(std::make_unique<Boolean>(t));
-    TraceOperation(Trace::CONST, value, value);
+    TraceConstOperation(value, value);
     return value;
 }
 

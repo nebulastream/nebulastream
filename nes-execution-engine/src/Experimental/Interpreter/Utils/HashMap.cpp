@@ -58,7 +58,7 @@ Value<UInt64> HashMap::calculateHash(std::vector<Value<>> keys) {
 
 HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> hash) {
     auto entryRef = FunctionCall<>("createEntryProxy", createEntryProxy, hashTableRef, hash);
-    auto entry = Entry(entryRef, NES::Experimental::Hashmap::headerSize, valueOffset);
+    auto entry = Entry(entryRef, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize + valueOffset);
     auto keyPtr = entry.getKeyPtr();
     for (auto i = 0ul; i < keys.size(); i++) {
         keyPtr.store(keys[i]);

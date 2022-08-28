@@ -31,7 +31,7 @@ void Aggregation::setup(RuntimeExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalAggregationState>();
     auto state = aggregationFunctions[0]->createGlobalState();
     globalState->threadLocalAggregationSlots.emplace_back(std::move(state));
-    executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
+    tag = executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
     Operator::setup(executionCtx);
 }
 
