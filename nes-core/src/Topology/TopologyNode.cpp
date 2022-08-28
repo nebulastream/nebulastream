@@ -45,8 +45,6 @@ uint16_t TopologyNode::getUsedResources() const { return usedResources; }
 
 uint16_t TopologyNode::getResourceCapacity() const { return resources; }
 
-uint64_t TopologyNode::getEffectiveRessources() const { return effectiveResources; }
-
 /*uint16_t TopologyNode::getEffectivelyUsedResources(GlobalExecutionPlan globalExecutionPlan, uint16_t queryId) const {
 
     //QueryId queryId1 =
@@ -196,7 +194,23 @@ void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
 
 bool TopologyNode::isMobileNode() { return isMobile; }
 
-void TopologyNode::setEffectiveRessources(uint64_t effectiveRessourcesSet){ effectiveResources = effectiveRessourcesSet; }
+float TopologyNode::getEffectiveRessources() const { return effectiveResources; }
+
+int TopologyNode::getLatency() const { return latency; }
+
+int TopologyNode::getAvailableBuffers() const { return availableBuffers; }
+
+int TopologyNode::getEffectiveLatency() const { return effectiveLatency; }
+
+void TopologyNode::setAvailableBuffers(int availableBuffersSet){ availableBuffers = availableBuffersSet; }
+
+void TopologyNode::setEffectiveRessources(float effectiveRessourcesSet){ effectiveResources = effectiveRessourcesSet; }
+
+void TopologyNode::setLatency(int latencySet){ latency = latencySet;}
+
+void TopologyNode::setEffectiveLatency(float effectiveLatencySet) { effectiveLatency = effectiveLatencySet; }
+
+
 
 
 }// namespace NES

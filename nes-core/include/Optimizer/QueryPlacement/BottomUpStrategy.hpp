@@ -17,6 +17,8 @@
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
+#include <Topology/TopologyNode.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 
 namespace NES {
 
@@ -49,6 +51,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase);
 
+    int getDepth(NodePtr enode);
+
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
      * @param queryId: query id
@@ -77,6 +81,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
     //bool calcEffectiveRessources(std::vector<ExecutionNodePtr> topologyNodes, std::vector<int> seenIds, QueryId queryId);
     bool calcEffectiveRessources(std::vector<ExecutionNodePtr> executionNodes, std::vector<int> seenIds, QueryId queryId);
     bool calcEffectiveRessources(std::vector<TopologyNodePtr> executionNodes, std::vector<int> seenIds, QueryId queryId);
+    int depthOfChildren(ExecutionNodePtr enode);
+    float calcExecutionPlanCosts(GlobalExecutionPlanPtr globalExecutionPlan);
+
 };
 }// namespace NES::Optimizer
 

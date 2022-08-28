@@ -89,13 +89,25 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
 
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        /*TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        topology->setAsRoot(rootNode);*/
+
+        //Test resources
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 13);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 125, 126, resources[1]);
+        /*TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 125, 126, resources[1]);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);*/
+
+        //Test resources
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 125, 126, 7);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 127, 128, resources[2]);
+        /*TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 127, 128, resources[2]);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);*/
+
+        //Test resources
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 127, 128, 9);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         TopologyNodePtr sourceNode3 = TopologyNode::create(12, "localhost", 129, 130, resources[3]);
@@ -104,11 +116,11 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
         TopologyNodePtr sourceNode4 = TopologyNode::create(13, "localhost", 131, 132, resources[4]);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode4);
 
-        TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 133, 134, 1);
+        TopologyNodePtr sourceNode5 = TopologyNode::create(14, "localhost", 133, 134, 2);
         sourceNode5->removeParent(rootNode);
         topology->addNewTopologyNodeAsChild(sourceNode4, sourceNode5);
 
-        TopologyNodePtr sourceNode6 = TopologyNode::create(15, "localhost", 133, 134, 9);
+        TopologyNodePtr sourceNode6 = TopologyNode::create(15, "localhost", 133, 134, 3);
         sourceNode6->removeParent(rootNode);
         topology->addNewTopologyNodeAsChild(sourceNode3, sourceNode6);
 

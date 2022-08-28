@@ -88,7 +88,21 @@ class TopologyNode : public Node {
      */
     std::string getIpAddress() const;
 
-    uint64_t getEffectiveRessources() const;
+    float getEffectiveRessources() const;
+
+    void setEffectiveRessources(float effectiveRessources);
+
+    int getLatency() const;
+
+    void setLatency(int latencySet);
+
+    int getAvailableBuffers() const;
+
+    void setAvailableBuffers(int availableBuffersSet);
+
+    int getEffectiveLatency() const;
+
+    void setEffectiveLatency(float effectiveLatencySet);
 
     /**
      * @brief Get grpc port for the node
@@ -113,8 +127,6 @@ class TopologyNode : public Node {
      * @param flag
      */
     void setMaintenanceFlag(bool flag);
-
-    void setEffectiveRessources(uint64_t effectiveRessources);
 
     std::string toString() const override;
 
@@ -227,7 +239,10 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
-    uint16_t effectiveResources;
+    float effectiveResources;
+    int latency;
+    float effectiveLatency;
+    int availableBuffers;
     bool maintenanceFlag;
     NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
     bool isMobile;

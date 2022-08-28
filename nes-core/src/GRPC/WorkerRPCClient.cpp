@@ -394,8 +394,9 @@ int WorkerRPCClient::sayHi(uint64_t queryId, const std::string& address) {
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return reply.available_buffers();
+    }else{
+        return -1;
     }
-    return 0;
 }
 
 int WorkerRPCClient::getRTT(const std::string& address){
@@ -412,7 +413,7 @@ int WorkerRPCClient::getRTT(const std::string& address){
     auto end_time = std::chrono::high_resolution_clock::now();
 
     if(status.ok()){
-        return ((end_time - start_time)/std::chrono::milliseconds(1));
+        return (((end_time - start_time)/std::chrono::milliseconds(1)));
     }else{
         return -1;
     }
