@@ -183,8 +183,8 @@ TEST_P(Query6Test, tpchQ6) {
     timer.snapshot("QueryExecutionTime");
     timer.pause();
     NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto tag = *((int64_t*) aggregation.get());
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
@@ -245,15 +245,15 @@ TEST_P(Query6Test, tpchQ6and) {
     timer.snapshot("QueryExecutionTime");
     timer.pause();
     NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto tag = *((int64_t*) aggregation.get());
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {

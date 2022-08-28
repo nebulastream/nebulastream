@@ -215,8 +215,8 @@ TEST_P(Query1Test, tpchQ1) {
     timer.snapshot("Execute");
     timer.pause();
     NES_INFO("QueryExecutionTime: " << timer);
-
-    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto tag = *((int64_t*) aggregation.get());
+    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
     ASSERT_EQ(currentSize, (int64_t) 4);
 
@@ -253,7 +253,7 @@ TEST_P(Query1Test, tpchQ1) {
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                         Query1Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {

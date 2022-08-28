@@ -24,7 +24,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
-extern "C" __attribute__((always_inline)) void NES__QueryCompiler__PipelineContext__emitBufferProxy(void* workerContext, void* pipelineContext, void* tupleBuffer) {
+extern "C" __attribute__((always_inline)) void
+NES__QueryCompiler__PipelineContext__emitBufferProxy(void* workerContext, void* pipelineContext, void* tupleBuffer) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
@@ -33,27 +34,36 @@ extern "C" __attribute__((always_inline)) void NES__QueryCompiler__PipelineConte
 }
 
 void PipelineContext::emitBuffer(const WorkerContext& workerContext, const RecordBuffer& rb) {
-    FunctionCall<>("NES__QueryCompiler__PipelineContext__emitBufferProxy", NES__QueryCompiler__PipelineContext__emitBufferProxy, workerContext.getWorkerContextRef(), pipelineContextRef, rb.tupleBufferRef);
+    FunctionCall<>("NES__QueryCompiler__PipelineContext__emitBufferProxy",
+                   NES__QueryCompiler__PipelineContext__emitBufferProxy,
+                   workerContext.getWorkerContextRef(),
+                   pipelineContextRef,
+                   rb.tupleBufferRef);
 }
 
-void PipelineContext::registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState) {
+Runtime::Execution::RuntimePipelineContext::OperatorStateTag
+PipelineContext::registerGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> operatorState) {
     // this should not be called during trace.
     auto ctx = (Runtime::Execution::RuntimePipelineContext*) pipelineContextRef.value->value;
-    auto tag = ctx->registerGlobalOperatorState(std::move(operatorState));
-    this->operatorIndexMap[operatorPtr] = tag;
+    auto value = *((int64_t*) op);
+    return ctx->registerGlobalOperatorState(value, std::move(operatorState));
 }
 
-extern "C" __attribute__((always_inline)) void* NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy(void* pipelineContext, uint64_t tag) {
+extern "C" __attribute__((always_inline)) void*
+NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy(void* pipelineContext, int64_t tag) {
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     return pc->getGlobalOperatorState(tag);
 }
 
-
-Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* operatorPtr) {
-    auto tag = this->operatorIndexMap[operatorPtr];
+Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* tag) {
+    //auto tag = this->operatorIndexMap[operatorPtr];
     // The tag is assumed to be constant therefore we create a constant string and call the get global operator state function with it.
-    auto tagValue = Value<Int32>((int32_t) tag);
-    return FunctionCall<>("NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy, pipelineContextRef, tagValue);
+    auto value = *((int64_t*) tag);
+    auto tagValue = Value<Int64>(value);
+    return FunctionCall<>("NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
+                          NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy,
+                          pipelineContextRef,
+                          tagValue);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

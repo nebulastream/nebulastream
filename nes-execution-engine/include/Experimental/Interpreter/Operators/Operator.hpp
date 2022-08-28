@@ -21,9 +21,9 @@ class ExecutableOperator;
 class RuntimeExecutionContext;
 using ExecuteOperatorPtr = std::shared_ptr<ExecutableOperator>;
 class TraceContext;
+static uint64_t id = 0;
 class Operator {
   public:
-
     virtual void setup(RuntimeExecutionContext& executionCtx) const;
     /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
@@ -36,6 +36,7 @@ class Operator {
 
   private:
     bool hasChildren() const;
+
 
   protected:
     mutable ExecuteOperatorPtr child;

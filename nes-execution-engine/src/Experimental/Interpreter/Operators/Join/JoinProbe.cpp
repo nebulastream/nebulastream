@@ -1,15 +1,21 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
+#include <Experimental/Interpreter/Record.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-JoinProbe::JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions)
-    : hashMap(hashmap), keyExpressions(keyExpressions) {}
+JoinProbe::JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap,
+                     std::vector<ExpressionPtr> keyExpressions,
+                     std::vector<ExpressionPtr> valueExpressions,
+                     std::vector<IR::Types::StampPtr> hashmapKeyStamps,
+                     std::vector<IR::Types::StampPtr> hashmapValueStamps)
+    : hashMap(hashmap), keyExpressions(keyExpressions), valueExpressions(valueExpressions), keyTypes(hashmapKeyStamps),
+      valueTypes(hashmapValueStamps) {}
 
 void JoinProbe::setup(RuntimeExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalJoinState>();
     globalState->hashTable = this->hashMap;
-    executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
+    tag = executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
     Operator::setup(executionCtx);
 }
 
@@ -28,13 +34,29 @@ void JoinProbe::execute(RuntimeExecutionContext& ctx, Record& record) const {
 
     if (!entry.isNull()) {
         // todo load values from table values
-        if (child != nullptr)
-            child->execute(ctx, record);
+        std::vector<Value<>> joinResults;
+
+        // add keys to result
+        for (auto& keys : keyValues) {
+            joinResults.push_back(keys);
+        }
+
+        // add left results
+        auto valuePtr = entry.getValuePtr();
+        for (auto& valueType : valueTypes) {
+            Value<> leftValue = valuePtr.load<Int64>();
+            joinResults.push_back(leftValue);
+            valuePtr = valuePtr + 8ul;
+        }
+
+        // add right values to the result
+        for (auto& valueExpression : valueExpressions) {
+            auto rightValue = valueExpression->execute(record);
+            joinResults.push_back(rightValue);
+        }
+        auto joinResult = Record(joinResults);
+        child->execute(ctx, joinResult);
     }
 }
-
-void JoinProbe::open(RuntimeExecutionContext&, RecordBuffer&) const {}
-
-void JoinProbe::close(RuntimeExecutionContext&, RecordBuffer&) const {}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -45,6 +45,7 @@ class TraceContext {
     std::shared_ptr<ExecutionTrace> getExecutionTrace();
     ValueRef createNextRef(IR::Types::StampPtr type);
     void addTraceArgument(const ValueRef& value);
+    void incrementOperationCounter();
 
   private:
     uint64_t createStartAddress();
