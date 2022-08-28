@@ -29,7 +29,7 @@ NES__QueryCompiler__PipelineContext__emitBufferProxy(void* workerContext, void* 
     auto* wc = (Runtime::WorkerContext*) workerContext;
     auto* pc = (Runtime::Execution::RuntimePipelineContext*) pipelineContext;
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
-    pc->dispatchBuffer(*wc, *tb);
+    //pc->dispatchBuffer(*wc, *tb);
     delete tb;
 }
 

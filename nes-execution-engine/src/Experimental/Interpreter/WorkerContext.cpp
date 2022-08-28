@@ -24,7 +24,8 @@ void* allocateBufferProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
     // we allocate a new tuple buffer on the heap and call retain to prevent the deletion of the reference.
     // todo check with ventura
-    auto* tb = new Runtime::TupleBuffer(wc->allocateTupleBuffer());
+    auto buffer = wc->allocateTupleBuffer();
+    auto* tb = new Runtime::TupleBuffer(buffer);
     return tb;
 }
 

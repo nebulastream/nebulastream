@@ -426,7 +426,7 @@ TEST_P(Query3Test, tpchQ3_onlyCompile) {
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ3,
                         Query3Test,
-                        ::testing::Combine(::testing::Values( "MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values( "INTERPRETER","MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query3Test::ParamType>& info) {

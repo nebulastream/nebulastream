@@ -19,7 +19,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
     if (expression->execute(record)) {
-        child->execute(ctx, record);
+        if (child != nullptr)
+            child->execute(ctx, record);
     }
 }
 

@@ -76,23 +76,27 @@ Value<> load(PhysicalTypePtr type, Value<MemRef> memRef) {
 }
 
 Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                          const std::vector<uint64_t>& projections,
                           Value<MemRef> bufferAddress,
                           Value<UInt64> recordIndex) {
     // read all fields
     if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
-        return readRowLayout(memoryLayout, bufferAddress, recordIndex);
+        return readRowLayout(memoryLayout, projections, bufferAddress, recordIndex);
     } else if (memoryLayout->getSchema()->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-        return readColumnarLayout(memoryLayout, bufferAddress, recordIndex);
+        return readColumnarLayout(memoryLayout, projections, bufferAddress, recordIndex);
     }
     NES_THROW_RUNTIME_ERROR("Layout not supported");
 }
 
 Record RecordBuffer::readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                        const std::vector<uint64_t>& projections,
                                         Value<MemRef> bufferAddress,
                                         Value<UInt64> recordIndex) {
     auto columnLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(memoryLayout);
     std::vector<Value<Any>> fieldValues;
     for (uint64_t i = 0; i < columnLayout->getSchema()->getSize(); i++) {
+        if (!includeField(projections, i))
+            continue;
         auto fieldSize = columnLayout->getFieldSizes()[i];
         auto columnOffset = columnLayout->getColumnOffsets()[i];
         auto fieldOffset = recordIndex * fieldSize + columnOffset;
@@ -105,6 +109,7 @@ Record RecordBuffer::readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayo
 }
 
 Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                   const std::vector<uint64_t>& projections,
                                    Value<MemRef> bufferAddress,
                                    Value<UInt64> recordIndex) {
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
@@ -113,6 +118,8 @@ Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr
     fieldValues.reserve(rowLayout->getFieldSizes().size());
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (uint64_t i = 0; i < rowLayout->getSchema()->getSize(); i++) {
+        if (!includeField(projections, i))
+            continue;
         auto fieldOffset = rowLayout->getFieldOffSets()[i];
         auto fieldAddress = recordOffset + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
@@ -135,6 +142,12 @@ void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLay
         auto memRef = fieldAddress.as<MemRef>();
         memRef.store(value);
     }
+}
+
+bool RecordBuffer::includeField(const std::vector<uint64_t>& projections, uint64_t fieldIndex) {
+    if (projections.empty())
+        return true;
+    return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 void RecordBuffer::setNumRecords(Value<UInt64> value) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setNumberOfTuples",

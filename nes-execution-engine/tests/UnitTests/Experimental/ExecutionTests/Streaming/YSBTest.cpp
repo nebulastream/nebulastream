@@ -56,6 +56,7 @@
 #include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #endif
+#include <Experimental/Interpreter/Operators/Streaming/WindowAggregation.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -70,6 +71,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <algorithm>
 #include <execinfo.h>
 #include <fstream>
@@ -81,7 +83,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 /**
  * @brief This test tests query execution using th mlir backend
  */
-class Query1Test : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
+class YSBTest : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
@@ -128,76 +130,77 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
     static void TearDownTestCase() { std::cout << "Tear down QueryExecutionTest test class." << std::endl; }
 };
 
-TEST_P(Query1Test, tpchQ1) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-    auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+SchemaPtr getSchema() {
+    return Schema::create()
+        ->addField("user_id", INT64)
+        ->addField("page_id", INT64)
+        ->addField("campaign_id", INT64)
+        ->addField("ad_type", INT64)
+        ->addField("event_type", INT64)
+        ->addField("current_ms", INT64)
+        ->addField("ip", INT64)
+        ->addField("d1", INT64)
+        ->addField("d2", INT64)
+        ->addField("d3", INT32)
+        ->addField("d4", INT16);
+}
+
+std::vector<Runtime::TupleBuffer>
+createData(uint64_t numberOfBuffers, Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Runtime::BufferManagerPtr bm) {
+
+    std::vector<Runtime::TupleBuffer> buffers;
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+        auto buffer = bm->getUnpooledBuffer(memoryLayout->getBufferSize()).value();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+            auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::high_resolution_clock::now().time_since_epoch())
+                          .count();
+            auto campaign_id = rand() % 100;
+            auto event_type = currentRecord % 3;
+            dynamicBuffer[currentRecord]["user_id"].write<int64_t>(1);
+            dynamicBuffer[currentRecord]["page_id"].write<int64_t>(0);
+            dynamicBuffer[currentRecord]["campaign_id"].write<int64_t>(campaign_id);
+            dynamicBuffer[currentRecord]["ad_type"].write<int64_t>(0);
+            dynamicBuffer[currentRecord]["event_type"].write<int64_t>(event_type);
+            dynamicBuffer[currentRecord]["current_ms"].write<int64_t>(100);
+            dynamicBuffer[currentRecord]["ip"].write<int64_t>(0x01020304);
+            dynamicBuffer[currentRecord]["d1"].write<int64_t>(1);
+            dynamicBuffer[currentRecord]["d2"].write<int64_t>(1);
+            dynamicBuffer[currentRecord]["d3"].write<int32_t>(1);
+            dynamicBuffer[currentRecord]["d4"].write<int16_t>(1);
+        }
+        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        buffers.emplace_back(buffer);
+    }
+    return buffers;
+}
+
+TEST_P(YSBTest, ysbSelectionCampain) {
+    uint64_t bufferSize = 1000000;
+    auto bm = std::make_shared<Runtime::BufferManager>(bufferSize);
+
+
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(getSchema(), bufferSize);
+    auto data = createData(5, memoryLayout, bm);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
 
+    Scan scan = Scan(memoryLayout, {4});
     /*
-     *   l_shipdate <= date '1998-12-01' - interval '90' day
-     *
-     *   1998-09-02
+     *   campaing_id = 0
      */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(10);
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
-    auto selection = std::make_shared<Selection>(lessThanExpression1);
+    auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
+    auto readCampaignId = std::make_shared<ReadFieldExpression>(0);
+    auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
+    auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(selection);
 
-    /**
-     *
-     * group by
-        l_returnflag,
-        l_linestatus
+    auto resultSchema = Schema::create()->addField("user_id", INT64);
+    auto resMem = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
 
-        sum(l_quantity) as sum_qty,
-        sum(l_extendedprice) as sum_base_price,
-        sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
-        sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-        avg(l_quantity) as avg_qty,
-        avg(l_extendedprice) as avg_price,
-        avg(l_discount) as avg_disc,
-        count(*) as count_order
-     */
-    auto l_returnflagField = std::make_shared<ReadFieldExpression>(8);
-    auto l_linestatusFiled = std::make_shared<ReadFieldExpression>(9);
-
-    //  sum(l_quantity) as sum_qty,
-    auto l_quantityField = std::make_shared<ReadFieldExpression>(4);
-    auto sumAggFunction1 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
-
-    // sum(l_extendedprice) as sum_base_price,
-    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>(5);
-    auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
-
-    // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
-    auto l_discountField = std::make_shared<ReadFieldExpression>(6);
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
-    auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-    auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-    auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
-
-    //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    auto l_taxField = std::make_shared<ReadFieldExpression>(6);
-    auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-    auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
-    auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
-
-    auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
-
-    //  count() as avg_price,
-    auto countFunction = std::make_shared<CountFunction>();
-
-    std::vector<std::shared_ptr<AggregationFunction>> functions =
-        {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, sumAggFunction5, countFunction};
-    std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
-    // 5 * 3 + 3 * 16 = 88 value size
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
-    auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
-    selection->setChild(aggregation);
+    auto emit = std::make_shared<Emit>(resMem);
+    selection->setChild(emit);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
@@ -206,57 +209,89 @@ TEST_P(Query1Test, tpchQ1) {
 
     executablePipeline->setup();
 
-    auto buffer = lineitemBuffer.second.getBuffer();
+    Timer timer("QueryExecutionTime");
+    timer.start();
+    for (auto i = 0; i < 100; i++) {
+        for (auto& buffer : data) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+    }
+    timer.snapshot("Execute");
+    timer.pause();
+
+    NES_INFO(timer);
+    auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
+    double recordsPerMs = (double) processedTuples / timer.getPrintTime();
+    NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
+                                << " Throughput: " << (recordsPerMs * 1000));
+}
+
+TEST_P(YSBTest, ysbTumblingWindow) {
+    uint64_t tumblingWindowSize = 1000;
+    auto bm = std::make_shared<Runtime::BufferManager>();
+
+    uint64_t bufferSize = 1000000;
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(getSchema(), bufferSize);
+    auto data = createData(10, memoryLayout, bm);
+
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan scan = Scan(memoryLayout, {2, 4, 5});
+    /*
+     *   campaing_id = 0
+     */
+    auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
+    auto readCampaignId = std::make_shared<ReadFieldExpression>(1);
+    auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
+    auto selection = std::make_shared<Selection>(equalsExpression);
+    scan.setChild(selection);
+
+    auto hashMapFactory = std::make_shared<NES::Experimental::HashMapFactory>(bm, 8, 16, 40000);
+    auto sliceStore = std::make_shared<Windowing::Experimental::KeyedThreadLocalSliceStore>(hashMapFactory,
+                                                                                            tumblingWindowSize,
+                                                                                            tumblingWindowSize);
+    auto tsExpression = std::make_shared<ReadFieldExpression>(2);
+    auto keyExpression = std::make_shared<ReadFieldExpression>(0);
+    std::vector<ExpressionPtr> keyExpressions = {keyExpression};
+    auto countAggregation = std::make_shared<CountFunction>();
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {countAggregation};
+    auto windowAggregation = std::make_shared<WindowAggregation>(sliceStore, tsExpression, keyExpressions, functions);
+    selection->setChild(windowAggregation);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+    auto executablePipeline = executionEngine->compile(pipeline);
+
+    executablePipeline->setup();
 
     Timer timer("QueryExecutionTime");
     timer.start();
-    timer.snapshot("Start");
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
+    for (auto i = 0; i < 100; i++) {
+        for (auto& buffer : data) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+    }
     timer.snapshot("Execute");
     timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-    auto tag = *((int64_t*) aggregation.get());
-    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
-    auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 4);
 
-    auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
+    NES_INFO(timer);
 
-    struct REntry {
-        void* next;
-        std::int64_t hash;
-        std::int64_t k1;
-        std::int64_t k2;
-        GlobalSumState ag1;
-        GlobalSumState ag2;
-        GlobalSumState ag3;
-        GlobalSumState ag4;
-        GlobalCountState ag8;
-    };
+    auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
+    double recordsPerMs = (double) processedTuples / timer.getPrintTime();
+    NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
+                                << " Throughput: " << (recordsPerMs * 1000));
 
-    auto entries = entryBuffer[0].getBuffer<REntry>();
-    for (auto i = 0; i < 4; i++) {
-        NES_DEBUG("K1 " << entries[i].k1);
-        NES_DEBUG("K2 " << entries[i].k2);
-        NES_DEBUG("ag1 " << entries[i].ag1.sum);
-        NES_DEBUG("ag2 " << entries[i].ag2.sum);
-        NES_DEBUG("ag3 " << entries[i].ag3.sum);
-        NES_DEBUG("ag4 " << entries[i].ag4.sum);
-        NES_DEBUG("ag8 " << entries[i].ag8.count);
-        NES_DEBUG("\n");
-        NES_DEBUG("\n");
-    }
+    ASSERT_EQ(sliceStore->getSlices().size(), 1);
 
-    //ASSERT_EQ(entries[0].ag1, 37719753);
-    //ASSERT_EQ(entries[0].ag2, 5656804138090);
+    ASSERT_EQ(sliceStore->getSlices().front()->getState().numberOfEntries(), 100);
 }
 
-INSTANTIATE_TEST_CASE_P(testTPCHQ1,
-                        Query1Test,
+INSTANTIATE_TEST_CASE_P(testYSB,
+                        YSBTest,
                         ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
-                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
-                        [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                        [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
