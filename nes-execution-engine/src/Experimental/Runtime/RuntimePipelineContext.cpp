@@ -20,17 +20,18 @@
 namespace NES::Runtime::Execution {
 
 void RuntimePipelineContext::dispatchBuffer(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& buffer) {
-    successors[0]->execute(workerContext, buffer);
+    if (!successors.empty())
+        successors[0]->execute(workerContext, buffer);
 }
 
 RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalOperatorState(
-    int64_t op,  std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
+    int64_t op,
+    std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
     operatorStates.insert(std::make_pair(op, std::move(operatorState)));
     return operatorStates.size() - 1;
 }
 
-ExecutionEngine::Experimental::Interpreter::OperatorState*
-RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
+ExecutionEngine::Experimental::Interpreter::OperatorState* RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
     return operatorStates[tag].get();
 }
 

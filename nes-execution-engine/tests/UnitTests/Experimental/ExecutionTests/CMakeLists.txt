@@ -36,6 +36,7 @@
     endif ()
 
     add_subdirectory(TPC-H)
+    add_subdirectory(Streaming)
     add_subdirectory(Operators)
 
 
