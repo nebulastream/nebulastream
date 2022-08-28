@@ -1,0 +1,12 @@
+---
+# This Playbook runs all the common plays in the deployment
+
+- name: Create the local-ssd log directory
+  file:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
+    state: directory
+
+- name: Copy worker binaries from fat server
+  copy:
+    src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/nesWorker"
+    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
