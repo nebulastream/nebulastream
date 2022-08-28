@@ -25,9 +25,9 @@ class PipelineContext {
 
     void emitBuffer(const WorkerContext& workerContext, const RecordBuffer& rb);
 
-    void registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState);
+    uint32_t  registerGlobalOperatorState(const Operator* operatorPtr, std::unique_ptr<OperatorState> operatorState);
 
-    Value<MemRef> getGlobalOperatorState(const Operator* operatorPtr);
+    Value<MemRef> getGlobalOperatorState(const Operator* tag);
 
   private:
     Value<MemRef> pipelineContextRef;

@@ -142,7 +142,7 @@ SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experi
                                     "This potentially indicates a bug in the evaluator or the use of recursion in the function.");
         }
     }
-    NES_DEBUG("Symbolic Execution: iterations " << iterations);
+    NES_INFO("Symbolic Execution: iterations " << iterations);
     disableThreadLocalTraceContext();
     return tracCtx->getExecutionTrace();
 }

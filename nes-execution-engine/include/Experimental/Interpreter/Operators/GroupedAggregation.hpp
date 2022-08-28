@@ -47,6 +47,7 @@ class GroupedAggregation : public ExecutableOperator {
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     const std::vector<IR::Types::StampPtr> keyTypes;
     const std::vector<IR::Types::StampPtr> valueTypes;
+    mutable uint32_t tag;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

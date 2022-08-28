@@ -36,7 +36,7 @@ void GroupedAggregation::setup(RuntimeExecutionContext& executionCtx) const {
 
     globalState->threadLocalAggregationSlots.emplace_back(this->factory.createPtr());
 
-    executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
+    tag = executionCtx.getPipelineContext().registerGlobalOperatorState(this, std::move(globalState));
     Operator::setup(executionCtx);
 }
 
@@ -59,10 +59,10 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
     auto entry = hashMap.findOrCreate(keyValues);
     auto valuePtr = entry.getValuePtr();
     for (auto& aggregationFunction : aggregationFunctions) {
-        //auto state = aggregationFunction->loadState(valuePtr);
-        //aggregationFunction->liftCombine(state, record);
-        //aggregationFunction->storeState(valuePtr, state);
-        //valuePtr = valuePtr + aggregationFunction->getStateSize();
+        auto state = aggregationFunction->loadState(valuePtr);
+        aggregationFunction->liftCombine(state, record);
+        aggregationFunction->storeState(valuePtr, state);
+        valuePtr = valuePtr + aggregationFunction->getStateSize();
     }
 }
 
