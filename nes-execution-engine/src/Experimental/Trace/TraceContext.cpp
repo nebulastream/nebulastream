@@ -137,14 +137,14 @@ bool TraceContext::isExpectedOperation(OpCode opCode) {
     if (currentBlock.operations.size() <= currentOperationCounter) {
         return false;
     }
-    auto currentOperation = currentBlock.operations[currentOperationCounter];
+    auto currentOperation = &currentBlock.operations[currentOperationCounter];
     // the next operation is a jump we transfer to that block.
-    while (currentOperation.op == JMP) {
-        executionTrace->setCurrentBloc(std::get<BlockRef>(currentOperation.input[0]).block);
+    while (currentOperation->op == JMP) {
+        executionTrace->setCurrentBloc(std::get<BlockRef>(currentOperation->input[0]).block);
         currentOperationCounter = 0;
-        currentOperation = executionTrace->getCurrentBlock().operations[currentOperationCounter];
+        currentOperation = &executionTrace->getCurrentBlock().operations[currentOperationCounter];
     }
-    return currentOperation.op == opCode;
+    return currentOperation->op == opCode;
 }
 
 std::shared_ptr<OperationRef> TraceContext::isKnownOperation(Tag& tag) {
@@ -194,28 +194,31 @@ void TraceContext::trace(Operation& operation) {
                 // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
                 // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
                 //           << ")-----------" << std::endl;
-                std::cout << *executionTrace.get() << std::endl;
-                if(executionTrace->localTagMap.contains(tag)){
-                    std::cout << "----------- Found local repeating node ------------" << std::endl;
-                    std::cout << "This is a loop head " << ref->blockId << std::endl;
-                }
+                //std::cout << *executionTrace.get() << std::endl;
+               // if(executionTrace->localTagMap.contains(tag)){
+               //     std::cout << "----------- Found local repeating node ------------" << std::endl;
+                //    std::cout << "This is a loop head " << ref->blockId << std::endl;
+               // }
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
                 auto mergeOperation = mergeBlock.operations.front();
                 currentOperationCounter = 1;
                 return;
             } else {
-                std::cout << "----------- Ignore CONTROL_FLOW_MERGE as it is in the same block------------" << std::endl;
+               // std::cout << "----------- Ignore CONTROL_FLOW_MERGE as it is in the same block------------" << std::endl;
             }
         }
         executionTrace->addOperation(operation);
         executionTrace->localTagMap.emplace(std::make_pair(tag, operation.operationRef));
     }
 
-    currentOperationCounter++;
+    incrementOperationCounter();
 }
 
 void TraceContext::addTraceArgument(const ValueRef& value) {
     executionTrace->addArgument(value);
+}
+void TraceContext::incrementOperationCounter() {
+    currentOperationCounter++;
 }
 
 /*

@@ -24,13 +24,13 @@ void RuntimePipelineContext::dispatchBuffer(Runtime::WorkerContext& workerContex
 }
 
 RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalOperatorState(
-    std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
-    operatorStates.push_back(std::move(operatorState));
+    int64_t op,  std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
+    operatorStates.insert(std::make_pair(op, std::move(operatorState)));
     return operatorStates.size() - 1;
 }
 
 ExecutionEngine::Experimental::Interpreter::OperatorState*
-RuntimePipelineContext::getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag) {
+RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
     return operatorStates[tag].get();
 }
 

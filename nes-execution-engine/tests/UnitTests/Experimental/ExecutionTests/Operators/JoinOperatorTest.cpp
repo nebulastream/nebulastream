@@ -81,7 +81,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 /**
 * @brief This test tests query execution using th mlir backend
 */
-class EmitOperatorTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
+class JoinOperatorTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
@@ -134,51 +134,134 @@ class CollectPipeline : public ExecutablePipeline {
     std::vector<Runtime::TupleBuffer> receivedBuffers;
 };
 
-TEST_P(EmitOperatorTest, scanAndEmitTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
+TEST_P(JoinOperatorTest, joinBuildQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(1000);
+
+    auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    buildSideSchema->addField("key", BasicType::INT64);
+    buildSideSchema->addField("value", BasicType::INT64);
+    auto buildSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(buildSideSchema, bm->getBufferSize());
+
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
-    Scan scan = Scan(memoryLayout);
-    auto emit = std::make_shared<Emit>(memoryLayout);
-    scan.setChild(emit);
+    Scan buildSideScan = Scan(buildSideMemoryLayout);
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 8, 1000);
+    auto map = factory.createPtr();
+    std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = std::move(map);
+    auto joinBuild = std::make_shared<JoinBuild>(sharedHashMap, joinBuildKeys, joinBuildValues);
+    buildSideScan.setChild(joinBuild);
+    auto buildPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    buildPipeline->setRootOperator(&buildSideScan);
+    auto buildSidePipeline = executionEngine->compile(buildPipeline);
 
-    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    RecordBuffer recordBuffer = RecordBuffer(memRef);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine->compile(pipeline);
-    auto collectPipelines = std::make_shared<CollectPipeline>();
-    executablePipeline->getExecutionContext()->addSuccessorPipeline(collectPipelines);
-    auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto buildSideBuffer = bm->getBufferBlocking();
+    auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
     for (auto i = 0; i < 10; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        buildSideDynBuffer[i]["key"].write((int64_t) i % 2);
+        buildSideDynBuffer[i]["value"].write((int64_t) 1);
     }
-    dynamicBuffer.setNumberOfTuples(10);
+    buildSideDynBuffer.setNumberOfTuples(10);
+    buildSidePipeline->setup();
+    buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
 
-    executablePipeline->setup();
+    auto currentSize = sharedHashMap->numberOfEntries();
+    ASSERT_EQ(currentSize, (int64_t) 10);
+}
 
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("QueryExecutionTime");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
+TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(1000);
+
+    auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    buildSideSchema->addField("key", BasicType::INT64);
+    buildSideSchema->addField("valueLeft", BasicType::INT64);
+    auto buildSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(buildSideSchema, bm->getBufferSize());
+
+    auto probSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    probSideSchema->addField("key", BasicType::INT64);
+    probSideSchema->addField("valueRight", BasicType::INT64);
+    auto probeSideMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(probSideSchema, bm->getBufferSize());
+
+    auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    resultSchema->addField("key", BasicType::INT64);
+    resultSchema->addField("leftValue", BasicType::INT64);
+    resultSchema->addField("rightValue", BasicType::INT64);
+    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan buildSideScan = Scan(buildSideMemoryLayout);
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 8, 1000);
+    std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = factory.createPtr();
+    auto joinBuild = std::make_shared<JoinBuild>(sharedHashMap, joinBuildKeys, joinBuildValues);
+    buildSideScan.setChild(joinBuild);
+    auto buildPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    buildPipeline->setRootOperator(&buildSideScan);
+    auto buildSidePipeline = executionEngine->compile(buildPipeline);
+
+    Scan probSideScan = Scan(probeSideMemoryLayout);
+    std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+    std::vector<IR::Types::StampPtr> valueStamps = {IR::Types::StampFactory::createInt64Stamp()};
+    std::vector<ExpressionPtr> joinProbeKeys = {std::make_shared<ReadFieldExpression>(0)};
+    std::vector<ExpressionPtr> joinProbeValues = {std::make_shared<ReadFieldExpression>(1)};
+    auto joinProb = std::make_shared<JoinProbe>(sharedHashMap, joinProbeKeys, joinProbeValues, keyStamps, valueStamps);
+    probSideScan.setChild(joinProb);
+    auto emit = std::make_shared<Emit>(resultMemoryLayout);
+    joinProb->setChild(emit);
+    auto probePipeline = std::make_shared<PhysicalOperatorPipeline>();
+    probePipeline->setRootOperator(&probSideScan);
+    auto executablePropePipeline = executionEngine->compile(probePipeline);
+
+    auto collectPipelines = std::make_shared<CollectPipeline>();
+    executablePropePipeline->getExecutionContext()->addSuccessorPipeline(collectPipelines);
+
+    auto buildSideBuffer = bm->getBufferBlocking();
+    auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
+    for (auto i = 0; i < 10; i++) {
+        buildSideDynBuffer[i]["key"].write((int64_t) i);
+        buildSideDynBuffer[i]["valueLeft"].write((int64_t) 666);
+    }
+    buildSideDynBuffer.setNumberOfTuples(10);
+
+    auto probeSideBuffer = bm->getBufferBlocking();
+    auto probeSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(probeSideMemoryLayout, probeSideBuffer);
+    for (auto i = 0; i < 10; i++) {
+        probeSideDynBuffer[i]["key"].write((int64_t) i % 5);
+        probeSideDynBuffer[i]["valueRight"].write((int64_t) 42);
+    }
+    probeSideDynBuffer.setNumberOfTuples(10);
+
+    buildSidePipeline->setup();
+    buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
+
+    auto currentSize = sharedHashMap->numberOfEntries();
+    ASSERT_EQ(currentSize, (int64_t) 10);
+
+    executablePropePipeline->setup();
+    executablePropePipeline->execute(*runtimeWorkerContext, probeSideBuffer);
+
     ASSERT_EQ(collectPipelines->receivedBuffers.size(), 1);
-    ASSERT_EQ(collectPipelines->receivedBuffers[0].getNumberOfTuples(), 10);
+    auto resultBuffer = collectPipelines->receivedBuffers[0];
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    auto resultDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultMemoryLayout, resultBuffer);
+    ASSERT_EQ(resultDynBuffer[0][0].read<int64_t>(), 0);
+    ASSERT_EQ(resultDynBuffer[0][1].read<int64_t>(), 666);
+    ASSERT_EQ(resultDynBuffer[0][2].read<int64_t>(), 42);
+    ASSERT_EQ(resultDynBuffer[1][0].read<int64_t>(), 1);
+    ASSERT_EQ(resultDynBuffer[1][1].read<int64_t>(), 666);
+    ASSERT_EQ(resultDynBuffer[1][2].read<int64_t>(), 42);
+    ASSERT_EQ(resultDynBuffer[6][0].read<int64_t>(), 1);
+    ASSERT_EQ(resultDynBuffer[6][1].read<int64_t>(), 666);
+    ASSERT_EQ(resultDynBuffer[6][2].read<int64_t>(), 42);
 }
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
-                        EmitOperatorTest,
+                        JoinOperatorTest,
                         ::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
-                        [](const testing::TestParamInfo<EmitOperatorTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<JoinOperatorTest::ParamType>& info) {
                             return info.param;
                         });
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

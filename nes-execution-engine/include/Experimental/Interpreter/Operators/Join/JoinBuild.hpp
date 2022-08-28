@@ -43,6 +43,7 @@ class JoinBuild : public ExecutableOperator {
     const std::vector<ExpressionPtr> valueExpressions;
     const std::vector<IR::Types::StampPtr> keyTypes;
     const std::vector<IR::Types::StampPtr> valueTypes;
+    mutable uint32_t tag;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
