@@ -40,13 +40,13 @@ void Emit::execute(RuntimeExecutionContext& ctx, Record& recordBuffer) const {
     resultBuffer.write(resultMemoryLayout, outputIndex, recordBuffer);
     emitState->outputIndex = outputIndex + 1ul;
     // emit buffer if it reached the maximal capacity
-    if (outputIndex >= maxRecordsPerBuffer) {
+   /* if (outputIndex >= maxRecordsPerBuffer) {
         resultBuffer.setNumRecords(emitState->outputIndex);
         ctx.getPipelineContext().emitBuffer(ctx.getWorkerContext(), resultBuffer);
         auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->outputIndex = 0ul;
-    }
+    }*/
 }
 
 void Emit::close(RuntimeExecutionContext& ctx, RecordBuffer&) const {

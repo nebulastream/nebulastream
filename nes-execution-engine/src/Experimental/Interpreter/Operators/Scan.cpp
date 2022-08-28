@@ -17,7 +17,8 @@
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) : memoryLayout(memoryLayout) {}
+Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<uint64_t> projections)
+    : memoryLayout(memoryLayout), projections(projections) {}
 
 void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
@@ -26,7 +27,7 @@ void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const 
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
     for (Value<UInt64> i = 0ul; i < numberOfRecords; i = i + 1ul) {
-        auto record = recordBuffer.read(memoryLayout, bufferAddress, i);
+        auto record = recordBuffer.read(memoryLayout, projections, bufferAddress, i);
         child->execute(ctx, record);
     }
 }
