@@ -27,18 +27,23 @@ class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 class RegistrationMetrics;
 
+class CoordinatorRPCClient;
+using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
+
 /**
 * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
 */
 class MonitoringAgent {
   public:
     MonitoringAgent();
-    explicit MonitoringAgent(bool enabled);
-    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+    explicit MonitoringAgent(bool enabled, CoordinatorRPCClientPtr coorRpcClient);
+    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
+                    CoordinatorRPCClientPtr coorRpcClient);
 
     static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(bool enabled);
-    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+    static MonitoringAgentPtr create(bool enabled, CoordinatorRPCClientPtr coorRpcClient);
+    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
+                                     CoordinatorRPCClientPtr coorRpcClient);
 
     /**
      * @brief Collect the metrics and store them in to the given output. The collected metrics depend on the monitoring plan.
@@ -94,6 +99,8 @@ class MonitoringAgent {
     TopologyNodeId nodeId;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
+    CoordinatorRPCClientPtr coordinatorRpcClient;
+
     bool enabled;
 };
 

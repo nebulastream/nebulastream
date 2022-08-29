@@ -16,6 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesWorker.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -33,22 +34,24 @@
 namespace NES {
 using namespace Configurations;
 
-MonitoringAgent::MonitoringAgent() : MonitoringAgent(true) {}
+MonitoringAgent::MonitoringAgent() : enabled(true) {}
 
-MonitoringAgent::MonitoringAgent(bool enabled)
-    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
+MonitoringAgent::MonitoringAgent(bool enabled, CoordinatorRPCClientPtr coorRpcClient)
+    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled, coorRpcClient) {}
 
-MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
-    : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
+MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
+                                 CoordinatorRPCClientPtr coorRpcClient)
+    : monitoringPlan(monitoringPlan), catalog(catalog), coordinatorRpcClient(coorRpcClient), enabled(enabled) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
+MonitoringAgentPtr MonitoringAgent::create(bool enabled, CoordinatorRPCClientPtr coorRpcClient) { return std::make_shared<MonitoringAgent>(enabled, coorRpcClient); }
 
-MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled) {
-    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
+MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
+                                           CoordinatorRPCClientPtr coorRpcClient) {
+    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled, coorRpcClient);
 }
 
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
@@ -100,6 +103,7 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
 
 bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
     if (enabled) {
+        std::vector<PhysicalSourcePtr> physicalSourcePointerVector;
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             MonitoringSourceTypePtr sourceType;
             uint64_t sampleRate = monitoringPlan->getSampleRate(metricType);
@@ -113,16 +117,29 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
             }
             SchemaPtr defaultSchema = MetricUtils::defaultSchema(metricType);
             if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
-                // TODO: save in MonitoringManager that this node is using default Schema
                 std::string metricTypeString = NES::toString(metricType) + "_default";
-                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
-                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
+                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
                 workerConfig->physicalSources.add(source);
+                // TODO: überprüfen ob für den default Fall die Physical Sources schon registriert sind
             } else {
                 // TODO: check if LogicalSource with same config already exists, if not create a logicalSource with the config
 //              // TODO: gRPC Call zu MonitoringManager -> LogicalSourceCheck; returned 0 oder die NodeId eines Knoten, welches das Schema hat
-                // Problem: has to communicate each time new: so max. 4 Transmissions
+                // TODO: push physicalSource to vector
+//                std::string metricTypeString = NES::toString(metricType) + "_default";
+//                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
+//                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
+//                workerConfig->physicalSources.add(source);
                 NES_INFO("MonitoringAgent: Adding physical source to config: Custom!");
+            }
+        }
+        // TODO: register the phyiscalSources in MonitoringManager
+        // Alternative 1: coordinatorRpcClient neu erstellen
+        if (!(physicalSourcePointerVector.empty())){
+            auto successRegisterPhysicalSources = coordinatorRpcClient->registerPhysicalSources(physicalSourcePointerVector);
+            if (successRegisterPhysicalSources) {
+                NES_DEBUG("MonitoringAgent: addMonitoringStreams: Successfully registered " + std::to_string(physicalSourcePointerVector.size())
+                          + " physical streams")
             }
         }
         return true;
