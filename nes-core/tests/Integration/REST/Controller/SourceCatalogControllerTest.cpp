@@ -51,7 +51,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down SourceCatalogControllerTest test class."); }
 };
 
-TEST_F(SourceCatalogControllerTest, getAllLogicalSource) {
+TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -102,7 +102,7 @@ TEST_F(SourceCatalogControllerTest, getAllLogicalSource) {
     // expecting: Response: {[ "logical_source_name": "logical_source_schema" ]}
 }
 
-TEST_F(SourceCatalogControllerTest, getPhysicalSource) {
+TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -160,7 +160,7 @@ TEST_F(SourceCatalogControllerTest, getPhysicalSource) {
     EXPECT_TRUE(retStopWrk);
 }
 
-TEST_F(SourceCatalogControllerTest, getSchema) {
+TEST_F(SourceCatalogControllerTest, testGetSchema) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
