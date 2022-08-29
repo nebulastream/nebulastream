@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-
 #ifndef NES_NES_CORE_INCLUDE_REST_DTOS_MONITORINGCONTROLLERSTRINGRESPONSE_HPP_
 #define NES_NES_CORE_INCLUDE_REST_DTOS_MONITORINGCONTROLLERSTRINGRESPONSE_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 
-        /* Begin DTO code-generation */
+/* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
 
 namespace NES {
@@ -27,12 +26,12 @@ namespace NES {
 /**
  * Message Data-Transfer-Object containing information as string
  */
-class MonitoringControllerStringResponse: public oatpp::DTO {
+class MonitoringControllerStringResponse : public oatpp::DTO {
     DTO_INIT(MonitoringControllerStringResponse, DTO /* Extends */)
     DTO_FIELD_INFO(monitoringData) { info->description = "requested data from monitoring service"; }
     DTO_FIELD(String, monitoringData);
 };
-}
+}// namespace NES
 #include OATPP_CODEGEN_END(DTO)
 
 #endif//NES_NES_CORE_INCLUDE_REST_DTOS_MONITORINGCONTROLLERSTRINGRESPONSE_HPP_

@@ -25,6 +25,7 @@
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
+#include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -199,7 +200,11 @@ void RestServer::run() {
     router->addController(locationController);
 
     /* Create monitoring controller and add all of its endpoints to the router */
-    auto monitoringController = REST::Controller::MonitoringController::createShared(objectMapper,  monitoringService, bufferManager, errorHandler, "/monitoring");
+    auto monitoringController = REST::Controller::MonitoringController::createShared(objectMapper,
+                                                                                     monitoringService,
+                                                                                     bufferManager,
+                                                                                     errorHandler,
+                                                                                     "/monitoring");
     router->addController(monitoringController);
 
     /* Create HTTP connection handler with router */

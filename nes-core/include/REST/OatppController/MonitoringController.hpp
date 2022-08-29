@@ -15,33 +15,33 @@ limitations under the License.
 #ifndef NEBULASTREAM_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_MONITORINGCONTROLLER_HPP_
 #define NEBULASTREAM_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_MONITORINGCONTROLLER_HPP_
 
-#include <REST/DTOs/MonitoringControllerStringResponse.hpp>
-#include <REST/DTOs/MonitoringControllerBoolResponse.hpp>
-#include <oatpp/core/macro/codegen.hpp>
-#include <oatpp/core/macro/component.hpp>
-#include <oatpp/web/server/api/ApiController.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
+#include <REST/DTOs/MonitoringControllerBoolResponse.hpp>
+#include <REST/DTOs/MonitoringControllerStringResponse.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cpprest/json.h>
 #include <memory>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/core/parser/Caret.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
 #include <string>
 #include <vector>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <cpprest/json.h>
-#include <REST/Handlers/ErrorHandler.hpp>
-#include <oatpp/core/parser/Caret.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
-namespace Runtime{
+namespace Runtime {
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
-}
+}// namespace Runtime
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class ErrorHandler;
@@ -60,8 +60,13 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @param ErrorHandler
      * @param routerprefix - part of the path of the request
      */
-    MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper, MonitoringServicePtr mService, Runtime::BufferManagerPtr bManager, ErrorHandlerPtr eHandler, oatpp::String completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService), bufferManager(bManager), errorHandler(eHandler) {}
+    MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                         MonitoringServicePtr mService,
+                         Runtime::BufferManagerPtr bManager,
+                         ErrorHandlerPtr eHandler,
+                         oatpp::String completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService),
+          bufferManager(bManager), errorHandler(eHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -69,75 +74,92 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @param MonitoringServicePtr, BufferManagerPtr, ErrorHandlerPtr, routerPrefixAddition
      * @return MonitoringController
      */
-    static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper, MonitoringServicePtr mService, Runtime::BufferManagerPtr bManager, ErrorHandlerPtr errorHandler, std::string routerPrefixAddition) {
-        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX  + routerPrefixAddition;
+    static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                              MonitoringServicePtr mService,
+                                                              Runtime::BufferManagerPtr bManager,
+                                                              ErrorHandlerPtr errorHandler,
+                                                              std::string routerPrefixAddition) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<MonitoringController>(objectMapper, mService, bManager, errorHandler, completeRouterPrefix);
     }
 
     ENDPOINT("GET", "/start", getMonitoringControllerStart) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->startMonitoringStreams().to_string();
-        if (dto->monitoringData != "null"){
+        if (dto->monitoringData != "null") {
             return createDtoResponse(Status::CODE_200, dto);
         }
         return errorHandler->handleError(Status::CODE_404, "Starting monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerBoolResponse::createShared();
         dto->success = monitoringService->stopMonitoringStreams().as_bool();
-        if (dto->success == true){
+        if (dto->success == true) {
             return createDtoResponse(Status::CODE_200, dto);
         }
         return errorHandler->handleError(Status::CODE_404, "Stopping monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->getMonitoringStreams().to_string();
-        if (dto->monitoringData != "null"){
+        if (dto->monitoringData != "null") {
             return createDtoResponse(Status::CODE_200, dto);
         }
         return errorHandler->handleError(Status::CODE_404, "Getting streams of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
-        if (dto->monitoringData != "null"){
+        if (dto->monitoringData != "null") {
             return createDtoResponse(Status::CODE_200, dto);
         }
-        return errorHandler->handleError(Status::CODE_404, "Getting newest monitoring data from metric store of monitoring service was not successful.");
+        return errorHandler->handleError(
+            Status::CODE_404,
+            "Getting newest monitoring data from metric store of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerStringResponse::createShared();
         dto->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
-        if (dto->monitoringData != "null"){
+        if (dto->monitoringData != "null") {
             return createDtoResponse(Status::CODE_200, dto);
         }
         return errorHandler->handleError(Status::CODE_404, "Getting monitoring data from all nodes was not successful.");
     }
-    
-    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode,
-             QUERY(UInt64, nodeId, "nodeId")) {
-        if (!monitoringService->isMonitoringEnabled()){
-            return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+
+    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode, QUERY(UInt64, nodeId, "nodeId")) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(
+                Status::CODE_404,
+                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
         }
         auto dto = MonitoringControllerStringResponse::createShared();
         try {
