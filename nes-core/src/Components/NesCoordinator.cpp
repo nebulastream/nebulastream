@@ -179,6 +179,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorConfiguration->worker.coordinatorIp = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
     coordinatorConfiguration->worker.localWorkerIp = rpcIp;
+    // Ensure that coordinator and internal worker enable/disable monitoring together.
+    coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());
