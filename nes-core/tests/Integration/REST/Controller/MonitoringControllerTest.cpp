@@ -2,7 +2,9 @@
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     https://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -10,25 +12,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <API/Query.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <REST/ServerTypes.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <cpr/cpr.h>
-#include <gtest/gtest.h>
-#include <memory>
-#include <API/Query.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/MonitoringManager.hpp>
-#include <Services/MonitoringService.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
-#include <cpprest/json.h>
-#include <Util/MetricValidator.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Services/MonitoringService.hpp>
+#include <Services/QueryParsingService.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
+#include <Util/TestUtils.hpp>
+#include <cpprest/json.h>
+#include <cpr/cpr.h>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <memory>
 
 using std::cout;
@@ -54,7 +55,6 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down MonitoringControllerTest test class."); }
 };
 
-
 TEST_F(MonitoringControllerTest, testStartMonitoring) {
     NES_INFO("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -65,13 +65,12 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
     // oatpp GET start call
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
     //TODO:: compare content of response to expected values. To be added once json library found #2950
 }
@@ -85,12 +84,11 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 404);
 }
 
@@ -104,12 +102,11 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
     EXPECT_EQ(r.status_code, 200);
     //TODO: also check if content of r contains valid information (right fields and valid queryIds) --> Need of json parser
 }
@@ -124,13 +121,12 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
-    cpr::Parameters{{"nodeId", std::to_string(1)}});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
+                               cpr::Parameters{{"nodeId", std::to_string(1)}});
     EXPECT_EQ(r.status_code, 200);
     // TODO: also check if content of r contains valid information (right fields and valid queryIds) --> Need of json parser
 }
@@ -145,12 +141,11 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
     EXPECT_EQ(r.status_code, 200);
     //TODO: compare content of response to expected values. To be added once json library found #2950
 }
@@ -165,14 +160,13 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("MonitoringControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(),5);
-    if(!success){
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
         FAIL() << "Rest server failed to start";
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->startMonitoringStreams();
-    cpr::Response r =
-        cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
     EXPECT_EQ(r.status_code, 200);
     //TODO: compare content of response to expected values. To be added once json library found #2950
 }
