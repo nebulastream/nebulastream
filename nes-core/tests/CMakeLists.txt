@@ -127,6 +127,9 @@ add_nes_integration_test(topology-controller-integration-tests "Integration/REST
 ### NES Udf Catalog Controller Test ###
 add_nes_integration_test(udf-catalog-controller-tests "Integration/REST/Controller/UdfCatalogControllerTest.cpp")
 
+### NES Query Controller Test ###
+add_nes_integration_test(query-controller-integration-tests "Integration/REST/Controller/QueryControllerTest.cpp")
+
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
 
