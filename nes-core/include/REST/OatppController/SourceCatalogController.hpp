@@ -87,8 +87,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("GET",  "allPhysicalSource/{logicalSourceName}", getPhysicalSource,
-             PATH(String, logicalSourceName)) {
+    ENDPOINT("GET",  "/allPhysicalSource",getPhysicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         auto dto = SourceCatalogStringResponse::createShared();
         if (logicalSourceName == "") {
             NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the GET allPhysicalSource request");
