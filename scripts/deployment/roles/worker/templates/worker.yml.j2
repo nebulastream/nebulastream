@@ -1,0 +1,25 @@
+###
+### General configuration
+###
+logLevel: LOG_ERROR
+#logLevel: LOG_WARNING
+#logLevel: LOG_DEBUG
+
+###
+### Network configuration
+###
+localWorkerIp: 172.31.0.3
+coordinatorIp: coordinator
+
+###
+### Physical source configuration
+###
+physicalSources:
+        - logicalSourceName: wind_turbines
+          physicalSourceName: wind_turbine_1
+          type: CSVSource
+          configuration:
+                  filePath: /tmp/wind-turbine-1.csv
+                  numberOfBuffersToProduce: 1024
+                  numberOfTuplesToProducePerBuffer: 0
+                  skipHeader: true

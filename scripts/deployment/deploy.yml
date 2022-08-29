@@ -1,5 +1,5 @@
 ---
-# This Playbook would deploy the whole mongodb cluster with replication and sharding.
+# This Playbook deploys a NES cluster
 
 - hosts: workers
   roles:
