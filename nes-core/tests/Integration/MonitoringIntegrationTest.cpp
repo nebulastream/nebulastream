@@ -84,7 +84,6 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableMonitoring(),
-                                                    TestUtils::enableMonitoring(true),
                                                     TestUtils::enableDebug()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
