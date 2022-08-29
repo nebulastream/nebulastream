@@ -38,6 +38,7 @@
     add_subdirectory(TPC-H)
     add_subdirectory(Streaming)
     add_subdirectory(Operators)
+    add_subdirectory(UDFs)
 
 
 
