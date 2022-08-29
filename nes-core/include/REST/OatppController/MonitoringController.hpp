@@ -26,6 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cpprest/json.h>
 #include <memory>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
