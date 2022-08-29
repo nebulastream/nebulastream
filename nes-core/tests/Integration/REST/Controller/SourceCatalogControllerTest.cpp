@@ -160,7 +160,7 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     EXPECT_TRUE(retStopWrk);
 }
 
-TEST_F(SourceCatalogControllerTest, testGetSchema) {
+TEST_F(SourceCatalogControllerTest, DISABLED_testGetSchema) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
