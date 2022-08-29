@@ -20,10 +20,10 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class UDFCallExpression : public Expression {
   private:
-    ExpressionPtr argument;
+    std::vector<ExpressionPtr> arguments;
 
   public:
-    UDFCallExpression(ExpressionPtr argument);
+    UDFCallExpression(std::vector<ExpressionPtr> argument, std::string javaClass, std::string javaFunction, std::string signature);
     Value<> execute(Record& record) override;
 };
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
