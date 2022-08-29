@@ -144,9 +144,6 @@ jobs:
           - osversion: ubuntu-20_04
             require_build: "true"
             require_test: "true"
-          - osversion: ubuntu-21_10
-            require_build: "true"
-            require_test: "true"
           - osversion: ubuntu-22_04
             require_build: "true"
             require_test: "true"

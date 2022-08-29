@@ -62,12 +62,12 @@ jobs:
       fail-fast: false
       matrix:
         arch: [X64, arm64]
-        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-21_10, ubuntu-22_04]
+        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-22_04]
         exclude:
           - arch: arm64
             osversion: ubuntu-18_04
           - arch: arm64
-            osversion: ubuntu-21_10
+            osversion: ubuntu-20_04
           - arch: arm64
             osversion: ubuntu-22_04
     steps:
