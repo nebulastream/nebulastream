@@ -133,8 +133,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         return errorHandler->handleError(Status::CODE_404, "Getting monitoring data from all nodes was not successful.");
     }
-    // ToDo: Find out if /metrics/ or /metrics
-    ENDPOINT("GET", "/metrics/", getMonitoringControllerDataFromOneNode,
+    
+    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode,
              QUERY(UInt64, nodeId, "nodeId")) {
         if (!monitoringService->isMonitoringEnabled()){
             return errorHandler->handleError(Status::CODE_404, "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
