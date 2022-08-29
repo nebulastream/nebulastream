@@ -1,10 +1,18 @@
 ---
 # This Playbook deploys a NES cluster
 
+- hosts: coordinator
+  roles:
+    - role: coordinator
+
 - hosts: workers
   roles:
     - role: worker
 
 - hosts: coordinator
-  roles:
-    - role: coordinator
+  tasks:
+    - include_tasks: roles/coordinator/tasks/start.yml
+
+- hosts: workers
+  tasks:
+    - include_tasks: roles/worker/tasks/start.yml
