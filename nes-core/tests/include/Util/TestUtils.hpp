@@ -89,11 +89,7 @@ template<typename T>
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
 }
-/* add only if needed in Monitoring Controller Test
-[[nodiscard]] std::string restServerType(std::string restServerType) {
-    return "--" + SERVER_TYPE + "=" + restServerType;
-}
-*/
+
 [[nodiscard]] std::string parentId(uint64_t parentId) { return "--" + PARENT_ID_CONFIG + "=" + std::to_string(parentId); }
 
 [[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort, bool prefix = false) {
