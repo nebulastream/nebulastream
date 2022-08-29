@@ -106,7 +106,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             dto->entry = executionPlanJson;
             return createDtoResponse(Status::CODE_200, dto);
         } catch (QueryNotFoundException e ) {
-            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");

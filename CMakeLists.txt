@@ -393,6 +393,9 @@ if (cpr_FOUND)
     message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
 endif ()
 
+find_package(nlohmann_json REQUIRED)
+set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
+
 # Eigen3 linear alg library
 find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
