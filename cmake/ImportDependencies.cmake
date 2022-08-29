@@ -83,11 +83,11 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
     message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
 
-    # for x68 linux we currently offer prebuild dependencies for ubuntu 18.04, 20.04, 21.10, 22.04
+    # for x68 linux we currently offer prebuild dependencies for ubuntu 18.04, 20.04, 22.04
     if (${VCPKG_TARGET_TRIPLET} STREQUAL "x64-linux-nes")
         get_linux_lsb_release_information()
         message(STATUS "Linux ${LSB_RELEASE_ID_SHORT} ${LSB_RELEASE_VERSION_SHORT} ${LSB_RELEASE_CODENAME_SHORT}")
-        set(NES_SUPPORTED_UBUNTU_VERSIONS 18.04 20.04 21.10 22.04)
+        set(NES_SUPPORTED_UBUNTU_VERSIONS 18.04 20.04 22.04)
         if ((NOT${LSB_RELEASE_ID_SHORT} STREQUAL "Ubuntu") OR (NOT ${LSB_RELEASE_VERSION_SHORT} IN_LIST NES_SUPPORTED_UBUNTU_VERSIONS))
             message(FATAL_ERROR "Currently we only provide pre-build dependencies for Ubuntu: ${NES_SUPPORTED_UBUNTU_VERSIONS}. If you use a different linux please build dependencies locally with -DNES_BUILD_DEPENDENCIES_LOCAL=1")
         endif ()
