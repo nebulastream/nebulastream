@@ -14,6 +14,7 @@
 - name: Kill process
   when: stat_result.stat.exists
   shell: "kill -9 {{ cat_result.stdout }}"
+  ignore_errors: true
 
 - name: Wait for process to completely die
   when: stat_result.stat.exists

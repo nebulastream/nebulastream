@@ -1,15 +1,14 @@
 ###
 ### General configuration
 ###
-logLevel: LOG_ERROR
-#logLevel: LOG_WARNING
-#logLevel: LOG_DEBUG
+logLevel: {{ log_level }}
 
 ###
 ### Network configuration
 ###
-localWorkerIp: 172.31.0.3
-coordinatorIp: coordinator
+localWorkerIp: {{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+coordinatorIp: {{ default_coordinator_ip }}
+coordinatorPort: {{ default_coordinator_ports[0] }}
 
 ###
 ### Physical source configuration

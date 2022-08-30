@@ -4,20 +4,35 @@
 # This should be the suffix of your CLion mappings
 cmake_build_dir: nebulastream/cmake-build-fat-1-debug/nes-core
 
+# The default log level
+log_level: LOG_DEBUG
+
 # The worker root dir to use for deployments
 worker_root_dir: /local-ssd
-
-# The coordinator root dir to use for deployments
-coord_root_dir: /data-ssd
 
 # Worker binary name
 worker_bin_name: nesWorker
 
-# Coordinator binary name
-coord_bin_name: nesCoordinator
-
 # Worker conf file
 worker_conf_name: worker.yaml
 
+# Worker default ports
+default_worker_ports:
+    - 3000
+    - 3001
+
+# The coordinator root dir to use for deployments
+coord_root_dir: /data-ssd
+
+# Coordinator binary name
+coord_bin_name: nesCoordinator
+
 # Coordinator conf file
 coord_conf_file: coordinator.yaml
+
+# Coordinator default IP
+default_coordinator_ip: 192.168.6.181
+
+# Coordinator default port, this can be a list later
+default_coordinator_ports:
+    - 4000

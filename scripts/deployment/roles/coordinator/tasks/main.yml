@@ -6,3 +6,8 @@
   file:
     path: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
     state: directory
+
+- name: Copy and populate configuration template
+  template:
+    src: coordinator.yaml.j2
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml"

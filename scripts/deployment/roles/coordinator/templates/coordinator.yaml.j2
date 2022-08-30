@@ -1,16 +1,16 @@
 ###
 ### General configuration
 ###
-logLevel: LOG_ERROR
+logLevel: {{ log_level }}
 optimizer:
   distributedWindowChildThreshold: 3
 
 ###
 ### Network configuration
 ###
-restIp: 172.31.0.2
-coordinatorIp: 172.31.0.2
-restPort: 8081
+restIp: {{ default_coordinator_ip }}
+coordinatorIp: {{ default_coordinator_ip }}
+restPort: {{ default_coordinator_ports[0] }}
 
 ###
 ### Logical source configuration
