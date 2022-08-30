@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.2.85](https://github.com/nebulastream/nebulastream/tree/v0.2.85) (2022-08-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.84...v0.2.85)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Ubuntu 21.10 is no longer supported [\#2962](https://github.com/nebulastream/nebulastream/issues/2962)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] change latency measurement to ns instead of ms [\#2895](https://github.com/nebulastream/nebulastream/issues/2895)
+- Create design document to incorporate micro controllers into NES [\#2285](https://github.com/nebulastream/nebulastream/issues/2285)
+
+## [v0.2.84](https://github.com/nebulastream/nebulastream/tree/v0.2.84) (2022-08-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.83...v0.2.84)
+
 ## [v0.2.83](https://github.com/nebulastream/nebulastream/tree/v0.2.83) (2022-08-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.82...v0.2.83)
