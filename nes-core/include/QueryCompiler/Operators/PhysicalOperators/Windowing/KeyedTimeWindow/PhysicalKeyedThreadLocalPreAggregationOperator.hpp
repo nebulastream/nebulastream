@@ -47,7 +47,6 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
 
   private:
     Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler;
-    SchemaPtr inputSchema;
 };
 
 }// namespace PhysicalOperators
