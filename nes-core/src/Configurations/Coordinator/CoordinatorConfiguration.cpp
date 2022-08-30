@@ -13,8 +13,8 @@
 */
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <string>
 #include <map>
+#include <string>
 #include <utility>
 
 namespace NES {
@@ -64,6 +64,5 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
 }
 
 }// namespace Configurations
-
 
 }// namespace NES

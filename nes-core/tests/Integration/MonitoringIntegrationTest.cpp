@@ -176,8 +176,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
                                                     TestUtils::bufferSizeInBytes(32768, true),
                                                     TestUtils::numberOfSlots(50, true),
                                                     TestUtils::numLocalBuffers(localBuffers, true),
-                                                    TestUtils::numGlobalBuffers(globalBuffers, true)
-    });
+                                                    TestUtils::numGlobalBuffers(globalBuffers, true)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),

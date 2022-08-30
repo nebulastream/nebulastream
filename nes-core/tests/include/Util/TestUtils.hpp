@@ -78,7 +78,8 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
  * @param prefix If true, prefix the name of the option with "worker." to configure the internal worker of the coordinator.
 * @return A string representing the command line parameter.
  */
-template <typename T> [[nodiscard]] std::string configOption(const std::string& name, T value, bool prefix = false) {
+template<typename T>
+[[nodiscard]] std::string configOption(const std::string& name, T value, bool prefix = false) {
     return configOption(name, std::to_string(value), prefix);
 }
 
@@ -86,13 +87,9 @@ template <typename T> [[nodiscard]] std::string configOption(const std::string& 
     return configOption(BUFFERS_SIZE_IN_BYTES_CONFIG, size, prefix);
 }
 
-[[nodiscard]] std::string configPath(const std::string& filename) {
-    return "--" + CONFIG_PATH + "=" + filename;
-}
+[[nodiscard]] std::string configPath(const std::string& filename) { return "--" + CONFIG_PATH + "=" + filename; }
 
-[[nodiscard]] std::string workerConfigPath(const std::string& filename) {
-    return "--" + WORKER_CONFIG_PATH + "=" + filename;
-}
+[[nodiscard]] std::string workerConfigPath(const std::string& filename) { return "--" + WORKER_CONFIG_PATH + "=" + filename; }
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
@@ -157,9 +154,7 @@ template <typename T> [[nodiscard]] std::string configOption(const std::string& 
     return "--healthCheckWaitTime=" + std::to_string(coordinatorWaitTime);
 }
 
-[[nodiscard]] std::string enableMonitoring(bool prefix = false) {
-    return configOption(ENABLE_MONITORING_CONFIG, true, prefix);
-}
+[[nodiscard]] std::string enableMonitoring(bool prefix = false) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
 
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
