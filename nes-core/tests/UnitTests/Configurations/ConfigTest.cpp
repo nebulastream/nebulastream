@@ -23,8 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <string>
 #include <iostream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -43,7 +43,9 @@ class ConfigTest : public Testing::NESBaseTest {
         static const char* empty = "";
         std::vector<const char*> argv(args.size() + 1);
         argv[0] = empty;
-        std::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg){return arg.c_str();});
+        std::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg) {
+            return arg.c_str();
+        });
         return argv;
     }
 
@@ -71,7 +73,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(),
+              coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
               coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
@@ -79,8 +82,10 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
               coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(),
+              coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
+              coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
@@ -111,12 +116,10 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
     // given
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    auto commandLineParams = makeCommandLineArgs({
-        "--restIp=localhost",
-        "--worker.numberOfSlots=10",
-        "--worker.numberOfBuffersInSourceLocalBufferPool=128",
-        "--worker.bufferSizeInBytes=1024"
-    });
+    auto commandLineParams = makeCommandLineArgs({"--restIp=localhost",
+                                                  "--worker.numberOfSlots=10",
+                                                  "--worker.numberOfBuffersInSourceLocalBufferPool=128",
+                                                  "--worker.bufferSizeInBytes=1024"});
     // when
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     // then
@@ -125,7 +128,8 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(),
+              coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
               coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
@@ -133,8 +137,10 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
               coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
               coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(),
+              coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
+              coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
 
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
@@ -196,21 +202,21 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
     // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    auto commandLineParams = makeCommandLineArgs({
-        "--localWorkerIp=localhost",
-        "--coordinatorPort=5000",
-        "--numWorkerThreads=5",
-        "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-        "--physicalSources.type=DefaultSource",
-        "--physicalSources.numberOfBuffersToProduce=5",
-        "--physicalSources.rowLayout=false",
-        "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default",
-        "--fieldNodeLocationCoordinates=23.88,-3.4"});
+    auto commandLineParams =
+        makeCommandLineArgs({"--localWorkerIp=localhost",
+                             "--coordinatorPort=5000",
+                             "--numWorkerThreads=5",
+                             "--numberOfBuffersInGlobalBufferManager=2048",
+                             "--numberOfBuffersInSourceLocalBufferPool=128",
+                             "--queryCompiler.compilationStrategy=FAST",
+                             "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+                             "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                             "--physicalSources.type=DefaultSource",
+                             "--physicalSources.numberOfBuffersToProduce=5",
+                             "--physicalSources.rowLayout=false",
+                             "--physicalSources.physicalSourceName=x",
+                             "--physicalSources.logicalSourceName=default",
+                             "--fieldNodeLocationCoordinates=23.88,-3.4"});
     // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     // then
@@ -240,20 +246,20 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
     // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    auto commandLineParams = makeCommandLineArgs({
-        "--localWorkerIp=localhost",
-        "--coordinatorPort=5000",
-        "--numWorkerThreads=5",
-        "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-        "--physicalSources.type=CSVSource",
-        "--physicalSources.filePath=fileLoc",
-        "--physicalSources.rowLayout=false",
-        "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default"});
+    auto commandLineParams =
+        makeCommandLineArgs({"--localWorkerIp=localhost",
+                             "--coordinatorPort=5000",
+                             "--numWorkerThreads=5",
+                             "--numberOfBuffersInGlobalBufferManager=2048",
+                             "--numberOfBuffersInSourceLocalBufferPool=128",
+                             "--queryCompiler.compilationStrategy=FAST",
+                             "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+                             "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                             "--physicalSources.type=CSVSource",
+                             "--physicalSources.filePath=fileLoc",
+                             "--physicalSources.rowLayout=false",
+                             "--physicalSources.physicalSourceName=x",
+                             "--physicalSources.logicalSourceName=default"});
     // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     // then
@@ -281,12 +287,11 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
-    auto commandLineParams = makeCommandLineArgs({
-        "type=DefaultSource",
-        "numberOfBuffersToProduce=5",
-        "rowLayout=false",
-        "physicalSourceName=x",
-        "logicalSourceName=default"});
+    auto commandLineParams = makeCommandLineArgs({"type=DefaultSource",
+                                                  "numberOfBuffersToProduce=5",
+                                                  "rowLayout=false",
+                                                  "physicalSourceName=x",
+                                                  "logicalSourceName=default"});
 
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
@@ -298,14 +303,13 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               physicalSourceType1->getSourceGatheringInterval()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
-    auto commandLineParams1 = makeCommandLineArgs({
-        "type=KafkaSource",
-        "physicalSourceName=x",
-        "logicalSourceName=default",
-        "topic=newTopic",
-        "connectionTimeout=100",
-        "brokers=testBroker",
-        "groupId=testId"});
+    auto commandLineParams1 = makeCommandLineArgs({"type=KafkaSource",
+                                                   "physicalSourceName=x",
+                                                   "logicalSourceName=default",
+                                                   "topic=newTopic",
+                                                   "connectionTimeout=100",
+                                                   "brokers=testBroker",
+                                                   "groupId=testId"});
 
     PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
@@ -323,12 +327,11 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({
-        "type=DefaultSource",
-        "numberOfBuffersToProduce=5",
-        "rowLayout=false",
-        "physicalSourceName=x",
-        "logicalSourceName=default"});
+    auto commandLineParams = makeCommandLineArgs({"type=DefaultSource",
+                                                  "numberOfBuffersToProduce=5",
+                                                  "rowLayout=false",
+                                                  "physicalSourceName=x",
+                                                  "logicalSourceName=default"});
     // when
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
@@ -339,13 +342,12 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({
-        "type=CSVSource",
-        "numberOfBuffersToProduce=5",
-        "rowLayout=false",
-        "physicalSourceName=x",
-        "logicalSourceName=default",
-        "filePath=fileLoc"});
+    auto commandLineParams = makeCommandLineArgs({"type=CSVSource",
+                                                  "numberOfBuffersToProduce=5",
+                                                  "rowLayout=false",
+                                                  "physicalSourceName=x",
+                                                  "logicalSourceName=default",
+                                                  "filePath=fileLoc"});
     // when
     PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
@@ -356,14 +358,13 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({
-        "type=CSVSource",
-        "numberOfBuffersToProduce=5",
-        "rowLayout=false",
-        "physicalSourceName=x",
-        "logicalSourceName=default",
-        "filePath=fileLoc",
-        "sourceGatheringMode=adaptive"});
+    auto commandLineParams = makeCommandLineArgs({"type=CSVSource",
+                                                  "numberOfBuffersToProduce=5",
+                                                  "rowLayout=false",
+                                                  "physicalSourceName=x",
+                                                  "logicalSourceName=default",
+                                                  "filePath=fileLoc",
+                                                  "sourceGatheringMode=adaptive"});
     // when
     PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
@@ -388,8 +389,7 @@ TEST_F(ConfigTest, parseWorkerOptionInCoordinatorConfigFile) {
     // given: Set up the coordinator configuration file with the worker option numWorkerThreads.
     auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
     std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl
-                          << "  " << NUM_WORKER_THREADS_CONFIG << ": 99" << std::endl;
+    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl << "  " << NUM_WORKER_THREADS_CONFIG << ": 99" << std::endl;
     coordinatorConfigFile.close();
     // given: Specify the coordinator configuration file on the command line.
     std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
@@ -412,11 +412,10 @@ TEST_F(ConfigTest, parseWorkerOptionInWorkerConfigFileSpecifiedInCoordinatorConf
     // given: Set up the coordinator configuration file.
     auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
     std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile
-        << WORKER_CONFIG << ":" << std::endl
-        << "  " << NUM_WORKER_THREADS_CONFIG << ": 15" << std::endl
-        << "  " << NUMBER_OF_SLOTS_CONFIG << ": 25" << std::endl
-        << WORKER_CONFIG_PATH << ": " << workerConfigPath << std::endl;
+    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl
+                          << "  " << NUM_WORKER_THREADS_CONFIG << ": 15" << std::endl
+                          << "  " << NUMBER_OF_SLOTS_CONFIG << ": 25" << std::endl
+                          << WORKER_CONFIG_PATH << ": " << workerConfigPath << std::endl;
     coordinatorConfigFile.close();
     // given: Specify the coordinator configuration file on the command line.
     std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
@@ -442,15 +441,12 @@ TEST_F(ConfigTest, parserWorkerOptionInWorkerConfigFileSpecifiedOnCommmandLine) 
     // Given: Set up the second worker configuration file.
     auto workerConfigPath2 = getTestResourceFolder() / "worker-2.yml";
     std::ofstream workerConfigFile2(workerConfigPath2);
-    workerConfigFile2
-        << NUM_WORKER_THREADS_CONFIG << ": 50" << std::endl
-        << NUMBER_OF_SLOTS_CONFIG << ": 83" << endl;
+    workerConfigFile2 << NUM_WORKER_THREADS_CONFIG << ": 50" << std::endl << NUMBER_OF_SLOTS_CONFIG << ": 83" << endl;
     workerConfigFile2.close();
     // Given: Set up a coordinator configuration file that references the second worker file.
     auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
     std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile
-        << WORKER_CONFIG_PATH << ": " << workerConfigPath2 << std::endl;
+    coordinatorConfigFile << WORKER_CONFIG_PATH << ": " << workerConfigPath2 << std::endl;
     coordinatorConfigFile.close();
     // given: Specify the first worker configuration file on the command line.
     std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath),
@@ -469,13 +465,10 @@ TEST_F(ConfigTest, parseWorkerOptionOnCommandline) {
     // Given: Set up the worker configuration file.
     auto workerConfigPath = getTestResourceFolder() / "worker.yml";
     std::ofstream workerConfigFile(workerConfigPath);
-    workerConfigFile
-        << NUM_WORKER_THREADS_CONFIG << ": 59" << std::endl
-        << NUMBER_OF_SLOTS_CONFIG << ": 28" << endl;
+    workerConfigFile << NUM_WORKER_THREADS_CONFIG << ": 59" << std::endl << NUMBER_OF_SLOTS_CONFIG << ": 28" << endl;
     workerConfigFile.close();
     // Given: Set up coordinator command line
-    std::vector<std::string> args = {"--worker.numWorkerThreads=68",
-                                     TestUtils::workerConfigPath(workerConfigPath)};
+    std::vector<std::string> args = {"--worker.numWorkerThreads=68", TestUtils::workerConfigPath(workerConfigPath)};
     auto posixArgs = makePosixArgs(args);
     // then: The value set on the command line takes precedence.
     auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());

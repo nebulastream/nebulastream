@@ -12,18 +12,16 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <NesBaseTest.hpp>
 
 namespace NES {
 
 class NesCoordinatorTest : public Testing::NESBaseTest {
   public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("CoordinatorTest.log", NES::LogLevel::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::Logger::setupLogging("CoordinatorTest.log", NES::LogLevel::LOG_DEBUG); }
 
     void SetUp() override { Testing::NESBaseTest::SetUp(); }
 };
@@ -56,7 +54,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     configuration->coordinatorIp = coordinatorIp;
     configuration->enableMonitoring = true;
     // given: Configure the worker with nonsensical IP and port, and disable monitoring
-    configuration->worker.coordinatorPort = 111; // This port won't be assigned by the line above because it is below 1024.
+    configuration->worker.coordinatorPort = 111;// This port won't be assigned by the line above because it is below 1024.
     configuration->worker.coordinatorIp = "127.0.0.2";
     configuration->worker.localWorkerIp = "127.0.0.3";
     configuration->worker.enableMonitoring = false;
@@ -75,4 +73,4 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 
-}
+}// namespace NES

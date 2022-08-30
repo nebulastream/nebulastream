@@ -74,8 +74,7 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
-      rpcPort(this->coordinatorConfiguration->rpcPort),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
