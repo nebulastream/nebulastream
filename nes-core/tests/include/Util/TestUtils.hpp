@@ -171,7 +171,9 @@ template<typename T>
     return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
 }
 
-[[nodiscard]] std::string enableThreadLocalWindowing() { return "--queryCompiler.windowingStrategy=THREAD_LOCAL"; }
+[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false) {
+    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"THREAD_LOCAL"}, prefix);
+}
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
