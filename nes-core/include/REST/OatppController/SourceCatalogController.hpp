@@ -87,7 +87,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("GET",  "/allPhysicalSource",getPhysicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
+    ENDPOINT("GET",  "/allPhysicalSource", getPhysicalSource,
+             QUERY(String, logicalSourceName, "logicalSourceName")) {
         auto dto = SourceCatalogStringResponse::createShared();
         if (logicalSourceName == "") {
             NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the GET allPhysicalSource request");
@@ -115,8 +116,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("GET",  "schema/{logicalSourceName}", getSchema,
-             PATH(String, logicalSourceName)) {
+    ENDPOINT("GET",  "/schema", getSchema,
+             QUERY(String, logicalSourceName, "logicalSourceName")) {
         auto dto = SourceCatalogStringResponse::createShared();
         if (logicalSourceName == "") {
             NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the GET allPhysicalSource request");
@@ -137,7 +138,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("POST", "addLogicalSource", addLogicalSource,
+        // TODO: DTO for body string!
+    ENDPOINT("POST", "/addLogicalSource", addLogicalSource,
              BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
@@ -169,8 +171,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         // TODO Do I need a wait() here?
     }
 
-
-    ENDPOINT("POST", "updateLogicalSource", updateLogicalSource,
+    // TODO: DTO for body string!
+    ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource,
              BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
@@ -202,8 +204,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("DELETE", "deleteLogicalSource", deleteLogicalSource,
-             PATH(String, logicalSourceName)) {
+    ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource,
+             QUERY(String, logicalSourceName, "logicalSourceName")) {
         if (logicalSourceName == "") {
             NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the delete request");
             return errorHandler->handleError(Status::CODE_400, "Bad Request: Parameter logicalSourceName must be provided");
