@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.86](https://github.com/nebulastream/nebulastream/tree/v0.2.86) (2022-08-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.85...v0.2.86)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add explicit worker configuration file for the coordinator [\#2948](https://github.com/nebulastream/nebulastream/issues/2948)
+
 ## [v0.2.85](https://github.com/nebulastream/nebulastream/tree/v0.2.85) (2022-08-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.84...v0.2.85)
