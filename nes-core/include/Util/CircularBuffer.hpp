@@ -212,6 +212,7 @@ class CircularBuffer {
      * @token to search for
      * @return number of places until first occurrence of token (place of token not included)
      */
+     //todo: move this to TCPSource
     uint64_t sizeUntilSearchToken(T token) {
         uint64_t places = 0;
         for(auto itr = end() - 1; itr != begin() - 1; --itr) {
@@ -230,6 +231,7 @@ class CircularBuffer {
      * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
      * @return true if number of values to pop successfully popped, false otherwise
      */
+     //todo: move this to TCPSource
     bool popGivenNumberOfValues(T* temp, uint64_t numberOfValuesToPop, bool popTextDivider) {
         if (size() >= numberOfValuesToPop) {
             for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
