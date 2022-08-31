@@ -23,6 +23,8 @@
 
 namespace NES {
 
+
+
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
@@ -95,14 +97,10 @@ std::string SinkMedium::getAppendAsString() const {
     return "OVERWRITE";
 }
 
-bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
-    NES_ASSERT(queryId >= 0, "SinkMedium: no queryId found for querySubPlanId");
-    if (auto listener = nodeEngine->getQueryStatusListener(); listener) {
-        bool success = listener->notifyEpochTermination(epochBarrier, queryId);
-        if (success) {
-            return true;
-        }
+bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) {
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
+    if (nodeEngine->getQueryManager()->propagateEpochBackwards(querySubPlanId, epochBarrier)) {
+        return true;
     }
     return false;
 }

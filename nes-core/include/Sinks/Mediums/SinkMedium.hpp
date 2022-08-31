@@ -21,6 +21,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/EpochMessage.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
 #include <iomanip>
@@ -45,7 +46,6 @@ enum SinkMediumTypes {
  * @note this code is not thread safe
  */
 class SinkMedium : public Runtime::Reconfigurable {
-
   public:
     /**
      * @brief public constructor for data sink
@@ -138,7 +138,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @param epochBarrier max epoch timestamp
      * @return success
      */
-    bool notifyEpochTermination(uint64_t epochBarrier) const;
+    bool notifyEpochTermination(uint64_t epochBarrier);
 
     /**
       * @brief method to return the type of medium

@@ -141,12 +141,12 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::PropagateEpoch: {
-            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+//            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
                                                                  << "punctuation= " << timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
+//            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
@@ -221,10 +221,30 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     auto qep = queryManager->getQueryExecutionPlan(querySubPlanId);
     qep->onEvent(event);
 
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+    NES_DEBUG("NetworkSink: received an event");
+    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+        if (success) {
+            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
+            success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent delete message");
+            }
+            else {
+                NES_ERROR("NetworkSink::onEvent:: could not send trimming message epoch " << epochBarrier << " queryId " << queryId);
+            }
+        }
+        else {
+            NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+        }
+    }
+    else if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
     }
 }
+
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG(
         "NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: " << this->uniqueNetworkSinkDescriptorId);

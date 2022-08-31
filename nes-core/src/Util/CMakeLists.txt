@@ -25,7 +25,8 @@ add_source_files(nes-core
         RequestType.cpp
         SharedQueryPlanStatus.cpp
         SpatialUtils.cpp
-        )
+        EpochMessage.cpp
+)
 if (NES_USE_MQTT)
     add_source_files(nes-core
             MQTTClientWrapper.cpp

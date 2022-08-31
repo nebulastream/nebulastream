@@ -54,6 +54,10 @@ std::optional<Runtime::TupleBuffer> NetworkSource::receiveData() {
 
 SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }
 
+NesPartition NetworkSource::getNesPartition() const {
+    return nesPartition;
+}
+
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
 // this is necessary to use std::visit below (see example: https://en.cppreference.com/w/cpp/utility/variant/visit)
@@ -136,19 +140,20 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
-void NetworkSource::onEvent(Runtime::BaseEvent& event) {
+void NetworkSource::onEvent(Runtime::BaseEvent&) {
     NES_DEBUG("NetworkSource: received an event");
-    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
-        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
-        auto epochBarrier = epochEvent->timestampValue();
-        auto queryId = epochEvent->queryIdValue();
-        auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
-        if (success) {
-            NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
-        } else {
-            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch " << epochBarrier << " queryId " << queryId);
-        }
-    }
+//    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+//        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+//        auto epochBarrier = epochEvent->timestampValue();
+//        auto queryId = epochEvent->queryIdValue();
+//        auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
+//        if (success) {
+//            NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
+//        }
+//        else {
+//            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch " << epochBarrier << " queryId " << queryId);
+//        }
+//    }
 }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
@@ -195,6 +200,15 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             isTermination = true;
+            break;
+        }
+        case Runtime::PropagateEpoch: {
+            auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            auto epochMessage = task.getUserData<EpochMessage>();
+            auto timestamp = epochMessage.getTimestamp();
+            NES_DEBUG("Executing PropagateEpoch punctuation= " << timestamp);
+            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
             break;
         }
         default: {
