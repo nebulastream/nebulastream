@@ -80,7 +80,27 @@ MonitoringManager::~MonitoringManager() {
     topology.reset();
 }
 
-bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
+bool MonitoringManager::registerMonitoringPlans(const uint64_t& nodeId, MonitoringPlanPtr monitoringPlan) {
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+        return false;
+    }
+    if (!monitoringPlan) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+        return false;
+    }
+    if (!nodeId) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+        return false;
+    }
+
+    NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered MonitoringPlan successfully.");
+    monitoringPlanMap[nodeId] = monitoringPlan;
+
+    return true;
+}
+
+bool MonitoringManager::setRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
     if (!enableMonitoring) {
         NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
         return false;
@@ -109,7 +129,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
                 NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
                 // TODO: register the MonitoringPlans and add LogicalStreamNames
                 std::list<std::string> emptyList;
-                monitoringPlanMap[nodeId] = std::make_pair(monitoringPlan, emptyList);
+                monitoringPlanMap[nodeId] = monitoringPlan;
             } else {
                 NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
                 return false;
@@ -181,9 +201,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
                                 + " failed. Node does not exist in topology.");
     } else {
-        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeId];
-
-        return tempPair.first;
+        return monitoringPlanMap[nodeId];
     }
 }
 
@@ -358,40 +376,6 @@ const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMo
     return deployedMonitoringQueries;
 }
 
-//std::string MonitoringManager::logicalSourceCheck(MetricType metric, SchemaPtr schema, uint64_t nodeId) {
-//    std::string schemaString = schema->toString();
-//    std::string logicalSourceName;
-//
-//    if (configuredLogicalSources[metric].count(schemaString) > 0) {
-//        uint64_t nodeIdTemp = configuredLogicalSources[metric][schemaString].front();
-//        std::pair<MonitoringPlanPtr, std::list<std::string>> tempPair = monitoringPlanMap[nodeIdTemp];
-//        for (auto logicalSource : tempPair.second) {
-//            if (logicalSource.starts_with(toString(metric))) {
-//                return logicalSource;
-//            }
-//        }
-//        // TODO: add the nodeId to all relevant catalogs
-//        // TODO: exception if Problems
-//    } else {
-//        // TODO: create a logicalSource with all given Parameters
-//        return logicalSourceName;
-//    }
-//
-//    return 0;
-//}
 
-//std::string MonitoringManager::registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId) {
-//    std::string logicalSourceName;
-//    if (enableMonitoring) {
-//        // auto generate the specifics
-//        std::string metricString = NES::toString(metric);
-//        // TODO: create the right name for the LogicalSoureName
-//        NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
-//        // TODO: add all the info to the right places
-////            config->logicalSources.add(LogicalSource::create(logicalSourceName, schema));
-//    }
-//    NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
-//    return logicalSourceName;
-//}
 
 }// namespace NES

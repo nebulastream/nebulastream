@@ -83,6 +83,37 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
     return Status::CANCELLED;
 }
 
+
+// TODO: weiter machen
+//Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
+//    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
+//
+//    bool success = monitoringManager->unregisterNode(request->id());
+//    if (success) {
+//        monitoringManager->removeMonitoringNode(request->id());
+//        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
+//        reply->set_success(true);
+//        return Status::OK;
+//    }
+//    NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
+//    reply->set_success(false);
+//    return Status::CANCELLED;
+//}
+
+Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: request =" << request);
+
+    bool success = sourceCatalogService->logicalSourceLookUp(request->logicalsourcename());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does already exist");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does not already exist");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {

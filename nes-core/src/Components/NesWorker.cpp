@@ -162,7 +162,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                     workerConfig->enableMonitoring, coordinatorRpcClient);
           NES_DEBUG("NesWorker: Starting Worker with custom monitoring config");
       }
-      // TODO: registerRemoteMonitoringPlans: monitoringPlan!
+      // TODO: registerRemoteMonitoringPlans::monitoringPlan!
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =
@@ -322,6 +322,7 @@ bool NesWorker::connect() {
         healthCheckService->startHealthCheck();
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
+        NES_DEBUG("NesWorker::connect: size of physicalSources: " + to_string(configPhysicalSources.size()));
         if (!configPhysicalSources.empty()) {
             std::vector<PhysicalSourcePtr> physicalSources;
             for (auto physicalSource : configPhysicalSources) {

@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -118,27 +119,32 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
             SchemaPtr defaultSchema = MetricUtils::defaultSchema(metricType);
             if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
                 std::string metricTypeString = NES::toString(metricType) + "_default";
-                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+                NES_DEBUG("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
                 auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
                 workerConfig->physicalSources.add(source);
-                // TODO: überprüfen ob für den default Fall die Physical Sources schon registriert sind
+//                physicalSourcePointerVector.push_back(source);
             } else {
-                // TODO: check if LogicalSource with same config already exists, if not create a logicalSource with the config
-//              // TODO: gRPC Call zu MonitoringManager -> LogicalSourceCheck; returned 0 oder die NodeId eines Knoten, welches das Schema hat
-                // TODO: push physicalSource to vector
-//                std::string metricTypeString = NES::toString(metricType) + "_default";
-//                NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph_" + std::to_string(nodeId));
-//                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph_" + std::to_string(nodeId), sourceType);
+//                std::string logicalSourceString = MetricUtils::createLogicalSourceName(metricType,monitoringPlan->getSchema(metricType));
+//                bool success = coordinatorRpcClient->logicalSourceLookUp(logicalSourceString);
+//                if (!success) {
+//                    LogicalSourcePtr logicalSource = LogicalSource::create(logicalSourceString, monitoringPlan->getSchema(metricType));
+//                    // TODO: if it doesnt exist, create LogicalSource
+//                        // register at MonitoringManager and SourceCatalog
+//                }
+//                auto source = PhysicalSource::create(logicalSourceString, logicalSourceString + "_ph", sourceType);
 //                workerConfig->physicalSources.add(source);
+//                physicalSourcePointerVector.push_back(source);
+//                NES_DEBUG("MonitoringAgent: Adding physical source to config " << logicalSourceString + "_ph");
                 NES_INFO("MonitoringAgent: Adding physical source to config: Custom!");
             }
         }
-        // TODO: register the phyiscalSources in MonitoringManager
-        // Alternative 1: coordinatorRpcClient neu erstellen
         if (!(physicalSourcePointerVector.empty())){
             auto successRegisterPhysicalSources = coordinatorRpcClient->registerPhysicalSources(physicalSourcePointerVector);
             if (successRegisterPhysicalSources) {
                 NES_DEBUG("MonitoringAgent: addMonitoringStreams: Successfully registered " + std::to_string(physicalSourcePointerVector.size())
+                          + " physical streams")
+            } else {
+                NES_DEBUG("MonitoringAgent: addMonitoringStreams: Not successfully registered " + std::to_string(physicalSourcePointerVector.size())
                           + " physical streams")
             }
         }

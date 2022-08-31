@@ -375,6 +375,7 @@ std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttrib
 
     return attributesList;
 }
+
 SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
     SchemaPtr defaultSchema;
     if (metricType == CpuMetric || metricType == WrappedCpuMetrics) {
@@ -388,5 +389,10 @@ SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
     }
 
     return defaultSchema;
+}
+
+std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
+    std::string logicalSourceName = NES::toString(metricType) + "_" + schema->toString();
+    return logicalSourceName;
 }
 }// namespace NES

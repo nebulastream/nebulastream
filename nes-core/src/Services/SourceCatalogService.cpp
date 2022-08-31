@@ -94,4 +94,10 @@ bool SourceCatalogService::unregisterLogicalSource(const std::string& logicalSou
     return success;
 }
 
+bool SourceCatalogService::logicalSourceLookUp(const std::string& logicalSourceName) {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    NES_DEBUG("SourceCatalogService::logicalSourceLookUp: look up logical source=" << logicalSourceName);
+    bool success = sourceCatalog->containsLogicalSource(logicalSourceName);
+    return success;
+}
 }//namespace NES

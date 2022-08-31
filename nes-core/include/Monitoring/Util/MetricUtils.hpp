@@ -95,6 +95,7 @@ class MetricUtils {
 
     static SchemaPtr defaultSchema(MetricType metricType);
 
+    static std::string createLogicalSourceName(MetricType metricType, SchemaPtr schema);
     /**
      *
      * @param mapConfigurationMonitoring
@@ -109,6 +110,8 @@ class MetricUtils {
     static std::string listToString(const std::string& seperator, const std::list<std::string>& list);
 
     static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric, int numberOfAttributes);
+
+
 };
 
 }// namespace NES

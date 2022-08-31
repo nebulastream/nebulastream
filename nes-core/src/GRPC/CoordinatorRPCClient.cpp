@@ -184,6 +184,8 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         });
 }
 
+
+
 bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath) {
     NES_DEBUG("CoordinatorRPCClient: registerLogicalSource " << logicalSourceName << " with path" << filePath);
 
@@ -372,6 +374,81 @@ bool CoordinatorRPCClient::unregisterNode() {
     };
 
     auto listener = UnRegisterNodeListener{coordinatorStub};
+
+    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+}
+
+// TODO: weiter schreiben, MonitoringPlan serializen
+bool CoordinatorRPCClient::registerMonitoringPlan(uint64_t tempId) {
+    NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan workerId=" << workerId);
+
+    RegisterMonitoringPlanRequest request;
+    request.set_id(workerId);
+    request.set_tempid(tempId);
+
+    NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan request=" << request.DebugString());
+
+    class RegisterMonitoringPlanListener : public detail::RpcExecutionListener<bool, RegisterMonitoringPlanRequest, RegisterMonitoringPlanReply> {
+      public:
+        std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
+
+        explicit RegisterMonitoringPlanListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+            : coordinatorStub(coordinatorStub) {}
+
+        Status rpcCall(const RegisterMonitoringPlanRequest& request, RegisterMonitoringPlanReply* reply) override {
+            ClientContext context;
+
+            return coordinatorStub->RegisterMonitoringPlan(&context, request, reply);
+        }
+        bool onSuccess(const RegisterMonitoringPlanReply& reply) override {
+            NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan: status ok return success=" << reply.success());
+            return reply.success();
+        }
+        bool onPartialFailure(const Status& status) override {
+            NES_DEBUG(" CoordinatorRPCClient::registerMonitoringPlan error=" << status.error_code() << ": " << status.error_message());
+            return false;
+        }
+        bool onFailure() override { return false; }
+    };
+
+    auto listener = RegisterMonitoringPlanListener{coordinatorStub};
+
+    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+}
+
+bool CoordinatorRPCClient::logicalSourceLookUp(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: logicalSourceLookUp: " << logicalSourceName);
+
+    LogicalSourceLookUpRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+
+    NES_DEBUG("CoordinatorRPCClient::logicalSourceLookUp request=" << request.DebugString());
+
+    class LogicalSourceLookUpListener : public detail::RpcExecutionListener<bool, LogicalSourceLookUpRequest, LogicalSourceLookUpReply> {
+      public:
+        std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
+
+        explicit LogicalSourceLookUpListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+            : coordinatorStub(coordinatorStub) {}
+
+        Status rpcCall(const LogicalSourceLookUpRequest& request, LogicalSourceLookUpReply* reply) override {
+            ClientContext context;
+
+            return coordinatorStub->LogicalSourceLookUp(&context, request, reply);
+        }
+        bool onSuccess(const LogicalSourceLookUpReply& reply) override {
+            NES_DEBUG("CoordinatorRPCClient::logicalSourceLookUp: status ok return success=" << reply.success());
+            return reply.success();
+        }
+        bool onPartialFailure(const Status& status) override {
+            NES_DEBUG(" CoordinatorRPCClient::logicalSourceLookUp error=" << status.error_code() << ": " << status.error_message());
+            return false;
+        }
+        bool onFailure() override { return false; }
+    };
+
+    auto listener = LogicalSourceLookUpListener{coordinatorStub};
 
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }

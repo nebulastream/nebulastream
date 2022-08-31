@@ -23,6 +23,7 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
+#include <Monitoring/MonitoringPlan.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -140,6 +141,11 @@ class CoordinatorRPCClient {
    * @return bool indicating success
    */
     bool unregisterNode();
+
+    // TODO: weiter arbeiten
+    bool registerMonitoringPlan(uint64_t tempId);
+
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
 
     /**
      * @brief method to get own id form server

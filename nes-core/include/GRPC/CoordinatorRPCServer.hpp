@@ -80,6 +80,20 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) override;
 
+    // TODO: weiter schreiben
+    /**
+     * @brief RPC Call to unregister a node
+     * @param context: the server context
+     * @param request: monitoringPlan registration request
+     * @param reply: monitoringPlan registration reply
+     * @return success
+     */
+
+//    Status RegisterMonitoringPlan(ServerContext* context, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) override;
+
+    Status LogicalSourceLookUp(ServerContext* context, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) override;
+
+
     /**
      * @brief RPC Call to register physical source
      * @param context: the server context

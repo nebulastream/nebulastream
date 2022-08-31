@@ -81,6 +81,8 @@ class SourceCatalogService {
      */
     bool unregisterLogicalSource(const std::string& logicalSourceName);
 
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
+
   private:
     SourceCatalogPtr sourceCatalog;
     std::mutex addRemoveLogicalSource;

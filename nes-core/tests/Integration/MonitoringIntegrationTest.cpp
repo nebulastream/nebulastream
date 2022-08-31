@@ -122,11 +122,14 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart) {
     uint64_t noWorkers = 1;
-    std::string configMonitoring = " - cpu: attributes: \"coreNum, user, system\" sampleRate: 6000"
+    std::string configMonitoring01 = " - cpu: attributes: \"coreNum, user, system\" sampleRate: 6000"
                                    " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 5000"
                                    " - memory: attributes: \"FREE_RAM, FREE_SWAP, TOTAL_RAM\" sampleRate: 4000"
                                    " - network: attributes: \"rBytes, rFifo, tPackets\" sampleRate: 3000 ";
-
+    std::string configMonitoring02 = " - cpu: attributes: \"coreNum, user, system\" sampleRate: 10000"
+                                     " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 9000"
+                                     " - memory: attributes: \"FREE_RAM, FREE_SWAP, TOTAL_RAM\" sampleRate: 8000"
+                                     " - network: attributes: \"rBytes, rFifo, tPackets\" sampleRate: 7000 ";
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableMonitoring(),
@@ -142,7 +145,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart) {
         TestUtils::workerHealthCheckWaitTime(1),
         TestUtils::enableMonitoring(),
 //        TestUtils::configPath("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml"),
-       TestUtils::monitoringConfiguration(configMonitoring)
+       TestUtils::monitoringConfiguration(configMonitoring01)
     });
 
     //    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),

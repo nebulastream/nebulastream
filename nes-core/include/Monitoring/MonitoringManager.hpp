@@ -104,13 +104,15 @@ class MonitoringManager {
     //  -- dtor --
     ~MonitoringManager();
 
+    bool registerMonitoringPlans(const uint64_t& nodeId, MonitoringPlanPtr monitoringPlan);
+
     /**
-     * @brief Register a monitoring plan for given nodes.
+     * @brief Sets a monitoring plan for given nodes.
      * @param nodeIdmonitoringPlan
      * @param monitoringPlan
      * @return True, if successful, else false
     */
-    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool setRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.
@@ -215,7 +217,7 @@ class MonitoringManager {
 
   private:
     MetricStorePtr metricStore;
-    std::unordered_map<uint64_t, std::pair<MonitoringPlanPtr, std::list<std::string>>> monitoringPlanMap;
+    std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
     std::unordered_map<std::string, QueryId> deployedMonitoringQueries;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
@@ -224,7 +226,7 @@ class MonitoringManager {
     std::set<std::string> logicalMonitoringSources;
     QueryServicePtr queryService;
     QueryCatalogServicePtr catalogService;
-    std::map<MetricType, std::map<std::string, std::list<uint64_t>>> configuredLogicalSources;
+//    std::map<MetricType, std::map<std::string, std::list<uint64_t>>> configuredLogicalSources;
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
