@@ -63,6 +63,8 @@ class NetworkSource : public DataSource {
      */
     SourceType getType() const override;
 
+    NesPartition getNesPartition() const;
+
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
      * It registers the source on the NetworkManager

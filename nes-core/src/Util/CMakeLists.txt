@@ -24,6 +24,7 @@ add_source_files(nes-core
         KalmanFilter.cpp
         BufferStorageUnit.cpp
         QueryStatus.cpp
+        EpochMessage.cpp
 )
 if (NES_USE_MQTT)
     add_source_files(nes-core
