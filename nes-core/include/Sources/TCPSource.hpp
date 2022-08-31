@@ -101,7 +101,7 @@ class TCPSource : public DataSource {
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
-    CircularBuffer<char> buffer;
+    CircularBuffer<char> circularBuffer;
     char* messageBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
