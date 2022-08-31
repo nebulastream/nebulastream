@@ -225,19 +225,19 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
-        auto success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
         if (success) {
-            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
-            success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
+            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
             if (success) {
-                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent delete message");
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
             }
             else {
-                NES_ERROR("NetworkSink::onEvent:: could not send trimming message epoch " << epochBarrier << " queryId " << queryId);
+                NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
             }
         }
         else {
-            NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+            NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
         }
     }
     else if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
