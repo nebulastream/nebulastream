@@ -52,8 +52,8 @@ NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
-//    workerContext.printStatistics(inputBuffer);
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+    workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     return true;
 }
