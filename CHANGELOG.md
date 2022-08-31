@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.87](https://github.com/nebulastream/nebulastream/tree/v0.2.87) (2022-08-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.86...v0.2.87)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot set THREAD\_LOCAL aggregation for the internal worker [\#2947](https://github.com/nebulastream/nebulastream/issues/2947)
+
 ## [v0.2.86](https://github.com/nebulastream/nebulastream/tree/v0.2.86) (2022-08-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.85...v0.2.86)
