@@ -387,21 +387,20 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     // It checks for a bug that was triggered by a use case provider.
     // We leave it in here, in case we need a further E2E test for this use case.
     NES_DEBUG("Starting the coordinator.");
-    auto coordinator = TestUtils::startCoordinator({
-        TestUtils::rpcPort(*rpcCoordinatorPort),
-        TestUtils::restPort(*restPort),
-        // The next two options disable distributed windowing.
-        TestUtils::setDistributedWindowChildThreshold(1000),
-        TestUtils::setDistributedWindowCombinerThreshold(1000),
-        // Enable THREAD_LOCAL on the coordinator.
-        TestUtils::enableThreadLocalWindowing(true)
-    });
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    // The next two options disable distributed windowing.
+                                                    TestUtils::setDistributedWindowChildThreshold(1000),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000),
+                                                    // Enable THREAD_LOCAL on the coordinator.
+                                                    TestUtils::enableThreadLocalWindowing(true)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     NES_DEBUG("Configure a schema that consists of a timestamp, a grouping key and a value.");
     auto schema = "{\n"
                   "  \"logicalSourceName\": \"test_source\",\n"
-                  "  \"schema\": \"Schema::create()->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"key\\\", UINT64))->addField(createField(\\\"value\\\", UINT64));\"\n"
+                  "  \"schema\": \"Schema::create()->addField(createField(\\\"timestamp\\\", "
+                  "UINT64))->addField(createField(\\\"key\\\", UINT64))->addField(createField(\\\"value\\\", UINT64));\"\n"
                   "}";
     NES_DEBUG("Schema: " << schema);
     ASSERT_TRUE(TestUtils::addLogicalSource(schema, std::to_string(*restPort)));
@@ -409,32 +408,30 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     NES_DEBUG("Create an input CSV file for the worker.");
     auto inputCsvPath = getTestResourceFolder() / "input.csv";
     std::ofstream inputCsvFile(inputCsvPath);
-    inputCsvFile
-        << "1100,1,58" << endl
-        << "1200,1,23" << endl
-        << "1300,2,94" << endl
-        << "1400,2,37" << endl
-        << "2500,1,83" << endl // Next window
-        << "2500,2,11" << endl << flush;
+    inputCsvFile << "1100,1,58" << endl
+                 << "1200,1,23" << endl
+                 << "1300,2,94" << endl
+                 << "1400,2,37" << endl
+                 << "2500,1,83" << endl// Next window
+                 << "2500,2,11" << endl
+                 << flush;
     inputCsvFile.close();
 
     NES_DEBUG("Start the workers.");
-    std::initializer_list<std::string> workerConfiguration1 = {
-        TestUtils::coordinatorPort(*rpcCoordinatorPort),
-        TestUtils::sourceType("CSVSource"),
-        TestUtils::csvSourceFilePath(inputCsvPath),
-        TestUtils::physicalSourceName("test_source_1"),
-        TestUtils::logicalSourceName("test_source"),
-        TestUtils::numberOfTuplesToProducePerBuffer(10),
-        TestUtils::enableThreadLocalWindowing()};
-    std::initializer_list<std::string> workerConfiguration2 = {
-        TestUtils::coordinatorPort(*rpcCoordinatorPort),
-        TestUtils::sourceType("CSVSource"),
-        TestUtils::csvSourceFilePath(inputCsvPath),
-        TestUtils::physicalSourceName("test_source_2"),
-        TestUtils::logicalSourceName("test_source"),
-        TestUtils::numberOfTuplesToProducePerBuffer(10),
-        TestUtils::enableThreadLocalWindowing()};
+    std::initializer_list<std::string> workerConfiguration1 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                               TestUtils::sourceType("CSVSource"),
+                                                               TestUtils::csvSourceFilePath(inputCsvPath),
+                                                               TestUtils::physicalSourceName("test_source_1"),
+                                                               TestUtils::logicalSourceName("test_source"),
+                                                               TestUtils::numberOfTuplesToProducePerBuffer(10),
+                                                               TestUtils::enableThreadLocalWindowing()};
+    std::initializer_list<std::string> workerConfiguration2 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                               TestUtils::sourceType("CSVSource"),
+                                                               TestUtils::csvSourceFilePath(inputCsvPath),
+                                                               TestUtils::physicalSourceName("test_source_2"),
+                                                               TestUtils::logicalSourceName("test_source"),
+                                                               TestUtils::numberOfTuplesToProducePerBuffer(10),
+                                                               TestUtils::enableThreadLocalWindowing()};
     auto worker1 = TestUtils::startWorker(workerConfiguration1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     auto worker2 = TestUtils::startWorker(workerConfiguration2);
@@ -445,9 +442,10 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     std::stringstream query;
     query
         << "{\n"
-           "  \"userQuery\": \"Query::from(\\\"test_source\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(1))).byKey(Attribute(\\\"key\\\")).apply(Sum(Attribute(\\\"value\\\"))->as(Attribute(\\\"Sum1\\\")), Count())"
-        << ".sink(FileSinkDescriptor::create(\\\""
-        << outputPath.c_str()
+           "  \"userQuery\": "
+           "\"Query::from(\\\"test_source\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), "
+           "Seconds(1))).byKey(Attribute(\\\"key\\\")).apply(Sum(Attribute(\\\"value\\\"))->as(Attribute(\\\"Sum1\\\")), Count())"
+        << ".sink(FileSinkDescriptor::create(\\\"" << outputPath.c_str()
         << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"));\",\n"
            "  \"strategyName\": \"BottomUp\"\n"
            "}";
@@ -468,7 +466,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     // 1000,2000,1,81,2
     // 1000,2000,2,94,1
     // ???
-    for (std::string line; std::getline(outputFile, line); ) {
+    for (std::string line; std::getline(outputFile, line);) {
         std::cout << line << endl;
     }
     FAIL();

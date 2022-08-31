@@ -2131,9 +2131,11 @@ TEST_F(WindowDeploymentTest, testMultipleAggregationFunctionsOnMultipleWorkers) 
 
     // given: Set up both workers to use ThreadLocal aggregation
     auto workerConfiguration1 = WorkerConfiguration::create();
-    workerConfiguration1->queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration1->queryCompiler.windowingStrategy =
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     auto workerConfiguration2 = WorkerConfiguration::create();
-    workerConfiguration2->queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration2->queryCompiler.windowingStrategy =
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     // given: Set up the input schema: a timestamp, a key, a value
     struct InputData {
         uint64_t timestamp;
@@ -2146,7 +2148,8 @@ TEST_F(WindowDeploymentTest, testMultipleAggregationFunctionsOnMultipleWorkers) 
                            ->addField("value", DataTypeFactory::createUInt32());
     ASSERT_EQ(sizeof(InputData), inputSchema->getSchemaSizeInBytes());
     // given: A window query with two aggregation functions
-    auto query = R"(Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value")), Count()))";
+    auto query =
+        R"(Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value")), Count()))";
     // given: Set up the test harness with two workers
     auto testHarness = TestHarness{query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()}
                            .addLogicalSource("input", inputSchema)
@@ -2165,8 +2168,9 @@ TEST_F(WindowDeploymentTest, testMultipleAggregationFunctionsOnMultipleWorkers) 
     testHarness.pushElement<InputData>({1200U, 1U, 7U}, 3);
     testHarness.pushElement<InputData>({1300U, 3U, 8U}, 3);
     // given: The internal coordinator also uses THREAD_LOCAL aggregation and distributed window is disabled.
-    testHarness.validate().setupTopology([](CoordinatorConfigurationPtr coordinatorConfiguration){
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    testHarness.validate().setupTopology([](CoordinatorConfigurationPtr coordinatorConfiguration) {
+        coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
         coordinatorConfiguration->optimizer.distributedWindowChildThreshold = 1000;
         coordinatorConfiguration->optimizer.distributedWindowCombinerThreshold = 1000;
     });
@@ -2181,9 +2185,7 @@ TEST_F(WindowDeploymentTest, testMultipleAggregationFunctionsOnMultipleWorkers) 
             return start == rhs.start && end == rhs.end && key == rhs.key && sum == rhs.sum && count == rhs.count;
         }
     };
-    auto expected = std::vector<Output>{{1000, 2000, 1, 16, 4},
-                                        {1000, 2000, 2, 6, 2},
-                                        {1000, 2000, 3, 14, 2}};
+    auto expected = std::vector<Output>{{1000, 2000, 1, 16, 4}, {1000, 2000, 2, 6, 2}, {1000, 2000, 3, 14, 2}};
     auto actual = testHarness.getOutput<Output>(expected.size(), "BottomUp", "NONE", "IN_MEMORY");
     for (auto i : {0, 1, 2}) {
         NES_DEBUG(i << " = {" << actual[i].start << ", " << actual[i].end << ", " << actual[i].key << ", " << actual[i].sum

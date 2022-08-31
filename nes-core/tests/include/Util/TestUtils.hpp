@@ -172,7 +172,9 @@ template<typename T>
 }
 
 [[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false) {
-    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"THREAD_LOCAL"}, prefix);
+    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
+                        std::string{"THREAD_LOCAL"},
+                        prefix);
 }
 
 /**
