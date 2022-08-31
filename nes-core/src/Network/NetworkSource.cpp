@@ -169,8 +169,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted) {
                 return;
             }
-            if (true)
-                return;
             auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                              nesPartition,
                                                                              localBufferManager,
@@ -205,8 +203,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::PropagateEpoch: {
             auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto epochMessage = task.getUserData<EpochMessage>();
-            auto timestamp = epochMessage.getTimestamp();
+            auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch punctuation= " << timestamp);
             channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
             break;
