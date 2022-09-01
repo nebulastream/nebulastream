@@ -85,7 +85,7 @@ SchemaPtr CpuMetrics::createSchema(const std::string& prefix, std::list<std::str
         } else if (metric == "guestnice") {
             schema->addField(prefix + "guestnice", BasicType::UINT64);
         } else {
-            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+            NES_INFO("CpuMetrics: Metric unknown: " << metric);
         }
     }
     return schema;

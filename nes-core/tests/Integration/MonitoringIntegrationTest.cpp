@@ -199,9 +199,9 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart02) {
                                            TestUtils::physicalSourceName("test1"),
                                            TestUtils::workerHealthCheckWaitTime(1),
                                            TestUtils::enableMonitoring(),
-                                           TestUtils::monitoringConfiguration(configMonitoring01)
+                                           TestUtils::monitoringConfiguration(configMonitoring02)
     });
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     NES_DEBUG("Now comes the RestCall!");
     auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));

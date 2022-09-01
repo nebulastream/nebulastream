@@ -89,7 +89,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @return success
      */
 
-//    Status RegisterMonitoringPlan(ServerContext* context, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) override;
+    Status RegisterMonitoringPlan(ServerContext* context, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) override;
 
     Status LogicalSourceLookUp(ServerContext* context, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) override;
 

@@ -143,7 +143,7 @@ class CoordinatorRPCClient {
     bool unregisterNode();
 
     // TODO: weiter arbeiten
-    bool registerMonitoringPlan(uint64_t tempId);
+    bool registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan);
 
     bool logicalSourceLookUp(const std::string& logicalSourceName);
 

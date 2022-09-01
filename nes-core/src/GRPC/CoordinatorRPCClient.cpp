@@ -379,41 +379,28 @@ bool CoordinatorRPCClient::unregisterNode() {
 }
 
 // TODO: weiter schreiben, MonitoringPlan serializen
-bool CoordinatorRPCClient::registerMonitoringPlan(uint64_t tempId) {
+bool CoordinatorRPCClient::registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan) {
     NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan workerId=" << workerId);
 
     RegisterMonitoringPlanRequest request;
     request.set_id(workerId);
-    request.set_tempid(tempId);
+
+    for (const auto& metricType : monitoringPlan->getMetricTypes()) {
+        MonitoringPlanPartDefinition* monitoringPlanMetricType = request.add_monitoringplanpart();
+        monitoringPlanMetricType->set_metrictype(toString(metricType));
+        monitoringPlanMetricType->set_schema(monitoringPlan->getSchema(metricType)->toString());
+        monitoringPlanMetricType->set_samplerate(monitoringPlan->getSampleRate(metricType));
+    }
 
     NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan request=" << request.DebugString());
 
-    class RegisterMonitoringPlanListener : public detail::RpcExecutionListener<bool, RegisterMonitoringPlanRequest, RegisterMonitoringPlanReply> {
-      public:
-        std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
-
-        explicit RegisterMonitoringPlanListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
-
-        Status rpcCall(const RegisterMonitoringPlanRequest& request, RegisterMonitoringPlanReply* reply) override {
-            ClientContext context;
-
-            return coordinatorStub->RegisterMonitoringPlan(&context, request, reply);
-        }
-        bool onSuccess(const RegisterMonitoringPlanReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan: status ok return success=" << reply.success());
-            return reply.success();
-        }
-        bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::registerMonitoringPlan error=" << status.error_code() << ": " << status.error_message());
-            return false;
-        }
-        bool onFailure() override { return false; }
-    };
-
-    auto listener = RegisterMonitoringPlanListener{coordinatorStub};
-
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processGenericRpc<bool, RegisterMonitoringPlanRequest, RegisterMonitoringPlanReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterMonitoringPlanRequest& request, RegisterMonitoringPlanReply* reply) {
+            return coordinatorStub->RegisterMonitoringPlan(context, request, reply);
+        });
 }
 
 bool CoordinatorRPCClient::logicalSourceLookUp(const std::string& logicalSourceName) {

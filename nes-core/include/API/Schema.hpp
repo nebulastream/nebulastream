@@ -163,6 +163,8 @@ class Schema {
      */
     [[nodiscard]] std::string toString() const;
 
+    static SchemaPtr parse(std::string schemaString);
+
     /**
      * @brief returns the string representation of layout
      * @param layout

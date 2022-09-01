@@ -146,7 +146,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
           MonitoringPlanPtr monitoringPlan = MonitoringPlan::defaultPlan();
           MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
           monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-                                                    workerConfig->enableMonitoring, coordinatorRpcClient);
+                                                    workerConfig->enableMonitoring);
 //         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
       } else {
@@ -157,12 +157,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
           MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
           std::vector<uint64_t> nodeIdVector {topologyNodeId};
 
-//          auto success = MonitoringManager::registerRemoteMonitoringPlans(nodeIdVector, monitoringPlan);
           monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-                                                    workerConfig->enableMonitoring, coordinatorRpcClient);
+                                                    workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with custom monitoring config");
       }
       // TODO: registerRemoteMonitoringPlans::monitoringPlan!
+      std::vector<uint64_t> nodeIdVector {topologyNodeId};
+
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =
@@ -321,6 +322,8 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
+        registerMonitoringPlan();
+
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         NES_DEBUG("NesWorker::connect: size of physicalSources: " + to_string(configPhysicalSources.size()));
         if (!configPhysicalSources.empty()) {
@@ -329,6 +332,9 @@ bool NesWorker::connect() {
                 physicalSources.push_back(physicalSource);
             }
             NES_DEBUG("NesWorker: start with register source");
+
+            registerLogicalSources(physicalSources);
+
             bool success = registerPhysicalSources(physicalSources);
             NES_DEBUG("registered= " << success);
             NES_ASSERT(success, "cannot register");
@@ -375,6 +381,29 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& ph
     return success;
 }
 
+void NesWorker::registerLogicalSources(const vector<PhysicalSourcePtr>& physicalSources) {
+    for(auto physicalSource : physicalSources) {
+        std::string logicalSourceName = physicalSource->getLogicalSourceName();
+        bool success = coordinatorRpcClient->logicalSourceLookUp(logicalSourceName);
+        NES_DEBUG("NesWorker: registerLogicalSources: LogicalSourceName: " + logicalSourceName
+                  + " and bool value: " + to_string(success));
+        if(!success) {
+            // TODO: register at monitoring Manager (MonitoringPlanMap) and SourceCatalog
+            NES_DEBUG("NesWorker: registerLogicalSources: LogicalSource is not registered yet")
+        }
+    }
+}
+
+void NesWorker::registerMonitoringPlan() {
+    NES_DEBUG("NesWorker register monitoringPlan at MonitoringManger")
+
+    auto success = coordinatorRpcClient->registerMonitoringPlan(monitoringAgent->getMonitoringPlan());
+    if (success) {
+        NES_DEBUG("MonitoringPlan successfully registered at MonitoringManager")
+    } else {
+        NES_ERROR("MonitoringPlan NOT successfully registered at MonitoringManager")
+    }
+}
 bool NesWorker::addParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);

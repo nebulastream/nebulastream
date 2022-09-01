@@ -37,22 +37,20 @@ using namespace Configurations;
 
 MonitoringAgent::MonitoringAgent() : enabled(true) {}
 
-MonitoringAgent::MonitoringAgent(bool enabled, CoordinatorRPCClientPtr coorRpcClient)
-    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled, coorRpcClient) {}
+MonitoringAgent::MonitoringAgent(bool enabled)
+    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
 
-MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
-                                 CoordinatorRPCClientPtr coorRpcClient)
-    : monitoringPlan(monitoringPlan), catalog(catalog), coordinatorRpcClient(coorRpcClient), enabled(enabled) {
+MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
+    : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-MonitoringAgentPtr MonitoringAgent::create(bool enabled, CoordinatorRPCClientPtr coorRpcClient) { return std::make_shared<MonitoringAgent>(enabled, coorRpcClient); }
+MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
 
-MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
-                                           CoordinatorRPCClientPtr coorRpcClient) {
-    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled, coorRpcClient);
+MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled) {
+    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
 }
 
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
@@ -104,7 +102,6 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
 
 bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
     if (enabled) {
-        std::vector<PhysicalSourcePtr> physicalSourcePointerVector;
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             MonitoringSourceTypePtr sourceType;
             uint64_t sampleRate = monitoringPlan->getSampleRate(metricType);
@@ -119,33 +116,15 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
             SchemaPtr defaultSchema = MetricUtils::defaultSchema(metricType);
             if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
                 std::string metricTypeString = NES::toString(metricType) + "_default";
-                NES_DEBUG("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+                NES_DEBUG("MonitoringAgent: Adding physical source to worker config " << metricTypeString + "_ph");
                 auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
                 workerConfig->physicalSources.add(source);
-//                physicalSourcePointerVector.push_back(source);
             } else {
-//                std::string logicalSourceString = MetricUtils::createLogicalSourceName(metricType,monitoringPlan->getSchema(metricType));
-//                bool success = coordinatorRpcClient->logicalSourceLookUp(logicalSourceString);
-//                if (!success) {
-//                    LogicalSourcePtr logicalSource = LogicalSource::create(logicalSourceString, monitoringPlan->getSchema(metricType));
-//                    // TODO: if it doesnt exist, create LogicalSource
-//                        // register at MonitoringManager and SourceCatalog
-//                }
-//                auto source = PhysicalSource::create(logicalSourceString, logicalSourceString + "_ph", sourceType);
-//                workerConfig->physicalSources.add(source);
-//                physicalSourcePointerVector.push_back(source);
-//                NES_DEBUG("MonitoringAgent: Adding physical source to config " << logicalSourceString + "_ph");
+                std::string logicalSourceString = MetricUtils::createLogicalSourceName(metricType,monitoringPlan->getSchema(metricType));
+                auto source = PhysicalSource::create(logicalSourceString, logicalSourceString + "_ph", sourceType);
+                workerConfig->physicalSources.add(source);
+                NES_DEBUG("MonitoringAgent: Adding physical source to worker config " << logicalSourceString + "_ph");
                 NES_INFO("MonitoringAgent: Adding physical source to config: Custom!");
-            }
-        }
-        if (!(physicalSourcePointerVector.empty())){
-            auto successRegisterPhysicalSources = coordinatorRpcClient->registerPhysicalSources(physicalSourcePointerVector);
-            if (successRegisterPhysicalSources) {
-                NES_DEBUG("MonitoringAgent: addMonitoringStreams: Successfully registered " + std::to_string(physicalSourcePointerVector.size())
-                          + " physical streams")
-            } else {
-                NES_DEBUG("MonitoringAgent: addMonitoringStreams: Not successfully registered " + std::to_string(physicalSourcePointerVector.size())
-                          + " physical streams")
             }
         }
         return true;
@@ -153,26 +132,6 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
-
-//bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
-//    if (enabled) {
-//        for (auto metricType : monitoringPlan->getMetricTypes()) {
-//            // auto generate the specifics
-//            MonitoringSourceTypePtr sourceType =
-//                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
-//            std::string metricTypeString = NES::toString(metricType);
-//
-//            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
-//            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
-//            workerConfig->physicalSources.add(source);
-//        }
-//        return true;
-//    }
-//    NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
-//    return false;
-//}
-
-
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 

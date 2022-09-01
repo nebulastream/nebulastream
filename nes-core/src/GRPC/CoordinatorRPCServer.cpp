@@ -16,6 +16,7 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/SourceCatalogService.hpp>
@@ -83,22 +84,33 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
     return Status::CANCELLED;
 }
 
-
 // TODO: weiter machen
-//Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
-//    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
-//
-//    bool success = monitoringManager->unregisterNode(request->id());
-//    if (success) {
-//        monitoringManager->removeMonitoringNode(request->id());
-//        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
-//        reply->set_success(true);
-//        return Status::OK;
-//    }
-//    NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
-//    reply->set_success(false);
-//    return Status::CANCELLED;
-//}
+Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
+
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlanMap;
+    std::pair<SchemaPtr, uint64_t> pairTemp;
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    SchemaPtr schema;
+    MetricType metricType;
+    for (const auto& monitoringPlanPart : request->monitoringplanpart()) {
+        metricType = parse(monitoringPlanPart.metrictype());
+        schema = Schema::parse(monitoringPlanPart.schema());
+        pairTemp = std::make_pair(schema, monitoringPlanPart.samplerate());
+        monitoringPlanMap[metricType] = pairTemp;
+    }
+
+    MonitoringPlanPtr monitoringPlan = MonitoringPlan::create(monitoringPlanMap);
+    bool success = monitoringManager->registerMonitoringPlans(request->id(), monitoringPlan);
+    if (!success) {
+        NES_ERROR("CoordinatorRPCServer::RegisterMonitoringPlan failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan Succeed");
+    reply->set_success(true);
+    return Status::OK;
+}
 
 Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: request =" << request);
@@ -109,7 +121,7 @@ Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSo
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does not already exist");
+    NES_INFO("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does not exist yet");
     reply->set_success(false);
     return Status::CANCELLED;
 }

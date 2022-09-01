@@ -23,6 +23,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <list>
 
 namespace NES {
 
@@ -160,6 +161,51 @@ std::string Schema::toString() const {
     return ss.str();
 }
 
+SchemaPtr Schema::parse(std::string schemaString) {
+    std::string prefix = "";
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT);
+
+    char delim = ' ';
+    std::stringstream ss(schemaString);
+
+    std::list<std::string> tokenList;
+
+    std::string temp;
+    while (std::getline(ss, temp, delim)) {
+        tokenList.push_back(temp);
+    }
+
+//    std::string delimiter(" ");
+
+    size_t pos = 0;
+//    std::string token;
+    std::list<std::string>::iterator i;
+//    i = tokenList.begin();
+//    while ((pos = schemaString.find(delimiter) != std::string::npos)) {
+//        token = schemaString.substr(0, pos);
+//        schemaString.erase(0, pos + delimiter.length());
+//        tokenList.insert(i, token);
+//        ++i;
+//    }
+    std::string attribute;
+    std::string basicTypeString;
+    BasicType basicType;
+
+    std::string delimiter = ":";
+    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
+        pos = i->find(delimiter);
+        attribute = i->substr(0, pos);
+        basicTypeString = i->substr().erase(0, pos + delimiter.length());
+        if (basicTypeString == "INTEGER") {
+            basicType = UINT64;
+        } else if (basicTypeString == "Boolean") {
+            basicType = BOOLEAN;
+        } // TODO: look other basicType strings
+        schema->addField(prefix + attribute, basicType);
+    }
+    return schema;
+}
+
 std::string Schema::getSourceNameQualifier() const {
     if (fields.empty()) {
         return "Unnamed Source";
@@ -186,7 +232,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() {
 
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+//        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
         if (field->getName() == fieldName) {
             return true;
         }

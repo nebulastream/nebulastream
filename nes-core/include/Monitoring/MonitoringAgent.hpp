@@ -36,14 +36,12 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent {
   public:
     MonitoringAgent();
-    explicit MonitoringAgent(bool enabled, CoordinatorRPCClientPtr coorRpcClient);
-    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
-                    CoordinatorRPCClientPtr coorRpcClient);
+    explicit MonitoringAgent(bool enabled);
+    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
 
     static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(bool enabled, CoordinatorRPCClientPtr coorRpcClient);
-    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled,
-                                     CoordinatorRPCClientPtr coorRpcClient);
+    static MonitoringAgentPtr create(bool enabled);
+    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
 
     /**
      * @brief Collect the metrics and store them in to the given output. The collected metrics depend on the monitoring plan.
@@ -99,7 +97,6 @@ class MonitoringAgent {
     TopologyNodeId nodeId;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
-    CoordinatorRPCClientPtr coordinatorRpcClient;
 
     bool enabled;
 };

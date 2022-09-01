@@ -103,7 +103,7 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
     std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
     uint64_t sampleDisk = 5000;
     SchemaPtr schemaDisk = DiskMetrics::createSchema("", configuredDisk);
-    std::list<std::string> configuredCpu = {"coreNum", "user", "system"};
+    std::list<std::string> configuredCpu = {"nice", "user", "system"};
     uint64_t sampleCpu = 6000;
     SchemaPtr schemaCpu = CpuMetrics::createSchema("", configuredCpu);
     std::list<std::string> configuredMem = {"FREE_RAM", "FREE_SWAP", "TOTAL_RAM"};
@@ -118,7 +118,6 @@ TEST_F(ConfigTest, testWorkerConfigLennart) {
    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 //    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream/nes-core/tests/test_data/workerConfigLennart.yaml");
 
-    std::string tempString = workerConfigPtr->monitoringConfiguration.getValue();
     web::json::value configurationMonitoringJson =
         MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
     MonitoringPlanPtr monitoringPlanJson = MonitoringPlan::setSchemaJson(configurationMonitoringJson);

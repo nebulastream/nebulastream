@@ -235,6 +235,9 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
+    void registerLogicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
+    void registerMonitoringPlan();
     /**
      * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
      */
