@@ -19,6 +19,7 @@
 #include <REST/DTOs/LogicalSourceInfo.hpp>
 #include <REST/DTOs/SourceCatalogStringResponse.hpp>
 #include <REST/DTOs/SourceCatalogBoolResponse.hpp>
+#include <REST/DTOs/SourceCatalogControllerSubmitLogicalSourceRequest.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -139,17 +140,16 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     }
 
         // TODO: DTO for body string!
-    ENDPOINT("POST", "/addLogicalSource", addLogicalSource,
-             BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
+    ENDPOINT("POST", "/addLogicalSource", addLogicalSource, BODY_DTO(Object<DTO::SourceCatalogControllerSubmitLogicalSourceRequest>, request)) {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
         try {
-            std::string sourceName = logicalSourceName->c_str();
-            std::string schemaName = schema->c_str();
+            std::string sourceName = request->logicalSourceName->c_str();
+            std::string schema = request->schema->c_str();
             NES_DEBUG("SourceCatalogController: addLogicalSource: Try to add new Logical Source "
-                      << sourceName << " and " << schemaName);
-            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
+                      << sourceName << " and " << schema);
+            bool added = sourceCatalog->addLogicalSource(request->logicalSourceName, request->schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?"
                       << added);
             //Prepare the response
@@ -172,14 +172,13 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     }
 
     // TODO: DTO for body string!
-    ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource,
-             BODY_STRING(String, logicalSourceName), BODY_STRING(String, schema)) {
+    ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource, BODY_DTO(Object<DTO::SourceCatalogControllerSubmitLogicalSourceRequest>, request))  {
         //OATPP_LOGV(TAG, "POST body %s", body->c_str());
         auto dto = SourceCatalogBoolResponse::createShared();
         NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
         try {
-            std::string sourceName = logicalSourceName->c_str();
-            std::string schemaName = schema->c_str();
+            std::string sourceName = request->logicalSourceName->c_str();
+            std::string schemaName = request->schema->c_str();
             NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source "
                        << sourceName << " and" << schemaName);
             bool updated = sourceCatalog->updatedLogicalSource(sourceName, schemaName);
