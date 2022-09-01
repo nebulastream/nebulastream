@@ -35,4 +35,4 @@ default_coordinator_ip: 192.168.6.181
 
 # Coordinator default port, this can be a list later
 default_coordinator_ports:
-    - 4000
+    - 10000
