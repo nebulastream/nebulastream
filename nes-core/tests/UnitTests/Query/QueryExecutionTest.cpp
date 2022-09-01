@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 // clang-format: on
 #include <API/QueryAPI.hpp>
-#include <API/NePSLPattern.h>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
