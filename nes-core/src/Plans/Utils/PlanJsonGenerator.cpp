@@ -252,4 +252,73 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
+nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                 QueryId queryId) {
+    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+
+    nlohmann::json executionPlanJson{};
+    std::vector<nlohmann::json> nodes = {};
+
+    std::vector<ExecutionNodePtr> executionNodes;
+    if (queryId != INVALID_QUERY_ID) {
+        executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    } else {
+        executionNodes = globalExecutionPlan->getAllExecutionNodes();
+    }
+
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
+        nlohmann::json currentExecutionNodeJsonValue{};
+
+        currentExecutionNodeJsonValue["executionNodeId"] = executionNode->getId();
+        currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
+        currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
+
+        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
+        std::vector<QueryPlanPtr> querySubPlans;
+        if (queryId == INVALID_QUERY_ID) {
+            queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
+        } else {
+            querySubPlans = executionNode->getQuerySubPlans(queryId);
+            if (!querySubPlans.empty()) {
+                queryToQuerySubPlansMap[queryId] = querySubPlans;
+            }
+        }
+
+        std::vector<nlohmann::json> scheduledQueries = {};
+
+        for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
+
+            std::vector<nlohmann::json> scheduledSubQueries;
+           nlohmann::json queryToQuerySubPlans{};
+            queryToQuerySubPlans["queryId"] = queryId;
+
+            // loop over all query sub plans inside the current executionNode
+            for (const QueryPlanPtr& querySubPlan : querySubPlans) {
+                // prepare json object to hold information on current query sub plan
+                nlohmann::json currentQuerySubPlan{};
+
+                // id of current query sub plan
+                currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+
+                // add the string containing operator to the json object of current query sub plan
+                currentQuerySubPlan["operator"] = querySubPlan->toString();
+
+                // TODO: Add source and target
+                scheduledSubQueries.push_back(currentQuerySubPlan);
+            }
+            queryToQuerySubPlans["querySubPlans"] = scheduledSubQueries;
+            scheduledQueries.push_back(queryToQuerySubPlans);
+        }
+
+        currentExecutionNodeJsonValue["ScheduledQueries"] = scheduledQueries;
+        nodes.push_back(currentExecutionNodeJsonValue);
+    }
+
+    // add `executionNodes` JSON array to the final JSON result
+    executionPlanJson["executionNodes"] =nodes;
+
+    return executionPlanJson;
+
+}
+
 }// namespace NES

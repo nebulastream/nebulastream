@@ -16,6 +16,7 @@
 #define NES_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <nlohmann/json.hpp>
 
 namespace web {
 namespace json {
@@ -55,6 +56,15 @@ class PlanJsonGenerator {
      * @return
      */
     static web::json::value getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                   QueryId queryId = INVALID_QUERY_ID);
+
+    /**
+     * @brief get the json representation of execution plan of a query
+     * @param the global execution plan
+     * @param id of the query
+     * @return
+     */
+    static nlohmann::json getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    QueryId queryId = INVALID_QUERY_ID);
 
   private:

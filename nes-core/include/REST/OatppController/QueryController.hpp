@@ -13,23 +13,24 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_QUERYCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_QUERYCONTROLLER_HPP_
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <REST/DTOs/ErrorResponse.hpp>
-#include <REST/DTOs/QueryControllerResponse.hpp>
+#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/QueryControllerExecutionPlanResponse.hpp>
 #include <REST/DTOs/QueryControllerOptimizationPhasesResponse.hpp>
+#include <REST/DTOs/QueryControllerResponse.hpp>
+#include <REST/DTOs/QueryControllerStopQueryResponse.hpp>
 #include <REST/DTOs/QueryControllerSubmitQueryRequest.hpp>
 #include <REST/DTOs/QueryControllerSubmitQueryResponse.hpp>
-#include <REST/DTOs/QueryControllerStopQueryResponse.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <REST/DTOs/ErrorResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Runtime/QueryStatistics.hpp>
+#include <Services/QueryService.hpp>
 #include <cpprest/json.h>
+#include <exception>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <Services/QueryService.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
-#include <exception>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 #include "GRPC/Serialization/QueryPlanSerializationUtil.hpp"
@@ -100,11 +101,46 @@ class QueryController : public oatpp::web::server::api::ApiController {
         try {
             NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId).serialize(); //TODO: change when removing cpprestsdk
-            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson);
-            auto dto = DTO::QueryControllerResponse::createShared();
-            dto->entry = executionPlanJson;
-            return createDtoResponse(Status::CODE_200, dto);
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsNlohmannJson(globalExecutionPlan, queryId); //TODO: change when removing cpprestsdk
+            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.dump());
+            //create list of execution nodes
+            oatpp::List<oatpp::Object<DTO::ExecutionNodeDTO>> executionNodes({});
+            auto executionNodesJson = executionPlanJson["executionNodes"];
+            NES_DEBUG(executionNodesJson.is_array());
+            for (auto node : executionNodesJson) {
+                //create single execution node DTO
+                //fill fields of executionNodeDTO
+                NES_DEBUG(node.dump());
+                auto executionNodeDTO = DTO::ExecutionNodeDTO::createShared();
+                executionNodeDTO->executionNodeId = node["executionNodeId"].get<uint64_t>();
+                executionNodeDTO->topologyNodeId = node["topologyNodeId"].get<uint64_t>();
+                executionNodeDTO->topologyNodeIpAddress = node["topologyNodeIpAddress"].get<std::string>();
+                //create list of query info, will be assigned to field of executionNodeDTO
+                oatpp::List<oatpp::Object<DTO::ScheduledQueryInfo>> scheduledQueries({});
+                auto scheduledQueriesJson = node["ScheduledQueries"];
+                for(auto query : scheduledQueriesJson){
+                    //fill fields of query info dto
+                    auto scheduledQueryDTO = DTO::ScheduledQueryInfo::createShared();
+                    scheduledQueryDTO->queryId = query["queryId"].get<uint64_t>();
+                    auto querySubPlansJson = query["querySubPlans"];
+                    //create list of querySubPlanDTOs, will be assigned to field of query info dto
+                    oatpp::List<oatpp::Object<DTO::QuerySubPlanDTO>> querySubPlans({});
+                    for(auto subPlan : querySubPlansJson){
+                        NES_DEBUG(subPlan.dump());
+                        auto subPlanDTO = DTO::QuerySubPlanDTO::createShared();
+                        subPlanDTO->operators = subPlan["operator"].get<std::string>();
+                        subPlanDTO->querySubPlanId = subPlan["querySubPlanId"].get<uint64_t>();
+                        querySubPlans->push_back(subPlanDTO);
+                    }
+                    scheduledQueryDTO->querySubPlans = querySubPlans;
+                    scheduledQueries->push_back(scheduledQueryDTO);
+                }
+                executionNodeDTO->scheduledQueries = scheduledQueries;
+                executionNodes->push_back(executionNodeDTO);
+            }
+            auto response = DTO::QueryControllerExecutionPlanResponse::createShared();
+            response->executionNodes = executionNodes;
+            return createDtoResponse(Status::CODE_200, response);
         } catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         }

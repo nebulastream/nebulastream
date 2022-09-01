@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <API/Query.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
@@ -20,10 +22,10 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <nlohmann/json.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 class QueryControllerTest : public Testing::NESBaseTest {
@@ -91,17 +93,42 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfiguration);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
+    auto sourceCatalog = coordinator->getSourceCatalog();
+    auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response response = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
-                                cpr::Parameters{{"queryId", "1"}});
-    EXPECT_EQ(response.status_code, 404l);
+    nlohmann::json request;
+    request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    request["strategyName"] = "BottomUp";
+    request["faultTolerance"] ="AT_MOST_ONCE";
+    request["lineage"] = "IN_MEMORY";
+    auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(r1.status_code, 200l);
+
+    nlohmann::json response1 = nlohmann::json::parse(r1.text);
+    uint64_t queryId = response1["queryId"];
+    NES_DEBUG(queryId);
+    auto started = TestUtils::waitForQueryToStart(queryId,coordinator->getQueryCatalogService());
+    ASSERT_TRUE(started);
+    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
+                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    EXPECT_EQ(r2.status_code, 200l);
+    nlohmann::json response2 = nlohmann::json::parse(r2.text);
+    NES_DEBUG(response2.dump());
+    NES_DEBUG(response2.size());
+
     //TODO: compare content of response to expected values. To be added once json library found #2950
 }
 } // namespace NES

@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
-#define NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+
+#ifndef NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLEREXECUTIONPLANRESPONSE_HPP_
+#define NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLEREXECUTIONPLANRESPONSE_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
+#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/ExecutionNodeDTO.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
@@ -28,9 +30,9 @@ namespace DTO {
 /**
  * Message Data-Transfer-Object
  */
-class QueryControllerStopQueryResponse : public oatpp::DTO {
-    DTO_INIT(QueryControllerStopQueryResponse, DTO /* Extends */)
-    DTO_FIELD(Boolean, success);
+class QueryControllerExecutionPlanResponse : public oatpp::DTO {
+    DTO_INIT(QueryControllerExecutionPlanResponse, DTO /* Extends */)
+    DTO_FIELD(List<Object<ExecutionNodeDTO>>, executionNodes, "executionNodes");
 };
 
 }// namespace DTO
@@ -39,5 +41,4 @@ class QueryControllerStopQueryResponse : public oatpp::DTO {
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-
-#endif//NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+#endif//NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLEREXECUTIONPLANRESPONSE_HPP_

@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
-#define NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_EXECUTIONNODEDTO_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_EXECUTIONNODEDTO_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
+#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/ScheduledQueryInfo.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)
@@ -28,9 +29,12 @@ namespace DTO {
 /**
  * Message Data-Transfer-Object
  */
-class QueryControllerStopQueryResponse : public oatpp::DTO {
-    DTO_INIT(QueryControllerStopQueryResponse, DTO /* Extends */)
-    DTO_FIELD(Boolean, success);
+class ExecutionNodeDTO : public oatpp::DTO {
+    DTO_INIT(ExecutionNodeDTO, DTO /* Extends */)
+    DTO_FIELD(List<Object<ScheduledQueryInfo>>, scheduledQueries, "ScheduledQueries");
+    DTO_FIELD(UInt64 , executionNodeId, "executionNodeId");
+    DTO_FIELD(UInt64 , topologyNodeId,"topologyNodeId");
+    DTO_FIELD(String, topologyNodeIpAddress, "topologyNodeIpAddress");
 };
 
 }// namespace DTO
@@ -40,4 +44,4 @@ class QueryControllerStopQueryResponse : public oatpp::DTO {
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
 
-#endif//NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+#endif//NES_CORE_INCLUDE_REST_DTOS_EXECUTIONNODEDTO_HPP_
