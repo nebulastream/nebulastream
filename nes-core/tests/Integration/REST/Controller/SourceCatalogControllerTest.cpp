@@ -61,45 +61,17 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
-    /*
-    sourceCatalog->addLogicalSource("test_stream", Schema::create());
-    SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
-    EXPECT_NE(sPtr, nullptr);
-    */
-
-    // for debugging only:
-    std::map<std::string, SchemaPtr> logicalSources = sourceCatalog->getAllLogicalSource();
-    NES_INFO("Content of Variable logicalSources field test_stream:");
-    NES_INFO(logicalSources["test_stream"]->toString());
-    NES_INFO("Content of Variable logicalSources field default logical:");
-    NES_INFO(logicalSources["default_logical"]->toString());
-    /*
-    string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(logicalSources.size(), 3U);
-
-    SchemaPtr testSchema = logicalSources["test_stream"];
-    EXPECT_EQ("", testSchema->toString());
-
-    SchemaPtr defaultSchema = allLogicalSource["default_logical"];
-    EXPECT_EQ(exp, defaultSchema->toString());
-    */
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allLogicalSource"});
     EXPECT_EQ(r.status_code, 200l);
-
     // TODO compare value of response with expected value  To be added once json library found #2950
     NES_INFO("This is the content of response:");
     NES_INFO(r.text);
-    // auf dem dto heißt es entries mit name schema
-    // expecting: Response: {[ "logical_source_name": "logical_source_schema" ]}
 }
 
 TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
@@ -113,11 +85,9 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     ASSERT_EQ(port, *rpcCoordinatorPort);
     NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-
     NES_DEBUG("SourceCatalogControllerTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
@@ -131,36 +101,19 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
-
     NES_INFO(coordinator->getSourceCatalog()->getPhysicalSourceAndSchemaAsString());
-    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys =
-        coordinator->getSourceCatalog()->getPhysicalSources("default_logical");
-
-    // the following is for debugging only, to be removed later
-    NES_INFO("das steht in phys physicalName: ");
-    std::string name = phys[0]->getPhysicalSource()->getPhysicalSourceName();
-    NES_INFO(name);
-    NES_INFO("das steht in phys LogicalName: ");
-    NES_INFO(phys[0]->getLogicalSource()->getLogicalSourceName());
-
-    EXPECT_EQ(phys.size(), 1U);
-    EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
-
-    // TODO find out why path is wrong
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allPhysicalSource"},
                                cpr::Parameters{{"logicalSourceName", "default_logical"}});
     EXPECT_EQ(r.status_code, 200l);
-
     // TODO compare value of response with expected value  To be added once json library found #2950
     NES_INFO("This is the content of response:");
     NES_INFO(r.text);
-
     NES_INFO("stopping worker");
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 }
 
-TEST_F(SourceCatalogControllerTest, DISABLED_testGetSchema) {
+TEST_F(SourceCatalogControllerTest, testGetSchema) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -170,22 +123,14 @@ TEST_F(SourceCatalogControllerTest, DISABLED_testGetSchema) {
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
-    SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
-    EXPECT_NE(sPtr, nullptr);
-
-    // TODO find out why path is wrong & add expected failures for different status codes
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/schema"}, cpr::Parameters{{"logicalSourceName", "test_stream"}});
     EXPECT_EQ(r.status_code, 200l);
-
     // TODO compare value of response with expected value  To be added once json library found #2950
     NES_INFO("This is the content of response:");
     NES_INFO(r.text);
