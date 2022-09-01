@@ -190,8 +190,8 @@ booleanExpression
     : NOT booleanExpression                                        #logicalNot
     | EXISTS '(' query ')'                                         #exists
     | valueExpression predicate?                                   #predicated
-    | left=booleanExpression operator=AND right=booleanExpression  #logicalBinary
-    | left=booleanExpression operator=OR right=booleanExpression   #logicalBinary
+    | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
+    | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
     ;
 
 windowedAggregationClause:
@@ -263,6 +263,10 @@ csvKeyword: CSV;
 
 sinkTypeZMQ: zmqKeyword '(' zmqStreamName=streamName ',' zmqHost=host ',' zmqPort=port ')';
 
+nullNotnull
+    : NOT? NULLTOKEN
+    ;
+
 zmqKeyword: ZMQ;
 
 streamName: IDENTIFIER;
@@ -292,7 +296,7 @@ predicate
     | NOT? kind=RLIKE pattern=valueExpression
     | NOT? kind=LIKE quantifier=(ANY | SOME | ALL) ('('')' | '(' expression (',' expression)* ')')
     | NOT? kind=LIKE pattern=valueExpression (ESCAPE escapeChar=STRING)?
-    | IS NOT? kind=NULL
+    | IS nullNotnull
     | IS NOT? kind=(TRUE | FALSE | UNKNOWN)
     | IS NOT? kind=DISTINCT FROM right=valueExpression
     ;
@@ -300,12 +304,12 @@ predicate
 
 valueExpression
     : primaryExpression                                                                      #valueExpressionDefault
-    | operator=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
-    | left=valueExpression operator=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
-    | left=valueExpression operator=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
-    | left=valueExpression operator=AMPERSAND right=valueExpression                          #arithmeticBinary
-    | left=valueExpression operator=HAT right=valueExpression                                #arithmeticBinary
-    | left=valueExpression operator=PIPE right=valueExpression                               #arithmeticBinary
+    | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
+    | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
+    | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
+    | left=valueExpression op=AMPERSAND right=valueExpression                          #arithmeticBinary
+    | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
+    | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
     ;
 
@@ -358,7 +362,7 @@ number
     ;
 
 constant
-    : NULL                                                                                     #nullLiteral
+    : NULLTOKEN                                                                                #nullLiteral
     | identifier STRING                                                                        #typeConstructor
     | number                                                                                   #numericLiteral
     | booleanValue                                                                             #booleanLiteral
@@ -455,7 +459,7 @@ nonReserved
 	| INTO
 	| IS
 	| NOT
-	| NULL
+	| NULLTOKEN
 	| OR
 	| ORDER
 	| SELECT
@@ -508,7 +512,7 @@ LIST: 'LIST';
 MERGE: 'MERGE' | 'merge';
 NATURAL: 'NATURAL';
 NOT: 'NOT' | '!';
-NULL: 'NULL';
+NULLTOKEN:'NULL';
 NULLS: 'NULLS';
 OF: 'OF';
 ON: 'ON' | 'on';
