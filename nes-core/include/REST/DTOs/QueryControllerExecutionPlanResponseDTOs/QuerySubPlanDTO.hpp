@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
-#define NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_DTOS_QUERYSUBPLANDTO_HPP_
+#define NES_NES_CORE_INCLUDE_REST_DTOS_QUERYSUBPLANDTO_HPP_
 
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -28,9 +28,10 @@ namespace DTO {
 /**
  * Message Data-Transfer-Object
  */
-class QueryControllerStopQueryResponse : public oatpp::DTO {
-    DTO_INIT(QueryControllerStopQueryResponse, DTO /* Extends */)
-    DTO_FIELD(Boolean, success);
+class QuerySubPlanDTO : public oatpp::DTO {
+    DTO_INIT(QuerySubPlanDTO, DTO /* Extends */)
+    DTO_FIELD(String, operators, "operators");
+    DTO_FIELD(UInt64, querySubPlanId, "querySubPlanId");
 };
 
 }// namespace DTO
@@ -40,4 +41,4 @@ class QueryControllerStopQueryResponse : public oatpp::DTO {
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
 
-#endif//NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLERSTOPQUERYRESPONSE_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_DTOS_NES_NES_CORE_INCLUDE_REST_DTOS_QUERYSUBPLANDTO_HPP_
