@@ -70,6 +70,21 @@ class TCPSource : public DataSource {
     bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
 
     /**
+     * @brief search from the back (first inputted item) to the front for the given search token
+     * @token to search for
+     * @return number of places until first occurrence of token (place of token not included)
+     */
+    uint64_t sizeUntilSearchToken(char token);
+
+    /**
+     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
+     * @param numberOfValuesToPop number of values to pop and fill temp with
+     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
+     * @return true if number of values to pop successfully popped, false otherwise
+     */
+    bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
+
+    /**
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
