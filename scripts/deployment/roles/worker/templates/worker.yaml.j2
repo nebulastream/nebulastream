@@ -8,7 +8,12 @@ logLevel: {{ log_level }}
 ###
 localWorkerIp: {{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
 coordinatorIp: {{ default_coordinator_ip }}
-coordinatorPort: {{ default_coordinator_ports[0] }}
+coordinatorPort: {{ default_coordinator_ports[1] }}
+
+# Set RPC server port of NES Worker
+rpcPort: {{ default_worker_ports[0] }}
+# Set the data port of the NES Worker
+dataPort: {{ default_worker_ports[1] }}
 
 ###
 ### Physical source configuration
