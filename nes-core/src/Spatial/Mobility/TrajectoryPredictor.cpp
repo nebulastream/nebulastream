@@ -258,29 +258,21 @@ void TrajectoryPredictor::startReconnectPlanning() {
         //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
         S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first)),
                                       currentParentLocation);
+
+        //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
+        if (reconnectVector->empty() && currentDistFromParent > defaultCoverageRadiusAngle) {
+            reconnectToClosestNode(currentOwnLocation);
+        }
+
+        //todo: is radius already an angle?
         if (!reconnectVector->empty() && currentDistFromParent >= S1Angle(defaultCoverageRadiusAngle)) {
             auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first));
-            auto nextReconnect = getNextPredictedReconnect();
 
             //if the next expected parent is closer than the current one: reconnect
             if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
                 //reconnect and inform coordinator about upcoming reconnect
-                std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
-                //todo #2918: pass pointer here
-                reconnectConfigurator->reconnect(parentId, reconnectVector->front()->reconnectPrediction.expectedNewParentId);
-                devicePositionTupleAtLastReconnect = currentOwnLocation;
-
-                std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
-                if (nextReconnect) {
-                    updatedPrediction = nextReconnect->reconnectPrediction;
-                } else {
-                    updatedPrediction = {};
-                }
-                reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
-
-                //update locally saved information about parent
-                parentId = reconnectVector->front()->reconnectPrediction.expectedNewParentId;
-                currentParentLocation = fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.expectedNewParentId);
+                auto newParentId = reconnectVector->front()->reconnectPrediction.expectedNewParentId;
+                reconnect(newParentId, currentOwnLocation);
                 reconnectVector->erase(reconnectVector->begin());
 
                 //after reconnect, check if there is a next point on the schedule
@@ -291,7 +283,6 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 } else {
                     NES_INFO("no next reconnect scheduled")
                 }
-                lastReconnectLock.unlock();
             }
         }
         reconnectVectorLock.unlock();
@@ -301,6 +292,42 @@ void TrajectoryPredictor::startReconnectPlanning() {
 #else
     NES_WARNING("s2 library is needed to start reconnect planning")
 #endif
+}
+
+void TrajectoryPredictor::reconnect(uint64_t newParentId, std::pair<Spatial::Index::Experimental::LocationPtr, Timestamp> ownLocation) {
+        std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
+        //todo #2918: pass pointer here
+        reconnectConfigurator->reconnect(parentId, newParentId);
+        devicePositionTupleAtLastReconnect = ownLocation;
+
+        auto nextReconnect = getNextPredictedReconnect();
+        std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
+        if (nextReconnect) {
+            updatedPrediction = nextReconnect->reconnectPrediction;
+        } else {
+            updatedPrediction = {};
+        }
+        reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
+
+        //update locally saved information about parent
+        parentId = newParentId;
+        currentParentLocation = fieldNodeMap.at(newParentId);
+}
+
+bool TrajectoryPredictor::reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation) {
+    std::unique_lock nodeIndexLock(nodeIndexMutex);
+    if (fieldNodeIndex.num_points() == 0) {
+        return false;
+    }
+    S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
+    query.mutable_options()->set_max_distance(defaultCoverageRadiusAngle);
+    S2ClosestPointQuery<int>::PointTarget target(Spatial::Util::S2Utilities::locationToS2Point(*ownLocation.first));
+    auto closestNode = query.FindClosestPoint(&target);
+    if (closestNode.is_empty()) {
+        return false;
+    }
+    reconnect(closestNode.data(), ownLocation);
+    return true;
 }
 
 bool TrajectoryPredictor::updateAverageMovementSpeed() {

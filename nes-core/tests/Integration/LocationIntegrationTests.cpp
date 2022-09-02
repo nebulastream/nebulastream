@@ -900,6 +900,12 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     ReconnectSchedule currentSchedule;
     ReconnectSchedule lastSchedule;
 
+    parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+    while (parentId != 10006) {
+        EXPECT_EQ(parentId, 10045);
+        parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+    }
+
     //keep looping until the final waypoint is reached
     for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation();
          *workerLocation.first != *(waypoints.back().first);

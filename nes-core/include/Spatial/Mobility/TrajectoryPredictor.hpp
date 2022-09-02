@@ -187,6 +187,8 @@ class TrajectoryPredictor {
      */
     bool updateAverageMovementSpeed();
 
+    void reconnect(uint64_t newParentId, std::pair<Index::Experimental::LocationPtr, Timestamp> ownLocation);
+
     LocationProviderPtr locationProvider;
     ReconnectConfiguratorPtr reconnectConfigurator;
 
@@ -225,6 +227,7 @@ class TrajectoryPredictor {
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
+    bool reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation);
 };
 }// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_TRAJECTORYPREDICTOR_HPP
