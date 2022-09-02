@@ -438,6 +438,7 @@ void TrajectoryPredictor::scheduleReconnects() {
     double remainingTime;
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
     std::unique_lock trajecotryLock(trajectoryLineMutex);
+    std::unique_lock indexLock(nodeIndexMutex);
     reconnectVector->clear();
 
     //find the end of path coverage of our curent parent
@@ -494,7 +495,7 @@ void TrajectoryPredictor::scheduleReconnects() {
         }
 
         //if we found a reconnect which is different from the last one on the list, add it to the vector as soon as we
-        if (reconnectVector->empty() || nextReconnectLocationOnPath != reconnectLocationOnPath) {
+        if (nextReconnectLocationOnPath != reconnectLocationOnPath) {
             auto currLatLng = S2LatLng(reconnectLocationOnPath);
             auto currLoc =
                 std::make_shared<Index::Experimental::Location>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
