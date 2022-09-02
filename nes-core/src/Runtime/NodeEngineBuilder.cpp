@@ -139,36 +139,42 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!this->queryManager) {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration->numberOfBuffersPerEpoch.getValue());
+            auto replicationLevel = static_cast<uint16_t>(workerConfiguration->replicationLevel.getValue());
             std::vector<uint64_t> workerToCoreMappingVec =
                 Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
-            switch (workerConfiguration->queryManagerMode.getValue()) {
-                case QueryExecutionMode::Dynamic: {
-                    queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
-                                                                         bufferManagers,
-                                                                         nodeEngineId,
-                                                                         numOfThreads,
-                                                                         numberOfBuffersPerEpoch,
-                                                                         hardwareManager,
-                                                                         stateManager,
-                                                                         workerToCoreMappingVec);
-                    break;
-                }
-                case QueryExecutionMode::Static: {
-                    queryManager =
-                        std::make_shared<MultiQueueQueryManager>(nesWorker,
-                                                                 bufferManagers,
-                                                                 nodeEngineId,
-                                                                 numOfThreads,
-                                                                 numberOfBuffersPerEpoch,
-                                                                 hardwareManager,
-                                                                 stateManager,
-                                                                 workerToCoreMappingVec,
-                                                                 workerConfiguration->numberOfQueues.getValue(),
-                                                                 workerConfiguration->numberOfThreadsPerQueue.getValue());
-                    break;
-                }
-                default: {
-                    NES_ASSERT(false, "Cannot build Query Manager");
+            if (workerToCoreMappingVec.size()) {
+                NES_ASSERT(workerToCoreMappingVec.size() >= numOfThreads, " we need one position for each thread in mapping");
+                switch (workerConfiguration->queryManagerMode.getValue()) {
+                    case QueryExecutionMode::Dynamic: {
+                        queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
+                                                                             bufferManagers,
+                                                                             nodeEngineId,
+                                                                             numOfThreads,
+                                                                             numberOfBuffersPerEpoch,
+                                                                             replicationLevel,
+                                                                             hardwareManager,
+                                                                             stateManager,
+                                                                             workerToCoreMappingVec);
+                        break;
+                    }
+                    case QueryExecutionMode::Static: {
+                        queryManager =
+                            std::make_shared<MultiQueueQueryManager>(nesWorker,
+                                                                     bufferManagers,
+                                                                     nodeEngineId,
+                                                                     numOfThreads,
+                                                                     numberOfBuffersPerEpoch,
+                                                                     replicationLevel,
+                                                                     hardwareManager,
+                                                                     stateManager,
+                                                                     workerToCoreMappingVec,
+                                                                     workerConfiguration->numberOfQueues.getValue(),
+                                                                     workerConfiguration->numberOfThreadsPerQueue.getValue());
+                        break;
+                    }
+                    default: {
+                        NES_ASSERT(false, "Cannot build Query Manager");
+                    }
                 }
 
             } else {
@@ -177,6 +183,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                      nodeEngineId,
                                                                      numOfThreads,
                                                                      numberOfBuffersPerEpoch,
+                                                                     replicationLevel,
                                                                      hardwareManager,
                                                                      stateManager);
             }

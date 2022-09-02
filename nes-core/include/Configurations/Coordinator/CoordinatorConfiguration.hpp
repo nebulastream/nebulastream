@@ -76,6 +76,17 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                      LogLevel::LOG_INFO,
                                      "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
+
+    /**
+     * @brief Number of buffers per epoch
+     */
+    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
+
+    /**
+     * @brief number of nodes that will buffer
+     */
+    UIntOption replicationLevel = {REPLICATION_LEVEL, 2, "number of nodes that will buffer."};
+
     /**
      * @brief Indicates if the monitoring stack is enables.
      */
@@ -145,6 +156,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &logLevel,
                 &enableQueryReconfiguration,
                 &enableMonitoring,
+                &numberOfBuffersPerEpoch,
+                &replicationLevel,
                 &configPath,
                 &worker,
                 &workerConfigPath,

@@ -171,7 +171,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->lambdaSource.getValue(), workerConfigPtr->lambdaSource.getDefaultValue());
     EXPECT_TRUE(workerConfigPtr->physicalSources.empty());
 }
 

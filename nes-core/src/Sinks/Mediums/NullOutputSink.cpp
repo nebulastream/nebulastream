@@ -34,6 +34,11 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
             updateWatermark(inputBuffer);
         };
     }
+    else if(faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    }
     else {
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {};
     }

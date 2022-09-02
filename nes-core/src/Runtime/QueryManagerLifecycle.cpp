@@ -520,6 +520,29 @@ bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uin
     return false;
 }
 
+bool AbstractQueryManager::propagateKEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t replicationLevel) {
+    std::unique_lock queryLock(queryMutex);
+    auto queryId = getQueryId(querySubPlanId);
+    auto qep = getQueryExecutionPlan(querySubPlanId);
+    auto sources = qep->getSources();
+    bool isPropagated = false;
+    for (auto source : sources) {
+        if (source->getType() == SourceType::NETWORK_SOURCE) {
+            auto newReconf = Runtime::ReconfigurationMessage(queryId,
+                                                             querySubPlanId,
+                                                             Runtime::ReconfigurationType::PropagateKEpoch,
+                                                             source,
+                                                             std::make_any<EpochMessage>(epochBarrier, replicationLevel));
+            addReconfigurationMessage(queryId, querySubPlanId, newReconf);
+            isPropagated = true;
+        }
+    }
+    if (isPropagated) {
+        return true;
+    }
+    return false;
+}
+
 bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
     std::unique_lock queryLock(queryMutex);
     NES_DEBUG("AbstractQueryManager: AbstractQueryManager::addEndOfStream for source operator "

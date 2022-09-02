@@ -259,6 +259,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
     uint64_t numberOfBuffersPerEpoch;
+    uint64_t replicationLevel;
+    std::shared_ptr<std::thread> statisticOutputThread;
     LocationServicePtr locationService;
 
   public:

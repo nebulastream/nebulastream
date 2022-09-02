@@ -31,6 +31,8 @@ enum ReconfigurationType : uint8_t {
     FailEndOfStream,
     /// use PropagateEpoch to pass epoch barrier to all network sinks
     PropagateEpoch,
+    /// use PropagateEpoch to pass epoch barrier to all network sinks on k nodes
+    PropagateKEpoch
     /// start buffering the data
     StartBuffering,
     /// stop buffering data

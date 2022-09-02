@@ -211,6 +211,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     */
     uint64_t getNumberOfBuffersPerEpoch();
 
+    /**
+     * @brief Method to get replicationLevel
+     * @return replicationLevel
+     */
+    uint64_t getReplicationLevel();
+
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
     /**
@@ -292,6 +298,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Monitoring::MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     uint64_t numberOfBuffersPerEpoch;
+    uint64_t replicationLevel;
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;

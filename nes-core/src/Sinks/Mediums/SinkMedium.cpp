@@ -37,19 +37,24 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
       watermarkProcessor(std::move(watermarkProcessor)) {
     bufferCount = 0;
-    currentTimestamp = 0;
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
+    replicationLevel = this->nodeEngine->getQueryManager()->getReplicationLevel();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
+    currentTimestamp = 0;
     bool isWaiting = false;
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        notifyEpochCallback = [this](uint64_t timestamp) {
+            notifyEpochTermination(timestamp);
         };
     }
+    else if(faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+        notifyEpochCallback = [this](uint64_t timestamp) {
+            notifyKEpochTermination(timestamp);
+        };
+    }
+//    statisticsFile.open("sinkMedium.csv", std::ios::out);
+//    statisticsFile << "time, waitingTime\n";
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
@@ -65,8 +70,14 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
         if (isSync && timestamp) {
-            notifyEpochTermination(timestamp);
+            //            auto t1 = std::chrono::high_resolution_clock::now();
+            notifyEpochCallback(timestamp);
             isWaiting = false;
+            //            auto t2 = std::chrono::high_resolution_clock::now();
+            //            auto ts = std::chrono::system_clock::now();
+            //            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            //            statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+            //            statisticsFile << duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
         }
         else {
             isWaiting = true;
@@ -100,6 +111,14 @@ std::string SinkMedium::getAppendAsString() const {
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) {
     auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
     if (nodeEngine->getQueryManager()->propagateEpochBackwards(querySubPlanId, epochBarrier)) {
+        return true;
+    }
+    return false;
+}
+
+bool SinkMedium::notifyKEpochTermination(uint64_t epochBarrier) {
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
+    if (nodeEngine->getQueryManager()->propagateKEpochBackwards(querySubPlanId, epochBarrier, replicationLevel)) {
         return true;
     }
     return false;

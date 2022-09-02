@@ -205,7 +205,21 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch punctuation= " << timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
+            if (channel) {
+                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
+            }
+            break;
+        }
+        case Runtime::PropagateKEpoch: {
+            auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            auto epochMessage = task.getUserData<EpochMessage>();
+            auto timestamp = epochMessage.getTimestamp();
+            auto replicationLevel = epochMessage.getReplicationLevel();
+            NES_DEBUG("Executing PropagateKEpoch punctuation= " << timestamp << " replication level= " << replicationLevel);
+            if (channel) {
+                channel->sendEvent<Runtime::PropagateKEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, replicationLevel);
+            }
             break;
         }
         default: {

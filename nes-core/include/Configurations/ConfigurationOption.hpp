@@ -294,6 +294,7 @@ const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
+const std::string REPLICATION_LEVEL = "replicationLevel";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
 const std::string SOURCE_GATHERING_INTERVAL_CONFIG = "sourceGatheringInterval";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";

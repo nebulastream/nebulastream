@@ -230,6 +230,11 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 
     /**
+     * @brief number of nodes that will buffer
+     */
+    UIntOption replicationLevel = {REPLICATION_LEVEL, 2, "number of nodes that will buffer."};
+
+    /**
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
      *      - Dynamic: only one queue overall
@@ -282,6 +287,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
+                &replicationLevel,
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,

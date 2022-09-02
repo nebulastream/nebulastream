@@ -136,9 +136,11 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;
+    uint64_t bufferCount;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
     std::atomic<bool> reconnectBuffering;
 };
 
