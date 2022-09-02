@@ -19,6 +19,7 @@
 #include <REST/DTOs/QueryControllerStopQueryResponse.hpp>
 #include <REST/DTOs/QueryControllerSubmitQueryRequest.hpp>
 #include <REST/DTOs/QueryControllerSubmitQueryResponse.hpp>
+#include <REST/DTOs/QueryControllerQueryPlanResponse.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
@@ -154,7 +155,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan()).serialize();
+            auto basePlan = PlanJsonGenerator::getQueryPlanAsNlohmannJson(queryCatalogEntry->getInputQueryPlan());
             auto dto = DTO::QueryControllerResponse::createShared();
             dto->entry = basePlan;
             return createDtoResponse(Status::CODE_200, dto);

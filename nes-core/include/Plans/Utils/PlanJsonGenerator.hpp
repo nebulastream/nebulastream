@@ -59,6 +59,14 @@ class PlanJsonGenerator {
                                                    QueryId queryId = INVALID_QUERY_ID);
 
     /**
+     * @brief function to generate the query plan from of a query.
+     * @param queryCatalog in which the query is stored
+     * @param the id of the query
+     * @return a JSON object representing the query plan
+     */
+    static nlohmann::json getQueryPlanAsNlohmannJson(const QueryPlanPtr& queryPlan);
+
+    /**
      * @brief get the json representation of execution plan of a query
      * @param the global execution plan
      * @param id of the query
@@ -68,6 +76,15 @@ class PlanJsonGenerator {
                                                    QueryId queryId = INVALID_QUERY_ID);
 
   private:
+    /**
+     * @brief function to traverse to queryPlanChildren
+     * @param root root operator of the queryPlan
+     * @param nodes JSON array to store the traversed node
+     * @param edges JSON array to store the traversed edge
+     */
+    static void
+    getChildrenNlohmann(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
+
     /**
      * @brief function to traverse to queryPlanChildren
      * @param root root operator of the queryPlan
