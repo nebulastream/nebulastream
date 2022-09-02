@@ -149,6 +149,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
                                                                            0,
                                                                            1,
                                                                            100,
+                                                                           0,
                                                                            nullptr,
                                                                            stateManager,
                                                                            100);
