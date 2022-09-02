@@ -21,6 +21,7 @@ limitations under the License.
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
+#include <nlohmann/json.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -136,7 +137,7 @@ TEST_F(SourceCatalogControllerTest, DISABLED_testGetSchema) {
     NES_INFO(r.text);
 }
 
-TEST_F(SourceCatalogControllerTest, DISABLED_testPostLogicalSource) {
+TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -148,19 +149,20 @@ TEST_F(SourceCatalogControllerTest, DISABLED_testPostLogicalSource) {
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     if (!success) {
         FAIL() << "Rest server failed to start";
-    }/*
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addLogicalSource("test_stream", Schema::create());*/
-    //toDO pfad ändern
-    cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource"}, cpr::Parameters{{"logicalSourceName", "test_stream"}});
-    EXPECT_EQ(r.status_code, 200l);
+    }
+    nlohmann::json request;
+    request["logicalSourceName"] = "logicalSourceName";
+    request["schema"] = "test_schema";
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource"},
+                                cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                                cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 200l);
     // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
+    NES_DEBUG("This is the content of response:");
+    NES_DEBUG(response.text);
 }
 
-TEST_F(SourceCatalogControllerTest, DISABLED_testUpdateLogicalSource) {
+TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -175,16 +177,22 @@ TEST_F(SourceCatalogControllerTest, DISABLED_testUpdateLogicalSource) {
     }
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addLogicalSource("test_stream", Schema::create());
-    //toDO pfad ändern
-    cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/updateLogicalSource"}, cpr::Parameters{{"logicalSourceName", "test_stream"}});
+    auto schema = Schema::create();
+    sourceCatalog->addLogicalSource("test_stream", schema);
+
+    nlohmann::json request;
+    request["logicalSourceName"] = "test_stream";
+    request["schema"] = "schema";
+    auto r = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/updateLogicalSource"},
+                       cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                       cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     EXPECT_EQ(r.status_code, 200l);
     // TODO compare value of response with expected value  To be added once json library found #2950
     NES_INFO("This is the content of response:");
     NES_INFO(r.text);
 }
 
-TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
+TEST_F(SourceCatalogControllerTest, DISABLED_testDeleteLogicalSource) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
