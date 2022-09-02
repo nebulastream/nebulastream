@@ -69,6 +69,20 @@ struct PropagateEpochEvent {
     uint64_t timestamp;
 };
 
+struct PropagateKEpochEvent {
+    explicit PropagateKEpochEvent(Runtime::EventType type, uint64_t timestamp, uint64_t replicationLevel) : type(type), timestamp(timestamp), replicationLevel(replicationLevel) {}
+
+    Runtime::EventType getEventType() const { return type; }
+
+    uint64_t timestampValue() const { return timestamp; }
+
+    uint64_t replicationLevelValue() const { return replicationLevel; }
+
+    Runtime::EventType type;
+    uint64_t timestamp;
+    uint64_t replicationLevel;
+};
+
 
 
 /**

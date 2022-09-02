@@ -23,6 +23,9 @@
 # Set the number of worker threads
 #numWorkerThreads: 1
 
+# Set the replication level
+# replicationLevel: 100
+
 # Set the number of buffers per epoch
 # numberOfBuffersPerEpoch: 100
 

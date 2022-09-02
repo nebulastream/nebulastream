@@ -16,10 +16,10 @@
 
 namespace NES {
 
-    EpochMessage::EpochMessage(uint64_t timestamp, uint64_t queryId) : timestamp(timestamp), queryId(queryId) {}
+    EpochMessage::EpochMessage(uint64_t timestamp, uint64_t replicationLevel) : timestamp(timestamp), replicationLevel(replicationLevel) {}
 
     uint64_t EpochMessage::getTimestamp() const { return timestamp; }
 
-    uint64_t EpochMessage::getQueryId() const { return queryId; }
+    uint64_t EpochMessage::getReplicationLevel() const { return replicationLevel; }
 
 }// namespace NES

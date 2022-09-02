@@ -84,7 +84,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
       numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring), numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring), numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch),
+      replicationLevel(this->coordinatorConfiguration->replicationLevel) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -199,6 +200,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
         workerConfig->numberOfBuffersPerEpoch = numberOfBuffersPerEpoch;
+        workerConfig->replicationLevel = replicationLevel;
     }
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));

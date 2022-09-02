@@ -217,6 +217,11 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 
+    /**
+     * @brief number of nodes that will buffer
+     */
+    UIntOption replicationLevel = {REPLICATION_LEVEL, 2, "number of nodes that will buffer."};
+
     UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
 
     UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
@@ -262,6 +267,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
+                &replicationLevel,
                 &lambdaSource,
                 &numberOfBuffersToProduce,
                 &sourceGatheringInterval,

@@ -139,6 +139,8 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     bool notifyEpochTermination(uint64_t epochBarrier);
 
+    bool notifyKEpochTermination(uint64_t epochBarrier);
+
     /**
       * @brief method to return the type of medium
       * @return type of medium
@@ -191,9 +193,11 @@ class SinkMedium : public Runtime::Reconfigurable {
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
+    std::function<void(uint64_t)> notifyEpochCallback;
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint64_t buffersPerEpoch;
+    uint64_t replicationLevel;
     bool isWaiting;
 //    std::ofstream statisticsFile;
     uint64_t sentBuffer{0};// TODO check thread safety

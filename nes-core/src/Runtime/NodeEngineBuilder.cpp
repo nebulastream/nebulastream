@@ -146,6 +146,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!this->queryManager) {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration->numberOfBuffersPerEpoch.getValue());
+            auto replicationLevel = static_cast<uint16_t>(workerConfiguration->replicationLevel.getValue());
             std::vector<uint64_t> workerToCoreMappingVec =
                 Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
             if (workerToCoreMappingVec.size()) {
@@ -157,6 +158,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                              nodeEngineId,
                                                                              numOfThreads,
                                                                              numberOfBuffersPerEpoch,
+                                                                             replicationLevel,
                                                                              hardwareManager,
                                                                              stateManager,
                                                                              workerToCoreMappingVec);
@@ -169,6 +171,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                      nodeEngineId,
                                                                      numOfThreads,
                                                                      numberOfBuffersPerEpoch,
+                                                                     replicationLevel,
                                                                      hardwareManager,
                                                                      stateManager,
                                                                      workerToCoreMappingVec,
@@ -187,6 +190,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                      nodeEngineId,
                                                                      numOfThreads,
                                                                      numberOfBuffersPerEpoch,
+                                                                     replicationLevel,
                                                                      hardwareManager,
                                                                      stateManager);
             }

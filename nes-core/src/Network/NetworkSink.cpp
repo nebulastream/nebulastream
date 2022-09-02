@@ -49,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
@@ -57,6 +57,23 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
     else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {};
     }
+    if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+        sendPropagationCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
+                auto epochBarrier = inputBuffer.getWatermark();
+                auto success = queryManager->propagateEpochBackwards(this->querySubPlanId, epochBarrier);
+                if (success) {
+                    NES_DEBUG("NetworkSink::writeData: epoch" << epochBarrier << " queryId " << this->queryId << " sent back");
+                } else {
+                    NES_ERROR("NetworkSink::writeData:: couldn't send " << epochBarrier << " queryId " << this->queryId);
+                }
+            }
+        };
+    }
+    else {
+        sendPropagationCallback = [](Runtime::TupleBuffer&) {};
+    }
+    bufferCount = 0;
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
@@ -66,6 +83,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     if (channel) {
         insertIntoStorageCallback(inputBuffer, workerContext);
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        sendPropagationCallback(inputBuffer);
+        bufferCount++;
         return success;
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
@@ -167,20 +186,52 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     NES_DEBUG("NetworkSink: received an event");
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
-        auto epochBarrier = epochEvent->timestampValue();
-        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
-        if (success) {
-            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
-            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+        if (epochEvent) {
+            auto epochBarrier = epochEvent->timestampValue();
+            auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
             if (success) {
-                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
+                success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+                if (success) {
+                    NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+                }
+                else {
+                    NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+                }
             }
             else {
-                NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+                NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
             }
         }
         else {
-            NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
+            auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateKEpochEvent>();
+            auto epochBarrier = epochEvent->timestampValue();
+            auto replicationLevel = epochEvent->replicationLevelValue();
+            if (replicationLevel > 0) {
+                auto success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, replicationLevel - 1);
+                if (success) {
+                    NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+                }
+                else {
+                    NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+                }
+            }
+            else {
+                auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+                if (success) {
+                    NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
+                    success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, 0);
+                    if (success) {
+                        NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+                    }
+                    else {
+                        NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+                    }
+                }
+                else {
+                    NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
+                }
+            }
         }
     }
 }

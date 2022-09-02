@@ -110,6 +110,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 
+    /**
+     * @brief number of nodes that will buffer
+     */
+    UIntOption replicationLevel = {REPLICATION_LEVEL, 2, "number of nodes that will buffer."};
+
 
     /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
@@ -162,6 +167,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &numberOfBuffersPerWorker,
             &numberOfBuffersInSourceLocalBufferPool,
             &numberOfBuffersPerEpoch,
+            &replicationLevel,
             &bufferSizeInBytes,
             &numWorkerThreads,
             &enableQueryReconfiguration,
