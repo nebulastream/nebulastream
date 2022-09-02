@@ -194,6 +194,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                                            0,
                                                                            1,
                                                                            100,
+                                                                           0,
                                                                            hwManager,
                                                                            stateManager);
         auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
