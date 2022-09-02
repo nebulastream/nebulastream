@@ -118,7 +118,7 @@ bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) {
 
 bool SinkMedium::notifyKEpochTermination(uint64_t epochBarrier) {
     auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
-    if (nodeEngine->getQueryManager()->propagateKEpochBackwards(querySubPlanId, epochBarrier, replicationLevel)) {
+    if (nodeEngine->getQueryManager()->propagateKEpochBackwards(querySubPlanId, epochBarrier, 0)) {
         return true;
     }
     return false;
