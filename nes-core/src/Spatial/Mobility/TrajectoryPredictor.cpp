@@ -173,17 +173,20 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
         }
         iterator.Next();
     }
-
-    //if this workers current parent could not be found among the data, reconnect planning is not possible
-    if (iterator.done()) {
-        NES_DEBUG("parent id does not match any field node in the coverage area. Cannot start reconnect planning")
-        return;
-    }
     nodeIndexLock.unlock();
 
     std::unique_lock vectorLock(reconnectVectorMutex);
     reconnectVector = std::make_shared<std::vector<ReconnectPointPtr>>();
     vectorLock.unlock();
+
+    //if this workers current parent could not be found among the data, reconnect planning is not possible
+    if (iterator.done()) {
+        NES_DEBUG("parent id does not match any field node in the coverage area. Changing parent now")
+        //todo: something is not quite right with setting the right parent here
+        reconnectToClosestNode(locationProvider->getCurrentLocation());
+        NES_DEBUG("set parent to " << parentId);
+        //return;
+    }
 
     //start reconnect planner thread
     locationUpdateThread = std::make_shared<std::thread>(&TrajectoryPredictor::startReconnectPlanning, this);
@@ -552,6 +555,9 @@ void TrajectoryPredictor::scheduleReconnects() {
 }
 
 std::shared_ptr<ReconnectPoint> TrajectoryPredictor::getNextPredictedReconnect() {
+    if (!reconnectVector) {
+        return {};
+    }
     std::unique_lock lock(reconnectVectorMutex);
     if (reconnectVector->size() > 1) {
         return reconnectVector->at(0);

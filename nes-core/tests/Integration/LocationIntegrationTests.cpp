@@ -1482,7 +1482,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     //error starts after adding this block
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
-    //wrkConf1->parentId.setValue(10006);
+    wrkConf1->parentId.setValue(10006);
     wrkConf1->parentId.setValue(startParentId);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
@@ -1533,6 +1533,21 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     string expectedContent = compareString;
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+
+
+    /*
+    uint64_t parentId = 0;
+    std::vector<uint64_t> reconnectSequence({10045, 10006, 10008, 10051, 10046, 10000, 10033, 10031});
+    parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+    while (parentId != reconnectSequence.back()) {
+        if (parentId != reconnectSequence.front()) {
+            reconnectSequence.erase(reconnectSequence.begin());
+            EXPECT_EQ(parentId, reconnectSequence.front());
+        }
+        parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+     */
 
     int response = remove(testFile.c_str());
     EXPECT_TRUE(response == 0);
