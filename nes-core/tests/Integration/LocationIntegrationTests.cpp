@@ -880,26 +880,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
     }
 
-    size_t waypointCounter = 1;
-    std::vector<bool> waypointCovered(waypoints.size(), false);
-    S2Polyline lastPredictedPath;
-    Timestamp lastPredictedPathRetrievalTime;
     uint64_t parentId = 0;
-    Timestamp allowedTimeDiff = 150000000;//0.15 seconds
-    std::optional<Timestamp> firstPrediction;
-    auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
-    std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime =
-        std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
-    std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
-    std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect;
-    bool stabilizedSchedule = false;
-    int reconnectCounter = 0;
-    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPrediction> checkVectorForCoordinatorPrediction;
-    std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>>
-        delayedCoordinatorPredictionsToCheck;
-    ReconnectSchedule currentSchedule;
-    ReconnectSchedule lastSchedule;
-
     std::vector<uint64_t> reconnectSequence({10045, 10006, 10008, 10051, 10046, 10000, 10033, 10031});
     parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
     while (parentId != reconnectSequence.back()) {

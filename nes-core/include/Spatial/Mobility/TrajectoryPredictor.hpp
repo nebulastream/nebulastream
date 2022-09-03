@@ -187,7 +187,20 @@ class TrajectoryPredictor {
      */
     bool updateAverageMovementSpeed();
 
+    /**
+     * @brief: Perform a reconnect to change this workers parent in the topology and update devicePositionTuplesAtLastReconnect,
+     * ParentId and currentParentLocation.
+     * @param newParentId: The id of the new parent to connect to
+     * @param ownLocation: This workers current location
+     */
     void reconnect(uint64_t newParentId, std::pair<Index::Experimental::LocationPtr, Timestamp> ownLocation);
+
+    /**
+     * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
+     * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
+     * @param ownLocation: This workers current location
+     */
+    bool reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation);
 
     LocationProviderPtr locationProvider;
     ReconnectConfiguratorPtr reconnectConfigurator;
@@ -227,7 +240,6 @@ class TrajectoryPredictor {
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
-    bool reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation);
 };
 }// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_TRAJECTORYPREDICTOR_HPP
