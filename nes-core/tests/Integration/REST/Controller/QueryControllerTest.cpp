@@ -176,15 +176,15 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     NES_DEBUG(queryId);
     auto started = TestUtils::waitForQueryToStart(queryId,coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
-    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
+    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
                                 cpr::Parameters{{"queryId", std::to_string(queryId)}});
     EXPECT_EQ(r2.status_code, 200l);
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
-    EXPECT_EQ(response2.size(), 1);
-    for(auto executionNode : response2["executionNodes"]){
-        EXPECT_EQ(coordinator->getTopology()->getRoot()->getId(), executionNode["topologyNodeId"].get<uint64_t>());
-        EXPECT_EQ(coordinatorConfig->coordinatorIp.getValue(),executionNode["topologyNodeIpAddress"].get<std::string>());
-        EXPECT_TRUE(executionNode["ScheduledQueries"].size() != 0);
+    for(auto edge : response2["edges"]){
+        EXPECT_TRUE(edge.contains("source") && edge.contains("target"));
+    }
+    for(auto node : response2["nodes"]){
+        EXPECT_TRUE(node.contains("id") && node.contains("name") && node.contains("nodeType"));
     }
 }
 } // namespace NES
