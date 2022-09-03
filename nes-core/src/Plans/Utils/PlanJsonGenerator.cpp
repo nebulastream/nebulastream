@@ -176,7 +176,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& query
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
         node["name"] = web::json::value::string(rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
 
-        node["nodeSpatialType"] = web::json::value::string(rootOperatorType);
+        node["nodeType"] = web::json::value::string(rootOperatorType);
 
         nodes.push_back(node);
 
@@ -222,7 +222,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
             node["name"] =
                 web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
         }
-        node["nodeSpatialType"] = web::json::value::string(childOPeratorType);
+        node["nodeType"] = web::json::value::string(childOPeratorType);
 
         // store current node JSON object to the `nodes` JSON array
         nodes.push_back(node);
@@ -284,7 +284,7 @@ void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
             node["name"] =
                childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
         }
-        node["nodeSpatialType"] = childOPeratorType;
+        node["nodeType"] = childOPeratorType;
 
         // store current node JSON object to the `nodes` JSON array
         nodes.push_back(node);
@@ -410,7 +410,7 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsNlohmannJson(const QueryPlanPtr&
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
         node["name"] = rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")";
 
-        node["nodeSpatialType"] = rootOperatorType;
+        node["nodeType"] = rootOperatorType;
 
         nodes.push_back(node);
 

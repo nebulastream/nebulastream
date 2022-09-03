@@ -156,9 +156,30 @@ class QueryController : public oatpp::web::server::api::ApiController {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsNlohmannJson(queryCatalogEntry->getInputQueryPlan());
-            auto dto = DTO::QueryControllerResponse::createShared();
-            dto->entry = basePlan;
-            return createDtoResponse(Status::CODE_200, dto);
+            NES_DEBUG(basePlan.dump());
+            //create list of edges
+            auto response = DTO::QueryControllerQueryPlanResponse::createShared();
+            oatpp::List<oatpp::Object<DTO::Edge>> edges({});
+            auto edgesJson = basePlan["edges"];
+            for(auto edge : edgesJson){
+                auto edgeDTO = DTO::Edge::createShared();
+                edgeDTO->source = edge["source"].get<std::string>();
+                edgeDTO->target = edge["target"].get<std::string>();
+                edges->push_back(edgeDTO);
+            }
+            response->edges = edges;
+            //create list of nodes
+            oatpp::List<oatpp::Object<DTO::Node>> nodes({});
+            auto nodesJson = basePlan["nodes"];
+            for(auto node : nodesJson){
+                auto nodeDTO = DTO::Node::createShared();
+                nodeDTO->id = node["id"].get<uint64_t>();
+                nodeDTO->name = node["name"].get<std::string>();
+                nodeDTO->nodeType = node["nodeType"].get<std::string>();
+                nodes->push_back(nodeDTO);
+            }
+            response->nodes = nodes;
+            return createDtoResponse(Status::CODE_200, response);
         } catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
         }
