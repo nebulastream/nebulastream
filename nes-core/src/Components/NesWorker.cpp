@@ -219,6 +219,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    if (trajectoryPredictor) {
+        trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
+    }
+
     if (workerConfig->enableStatisticOuput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
@@ -350,7 +354,7 @@ bool NesWorker::connect() {
                     std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this,
                                                                                                   coordinatorRpcClient,
                                                                                                   mobilityConfig);
-                trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
+                //trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
             }
         }
 
