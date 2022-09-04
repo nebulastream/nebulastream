@@ -419,11 +419,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 }
-TEST_F(LocationIntegrationTests, DISABLED_testLocationFromConfig) {
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyFieldNode.yaml");
-    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::Index::Experimental::Location(45, -30));
-}
 
 TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 

@@ -117,7 +117,7 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::Location curre
 
     //if we actually received nodes in our vicinity, we can clear the old nodes
     std::unique_lock nodeIndexLock(nodeIndexMutex);
-    if (!nodeMapPtr->empty()) {
+    if (nodeMapPtr && !nodeMapPtr->empty()) {
         fieldNodeMap.clear();
         fieldNodeIndex.Clear();
     } else {
@@ -150,6 +150,7 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
         NES_WARNING("there is already a prediction thread running, cannot start another one")
         return;
     }
+    //if (!locationProvider->get)
 
     //set this boolean to tell the locationUpdate thread to keep looping after it started
     //the thread will only terminate when this is set to false

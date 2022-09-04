@@ -187,12 +187,14 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Index::Experimental::NodeType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
+        /*
         if (locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
             trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider,
                                                                                                               mobilityConfig,
                                                                                                               parentId);
         }
+         */
     }
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
@@ -219,7 +221,16 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    /*
     if (trajectoryPredictor) {
+        trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
+    }
+     */
+    if (coordinatorRpcClient && locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
+        trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider,
+                                                                                                          mobilityConfig,
+                                                                                                          parentId);
         trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
     }
 
