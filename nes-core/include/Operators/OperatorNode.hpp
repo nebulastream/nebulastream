@@ -29,6 +29,12 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
+
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
 class OperatorNode : public Node {
   public:
     explicit OperatorNode(OperatorId id);

@@ -178,8 +178,6 @@ class QueryPlacementTestSandbox : public Testing::TestWithErrorHandling<testing:
 
 
 
-
-
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }

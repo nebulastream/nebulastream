@@ -76,14 +76,31 @@ class BottomUpStrategy : public BasePlacementStrategy {
                        TopologyNodePtr candidateTopologyNode,
                        const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
     FaultToleranceType checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryId queryId);
+
+/**
+ * returns true if there are other nodes within the globalExecutionPlan on which the specified SubQuery is not deployed.
+ * @param globalExecutionPlan
+ * @param queryId
+ * @return
+ */
     bool otherNodesAvailable(GlobalExecutionPlanPtr globalExecutionPlan, std::vector<long> topologyIds, QueryId queryId);
+
+
     uint16_t getEffectivelyUsedResources(ExecutionNodePtr exNode, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) const;
-    //bool calcEffectiveRessources(std::vector<ExecutionNodePtr> topologyNodes, std::vector<int> seenIds, QueryId queryId);
-    bool calcEffectiveRessources(std::vector<ExecutionNodePtr> executionNodes, std::vector<int> seenIds, QueryId queryId);
-    bool calcEffectiveRessources(std::vector<TopologyNodePtr> executionNodes, std::vector<int> seenIds, QueryId queryId);
-    int depthOfChildren(ExecutionNodePtr enode);
+
+    /**
+     * Sum up all effective ressources and latencies of a given GlobalExecutionPlan
+     * @param globalExecutionPlan
+     * @return
+     */
     float calcExecutionPlanCosts(GlobalExecutionPlanPtr globalExecutionPlan);
 
+    /**
+     * Calculate a queries' effective ressources and latencies for a set of TopologyNodes
+     * @param topologyNodes
+     * @param queryId
+     */
+    void calcEffectiveValues(std::vector<TopologyNodePtr> topologyNodes, QueryId queryId);
 };
 }// namespace NES::Optimizer
 
