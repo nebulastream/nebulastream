@@ -61,7 +61,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         sendPropagationCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
                 auto epochBarrier = inputBuffer.getWatermark();
-                auto success = queryManager->propagateEpochBackwards(this->querySubPlanId, epochBarrier);
+                auto success = queryManager->propagateKEpochBackwards(this->querySubPlanId, epochBarrier, this->replicationLevel);
                 if (success) {
                     NES_DEBUG("NetworkSink::writeData: epoch" << epochBarrier << " queryId " << this->queryId << " sent back");
                 } else {

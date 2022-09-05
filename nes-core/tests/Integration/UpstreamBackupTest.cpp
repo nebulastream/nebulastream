@@ -83,39 +83,40 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
-        coordinatorConfig->replicationLevel = 1;
+        coordinatorConfig->replicationLevel = 3;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
-        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 11;
         workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 4;
-        workerConfig1->replicationLevel = 1;
+        workerConfig1->replicationLevel = 3;
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 10;
-        workerConfig2->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig2->numberOfBuffersInSourceLocalBufferPool = 11;
         workerConfig2->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig2->coordinatorPort = *rpcCoordinatorPort;
         workerConfig2->enableStatisticOutput = true;
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 10;
         workerConfig2->numWorkerThreads = 4;
-        workerConfig2->replicationLevel = 1;
+        workerConfig2->replicationLevel = 3;
 
         workerConfig3 = WorkerConfiguration::create();
         workerConfig3->numberOfBuffersPerEpoch = 10;
         workerConfig3->numWorkerThreads = 4;
-        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 11;
         workerConfig3->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig3->coordinatorPort = *rpcCoordinatorPort;
         workerConfig3->enableStatisticOutput = true;
         workerConfig3->numberOfBuffersToProduce = 5000000;
         workerConfig3->sourceGatheringInterval = 10;
+        workerConfig3->replicationLevel = 3;
 
         workerConfig4 = WorkerConfiguration::create();
         workerConfig4->numberOfBuffersPerEpoch = 10;
@@ -504,15 +505,22 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
 
-    workerConfig2->lambdaSource = 2;
+//    workerConfig2->lambdaSource = 2;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
+    workerConfig3->lambdaSource = 2;
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
+    crd->getTopologyManagerService()->removeParent(4,1);
     crd->getTopologyManagerService()->removeParent(3,1);
     crd->getTopologyManagerService()->addParent(3,2);
+    crd->getTopologyManagerService()->addParent(4,3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
