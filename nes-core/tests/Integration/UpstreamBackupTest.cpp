@@ -83,6 +83,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
+        coordinatorConfig->replicationLevel = 1;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
@@ -93,6 +94,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 4;
+        workerConfig1->replicationLevel = 1;
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 10;
@@ -103,6 +105,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 10;
         workerConfig2->numWorkerThreads = 4;
+        workerConfig2->replicationLevel = 1;
 
         workerConfig3 = WorkerConfiguration::create();
         workerConfig3->numberOfBuffersPerEpoch = 10;
@@ -523,7 +526,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_MOST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

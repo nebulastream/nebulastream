@@ -333,6 +333,11 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                             exchangeProtocol.onEvent(nesPartition, event);
                             break;
                         }
+                        case Runtime::EventType::kEpochPropagation: {
+                            auto event = Runtime::KEpochEventWrapper(std::move(buffer));
+                            exchangeProtocol.onEvent(nesPartition, event);
+                            break;
+                        }
                         default: {
                             NES_ASSERT2_FMT(false, "Invalid event");
                         }
