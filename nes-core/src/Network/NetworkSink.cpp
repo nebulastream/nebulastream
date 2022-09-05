@@ -241,12 +241,38 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     NES_DEBUG("NetworkSink: received an event");
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
-        if (epochEvent) {
-            auto epochBarrier = epochEvent->timestampValue();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+        if (success) {
+            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
+            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+            } else {
+                NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+            }
+        } else {
+            NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
+        }
+    }
+    else {
+        auto epochEvent = dynamic_cast<Runtime::KEpochEventWrapper&>(event).data<Runtime::PropagateKEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto replicationLevel = epochEvent->replicationLevelValue();
+        if (replicationLevel > 0) {
+            auto success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, replicationLevel - 1);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+            }
+            else {
+                NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+            }
+        }
+        else {
             auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
             if (success) {
                 NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
-                success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+                success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, 0);
                 if (success) {
                     NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
                 }
@@ -256,36 +282,6 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
             }
             else {
                 NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
-            }
-        }
-        else {
-            auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateKEpochEvent>();
-            auto epochBarrier = epochEvent->timestampValue();
-            auto replicationLevel = epochEvent->replicationLevelValue();
-            if (replicationLevel > 0) {
-                auto success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, replicationLevel - 1);
-                if (success) {
-                    NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
-                }
-                else {
-                    NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
-                }
-            }
-            else {
-                auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
-                if (success) {
-                    NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
-                    success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, 0);
-                    if (success) {
-                        NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
-                    }
-                    else {
-                        NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
-                    }
-                }
-                else {
-                    NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
-                }
             }
         }
     }

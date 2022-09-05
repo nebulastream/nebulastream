@@ -22,7 +22,7 @@ class ExchangeProtocol;
 }
 namespace NES::Runtime {
 /// this enum defines the event that can occur in the system runtime
-enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, kStartSourceEvent };
+enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, kEpochPropagation,  kStartSourceEvent};
 
 template<typename T>
 concept IsNesEvent = requires(T t) { t.getEventType(); };
@@ -107,6 +107,28 @@ class CustomEventWrapper : public BaseEvent {
      * @param buffer
      */
     explicit CustomEventWrapper(Runtime::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) {}
+
+    uint8_t* data() override { return buffer.getBuffer(); }
+
+    template<typename T>
+    T* data() {
+        return buffer.getBuffer<T>();
+    }
+
+  private:
+    Runtime::TupleBuffer buffer;
+};
+
+/**
+ * @brief This class shall be used to define custom events with user-supplied data
+ */
+class KEpochEventWrapper : public BaseEvent {
+  public:
+    /**
+     * @brief creates a custom events that stores a buffer as a payload
+     * @param buffer
+     */
+    explicit KEpochEventWrapper(Runtime::TupleBuffer&& buffer) : BaseEvent(EventType::kEpochPropagation), buffer(buffer) {}
 
     uint8_t* data() override { return buffer.getBuffer(); }
 

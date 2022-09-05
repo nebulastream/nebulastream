@@ -218,7 +218,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             auto replicationLevel = epochMessage.getReplicationLevel();
             NES_DEBUG("Executing PropagateKEpoch punctuation= " << timestamp << " replication level= " << replicationLevel);
             if (channel) {
-                channel->sendEvent<Runtime::PropagateKEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, replicationLevel);
+                channel->sendEvent<Runtime::PropagateKEpochEvent>(Runtime::EventType::kEpochPropagation, timestamp, replicationLevel);
             }
             break;
         }

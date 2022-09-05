@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -22,16 +22,28 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 #include <gtest/gtest.h>
 #include <thread>
 
+using namespace utility;
 using namespace std;
+using namespace web;
+// Common features like URIs.
+using namespace web::http;
+// Common HTTP functionality
+using namespace web::http::client;
+// HTTP client features
+using namespace concurrency::streams;
+
 namespace NES {
 
 using namespace Configurations;
@@ -71,6 +83,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
+        coordinatorConfig->replicationLevel = 1;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
@@ -81,6 +94,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 4;
+        workerConfig1->replicationLevel = 1;
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 10;
@@ -91,6 +105,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 10;
         workerConfig2->numWorkerThreads = 4;
+        workerConfig2->replicationLevel = 1;
 
         workerConfig3 = WorkerConfiguration::create();
         workerConfig3->numberOfBuffersPerEpoch = 10;
@@ -259,7 +274,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -290,7 +305,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
     }
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
+    queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
@@ -339,7 +354,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -364,7 +379,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     EXPECT_TRUE(currentTimestamp == timestamp);
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
+    queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
@@ -454,6 +469,10 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
+    NES_INFO("UpstreamBackupTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
@@ -507,7 +526,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_MOST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -516,7 +535,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
+    queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
