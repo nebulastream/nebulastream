@@ -14,8 +14,6 @@
 #include <API/Query.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
@@ -97,7 +95,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfiguration);
+    coordinatorConfig->worker = *(workerConfiguration);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
@@ -151,7 +150,8 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfiguration);
+    coordinatorConfig->worker = *(workerConfiguration);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
