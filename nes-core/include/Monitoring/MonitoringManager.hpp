@@ -206,10 +206,7 @@ class MonitoringManager {
      */
     const std::unordered_map<std::string, QueryId>& getDeployedMonitoringQueries() const;
 
-//    std::string logicalSourceCheck(MetricType metric,SchemaPtr schema, uint64_t nodeId);
-
-//    std::string registerLogicalMonitoringStreams(MetricType metric,SchemaPtr schema, uint64_t nodeId);
-
+    bool insertLogicalSource (std::string logicalSourceName);
 
   private:
     bool waitForQueryToStart(QueryId queryId, std::chrono::seconds timeout);

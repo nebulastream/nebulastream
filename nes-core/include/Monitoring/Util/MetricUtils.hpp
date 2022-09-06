@@ -95,6 +95,8 @@ class MetricUtils {
 
     static SchemaPtr defaultSchema(MetricType metricType);
 
+    static MetricType metricTypeFromSourceName(std::string sourceName);
+
     static std::string createLogicalSourceName(MetricType metricType, SchemaPtr schema);
     /**
      *

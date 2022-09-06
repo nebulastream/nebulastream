@@ -161,9 +161,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                     workerConfig->enableMonitoring);
           NES_DEBUG("NesWorker: Starting Worker with custom monitoring config");
       }
-      // TODO: registerRemoteMonitoringPlans::monitoringPlan!
-      std::vector<uint64_t> nodeIdVector {topologyNodeId};
-
+//      std::vector<uint64_t> nodeIdVector {topologyNodeId};
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =
@@ -388,8 +386,16 @@ void NesWorker::registerLogicalSources(const vector<PhysicalSourcePtr>& physical
         NES_DEBUG("NesWorker: registerLogicalSources: LogicalSourceName: " + logicalSourceName
                   + " and bool value: " + to_string(success));
         if(!success) {
-            // TODO: register at monitoring Manager (MonitoringPlanMap) and SourceCatalog
             NES_DEBUG("NesWorker: registerLogicalSources: LogicalSource is not registered yet")
+            success = coordinatorRpcClient->registerLogicalSourceName(logicalSourceName);
+            if(success) {
+                NES_DEBUG("NesWorker: registerLogicalSources: LogicalSource got registered at MonitoringManager");
+            } else {
+                NES_ERROR("NesWorker: registerLogicalSources: LogicalSource was already registered at MonitoringManager");
+            }
+            MetricType metricType = MetricUtils::metricTypeFromSourceName(logicalSourceName);
+            SchemaPtr schema = monitoringAgent->getMonitoringPlan()->getSchema(metricType);
+            success = coordinatorRpcClient->registerLogicalSourceNEW(logicalSourceName, schema);
         }
     }
 }

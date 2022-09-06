@@ -147,6 +147,9 @@ class CoordinatorRPCClient {
 
     bool logicalSourceLookUp(const std::string& logicalSourceName);
 
+    bool registerLogicalSourceName(const std::string& logicalSourceName);
+
+    bool registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
     /**
      * @brief method to get own id form server
      * @return own id as listed in the graph

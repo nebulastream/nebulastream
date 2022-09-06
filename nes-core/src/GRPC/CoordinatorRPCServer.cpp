@@ -126,6 +126,36 @@ Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSo
     return Status::CANCELLED;
 }
 
+Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const RegisterLogicalSourceNEWRequest* request
+                                                      , RegisterLogicalSourceNEWReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: request =" << request);
+
+    SchemaPtr schema = Schema::parse(request->logicalsourceschema());
+    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), schema);
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource successfully registered");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource NOT successfully registered");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status CoordinatorRPCServer::RegisterLogicalSourceName(ServerContext*, const RegisterLogicalSourceNameRequest* request, RegisterLogicalSourceNameReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: request =" << request);
+
+    bool success = monitoringManager->insertLogicalSource(request->logicalsourcename());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource successfully inserted");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource already in set");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {

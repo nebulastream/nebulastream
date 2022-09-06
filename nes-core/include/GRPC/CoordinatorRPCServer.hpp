@@ -93,6 +93,11 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     Status LogicalSourceLookUp(ServerContext* context, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) override;
 
+    Status RegisterLogicalSourceName(ServerContext* context, const RegisterLogicalSourceNameRequest* request,
+                                     RegisterLogicalSourceNameReply* reply) override;
+
+    Status RegisterLogicalSourceNEW(ServerContext* context, const RegisterLogicalSourceNEWRequest* request,
+                                    RegisterLogicalSourceNEWReply* reply) override;
 
     /**
      * @brief RPC Call to register physical source

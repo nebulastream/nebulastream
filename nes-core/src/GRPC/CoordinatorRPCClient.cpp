@@ -403,6 +403,24 @@ bool CoordinatorRPCClient::registerMonitoringPlan(const MonitoringPlanPtr& monit
         });
 }
 
+bool CoordinatorRPCClient::registerLogicalSourceName(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceName workerId=" << workerId);
+
+    RegisterLogicalSourceNameRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceName request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RegisterLogicalSourceNameRequest, RegisterLogicalSourceNameReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterLogicalSourceNameRequest& request, RegisterLogicalSourceNameReply* reply) {
+            return coordinatorStub->RegisterLogicalSourceName(context, request, reply);
+        });
+}
+
 bool CoordinatorRPCClient::logicalSourceLookUp(const std::string& logicalSourceName) {
     NES_DEBUG("CoordinatorRPCClient: logicalSourceLookUp: " << logicalSourceName);
 
@@ -439,6 +457,28 @@ bool CoordinatorRPCClient::logicalSourceLookUp(const std::string& logicalSourceN
 
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
+
+bool CoordinatorRPCClient::registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema) {
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW workerId=" << workerId);
+
+    std::string logicalSourceSchemaString = logicalSourceSchema->toString();
+
+    RegisterLogicalSourceNEWRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+    request.set_logicalsourceschema(logicalSourceSchemaString);
+
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RegisterLogicalSourceNEWRequest, RegisterLogicalSourceNEWReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterLogicalSourceNEWRequest& request, RegisterLogicalSourceNEWReply* reply) {
+            return coordinatorStub->RegisterLogicalSourceNEW(context, request, reply);
+        });
+}
+
 
 bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
@@ -664,5 +704,4 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     //return the response
     return softStopCompletionReply.success();
 }
-
 }// namespace NES

@@ -585,7 +585,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     MetricPtr diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
-    auto bufferSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
+    auto bufferSize = DiskMetrics::getDefaultSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -596,19 +596,19 @@ TEST_F(SinkTest, testMonitoringSink) {
     MetricPtr cpuMetric = cpuCollector.readMetric();
     CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<CpuMetricsWrapper>();
     ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
-    auto bufferSizeCpu = CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
+    auto bufferSizeCpu = CpuMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
     auto tupleBufferCpu = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSizeCpu).value();
     writeToBuffer(typedMetricCpu, tupleBufferCpu, 0);
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
     const DataSinkPtr monitoringSink =
-        createMonitoringSink(metricStore, diskCollector.getType(), DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, diskCollector.getType(), DiskMetrics::getDefaultSchema(""), nodeEngine, 1, 0, 0);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
     const DataSinkPtr monitoringSinkCpu =
-        createMonitoringSink(metricStore, cpuCollector.getType(), CpuMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, cpuCollector.getType(), CpuMetrics::getDefaultSchema(""), nodeEngine, 1, 0, 0);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics

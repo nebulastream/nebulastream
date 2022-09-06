@@ -2043,7 +2043,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
     std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
-    std::map <MetricType, SchemaPtr> metrics;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> metrics;
     SchemaPtr schema;
     std::vector<std::string> attributesNetwork;
     std::vector<std::string> attributesMem;
@@ -2053,6 +2053,8 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
     std::list<std::string> configMem;
     std::list<std::string> configCPU;
     std::list<std::string> configDisk;
+    uint64_t sampleRate = 0;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
 
     for (auto metricType : metricTypeListString){
         std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
@@ -2066,22 +2068,26 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
             attributesDisk = attributesList;
             configDisk = configuredMetrics;
             schema = DiskMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+            tempPair = std::make_pair(DiskMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "NetworkMetric") {
             attributesNetwork = attributesList;
             configNetwork = configuredMetrics;
             schema = NetworkMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(NetworkMetric, schema));
+            tempPair = std::make_pair(NetworkMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "CpuMetric") {
             attributesCPU = attributesList;
             configCPU = configuredMetrics;
             schema = CpuMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(CpuMetric, schema));
+            tempPair = std::make_pair(CpuMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "MemoryMetric") {
             attributesMem = attributesList;
             configMem = configuredMetrics;
             schema = MemoryMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(MemoryMetric, schema));
+            tempPair = std::make_pair(MemoryMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         }
     }
 
@@ -2173,12 +2179,14 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennart) {
     std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
-    std::map <MetricType, SchemaPtr> metrics;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> metrics;
     SchemaPtr schema;
     std::vector<std::string> attributesNetwork;
     std::vector<std::string> attributesMem;
     std::vector<std::string> attributesCPU;
     std::vector<std::string> attributesDisk;
+    uint64_t sampleRate = 0;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
 
     for (const auto& metricType : metricTypeListString){
         std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
@@ -2191,19 +2199,23 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennart) {
         if (metricType == "DiskMetric") {
             attributesDisk = attributesList;
             schema = DiskMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+            tempPair = std::make_pair(DiskMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "NetworkMetric") {
             attributesNetwork = attributesList;
             schema = NetworkMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(NetworkMetric, schema));
+            tempPair = std::make_pair(NetworkMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "CpuMetric") {
             attributesCPU = attributesList;
             schema = CpuMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(CpuMetric, schema));
+            tempPair = std::make_pair(CpuMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         } else if (metricType == "MemoryMetric") {
             attributesMem = attributesList;
             schema = MemoryMetrics::createSchema("", configuredMetrics);
-            metrics.insert(std::pair<MetricType, SchemaPtr>(MemoryMetric, schema));
+            tempPair = std::make_pair(MemoryMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
         }
     }
 
@@ -2278,8 +2290,11 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartDisk) {
     std::list<std::string> configuredAttributes {"F_BSIZE", "F_BLOCKS", "F_BAVAIL"};
     std::list<std::string> notConfiguredAttributes {"F_FRSIZE", "F_BFREE"};
     SchemaPtr schema = DiskMetrics::createSchema("", configuredAttributes);
-    std::map <MetricType, SchemaPtr> monitoringPlan;
-    monitoringPlan.insert (std::pair<MetricType, SchemaPtr>(DiskMetric, schema));
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+    uint64_t sampleRate = 0;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
+    tempPair = std::make_pair(DiskMetric, std::make_pair(schema, sampleRate));
+    monitoringPlan.insert (tempPair);
     auto plan = MonitoringPlan::create(monitoringPlan);
     auto testCollector = std::make_shared<DiskCollector>(DiskCollector(schema));
     testCollector->setNodeId(nodeId);

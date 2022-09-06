@@ -140,88 +140,6 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
-//std::map <MetricType, std::list<std::string>> MetricUtils::parseMonitoringConfigStringToMap(std::string rawConfigString) {
-//    // init map to save everything
-//    std::map <MetricType, std::list<std::string>> monitoringConfigurationMap;
-//
-//    // argument for splitting the string
-//    std::string delimiter(" - ");
-//
-//    // erase first 3 characters from the raw string and check, if the string has the right format in the beginning
-//    if (rawConfigString.substr(0, 3) == delimiter) {
-//        rawConfigString.erase(0, 3);
-//    } else {
-//        //throw exception
-//        std::cout << "String has the wrong format";
-//    }
-//    // list to save strings for each metric
-//    std::list<std::string> tokenList;
-//
-//    size_t pos = 0;
-//    std::string token;
-//    std::list<std::string>::iterator i;
-//    i = tokenList.begin();
-//
-//    // split rawString into n different strings;
-//    // each string will represent the configuration of one metric
-//    while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
-//        token = rawConfigString.substr(0, pos);
-//        rawConfigString.erase(0, pos + delimiter.length());
-//        tokenList.insert(i, token);
-//        ++i;
-//    }
-//    tokenList.insert(i, rawConfigString);
-//
-//    std::string metricType;
-//    std::string attributes;
-//    std::list<std::string> listOfAttributes;
-//    std::string sampleRate;
-//    std::list<std::string>::iterator j;
-//    // split the metric configuration strings into the form of the map
-//    // key: metricType
-//    // value: list of strings including all attributes of metric and the sample rate
-//    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
-//        delimiter = ": ";
-//        pos = i->find(delimiter);
-//        metricType = i->substr(0, pos);
-//        i->erase(0, pos + delimiter.length());
-//
-//        delimiter = "attributes: \"";
-//        i->erase(0, delimiter.length());
-//
-//        delimiter = "\" ";
-//        pos = i->find(delimiter);
-//        attributes = i->substr(0, pos);
-//        i->erase(0, pos + delimiter.length());
-//
-//        delimiter= "sampleRate: ";
-//        i->erase(0, delimiter.length());
-//
-//        delimiter = " ";
-//        pos = i->find(delimiter);
-//        sampleRate = i->substr(0, pos);
-//
-//        attributes.insert(0, sampleRate + ", ");
-//
-//        // parse attribute string to list of strings
-//        delimiter = ", ";
-//        j = listOfAttributes.begin();
-//        while ((pos = attributes.find(delimiter)) != std::string::npos) {
-//            token = attributes.substr(0, pos);
-//            attributes.erase(0, pos + delimiter.length());
-//            listOfAttributes.insert(j, token);
-//            ++j;
-//        }
-//        listOfAttributes.insert(j, attributes);
-//
-//        monitoringConfigurationMap[NES::parse(metricType)] = listOfAttributes;
-//        listOfAttributes.clear();
-//
-//    }
-//
-//    return monitoringConfigurationMap;
-//}
-
 web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawConfigString) {
     // init json to save everything
     web::json::value monitoringConfigurationJson;
@@ -394,5 +312,23 @@ SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
 std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
     std::string logicalSourceName = NES::toString(metricType) + "_" + schema->toString();
     return logicalSourceName;
+}
+
+MetricType MetricUtils::metricTypeFromSourceName(std::string sourceName) {
+    MetricType metricType;
+    if (sourceName.substr(0, 4) == "disk"){
+        metricType = DiskMetric;
+    } else if (sourceName.substr(0, 6) == "memory") {
+        metricType = MemoryMetric;
+    } else if (sourceName.substr(0, 11) == "wrapped_cpu") {
+        metricType = WrappedCpuMetrics;
+    } else if (sourceName.substr(0, 15) == "wrapped_network") {
+        metricType = WrappedNetworkMetrics;
+    } else {
+        NES_ERROR("MetricUtils: metricTypeFromSourceName: MetricType cannot be defined from sourceName")
+        metricType = UnknownMetric;
+    }
+
+    return metricType;
 }
 }// namespace NES

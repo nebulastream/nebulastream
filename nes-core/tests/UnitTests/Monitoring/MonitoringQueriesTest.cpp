@@ -167,7 +167,7 @@ TEST_F(MonitoringQueriesTest, testDiskMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing disk metrics query");
     uint64_t workerCnt = 3;
     MetricCollectorType collectorType = MetricCollectorType::DISK_COLLECTOR;
-    SchemaPtr schema = DiskMetrics::getSchema("");
+    SchemaPtr schema = DiskMetrics::getDefaultSchema("");
     MetricType expectedType = MetricType::DiskMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -176,7 +176,7 @@ TEST_F(MonitoringQueriesTest, testCpuMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing cpu metrics query");
     uint64_t workerCnt = 3;
     MetricCollectorType collectorType = MetricCollectorType::CPU_COLLECTOR;
-    SchemaPtr schema = CpuMetrics::getSchema("");
+    SchemaPtr schema = CpuMetrics::getDefaultSchema("");
     MetricType expectedType = MetricType::WrappedCpuMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -185,7 +185,7 @@ TEST_F(MonitoringQueriesTest, testMemoryMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing memory metrics query");
     uint64_t workerCnt = 3;
     MetricCollectorType collectorType = MetricCollectorType::MEMORY_COLLECTOR;
-    SchemaPtr schema = MemoryMetrics::getSchema("");
+    SchemaPtr schema = MemoryMetrics::getDefaultSchema("");
     MetricType expectedType = MetricType::MemoryMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -194,7 +194,7 @@ TEST_F(MonitoringQueriesTest, testNetworkMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing network metrics query");
     uint64_t workerCnt = 3;
     MetricCollectorType collectorType = MetricCollectorType::NETWORK_COLLECTOR;
-    SchemaPtr schema = NetworkMetrics::getSchema("");
+    SchemaPtr schema = NetworkMetrics::getDefaultSchema("");
     MetricType expectedType = MetricType::WrappedNetworkMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }

@@ -224,6 +224,16 @@ bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurat
     return false;
 }
 
+bool MonitoringManager::insertLogicalSource(std::string logicalSourceName) {
+    if (!logicalMonitoringSources.contains(logicalSourceName)) {
+        logicalMonitoringSources.insert(logicalSourceName);
+        return true;
+    }
+
+    return false;
+}
+
+
 QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoringStream, bool sync) {
     QueryId queryId = 0;
 
