@@ -169,6 +169,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             if (!reconnectBuffering) {
                 NES_WARNING("Requested sink to stop buffering but it is not buffering")
             } else {
+                //todo: move setting this to false to the post reconfig callback?
                 reconnectBuffering = false;
                 //todo: do we have to look for threadsafety here?
                 //todo: extract to function
