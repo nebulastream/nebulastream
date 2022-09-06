@@ -381,7 +381,7 @@ bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Locatio
 
     /*check if we have moved close enough to the edge of the area covered by the current node index so the we need to
     download new node infromation */
-    if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
+    if (!positionOfLastNodeIndexUpdate || S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
         //if new nodes were downloaded, make sure that the current parent becomes part of the index by adding it if it was not downloaded anyway
         if (downloadFieldNodes(*currentLocation) && fieldNodeMap.count(parentId) == 0) {
             NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
