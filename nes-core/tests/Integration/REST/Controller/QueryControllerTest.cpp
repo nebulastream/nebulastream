@@ -64,6 +64,11 @@ TEST_F(QueryControllerTest, testSubmitQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    workerConfiguration->physicalSources.add(physicalSource);
+    coordinatorConfig->worker = *(workerConfiguration);
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
