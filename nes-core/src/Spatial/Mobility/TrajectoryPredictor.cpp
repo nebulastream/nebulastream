@@ -264,8 +264,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             reconnectToClosestNode(currentOwnLocation);
         }
 
-        //todo: is radius already an angle?
-        if (!reconnectVector->empty() && currentDistFromParent >= S1Angle(defaultCoverageRadiusAngle)) {
+        if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
             auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first));
 
             //if the next expected parent is closer than the current one: reconnect
@@ -311,10 +310,13 @@ void TrajectoryPredictor::reconnect(uint64_t newParentId, std::pair<Spatial::Ind
 
         //update locally saved information about parent
         parentId = newParentId;
+#ifdef S2DEF
         currentParentLocation = fieldNodeMap.at(newParentId);
+#endif
 }
 
 bool TrajectoryPredictor::reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation) {
+#ifdef S2DEF
     std::unique_lock nodeIndexLock(nodeIndexMutex);
     if (fieldNodeIndex.num_points() == 0) {
         return false;
@@ -328,6 +330,10 @@ bool TrajectoryPredictor::reconnectToClosestNode(const std::pair<Index::Experime
     }
     reconnect(closestNode.data(), ownLocation);
     return true;
+#else
+    (void) ownLocation;
+    return false;
+#endif
 }
 
 bool TrajectoryPredictor::updateAverageMovementSpeed() {
