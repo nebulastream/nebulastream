@@ -157,18 +157,19 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::StartBuffering: {
             //todo: what to do here?
             if (reconnectBuffering) {
-                NES_WARNING("Requested sink to buffer but it is already buffering")
+                NES_DEBUG("Requested sink to buffer but it is already buffering")
             } else {
                 this->reconnectBuffering = true;
             }
             break;
         }
         case Runtime::StopBuffering: {
-            //todo: check if this will cause trouble when buffer is empty
             //todo: maybe we need a "draining" boolean to avaid problems when worker keeps writing while we drain?
+            /*
             if (!reconnectBuffering) {
                 NES_WARNING("Requested sink to stop buffering but it is not buffering")
             } else {
+             */
                 //todo: move setting this to false to the post reconfig callback?
                 reconnectBuffering = false;
                 //todo: do we have to look for threadsafety here?
@@ -192,7 +193,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     workerContext.removeTopBufferFromStorage(nesPartition);
                     topBuffer = workerContext.getTopBufferFromStorage(nesPartition);
                 }
-            }
+            //}
             break;
         }
         default: {
