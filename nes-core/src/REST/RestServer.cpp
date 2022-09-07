@@ -18,6 +18,7 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
+#include <REST/OatppController/TopologyController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -60,7 +61,7 @@ RestServer::RestServer(std::string host,
                                               bufferManager,
                                               locationService)),
       host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator),
-      globalQueryPlan(globalQueryPlan) {}
+      globalQueryPlan(globalQueryPlan), topology(topology) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -150,8 +151,13 @@ void RestServer::run() {
                                                                                          globalQueryPlan,
                                                                                          "/queryCatalog",
                                                                                          errorHandler);
+    auto topologyController = REST::Controller::TopologyController::createShared(objectMapper,
+                                                                                 topology,
+                                                                                 "/topology",
+                                                                                 errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
+    router->addController(topologyController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
