@@ -138,6 +138,7 @@ class RestServer {
     QueryCatalogServicePtr queryCatalogService;
     NesCoordinatorWeakPtr coordinator;
     GlobalQueryPlanPtr globalQueryPlan;
+    TopologyPtr topology;
 
     std::condition_variable cvar;
     std::mutex mutex;
