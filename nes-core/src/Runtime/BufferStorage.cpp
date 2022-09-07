@@ -30,7 +30,12 @@ void BufferStorage::trimBuffer(uint64_t timestamp) {
 
 size_t BufferStorage::getStorageSize() const { return this->storage.size(); }
 
-std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const { return this->storage.top(); }
+std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const {
+    if (storage.empty()) {
+        return {};
+    }
+    return this->storage.top();
+}
 
 void BufferStorage::removeTopElementFromQueue() {
     this->storage.pop();

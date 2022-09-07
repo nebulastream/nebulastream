@@ -903,8 +903,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
 
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO(" start coordinator");
-    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
-    std::string testFile = getTestResourceFolder() / "exdra_out.csv";
+    std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
 
     std::stringstream fileInStream;
     std::ifstream checkFile(std::string(TEST_DATA_DIRECTORY) + std::string("sequence_middle_check.csv"));
@@ -988,11 +987,17 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     wrk1->getNodeEngine()->bufferAllData();
 
-    for (int i = 0; i < 10; ++i) {
+    sleep(1);
+    std::ifstream inFile(testFile);
+    auto last_recv = std::count(std::istreambuf_iterator<char>(inFile),
+                             std::istreambuf_iterator<char>(), '\n');
+
+    for (int i = 0; i < 5; ++i) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
                                  std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv while buffering: " << recv_tuples)
+        EXPECT_EQ(last_recv, recv_tuples);
         sleep(1);
     }
     wrk1->getNodeEngine()->stopBufferingAllData();
@@ -1024,8 +1029,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
 TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NES_INFO(" start coordinator");
-    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
-    std::string testFile = getTestResourceFolder() / "exdra_out.csv";
+    std::string testFile = getTestResourceFolder() / "empty_buffer_out.csv";
 
     std::stringstream fileInStream;
     std::ifstream checkFile(std::string(TEST_DATA_DIRECTORY) + std::string("sequence_middle_check.csv"));
@@ -1063,9 +1067,11 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    /*
     //todo: maybe remove these 2
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
+     */
 
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
@@ -1110,13 +1116,12 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
 
     wrk1->getNodeEngine()->bufferAllData();
 
-    //for (int i = 0; i < 2; ++i) {
-        std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv while buffering: " << recv_tuples)
-        sleep(1);
-    //}
+    std::ifstream inFile(testFile);
+    recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
+                             std::istreambuf_iterator<char>(), '\n');
+    NES_DEBUG("recv while buffering: " << recv_tuples)
+    sleep(1);
+
     wrk1->getNodeEngine()->stopBufferingAllData();
 
     while (recv_tuples < 5) {
@@ -1126,14 +1131,6 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
         NES_DEBUG("recv after buffering: " << recv_tuples)
         sleep(1);
     }
-
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-
-    string expectedContent = compareString;
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
-
-    int response = remove(testFile.c_str());
-    EXPECT_TRUE(response == 0);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk1->stop(false);
