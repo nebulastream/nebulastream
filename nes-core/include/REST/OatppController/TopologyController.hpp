@@ -114,6 +114,47 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
+        std::string req = request.getValue("{}");
+        nlohmann::json reqJson = nlohmann::json::parse(req);
+        /*try {
+            if(!validatePlacementStrategy(request->placement)){
+                std::string errorMessage =  "Invalid Placement Strategy: " + request->placement +
+                    ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
+                return errorHandler->handleError(Status::CODE_400,errorMessage);
+            }
+            if(!validateFaultToleranceType(request->faultTolerance)){
+                std::string errorMessage = "Invalid fault tolerance Type provided: " + request->faultTolerance +
+                    ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
+                return errorHandler->handleError(Status::CODE_400, errorMessage);
+            }
+            auto faultToleranceMode = stringToFaultToleranceTypeMap(request->faultTolerance);
+            auto lineageMode = stringToLineageTypeMap(request->lineage);
+            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
+                      << request->userQuery.getValue("null") << ", strategyName= " << request->placement.getValue("null")
+                      << ", faultTolerance= " << request->faultTolerance.getValue("null") << ", lineage= " << request->lineage.getValue("null"));
+            QueryId queryId = queryService->validateAndQueueAddQueryRequest(request->userQuery,
+                                                                            request->placement,
+                                                                            faultToleranceMode,
+                                                                            lineageMode);
+            //Prepare the response
+            auto dto = DTO::QueryControllerSubmitQueryResponse::createShared();
+            dto->queryId = queryId;
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request:"
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        }
+        catch (std::exception& e) {
+            std::string errorMessage = "Potentially incorrect or missing key words for user query (use 'userQuery') or placement strategy (use 'strategyName')."
+                                       "For more info check: https://docs.nebula.stream/docs/clients/rest-api/ \n";
+            return errorHandler->handleError(Status::CODE_500, errorMessage + e.what());
+        }*/
+    }
+
   private:
     /**
       * @brief function to obtain JSON representation of a NES Topology
