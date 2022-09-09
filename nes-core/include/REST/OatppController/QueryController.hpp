@@ -214,25 +214,56 @@ class QueryController : public oatpp::web::server::api::ApiController {
        return errorHandler->handleError(Status::CODE_301, "Requests for the status of a query are now served at /queryCatalogController/status?queryId=" + std::to_string(queryId));
     }
 
-    ENDPOINT("POST", "/execute-query", submitQuery, BODY_DTO(Object<DTO::QueryControllerSubmitQueryRequest>, request)) {
+    ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
-            if(!validatePlacementStrategy(request->placement)){
-                std::string errorMessage =  "Invalid Placement Strategy: " + request->placement +
+            std::string req = request.getValue("");
+            NES_DEBUG(req);
+            nlohmann::json requestJson = nlohmann::json::parse(req);
+            auto error = validateUserRequest(requestJson);
+            if (error.has_value()) {
+                return error.value();
+            }
+            if(!validatePlacementStrategy(requestJson["placement"].get<std::string>())){
+                std::string errorMessage =  "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>() +
                     ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
                 return errorHandler->handleError(Status::CODE_400,errorMessage);
             }
-            if(!validateFaultToleranceType(request->faultTolerance)){
-                std::string errorMessage = "Invalid fault tolerance Type provided: " + request->faultTolerance +
+            auto userQuery = requestJson["userQuery"].get<std::string>();
+            auto placement = requestJson["placement"].get<std::string>();
+            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
+            std::string lineageString = DEFAULT_TOLERANCE_TYPE;
+            if (requestJson.contains("faultTolerance")) {
+                if(!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())){
+                    std::string errorMessage = "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>() +
+                        ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    faultToleranceString = requestJson["faultTolerance"].get<std::string>();
+                }
+            }
+            if (requestJson.contains("lineage")) {
+                if (!validateLineageMode(requestJson["lineage"].get<std::string>())) {
+                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: " + lineageString);
+                    std::string errorMessage = "Invalid Lineage Mode Type provided: " + lineageString
+                        + ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    lineageString = requestJson["lineage"].get<std::string>();
+                }
+            }
+            if(!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())){
+                std::string errorMessage = "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>() +
                     ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
                 return errorHandler->handleError(Status::CODE_400, errorMessage);
             }
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(request->faultTolerance);
-            auto lineageMode = stringToLineageTypeMap(request->lineage);
+
+            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+            auto lineageMode = stringToLineageTypeMap(lineageString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
-                      << request->userQuery.getValue("null") << ", strategyName= " << request->placement.getValue("null")
-                      << ", faultTolerance= " << request->faultTolerance.getValue("null") << ", lineage= " << request->lineage.getValue("null"));
-            QueryId queryId = queryService->validateAndQueueAddQueryRequest(request->userQuery,
-                                                                            request->placement,
+                      << userQuery << ", strategyName= " << placement
+                      << ", faultTolerance= " << faultToleranceString << ", lineage= " << lineageString);
+            QueryId queryId = queryService->validateAndQueueAddQueryRequest(userQuery,
+                                                                            placement,
                                                                             faultToleranceMode,
                                                                             lineageMode);
             //Prepare the response
@@ -327,6 +358,21 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
   private:
+
+    std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>> validateUserRequest(nlohmann::json userRequest) {
+        if (!userRequest.contains("userQuery")) {
+            NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
+            std::string errorMessage = "Incorrect or missing key word for user query, use 'userQuery'. For more info check https://docs.nebula.stream/docs/clients/rest-api/";
+            return errorHandler->handleError(Status::CODE_400, errorMessage);
+        }
+        if (!userRequest.contains("strategyName")) {
+            NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
+                      "using 'placementStrategy'.");
+            std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placementStrategy'. For more info check https://docs.nebula.stream/docs/clients/rest-api/";
+            return errorHandler->handleError(Status::CODE_400, errorMessage);
+        }
+        return std::nullopt;
+    }
 
     bool validatePlacementStrategy(const std::string& placementStrategy) {
         try {
