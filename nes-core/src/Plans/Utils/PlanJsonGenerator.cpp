@@ -130,7 +130,6 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecution
                 // add the string containing operator to the json object of current query sub plan
                 currentQuerySubPlan["operator"] = web::json::value::string(querySubPlan->toString());
 
-                // TODO: Add source and target
                 scheduledSubQueries.push_back(currentQuerySubPlan);
             }
             queryToQuerySubPlans["querySubPlans"] = web::json::value::array(scheduledSubQueries);
@@ -320,13 +319,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    std::vector<ExecutionNodePtr> executionNodes;
-    if (queryId != INVALID_QUERY_ID) {
-        executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    } else {
-        executionNodes = globalExecutionPlan->getAllExecutionNodes();
-    }
-
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         nlohmann::json currentExecutionNodeJsonValue{};
 
@@ -334,23 +327,19 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
         currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
-        std::vector<QueryPlanPtr> querySubPlans;
-        if (queryId == INVALID_QUERY_ID) {
-            queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
-        } else {
-            querySubPlans = executionNode->getQuerySubPlans(queryId);
-            if (!querySubPlans.empty()) {
-                queryToQuerySubPlansMap[queryId] = querySubPlans;
-            }
+        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap ;
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);;
+        if (!querySubPlans.empty()) {
+            queryToQuerySubPlansMap[queryId] = querySubPlans;
         }
+
 
         std::vector<nlohmann::json> scheduledQueries = {};
 
         for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
 
             std::vector<nlohmann::json> scheduledSubQueries;
-           nlohmann::json queryToQuerySubPlans{};
+            nlohmann::json queryToQuerySubPlans{};
             queryToQuerySubPlans["queryId"] = queryId;
 
             // loop over all query sub plans inside the current executionNode
@@ -364,7 +353,6 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
                 // add the string containing operator to the json object of current query sub plan
                 currentQuerySubPlan["operator"] = querySubPlan->toString();
 
-                // TODO: Add source and target
                 scheduledSubQueries.push_back(currentQuerySubPlan);
             }
             queryToQuerySubPlans["querySubPlans"] = scheduledSubQueries;

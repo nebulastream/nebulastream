@@ -53,7 +53,7 @@ class PlanJsonGenerator {
      * @brief get the json representation of execution plan of a query
      * @param the global execution plan
      * @param id of the query
-     * @return
+     * @return a JSON object representing the execution plan
      */
     static web::json::value getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    QueryId queryId = INVALID_QUERY_ID);
@@ -70,7 +70,7 @@ class PlanJsonGenerator {
      * @brief get the json representation of execution plan of a query
      * @param the global execution plan
      * @param id of the query
-     * @return
+     * @return a JSON object representing the execution plan
      */
     static nlohmann::json getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    QueryId queryId = INVALID_QUERY_ID);

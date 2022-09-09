@@ -47,9 +47,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["faultTolerance"] ="AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -74,9 +72,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
@@ -101,9 +97,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "FAST";
@@ -129,9 +123,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -158,9 +150,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -193,9 +183,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -228,9 +216,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -265,6 +251,48 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
 }
 
+TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    workerConfiguration->physicalSources.add(physicalSource);
+    coordinatorConfig->worker = *(workerConfiguration);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    auto sourceCatalog = coordinator->getSourceCatalog();
+    auto topologyNode = coordinator->getTopology()->getRoot();
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    ASSERT_TRUE(success);
+    nlohmann::json request;
+    request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    request["placement"] = "BottomUp";
+    request["faultTolerance"] ="AT_MOST_ONCE";
+    request["lineage"] = "IN_MEMORY";
+    auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
+                        cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                        cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(r1.status_code, 200l);
+
+    nlohmann::json response1 = nlohmann::json::parse(r1.text);
+    uint64_t queryId = response1["queryId"];
+    NES_DEBUG(queryId);
+    auto started = TestUtils::waitForQueryToStart(queryId,coordinator->getQueryCatalogService());
+    ASSERT_TRUE(started);
+    cpr::Response r3 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
+                                cpr::Parameters{{"queryId", std::to_string(0)}});
+    EXPECT_EQ(r3.status_code, 404l);
+    nlohmann::json response3 = nlohmann::json::parse(r3.text);
+    NES_DEBUG(response3.dump());
+    EXPECT_EQ(response3["message"], "No query with given ID: 0");
+}
+
 TEST_F(QueryControllerTest, testGetQueryPlan) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -283,9 +311,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -311,5 +337,47 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     for(auto node : response2["nodes"]){
         EXPECT_TRUE(node.contains("id") && node.contains("name") && node.contains("nodeType"));
     }
+}
+
+TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    workerConfiguration->physicalSources.add(physicalSource);
+    coordinatorConfig->worker = *(workerConfiguration);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    auto sourceCatalog = coordinator->getSourceCatalog();
+    auto topologyNode = coordinator->getTopology()->getRoot();
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    ASSERT_TRUE(success);
+    nlohmann::json request;
+    request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    request["placement"] = "BottomUp";
+    request["faultTolerance"] ="AT_MOST_ONCE";
+    request["lineage"] = "IN_MEMORY";
+    auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
+                        cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                        cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(r1.status_code, 200l);
+
+    nlohmann::json response1 = nlohmann::json::parse(r1.text);
+    uint64_t queryId = response1["queryId"];
+    NES_DEBUG(queryId);
+    auto started = TestUtils::waitForQueryToStart(queryId,coordinator->getQueryCatalogService());
+    ASSERT_TRUE(started);
+    cpr::Response r2 = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
+                                cpr::Parameters{{"queryId", std::to_string(0)}});
+    EXPECT_EQ(r2.status_code, 404l);
+    nlohmann::json response2 = nlohmann::json::parse(r2.text);
+    NES_DEBUG(response2.dump());
+    EXPECT_EQ(response2["message"], "No query with given ID: 0");
 }
 } // namespace NES
