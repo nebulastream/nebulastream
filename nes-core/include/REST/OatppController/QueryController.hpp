@@ -101,7 +101,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         try {
             NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsNlohmannJson(globalExecutionPlan, queryId); //TODO: change when removing cpprestsdk
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsNlohmannJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.dump());
             //create list of execution nodes
             oatpp::List<oatpp::Object<DTO::ExecutionNodeDTO>> executionNodes({});
@@ -180,7 +180,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             response->nodes = nodes;
             return createDtoResponse(Status::CODE_200, response);
         } catch (QueryNotFoundException e ) {
-            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
