@@ -63,5 +63,202 @@ TEST_F(TopologyControllerTest, testGetTopology) {
         EXPECT_TRUE(node.contains("id") && node.contains("ip_address") && node.contains("nodeType") && node.contains("location") && node.contains("available_resources"));
     }
 }
+TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["childId"] = 1;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 400l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["message"], " Request body missing 'parentId'");
+}
+
+TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 1;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 400l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["message"], " Request body missing 'childId'");
+}
+
+TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 1;
+    request["childId"] = 7;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 400l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["message"], "Could not add parent for node in topology: Node with childId=7 not found.");
+}
+
+TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 3;
+    request["childId"] = 2;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 400l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["message"], "Could not add parent for node in topology: Node with parentId=3 not found.");
+}
+
+TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 7;
+    request["childId"] = 7;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 400l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["message"], "Could not add parent for node in topology: childId and parentId must be different.");
+}
+
+TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 1;
+    request["childId"] = 2;
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 500l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+}
+
+TEST_F(TopologyControllerTest, testRemoveParent) {
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("TopologyControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    nlohmann::json request{};
+    request["parentId"] = 1;
+    request["childId"] = 2;
+    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeParent"},
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    EXPECT_EQ(response.status_code, 200l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res.dump());
+    EXPECT_EQ(res["success"],true);
+}
+
 
 }

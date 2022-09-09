@@ -14,6 +14,7 @@
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #include <REST/DTOs/TopologyDTO.hpp>
+#include <REST/DTOs/SuccessDTO.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
@@ -117,45 +118,89 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
         std::string req = request.getValue("{}");
         nlohmann::json reqJson = nlohmann::json::parse(req);
-        /*try {
-            if(!validatePlacementStrategy(request->placement)){
-                std::string errorMessage =  "Invalid Placement Strategy: " + request->placement +
-                    ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
-                return errorHandler->handleError(Status::CODE_400,errorMessage);
-            }
-            if(!validateFaultToleranceType(request->faultTolerance)){
-                std::string errorMessage = "Invalid fault tolerance Type provided: " + request->faultTolerance +
-                    ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
-                return errorHandler->handleError(Status::CODE_400, errorMessage);
-            }
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(request->faultTolerance);
-            auto lineageMode = stringToLineageTypeMap(request->lineage);
-            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
-                      << request->userQuery.getValue("null") << ", strategyName= " << request->placement.getValue("null")
-                      << ", faultTolerance= " << request->faultTolerance.getValue("null") << ", lineage= " << request->lineage.getValue("null"));
-            QueryId queryId = queryService->validateAndQueueAddQueryRequest(request->userQuery,
-                                                                            request->placement,
-                                                                            faultToleranceMode,
-                                                                            lineageMode);
-            //Prepare the response
-            auto dto = DTO::QueryControllerSubmitQueryResponse::createShared();
-            dto->queryId = queryId;
-            return createDtoResponse(Status::CODE_200, dto);
+        auto optional = validateRequest(reqJson);
+        if(optional.has_value()){
+            return optional.value();
         }
-        catch (const InvalidQueryException& exc) {
-            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
-                      "user request:"
-                      << exc.what());
-            return errorHandler->handleError(Status::CODE_400, exc.what());
+        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+        uint64_t childId = reqJson["childId"].get<uint64_t>();
+        auto parentPhysicalNode = topology->findNodeWithId(parentId);
+        auto childPhysicalNode = topology->findNodeWithId(childId);
+
+        bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
+        if (added) {
+            NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
+            topology->print();
+        } else {
+            NES_ERROR("TopologyController::handlePost:addParent: Failed");
+            return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
         }
-        catch (std::exception& e) {
-            std::string errorMessage = "Potentially incorrect or missing key words for user query (use 'userQuery') or placement strategy (use 'strategyName')."
-                                       "For more info check: https://docs.nebula.stream/docs/clients/rest-api/ \n";
-            return errorHandler->handleError(Status::CODE_500, errorMessage + e.what());
-        }*/
+
+        //Prepare the response
+        auto dto = DTO::SuccessDTO::createShared();
+        dto->success = added;
+        return createDtoResponse(Status::CODE_200, dto);
+    }
+
+    ENDPOINT("DELETE", "/removeParent", removeParent, BODY_STRING(String, request)) {
+        std::string req = request.getValue("{}");
+        nlohmann::json reqJson = nlohmann::json::parse(req);
+        auto optional = validateRequest(reqJson);
+        if(optional.has_value()){
+            return optional.value();
+        }
+        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+        uint64_t childId = reqJson["childId"].get<uint64_t>();
+        auto parentPhysicalNode = topology->findNodeWithId(parentId);
+        auto childPhysicalNode = topology->findNodeWithId(childId);
+
+        bool added = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
+        if (added) {
+            NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully new topology is=");
+            topology->print();
+        } else {
+            NES_ERROR("TopologyController::handlePost:addParent: Failed");
+            return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
+        }
+
+        //Prepare the response
+        auto dto = DTO::SuccessDTO::createShared();
+        dto->success = added;
+        return createDtoResponse(Status::CODE_200, dto);
     }
 
   private:
+
+    std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
+        validateRequest(nlohmann::json reqJson){
+        if(reqJson.empty()){
+            return errorHandler->handleError(Status::CODE_400, "empty body");
+        }
+        if(!reqJson.contains("parentId")){
+            return errorHandler->handleError(Status::CODE_400, " Request body missing 'parentId'");
+        }
+        if(!reqJson.contains("childId")){
+            return errorHandler->handleError(Status::CODE_400, " Request body missing 'childId'");
+        }
+        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+        uint64_t childId = reqJson["childId"].get<uint64_t>();
+        if (parentId == childId) {
+            return errorHandler->handleError(Status::CODE_400,"Could not add parent for node in topology: childId and parentId must be different.");
+        }
+
+        TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
+        if (!childPhysicalNode) {
+            return errorHandler->handleError(Status::CODE_400,"Could not add parent for node in topology: Node with childId="
+                                                 + std::to_string(childId) + " not found.");
+        }
+
+        TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
+        if (!parentPhysicalNode) {
+            return errorHandler->handleError(Status::CODE_400, "Could not add parent for node in topology: Node with parentId="
+                                                 + std::to_string(parentId) + " not found.");
+        }
+        return std::nullopt;
+    }
     /**
       * @brief function to obtain JSON representation of a NES Topology
       * @param root of the Topology
