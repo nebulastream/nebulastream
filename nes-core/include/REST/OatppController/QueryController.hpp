@@ -17,7 +17,6 @@
 #include <REST/DTOs/QueryControllerOptimizationPhasesResponse.hpp>
 #include <REST/DTOs/QueryControllerResponse.hpp>
 #include <REST/DTOs/QueryControllerStopQueryResponse.hpp>
-#include <REST/DTOs/QueryControllerSubmitQueryRequest.hpp>
 #include <REST/DTOs/QueryControllerSubmitQueryResponse.hpp>
 #include <REST/DTOs/QueryControllerQueryPlanResponse.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
@@ -216,8 +215,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
-            std::string req = request.getValue("");
-            NES_DEBUG(req);
+            std::string req = request.getValue("{}");
             nlohmann::json requestJson = nlohmann::json::parse(req);
             auto error = validateUserRequest(requestJson);
             if (error.has_value()) {
@@ -365,10 +363,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
             std::string errorMessage = "Incorrect or missing key word for user query, use 'userQuery'. For more info check https://docs.nebula.stream/docs/clients/rest-api/";
             return errorHandler->handleError(Status::CODE_400, errorMessage);
         }
-        if (!userRequest.contains("strategyName")) {
+        if (!userRequest.contains("placement")) {
             NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                      "using 'placementStrategy'.");
-            std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placementStrategy'. For more info check https://docs.nebula.stream/docs/clients/rest-api/";
+                      "using 'placement'.");
+            std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placement'. For more info check https://docs.nebula.stream/docs/clients/rest-api/";
             return errorHandler->handleError(Status::CODE_400, errorMessage);
         }
         return std::nullopt;
@@ -422,7 +420,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
         return true;
     }
-
+    const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
