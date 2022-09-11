@@ -16,15 +16,164 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <UdfCatalogService.pb.h>
+#include <REST/DTOs/UdfControllerListUdfsResponse.hpp>
+#include <nlohmann/json.hpp>
+#include <Exceptions/UdfException.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
+
 namespace NES {
+
+namespace Catalogs::UDF {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace Catalogs::UDF
+
 namespace REST {
+
 namespace Controller {
+
+using namespace Catalogs::UDF;
+
 class UdfCatalogController : public oatpp::web::server::api::ApiController {
 
+  public:
+    /**
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param udfCatalog
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
+     * @param errorHandler - responsible for handling errors
+     */
+    UdfCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                         UdfCatalogPtr udfCatalog,
+                         oatpp::String completeRouterPrefix,
+                         ErrorHandlerPtr errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(udfCatalog), errorHandler(errorHandler) {}
+
+    /**
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param udfCatalog
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @param errorHandler - responsible for handling errors
+     */
+    static std::shared_ptr<UdfCatalogController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                              UdfCatalogPtr udfCatalog,
+                                                              std::string routerPrefixAddition,
+                                                              ErrorHandlerPtr errorHandler) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
+    }
+
+    ENDPOINT("GET", "/getUdfDescriptor", getUdfDescriptor, QUERY(String, udf, "udfName")) {
+        try {
+            std::string udfName = udf.getValue("");
+            auto udfDescriptor = UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(udfName));
+            GetJavaUdfDescriptorResponse response;
+            if (udfDescriptor == nullptr) {
+                // Signal that the UDF does not exist in the catalog.
+                NES_DEBUG("REST client tried retrieving UDF descriptor for non-existing Java UDF: " << udfName);
+                response.set_found(false);
+            } else {
+                // Return the UDF descriptor to the client.
+                NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
+                response.set_found(true);
+                auto* descriptorMessage = response.mutable_java_udf_descriptor();
+                descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
+                descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
+                descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
+                                                           udfDescriptor->getSerializedInstance().size());
+                for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
+                    auto* javaClass = descriptorMessage->add_classes();
+                    javaClass->set_class_name(className);
+                    javaClass->set_byte_code(byteCode.data(), byteCode.size());
+                }
+            }
+            return createResponse(Status::CODE_200, response.SerializeAsString());
+        } catch (...) {
+            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
+
+    ENDPOINT("GET", "/listUdfs", listUdfs) {
+        try{
+            oatpp::List<String> udfList({});
+            for (const auto& udf : udfCatalog->listUdfs()) {
+                udfList->push_back(udf);
+            }
+            auto dto = DTO::UdfControllerListUdfsResponse::createShared();
+            dto->udfs = udfList;
+            return createDtoResponse(Status::CODE_200, dto);
+        }
+        catch (...) {
+            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
+
+    ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
+        auto udfCatalog = this->udfCatalog;
+        try{
+            // Convert protobuf message contents to JavaUdfDescriptor.
+            std::string body = request.getValue("");
+            if(body.empty()){
+                errorHandler->handleError(Status::CODE_400, "Protobuf message is empty");
+            }
+            NES_DEBUG("Parsing Java UDF descriptor from REST request");
+            auto javaUdfRequest = RegisterJavaUdfRequest{};
+            javaUdfRequest.ParseFromString(body);
+            auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
+            // C++ represents the bytes type of serialized_instance and byte_code as std::strings
+            // which have to be converted to typed byte arrays.
+            auto serializedInstance = JavaSerializedInstance{descriptorMessage.serialized_instance().begin(),
+                                                             descriptorMessage.serialized_instance().end()};
+            auto javaUdfByteCodeList = JavaUdfByteCodeList{};
+            javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
+            for (const auto& classDefinition : descriptorMessage.classes()) {
+                javaUdfByteCodeList.insert(
+                    {classDefinition.class_name(),
+                     JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
+            }
+            // Register JavaUdfDescriptor in UDF catalog and return success.
+            auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
+                                                               descriptorMessage.udf_method_name(),
+                                                                   serializedInstance,
+                                                                   javaUdfByteCodeList);
+            NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
+            udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+           return createResponse(Status::CODE_400, "Registered Java UDF");
+        }
+        catch(const UdfException& e){
+            NES_WARNING("Exception occurred during UDF registration: " << e.what());
+            // Just return the exception message to the client, not the stack trace.
+            return errorHandler->handleError(Status::CODE_400, e.getMessage());
+        }
+        catch(...){
+            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
+
+    ENDPOINT("DELETE", "/removeUdf", removeUdf, QUERY(String, udf, "udfName")) {
+        try{
+            std::string udfName = udf.getValue("");
+            NES_DEBUG("Removing Java UDF '" << udfName << "'");
+            auto removed = udfCatalog->removeUdf(udfName);
+            nlohmann::json result;
+            result["removed"] = removed;
+            return createResponse(Status::CODE_200, result.dump());
+        }
+        catch(...){
+            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
+
+  private:
+    UdfCatalogPtr udfCatalog;
+    ErrorHandlerPtr errorHandler;
+
 };
-}//namespace Controller
-}//namespace REST
-}//namespace NES
+}// namespace Controller
+}// namespace REST
+}// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
 #endif//NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_UDFCATALOGCONTROLLER_HPP

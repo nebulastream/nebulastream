@@ -62,7 +62,7 @@ RestServer::RestServer(std::string host,
                                               bufferManager,
                                               locationService)),
       host(std::move(host)), port(port), queryCatalogService(queryCatalogService), coordinator(coordinator),
-      globalQueryPlan(globalQueryPlan), topology(topology) {}
+      globalQueryPlan(globalQueryPlan), topology(topology), udfCatalog(udfCatalog) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -154,9 +154,14 @@ void RestServer::run() {
                                                                                          errorHandler);
     auto topologyController =
         REST::Controller::TopologyController::createShared(objectMapper, topology, "/topology", errorHandler);
+    auto udfCatalogController = REST::Controller::UdfCatalogController::createShared(objectMapper,
+                                                                                     udfCatalog,
+                                                                                     "/udf-catalog",
+                                                                                     errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(topologyController);
+    router->addController(udfCatalogController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
