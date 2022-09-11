@@ -139,6 +139,7 @@ class RestServer {
     NesCoordinatorWeakPtr coordinator;
     GlobalQueryPlanPtr globalQueryPlan;
     TopologyPtr topology;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 
     std::condition_variable cvar;
     std::mutex mutex;
