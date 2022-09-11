@@ -19,6 +19,7 @@
 #include <REST/OatppController/ConnectivityController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
+#include <REST/OatppController/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
