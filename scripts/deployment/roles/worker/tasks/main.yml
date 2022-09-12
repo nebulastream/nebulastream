@@ -6,6 +6,13 @@
     path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
     state: directory
 
+- name: Clone dool repository
+  git:
+    repo: 'https://github.com/scottchiefbaker/dool.git'
+    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_loc }}"
+    update: no
+    clone: yes
+
 - name: Copy worker binaries from fat server
   copy:
     src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }}"

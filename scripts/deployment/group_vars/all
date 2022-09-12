@@ -38,3 +38,6 @@ default_coordinator_ports:
     - 8081
     - 10000
     - 3001
+
+# Dir name of dool clone
+dool_loc: dool
