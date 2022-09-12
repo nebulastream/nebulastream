@@ -92,7 +92,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             }
             return createResponse(Status::CODE_200, response.SerializeAsString());
         } catch (...) {
-            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
 
@@ -100,6 +100,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         try{
             oatpp::List<String> udfList({});
             for (const auto& udf : udfCatalog->listUdfs()) {
+                NES_DEBUG(udf);
                 udfList->push_back(udf);
             }
             auto dto = DTO::UdfControllerListUdfsResponse::createShared();
@@ -107,7 +108,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             return createDtoResponse(Status::CODE_200, dto);
         }
         catch (...) {
-            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
 
@@ -141,7 +142,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                                                                    javaUdfByteCodeList);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
             udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
-           return createResponse(Status::CODE_400, "Registered Java UDF");
+           return createResponse(Status::CODE_200, "Registered Java UDF");
         }
         catch(const UdfException& e){
             NES_WARNING("Exception occurred during UDF registration: " << e.what());
@@ -149,7 +150,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_400, e.getMessage());
         }
         catch(...){
-            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
 
@@ -163,7 +164,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             return createResponse(Status::CODE_200, result.dump());
         }
         catch(...){
-            errorHandler->handleError(Status::CODE_500, "Internal Server error");
+           return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
 
