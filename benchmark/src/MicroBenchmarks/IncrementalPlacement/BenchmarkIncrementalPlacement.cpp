@@ -13,31 +13,26 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Utils/BenchmarkUtils.hpp>
@@ -49,33 +44,33 @@ using namespace NES;
 using namespace NES::Benchmarking;
 using std::filesystem::directory_iterator;
 
-uint64_t sourceCnt;
-std::vector<uint64_t> noOfPhysicalSources;
-uint64_t noOfMeasurementsToCollect;
-uint64_t numberOfDistinctSources;
-uint64_t startupSleepIntervalInSeconds;
-std::vector<std::string> queryMergerRules;
-std::vector<bool> enableQueryMerging;
-std::vector<uint64_t> batchSizes;
-std::string querySetLocation;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
-std::string logLevel;
 
 QueryParsingServicePtr queryParsingService;
-QueryCatalogServicePtr queryCatalogService;
 TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
 Catalogs::UDF::UdfCatalogPtr udfCatalog;
 
+class ErrorHandler : public Exceptions::ErrorListener {
+  public:
+    virtual void onFatalError(int signalNumber, std::string callstack) override {
+        std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack;
+    }
+
+    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
+        std::cout << "onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack;
+    }
+};
+
 /**
  * @brief Set up the physical sources for the benchmark
  * @param nesCoordinator : the coordinator shared object
  * @param noOfPhysicalSource : number of physical sources
  */
-void setupSources(uint64_t noOfPhysicalSource) {
+void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //Create source catalog service
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
@@ -114,7 +109,7 @@ void setupSources(uint64_t noOfPhysicalSource) {
 
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
-    for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
+    for (uint64_t j = 0; j < noOfLogicalSource; j++) {
         //We increment the counter till 3 and then reset it to 0
         //When the counter is 1 we add the logical stream with schema type 1
         //When the counter is 2 we add the logical stream with schema type 2
@@ -150,7 +145,7 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     topologyManagerService->registerNode("1", 0, 0, UINT16_MAX, false, NES::Spatial::Index::Experimental::Location());
-    for (uint64_t i = 2; i < noOfTopologyNodes; i++) {
+    for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
         topologyManagerService
             ->registerNode(std::to_string(i), 0, 0, UINT16_MAX, false, NES::Spatial::Index::Experimental::Location());
     }
@@ -171,9 +166,9 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(uint64_t noOfPhysicalSources) {
+void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources) {
     setupTopology();
-    setupSources(noOfPhysicalSources);
+    setupSources(noOfLogicalSource, noOfPhysicalSources);
 }
 
 /**
@@ -196,54 +191,22 @@ std::vector<std::string> split(std::string input, char delim) {
  * @brief Load provided configuration file
  * @param filePath : location of the configuration file
  */
-void loadConfigFromYAMLFile(const std::string& filePath) {
+Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
 
+    NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: " << filePath << " .");
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
-            NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: " << filePath << " .");
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
-
-            //Number of Measurements to collect
-            noOfMeasurementsToCollect = config["numberOfMeasurementsToCollect"].As<uint64_t>();
-            //Query set location
-            querySetLocation = config["querySetLocation"].As<std::string>();
-            //Startup sleep interval
-            startupSleepIntervalInSeconds = config["startupSleepIntervalInSeconds"].As<uint64_t>();
-            //Number of distinct sources
-            numberOfDistinctSources = config["numberOfDistinctSources"].As<uint64_t>();
-            //Query merger rules
-            queryMergerRules = split(config["queryMergerRule"].As<std::string>(), ',');
-            //Enable Query Merging
-            auto enableQueryMergingOpts = split(config["enableQueryMerging"].As<std::string>(), ',');
-            for (const auto& item : enableQueryMergingOpts) {
-                bool booleanParm;
-                std::istringstream(item) >> std::boolalpha >> booleanParm;
-                enableQueryMerging.emplace_back(booleanParm);
-            }
-
-            //Load Number of Physical sources
-            auto configuredNoOfPhysicalSources = split(config["noOfPhysicalSources"].As<std::string>(), ',');
-            for (const auto& item : configuredNoOfPhysicalSources) {
-                noOfPhysicalSources.emplace_back(std::stoi(item));
-            }
-
-            //Load batch size
-            auto configuredBatchSizes = split(config["batchSize"].As<std::string>(), ',');
-            for (const auto& item : configuredBatchSizes) {
-                batchSizes.emplace_back(std::stoi(item));
-            }
-
-            //Log level
-            logLevel = config["logLevel"].As<std::string>();
+            return config;
         } catch (std::exception& e) {
             NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file."
                       << e.what());
+            throw e;
         }
-        return;
     }
     NES_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at " << filePath << ".");
-    NES_WARNING("Keeping default values for Worker Config.");
+    NES_THROW_RUNTIME_ERROR("Unable to find benchmark run configuration.");
 }
 
 /**
@@ -251,10 +214,13 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
  */
 int main(int argc, const char* argv[]) {
 
+    auto listener = std::make_shared<ErrorHandler>();
+    Exceptions::installGlobalErrorListener(listener);
+
     NES::Logger::setupLogging("BenchmarkIncrementalPlacement.log", NES::LogLevel::LOG_INFO);
     std::cout << "Setup BenchmarkIncrementalPlacement test class." << std::endl;
     std::stringstream benchmarkOutput;
-    benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
+    benchmarkOutput << "Time,BM_Name,PlacementRule,IncrementalPlacement,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
                        "SharedOperators,OperatorEfficiency,NES_Version,Run_Num,Start_"
                        "Time,End_Time,Total_Run_Time"
                     << std::endl;
@@ -270,43 +236,65 @@ int main(int argc, const char* argv[]) {
     // Location of the configuration file
     auto configPath = commandLineParams.find("--configPath");
 
+    Yaml::Node configs;
     //Load the configuration file
     if (configPath != commandLineParams.end()) {
-        loadConfigFromYAMLFile(configPath->second.c_str());
+        configs = loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
         NES_ERROR("Configuration file is not provided");
         return -1;
     }
 
+    //Fetch base benchmark configurations
+    std::string logLevel = configs["LogLevel"].As<std::string>();
+    uint16_t numberOfRun = configs["NumOfRuns"].As<uint16_t>();
+    uint16_t startupSleepInterval = configs["StartupSleepIntervalInSeconds"].As<uint16_t>();
     NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
 
-    //Load individual query set from the query set location and run the benchmark
-    for (const auto& file : directory_iterator(querySetLocation)) {
+    //Load queries from the query set location and run the benchmark
+    std::string querySetLocation = configs["QuerySetLocation"].As<std::string>();
+    std::vector<std::string> queries;
+    //Read the input query set and load the query string in the queries vector
+    std::ifstream infile(querySetLocation);
+    std::string line;
+    while (std::getline(infile, line)) {
+        std::istringstream iss(line);
+        queries.emplace_back(line);
+    }
 
-        //Read the input query set and load the query string in the queries vector
-        std::ifstream infile(file.path());
-        std::vector<std::string> queries;
-        std::string line;
-        while (std::getline(infile, line)) {
-            std::istringstream iss(line);
-            queries.emplace_back(line);
-        }
+    if (queries.empty()) {
+        NES_THROW_RUNTIME_ERROR("Unable to find any query");
+    }
 
-        uint64_t noOfQueries = queries.size();
-        QueryPtr queryObjects[noOfQueries];
+    //using Open MP to parallelize the compilation of string queries and string them in an array of query objects
+    const uint32_t numOfQueries = queries.size();
+    QueryPtr queryObjects[numOfQueries];
 
-        //using Open MP to parallelize the compilation of string queries and string them in an array of query objects
-        //#pragma omp parallel for
-        for (uint64_t i = 0; i < queries.size(); i++) {
-            auto cppCompiler = Compiler::CPPCompiler::create();
-            auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-            queryParsingService = QueryParsingService::create(jitCompiler);
-            auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
-            queryObjects[i] = queryObj;
-        }
+    //#pragma omp parallel for
+    for (uint64_t i = 0; i < numOfQueries; i++) {
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+        auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
+        queryObj->getQueryPlan()->setQueryId(i + 1);
+        queryObjects[i] = queryObj;
+    }
 
-        OptimizerConfiguration optimizerConfiguration;
-        optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule;
+    //Set optimizer configuration
+    OptimizerConfiguration optimizerConfiguration;
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule;
+
+    //Perform benchmark for each run configuration
+    auto runConfig = configs["RunConfig"];
+    for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++) {
+        auto node = (*entry).second;
+        auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
+        auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
+
+        sleep(startupSleepInterval);
+
+        //Setup topology and source catalog
+        setUp(3, 1);
 
         z3::config cfg;
         cfg.set("timeout", 1000);
@@ -314,6 +302,8 @@ int main(int argc, const char* argv[]) {
         cfg.set("type_check", false);
         auto z3Context = std::make_shared<z3::context>(cfg);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+        QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         auto globalQueryPlan = GlobalQueryPlan::create();
         auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                     queryCatalogService,
@@ -325,17 +315,20 @@ int main(int argc, const char* argv[]) {
 
         auto globalExecutionPlan = GlobalExecutionPlan::create();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        auto queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+        auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                          topology,
+                                                                          typeInferencePhase,
+                                                                          z3Context,
+                                                                          incrementalPlacement);
 
         //Perform steps to optimize queries
-
         for (uint64_t i = 0; i < queries.size(); i++) {
 
             auto query = queryObjects[i];
             auto queryPlan = query->getQueryPlan();
-
-            auto runQueryRequest = RunQueryRequest::create(queryPlan, NES::PlacementStrategy::TopDown);
+            queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
+            PlacementStrategy::Value queryPlacementStrategy = PlacementStrategy::getFromString(placementStrategy);
+            auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
 
             globalQueryUpdatePhase->execute({runQueryRequest});
             auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -347,76 +340,78 @@ int main(int argc, const char* argv[]) {
             auto endTime =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
+            std::cout << "Placement Time for query " << i + 1 << " is " << (endTime - startTime) << std::endl;
             NES_ASSERT(placed, "Placement should be successful");
         }
-
-        //        //Compute total number of operators in the query set
-        //        uint64_t totalOperators = 0;
-        //        for (auto queryObject : queryObjects) {
-        //            totalOperators = totalOperators + QueryPlanIterator(queryObject->getQueryPlan()).snapshot().size();
-        //        }
-        //
-        //        // For the input query set run the experiments with different type of query merger rule
-        //        for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
-        //            //Number of time the experiments to run
-        //            for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
-        //
-        //                //Setup coordinator for the experiment
-        //                setUp(noOfPhysicalSources[configNum]);
-        //                NES::QueryServicePtr queryService = coordinator->getQueryService();
-        //                NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
-        //                auto globalQueryPlan = coordinator->getGlobalQueryPlan();
-        //                //Sleep for fixed time before starting the experiments
-        //                sleep(startupSleepIntervalInSeconds);
-        //
-        //                auto startTime =
-        //                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-        //                        .count();
-        //                //Send queries to nebula stream for processing
-        //                for (uint64_t i = 1; i <= noOfQueries; i++) {
-        //                    const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
-        //                    queryPlan->setQueryId(i);
-        //                    queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
-        //                }
-        //
-        //                //Fetch the last query for the query catalog
-        //                auto lastQuery = queryCatalog->getQueryCatalogEntry(noOfQueries);
-        //                //Wait till the status of the last query is set as running
-        //                while (lastQuery->getQueryStatus() != QueryStatus::Running) {
-        //                    //Sleep for 100 milliseconds
-        //                    sleep(.1);
-        //                }
-        //                auto endTime =
-        //                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-        //                        .count();
-        //
-        //                //Fetch the global query plan and count the number of operators produced post merging the queries
-        //                auto gqp = coordinator->getGlobalQueryPlan();
-        //                auto allSQP = gqp->getAllSharedQueryPlans();
-        //                std::cout << "Number of Origins : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
-        //                uint64_t mergedOperators = 0;
-        //                for (auto sqp : allSQP) {
-        //                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
-        //                    mergedOperators = mergedOperators + planSize;
-        //                }
-        //
-        //                //Compute efficiency
-        //                auto efficiency = ((totalOperators - mergedOperators) / totalOperators) * 100;
-        //
-        //                //Add the information in the log
-        //                benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
-        //                                << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
-        //                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
-        //                                << mergedOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
-        //                                << "," << endTime << "," << endTime - startTime << std::endl;
-        //                std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
-        //                //Stop NES coordinator
-        //                coordinator->stopCoordinator(true);
-        //            }
-        //            benchmarkOutput << std::endl << std::endl;
-        //            std::cout << benchmarkOutput.str();
-        //        }
     }
+
+    //        //Compute total number of operators in the query set
+    //        uint64_t totalOperators = 0;
+    //        for (auto queryObject : queryObjects) {
+    //            totalOperators = totalOperators + QueryPlanIterator(queryObject->getQueryPlan()).snapshot().size();
+    //        }
+    //
+    //        // For the input query set run the experiments with different type of query merger rule
+    //        for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
+    //            //Number of time the experiments to run
+    //            for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
+    //
+    //                //Setup coordinator for the experiment
+    //                setUp(noOfPhysicalSources[configNum]);
+    //                NES::QueryServicePtr queryService = coordinator->getQueryService();
+    //                NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
+    //                auto globalQueryPlan = coordinator->getGlobalQueryPlan();
+    //                //Sleep for fixed time before starting the experiments
+    //                sleep(startupSleepIntervalInSeconds);
+    //
+    //                auto startTime =
+    //                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+    //                        .count();
+    //                //Send queries to nebula stream for processing
+    //                for (uint64_t i = 1; i <= noOfQueries; i++) {
+    //                    const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
+    //                    queryPlan->setQueryId(i);
+    //                    queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
+    //                }
+    //
+    //                //Fetch the last query for the query catalog
+    //                auto lastQuery = queryCatalog->getQueryCatalogEntry(noOfQueries);
+    //                //Wait till the status of the last query is set as running
+    //                while (lastQuery->getQueryStatus() != QueryStatus::Running) {
+    //                    //Sleep for 100 milliseconds
+    //                    sleep(.1);
+    //                }
+    //                auto endTime =
+    //                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+    //                        .count();
+    //
+    //                //Fetch the global query plan and count the number of operators produced post merging the queries
+    //                auto gqp = coordinator->getGlobalQueryPlan();
+    //                auto allSQP = gqp->getAllSharedQueryPlans();
+    //                std::cout << "Number of Origins : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
+    //                uint64_t mergedOperators = 0;
+    //                for (auto sqp : allSQP) {
+    //                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+    //                    mergedOperators = mergedOperators + planSize;
+    //                }
+    //
+    //                //Compute efficiency
+    //                auto efficiency = ((totalOperators - mergedOperators) / totalOperators) * 100;
+    //
+    //                //Add the information in the log
+    //                benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
+    //                                << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
+    //                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
+    //                                << mergedOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
+    //                                << "," << endTime << "," << endTime - startTime << std::endl;
+    //                std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
+    //                //Stop NES coordinator
+    //                coordinator->stopCoordinator(true);
+    //            }
+    //            benchmarkOutput << std::endl << std::endl;
+    //            std::cout << benchmarkOutput.str();
+    //        }
+
     //Print the benchmark output and same it to the CSV file for further processing
     std::cout << benchmarkOutput.str();
     std::ofstream out("BenchmarkQueryMerger.csv");
