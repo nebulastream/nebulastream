@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SPATIAL_DATATYPES_POINT_HPP
-#define NES_SPATIAL_DATATYPES_POINT_HPP
+#ifndef NES_SPATIAL_DATATYPES_POINT_HPP_
+#define NES_SPATIAL_DATATYPES_POINT_HPP_
 
 namespace NES {
 
@@ -71,4 +71,4 @@ class Point {
     double latitude, longitude;
 };
 }
-#endif//NES_SPATIAL_DATATYPES_POINT_HPP
+#endif//NES_SPATIAL_DATATYPES_POINT_HPP_

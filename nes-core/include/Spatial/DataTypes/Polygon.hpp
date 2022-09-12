@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SPATIAL_DATATYPES_POLYGON_HPP
-#define NES_SPATIAL_DATATYPES_POLYGON_HPP
+#ifndef NES_SPATIAL_DATATYPES_POLYGON_HPP_
+#define NES_SPATIAL_DATATYPES_POLYGON_HPP_
 
 #include <vector>
 
@@ -87,4 +87,4 @@ class Polygon {
 
 }// namespace NES
 
-#endif//NES_SPATIAL_DATATYPES_POLYGON_HPP
+#endif//NES_SPATIAL_DATATYPES_POLYGON_HPP_
