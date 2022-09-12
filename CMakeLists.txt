@@ -42,7 +42,7 @@ option(NES_USE_LLD "Use LLD" OFF)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the highly experimental execution engine based on mlir." OFF)
 # Enable exception interception (for debugging purpose)
-option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" ON)
+option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
