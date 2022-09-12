@@ -24,6 +24,7 @@ add_source_files(nes-core
         QueryStatus.cpp
         RequestType.cpp
         SharedQueryPlanStatus.cpp
+        SpatialUtils.cpp
         )
 if (NES_USE_MQTT)
     add_source_files(nes-core
