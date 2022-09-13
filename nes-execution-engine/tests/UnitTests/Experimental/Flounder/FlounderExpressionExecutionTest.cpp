@@ -13,7 +13,7 @@
 */
 #include <API/Schema.hpp>
 
-#include <gtest/gtest.h>
+
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
@@ -22,7 +22,7 @@
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
@@ -37,9 +37,11 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <gtest/gtest.h>
 
+#include <Experimental/Babelfish/IRSerialization.hpp>
 #include <Util/Logger/Logger.hpp>
-//#include <babelfish.h>
+#include <babelfish.h>
 #include <execinfo.h>
 #include <memory>
 
@@ -105,13 +107,17 @@ int64_t test(int64_t) { return 10; };
 Value<> sumLoop(Value<MemRef> ptr) {
     auto agg = ptr.load<Int64>();
     //agg = FunctionCall<>("callUDFProxyFunction", test, agg);
-    //for (Value start = 0l; start < 10l; start = start + 1l) {
-    agg = agg + 10l;
-    //}
+    for (Value start = 0l; start < 10l; start = start + 1l) {
+
+        for (Value start2 = 0l; start2 < 10l; start2 = start2 + 1l) {
+            agg = agg + 10l;
+        }
+        agg = agg + 10l;
+    }
     ptr.store(agg);
     return agg;
 }
-/*
+
 TEST_F(FlounderExpressionExecutionTest, bftest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
@@ -134,10 +140,9 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
         executePipeline(thread, pipeline, &valI, nullptr);
     }
     for (auto i = 0; i < 100000; i++) {
-        executePipeline(thread, pipeline,  &valI, nullptr);
+        executePipeline(thread, pipeline, &valI, nullptr);
     }
 }
- */
 
 Value<> longExpression(Value<Int64> i1) {
     auto i2 = i1 + 1l;

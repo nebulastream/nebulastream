@@ -178,6 +178,7 @@ createData(uint64_t numberOfBuffers, Runtime::MemoryLayouts::MemoryLayoutPtr mem
 
 TEST_P(UDFTest, distanceUDF) {
     uint64_t bufferSize = 1000000;
+    uint64_t warmup = 100000;
     uint64_t iterations = 100;
     auto bm = std::make_shared<Runtime::BufferManager>(bufferSize);
 
@@ -196,9 +197,11 @@ TEST_P(UDFTest, distanceUDF) {
 
     auto resultSchema = Schema::create()->addField("user_id", INT64);
     auto resMem = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
-
-    auto emit = std::make_shared<Emit>(resMem);
-    mapOperator->setChild(emit);
+    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> aggfunctions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(aggfunctions);
+    scan.setChild(aggregation);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
@@ -206,6 +209,14 @@ TEST_P(UDFTest, distanceUDF) {
     auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
+
+#ifdef USE_BABELFISH
+    for (auto i = 0ul; i < warmup; i++) {
+        for (auto& buffer : data) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+    }
+#endif
 
     Timer timer("QueryExecutionTime");
     timer.start();
@@ -271,7 +282,21 @@ TEST_P(UDFTest, crimeIndexUDF) {
     NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
                                 << " Throughput: " << (recordsPerMs * 1000));
 }
+#ifdef USE_BABELFISH
+INSTANTIATE_TEST_CASE_P(testUDF,
+                        UDFTest,
+                        ::testing::Combine(::testing::Values("BABELFISH"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                        [](const testing::TestParamInfo<UDFTest::ParamType>& info) {
+                            auto layout = std::get<1>(info.param);
+                            if (layout == Schema::ROW_LAYOUT) {
+                                return std::get<0>(info.param) + "_ROW";
+                            } else {
+                                return std::get<0>(info.param) + "_COLUMNAR";
+                            }
+                        });
 
+#else
 INSTANTIATE_TEST_CASE_P(testUDF,
                         UDFTest,
                         ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
@@ -284,5 +309,7 @@ INSTANTIATE_TEST_CASE_P(testUDF,
                                 return std::get<0>(info.param) + "_COLUMNAR";
                             }
                         });
+
+#endif
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

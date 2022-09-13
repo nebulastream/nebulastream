@@ -31,6 +31,7 @@ class HashMap {
     Entry createEntry(std::vector<Value<>> keys, Value<UInt64> hash);
     Entry getEntryFromHashTable(Value<UInt64> hash) const;
     Value<> compareKeys(std::vector<Value<>> keyValue, Value<MemRef> keys) const;
+    Value<> isValid(std::vector<Value<>>& keyValue, Entry& entry) const;
 
   private:
     Value<MemRef> hashTableRef;

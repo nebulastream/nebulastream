@@ -151,7 +151,7 @@ TEST_P(Query3Test, tpchQ3) {
     // JoinBuild
     std::vector<ExpressionPtr> customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>(/*c_custkey*/ 0)};
     std::vector<ExpressionPtr> customersJoinBuildValues = {};
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 0, 40000);
+    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 0, 100000);
     std::shared_ptr<NES::Experimental::Hashmap> customersHashMap = factory.createPtr();
     auto customersJoinBuild = std::make_shared<JoinBuild>(customersHashMap, customersJoinBuildKeys, customersJoinBuildValues);
     selection->setChild(customersJoinBuild);
@@ -192,7 +192,7 @@ TEST_P(Query3Test, tpchQ3) {
     std::vector<ExpressionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>(/*o_custkey*/ 1)};
     std::vector<ExpressionPtr> order_customersJoinBuildValues = {std::make_shared<ReadFieldExpression>(/*o_orderdate*/ 2),
                                                                  std::make_shared<ReadFieldExpression>(/*o_shippriority*/ 3)};
-    NES::Experimental::HashMapFactory order_customersfactory = NES::Experimental::HashMapFactory(bm, 8, 16, 40000);
+    NES::Experimental::HashMapFactory order_customersfactory = NES::Experimental::HashMapFactory(bm, 8, 16, 100000);
     std::shared_ptr<NES::Experimental::Hashmap> order_customersHashMap = order_customersfactory.createPtr();
     auto order_customersJoinBuild =
         std::make_shared<JoinBuild>(order_customersHashMap, order_customersJoinBuildKeys, order_customersJoinBuildValues);
@@ -232,7 +232,7 @@ TEST_P(Query3Test, tpchQ3) {
                                                          order_customersValueStamps);
     shipDateSelection->setChild(lineitemJoinProbe);
 
-    NES::Experimental::HashMapFactory groupedAggregationFactory = NES::Experimental::HashMapFactory(bm, 24, 8, 40000);
+    NES::Experimental::HashMapFactory groupedAggregationFactory = NES::Experimental::HashMapFactory(bm, 24, 8, 100000);
 
     auto l_extendedpriceField = std::make_shared<ReadFieldExpression>(1);
     auto l_discountField = std::make_shared<ReadFieldExpression>(2);
@@ -254,6 +254,32 @@ TEST_P(Query3Test, tpchQ3) {
     compilationTimer.pause();
 
     executablePipeline1->setup();
+    executablePipeline2->setup();
+    executablePipeline3->setup();
+#ifdef USE_BABELFISH
+
+    uint64_t warmup = 10000;
+    for (auto i = 0ul; i < warmup; i++) {
+        Timer timer("QueryExecutionTime");
+        timer.start();
+        auto buffer1 = customersBuffer.second.getBuffer();
+        executablePipeline1->execute(*runtimeWorkerContext, buffer1);
+        auto buffer2 = ordersBuffer.second.getBuffer();
+        executablePipeline2->execute(*runtimeWorkerContext, buffer2);
+        auto buffer3 = lineitemsBuffer.second.getBuffer();
+        executablePipeline3->execute(*runtimeWorkerContext, buffer3);
+        timer.snapshot("Execute Warmup");
+        timer.pause();
+        NES_INFO("QueryExecutionTime Warmup: " << timer);
+        customersHashMap->clear();
+        order_customersHashMap->clear();
+        auto tag = *((int64_t*) aggregation.get());
+        auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
+        globalState->threadLocalAggregationSlots[0]->clear();
+    }
+
+#endif
+
     Timer timer("QueryExecutionTime");
 
     {
@@ -265,7 +291,7 @@ TEST_P(Query3Test, tpchQ3) {
         EXPECT_EQ(customersHashMap->numberOfEntries(), 30142);
     }
 
-    executablePipeline2->setup();
+
     {
         auto buffer = ordersBuffer.second.getBuffer();
         timer.start();
@@ -275,7 +301,7 @@ TEST_P(Query3Test, tpchQ3) {
         EXPECT_EQ(order_customersHashMap->numberOfEntries(), 147126);
     }
 
-    executablePipeline3->setup();
+
     {
         auto buffer = lineitemsBuffer.second.getBuffer();
         timer.start();
@@ -424,6 +450,23 @@ TEST_P(Query3Test, tpchQ3_onlyCompile) {
     NES_INFO("QueryCompilationTime: " << compilationTimer);
 }
 
+#ifdef USE_BABELFISH
+INSTANTIATE_TEST_CASE_P(testTPCHQ3,
+                        Query3Test,
+                        ::testing::Combine(::testing::Values("BABELFISH"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
+                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        [](const testing::TestParamInfo<Query3Test::ParamType>& info) {
+                            auto layout = std::get<1>(info.param);
+                            if (layout == Schema::ROW_LAYOUT) {
+                                return std::get<0>(info.param) + "_ROW";
+                            } else {
+                                return std::get<0>(info.param) + "_COLUMNAR";
+                            }
+                        });
+
+#else
+
 INSTANTIATE_TEST_CASE_P(testTPCHQ3,
                         Query3Test,
                         ::testing::Combine(::testing::Values( "INTERPRETER","MLIR", "FLOUNDER"),
@@ -437,5 +480,6 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ3,
                                 return std::get<0>(info.param) + "_COLUMNAR";
                             }
                         });
+#endif
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
