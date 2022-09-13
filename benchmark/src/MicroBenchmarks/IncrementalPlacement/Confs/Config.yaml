@@ -1,6 +1,6 @@
 #Location of query set
 # For each query set we will run the experiments
-QuerySetLocation: '/home/ankit/dima/nebulastream-query-generator/generated_queries.txt'
+QuerySetLocation: '/home/ankit/dima/nes-2/benchmark/src/MicroBenchmarks/IncrementalPlacement/QuerySet/generated_queries.txt'
 # LOG level
 LogLevel: LOG_ERROR
 # Sleep interval between each run
@@ -9,12 +9,12 @@ StartupSleepIntervalInSeconds: 3
 NumOfRuns: 3
 
 RunConfig:
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: true
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: false
-#  - QueryPlacementStrategy: ILP
+#  - QueryPlacementStrategy: TopDown
 #    IncrementalPlacement: true
-#  - QueryPlacementStrategy: ILP
+#  - QueryPlacementStrategy: TopDown
 #    IncrementalPlacement: false
+  - QueryPlacementStrategy: ILP
+    IncrementalPlacement: true
+  - QueryPlacementStrategy: ILP
+    IncrementalPlacement: false
 

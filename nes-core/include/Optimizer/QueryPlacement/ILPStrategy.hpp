@@ -126,6 +126,9 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
     void computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages);
+
+    double getDefaultOperatorOutput(OperatorNodePtr operatorNode);
+    int getDefaultOperatorCost(OperatorNodePtr operatorNode);
 };
 }// namespace NES::Optimizer
 

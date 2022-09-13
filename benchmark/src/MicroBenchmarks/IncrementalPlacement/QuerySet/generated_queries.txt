@@ -1,0 +1,2 @@
+Query::from("example1").map(Attribute("e")=Attribute("e") * 1).map(Attribute("b")=Attribute("b") * 8).filter(Attribute("e")>Attribute("d")).map(Attribute("b")=8475 * Attribute("a")).filter(Attribute("e")<1197).sink(NullOutputSinkDescriptor::create());
+Query::from("example1").map(Attribute("e")=Attribute("e") * 1).map(Attribute("b")=Attribute("b") * 8).filter(Attribute("e")>Attribute("d")).map(Attribute("b")=8475 * Attribute("a")).filter(Attribute("e")<1197).sink(NullOutputSinkDescriptor::create());

@@ -16,8 +16,13 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -157,9 +162,13 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
                 NES_DEBUG("distance: " << operatorID << " " << distance);
 
-                std::any prop = operatorNode->getProperty("output");
-                auto output = std::any_cast<double>(prop);
-
+                double output;
+                if (!operatorNode->hasProperty("output")) {
+                    output = getDefaultOperatorOutput(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("output");
+                    output = std::any_cast<double>(prop);
+                }
                 cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
             }
         }
@@ -313,8 +322,14 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             sum_i = sum_i + P_IJ;
 
             // add to node utilization
-            std::any prop = operatorNode->getProperty("cost");
-            auto slots = std::any_cast<int>(prop);
+            int slots;
+            if (!operatorNode->hasProperty("cost")) {
+                slots = getDefaultOperatorCost(operatorNode);
+            } else {
+                std::any prop = operatorNode->getProperty("cost");
+                slots = std::any_cast<int>(prop);
+            }
+
             auto iterator = nodeUtilizationMap.find(topologyID);
             if (iterator != nodeUtilizationMap.end()) {
                 iterator->second = iterator->second + slots * P_IJ;
@@ -356,5 +371,38 @@ double ILPStrategy::getNetworkCostWeight() { return this->networkCostWeight; }
 void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizationCostWeight = weight; }
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
+
+double ILPStrategy::getDefaultOperatorOutput(OperatorNodePtr operatorNode) {
+
+    double dmf = 1;
+    double input = 10;
+    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        dmf = 0;
+    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        dmf = .5;
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        dmf = 2;
+    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        input = 100;
+    }
+    return dmf * input;
+}
+
+int ILPStrategy::getDefaultOperatorCost(OperatorNodePtr operatorNode) {
+
+    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        return 0;
+    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        return 1;
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
+               || operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+        return 2;
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        return 1;
+    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        return 0;
+    }
+    return 2;
+}
 
 }// namespace NES::Optimizer
