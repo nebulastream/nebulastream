@@ -468,20 +468,10 @@ endif ()
 
 # Antlr
 # Currently antlr dose not come with an own cmake file
-message(STATUS  Antlr ${_VCPKG_INSTALLED_DIR} )
-if(APPLE)
-    include_directories(${_VCPKG_INSTALLED_DIR}/x64-macos-nes/include/antlr4-runtime)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-macos-nes/lib/libuuid.a)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-macos-nes/lib/libantlr4-runtime.a)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-    include_directories(${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/include/antlr4-runtime)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/lib/libuuid.a)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/lib/libantlr4-runtime.a)
-else()
-    include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
-    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
-endif()
+message(STATUS  Antlr ${NES_DEPENDENCIES_BINARY_ROOT} )
+include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/antlr4-runtime)
+set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
+set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime.a)
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
