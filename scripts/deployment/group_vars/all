@@ -40,5 +40,16 @@ default_coordinator_ports:
     - 3001
 
 # Dir name of dool clone
-dool_loc: dool
+dool_name: dool
 
+# Coordinator cores to keep track of
+coord_cores: "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143"
+
+# Worker cores to keep track of
+worker_cores: "0,1,2,3"
+
+# Coordinator interface to keep track of
+coord_iface: ibs3f0
+
+# Worker interface to keep track of
+worker_iface: ibs2

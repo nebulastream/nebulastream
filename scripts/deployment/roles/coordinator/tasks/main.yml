@@ -10,7 +10,7 @@
 - name: Clone dool repository
   git:
     repo: 'https://github.com/scottchiefbaker/dool.git'
-    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_loc }}"
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}"
     update: no
     clone: yes
 

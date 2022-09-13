@@ -1,0 +1,6 @@
+---
+# This Playbook starts monitoring of a NES cluster
+
+- hosts: coordinator
+  tasks:
+    - include_tasks: roles/coordinator/tasks/monitor.yml
