@@ -15,7 +15,7 @@
 #ifndef NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_
 #define NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_
 
-#include "API/Query.hpp"
+#include <API/Query.hpp>
 #include <list>
 #include <queue>
 #include <string>

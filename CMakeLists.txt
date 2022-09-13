@@ -468,9 +468,11 @@ endif ()
 
 # Antlr
 # Currently antlr dose not come with an own cmake file
-message(STATUS  Antlr ${NES_DEPENDENCIES_BINARY_ROOT} )
+message(STATUS Antlr ${NES_DEPENDENCIES_BINARY_ROOT})
 include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/antlr4-runtime)
-set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
+if (NOT APPLE)
+    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
+endif ()
 set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime.a)
 
 # PAPI
