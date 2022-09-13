@@ -13,8 +13,11 @@
 */
 #include "Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp"
 #include "Experimental/NESIR/Operations/BranchOperation.hpp"
+#include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"
+#include "Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp"
 #include "Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp"
+#include "Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp"
 #include "Experimental/NESIR/Operations/Loop/LoopOperation.hpp"
 #include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
 #include <Experimental/Babelfish/IRSerialization.hpp>
@@ -72,9 +75,18 @@ void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operati
         auto constOp = std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation);
         opJson["type"] = web::json::value("ConstInt");
         opJson["value"] = web::json::value(constOp->getConstantIntValue());
+    } else if (operation->getOperationType() == IR::Operations::Operation::ConstBooleanOp) {
+        auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
+        opJson["type"] = web::json::value("ConstBool");
+        opJson["value"] = web::json::value(constOp->getValue());
     } else if (operation->getOperationType() == IR::Operations::Operation::AddOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
         opJson["type"] = web::json::value("Add");
+        opJson["left"] = web::json::value(constOp->getLeftInput()->getIdentifier());
+        opJson["right"] = web::json::value(constOp->getRightInput()->getIdentifier());
+    } else if (operation->getOperationType() == IR::Operations::Operation::SubOp) {
+        auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
+        opJson["type"] = web::json::value("Sub");
         opJson["left"] = web::json::value(constOp->getLeftInput()->getIdentifier());
         opJson["right"] = web::json::value(constOp->getRightInput()->getIdentifier());
     } else if (operation->getOperationType() == IR::Operations::Operation::MulOp) {
@@ -106,13 +118,24 @@ void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operati
         switch (compOp->getComparator()) {
             case IR::Operations::CompareOperation::Comparator::IEQ: {
                 opJson["Compare"] = web::json::value("EQ");
+                break;
             }
             case IR::Operations::CompareOperation::Comparator::ISLT: {
                 opJson["Compare"] = web::json::value("LT");
+                break;
             }
             default: {
             }
         }
+    } else if (operation->getOperationType() == IR::Operations::Operation::AndOp) {
+        auto andOp = std::static_pointer_cast<IR::Operations::AndOperation>(operation);
+        opJson["type"] = web::json::value("And");
+        opJson["left"] = web::json::value(andOp->getLeftInput()->getIdentifier());
+        opJson["right"] = web::json::value(andOp->getRightInput()->getIdentifier());
+    } else if (operation->getOperationType() == IR::Operations::Operation::NegateOp) {
+        auto negate = std::static_pointer_cast<IR::Operations::NegateOperation>(operation);
+        opJson["type"] = web::json::value("Negate");
+        opJson["input"] = web::json::value(negate->getInput()->getIdentifier());
     } else if (operation->getOperationType() == IR::Operations::Operation::BranchOp) {
         auto compOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operation);
         opJson["type"] = web::json::value("Branch");

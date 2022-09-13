@@ -67,19 +67,27 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
     return entry;
 }
 
+Value<> HashMap::isValid(std::vector<Value<>>& keyValue, Entry& entry) const {
+    Value<Boolean> valid = false;
+    if(!entry.isNull()){
+        valid = compareKeys(keyValue, entry.getKeyPtr());
+    }
+    return valid;
+}
+
 HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
     // calculate hash
     auto hash = calculateHash(keys);
 
     // return entry if it exists
     auto entry = getEntryFromHashTable(hash);
-    for (; !entry.isNull(); entry = entry.getNext()) {
-        if (compareKeys(keys, entry.getKeyPtr())) {
-            return entry;
-        }
+    //for (; !isValid(keys, entry); entry = entry.getNext()) {
+    //}
+    if(entry.isNull()){
+        entry = createEntry(keys, hash);
     }
-    // creates a new hashmap entry and place it to the right spot.
-    entry = createEntry(keys, hash);
+    // creates a new hashm11.8143ap entry and place it to the right spot.
+
     return entry;
 }
 
@@ -89,11 +97,11 @@ HashMap::Entry HashMap::findOne(std::vector<Value<>> keys) {
 
     // return entry if it exists
     auto entry = getEntryFromHashTable(hash);
-    for (; !entry.isNull(); entry = entry.getNext()) {
-        if (compareKeys(keys, entry.getKeyPtr())) {
-            return entry;
-        }
-    }
+    //for (; !entry.isNull(); entry = entry.getNext()) {
+    //    if (compareKeys(keys, entry.getKeyPtr())) {
+    //        return entry;
+    //    }
+    //}
     return entry;
 }
 

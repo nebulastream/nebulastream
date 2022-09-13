@@ -74,25 +74,24 @@ UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments,
 }
 
 int64_t callJavaUDF_1(void* value1) {
-    auto param = (jvalue*)value1;
+    auto param = (jvalue*) value1;
     return env->CallLongMethod(object, mid, param[0]);
 }
 
 int64_t callJavaUDF_3(void* value1, void* value2, void* value3) {
-    auto param1 = (jvalue*)value1;
-    auto param2 = (jvalue*)value2;
-    auto param3 = (jvalue*)value3;
+    auto param1 = (jvalue*) value1;
+    auto param2 = (jvalue*) value2;
+    auto param3 = (jvalue*) value3;
     return env->CallLongMethod(object, mid, param1[0], param2[0], param3[0]);
 }
 
-int64_t callJavaUDF_4(void* value1, void* value2, void* value3 , void* value4) {
-    auto param1 = (jvalue*)value1;
-    auto param2 = (jvalue*)value2;
-    auto param3 = (jvalue*)value3;
-    auto param4 = (jvalue*)value4;
+int64_t callJavaUDF_4(void* value1, void* value2, void* value3, void* value4) {
+    auto param1 = (jvalue*) value1;
+    auto param2 = (jvalue*) value2;
+    auto param3 = (jvalue*) value3;
+    auto param4 = (jvalue*) value4;
     return env->CallLongMethod(object, mid, param1[0], param2[0], param3[0], param4[0]);
 }
-
 
 void* createJValue(int64_t value) {
     auto val = new jvalue;
@@ -123,6 +122,53 @@ Value<> UDFCallExpression::execute(Record& record) {
                               argumentValues[3]);
     }
     return FunctionCall<>("callJavaUDF_1", callJavaUDF_1, argumentValues[0]);
+}
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+#endif
+
+#ifdef USE_BABELFISH
+
+#include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
+#include <Experimental/Interpreter/FunctionCall.hpp>
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments, std::string, std::string, std::string)
+    : arguments(arguments) {}
+
+int64_t callJavaUDF_1(long) { NES_NOT_IMPLEMENTED(); }
+
+int64_t callJavaUDF_3(long, long, long) { NES_NOT_IMPLEMENTED(); }
+
+int64_t callJavaUDF_4(long, long, long, long) { NES_NOT_IMPLEMENTED(); }
+
+Value<> UDFCallExpression::execute(Record& record) {
+    std::vector<Value<>> argumentValues;
+    for (auto& arg : arguments) {
+        auto value = arg->execute(record);
+        argumentValues.emplace_back(value);
+    }
+
+    if (argumentValues.size() == 1) {
+        return FunctionCall<>("callJavaUDF_1", callJavaUDF_1, argumentValues[0].as<Int64>());
+    }
+    if (argumentValues.size() == 3) {
+        return FunctionCall<>("callJavaUDF_3",
+                              callJavaUDF_3,
+                              argumentValues[0].as<Int64>(),
+                              argumentValues[1].as<Int64>(),
+                              argumentValues[2].as<Int64>());
+    }
+    if (argumentValues.size() == 4) {
+        return FunctionCall<>("callJavaUDF_4",
+                              callJavaUDF_4,
+                              argumentValues[0].as<Int64>(),
+                              argumentValues[1].as<Int64>(),
+                              argumentValues[2].as<Int64>(),
+                              argumentValues[3].as<Int64>());
+    }
+    return FunctionCall<>("callJavaUDF_1", callJavaUDF_1, argumentValues[0].as<Int64>());
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

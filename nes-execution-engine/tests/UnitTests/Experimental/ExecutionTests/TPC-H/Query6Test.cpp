@@ -1,4 +1,4 @@
- /*
+/*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -132,20 +132,20 @@ TEST_P(Query6Test, tpchQ6) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first);
+    Scan scan = Scan(lineitemBuffer.first,{4,5,6,10});
     /*
      *   l_shipdate >= date '1994-01-01'
      *   and l_shipdate < date '1995-01-01'
      */
     auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
     auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(10);
+    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
     auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
 
     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(6);
+    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
     auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
     auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
@@ -154,7 +154,7 @@ TEST_P(Query6Test, tpchQ6) {
 
     // l_quantity < 24
     auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(4);
+    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
     auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
     auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
@@ -163,7 +163,7 @@ TEST_P(Query6Test, tpchQ6) {
     scan.setChild(selection);
 
     // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(5);
+    auto aggField = std::make_shared<ReadFieldExpression>(1);
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
@@ -175,8 +175,22 @@ TEST_P(Query6Test, tpchQ6) {
     auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
-    NES_INFO("Start Execution");
+
     auto buffer = lineitemBuffer.second.getBuffer();
+#ifdef USE_BABELFISH
+    uint64_t warmup = 100;
+    for (auto i = 0ul; i < warmup; i++) {
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+    }
+    {
+        auto tag = *((int64_t*) aggregation.get());
+        auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
+        auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+        sumState->sum = 0;
+    }
+#endif
+
+    NES_INFO("Start Execution");
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
@@ -237,8 +251,22 @@ TEST_P(Query6Test, tpchQ6and) {
     auto executablePipeline = executionEngine->compile(pipeline);
 
     executablePipeline->setup();
-    NES_INFO("Start Execution");
     auto buffer = lineitemBuffer.second.getBuffer();
+#ifdef USE_BABELFISH
+    uint64_t warmup = 100;
+    for (auto i = 0ul; i < warmup; i++) {
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+    }
+    {
+        auto tag = *((int64_t*) aggregation.get());
+        auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
+        auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+        sumState->sum = 0;
+    }
+#endif
+
+    NES_INFO("Start Execution");
+
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
@@ -250,10 +278,10 @@ TEST_P(Query6Test, tpchQ6and) {
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
-
+#ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("BABELFISH"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
@@ -265,4 +293,19 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                             }
                         });
 
+#else
+INSTANTIATE_TEST_CASE_P(testTPCHQ6,
+                        Query6Test,
+                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
+                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
+                            auto layout = std::get<1>(info.param);
+                            if (layout == Schema::ROW_LAYOUT) {
+                                return std::get<0>(info.param) + "_ROW";
+                            } else {
+                                return std::get<0>(info.param) + "_COLUMNAR";
+                            }
+                        });
+#endif
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

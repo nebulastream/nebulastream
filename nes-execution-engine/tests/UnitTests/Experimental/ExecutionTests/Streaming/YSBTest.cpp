@@ -209,6 +209,15 @@ TEST_P(YSBTest, ysbSelectionCampain) {
 
     executablePipeline->setup();
 
+#ifdef USE_BABELFISH
+    uint64_t warmup = 100;
+    for (auto i = 0ul; i < warmup; i++) {
+        for (auto& buffer : data) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+    }
+#endif
+
     Timer timer("QueryExecutionTime");
     timer.start();
     for (auto i = 0; i < 100; i++) {
@@ -265,6 +274,15 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     executablePipeline->setup();
 
+#ifdef USE_BABELFISH
+    uint64_t warmup = 1000;
+    for (auto i = 0ul; i < warmup; i++) {
+        for (auto& buffer : data) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+    }
+#endif
+
     Timer timer("QueryExecutionTime");
     timer.start();
     for (auto i = 0; i < 100; i++) {
@@ -286,7 +304,21 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     ASSERT_EQ(sliceStore->getSlices().front()->getState().numberOfEntries(), 100);
 }
+#ifdef USE_BABELFISH
+INSTANTIATE_TEST_CASE_P(testYSB,
+                        YSBTest,
+                        ::testing::Combine(::testing::Values("BABELFISH"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                        [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
+                            auto layout = std::get<1>(info.param);
+                            if (layout == Schema::ROW_LAYOUT) {
+                                return std::get<0>(info.param) + "_ROW";
+                            } else {
+                                return std::get<0>(info.param) + "_COLUMNAR";
+                            }
+                        });
 
+#else
 INSTANTIATE_TEST_CASE_P(testYSB,
                         YSBTest,
                         ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
@@ -299,5 +331,5 @@ INSTANTIATE_TEST_CASE_P(testYSB,
                                 return std::get<0>(info.param) + "_COLUMNAR";
                             }
                         });
-
+#endif
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

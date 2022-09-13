@@ -197,7 +197,7 @@ TEST_P(Query1Test, tpchQ1) {
     // 5 * 3 + 3 * 16 = 88 value size
     NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
     auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
-    selection->setChild(aggregation);
+    scan.setChild(aggregation);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
@@ -207,6 +207,19 @@ TEST_P(Query1Test, tpchQ1) {
     executablePipeline->setup();
 
     auto buffer = lineitemBuffer.second.getBuffer();
+
+#ifdef USE_BABELFISH
+    uint64_t warmup = 1000;
+    for (auto i = 0ul; i < warmup; i++) {
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+    }
+    {
+        auto tag = *((int64_t*) aggregation.get());
+        auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
+        globalState->threadLocalAggregationSlots[0].get()->clear();
+    }
+#endif
+
 
     Timer timer("QueryExecutionTime");
     timer.start();
@@ -250,7 +263,22 @@ TEST_P(Query1Test, tpchQ1) {
     //ASSERT_EQ(entries[0].ag1, 37719753);
     //ASSERT_EQ(entries[0].ag2, 5656804138090);
 }
+#ifdef USE_BABELFISH
+INSTANTIATE_TEST_CASE_P(testTPCHQ1,
+                        Query1Test,
+                        ::testing::Combine(::testing::Values("BABELFISH"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
+                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
+                            auto layout = std::get<1>(info.param);
+                            if (layout == Schema::ROW_LAYOUT) {
+                                return std::get<0>(info.param) + "_ROW";
+                            } else {
+                                return std::get<0>(info.param) + "_COLUMNAR";
+                            }
+                        });
 
+#else
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                         Query1Test,
                         ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
@@ -264,5 +292,5 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                                 return std::get<0>(info.param) + "_COLUMNAR";
                             }
                         });
-
+#endif
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
