@@ -1,0 +1,15 @@
+---
+# This Playbook runs monitoring tasks for a worker
+
+- name: Start dool monitoring
+  shell: |
+    nohup {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -t -T -c -C {{ worker_cores }} -n -N {{ worker_iface }} -m --output {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &
+    echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid
+
+- name: Worker monitoring pid is created
+  wait_for:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+
+- name: Worker monitoring log is created
+  wait_for:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv"

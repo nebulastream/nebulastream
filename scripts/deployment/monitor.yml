@@ -4,3 +4,7 @@
 - hosts: coordinator
   tasks:
     - include_tasks: roles/coordinator/tasks/monitor.yml
+
+- hosts: workers
+  tasks:
+    - include_tasks: roles/worker/tasks/monitor.yml
