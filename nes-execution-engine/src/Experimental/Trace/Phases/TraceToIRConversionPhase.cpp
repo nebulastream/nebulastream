@@ -170,7 +170,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                IR::BasicBlockPtr& block,
                                                                Operation& operation) {
-    std::cout << "current block " << block->getIdentifier() << " "<< operation << std::endl;
+    std::cout << "current block " << block->getIdentifier() << " " << operation << std::endl;
     auto blockRef = get<BlockRef>(operation.input[0]);
     IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);
@@ -187,7 +187,8 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     // check if we jump to a loop head:
     if (targetBlock.operations.back().op == CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
-        /*if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
+#ifdef USE_BABELFISH
+        if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
             NES_DEBUG("1. found loop");
             auto loopOperator = std::make_shared<IR::Operations::LoopOperation>(IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<IR::Operations::DefaultLoopInfo>());
@@ -201,7 +202,8 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
             blockMap[blockRef.block] = loopHeadBlock;
             block->addOperation(loopOperator);
             return;
-        }*/
+        }
+#endif
     }
 
     auto resultTargetBlock = processBlock(scope - 1, trace->getBlock(blockRef.block));
@@ -271,6 +273,9 @@ IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlow
     }
     if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::ReturnOp) {
         return nullptr;
+    }
+    if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp) {
+        return currentBlock;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -465,6 +470,8 @@ bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t paren
     if (currentBlockId == parentBlockId) {
         return true;
     }
+    if (parentBlockId == 8)
+        return false;
     if (currentBlockId == UINT32_MAX) {
         currentBlockId = parentBlockId;
     }
@@ -473,7 +480,8 @@ bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t paren
     if (terminationOp.op == CMP) {
         auto trueCaseBlockRef = get<BlockRef>(terminationOp.input[0]);
         auto falseCaseBlockRef = get<BlockRef>(terminationOp.input[1]);
-        return isBlockInLoop(parentBlockId, trueCaseBlockRef.block) || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
+        return currentBlock.type == Block::ControlFlowMerge;
+        //isBlockInLoop(parentBlockId, trueCaseBlockRef.block) || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
     } else if (terminationOp.op == JMP) {
         auto target = get<BlockRef>(terminationOp.input[0]);
         return isBlockInLoop(parentBlockId, target.block);
@@ -510,8 +518,7 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
         constOperation =
             std::make_shared<IR::Operations::ConstFloatOperation>(resultIdentifier, float64->getValue(), float64->getType());
     } else if (auto* boolean = cast_if<Interpreter::Boolean>(valueRef.value.get())) {
-        constOperation =
-            std::make_shared<IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
+        constOperation = std::make_shared<IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }
