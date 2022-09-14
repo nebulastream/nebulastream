@@ -18,7 +18,7 @@
 
 namespace NES {
 PointExpressionNode::PointExpressionNode(PointExpressionNode* other) : ShapeExpressionNode(other->type) {
-    latitude = other->getLongitude();
+    latitude = other->getLatitude();
     longitude = other->getLongitude();
 }
 

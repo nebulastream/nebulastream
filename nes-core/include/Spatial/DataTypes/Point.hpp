@@ -64,7 +64,7 @@ class Point {
      * @param the other point
      * @return the distance between the two points in meters
      */
-    double HaversineDistance(const Point& o);
+    double haversineDistance(const Point& o);
 
   private:
     // data

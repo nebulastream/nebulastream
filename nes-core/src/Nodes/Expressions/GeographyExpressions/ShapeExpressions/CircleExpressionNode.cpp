@@ -18,7 +18,7 @@
 
 namespace NES {
 CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other) : ShapeExpressionNode(other->type) {
-    latitude = other->getLongitude();
+    latitude = other->getLatitude();
     longitude = other->getLongitude();
     radius = other->getRadius();
 }

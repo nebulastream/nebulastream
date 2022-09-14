@@ -56,7 +56,7 @@ double radiansToDegrees(double radians);
 * @param lng2 is the longitude (in degrees) of the second point
 * @return the haversine distance (in meters) between (lat1, lng1) and (lat2, lng2)
 */
-double HaversineDistance(double lat1, double lng1, double lat2, double lng2);
+double haversineDistance(double lat1, double lng1, double lat2, double lng2);
 
 }// namespace SpatialUtils
 }// namespace NES
