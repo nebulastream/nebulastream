@@ -1,6 +1,18 @@
 # Changelog
 
-## [v0.2.87](https://github.com/nebulastream/nebulastream/tree/v0.2.87) (2022-08-31)
+## [v0.2.88](https://github.com/nebulastream/nebulastream/tree/v0.2.88) (2022-09-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.87...v0.2.88)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query initially sends failed [\#2848](https://github.com/nebulastream/nebulastream/issues/2848)
+
+#### Spatial Query Processing 🌇
+
+- \[Feature\] Create physical spatial datatypes [\#2889](https://github.com/nebulastream/nebulastream/issues/2889)
+
+## [v0.2.87](https://github.com/nebulastream/nebulastream/tree/v0.2.87) (2022-09-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.86...v0.2.87)
 
