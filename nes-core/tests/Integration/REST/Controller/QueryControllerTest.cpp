@@ -36,6 +36,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 };
 
+//Check if submitting a POST request without defining 'userQuery' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -61,6 +62,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     EXPECT_TRUE(errorMessage.find("Incorrect or missing key word for user query, use 'userQuery'") != std::string::npos);
 }
 
+//Check if submitting a POST request without defining 'placement' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -86,6 +88,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     EXPECT_TRUE(errorMessage.find("No placement strategy specified. Specify a placement strategy using 'placement'.") != std::string::npos);
 }
 
+//Check if submitting a POST request with an unsupported 'placement' strategy returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -112,6 +115,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     EXPECT_TRUE(errorMessage.find("Invalid Placement Strategy: ") != std::string::npos);
 }
 
+//Check if submitting a POST request with an unsupported 'faultTolerance' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -139,6 +143,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     EXPECT_TRUE(errorMessage.find("Invalid fault tolerance Type provided:") != std::string::npos);
 }
 
+//Check if submitting a POST request with an unsupported 'lineage' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -167,6 +172,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     EXPECT_TRUE(errorMessage.find("Invalid Lineage Mode Type provided:") != std::string::npos);
 }
 
+//Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -198,6 +204,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 
 }
 
+//Check if getting an execution-plan returns as expected
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -251,6 +258,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
 }
 
+//Check if getting an execution-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -293,6 +301,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
 }
 
+//Check if getting a query-plan returns as expected
 TEST_F(QueryControllerTest, testGetQueryPlan) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -339,6 +348,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     }
 }
 
+//Check if getting a query-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
