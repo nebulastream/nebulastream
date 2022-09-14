@@ -16,13 +16,9 @@
 
 namespace NES {
 
-double SpatialUtils::degreesToRadians(double degrees) {
-    return (degrees * M_PI / 180.0);
-}
+double SpatialUtils::degreesToRadians(double degrees) { return (degrees * M_PI / 180.0); }
 
-double SpatialUtils::radiansToDegrees(double radians) {
-    return (radians * 180.0 / M_PI);
-}
+double SpatialUtils::radiansToDegrees(double radians) { return (radians * 180.0 / M_PI); }
 
 double SpatialUtils::haversineDistance(double lat1, double lng1, double lat2, double lng2) {
     double lat1r = degreesToRadians(lat1);

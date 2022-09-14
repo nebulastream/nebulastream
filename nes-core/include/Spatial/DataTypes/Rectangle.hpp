@@ -31,7 +31,6 @@ namespace NES {
  */
 class Rectangle {
   public:
-
     /**
      * @brief Create a new geography rectangle
      * @param latitudeLow defines the latitude of the south-west (bottom-left) point
@@ -137,5 +136,5 @@ class Rectangle {
     Point low, high;
 };
 
-}
+}// namespace NES
 #endif//NES_SPATIAL_DATATYPES_RECTANGLE_HPP_

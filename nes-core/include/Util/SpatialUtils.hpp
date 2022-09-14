@@ -28,8 +28,8 @@ namespace SpatialUtils {
 // see: https://earth-info.nga.mil/index.php?dir=wgs84&action=wgs84
 double const earthRadiusKms = 6378.1370;
 double const earthRadiusMeters = 6378137.0;
-const static double MIN_LAT = -(M_PI/2);
-const static double MAX_LAT = (M_PI/2);
+const static double MIN_LAT = -(M_PI / 2);
+const static double MAX_LAT = (M_PI / 2);
 const static double MIN_LON = -M_PI;
 const static double MAX_LON = M_PI;
 

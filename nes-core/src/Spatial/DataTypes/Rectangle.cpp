@@ -100,5 +100,4 @@ bool Rectangle::intersects(const Rectangle& other) {
              || other.getLongitudeLow() > high.getLongitude() || other.getLongitudeHigh() < low.getLongitude());
 }
 
-}
-
+}// namespace NES

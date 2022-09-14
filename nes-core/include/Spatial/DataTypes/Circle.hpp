@@ -32,7 +32,6 @@ namespace NES {
  */
 class Circle {
   public:
-
     /**
      * @brief Create a new geography circle defined by a center, and radius in meters
      * @param latitude defines the latitude of the center of the circle.
