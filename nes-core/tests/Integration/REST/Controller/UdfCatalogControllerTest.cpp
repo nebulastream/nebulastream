@@ -165,7 +165,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
 }
 
 //Test if POST endpoint handles exceptions without returning a stack trace
-TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
+TEST_F(UdfCatalogControllerTest, DISABLED_HandlePostHandlesException) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
