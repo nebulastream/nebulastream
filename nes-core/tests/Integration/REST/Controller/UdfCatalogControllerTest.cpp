@@ -95,6 +95,7 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
 
 };
 
+//Test if submitting a UDF and then retrieving it works as expected
 TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -140,6 +141,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptorMessage.classes());
 }
 
+//Test if Oatpp framework correctly returns 404 when URL path isnt supported
 TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -162,6 +164,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     verifyResponseStatusCode(response, 404l);
 }
 
+//Test if POST endpoint handles exceptions without returning a stack trace
 TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -189,6 +192,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     ASSERT_TRUE(response.text.find("Stack trace") == std::string::npos);
 }
 
+//Test if deleting a Udf catalog entry works as expected
 TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -233,6 +237,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     verifyResponseResult(response2, json);
 }
 
+//Test if DELETE handles non existent UDF correctly
 TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -259,6 +264,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
     verifyResponseResult(response, json);
 }
 
+//Test if DELETE handles missing query parameter correctly
 TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -280,6 +286,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
     verifyResponseStatusCode(response, 400);
 }
 
+//Test if DELETE handles extra query parameters correctly
 TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreIgnored) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -304,7 +311,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreIgnor
     //Oatpp ignores all query parameters that arent defined in the endpoint
 }
 
-
+//Test if GET returns expected results if no UDF is foound
 TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -331,6 +338,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist)
     ASSERT_FALSE(response1.found());
 }
 
+//Test if GET endpoint handles missing query parameters correclty
 TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -353,6 +361,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
     verifyResponseStatusCode(response, 400);
 }
 
+//Test if GET for list of udfs behaves as expected
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -393,6 +402,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
     verifyResponseResult(response2, json);
 }
 
+//Test if GET for udf List behaves correctly when no UDFs are registered
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
