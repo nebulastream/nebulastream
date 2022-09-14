@@ -93,12 +93,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/execution-plan", getExecutionPlan, QUERY(UInt64 , queryId, "queryId")) {
         try {
-            NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsNlohmannJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
-        } catch (QueryNotFoundException e ) {
+        }
+        catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         }
         catch(nlohmann::json::exception e){
@@ -111,9 +111,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64 , queryId, "queryId")) {
         try {
-            NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+            NES_TRACE("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsNlohmannJson(queryCatalogEntry->getInputQueryPlan());
             return createResponse(Status::CODE_200, basePlan.dump());
         }
@@ -139,7 +138,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 response[phaseName] = queryPlanJson;
             }
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e ) {
+        }
+        catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
         }
         catch(nlohmann::json::exception e){
@@ -149,6 +149,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
     }
+
     ENDPOINT("GET", "/query-status", getQueryStatus, QUERY(UInt64 ,queryId, "queryId")) {
         //NOTE: QueryController has "query-status" endpoint. QueryCatalogController has "status" endpoint with same functionality.
         //No sense in duplicating functionality, so "query-status" endpoint is not implemented.
@@ -157,6 +158,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
+            //nlohmann::json library has trouble parsing Oatpp String type
+            //we extract a std::string from the Oatpp String type to then be parsed
             std::string req = request.getValue("{}");
             nlohmann::json requestJson = nlohmann::json::parse(req);
             auto error = validateUserRequest(requestJson);
@@ -220,12 +223,11 @@ class QueryController : public oatpp::web::server::api::ApiController {
         catch(nlohmann::json::exception e){
             return errorHandler->handleError(Status::CODE_500, e.what());
         }
-        catch (std::exception& e) {
-            std::string errorMessage = "Potentially incorrect or missing key words for user query (use 'userQuery') or placement strategy (use 'strategyName')."
-                "For more info check: https://docs.nebula.stream/docs/clients/rest-api/ \n";
-            return errorHandler->handleError(Status::CODE_500, errorMessage + e.what());
+        catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
+
     ENDPOINT("POST", "/execute-query-ex", submitQueryProtobuf, BODY_STRING(String, request)) {
         try {
             std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
@@ -271,7 +273,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
             nlohmann::json response;
             response["queryId"] = queryId;
             return createResponse(Status::CODE_200, response.dump());
-        } catch(nlohmann::json::exception e){
+        }
+        catch(nlohmann::json::exception e){
             return errorHandler->handleError(Status::CODE_500, e.what());
         }
         catch (const std::exception& exc) {

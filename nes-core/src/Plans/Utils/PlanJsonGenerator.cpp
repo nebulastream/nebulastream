@@ -189,6 +189,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& query
 
     return result;
 }
+
 void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
                                     std::vector<web::json::value>& nodes,
                                     std::vector<web::json::value>& edges) {
@@ -249,7 +250,6 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         getChildren(childLogicalOperatorNode, nodes, edges);
     }
 }
-
 
 void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
                                     std::vector<nlohmann::json>& nodes,
@@ -367,8 +367,8 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
     executionPlanJson["executionNodes"] = nodes;
 
     return executionPlanJson;
-
 }
+
 nlohmann::json PlanJsonGenerator::getQueryPlanAsNlohmannJson(const QueryPlanPtr& queryPlan) {
 
     NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
@@ -409,7 +409,6 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsNlohmannJson(const QueryPlanPtr&
     // add `nodes` and `edges` JSON array to the final JSON result
     result["nodes"] = nodes;
     result["edges"] = edges;
-
     return result;
 }
 
