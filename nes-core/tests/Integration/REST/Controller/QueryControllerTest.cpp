@@ -89,7 +89,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
 }
 
 //Check if submitting a POST request with an unsupported 'placement' strategy returns 400
-TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
+TEST_F(QueryControllerTest, DISABLED_testSubmitQueryInvalidPlacement) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
