@@ -117,13 +117,13 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
                                                                                "udf_method",
                                                                                {1},
                                                                                {{"some_package.my_udf", {1}}});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/registerJavaUdf"},
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the HTTP response is OK
     verifyResponseStatusCode(response, 200);
 
-    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/getUdfDescriptor"},
+    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
                               cpr::Parameters{{"udfName", javaUdfRequest.udf_name()}},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     //check if udf entry exists
@@ -155,7 +155,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
         FAIL() << "Rest server failed to start";
     }
 
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/SUPER_SECRET_URL"},
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/SUPER_SECRET_URL"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{"Whats the object-oriented way to become wealthy? Inheritance."},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // given a REST message
@@ -180,7 +180,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest =
         ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/registerJavaUdf"},
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is BadRequest
@@ -211,14 +211,14 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
                                                                                "udf_method",
                                                                                {1},
                                                                                {{"some_package.my_udf", {1}}});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/registerJavaUdf"},
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the HTTP response is OK
     verifyResponseStatusCode(response, 200);
     // given the UDF catalog contains a Java UDF
     // when a REST message is passed to the controller to remove the UDF
-    auto response2   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/removeUdf"},
+    auto response2   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                               cpr::Parameters{{"udfName", "my_udf"}},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
@@ -248,7 +248,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller to remove a UDF that does not exist
-    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/removeUdf"},
+    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                  cpr::Parameters{{"udfName", "my_udf"}},
                                  cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
@@ -274,7 +274,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller that is missing the udfName parameter
-    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/removeUdf"},
+    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                 cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is BadRequest
     verifyResponseStatusCode(response, 400);
@@ -295,7 +295,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreIgnor
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
-    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/removeUdf"},
+    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                 cpr::Parameters{{"udfName", "my_udf"}, {"meaning_of_life", "42"}},
                                 cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
 
@@ -320,7 +320,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist)
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller to get the UDF descriptor of an UDF that does not exist
-    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/getUdfDescriptor"},
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
                               cpr::Parameters{{"udfName", "greatest-udf-of-all-time"}},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     auto request = web::http::http_request{web::http::methods::GET};
@@ -346,7 +346,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller that is missing the udfName parameter
-    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/getUdfDescriptor"},
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     auto request = web::http::http_request{web::http::methods::GET};
     // then the response is BadRequest
@@ -375,13 +375,13 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
                                                                                "udf_method",
                                                                                {1},
                                                                                {{"some_package.my_udf", {1}}});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/registerJavaUdf"},
+    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the HTTP response is OK
     verifyResponseStatusCode(response, 200);
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/listUdfs"},
+    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
     verifyResponseStatusCode(response2, 200);
@@ -408,7 +408,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
         FAIL() << "Rest server failed to start";
     }
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udf-catalog/listUdfs"},
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
     verifyResponseStatusCode(response, 200);

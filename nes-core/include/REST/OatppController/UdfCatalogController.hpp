@@ -41,7 +41,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param udfCatalog
+     * @param udfCatalog - catalog for user defined functions
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      * @param errorHandler - responsible for handling errors
      */
@@ -54,7 +54,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
     /**
      * Create a shared object of the API controller
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param udfCatalog
+     * @param udfCatalog - catalog for user defined functions
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
