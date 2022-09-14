@@ -20,7 +20,7 @@
 #include <queue>
 #include <string>
 
-namespace NES {
+namespace NES::Parsers {
 
 /**
  * @brief This class defines the attributes and methods used by the PatternParsingService.
@@ -28,15 +28,6 @@ namespace NES {
  */
 
 class NebulaPSLOperatorNode {
-  private:
-    int id;
-    std::string eventName;
-    int rightChildId = -1;
-    int leftChildId = -1;
-    std::pair<int, int> minMax;
-    int parentNodeId = -1;
-    NES::Query query = NES::Query(NULL);
-
   public:
     //Constructors
     explicit NebulaPSLOperatorNode(int id);
@@ -55,6 +46,14 @@ class NebulaPSLOperatorNode {
     void setParentNodeId(int parent_node_id);
     const Query& getQuery() const;
     void setQuery(const Query& query);
+  private:
+    int id;
+    std::string eventName;
+    int rightChildId = -1;
+    int leftChildId = -1;
+    std::pair<int, int> minMax;
+    int parentNodeId = -1;
+    NES::Query query = NES::Query(NULL);
 };
 
 }// namespace NES

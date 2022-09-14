@@ -18,7 +18,7 @@
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <iostream>
 
-namespace NES {
+namespace NES::Parsers {
 
 NebulaPSLOperatorNode::NebulaPSLOperatorNode(int id) { setId(id); }
 

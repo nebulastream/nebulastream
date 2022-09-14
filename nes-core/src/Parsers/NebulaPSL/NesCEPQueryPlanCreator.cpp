@@ -26,7 +26,7 @@
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 
-namespace NES {
+namespace NES::Parsers {
 
 void NesCEPQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* context) {
     NES_DEBUG("NesCEPQueryPlanCreator : enterListEvents: init tree walk and initialize read out of AST ");

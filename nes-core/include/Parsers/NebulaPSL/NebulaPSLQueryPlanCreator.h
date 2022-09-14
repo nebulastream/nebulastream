@@ -33,29 +33,13 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <string>
 
-namespace NES {
+namespace NES::Parsers {
 /**
  * @brief This class creates the query plan from ANTLR AST
  * It inherits from the auto-generated ANTLR base listener to walk the AST created from the pattern string.
  * This enables the parsing of declarative patterns into NES queries.
  */
-
 class NesCEPQueryPlanCreator : public NesCEPBaseListener {
-
-  private:
-    int sourceCounter = 0;
-    int currentOperatorPointer = -1;
-    int lastSeenSourcePtr = -1;
-    NebulaPSLPattern pattern;
-    int nodeId = 0;
-    int currentElementPointer = -1;
-    NES::Query query = NES::Query(NULL);
-
-    bool inWhere = false;
-    bool leftFilter = true;
-    std::string currentLeftExp;
-    std::string currentRightExp;
-
   public:
     int GetLastSeenSourcePtr() const;
     void SetLastSeenSourcePtr(int last_seen_source_ptr);
@@ -190,14 +174,28 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     /**
      * @brief this methods parses the user-specified window information to TimeMeasures
      */
-    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure, int time );
+    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure,
+                                                                                                int time);
 
     /**
      * @brief this methods add all projections to the query
      */
     void addProjections();
+
+  private:
+    int sourceCounter = 0;
+    int currentOperatorPointer = -1;
+    int lastSeenSourcePtr = -1;
+    NebulaPSLPattern pattern;
+    int nodeId = 0;
+    int currentElementPointer = -1;
+    NES::Query query = NES::Query(NULL);
+    bool inWhere = false;
+    bool leftFilter = true;
+    std::string currentLeftExp;
+    std::string currentRightExp;
 };
 
-}//end of namespace NES
+}// namespace NES::Parsers
 
-#endif //NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
+#endif//NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
