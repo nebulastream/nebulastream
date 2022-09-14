@@ -13,8 +13,6 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
-#include <REST/DTOs/TopologyDTO.hpp>
-#include <REST/DTOs/SuccessDTO.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
@@ -54,7 +52,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     /**
      * Create a shared object of the API controller
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param topology
+     * @param topology - the overall physical infrastructure with different nodes
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
@@ -70,39 +68,11 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "", getTopology) {
-        auto dto = DTO::TopologyDTO::createShared();
-        oatpp::List<oatpp::Object<DTO::QueryCatalogEntryResponse>> list({});
-        auto topologyJson = getTopologyAsJson(topology);
-        try {
-            oatpp::List<oatpp::Object<DTO::Edge>> edges({});
-            auto edgesJson = topologyJson["edges"];
-            for(auto edge : edgesJson){
-                auto edgeDTO = DTO::Edge::createShared();
-                edgeDTO->source = edge["source"].get<std::string>();
-                edgeDTO->target = edge["target"].get<std::string>();
-                edges->push_back(edgeDTO);
-            }
-            dto->edges = edges;
-            //create list of nodes
-            oatpp::List<oatpp::Object<DTO::TopologyNode>> nodes({});
-            auto nodesJson = topologyJson["nodes"];
-            for(auto node : nodesJson){
-                auto nodeDTO = DTO::TopologyNode::createShared();
-                auto locationDTO = DTO::LocationInformation::createShared();
-                auto locationInfoJson = node["location"];
-                NES_DEBUG(nodesJson.dump());
-                if(!locationInfoJson.empty()) {
-                    locationDTO->latitude = locationInfoJson["latitude"].get<std::string>();
-                    locationDTO->longitude = locationInfoJson["longitude"].get<std::string>();
-                }
-                nodeDTO->availableResources = node["available_resources"].get<uint64_t>();
-                nodeDTO->id = node["id"].get<uint64_t>();
-                nodeDTO->locationInformation = locationDTO;
-                nodeDTO->nodeType = node["nodeType"].get<std::string>();
-                nodes->push_back(nodeDTO);
-            }
-            dto->nodes = nodes;
-            return createDtoResponse(Status::CODE_200, dto);
+        try{
+            auto topologyJson = getTopologyAsJson(topology);
+            return createResponse(Status::CODE_200, topologyJson.dump());
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
             NES_ERROR("TopologyController: handleGet -getTopology: Exception occurred while building the "
                       "topology:"
@@ -116,57 +86,75 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
-        std::string req = request.getValue("{}");
-        nlohmann::json reqJson = nlohmann::json::parse(req);
-        auto optional = validateRequest(reqJson);
-        if(optional.has_value()){
-            return optional.value();
-        }
-        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
-        uint64_t childId = reqJson["childId"].get<uint64_t>();
-        auto parentPhysicalNode = topology->findNodeWithId(parentId);
-        auto childPhysicalNode = topology->findNodeWithId(childId);
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if(!nlohmann::json::accept(req)){
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            };
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            auto optional = validateRequest(reqJson);
+            if (optional.has_value()) {
+                return optional.value();
+            }
+            uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+            uint64_t childId = reqJson["childId"].get<uint64_t>();
+            auto parentPhysicalNode = topology->findNodeWithId(parentId);
+            auto childPhysicalNode = topology->findNodeWithId(childId);
 
-        bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
-        if (added) {
-            NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
-            topology->print();
-        } else {
-            NES_ERROR("TopologyController::handlePost:addParent: Failed");
-            return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
+            bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            if (added) {
+                NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
+                topology->print();
+            } else {
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
+            }
+            //Prepare the response
+            nlohmann::json response;
+            response["success"] = added;
+            return createResponse(Status::CODE_200, response);
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch(...){
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
-
-        //Prepare the response
-        auto dto = DTO::SuccessDTO::createShared();
-        dto->success = added;
-        return createDtoResponse(Status::CODE_200, dto);
     }
 
     ENDPOINT("DELETE", "/removeParent", removeParent, BODY_STRING(String, request)) {
-        std::string req = request.getValue("{}");
-        nlohmann::json reqJson = nlohmann::json::parse(req);
-        auto optional = validateRequest(reqJson);
-        if(optional.has_value()){
-            return optional.value();
-        }
-        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
-        uint64_t childId = reqJson["childId"].get<uint64_t>();
-        auto parentPhysicalNode = topology->findNodeWithId(parentId);
-        auto childPhysicalNode = topology->findNodeWithId(childId);
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if(!nlohmann::json::accept(req)){
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            };
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            auto optional = validateRequest(reqJson);
+            if (optional.has_value()) {
+                return optional.value();
+            }
+            uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+            uint64_t childId = reqJson["childId"].get<uint64_t>();
+            auto parentPhysicalNode = topology->findNodeWithId(parentId);
+            auto childPhysicalNode = topology->findNodeWithId(childId);
 
-        bool added = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
-        if (added) {
-            NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully new topology is=");
-            topology->print();
-        } else {
-            NES_ERROR("TopologyController::handlePost:addParent: Failed");
-            return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
+            bool removed = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            if (removed) {
+                NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
+            } else {
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
+            }
+            //Prepare the response
+            nlohmann::json response;
+            response["success"] = removed;
+            return createResponse(Status::CODE_200, response.dump());
+        }catch(nlohmann::json::exception e ){
+            return errorHandler->handleError(Status::CODE_500, e.what());
         }
-
-        //Prepare the response
-        auto dto = DTO::SuccessDTO::createShared();
-        dto->success = added;
-        return createDtoResponse(Status::CODE_200, dto);
+        catch(...){
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
     }
 
   private:
