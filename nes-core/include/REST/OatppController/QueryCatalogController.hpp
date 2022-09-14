@@ -51,8 +51,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      * @param queryCatalogService - queryCatalogService
-     * @param coordinator
-     * @param globalQueryPlan
+     * @param coordinator - central entity of NebulaStream
+     * @param globalQueryPlan - responsible for storing all currently running and to be deployed QueryPlans in the NES system.
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      * @param errorHandler - responsible for handling errors
      */
@@ -69,8 +69,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * Create a shared object of the API controller
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      * @param queryCatalogService - queryCatalogService
-     * @param coordinator
-     * @param globalQueryPlan
+     * @param coordinator - central entity of NebulaStream
+     * @param globalQueryPlan - responsible for storing all currently running and to be deployed QueryPlans in the NES system.
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
