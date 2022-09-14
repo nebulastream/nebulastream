@@ -189,6 +189,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
         return std::nullopt;
     }
+
     /**
       * @brief function to obtain JSON representation of a NES Topology
       * @param root of the Topology

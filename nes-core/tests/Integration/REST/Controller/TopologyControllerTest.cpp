@@ -63,6 +63,7 @@ TEST_F(TopologyControllerTest, testGetTopology) {
         EXPECT_TRUE(node.contains("id") && node.contains("ip_address") && node.contains("nodeType") && node.contains("location") && node.contains("available_resources"));
     }
 }
+
 TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
