@@ -143,4 +143,4 @@ bool Circle::contains(const Rectangle& other) {
     }
 }
 
-}
+}// namespace NES

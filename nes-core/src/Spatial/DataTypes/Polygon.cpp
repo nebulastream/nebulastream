@@ -13,10 +13,10 @@
 */
 
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Polygon.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -100,17 +100,14 @@ bool Polygon::contains(double latitude, double longitude) {
 // a half-line whose left end point is the test point. The algorithm counts the
 // number of intersections between 'r' and the edges of the polygon. If the count
 // is odd then the point is inside the polygon otherwise not.
-bool Polygon::contains(const Point& point) {
-    return contains(point.getLatitude(), point.getLongitude());
-}
+bool Polygon::contains(const Point& point) { return contains(point.getLatitude(), point.getLongitude()); }
 
 bool Polygon::contains(const Rectangle& rect) {
     // this works for most cases when the rectangle is completely inside
     // the bounds of the polygon, but  it would fail for the case where
     // the edges of the rectangle crosses any edge of the polygon
     // TODO add additional check for edge crossing
-    return contains(rect.getLatitudeLow(), rect.getLongitudeLow())
-        && contains(rect.getLatitudeHigh(), rect.getLongitudeHigh());
+    return contains(rect.getLatitudeLow(), rect.getLongitudeLow()) && contains(rect.getLatitudeHigh(), rect.getLongitudeHigh());
 }
 
-}
+}// namespace NES

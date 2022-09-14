@@ -24,9 +24,7 @@ Point::Point(double latitude, double longitude) : latitude(latitude), longitude(
 Point::Point() : latitude(0.0), longitude(0.0) {}
 
 double Point::haversineDistance(const Point& other) {
-    return SpatialUtils::haversineDistance(this->latitude, this->longitude,
-                                           other.getLatitude(), other.getLongitude());
+    return SpatialUtils::haversineDistance(this->latitude, this->longitude, other.getLatitude(), other.getLongitude());
 }
 
-}
-
+}// namespace NES

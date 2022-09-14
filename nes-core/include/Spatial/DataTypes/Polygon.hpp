@@ -34,7 +34,6 @@ namespace NES {
  */
 class Polygon {
   public:
-
     /**
      * @brief Defines a polygon shape. The user can define a polygon as follows:
      * POLYGON({29.396018, 79.435183, 29.375910, 79.449621, 29.363619, 79.46852, 29.372501,

@@ -29,7 +29,6 @@ namespace NES {
  */
 class Point {
   public:
-
     /**
      * @brief Create a new geography point
      * @param latitude is the latitude of the point
@@ -70,5 +69,5 @@ class Point {
     // data
     double latitude, longitude;
 };
-}
+}// namespace NES
 #endif//NES_SPATIAL_DATATYPES_POINT_HPP_
