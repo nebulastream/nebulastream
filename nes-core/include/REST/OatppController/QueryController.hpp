@@ -13,12 +13,6 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_QUERYCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_QUERYCONTROLLER_HPP_
-#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/QueryControllerExecutionPlanResponse.hpp>
-#include <REST/DTOs/QueryControllerOptimizationPhasesResponse.hpp>
-#include <REST/DTOs/QueryControllerResponse.hpp>
-#include <REST/DTOs/QueryControllerStopQueryResponse.hpp>
-#include <REST/DTOs/QueryControllerSubmitQueryResponse.hpp>
-#include <REST/DTOs/QueryControllerQueryPlanResponse.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
@@ -31,10 +25,10 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <SerializableQueryPlan.pb.h>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
-#include "GRPC/Serialization/QueryPlanSerializationUtil.hpp"
-#include "SerializableQueryPlan.pb.h"
 
 namespace NES {
 class NesCoordinator;
@@ -103,46 +97,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsNlohmannJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.dump());
-            //create list of execution nodes
-            oatpp::List<oatpp::Object<DTO::ExecutionNodeDTO>> executionNodes({});
-            auto executionNodesJson = executionPlanJson["executionNodes"];
-            NES_DEBUG(executionNodesJson.is_array());
-            for (auto node : executionNodesJson) {
-                //create single execution node DTO
-                //fill fields of executionNodeDTO
-                NES_DEBUG(node.dump());
-                auto executionNodeDTO = DTO::ExecutionNodeDTO::createShared();
-                executionNodeDTO->executionNodeId = node["executionNodeId"].get<uint64_t>();
-                executionNodeDTO->topologyNodeId = node["topologyNodeId"].get<uint64_t>();
-                executionNodeDTO->topologyNodeIpAddress = node["topologyNodeIpAddress"].get<std::string>();
-                //create list of query info, will be assigned to field of executionNodeDTO
-                oatpp::List<oatpp::Object<DTO::ScheduledQueryInfo>> scheduledQueries({});
-                auto scheduledQueriesJson = node["ScheduledQueries"];
-                for(auto query : scheduledQueriesJson){
-                    //fill fields of query info dto
-                    auto scheduledQueryDTO = DTO::ScheduledQueryInfo::createShared();
-                    scheduledQueryDTO->queryId = query["queryId"].get<uint64_t>();
-                    auto querySubPlansJson = query["querySubPlans"];
-                    //create list of querySubPlanDTOs, will be assigned to field of query info dto
-                    oatpp::List<oatpp::Object<DTO::QuerySubPlanDTO>> querySubPlans({});
-                    for(auto subPlan : querySubPlansJson){
-                        NES_DEBUG(subPlan.dump());
-                        auto subPlanDTO = DTO::QuerySubPlanDTO::createShared();
-                        subPlanDTO->operators = subPlan["operator"].get<std::string>();
-                        subPlanDTO->querySubPlanId = subPlan["querySubPlanId"].get<uint64_t>();
-                        querySubPlans->push_back(subPlanDTO);
-                    }
-                    scheduledQueryDTO->querySubPlans = querySubPlans;
-                    scheduledQueries->push_back(scheduledQueryDTO);
-                }
-                executionNodeDTO->scheduledQueries = scheduledQueries;
-                executionNodes->push_back(executionNodeDTO);
-            }
-            auto response = DTO::QueryControllerExecutionPlanResponse::createShared();
-            response->executionNodes = executionNodes;
-            return createDtoResponse(Status::CODE_200, response);
+            return createResponse(Status::CODE_200, executionPlanJson.dump());
         } catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch(nlohmann::json::exception e){
+            return errorHandler->handleError(Status::CODE_500, e.what());
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -155,32 +115,13 @@ class QueryController : public oatpp::web::server::api::ApiController {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsNlohmannJson(queryCatalogEntry->getInputQueryPlan());
-            NES_DEBUG(basePlan.dump());
-            //create list of edges
-            auto response = DTO::QueryControllerQueryPlanResponse::createShared();
-            oatpp::List<oatpp::Object<DTO::Edge>> edges({});
-            auto edgesJson = basePlan["edges"];
-            for(auto edge : edgesJson){
-                auto edgeDTO = DTO::Edge::createShared();
-                edgeDTO->source = edge["source"].get<std::string>();
-                edgeDTO->target = edge["target"].get<std::string>();
-                edges->push_back(edgeDTO);
-            }
-            response->edges = edges;
-            //create list of nodes
-            oatpp::List<oatpp::Object<DTO::Node>> nodes({});
-            auto nodesJson = basePlan["nodes"];
-            for(auto node : nodesJson){
-                auto nodeDTO = DTO::Node::createShared();
-                nodeDTO->id = node["id"].get<uint64_t>();
-                nodeDTO->name = node["name"].get<std::string>();
-                nodeDTO->nodeType = node["nodeType"].get<std::string>();
-                nodes->push_back(nodeDTO);
-            }
-            response->nodes = nodes;
-            return createDtoResponse(Status::CODE_200, response);
-        } catch (QueryNotFoundException e ) {
+            return createResponse(Status::CODE_200, basePlan.dump());
+        }
+        catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch(nlohmann::json::exception e){
+            return errorHandler->handleError(Status::CODE_500, e.what());
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -189,19 +130,20 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64 , queryId, "queryId")) {
         try {
-            oatpp::Fields<String> map({});
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
+            nlohmann::json response;
             for (auto const& [phaseName, queryPlan] : optimizationPhases) {
-                auto queryPlanString = PlanJsonGenerator::getQueryPlanAsJson(queryPlan).serialize();
-                map->push_back({phaseName, queryPlanString});
+                auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsNlohmannJson(queryPlan);
+                response[phaseName] = queryPlanJson;
             }
-            auto dto = REST::DTO::QueryControllerOptimizationPhasesResponse::createShared();
-            dto->optimizationPhases = map;
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, response.dump());
         } catch (QueryNotFoundException e ) {
             return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+        }
+        catch(nlohmann::json::exception e){
+            return errorHandler->handleError(Status::CODE_500, e.what());
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -265,15 +207,18 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                                                             faultToleranceMode,
                                                                             lineageMode);
             //Prepare the response
-            auto dto = DTO::QueryControllerSubmitQueryResponse::createShared();
-            dto->queryId = queryId;
-            return createDtoResponse(Status::CODE_200, dto);
+            nlohmann::json response;
+            response["queryId"] = queryId;
+            return createResponse(Status::CODE_200, response.dump());
         }
         catch (const InvalidQueryException& exc) {
             NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                       "user request:"
                       << exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
+        }
+        catch(nlohmann::json::exception e){
+            return errorHandler->handleError(Status::CODE_500, e.what());
         }
         catch (std::exception& e) {
             std::string errorMessage = "Potentially incorrect or missing key words for user query (use 'userQuery') or placement strategy (use 'strategyName')."
@@ -323,16 +268,20 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                                             lineageMode);
 
             //Prepare the response
-            auto dto = DTO::QueryControllerSubmitQueryResponse::createShared();
-            dto->queryId = queryId;
-            return createDtoResponse(Status::CODE_201, dto);
-        } catch (const std::exception& exc) {
+            nlohmann::json response;
+            response["queryId"] = queryId;
+            return createResponse(Status::CODE_200, response.dump());
+        } catch(nlohmann::json::exception e){
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        }
+        catch (const std::exception& exc) {
             NES_ERROR(
                 "QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
                 "user request:"
                 << exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
-        } catch (...) {
+        }
+        catch (...) {
             NES_ERROR("RestServer: unknown exception.");
             return errorHandler->handleError(Status::CODE_500, "unknown exception");
         }
@@ -342,9 +291,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
         try{
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
             Status status = success ? Status::CODE_202 : Status::CODE_400;  //QueryController catches InvalidQueryStatus exception, but this is never thrown since it was commented out
-            auto dto = DTO::QueryControllerStopQueryResponse::createShared();
-            dto->success = success;
-            return createDtoResponse(status,dto);
+            nlohmann::json response;
+            response["success"] = success;
+            return createResponse(status,response.dump());
         }
         catch (QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
