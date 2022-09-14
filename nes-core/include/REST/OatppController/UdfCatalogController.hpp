@@ -17,7 +17,6 @@
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <UdfCatalogService.pb.h>
-#include <REST/DTOs/UdfControllerListUdfsResponse.hpp>
 #include <nlohmann/json.hpp>
 #include <Exceptions/UdfException.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
@@ -98,14 +97,12 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/listUdfs", listUdfs) {
         try{
-            oatpp::List<String> udfList({});
+            nlohmann::json response;
+            response["udfs"] = nlohmann::json::array();
             for (const auto& udf : udfCatalog->listUdfs()) {
-                NES_DEBUG(udf);
-                udfList->push_back(udf);
+                response["udfs"].push_back(udf);
             }
-            auto dto = DTO::UdfControllerListUdfsResponse::createShared();
-            dto->udfs = udfList;
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, response.dump());
         }
         catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Server error");
