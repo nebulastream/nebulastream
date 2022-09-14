@@ -22,33 +22,40 @@ namespace NES {
 
 Polygon::Polygon(std::vector<double> coords) {
     double minLat, minLng, maxLat, maxLng;
-    minLat = minLng =  std::numeric_limits<double>::max();
+    minLat = minLng = std::numeric_limits<double>::max();
     maxLat = maxLng = std::numeric_limits<double>::lowest();
 
     // iterate over the coordinates and (i) make a points vector, and (ii) compute
     // the bounding rectangle
-    for(size_t itr = 0; itr < coords.size() && itr+1 < coords.size() ; itr = itr + 2) {
+    for (size_t itr = 0; itr < coords.size() && itr + 1 < coords.size(); itr = itr + 2) {
         double lat = coords[itr];
-        double lng = coords[itr+1];
+        double lng = coords[itr + 1];
 
         // push into the Points vector
         coordinates.push_back(Point(lat, lng));
 
         // compute the bounds of the bounding rectangle
-        if(minLat > lat) minLat = lat;
-        if(minLng > lng) minLng = lng;
-        if(maxLat < lat) maxLat = lat;
-        if(maxLng < lng) maxLng = lng;
+        if (lat < minLat) {
+            minLat = lat;
+        }
+        if (lng < minLng) {
+            minLng = lng;
+        }
+        if (lat > maxLat) {
+            maxLat = lat;
+        }
+        if (lng > maxLng) {
+            maxLng = lng;
+        }
     }
     boundingRectangle = Rectangle(minLat, minLng, maxLat, maxLng);
 }
 
 Point Polygon::getVertex(int i) {
     size_t idx = i;
-    if(idx > 0 && idx < coordinates.size()) {
+    if (idx > 0 && idx < coordinates.size()) {
         return coordinates[idx];
-    }
-    else {
+    } else {
         NES_ERROR("Polygon::getVertex(): Invalid index access in coordinates: " + std::to_string(idx));
         throw InvalidArgumentException("coordinates[idx]", std::to_string(idx));
     }
@@ -66,19 +73,23 @@ bool Polygon::contains(double latitude, double longitude) {
     // if the point is within the bounding rectangle then
     // do the exact check to test whether the point is
     // within the polygon or not
-    if(boundingRectangle.contains(latitude, longitude)) {
+    if (boundingRectangle.contains(latitude, longitude)) {
         // iterate over pairs of coordinates (i.e., edges) in the polygon and
         // intersect them with 'r'
-        for(size_t i = 0, j = coordinates.size() - 1; i < coordinates.size(); j = i++) {
+        for (size_t i = 0, j = coordinates.size() - 1; i < coordinates.size(); j = i++) {
             // p1-p2 is an edge
             Point p1 = coordinates[i];
             Point p2 = coordinates[j];
 
-            bool intersect = ((p1.getLongitude() > longitude) != (p2.getLongitude() > longitude)) &&
-                (latitude < (p2.getLatitude() - p1.getLatitude()) * (longitude - p1.getLongitude()) / (p2.getLongitude() - p1.getLongitude()) + p1.getLatitude());
+            bool intersect = ((p1.getLongitude() > longitude) != (p2.getLongitude() > longitude))
+                && (latitude < (p2.getLatitude() - p1.getLatitude()) * (longitude - p1.getLongitude())
+                            / (p2.getLongitude() - p1.getLongitude())
+                        + p1.getLatitude());
 
             // flip inside if the edge intersects
-            if(intersect) inside = !inside;
+            if (intersect) {
+                inside = !inside;
+            }
         }
     }
     return inside;

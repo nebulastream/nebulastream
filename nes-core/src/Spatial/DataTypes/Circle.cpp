@@ -20,9 +20,7 @@
 
 namespace NES {
 
-Circle::Circle(double latitude,
-               double longitude,
-               double radius) {
+Circle::Circle(double latitude, double longitude, double radius) {
     center = Point(latitude, longitude);
     this->radius = radius;
     computeBoundingRectangle();
@@ -33,7 +31,7 @@ Circle::Circle(double latitude,
 // http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates
 // All credits for the core logic to Jan Philip Matuschek
 // (http://janmatuschek.de/)
-void Circle::computeBoundingRectangle(){
+void Circle::computeBoundingRectangle() {
     double latr, lonr, radiansDistance;
     double minLatitude, maxLatitude, minLongitude, maxLongitude;
 
@@ -51,12 +49,15 @@ void Circle::computeBoundingRectangle(){
         double deltaLon = asin(sin(radiansDistance) / cos(latr));
 
         minLongitude = lonr - deltaLon;
-        if (minLongitude < SpatialUtils::MIN_LON) minLongitude += 2.0 * M_PI;
+        if (minLongitude < SpatialUtils::MIN_LON) {
+            minLongitude += 2.0 * M_PI;
+        }
 
         maxLongitude = lonr + deltaLon;
-        if (maxLongitude > SpatialUtils::MAX_LON) maxLongitude -= 2.0 * M_PI;
-    }
-    else {
+        if (maxLongitude > SpatialUtils::MAX_LON) {
+            maxLongitude -= 2.0 * M_PI;
+        }
+    } else {
         minLatitude = std::max(minLatitude, SpatialUtils::MIN_LAT);
         maxLatitude = std::min(maxLatitude, SpatialUtils::MAX_LAT);
         minLongitude = SpatialUtils::MIN_LON;
@@ -73,61 +74,73 @@ void Circle::computeBoundingRectangle(){
 bool Circle::contains(double lat, double lon) {
     // first check if the point lies within the bounds of
     // the bounding rectangle
-    if(boundingRectangle.contains(lat, lon)) {
+    if (boundingRectangle.contains(lat, lon)) {
         // compute haversine distance between the center and the point
         // if the distance is less than radius then the circle contains
         // the point.
-        double haversineDistance = SpatialUtils::HaversineDistance(center.getLatitude(),
-                                                                   center.getLongitude(),
-                                                                   lat,
-                                                                   lon);
-        if(haversineDistance <= radius) return true;
-        else return false;
+        double haversineDistance = SpatialUtils::haversineDistance(center.getLatitude(), center.getLongitude(), lat, lon);
+        if (haversineDistance <= radius) {
+            return true;
+        } else {
+            return false;
+        }
     }
     // if not within the bounding rectangle then return false
-    else return false;
+    else {
+        return false;
+    }
 }
 
 bool Circle::contains(const Point& point) {
     // first check if the point lies within the bounds of
     // the bounding rectangle
-    if(boundingRectangle.contains(point)) {
+    if (boundingRectangle.contains(point)) {
         // compute haversine distance between the center and the point
         // if the distance is less than radius then the circle contains
         // the point.
-        double haversineDistance = SpatialUtils::HaversineDistance(center.getLatitude(),
+        double haversineDistance = SpatialUtils::haversineDistance(center.getLatitude(),
                                                                    center.getLongitude(),
                                                                    point.getLatitude(),
                                                                    point.getLongitude());
-        if(haversineDistance <= radius) return true;
-        else return false;
+        if (haversineDistance <= radius) {
+            return true;
+        } else {
+            return false;
+        }
     }
     // if not within the bounding rectangle then return false
-    else return false;
+    else {
+        return false;
+    }
 }
 
 bool Circle::contains(const Rectangle& other) {
     // first check if the rectangle lies within the bounds of
     // the bounding rectangle of the circle
-    if(boundingRectangle.contains(other)) {
+    if (boundingRectangle.contains(other)) {
         // compute haversine distance between the center and the two end points
         // of the rectangle (i.e., NE and SW points). If both points are within
         // the radius of the circle then the circle contains the rectangle.
-        double haversineDistanceSW = SpatialUtils::HaversineDistance(center.getLatitude(),
+        double haversineDistanceSW = SpatialUtils::haversineDistance(center.getLatitude(),
                                                                      center.getLongitude(),
                                                                      other.getLatitudeLow(),
                                                                      other.getLongitudeLow());
 
-        double haversineDistanceNE = SpatialUtils::HaversineDistance(center.getLatitude(),
+        double haversineDistanceNE = SpatialUtils::haversineDistance(center.getLatitude(),
                                                                      center.getLongitude(),
                                                                      other.getLatitudeHigh(),
                                                                      other.getLongitudeHigh());
 
-        if((haversineDistanceSW <= radius) && (haversineDistanceNE <= radius)) return true;
-        else return false;
+        if ((haversineDistanceSW <= radius) && (haversineDistanceNE <= radius)) {
+            return true;
+        } else {
+            return false;
+        }
     }
     // if not within the bounding rectangle then return false
-    else return false;
+    else {
+        return false;
+    }
 }
 
 }

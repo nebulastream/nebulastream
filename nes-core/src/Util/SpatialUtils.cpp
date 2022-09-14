@@ -24,7 +24,7 @@ double SpatialUtils::radiansToDegrees(double radians) {
     return (radians * 180.0 / M_PI);
 }
 
-double SpatialUtils::HaversineDistance(double lat1, double lng1, double lat2, double lng2) {
+double SpatialUtils::haversineDistance(double lat1, double lng1, double lat2, double lng2) {
     double lat1r = degreesToRadians(lat1);
     double lon1r = degreesToRadians(lng1);
     double lat2r = degreesToRadians(lat2);

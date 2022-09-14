@@ -19,18 +19,13 @@
 
 namespace NES {
 
-Point::Point(double latitude,
-             double longitude)
-    : latitude(latitude), longitude(longitude) {}
+Point::Point(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
 
-Point::Point()
-    : latitude(0.0), longitude(0.0) {}
+Point::Point() : latitude(0.0), longitude(0.0) {}
 
-double Point::HaversineDistance(const Point& other) {
-    return SpatialUtils::HaversineDistance(this->latitude,
-                                           this->longitude,
-                                           other.getLatitude(),
-                                           other.getLongitude());
+double Point::haversineDistance(const Point& other) {
+    return SpatialUtils::haversineDistance(this->latitude, this->longitude,
+                                           other.getLatitude(), other.getLongitude());
 }
 
 }

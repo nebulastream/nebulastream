@@ -18,9 +18,9 @@
 
 namespace NES {
 RectangleExpressionNode::RectangleExpressionNode(RectangleExpressionNode* other) : ShapeExpressionNode(other->type) {
-    latitudeLow = other->getLongitudeLow();
+    latitudeLow = other->getLatitudeLow();
     longitudeLow = other->getLongitudeLow();
-    latitudeHigh = other->getLongitudeHigh();
+    latitudeHigh = other->getLatitudeHigh();
     longitudeHigh = other->getLongitudeHigh();
 }
 
