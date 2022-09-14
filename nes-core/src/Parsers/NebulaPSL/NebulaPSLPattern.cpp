@@ -15,7 +15,7 @@
 #include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
 #include <Parsers/NebulaPSL/NebulaPSLPattern.h>
 
-namespace NES {
+namespace NES::Parsers {
 
 const std::map<int, std::string>& NebulaPSLPattern::getSources() const { return sources; }
 void NebulaPSLPattern::setSources(const std::map<int, std::string>& sources) { NebulaPSLPattern::sources = sources; }

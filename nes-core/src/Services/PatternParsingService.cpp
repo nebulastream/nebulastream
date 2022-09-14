@@ -29,7 +29,7 @@ NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std:
     NES_DEBUG("PatternParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
 
     NES_DEBUG("PatternParsingService: Parse the AST into a query plan");
-    NesCEPQueryPlanCreator queryPlanCreator;
+    Parsers::NesCEPQueryPlanCreator queryPlanCreator;
     //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
     auto query= queryPlanCreator.getQuery();

@@ -21,23 +21,13 @@
 #include <map>
 #include <string>
 
-namespace NES {
+namespace NES::Parsers {
 
 /**
  * @brief This class represents the results from parsing the ANTLR AST tree
  * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
  */
-
 class NebulaPSLPattern {
-
-  private:
-    std::map<int, std::string> sources;
-    std::map<int, NebulaPSLOperatorNode*> operatorList;// contains the operators from the PATTERN clause
-    std::list<ExpressionNodePtr> expressions;
-    std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinks;// INTO
-    std::pair<std::string, int> window;              // WITHIN
-
   public:
     //Constructors
     NebulaPSLPattern() = default;
@@ -90,8 +80,16 @@ class NebulaPSLPattern {
      * @param op_node
      */
     void addOperatorNode(NebulaPSLOperatorNode* op_node);
+
+  private:
+    std::map<int, std::string> sources;
+    std::map<int, NebulaPSLOperatorNode*> operatorList;// contains the operators from the PATTERN clause
+    std::list<ExpressionNodePtr> expressions;
+    std::vector<ExpressionNodePtr> projectionFields;
+    std::list<SinkDescriptorPtr> sinks;// INTO
+    std::pair<std::string, int> window;// WITHIN
 };
 
-}// namespace NES
+}// namespace NES::Parsers
 
 #endif//NES_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_H_
