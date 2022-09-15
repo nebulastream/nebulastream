@@ -57,8 +57,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      * @param monitoringService
      * @param BufferManager
-     * @param ErrorHandler
-     * @param routerprefix - part of the path of the request
+     * @param ErrorHandler - for sending error messages via DTO
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "monitoringController")
      */
     MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper,
                          MonitoringServicePtr mService,
@@ -70,8 +70,11 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
 
     /**
      * Create a shared object of the API controller
-     * @param objectMapper
-     * @param MonitoringServicePtr, BufferManagerPtr, ErrorHandlerPtr, routerPrefixAddition
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param MonitoringServicePtr
+     * @param BufferManagerPtr
+     * @param ErrorHandlerPtr - for sending error messages via DTO
+     * @param routerPrefixAddition - controller specific router prefix (e.g "monitoringController/")
      * @return MonitoringController
      */
     static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
@@ -86,90 +89,90 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/start", getMonitoringControllerStart) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerStringResponse::createShared();
-        dto->monitoringData = monitoringService->startMonitoringStreams().to_string();
-        if (dto->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, dto);
+        auto responseMsg = MonitoringControllerStringResponse::createShared();
+        responseMsg->monitoringData = monitoringService->startMonitoringStreams().to_string();
+        if (responseMsg->monitoringData != "null") {
+            return createDtoResponse(Status::CODE_200, responseMsg);
         }
-        return errorHandler->handleError(Status::CODE_404, "Starting monitoring service was not successful.");
+        return errorHandler->handleError(Status::CODE_500, "Request was not successful.");
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerBoolResponse::createShared();
-        dto->success = monitoringService->stopMonitoringStreams().as_bool();
-        if (dto->success == true) {
-            return createDtoResponse(Status::CODE_200, dto);
+        auto responseMsg = MonitoringControllerBoolResponse::createShared();
+        responseMsg->success = monitoringService->stopMonitoringStreams().as_bool();
+        if (responseMsg->success == true) {
+            return createDtoResponse(Status::CODE_200, responseMsg);
         }
-        return errorHandler->handleError(Status::CODE_404, "Stopping monitoring service was not successful.");
+        return errorHandler->handleError(Status::CODE_500, "Stopping monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerStringResponse::createShared();
-        dto->monitoringData = monitoringService->getMonitoringStreams().to_string();
-        if (dto->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, dto);
+        auto responseMsg = MonitoringControllerStringResponse::createShared();
+        responseMsg->monitoringData = monitoringService->getMonitoringStreams().to_string();
+        if (responseMsg->monitoringData != "null") {
+            return createDtoResponse(Status::CODE_200, responseMsg);
         }
-        return errorHandler->handleError(Status::CODE_404, "Getting streams of monitoring service was not successful.");
+        return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerStringResponse::createShared();
-        dto->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
-        if (dto->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, dto);
+        auto responseMsg = MonitoringControllerStringResponse::createShared();
+        responseMsg->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
+        if (responseMsg->monitoringData != "null") {
+            return createDtoResponse(Status::CODE_200, responseMsg);
         }
         return errorHandler->handleError(
-            Status::CODE_404,
+            Status::CODE_500,
             "Getting newest monitoring data from metric store of monitoring service was not successful.");
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerStringResponse::createShared();
-        dto->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
-        if (dto->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, dto);
+        auto responseMsg = MonitoringControllerStringResponse::createShared();
+        responseMsg->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
+        if (responseMsg->monitoringData != "null") {
+            return createDtoResponse(Status::CODE_200, responseMsg);
         }
-        return errorHandler->handleError(Status::CODE_404, "Getting monitoring data from all nodes was not successful.");
+        return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode, QUERY(UInt64, nodeId, "nodeId")) {
         if (!monitoringService->isMonitoringEnabled()) {
             return errorHandler->handleError(
-                Status::CODE_404,
-                "You have to enable Monitoring for making this request. Set it in the coordinator Configuration.");
+                Status::CODE_500,
+                "Error: Monitoring ist not enabled.");
         }
-        auto dto = MonitoringControllerStringResponse::createShared();
+        auto responseMsg = MonitoringControllerStringResponse::createShared();
         try {
-            dto->monitoringData = monitoringService->requestMonitoringDataAsJson(nodeId).to_string();
-            return createDtoResponse(Status::CODE_200, dto);
+            responseMsg->monitoringData = monitoringService->requestMonitoringDataAsJson(nodeId).to_string();
+            return createDtoResponse(Status::CODE_200, responseMsg);
         } catch (std::runtime_error& ex) {
             std::string errorMsg = ex.what();
-            return errorHandler->handleError(Status::CODE_400, errorMsg);
+            return errorHandler->handleError(Status::CODE_500, errorMsg);
         }
-        return errorHandler->handleError(Status::CODE_404, "Resource not found.");
+        return errorHandler->handleError(Status::CODE_500, "Resource not found.");
     }
 
   private:
