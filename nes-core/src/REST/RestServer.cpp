@@ -201,10 +201,13 @@ void RestServer::run() {
 
     /* Create monitoring controller and add all of its endpoints to the router */
     auto monitoringController = REST::Controller::MonitoringController::createShared(objectMapper,
-                                                                                     monitoringService,
-                                                                                     bufferManager,
-                                                                                     errorHandler,
-                                                                                     "/monitoring");
+                                                                                         monitoringService,
+                                                                                         bufferManager,
+                                                                                         errorHandler,
+                                                                                         "/monitoring");
+
+    router->addController(connectivityController);
+    router->addController(queryCatalogController);
     router->addController(monitoringController);
 
     /* Create HTTP connection handler with router */
