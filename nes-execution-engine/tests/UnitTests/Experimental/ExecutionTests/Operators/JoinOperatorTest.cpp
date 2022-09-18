@@ -258,7 +258,7 @@ TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
     ASSERT_EQ(resultDynBuffer[6][2].read<int64_t>(), 42);
 }
 
-INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
+INSTANTIATE_TEST_CASE_P(testJoinOperator,
                         JoinOperatorTest,
                         ::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                         [](const testing::TestParamInfo<JoinOperatorTest::ParamType>& info) {

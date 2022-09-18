@@ -12,39 +12,19 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/NESIR/ProxyFunctions.hpp>
-#include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
-#include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
-
-
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class FunctionExecutionTest : public testing::Test {
@@ -164,7 +144,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 
 TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     Value<Int64> tempPara = Value<Int64>(0l);
-    tempPara.ref.blockId = -1;
+    tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
     });

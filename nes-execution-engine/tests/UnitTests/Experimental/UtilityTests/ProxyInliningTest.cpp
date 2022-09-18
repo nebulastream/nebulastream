@@ -28,8 +28,6 @@
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
