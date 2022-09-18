@@ -31,7 +31,6 @@ target_include_directories(nes-execution-engine PUBLIC
 target_compile_options(nes-execution-engine PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
-
     # include MLIR. This is currently required
     find_package(MLIR REQUIRED CONFIG)
     if (MLIR_FOUND)
@@ -85,6 +84,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
             COMMAND "${OP_BINARY_DIR}/generate-proxy-function-ir"
             COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
             VERBATIM)
+    add_dependencies(generate-proxy-function-ir nes-runtime_opt)
     add_dependencies(nes-execution-engine generate-proxy-function-ir)
 endif ()
 

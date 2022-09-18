@@ -33,7 +33,7 @@ template<class T>
 Trace::ValueRef createNextRef(std::unique_ptr<T>& t) {
     auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx) {
-        auto dynCast = static_cast<TraceableType*>(t.get());
+        auto dynCast = dynamic_cast<TraceableType*>(t.get());
         if (dynCast == nullptr) {
             return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
         }
