@@ -235,6 +235,60 @@ TEST_P(UDFTest, distanceUDF) {
                                 << " Throughput: " << (recordsPerMs * 1000));
 }
 
+
+TEST_F(QueryExecutionTest, longAggregationUDFQueryTest) {
+
+    auto bm = std::make_shared<Runtime::BufferManager>();
+
+    // use 100 mb buffer
+    auto buffer = bm->getUnpooledBuffer(1024 * 1024 * 100).value();
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+
+    Scan scan = Scan(memoryLayout);
+
+    // map
+    auto field_0 = std::make_shared<ReadFieldExpression>(0);
+    auto udfCallExpression = std::make_shared<UDFCallExpression>(field_0);
+    auto writeExpression = std::make_shared<WriteFieldExpression>(0, udfCallExpression);
+    auto mapOperator = std::make_shared<Map>(writeExpression);
+    scan.setChild(mapOperator);
+    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    mapOperator->setChild(aggregation);
+    //backend = std::make_shared<MLIRPipelineCompilerBackend>();
+    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
+    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+    auto executablePipeline = executionEngine.compile(pipeline);
+
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
+        dynamicBuffer[i]["f1"].write((int64_t) 1);
+    }
+    dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
+
+    for (auto i = 0; i < 100; i++) {
+        Timer timer("QueryExecutionTime");
+        timer.start();
+        executablePipeline->setup();
+        executablePipeline->execute(*runtimeWorkerContext, buffer);
+        auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+        auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+        std::cout << "Result " << sumState->sum;
+        timer.snapshot("QueryExecutionTime");
+        timer.pause();
+        NES_INFO("QueryExecutionTime: " << timer);
+    }
+}
+
+
 TEST_P(UDFTest, crimeIndexUDF) {
     uint64_t bufferSize = 1000000;
     uint64_t iterations = 100;

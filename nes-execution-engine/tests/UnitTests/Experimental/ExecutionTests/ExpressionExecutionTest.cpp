@@ -12,32 +12,14 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-#include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/Aggregation.hpp>
-#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
-#include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -85,7 +67,7 @@ Value<> int8AddExpression(Value<Int8> x) {
 
 TEST_F(ExpressionExecutionTest, addI8Test) {
     Value<Int8> tempx = (int8_t) 0;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int8AddExpression(tempx);
     });
@@ -101,7 +83,7 @@ Value<> int16AddExpression(Value<Int16> x) {
 
 TEST_F(ExpressionExecutionTest, addI16Test) {
     Value<Int16> tempx = (int16_t) 0;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt16Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int16AddExpression(tempx);
     });
@@ -117,7 +99,7 @@ Value<> int32AddExpression(Value<Int32> x) {
 
 TEST_F(ExpressionExecutionTest, addI32Test) {
     Value<Int32> tempx = 0;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int32AddExpression(tempx);
     });
@@ -133,7 +115,7 @@ Value<> int64AddExpression(Value<Int64> x) {
 
 TEST_F(ExpressionExecutionTest, addI64Test) {
     Value<Int64> tempx = 0l;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int64AddExpression(tempx);
     });
@@ -151,7 +133,7 @@ Value<> floatAddExpression(Value<Float> x) {
 
 TEST_F(ExpressionExecutionTest, addFloatTest) {
     Value<Float> tempx = 0.0f;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return floatAddExpression(tempx);
     });
@@ -169,7 +151,7 @@ Value<> doubleAddExpression(Value<Double> x) {
 
 TEST_F(ExpressionExecutionTest, addDobleTest) {
     Value<Double> tempx = 0.0;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createDoubleStamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return doubleAddExpression(tempx);
     });
@@ -187,7 +169,7 @@ Value<> castFloatToDoubleAddExpression(Value<Float> x) {
 
 TEST_F(ExpressionExecutionTest, castFloatToDoubleTest) {
     Value<Float> tempx = 0.0f;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castFloatToDoubleAddExpression(tempx);
     });
@@ -205,7 +187,7 @@ Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
 
 TEST_F(ExpressionExecutionTest, castInt8ToInt64Test) {
     Value<Int8> tempx = (int8_t) 0;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
     });
@@ -223,7 +205,7 @@ Value<> castInt8ToInt64AddExpression2(Value<> x) {
 
 TEST_F(ExpressionExecutionTest, castInt8ToInt64Test2) {
     Value<Int8> tempx = (int8_t) 0 ;
-    tempx.ref.blockId = -1;
+    tempx.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);
     });
