@@ -63,10 +63,6 @@ TEST_F(ValueTest, assignMentTest) {
     val2 = val;
 }
 
-uint64_t addFunc(uint64_t x, bool) { return x; }
-
-[[proxy_function]] uint64_t addFunc2(uint64_t x, bool) { return x; }
-
 TEST_F(ValueTest, addValueTest) {
     auto x = Value<>(1);
     auto y = Value<>(2);

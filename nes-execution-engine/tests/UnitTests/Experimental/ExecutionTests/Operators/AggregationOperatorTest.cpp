@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #ifdef USE_BABELFISH
@@ -26,6 +26,7 @@
 #include <API/Schema.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
+#include <Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Utility/TPCHUtil.hpp>
 #ifdef USE_FLOUNDER
@@ -78,14 +79,14 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**
- * @brief This test tests query execution using th mlir backend
- */
-class QueryExecutionTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
+* @brief This test tests query execution using th mlir backend
+*/
+class AggregationOperatorTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
-    std::shared_ptr<ExecutionEngine::Experimental::PipelineCompilerBackend> backend;
+    std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -96,21 +97,26 @@ class QueryExecutionTest : public testing::Test, public ::testing::WithParamInte
     void SetUp() override {
         auto param = this->GetParam();
         std::cout << "Setup QueryExecutionTest test case." << param << std::endl;
-        if (param == "MLIR") {
+        if (param == "INTERPRETER") {
+            executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
+        } else if (param == "MLIR") {
 #ifdef USE_MLIR
-            backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (param == "FLOUNDER") {
 #ifdef USE_FLOUNDER
-            backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            auto backend = std::make_shared<FlounderPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (param == "BABELFISH") {
 #ifdef USE_BABELFISH
-            backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            auto backend = std::make_shared<BabelfishPipelineCompilerBackend>();
+            executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         }
-        if (backend == nullptr) {
-            GTEST_SKIP_("No compiler backend found");
+        if (executionEngine == nullptr) {
+            GTEST_SKIP_("No backend found");
         }
     }
 
@@ -121,118 +127,15 @@ class QueryExecutionTest : public testing::Test, public ::testing::WithParamInte
     static void TearDownTestCase() { std::cout << "Tear down QueryExecutionTest test class." << std::endl; }
 };
 
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+class CollectPipeline : public ExecutablePipeline {
   public:
-    MockedPipelineExecutionContext()
-        : PipelineExecutionContext(
-            0,
-            0,
-            nullptr,
-            [](Runtime::TupleBuffer&, Runtime::WorkerContextRef) {
-
-            },
-            [](Runtime::TupleBuffer&) {
-            },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
+    CollectPipeline() : ExecutablePipeline(nullptr, nullptr) {}
+    void execute(Runtime::WorkerContext&, Runtime::TupleBuffer& buffer) override { receivedBuffers.emplace_back(buffer); }
+    std::vector<Runtime::TupleBuffer> receivedBuffers;
 };
 
-TEST_P(QueryExecutionTest, longAggregationQueryTest) {
 
-    auto bm = std::make_shared<Runtime::BufferManager>();
-
-    // use 100 mb buffer
-    auto buffer = bm->getUnpooledBuffer(1024 * 1024 * 100).value();
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-
-    Scan scan = Scan(memoryLayout);
-    auto aggField = std::make_shared<ReadFieldExpression>(0);
-    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<Aggregation>(functions);
-    scan.setChild(aggregation);
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
-        dynamicBuffer[i]["f1"].write((uint64_t) 1);
-    }
-    dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
-    executablePipeline->setup();
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-    auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    for (auto i = 0; i < 10; i++) {
-        Timer timer("QueryExecutionTime");
-        timer.start();
-        sumState->sum = 0;
-        executablePipeline->setup();
-        executablePipeline->execute(*runtimeWorkerContext, buffer);
-        std::cout << "Result " << sumState->sum;
-        timer.snapshot("QueryExecutionTime");
-        timer.pause();
-        NES_INFO("QueryExecutionTime: " << timer);
-    }
-}
-
-TEST_F(QueryExecutionTest, longAggregationUDFQueryTest) {
-
-    auto bm = std::make_shared<Runtime::BufferManager>();
-
-    // use 100 mb buffer
-    auto buffer = bm->getUnpooledBuffer(1024 * 1024 * 100).value();
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-    auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-
-    Scan scan = Scan(memoryLayout);
-
-    // map
-    auto field_0 = std::make_shared<ReadFieldExpression>(0);
-    auto udfCallExpression = std::make_shared<UDFCallExpression>(field_0);
-    auto writeExpression = std::make_shared<WriteFieldExpression>(0, udfCallExpression);
-    auto mapOperator = std::make_shared<Map>(writeExpression);
-    scan.setChild(mapOperator);
-    auto aggField = std::make_shared<ReadFieldExpression>(0);
-    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<Aggregation>(functions);
-    mapOperator->setChild(aggregation);
-    //backend = std::make_shared<MLIRPipelineCompilerBackend>();
-    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
-
-    auto executablePipeline = executionEngine.compile(pipeline);
-
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) 1);
-    }
-    dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
-
-    for (auto i = 0; i < 100; i++) {
-        Timer timer("QueryExecutionTime");
-        timer.start();
-        executablePipeline->setup();
-        executablePipeline->execute(*runtimeWorkerContext, buffer);
-        auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
-        auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-        std::cout << "Result " << sumState->sum;
-        timer.snapshot("QueryExecutionTime");
-        timer.pause();
-        NES_INFO("QueryExecutionTime: " << timer);
-    }
-}
-
-TEST_P(QueryExecutionTest, groupedAggQueryTest) {
+TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(1000);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("key", BasicType::INT64);
@@ -249,11 +152,10 @@ TEST_P(QueryExecutionTest, groupedAggQueryTest) {
     NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 8, 1000);
     auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
     scan.setChild(aggregation);
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
-    auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine->compile(pipeline);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -264,13 +166,13 @@ TEST_P(QueryExecutionTest, groupedAggQueryTest) {
     dynamicBuffer.setNumberOfTuples(10);
     executablePipeline->setup();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
-
-    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto tag = *((int64_t*) aggregation.get());
+    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
     ASSERT_EQ(currentSize, (int64_t) 2);
 }
 
-TEST_P(QueryExecutionTest, aggQueryTest) {
+TEST_P(AggregationOperatorTest, aggQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::UINT64);
@@ -283,11 +185,10 @@ TEST_P(QueryExecutionTest, aggQueryTest) {
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
     scan.setChild(aggregation);
-    auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
-    auto executablePipeline = executionEngine.compile(pipeline);
+    auto executablePipeline = executionEngine->compile(pipeline);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -297,17 +198,16 @@ TEST_P(QueryExecutionTest, aggQueryTest) {
     dynamicBuffer.setNumberOfTuples(10);
     executablePipeline->setup();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
-
-    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
+    auto tag = *((int64_t*) aggregation.get());
+    auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
     ASSERT_EQ(sumState->sum, (int64_t) 10);
 }
 
-INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
-                        QueryExecutionTest,
-                        ::testing::Values("MLIR"),
-                        [](const testing::TestParamInfo<QueryExecutionTest::ParamType>& info) {
+INSTANTIATE_TEST_CASE_P(testAggregationOperator,
+                        AggregationOperatorTest,
+                        ::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                        [](const testing::TestParamInfo<AggregationOperatorTest::ParamType>& info) {
                             return info.param;
                         });
-
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

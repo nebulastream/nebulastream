@@ -138,10 +138,10 @@ TEST_P(EmitOperatorTest, scanAndEmitTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
     Scan scan = Scan(memoryLayout);
     auto emit = std::make_shared<Emit>(memoryLayout);
     scan.setChild(emit);
@@ -175,7 +175,7 @@ TEST_P(EmitOperatorTest, scanAndEmitTest) {
     ASSERT_EQ(collectPipelines->receivedBuffers[0].getNumberOfTuples(), 10);
 }
 
-INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
+INSTANTIATE_TEST_CASE_P(testEmitOperator,
                         EmitOperatorTest,
                         ::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                         [](const testing::TestParamInfo<EmitOperatorTest::ParamType>& info) {
