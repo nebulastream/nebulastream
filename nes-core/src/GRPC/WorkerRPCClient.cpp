@@ -420,6 +420,33 @@ int WorkerRPCClient::getRTT(const std::string& address){
 
 }
 
+int WorkerRPCClient::getConnectivity(const std::string& startAddress, const std::string& destAddress){
+
+    getConnectivityNotification request;
+    request.set_destaddress(destAddress);
+    getConnectivityReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(startAddress, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+    Status status = workerStub->getConnectivity(&context,request,&reply);
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    if(status.ok()){
+        return (((end_time - start_time)/std::chrono::milliseconds(1)));
+    }else{
+        return -1;
+    }
+
+}
+
+
+
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
     BufferRequest request;

@@ -183,6 +183,48 @@ Status WorkerRPCServer::getRTT(ServerContext* , const ::rttNotification* request
     }
 }
 
+Status WorkerRPCServer::getConnectivity(ServerContext* , const ::getConnectivityNotification* request, ::getConnectivityReply* response) {
+    try {
+
+        giveConnectivityNotification giveRequest;
+        giveConnectivityReply giveResponse;
+        grpc::ClientContext giveContext;
+
+        std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(request->destaddress(), grpc::InsecureChannelCredentials());
+
+        std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+        Status status = workerStub->giveConnectivity(&giveContext,giveRequest,&giveResponse);
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        int conn = -1;
+
+        if(status.ok()){
+            conn = (((end_time - start_time)/std::chrono::milliseconds(1)));
+        }
+
+        auto x = request;
+        response->set_success(true);
+        response->set_conn(conn);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
+Status WorkerRPCServer::giveConnectivity(ServerContext* , const ::giveConnectivityNotification* request, ::giveConnectivityReply* response) {
+    try {
+        auto x = request;
+        response->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
 
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");

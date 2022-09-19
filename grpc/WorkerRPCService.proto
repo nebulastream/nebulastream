@@ -35,6 +35,10 @@ service WorkerRPCService {
 
   rpc getRTT (rttNotification) returns (rttReply) {}
 
+  rpc getConnectivity (getConnectivityNotification) returns (getConnectivityReply) {}
+
+  rpc giveConnectivity (giveConnectivityNotification) returns (giveConnectivityReply) {}
+
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
@@ -114,6 +118,7 @@ message EpochBarrierNotification{
 
 message sayHiNotification{
   uint64 queryId = 1;
+  string workerAddress = 2;
 }
 
 message EpochBarrierReply{
@@ -127,9 +132,28 @@ message sayHiReply{
 }
 
 message rttNotification{
+  string workerAddress = 1;
 }
 
 message rttReply{
+  bool success = 1;
+}
+
+message getConnectivityNotification{
+  string startAddress = 1;
+  string destAddress = 2;
+}
+
+message getConnectivityReply{
+  bool success = 1;
+  uint64 conn = 2;
+}
+
+message giveConnectivityNotification{
+  string destAddress = 1;
+}
+
+message giveConnectivityReply{
   bool success = 1;
 }
 

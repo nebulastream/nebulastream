@@ -105,9 +105,18 @@ TopologyNodePtr TopologyNode::copy() {
 std::string TopologyNode::getIpAddress() const { return ipAddress; }
 
 std::string TopologyNode::toString() const {
+
     std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
-            + ", usedResource=" + std::to_string(usedResources) + "]";
+
+    if(nodeProperties.contains("ressources")){
+        ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
+                + ", usedResource=" + std::to_string(usedResources) + ", effectiveResources=" +
+                std::to_string(std::get<1>(std::any_cast<std::tuple<int,float>>(nodeProperties.at("ressources")))) + "]";
+    }else{
+        ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
+                + ", usedResource=" + std::to_string(usedResources) + "]";
+    }
+
     return ss.str();
 }
 

@@ -280,6 +280,9 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
                                               QueryId queryId) {
 
 
+
+
+
     std::tuple<int,int> tup = {5,8};
     NES_INFO("TUP1: " + std::to_string(std::get<0>(tup)));
 
@@ -321,6 +324,8 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
         NES_WARNING("\nFAULT-TOLERANCE CANNOT BE PROVIDED. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
         return FaultToleranceType::NONE;
     }*/
+
+
 
 
     double highestCost = 0;
@@ -479,10 +484,13 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
     float highestExecutionPlanCost = calcExecutionPlanCosts(globalExecutionPlan);
 
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+
 
     //TODO only consider TopologyNodes that are at the same depth as the highest effective cost node from the root.
     //Try out available TopologyNodes as backup nodes for the highest effective cost node and see what the highest possible cost would be.
-    for(auto& topNode : topologyNodes){
+    /*for(auto& topNode : topologyNodes){
 
         if(!globalExecutionPlan->checkIfExecutionNodeExists(topNode->getId())){
             std::tuple<int,float> tuple = {highestEffectiveCostNode->getOccupiedResources(queryId),
@@ -530,7 +538,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
         globalExecutionPlan->removeExecutionNode(nodeEx->getId());
     }
-    }
+    }*/
 
     NES_INFO("HIGHEST ACTIVE STANDBY COST: " + std::to_string(highestExecutionPlanCost));
 
@@ -659,6 +667,8 @@ int BottomUpStrategy::getDepth(NodePtr enode){
 
 void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topologyNodes, QueryId queryId){
 
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
     std::queue<TopologyNodePtr> q;
     std::vector<TopologyNodePtr> answer;
 
@@ -718,7 +728,9 @@ void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topology
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
 
+
     for(auto& topNode : topologyNodes){
+
 
         auto ipAddress = topNode->getIpAddress();
         auto grpcPort = topNode->getGrpcPort();
@@ -803,6 +815,33 @@ void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topology
                         }
                     }
                 }
+            }
+        }
+    }
+
+    for(auto& exNode : executionNodes){
+        TopologyNodePtr topNode = topology->findNodeWithId(exNode->getId());
+        for(auto& exNodeParent : topNode->getParents()){
+            if(globalExecutionPlan->getExecutionNodeByNodeId(topology->findNodeWithId(exNodeParent->as<TopologyNode>()->getId())->getId())->hasQuerySubPlans(queryId)){
+                TopologyNodePtr topNodeParent = exNodeParent->as<TopologyNode>();
+                auto startIpAddress = topNode->getIpAddress();
+                auto startGrpcPort = topNode->getGrpcPort();
+                std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
+
+                auto destIpAddress = topNodeParent->getIpAddress();
+                auto destGrpcPort = topNodeParent->getGrpcPort();
+                std::string destRpcAddress = destIpAddress + ":" + std::to_string(destGrpcPort);
+
+                int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
+
+                NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
+                         + " HAS CONN OF: " + std::to_string(conn));
+
+                if(conn == -1){
+                    conn = (rand() % 100 + 10);
+                }
+
+                topNode->addNodeProperty("connectivity",(topNodeParent->getId(),conn));
             }
         }
     }

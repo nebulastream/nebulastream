@@ -63,6 +63,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status getRTT(ServerContext* context, const rttNotification* request, rttReply* response) override;
 
+    Status giveConnectivity(ServerContext*, const ::giveConnectivityNotification* request, ::giveConnectivityReply* response) override;
+
+    Status getConnectivity(ServerContext*, const getConnectivityNotification* request, getConnectivityReply* response) override;
+
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
@@ -73,6 +77,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
+
+
 };
 
 }// namespace NES

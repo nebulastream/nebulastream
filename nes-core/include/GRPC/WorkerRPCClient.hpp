@@ -223,6 +223,7 @@ class WorkerRPCClient {
 
     int sayHi(uint64_t queryId, const std::string& address);
     int getRTT(const std::string& address);
+    int getConnectivity(const std::string& startAddress, const std::string& destAddress);
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
