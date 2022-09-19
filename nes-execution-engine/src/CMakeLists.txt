@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(Experimental)
+add_subdirectory(Nautilus)

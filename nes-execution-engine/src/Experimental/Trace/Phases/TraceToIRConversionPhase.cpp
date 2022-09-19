@@ -14,9 +14,9 @@
 
 #include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
 #include "Experimental/NESIR/Types/IntegerStamp.hpp"
-#include <Experimental/Interpreter/DataValue/Float/Double.hpp>
-#include <Experimental/Interpreter/DataValue/Float/Float.hpp>
-#include <Experimental/Interpreter/DataValue/Integer/Int.hpp>
+#include <Nautilus/Interface/DataValue/Float/Double.hpp>
+#include <Nautilus/Interface/DataValue/Float/Float.hpp>
+#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
