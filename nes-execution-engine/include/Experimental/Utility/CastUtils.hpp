@@ -106,9 +106,17 @@ struct is_unique_ptr : std::false_type {};
 template<class T, class D>
 struct is_unique_ptr<std::unique_ptr<T, D>> : std::true_type {};
 
+template<class T>
+struct is_shared_ptr : std::false_type {};
+
+template<class T>
+struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
 template<HasTypeIdentifier T, IsTyped U>
 bool isa(U& typed) {
     if constexpr (is_unique_ptr<U>::value) {
+        return &T::type == typed->getTypeIdentifier();
+    } else if constexpr (is_shared_ptr<U>::value) {
         return &T::type == typed->getTypeIdentifier();
     } else if constexpr (std::is_pointer<U>::value) {
         return &T::type == typed->getTypeIdentifier();

@@ -23,10 +23,6 @@
              nes-execution-engine ${GTEST_LIBRARIES})
      add_test(NAME execution-engine-expression-execution-test COMMAND execution-engine-expression-execution-test)
 
-     add_executable(execution-engine-type-execution-test "TypeExecutionTest.cpp")
-     target_link_libraries(execution-engine-type-execution-test
-             nes-execution-engine ${GTEST_LIBRARIES})
-     add_test(NAME execution-engine-type-execution-test COMMAND execution-engine-type-execution-test)
  endif ()
 
  add_subdirectory(TPC-H)

@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/Operations/BranchOperation.hpp"
-#include "Experimental/NESIR/Operations/IfOperation.hpp"
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/Utility/NESIRDumpHandler.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 namespace NES {
-namespace ExecutionEngine::Experimental::IR {
+namespace Nautilus::IR {
 
 NESIRDumpHandler::NESIRDumpHandler(std::ostream& out) : out(out) {}
 
@@ -95,9 +96,11 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
         //out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << "Block_" << basicBlock->getIdentifier() << '(';
         out << '\n' << "Block_" << basicBlock->getIdentifier() << '(';
         if (basicBlock->getArguments().size() > 0) {
-            out << basicBlock->getArguments().at(0)->getIdentifier() + ":" << basicBlock->getArguments().at(0)->getStamp()->toString();
+            out << basicBlock->getArguments().at(0)->getIdentifier() + ":"
+                << basicBlock->getArguments().at(0)->getStamp()->toString();
             for (int i = 1; i < (int) basicBlock->getArguments().size(); ++i) {
-                out << ", " << basicBlock->getArguments().at(i)->getIdentifier() << ":" << basicBlock->getArguments().at(0)->getStamp()->toString();
+                out << ", " << basicBlock->getArguments().at(i)->getIdentifier() << ":"
+                    << basicBlock->getArguments().at(0)->getStamp()->toString();
             }
         }
         out << "):" << '\n';
@@ -116,5 +119,5 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-}// namespace ExecutionEngine::Experimental::IR
+}// namespace Nautilus::IR
 }// namespace NES

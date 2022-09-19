@@ -15,10 +15,10 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_YIELDOPERATION_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_YIELDOPERATION_HPP_
 
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 /**
  * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes control flow from one BB to another.
  */

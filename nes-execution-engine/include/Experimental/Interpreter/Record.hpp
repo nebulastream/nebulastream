@@ -15,7 +15,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
 
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 #include <ostream>
 #include <vector>
