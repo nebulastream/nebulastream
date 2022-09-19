@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp"
-#include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
+#include "Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp"
+#include "Nautilus/IR/Operations/ConstBooleanOperation.hpp"
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
-#include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <flounder/compiler.h>
 #include <flounder/executable.h>
 #include <flounder/program.h>

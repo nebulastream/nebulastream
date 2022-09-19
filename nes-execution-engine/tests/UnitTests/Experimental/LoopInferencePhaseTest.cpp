@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+using namespace NES::ExecutionEngine::Experimental::Interpreter;
+namespace NES::Nautilus::IR {
 
-namespace NES::ExecutionEngine::Experimental::IR {
-using namespace Interpreter;
 class LoopInferencePhaseTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -56,7 +56,7 @@ void sumLoop() {
 
 TEST_F(LoopInferencePhaseTest, sumLoopTest) {
 
-    auto execution = Trace::traceFunctionSymbolically([]() {
+    auto execution =  Nautilus::Tracing::traceFunctionSymbolically([]() {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -75,4 +75,4 @@ TEST_F(LoopInferencePhaseTest, sumLoopTest) {
     NES_DEBUG(loopOperation);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR

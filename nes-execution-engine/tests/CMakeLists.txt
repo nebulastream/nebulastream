@@ -58,12 +58,6 @@ target_link_libraries(execution-engine-trace-test
          nes-execution-engine ${GTEST_LIBRARIES})
 add_test(NAME execution-engine-trace-test COMMAND execution-engine-trace-test)
 
-add_executable(execution-engine-symbolic-execution-test "UnitTests/Experimental/SymbolicExecutionTest.cpp")
-target_link_libraries(execution-engine-symbolic-execution-test
-        nes-execution-engine ${GTEST_LIBRARIES})
-add_test(NAME execution-engine-symbolic-execution-test COMMAND execution-engine-symbolic-execution-test)
-
-
 add_executable(execution-engine-loop-inference-phase-test "UnitTests/Experimental/LoopInferencePhaseTest.cpp")
 target_link_libraries(execution-engine-loop-inference-phase-test
          nes-execution-engine ${GTEST_LIBRARIES})
@@ -79,11 +73,6 @@ add_executable(execution-engine-operator-test "UnitTests/Experimental/Interprete
 target_link_libraries(execution-engine-operator-test
          nes-execution-engine ${GTEST_LIBRARIES})
 add_test(NAME execution-engine-operator-test COMMAND execution-engine-operator-test)
-
-
-add_executable(execution-engine-interpreter-value-test "UnitTests/Experimental/Interpreter/ValueTypeTest.cpp")
-target_link_libraries(execution-engine-interpreter-value-test  nes-execution-engine ${GTEST_LIBRARIES})
-add_test(NAME execution-engine-interpreter-value-test COMMAND execution-engine-interpreter-value-test)
 
 add_executable(execution-engine-expression-test "UnitTests/Experimental/Interpreter/ExpressionTest.cpp")
 target_link_libraries(execution-engine-expression-test  nes-execution-engine ${GTEST_LIBRARIES})
@@ -104,6 +93,7 @@ endif ()
 
 
 add_subdirectory(UnitTests/Experimental/UtilityTests)
+add_subdirectory(UnitTests/Nautilus)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

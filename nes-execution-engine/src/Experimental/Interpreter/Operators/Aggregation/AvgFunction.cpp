@@ -1,51 +1,51 @@
 
 #include <Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp>
-#include <Experimental/NESIR/Types/FloatStamp.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
-
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 std::unique_ptr<AggregationState> AvgFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
 std::unique_ptr<AggregationState> AvgFunction::createState() {
-    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
+    if (auto integerStamp = cast_if<Nautilus::IR::Types::IntegerStamp>(stamp.get())) {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: {
+                case Nautilus::IR::Types::IntegerStamp::I8: {
                     return std::make_unique<AvgState>(Value<>((uint8_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I16: {
+                case Nautilus::IR::Types::IntegerStamp::I16: {
                     return std::make_unique<AvgState>(Value<>((uint16_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I32: {
+                case Nautilus::IR::Types::IntegerStamp::I32: {
                     return std::make_unique<AvgState>(Value<>((uint32_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I64: {
+                case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<AvgState>(Value<>((uint64_t) 0), Value<>(0l));
                 };
             }
         } else {
             switch (integerStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: {
+                case Nautilus::IR::Types::IntegerStamp::I8: {
                     return std::make_unique<AvgState>(Value<>((int8_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I16: {
+                case Nautilus::IR::Types::IntegerStamp::I16: {
                     return std::make_unique<AvgState>(Value<>((int16_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I32: {
+                case Nautilus::IR::Types::IntegerStamp::I32: {
                     return std::make_unique<AvgState>(Value<>((int32_t) 0), Value<>(0l));
                 };
-                case IR::Types::IntegerStamp::I64: {
+                case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<AvgState>(Value<>((int64_t) 0), Value<>(0l));
                 };
             }
         }
-    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stamp.get())) {
+    } else if (auto floatStamp = cast_if<Nautilus::IR::Types::FloatStamp>(stamp.get())) {
         switch (floatStamp->getBitWidth()) {
-            case IR::Types::FloatStamp::F32: {
+            case Nautilus::IR::Types::FloatStamp::F32: {
                 return std::make_unique<AvgState>(Value<>(0.0f), Value<>(0l));
             };
-            case IR::Types::FloatStamp::F64: {
+            case Nautilus::IR::Types::FloatStamp::F64: {
                 return std::make_unique<AvgState>(Value<>(0.0), Value<>(0l));
             };
         }
@@ -53,7 +53,7 @@ std::unique_ptr<AggregationState> AvgFunction::createState() {
     NES_THROW_RUNTIME_ERROR("Sum state on " << stamp->toString() << " is not supported.");
 }
 
-AvgFunction::AvgFunction(ExpressionPtr expression, IR::Types::StampPtr stamp) : expression(expression), stamp(stamp) {}
+AvgFunction::AvgFunction(ExpressionPtr expression, Nautilus::IR::Types::StampPtr stamp) : expression(expression), stamp(stamp) {}
 
 void AvgFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& record) {
     auto sumState = (AvgState*) state.get();
@@ -79,41 +79,41 @@ std::unique_ptr<AggregationState> AvgFunction::loadState(Value<MemRef>& ref) {
     if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: {
+                case Nautilus::IR::Types::IntegerStamp::I8: {
                     return std::make_unique<AvgState>(valueRef.load<UInt8>(), counter);
                 };
-                case IR::Types::IntegerStamp::I16: {
+                case Nautilus::IR::Types::IntegerStamp::I16: {
                     return std::make_unique<AvgState>(valueRef.load<UInt16>(), counter);
                 };
-                case IR::Types::IntegerStamp::I32: {
+                case Nautilus::IR::Types::IntegerStamp::I32: {
                     return std::make_unique<AvgState>(valueRef.load<UInt32>(), counter);
                 };
-                case IR::Types::IntegerStamp::I64: {
+                case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<AvgState>(valueRef.load<UInt64>(), counter);
                 };
             }
         } else {
             switch (integerStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: {
+                case Nautilus::IR::Types::IntegerStamp::I8: {
                     return std::make_unique<AvgState>(valueRef.load<Int8>(), counter);
                 };
-                case IR::Types::IntegerStamp::I16: {
+                case Nautilus::IR::Types::IntegerStamp::I16: {
                     return std::make_unique<AvgState>(valueRef.load<Int16>(), counter);
                 };
-                case IR::Types::IntegerStamp::I32: {
+                case Nautilus::IR::Types::IntegerStamp::I32: {
                     return std::make_unique<AvgState>(valueRef.load<Int32>(), counter);
                 };
-                case IR::Types::IntegerStamp::I64: {
+                case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<AvgState>(valueRef.load<Int64>(), counter);
                 };
             }
         }
-    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stamp.get())) {
+    } else if (auto floatStamp = cast_if<Nautilus::IR::Types::FloatStamp>(stamp.get())) {
         switch (floatStamp->getBitWidth()) {
-            case IR::Types::FloatStamp::F32: {
+            case Nautilus::IR::Types::FloatStamp::F32: {
                 return std::make_unique<AvgState>(valueRef.load<Float>(), counter);
             };
-            case IR::Types::FloatStamp::F64: {
+            case Nautilus::IR::Types::FloatStamp::F64: {
                 return std::make_unique<AvgState>(valueRef.load<Double>(), counter);
             };
         }

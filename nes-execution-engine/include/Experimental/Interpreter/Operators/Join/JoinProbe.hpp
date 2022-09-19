@@ -22,7 +22,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class JoinProbe : public ExecutableOperator {
   public:
-    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions, std::vector<ExpressionPtr> valueExpressions, std::vector<IR::Types::StampPtr> hashmapKeyStamps, std::vector<IR::Types::StampPtr> hashmapValueStamps);
+    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions, std::vector<ExpressionPtr> valueExpressions, std::vector<Nautilus::IR::Types::StampPtr> hashmapKeyStamps, std::vector<Nautilus::IR::Types::StampPtr> hashmapValueStamps);
     void setup(RuntimeExecutionContext& executionCtx) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
 
@@ -30,8 +30,8 @@ class JoinProbe : public ExecutableOperator {
     std::shared_ptr<NES::Experimental::Hashmap> hashMap;
     const std::vector<ExpressionPtr> keyExpressions;
     const std::vector<ExpressionPtr> valueExpressions;
-    const std::vector<IR::Types::StampPtr> keyTypes;
-    const std::vector<IR::Types::StampPtr> valueTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
     mutable uint32_t tag;
 };
 

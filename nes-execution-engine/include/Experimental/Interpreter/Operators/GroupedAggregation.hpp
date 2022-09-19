@@ -45,8 +45,8 @@ class GroupedAggregation : public ExecutableOperator {
     mutable NES::Experimental::HashMapFactory factory;
     const std::vector<ExpressionPtr> keyExpressions;
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
-    const std::vector<IR::Types::StampPtr> keyTypes;
-    const std::vector<IR::Types::StampPtr> valueTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
     mutable uint32_t tag;
 };
 

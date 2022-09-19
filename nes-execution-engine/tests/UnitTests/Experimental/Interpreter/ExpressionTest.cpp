@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/DataValue/MemRef.hpp>
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
@@ -51,7 +51,7 @@ TEST_F(ExpressionTest, EqualsExpressionInteger) {
     auto readField2 = std::make_shared<ReadFieldExpression>(1);
     auto equalsExpression = std::make_shared<EqualsExpression>(readField1, readField2);
     auto r1 = Record({Value<Int32>(1), Value<Int32>(1)});
-    ASSERT_TRUE(equalsExpression->execute(r1).as<Boolean>().value->value);
+    ASSERT_TRUE(equalsExpression->execute(r1).as<Boolean>()->getValue());
 }
 
 TEST_F(ExpressionTest, ExpressionReadInvalidField) {

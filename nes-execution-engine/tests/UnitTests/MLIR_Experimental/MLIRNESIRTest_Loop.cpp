@@ -25,20 +25,20 @@
 // #include <Runtime/BufferManager.hpp>
 // #include <Runtime/TupleBuffer.hpp>
 
-// #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-// #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-// #include <Experimental/NESIR/Operations/AddressOperation.hpp>
-// #include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
-// #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
-// #include <Experimental/NESIR/Operations/LoadOperation.hpp>
-// #include <Experimental/NESIR/Operations/StoreOperation.hpp>
-// #include <Experimental/NESIR/Operations/BranchOperation.hpp>
+// #include <Nautilus/IR/Operations/FunctionOperation.hpp>
+// #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+// #include <Nautilus/IR/Operations/AddressOperation.hpp>
+// #include <Nautilus/IR/Operations/ArithmeticOperations/AddIntOperation.hpp>
+// #include <Nautilus/IR/Operations/ConstantIntOperation.hpp>
+// #include <Nautilus/IR/Operations/LoadOperation.hpp>
+// #include <Nautilus/IR/Operations/StoreOperation.hpp>
+// #include <Nautilus/IR/Operations/BranchOperation.hpp>
 
-// #include <Experimental/NESIR/Operations/IfOperation.hpp>
+// #include <Nautilus/IR/Operations/IfOperation.hpp>
 
-// #include <Experimental/NESIR/Operations/CompareOperation.hpp>
-// #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
-// #include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
+// #include <Nautilus/IR/Operations/CompareOperation.hpp>
+// #include <Nautilus/IR/Operations/ReturnOperation.hpp>
+// #include "Nautilus/IR/Operations/ProxyCallOperation.hpp"
 // #include <unordered_map>
 
 // namespace NES {

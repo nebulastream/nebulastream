@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
-#include <Experimental/Interpreter/DataValue/MemRef.hpp>
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/WorkerContext.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <memory>

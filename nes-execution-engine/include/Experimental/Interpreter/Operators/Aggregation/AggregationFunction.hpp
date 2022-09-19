@@ -59,7 +59,7 @@ class AggregationFunction {
 
 class SumFunction : public AggregationFunction {
   public:
-    SumFunction(ExpressionPtr expression, IR::Types::StampPtr stamp);
+    SumFunction(ExpressionPtr expression, Nautilus::IR::Types::StampPtr stamp);
     std::unique_ptr<AggregationState> createGlobalState() override;
     std::unique_ptr<AggregationState> createState() override;
     void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) override;
@@ -71,7 +71,7 @@ class SumFunction : public AggregationFunction {
 
   private:
     ExpressionPtr expression;
-    IR::Types::StampPtr stamp;
+    Nautilus::IR::Types::StampPtr stamp;
 };
 
 class CountFunction : public AggregationFunction {

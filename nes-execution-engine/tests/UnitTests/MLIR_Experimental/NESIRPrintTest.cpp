@@ -13,20 +13,20 @@
 */
 
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/Operations/AddressOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
-#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-#include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/Operation.hpp>
-#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
-#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
-#include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/AddressOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -49,7 +49,7 @@ class MLIRGeneratorArithmeticOpsTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down MLIRGeneratorIfTest test class."); }
 };
 
-namespace ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 namespace Operations {
 
 std::shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
@@ -96,28 +96,28 @@ saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>&
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR
-        ->addRootOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::FunctionOperation>(
+        ->addRootOperation(std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>(
             "execute",
             executeArgTypes,
             executeArgNames,
-            ExecutionEngine::Experimental::IR::Operations::INT64))
+            NES::Nautilus::IR::Operations::INT64))
         ->addFunctionBasicBlock(
-            std::make_shared<ExecutionEngine::Experimental::IR::BasicBlock>(
+            std::make_shared<NES::Nautilus::IR::BasicBlock>(
                 "executeBodyBB",
                 0,
-                std::vector<ExecutionEngine::Experimental::IR::Operations::OperationPtr>{},
+                std::vector<NES::Nautilus::IR::Operations::OperationPtr>{},
                 executeArgNames,
                 executeArgTypes)
-                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>("int1", 5, 64))
-                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>("int2", 4, 64))
+                ->addOperation(std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>("int1", 5, 64))
+                ->addOperation(std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>("int2", 4, 64))
                 ->addOperation(
-                    std::make_shared<ExecutionEngine::Experimental::IR::Operations::AddOperation>("add", "int1", "int2", INT64))
-                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>(0)));
+                    std::make_shared<NES::Nautilus::IR::Operations::AddOperation>("add", "int1", "int2", INT64))
+                ->addOperation(std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>(0)));
     NES_DEBUG("\n\n" << nesIR->toString());
 }
 
@@ -126,10 +126,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFOperation) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -191,10 +191,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFOperation) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFElseOperation) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -264,10 +264,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFElseOperation) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithIfElseFollowUp) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -342,10 +342,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithIfElseFollowUp) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElse) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -457,10 +457,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElse) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseFollowUp) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -589,10 +589,10 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseFollowUp) {
  */
 TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
 
-    std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp> executeArgTypes{};
+    std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
+    auto nesIR = std::make_shared<NES::Nautilus::IR::NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, INT64))
         ->addFunctionBasicBlock(
@@ -771,5 +771,5 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseAndLoopFollowUp
 }
 
 }// namespace Operations
-}// namespace ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR
 }// namespace NES

@@ -13,26 +13,26 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
-#include <Experimental/NESIR/NESIR.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <optional>
-#include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 class LoopInferencePhase {
 
   public:
-    std::shared_ptr<NESIR> apply(std::shared_ptr<NESIR> ir);
+    std::shared_ptr<IRGraph> apply(std::shared_ptr<IRGraph> ir);
 
   private:
     class Context {
       public:
-        Context(std::shared_ptr<NESIR> ir);
-        std::shared_ptr<NESIR> process();
+        Context(std::shared_ptr<IRGraph> ir);
+        std::shared_ptr<IRGraph> process();
         void processBlock(BasicBlockPtr block);
         void processLoop(BasicBlockPtr block);
         std::optional<std::shared_ptr<Operations::CountedLoopInfo>> isCountedLoop(BasicBlockPtr block);
       private:
-        std::shared_ptr<NESIR> ir;
+        std::shared_ptr<IRGraph> ir;
     };
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_

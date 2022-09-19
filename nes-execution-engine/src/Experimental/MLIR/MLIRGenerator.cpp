@@ -12,25 +12,25 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
+#include "Nautilus/IR/Operations/ConstBooleanOperation.hpp"
 #include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/MLIR/YieldOperation.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
-#include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/CastOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
-#include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/Operation.hpp>
-#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
-#include <Experimental/NESIR/Types/FloatStamp.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <exception>
@@ -260,7 +260,7 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR) {
+mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
     ValueFrame firstframe;
     generateMLIR(nesIR->getRootOperation(), firstframe);
     theModule->dump();

@@ -14,20 +14,20 @@
 
 #include <API/Query.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/Operations/AddressOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
-#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-#include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
-#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
-#include <Experimental/NESIR/Operations/StoreOperation.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/AddressOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,8 +42,8 @@
 
 using namespace std;
 using namespace NES::ExecutionEngine::Experimental::MLIR;
-using namespace NES::ExecutionEngine::Experimental::IR;
-using namespace NES::ExecutionEngine::Experimental::IR::Operations;
+using namespace NES::Nautilus::IR;
+using namespace NES::Nautilus::IR::Operations;
 
 namespace NES {
 class MLIR_LOOP_GenerationTest : public testing::Test {
@@ -75,7 +75,7 @@ createBB(std::string identifier, int level, std::vector<std::shared_ptr<Operatio
  *  return x;
  */
 TEST_F(MLIR_LOOP_GenerationTest, testCountedLoop) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto rootBasicBlock = createBB("executeBodyBB", 0, {x});
@@ -145,7 +145,7 @@ TEST_F(MLIR_LOOP_GenerationTest, testCountedLoop) {
  *  return x;
  */
 TEST_F(MLIR_LOOP_GenerationTest, testDefaultLoop) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto rootBasicBlock = createBB("executeBodyBB", 0, {x});
