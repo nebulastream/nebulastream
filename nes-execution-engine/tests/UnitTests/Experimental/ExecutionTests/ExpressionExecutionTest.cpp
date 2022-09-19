@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/DataValue/MemRef.hpp>
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataValue/MemRef.hpp>
+#include <Nautilus/Interface/DataValue/Value.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>

@@ -1,7 +1,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_
-#include <Experimental/Interpreter/DataValue/MemRef.hpp>
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataValue/MemRef.hpp>
+#include <Nautilus/Interface/DataValue/Value.hpp>
 #include <Util/Experimental/HashMap.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataValue/Value.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
