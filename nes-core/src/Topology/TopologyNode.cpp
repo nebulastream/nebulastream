@@ -112,6 +112,12 @@ std::string TopologyNode::toString() const {
         ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
                 + ", usedResource=" + std::to_string(usedResources) + ", effectiveResources=" +
                 std::to_string(std::get<1>(std::any_cast<std::tuple<int,float>>(nodeProperties.at("ressources")))) + "]";
+
+        if(nodeProperties.contains("connectivity")){
+            for(auto& entry : std::any_cast<std::map<int,int>>(nodeProperties.at("connectivity"))){
+                ss << "\nLatency to node#" + std::to_string(entry.first) + ": " + std::to_string(entry.second) + "ms";
+            }
+        }
     }else{
         ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
                 + ", usedResource=" + std::to_string(usedResources) + "]";
@@ -146,6 +152,14 @@ std::any TopologyNode::getNodeProperty(const std::string& key) {
         NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
     } else {
         return nodeProperties.at(key);
+    }
+}
+
+bool TopologyNode::hasNodeProperty(const std::string& key){
+    if(nodeProperties.contains(key)){
+        return true;
+    }else{
+        return false;
     }
 }
 

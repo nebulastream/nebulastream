@@ -230,7 +230,7 @@ class TopologyNode : public Node {
      */
     bool isMobileNode();
 
-
+    bool hasNodeProperty(const std::string& key);
 
   private:
     uint64_t id;
@@ -256,7 +256,6 @@ class TopologyNode : public Node {
      * @brief A field to store a map of linked nodes and its link property
      */
     std::map<TopologyNodePtr, LinkPropertyPtr> linkProperties;
-
 };
 }// namespace NES
 

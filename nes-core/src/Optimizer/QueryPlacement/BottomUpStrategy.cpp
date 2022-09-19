@@ -834,14 +834,27 @@ void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topology
 
                 int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
 
-                NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
-                         + " HAS CONN OF: " + std::to_string(conn));
-
                 if(conn == -1){
                     conn = (rand() % 100 + 10);
                 }
 
-                topNode->addNodeProperty("connectivity",(topNodeParent->getId(),conn));
+                NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
+                         + " HAS CONN OF: " + std::to_string(conn));
+
+                if(topNode->hasNodeProperty("connectivity")){
+                    std::map<int,int> linkConnecitivites = std::any_cast<std::map<int,int>>(topNode->getNodeProperty("connectivity"));
+
+                    linkConnecitivites.insert({topNodeParent->getId(),conn});
+                    topNode->removeNodeProperty("connectivity");
+                    topNode->addNodeProperty("connectivity",(topNodeParent->getId(),linkConnecitivites));
+                }else{
+                    std::map<int,int> map = {{topNodeParent->getId(),conn}};
+                    topNode->addNodeProperty("connectivity",map);
+                }
+
+
+
+
             }
         }
     }
