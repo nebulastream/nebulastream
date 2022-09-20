@@ -13,4 +13,3 @@
 # limitations under the License.
 
 add_subdirectory(NebulaPSL)
-add_subdirectory(NebulaSQL)
