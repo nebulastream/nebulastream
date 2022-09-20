@@ -32,33 +32,33 @@ class NebulaPSLPattern {
     //Constructors
     NebulaPSLPattern() = default;
     // Getter and Setter
-    const std::map<int, std::string>& getSources() const;
-    void setSources(const std::map<int, std::string>& sources);
-    const std::map<int, NebulaPSLOperatorNode*>& getOperatorList() const;
-    void setOperatorList(const std::map<int, NebulaPSLOperatorNode*>& operator_list);
+    const std::map<int32_t, std::string>& getSources() const;
+    void setSources(const std::map<int32_t, std::string>& sources);
+    const std::map<int32_t, NebulaPSLOperatorNode>& getOperatorList() const;
+    void setOperatorList(const std::map<int32_t, NebulaPSLOperatorNode>& operatorList);
     const std::list<ExpressionNodePtr>& getExpressions() const;
     void setExpressions(const std::list<ExpressionNodePtr>& expressions);
     const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-    void setProjectionFields(const std::vector<ExpressionNodePtr>& projection_fields);
+    void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
     const std::list<SinkDescriptorPtr>& getSinks() const;
     void setSinks(const std::list<SinkDescriptorPtr>& sinks);
     const std::pair<std::string, int>& getWindow() const;
     void setWindow(const std::pair<std::string, int>& window);
 
     /**
-     * @brief inserts a new source into the source map
+     * @brief inserts a new source into the source map (FROM-Clause)
      * @param sourcePair <K,V> containing the nodeId and the streamName
      */
-    void addSource(std::pair<int, std::basic_string<char>> sourcePair);
+    void addSource(std::pair<int32_t, std::basic_string<char>> sourcePair);
 
     /**
      * @brief updates the sourceName in case an alias is using in the FROM-Clause
      * @param sourcePair <K,V> containing the nodeId and the streamName
      */
-    void updateSource(const int key, std::string streamName);
+    void updateSource(const int32_t key, std::string streamName);
 
     /**
-     * @brief inserts a new ExpressionNode (filter) to the list of parsed expressions
+     * @brief inserts a new ExpressionNode (filter) to the list of parsed expressions (WHERE-clause)
      * @param expNode
      */
     void addExpression(ExpressionNodePtr expNode);
@@ -71,23 +71,23 @@ class NebulaPSLPattern {
 
     /**
      * @brief inserts a new ExpressionItem (Projection Attribute) to the  list of specified output attributes
-     * @param expression_item
+     * @param expressionItem
      */
-    void addProjectionField(ExpressionNodePtr expression_item);
+    void addProjectionField(ExpressionNodePtr expressionItem);
 
     /**
      * @brief inserts a new Operator from the PATTERN clause to the list of operators
-     * @param op_node
+     * @param opNode
      */
-    void addOperatorNode(NebulaPSLOperatorNode* op_node);
+    void addOperatorNode(NebulaPSLOperatorNode opNode);
 
   private:
-    std::map<int, std::string> sources;
-    std::map<int, NebulaPSLOperatorNode*> operatorList;// contains the operators from the PATTERN clause
+    std::map<int32_t, std::string> sources;
+    std::map<int32_t, NebulaPSLOperatorNode> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressions;
     std::vector<ExpressionNodePtr> projectionFields;
     std::list<SinkDescriptorPtr> sinks;// INTO
-    std::pair<std::string, int> window;// WITHIN
+    std::pair<std::string, int32_t> window;// WITHIN
 };
 
 }// namespace NES::Parsers

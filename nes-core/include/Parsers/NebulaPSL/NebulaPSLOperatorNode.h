@@ -25,35 +25,37 @@ namespace NES::Parsers {
 /**
  * @brief This class defines the attributes and methods used by the PatternParsingService.
  * This enables the parsing of declarative patterns into NES queries.
+ * Each operatorNode represents a node from the ANTLR AST tree with a unique identifier (id), pointers to the parent and child nodes
+ * and specific attributes of the specific operator in order to create the query (tree).
  */
 
 class NebulaPSLOperatorNode {
   public:
     //Constructors
-    explicit NebulaPSLOperatorNode(int id);
+    explicit NebulaPSLOperatorNode(int32_t id);
     // Getter and Setter
-    int getId() const;
-    void setId(int id);
+    int32_t getId() const;
+    void setId(int32_t id);
     const std::string& getEventName() const;
-    void setEventName(const std::string& event_name);
-    int getRightChildId() const;
-    void setRightChildId(int right_child_id);
-    int getLeftChildId() const;
-    void setLeftChildId(int left_child_id);
+    void setEventName(const std::string& eventName);
+    int32_t getRightChildId() const;
+    void setRightChildId(int32_t rightChildId);
+    int32_t getLeftChildId() const;
+    void setLeftChildId(int32_t leftChildId);
     const std::pair<int, int>& getMinMax() const;
-    void setMinMax(const std::pair<int, int>& min_max);
-    int getParentNodeId() const;
-    void setParentNodeId(int parent_node_id);
-    const Query& getQuery() const;
-    void setQuery(const Query& query);
+    void setMinMax(const std::pair<int, int>& minMax);
+    int32_t getParentNodeId() const;
+    void setParentNodeId(int32_t parentNodeId);
+    //const Query& getQuery() const;
+    //void setQuery(const Query& query);
   private:
-    int id;
+    int32_t id;
     std::string eventName;
-    int rightChildId = -1;
-    int leftChildId = -1;
-    std::pair<int, int> minMax;
-    int parentNodeId = -1;
-    NES::Query query = NES::Query(NULL);
+    int32_t rightChildId = -1;
+    int32_t leftChildId = -1;
+    std::pair<int32_t, int32_t> minMax;
+    int32_t parentNodeId = -1;
+   // NES::Query query = NES::Query(NULL);
 };
 
 }// namespace NES

@@ -12,29 +12,23 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
-#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
-#include <iostream>
 
 namespace NES::Parsers {
-
-NebulaPSLOperatorNode::NebulaPSLOperatorNode(int id) { setId(id); }
-
-int NebulaPSLOperatorNode::getId() const { return id; }
-void NebulaPSLOperatorNode::setId(int id) { NebulaPSLOperatorNode::id = id; }
-const std::string& NebulaPSLOperatorNode::getEventName() const { return eventName; }
-void NebulaPSLOperatorNode::setEventName(const std::string& event_name) { eventName = event_name; }
-int NebulaPSLOperatorNode::getRightChildId() const { return rightChildId; }
-void NebulaPSLOperatorNode::setRightChildId(int right_child_id) { rightChildId = right_child_id; }
-int NebulaPSLOperatorNode::getLeftChildId() const { return leftChildId; }
-void NebulaPSLOperatorNode::setLeftChildId(int left_child_id) { leftChildId = left_child_id; }
-const std::pair<int, int>& NebulaPSLOperatorNode::getMinMax() const { return minMax; }
-void NebulaPSLOperatorNode::setMinMax(const std::pair<int, int>& min_max) { minMax = min_max; }
-int NebulaPSLOperatorNode::getParentNodeId() const { return parentNodeId; }
-void NebulaPSLOperatorNode::setParentNodeId(int parent_node_id) { parentNodeId = parent_node_id; }
-const Query& NebulaPSLOperatorNode::getQuery() const { return query; }
-void NebulaPSLOperatorNode::setQuery(const Query& query) { NebulaPSLOperatorNode::query = query; }
+// creates a instance of the Operator Node (for as AST Tree node) with a unique identifier
+NebulaPSLOperatorNode::NebulaPSLOperatorNode(int32_t id) { this->id = id; }
+//Getter and Setter
+int32_t NebulaPSLOperatorNode::getId() const { return this->id; }
+void NebulaPSLOperatorNode::setId(int32_t id) { this->id = id; }
+const std::string& NebulaPSLOperatorNode::getEventName() const { return this->eventName; }
+void NebulaPSLOperatorNode::setEventName(const std::string& eventName) { this->eventName = eventName; }
+int32_t NebulaPSLOperatorNode::getRightChildId() const { return this->rightChildId; }
+void NebulaPSLOperatorNode::setRightChildId(int32_t rightChildId) { this->rightChildId = rightChildId; }
+int32_t NebulaPSLOperatorNode::getLeftChildId() const { return this->leftChildId; }
+void NebulaPSLOperatorNode::setLeftChildId(int32_t leftChildId) { this->leftChildId = leftChildId; }
+const std::pair<int32_t, int32_t>& NebulaPSLOperatorNode::getMinMax() const { return this->minMax; }
+void NebulaPSLOperatorNode::setMinMax(const std::pair<int32_t, int32_t>& minMax) { this->minMax = minMax; }
+int32_t NebulaPSLOperatorNode::getParentNodeId() const { return this->parentNodeId; }
+void NebulaPSLOperatorNode::setParentNodeId(int32_t parentNodeId) { this->parentNodeId = parentNodeId; }
 
 }// namespace NES

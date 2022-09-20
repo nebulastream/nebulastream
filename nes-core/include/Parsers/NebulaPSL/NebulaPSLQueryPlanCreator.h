@@ -15,8 +15,8 @@
 #ifndef NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
 #define NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
 
-#include "NebulaPSLOperatorNode.h"
-#include "NebulaPSLPattern.h"
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLPattern.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -41,27 +41,6 @@ namespace NES::Parsers {
  */
 class NesCEPQueryPlanCreator : public NesCEPBaseListener {
   public:
-    int GetLastSeenSourcePtr() const;
-    void SetLastSeenSourcePtr(int last_seen_source_ptr);
-    int GetSourceCounter() const;
-    void SetSourceCounter(int source_counter);
-    int getNodeId() const;
-    void setNodeId(int node_id);
-    int GetCurrentElementPointer() const;
-    void setCurrentElementPointer(int current_element_pointer);
-    int GetCurrentParentPointer() const;
-    void SetCurrentParentPointer(int current_parent_pointer);
-    const NES::Query& getQuery() const;
-    void SetQuery(const NES::Query& query);
-    bool IsInWhere() const;
-    void SetInWhere(bool in_where);
-    bool IsLeftFilter() const;
-    void SetLeftFilter(bool left_filter);
-    const std::string& GetCurrentLeftExp() const;
-    void SetCurrentLeftExp(const std::string& current_left_exp);
-    const std::string& GetCurrentRightExp() const;
-    void SetCurrentRightExp(const std::string& current_right_exp);
-
     /** the following methods read out the AST tree and collect all mined patterns in the global pattern list
      * An example of the AST looks as follows:
      * (query (cepPattern PATTERN test := (compositeEventExpressions (
@@ -175,20 +154,25 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @brief this methods parses the user-specified window information to TimeMeasures
      */
     std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                                int time);
+                                                                                                int32_t time);
 
     /**
      * @brief this methods add all projections to the query
      */
     void addProjections();
 
+    /**
+     * @brief returns the parsed query
+     */
+    const Query& getQuery() const;
+
   private:
-    int sourceCounter = 0;
-    int currentOperatorPointer = -1;
-    int lastSeenSourcePtr = -1;
+    int32_t sourceCounter = 0;
+    int32_t currentOperatorPointer = -1;
+    int32_t lastSeenSourcePtr = -1;
     NebulaPSLPattern pattern;
-    int nodeId = 0;
-    int currentElementPointer = -1;
+    int32_t nodeId = 0;
+    int32_t currentElementPointer = -1;
     NES::Query query = NES::Query(NULL);
     bool inWhere = false;
     bool leftFilter = true;
