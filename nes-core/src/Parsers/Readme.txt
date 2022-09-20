@@ -8,6 +8,7 @@ To regenerate the ANTLR classes, e.g., upon modifying the ANTLR grammar, you can
 provided by CLion (use .g4 file, right-click, select 'Generate Antlr Recognizer') or
 follow the instructions given here: "https://tomassetti.me/getting-started-antlr-cpp/"
 (java -jar antlr-4.9.2-complete.jar -package NES::Parsers -Dlanguage=Cpp IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4)
+(java -jar antlr-4.9.2-complete.jar -package NES::Parsers -Dlanguage=Cpp IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4)
 
 (The plugin currently does not work as vcpkg only provides version 4.9.3, plugin is on 4.10)
 
