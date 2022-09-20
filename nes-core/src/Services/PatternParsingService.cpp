@@ -14,7 +14,6 @@
 #include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
-#include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 #include <Services/PatternParsingService.hpp>
 #include <antlr4-runtime/ANTLRInputStream.h>
 
@@ -22,10 +21,10 @@ NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std:
     NES_DEBUG("PatternParsingService: received the following pattern string" + patternString);
     // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
     antlr4::ANTLRInputStream input(patternString.c_str(), patternString.length());
-    NesCEPLexer lexer(&input);
+    Parsers::NesCEPLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
-    NesCEPParser parser(&tokens);
-    NesCEPParser::QueryContext* tree = parser.query();
+    Parsers::NesCEPParser parser(&tokens);
+    Parsers::NesCEPParser::QueryContext* tree = parser.query();
     NES_DEBUG("PatternParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
 
     NES_DEBUG("PatternParsingService: Parse the AST into a query plan");

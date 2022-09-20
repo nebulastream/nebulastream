@@ -427,8 +427,6 @@ TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
     EXPECT_TRUE( queryPlanString == queryPlanPatternString);
 }
 
-
-
 //   std::string patternString =
 //        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
 
