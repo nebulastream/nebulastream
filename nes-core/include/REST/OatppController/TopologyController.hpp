@@ -47,7 +47,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                            oatpp::String completeRouterPrefix,
                            ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          topology(topology), errorHandler(errorHandler) {}
+          topology(std::move(topology)), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -62,7 +62,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                                                                 ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<TopologyController>(objectMapper,
-                                                        topology,
+                                                        std::move(topology),
                                                         completeRouterPrefix,
                                                         errorHandler);
     }
