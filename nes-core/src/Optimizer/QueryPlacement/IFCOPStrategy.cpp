@@ -315,7 +315,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
 }
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                              FaultToleranceType /*faultToleranceType*/,
+                                              FaultToleranceType::Value /*faultToleranceType*/,
                                               LineageType::Value /*lineageType*/,
                                               const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
                                               const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {

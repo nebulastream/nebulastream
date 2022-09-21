@@ -48,7 +48,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
-                   FaultToleranceType faultToleranceType,
+                   FaultToleranceType::Value faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  nodeEngine,

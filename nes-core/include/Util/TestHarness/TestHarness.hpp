@@ -489,10 +489,8 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        auto faultToleranceMode = stringToFaultToleranceTypeMap(faultTolerance);
-        if (faultToleranceMode == FaultToleranceType::INVALID) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify fault tolerance guarantee");
-        }
+        auto faultToleranceMode = FaultToleranceType::getFromString(faultTolerance);
+
         auto lineageMode = LineageType::getFromString(lineage);
 
         QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,

@@ -44,7 +44,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1,
                                     uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
 
@@ -95,20 +95,20 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @brief getter for fault-tolerance type
      * @return fault-tolerance type
      */
-    FaultToleranceType getFaultToleranceType() const;
+    FaultToleranceType::Value getFaultToleranceType() const;
 
     /**
      * @brief setter for fault-tolerance type
      * @param fault-tolerance type
      */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+    void setFaultToleranceType(FaultToleranceType::Value faultToleranceType);
 
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   FaultToleranceType faultToleranceType,
+                                   FaultToleranceType::Value faultToleranceType,
                                    uint64_t numberOfOrigins,
                                    uint64_t uniqueNetworkSinkDescriptorId);
 

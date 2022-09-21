@@ -39,7 +39,7 @@ class MaterializedViewSink : public SinkMedium {
                          uint32_t numOfProducers,
                          QueryId queryId,
                          QuerySubPlanId parentPlanId,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 1);
 
     /**

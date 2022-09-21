@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Util/Logger/Logger.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES {
-FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode) {
+FaultToleranceType::Value FaultToleranceType::getFromString(const std::string faultToleranceMode) {
     if (faultToleranceMode == "NONE") {
         return FaultToleranceType::NONE;
     } else if (faultToleranceMode == "AT_MOST_ONCE") {
@@ -26,11 +26,11 @@ FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranc
     } else if (faultToleranceMode == "EXACTLY_ONCE") {
         return FaultToleranceType::EXACTLY_ONCE;
     } else {
-        return FaultToleranceType::INVALID;
+        NES_THROW_RUNTIME_ERROR("FaultToleranceType not supported " + faultToleranceMode);
     }
 }
 
-std::string toString(const FaultToleranceType faultToleranceMode) {
+std::string FaultToleranceType::toString(const Value faultToleranceMode) {
     switch (faultToleranceMode) {
         case FaultToleranceType::NONE: return "NONE";
         case FaultToleranceType::AT_MOST_ONCE: return "AT_MOST_ONCE";

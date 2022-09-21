@@ -33,7 +33,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType,
+                         FaultToleranceType::Value faultToleranceType,
                          uint64_t numberOfOrigins)
     : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
                  nodeEngine,

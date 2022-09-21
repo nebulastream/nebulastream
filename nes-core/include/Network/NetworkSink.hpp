@@ -52,7 +52,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 0);
 
     /**

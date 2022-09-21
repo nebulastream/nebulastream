@@ -17,12 +17,12 @@
 namespace NES {
 
 MonitoringSinkDescriptor::MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType,
-                                                   FaultToleranceType faultToleranceType,
+                                                   FaultToleranceType::Value faultToleranceType,
                                                    uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), collectorType(collectorType) {}
 
 SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType collectorType,
-                                                   FaultToleranceType faultToleranceType,
+                                                   FaultToleranceType::Value faultToleranceType,
                                                    uint64_t numberOfOrigins) {
     return std::make_shared<MonitoringSinkDescriptor>(
         MonitoringSinkDescriptor(collectorType, faultToleranceType, numberOfOrigins));

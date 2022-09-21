@@ -41,7 +41,7 @@ class PrintSink : public SinkMedium {
               QuerySubPlanId querySubPlanId,
               QueryId queryId,
               std::ostream& pOutputStream = std::cout,
-              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     /**

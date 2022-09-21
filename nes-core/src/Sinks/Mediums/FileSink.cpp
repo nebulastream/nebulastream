@@ -32,7 +32,7 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
-                   FaultToleranceType faultToleranceType,
+                   FaultToleranceType::Value faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),

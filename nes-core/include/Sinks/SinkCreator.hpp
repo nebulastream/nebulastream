@@ -57,7 +57,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1);
 
 /**
@@ -77,7 +77,7 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -97,7 +97,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     uint32_t numOfProducers,
                                     const std::string& filePath,
                                     bool append,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
 /**
@@ -117,7 +117,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -138,7 +138,7 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               uint32_t numOfProducers,
                               const std::string& host,
                               uint16_t port,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1);
 #ifdef ENABLE_OPC_BUILD
 /**
@@ -176,7 +176,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              uint32_t numOfProducers,
                              const std::string& host,
                              uint16_t port,
-                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                             FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                              uint64_t numberOfOrigins = 1);
 
 /**
@@ -197,7 +197,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 const std::string& host,
                                 uint16_t port,
                                 bool internal,
-                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                 uint64_t numberOfOrigins = 1);
 
 /**
@@ -215,7 +215,7 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
                                 std::ostream& out,
-                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                 uint64_t numberOfOrigins = 1);
 
 /**
@@ -226,7 +226,7 @@ DataSinkPtr createNullOutputSink(QueryId queryId,
                                  QuerySubPlanId querySubPlanId,
                                  const Runtime::NodeEnginePtr& nodeEngine,
                                  uint32_t activeProducers,
-                                 FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                 FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                  uint64_t numberOfOrigins = 1);
 
 /**
@@ -245,7 +245,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -268,7 +268,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5);
 
@@ -290,7 +290,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  uint32_t numOfProducers,
                                  QueryId queryId,
                                  QuerySubPlanId querySubPlanId,
-                                 FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                 FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                  uint64_t numberOfOrigins = 1);
 
 namespace Experimental::MaterializedView {
@@ -311,7 +311,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        QueryId queryId,
                                        QuerySubPlanId parentPlanId,
                                        uint64_t viewId,
-                                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                       FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                        uint64_t numberOfOrigins = 1);
 
 }// namespace Experimental::MaterializedView
@@ -362,7 +362,7 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            uint64_t msgDelay,
                            MQTTSinkDescriptor::ServiceQualities qualityOfService,
                            bool asynchronousClient,
-                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                           FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                            uint64_t numberOfOrigins = 1);
 #endif
 

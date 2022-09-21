@@ -45,7 +45,7 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                            FaultToleranceType faultToleranceType,
+                                            FaultToleranceType::Value faultToleranceType,
                                             LineageType::Value lineageType,
                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {

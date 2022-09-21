@@ -329,7 +329,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId query
 }
 
 bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
-                                                  FaultToleranceType faultToleranceType,
+                                                  FaultToleranceType::Value faultToleranceType,
                                                   LineageType::Value lineageType) {
     NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
