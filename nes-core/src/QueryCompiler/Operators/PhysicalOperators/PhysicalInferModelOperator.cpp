@@ -23,7 +23,7 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                          std::string model,
                                          std::vector<ExpressionItemPtr> inputFields,
                                          std::vector<ExpressionItemPtr> outputFields,
-                                         Join::InferModelOperatorHandlerPtr operatorHandler)
+                                         InferModel::InferModelOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields), operatorHandler(operatorHandler) {}
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
@@ -40,7 +40,7 @@ PhysicalOperatorPtr
 PhysicalInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model,
                                    std::vector<ExpressionItemPtr> inputFields,
                                    std::vector<ExpressionItemPtr> outputFields,
-                                   Join::InferModelOperatorHandlerPtr operatorHandler) {
+                                   InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 

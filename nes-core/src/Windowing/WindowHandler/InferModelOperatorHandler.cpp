@@ -20,7 +20,7 @@
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 
 
-namespace NES::Join {
+namespace NES::InferModel {
 
 InferModelOperatorHandlerPtr InferModelOperatorHandler::create(std::string model) {
     return std::make_shared<InferModelOperatorHandler>(model);
@@ -35,8 +35,8 @@ InferModelOperatorHandler::InferModelOperatorHandler(std::string model) {
 void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                       Runtime::StateManagerPtr stateManager,
                                 uint32_t localStateVariableId) {
-    std::cout << stateManager->getNodeId() << std::endl;
-    std::cout << localStateVariableId << std::endl;
+    NES_DEBUG(stateManager->getNodeId() << std::endl);
+    NES_DEBUG(std::cout << localStateVariableId << std::endl);
 }
 
 void InferModelOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
@@ -52,4 +52,4 @@ void InferModelOperatorHandler::postReconfigurationCallback(Runtime::Reconfigura
 const std::string& InferModelOperatorHandler::getModel() const { return model; }
 const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() const { return tfAdapter; }
 
-}// namespace NES::Join
+}// namespace NES::InferModel

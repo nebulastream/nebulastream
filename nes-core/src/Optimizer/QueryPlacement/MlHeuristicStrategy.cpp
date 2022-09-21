@@ -245,16 +245,16 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
             }
         }
 
-        bool should_push_up = false;
-        bool can_be_placed_here = true;
+        bool shouldPushUp = false;
+        bool canBePlacedHere = true;
 
         bool tf_not_installed = operatorNode->instanceOf<InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tf_not_installed) {
-            can_be_placed_here = false;
+            canBePlacedHere = false;
         }
 
-        if(!can_be_placed_here){
-            should_push_up = true;
+        if(!canBePlacedHere){
+            shouldPushUp = true;
             if(candidateTopologyNode->getParents().empty()) {
                 return false;
             }
@@ -281,28 +281,28 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
             }
 
             if(candidateTopologyNode->getAvailableResources() < MIN_RESOURCE_LIMIT && ENABLE_CPU_SAVER_MODE){
-                should_push_up = true;
+                shouldPushUp = true;
             }
             if(pushUpBasedOnFilterSelectivity(operatorNode)) {
-                should_push_up = true;
+                shouldPushUp = true;
             }
             if(LOW_THROUGHPUT_SOURCE) {
-                should_push_up = true;
+                shouldPushUp = true;
             }
             if(ML_HARDWARE){
-                should_push_up = false;
+                shouldPushUp = false;
             }
         }
 
         if(candidateTopologyNode->getParents().empty()){
-            should_push_up = false;
+            shouldPushUp = false;
         }
-        if(should_push_up) {
+        if(shouldPushUp) {
             if(placeOperator(queryId, operatorNode, candidateTopologyNode->getParents()[0]->as<TopologyNode>(), pinnedDownStreamOperators)){
                 return true;
             }
         }
-        if(!can_be_placed_here){
+        if(!canBePlacedHere){
             return false;
         }
 
@@ -572,16 +572,16 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
 //    candidateTopologyNode->getAvailableResources();
 //
 //    bool cpu_saver_mode = true;
-//    bool should_push_up = false;
-//    bool can_be_placed_here = true;
+//    bool shouldPushUp = false;
+//    bool canBePlacedHere = true;
 //
 //    bool tf_not_installed = operatorNode->instanceOf<InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
 //    if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tf_not_installed) {
-//        can_be_placed_here = false;
+//        canBePlacedHere = false;
 //    }
 //
-//    if(!can_be_placed_here){
-//        should_push_up = true;
+//    if(!canBePlacedHere){
+//        shouldPushUp = true;
 //        if(candidateTopologyNode->getParents().empty()) {
 //            return false;
 //        }
@@ -589,7 +589,7 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
 //
 //    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
 //        if(candidateTopologyNode->getAvailableResources() < 5 && cpu_saver_mode){
-//            should_push_up = true;
+//            shouldPushUp = true;
 //        }
 //
 //        auto infModl = operatorNode->as<InferModelLogicalOperatorNode>();
@@ -610,19 +610,19 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
 //        float fields_measure = f_new / f0;
 //        float selectivity_measure = 1/s;
 //        if (fields_measure > selectivity_measure) {
-//            should_push_up = true;
+//            shouldPushUp = true;
 //        }
 //    }
 //
 //    if(candidateTopologyNode->getParents().empty()){
-//        should_push_up = false;
+//        shouldPushUp = false;
 //    }
-//    if(should_push_up) {
+//    if(shouldPushUp) {
 //        if(placeOperatorOnTopologyNode(queryId, operatorNode, candidateTopologyNode->getParents()[0]->as<TopologyNode>())){
 //            return true;
 //        }
 //    }
-//    if(!can_be_placed_here){
+//    if(!canBePlacedHere){
 //        return false;
 //    }
 //

@@ -27,22 +27,80 @@ namespace NES {
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id);
+
+    /**
+     * @brief creates a string representation of this node
+     * @return the string representation
+     */
     std::string toString() const override;
+
+    /**
+     * @brief copies the current operator node
+     * @return a copy of this node
+     */
     OperatorNodePtr copy() override;
+
+    /**
+     * @brief compares this operator node with another
+     * @param rhs the other operator node
+     * @return true if both are equal or false if both are not equal
+     */
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+
+    /**
+     * @brief checks if the operator node is equal and also has the same id, so it is the identical node
+     * @param rhs the other operator node
+     * @return true if identical, false otherwise
+     */
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+
+    /**
+     * @brief infers the schema of the this operator node
+     * @param typeInferencePhaseContext
+     * @return true on success, false otherwise
+     */
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+
+    /**
+     * @brief infers the signature of this operator node
+     */
     void inferStringSignature() override;
+
+    /**
+     * @brief getter for the model
+     * @return model
+     */
     const std::string& getModel() const;
+
+    /**
+     * @brief getter for the path to the deployed model
+     * @return path to model
+     */
     const std::string getDeployedModelPath() const;
+
+    /**
+     * @brief getter for inputFieldsPtr
+     * @return inputFieldsPtr
+     */
     const std::vector<ExpressionItemPtr>& getInputFieldsAsPtr();
+
+    /**
+     * @brief getter for outputFieldsPtr
+     * @return outputFieldsPtr
+     */
     const std::vector<ExpressionItemPtr>& getOutputFieldsAsPtr();
 
   private:
-    std::string model;
+    /**
+     * @brief updates the field to a fully qualified one.
+     * @param field
+     */
+    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
+
+  private:
     std::vector<ExpressionItemPtr> inputFieldsPtr;
     std::vector<ExpressionItemPtr> outputFieldsPtr;
-    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
+    std::string model;
 };
 
 }// namespace NES

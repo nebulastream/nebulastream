@@ -399,7 +399,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
 
     auto inferModelOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Join::InferModelOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<InferModel::InferModelOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
