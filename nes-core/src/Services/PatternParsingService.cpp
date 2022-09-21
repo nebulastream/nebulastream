@@ -31,7 +31,7 @@ NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std:
     Parsers::NesCEPQueryPlanCreator queryPlanCreator;
     //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
-    auto query= queryPlanCreator.getQuery();
+    auto query = queryPlanCreator.getQuery();
     NES_DEBUG("PatternParsingService: created the query from AST " + queryPlanCreator.getQuery().getQueryPlan()->toString());
     return std::make_shared<Query>(query);
 }

@@ -35,6 +35,6 @@ class PatternParsingService {
     NES::QueryPtr createPatternFromCodeString(const std::string& patternString);
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_SERVICES_PATTERNPARSINGSERVICE_H

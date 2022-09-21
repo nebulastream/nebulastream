@@ -25,9 +25,7 @@ void NebulaPSLPattern::setOperatorList(const std::map<int32_t, NebulaPSLOperator
     this->operatorList = operatorList;
 }
 const std::list<ExpressionNodePtr>& NebulaPSLPattern::getExpressions() const { return this->expressions; }
-void NebulaPSLPattern::setExpressions(const std::list<ExpressionNodePtr>& expressions) {
-    this->expressions = expressions;
-}
+void NebulaPSLPattern::setExpressions(const std::list<ExpressionNodePtr>& expressions) { this->expressions = expressions; }
 const std::vector<ExpressionNodePtr>& NebulaPSLPattern::getProjectionFields() const { return this->projectionFields; }
 void NebulaPSLPattern::setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields) {
     this->projectionFields = projectionFields;
@@ -46,5 +44,6 @@ void NebulaPSLPattern::addExpression(ExpressionNodePtr expNode) {
 void NebulaPSLPattern::addSink(SinkDescriptorPtr sink) { this->sinks.push_back(sink); }
 void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionItem) { this->projectionFields.push_back(expressionItem); }
 void NebulaPSLPattern::addOperatorNode(NebulaPSLOperatorNode node) {
-    this->operatorList.insert(std::pair<uint32_t,NebulaPSLOperatorNode>(node.getId(),node)); }
-}// namespace NES
+    this->operatorList.insert(std::pair<uint32_t, NebulaPSLOperatorNode>(node.getId(), node));
+}
+}// namespace NES::Parsers
