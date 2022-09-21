@@ -1,0 +1,4 @@
+{
+  "logicalSourceName": "smartgrid",
+  "schema": "Schema::create()->addField(\"a\", UINT64)"
+}
