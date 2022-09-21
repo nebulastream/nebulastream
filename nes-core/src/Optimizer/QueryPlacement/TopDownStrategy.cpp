@@ -45,7 +45,7 @@ TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType faultToleranceType,
-                                                LineageType lineageType,
+                                                LineageType::Value lineageType,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {

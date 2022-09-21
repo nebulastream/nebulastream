@@ -16,7 +16,7 @@
 
 namespace NES::Client {
 
-QueryConfig::QueryConfig(FaultToleranceType faultToleranceType, LineageType lineageType, PlacementStrategy::Value placementType)
+QueryConfig::QueryConfig(FaultToleranceType faultToleranceType, LineageType::Value lineageType, PlacementStrategy::Value placementType)
     : faultToleranceType(faultToleranceType), lineageType(lineageType), placementType(placementType) {}
 
 FaultToleranceType QueryConfig::getFaultToleranceType() const { return faultToleranceType; }
@@ -25,9 +25,9 @@ void QueryConfig::setFaultToleranceType(FaultToleranceType faultToleranceType) {
     QueryConfig::faultToleranceType = faultToleranceType;
 }
 
-LineageType QueryConfig::getLineageType() const { return lineageType; }
+LineageType::Value QueryConfig::getLineageType() const { return lineageType; }
 
-void QueryConfig::setLineageType(LineageType lineageType) { QueryConfig::lineageType = lineageType; }
+void QueryConfig::setLineageType(LineageType::Value lineageType) { QueryConfig::lineageType = lineageType; }
 
 PlacementStrategy::Value QueryConfig::getPlacementType() const { return placementType; }
 

@@ -30,7 +30,7 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
-                                   LineageType lineageType,
+                                   LineageType::Value lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 

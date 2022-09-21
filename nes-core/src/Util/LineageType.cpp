@@ -12,30 +12,32 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Util/LineageType.hpp>
 #include <string>
 
 namespace NES {
-LineageType stringToLineageTypeMap(const std::string lineageMode) {
-    if (lineageMode == "NONE") {
+
+LineageType::Value LineageType::getFromString(const std::string lineageType) {
+    if (lineageType == "NONE") {
         return LineageType::NONE;
-    } else if (lineageMode == "IN_MEMORY") {
+    } else if (lineageType == "IN_MEMORY") {
         return LineageType::IN_MEMORY;
-    } else if (lineageMode == "PERSISTENT") {
+    } else if (lineageType == "PERSISTENT") {
         return LineageType::PERSISTENT;
-    } else if (lineageMode == "REMOTE") {
+    } else if (lineageType == "REMOTE") {
         return LineageType::REMOTE;
     } else {
-        return LineageType::INVALID;
+        NES_THROW_RUNTIME_ERROR("LineageType not supported " + lineageType);
     }
 }
-std::string toString(const LineageType lineageMode) {
-    switch (lineageMode) {
-        case LineageType::NONE: return "NONE";
-        case LineageType::IN_MEMORY: return "IN_MEMORY";
-        case LineageType::PERSISTENT: return "PERSISTENT";
-        case LineageType::REMOTE: return "REMOTE";
-        case LineageType::INVALID: return "INVALID";
+std::string LineageType::toString(const Value lineageType) {
+    switch (lineageType) {
+        case Value::NONE: return "NONE";
+        case Value::IN_MEMORY: return "IN_MEMORY";
+        case Value::PERSISTENT: return "PERSISTENT";
+        case Value::REMOTE: return "REMOTE";
+        case Value::INVALID: return "INVALID";
     }
 }
 

@@ -28,7 +28,7 @@ namespace NES::Client {
 class QueryConfig {
   public:
     explicit QueryConfig(NES::FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                         LineageType lineageType = LineageType::NONE,
+                         LineageType::Value lineageType = LineageType::NONE,
                          PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
 
     /**
@@ -47,13 +47,13 @@ class QueryConfig {
      * @brief Returns the type of Linage.
      * @return LineageType
      */
-    LineageType getLineageType() const;
+    LineageType::Value getLineageType() const;
 
     /**
      * @brief Sets the linage type
      * @param lineageType
      */
-    void setLineageType(LineageType lineageType);
+    void setLineageType(LineageType::Value lineageType);
 
     /**
      * @brief Returns the placement type.
@@ -69,7 +69,7 @@ class QueryConfig {
 
   private:
     FaultToleranceType faultToleranceType;
-    LineageType lineageType;
+    LineageType::Value lineageType;
     PlacementStrategy::Value placementType;
 };
 }// namespace NES::Client

@@ -43,7 +43,7 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  FaultToleranceType faultToleranceType,
-                                                 LineageType lineageType,
+                                                 LineageType::Value lineageType,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {

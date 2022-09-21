@@ -57,7 +57,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     context["placement"] = placement;
 
     auto linageType = google::protobuf::Any();
-    linageType.set_value(toString(config.getLineageType()));
+    linageType.set_value(LineageType::toString(config.getLineageType()));
     context["linage"] = linageType;
 
     auto faultToleranceType = google::protobuf::Any();

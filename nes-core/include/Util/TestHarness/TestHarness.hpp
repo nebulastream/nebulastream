@@ -493,10 +493,8 @@ class TestHarness {
         if (faultToleranceMode == FaultToleranceType::INVALID) {
             NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify fault tolerance guarantee");
         }
-        auto lineageMode = stringToLineageTypeMap(lineage);
-        if (lineageMode == LineageType::INVALID) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: unable to find given lineage type");
-        }
+        auto lineageMode = LineageType::getFromString(lineage);
+
         QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
                                                                         std::move(placementStrategyName),
                                                                         faultToleranceMode,

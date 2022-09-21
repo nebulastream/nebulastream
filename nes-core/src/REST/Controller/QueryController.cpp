@@ -157,7 +157,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         }
                     }
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-                    auto lineageMode = stringToLineageTypeMap(lineageString);
+                    auto lineageMode = LineageType::getFromString(lineageString);
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
                               << userQuery << ", placement= " << placementStrategyName
                               << ", faultTolerance= " << faultToleranceString << ", lineage= " << lineageString);
@@ -221,7 +221,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     std::string* queryString = protobufMessage->mutable_querystring();
                     std::string placementStrategy = context->at("placement").value();
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-                    auto lineageMode = stringToLineageTypeMap(lineageString);
+                    auto lineageMode = LineageType::getFromString(lineageString);
                     QueryId queryId = queryService->addQueryRequest(*queryString,
                                                                     queryPlan,
                                                                     placementStrategy,
@@ -299,8 +299,10 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
 }
 
 bool QueryController::validateLineageMode(const std::string& lineageModeString, const web::http::http_request& request) {
-    auto lineageMode = stringToLineageTypeMap(lineageModeString);
-    if (lineageMode == LineageType::INVALID) {
+    try {
+        LineageType::getFromString(lineageModeString);
+    }
+    catch(Exceptions::RuntimeException e){
         NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: " + lineageModeString);
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;

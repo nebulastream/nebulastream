@@ -245,13 +245,13 @@ class QueryPlan {
      * @brief Set current lineage flag
      * @param LineageType: type of lineage for a given query
      */
-    void setLineageType(LineageType lineageType = LineageType::NONE);
+    void setLineageType(LineageType::Value lineageType = LineageType::NONE);
 
     /**
      * @brief Get current lineage flag
      * @return LineageType: type of lineage for a given query
      */
-    LineageType getLineageType() const;
+    LineageType::Value getLineageType() const;
 
     /**
      * @brief Set current fault-tolerance flag
@@ -289,7 +289,7 @@ class QueryPlan {
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
     FaultToleranceType faultToleranceType;
-    LineageType lineageType;
+    LineageType::Value lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
 };
