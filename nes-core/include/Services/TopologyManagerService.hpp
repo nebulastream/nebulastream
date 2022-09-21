@@ -62,7 +62,7 @@ class TopologyManagerService {
                           NES::Spatial::Index::Experimental::NodeType spatialType,
                           bool isMobile,
                           NES::Spatial::Index::Experimental::Location fixedCoordinates,
-                          bool tfInstalled);
+                          bool isTfInstalled);
 
     /**
     * @brief unregister an existing node

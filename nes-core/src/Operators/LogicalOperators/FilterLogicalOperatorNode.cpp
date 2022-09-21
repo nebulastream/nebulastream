@@ -90,5 +90,5 @@ void FilterLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 float FilterLogicalOperatorNode::getSelectivity() { return selectivity; }
-void FilterLogicalOperatorNode::setSelectivity(float s) {selectivity = s;}
+void FilterLogicalOperatorNode::setSelectivity(float newSelectivity) { selectivity = newSelectivity; }
 }// namespace NES
