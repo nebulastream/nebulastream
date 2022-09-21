@@ -1,5 +1,33 @@
 # Changelog
 
+## [v0.2.89](https://github.com/nebulastream/nebulastream/tree/v0.2.89) (2022-09-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.88...v0.2.89)
+
+#### Complex Event Processing
+
+- Enable NEPSL support with Antlr in NES-core [\#2729](https://github.com/nebulastream/nebulastream/issues/2729)
+
+#### Query Compiler
+
+- \[IR\] Operations should directly reference inputs [\#2824](https://github.com/nebulastream/nebulastream/issues/2824)
+
+#### Build Management
+
+- Inspect access control on different repositories to prevent unauthorized merging, triggering of actions, deletion, etc. \(Critical\) [\#2574](https://github.com/nebulastream/nebulastream/issues/2574)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT\] Support grouped aggregations [\#2938](https://github.com/nebulastream/nebulastream/issues/2938)
+- \[Feature\] implement greater\_than in JIT compiler [\#2923](https://github.com/nebulastream/nebulastream/issues/2923)
+- \[Feature\] Prototype Flounder integration for JIT [\#2902](https://github.com/nebulastream/nebulastream/issues/2902)
+- \[CPP Compiler\] Cache pipeline compilation [\#2539](https://github.com/nebulastream/nebulastream/issues/2539)
+- Reuse format and medium between sinks and sources [\#2500](https://github.com/nebulastream/nebulastream/issues/2500)
+- JITCompiler: link LLVM directly [\#2074](https://github.com/nebulastream/nebulastream/issues/2074)
+- JITCompiler: lookup mangled names automatically. [\#2073](https://github.com/nebulastream/nebulastream/issues/2073)
+- Rewrite SimpleBenchmarkSource and SimpleBenchmarkSink [\#1911](https://github.com/nebulastream/nebulastream/issues/1911)
+- Number Buffers equal to Workerthreads [\#1371](https://github.com/nebulastream/nebulastream/issues/1371)
+
 ## [v0.2.88](https://github.com/nebulastream/nebulastream/tree/v0.2.88) (2022-09-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.87...v0.2.88)
