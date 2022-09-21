@@ -33,7 +33,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                uint32_t numOfProducers,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
-                               FaultToleranceType faultToleranceType,
+                               FaultToleranceType::Value faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  std::move(nodeEngine),

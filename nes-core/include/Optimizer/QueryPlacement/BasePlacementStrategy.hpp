@@ -119,7 +119,7 @@ class BasePlacementStrategy {
      * @return true if successful else false
      */
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
-                                           FaultToleranceType faultToleranceType,
+                                           FaultToleranceType::Value faultToleranceType,
                                            LineageType::Value lineageType,
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
@@ -181,7 +181,7 @@ class BasePlacementStrategy {
      * @param lineageType: lineage type
      * @return true if successful else false
      */
-    bool runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType::Value lineageType);
+    bool runTypeInferencePhase(QueryId queryId, FaultToleranceType::Value faultToleranceType, LineageType::Value lineageType);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed

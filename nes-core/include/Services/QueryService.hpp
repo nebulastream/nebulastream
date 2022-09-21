@@ -82,7 +82,7 @@ class QueryService {
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
                                             const std::string& placementStrategyName,
-                                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                            const FaultToleranceType::Value faultTolerance = FaultToleranceType::NONE,
                                             const LineageType::Value lineage = LineageType::NONE);
 
     /**
@@ -97,7 +97,7 @@ class QueryService {
     QueryId addQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
                             const std::string& placementStrategyName,
-                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                            const FaultToleranceType::Value faultTolerance = FaultToleranceType::NONE,
                             const LineageType::Value lineage = LineageType::NONE);
 
     /**

@@ -35,7 +35,7 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  bool internal,
                  QueryId queryId,
                  QuerySubPlanId querySubPlanId,
-                 FaultToleranceType faultToleranceType,
+                 FaultToleranceType::Value faultToleranceType,
                  uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),

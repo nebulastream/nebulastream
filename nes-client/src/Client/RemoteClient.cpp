@@ -61,7 +61,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     context["linage"] = linageType;
 
     auto faultToleranceType = google::protobuf::Any();
-    faultToleranceType.set_value(toString(config.getFaultToleranceType()));
+    faultToleranceType.set_value(FaultToleranceType::toString(config.getFaultToleranceType()));
     context["faultTolerance"] = faultToleranceType;
 
     std::string message = request.SerializeAsString();

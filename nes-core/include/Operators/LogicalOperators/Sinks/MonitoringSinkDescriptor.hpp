@@ -33,7 +33,7 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
      * @return descriptor for Monitoring sink
      */
     static SinkDescriptorPtr create(Monitoring::MetricCollectorType collectorType,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
@@ -43,7 +43,7 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
 
   private:
     explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType,
-                                      FaultToleranceType faultToleranceType,
+                                      FaultToleranceType::Value faultToleranceType,
                                       uint64_t numberOfOrigins);
 
   private:

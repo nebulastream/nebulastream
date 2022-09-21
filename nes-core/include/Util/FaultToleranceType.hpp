@@ -18,17 +18,31 @@
 #include <string>
 #include <unordered_map>
 namespace NES {
-enum class FaultToleranceType : int8_t {
-    NONE = 0,         ///No fault-tolerance
-    AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
-    AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
-    EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
-    INVALID = 4
+class FaultToleranceType {
+  public:
+    enum Value : uint8_t {
+          NONE = 0,         ///No fault-tolerance
+          AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
+          AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
+          EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
+          INVALID = 4
+    };
+
+    /**
+     * @brief Get fault tolerance type in string representation
+     * @param faultToleranceMode : enum value of the fault tolerance type
+     * @return string representation of fault tolerance type
+     */
+    static std::string toString(const Value faultToleranceMode);
+
+    /**
+     * @brief Get fault tolerance type from string
+     * @param faultToleranceMode : string representation of fault tolerance type
+     * @return enum representing fault tolerance type
+     */
+    static Value getFromString(const std::string faultToleranceMode);
+
 };
-
-std::string toString(const FaultToleranceType faultToleranceMode);
-
-FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode);
 }// namespace NES
 
 #endif// NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_

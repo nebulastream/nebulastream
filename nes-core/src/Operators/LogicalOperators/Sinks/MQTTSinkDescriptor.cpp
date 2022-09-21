@@ -25,7 +25,7 @@ MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
                                        uint64_t messageDelay,
                                        const ServiceQualities qualityOfService,
                                        bool asynchronousClient,
-                                       FaultToleranceType faultToleranceType,
+                                       FaultToleranceType::Value faultToleranceType,
                                        uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), address(std::move(address)), clientId(std::move(clientId)),
       topic(std::move(topic)), user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
@@ -49,7 +49,7 @@ MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() c
 
 bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
 
-FaultToleranceType MQTTSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType::Value MQTTSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 uint64_t MQTTSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
@@ -62,7 +62,7 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              ServiceQualities qualityOfService,
                                              bool asynchronousClient,
                                              std::string&& clientId,
-                                             FaultToleranceType faultToleranceType,
+                                             FaultToleranceType::Value faultToleranceType,
                                              uint64_t numberOfOrigins) {
     return std::make_shared<MQTTSinkDescriptor>(std::move(address),
                                                 std::move(clientId),

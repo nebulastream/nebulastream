@@ -54,7 +54,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                        FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                         uint64_t numberOfOrigins = 1,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
@@ -189,7 +189,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic<uint32_t> activeProducers;
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    FaultToleranceType faultToleranceType;
+    FaultToleranceType::Value faultToleranceType;
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;

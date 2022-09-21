@@ -28,7 +28,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
-                       FaultToleranceType faultToleranceType,
+                       FaultToleranceType::Value faultToleranceType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),

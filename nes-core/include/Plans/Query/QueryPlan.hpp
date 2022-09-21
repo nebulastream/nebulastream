@@ -239,7 +239,7 @@ class QueryPlan {
      * @brief Get current fault-tolerance flag
      * @return FaultToleranceType: type of fault-tolerance for a given query
      */
-    FaultToleranceType getFaultToleranceType() const;
+    FaultToleranceType::Value getFaultToleranceType() const;
 
     /**
      * @brief Set current lineage flag
@@ -257,7 +257,7 @@ class QueryPlan {
      * @brief Set current fault-tolerance flag
      * @param FaultToleranceType: type of fault-tolerance for a given query
      */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+    void setFaultToleranceType(FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE);
 
   private:
     /**
@@ -288,7 +288,7 @@ class QueryPlan {
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
-    FaultToleranceType faultToleranceType;
+    FaultToleranceType::Value faultToleranceType;
     LineageType::Value lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;

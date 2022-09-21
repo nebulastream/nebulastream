@@ -156,7 +156,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                             lineageString = req.at("lineage").as_string();
                         }
                     }
-                    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+                    auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
                     auto lineageMode = LineageType::getFromString(lineageString);
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
                               << userQuery << ", placement= " << placementStrategyName
@@ -220,7 +220,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
                     std::string* queryString = protobufMessage->mutable_querystring();
                     std::string placementStrategy = context->at("placement").value();
-                    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+                    auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
                     auto lineageMode = LineageType::getFromString(lineageString);
                     QueryId queryId = queryService->addQueryRequest(*queryString,
                                                                     queryPlan,
@@ -318,8 +318,10 @@ bool QueryController::validateLineageMode(const std::string& lineageModeString, 
 
 bool QueryController::validateFaultToleranceType(const std::string& faultToleranceString,
                                                  const web::http::http_request& request) {
-    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-    if (faultToleranceMode == FaultToleranceType::INVALID) {
+    try {
+        FaultToleranceType::getFromString(faultToleranceString);
+    }
+    catch (Exceptions::RuntimeException e){
         NES_ERROR("QueryController: handlePost -execute-query: Invalid Fault Tolerance Type provided: " + faultToleranceString);
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
@@ -332,6 +334,7 @@ bool QueryController::validateFaultToleranceType(const std::string& faultToleran
     }
     return true;
 }
+
 
 bool QueryController::validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage,
                                               const web::http::http_request& request,

@@ -27,7 +27,7 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
                      std::ostream& pOutputStream,
-                     FaultToleranceType faultToleranceType,
+                     FaultToleranceType::Value faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),

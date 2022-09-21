@@ -27,7 +27,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     ~ManualPlacementStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryId queryId,
-                                   FaultToleranceType faultToleranceType,
+                                   FaultToleranceType::Value faultToleranceType,
                                    LineageType::Value lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;

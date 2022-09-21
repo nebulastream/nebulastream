@@ -26,7 +26,7 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
                                              std::string sinkFormat,
                                              const std::string& append,
-                                             FaultToleranceType faultToleranceType,
+                                             FaultToleranceType::Value faultToleranceType,
                                              uint64_t numberOfOrigins) {
     return std::make_shared<FileSinkDescriptor>(
         FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND", faultToleranceType, numberOfOrigins));
@@ -35,7 +35,7 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
                                        std::string sinkFormat,
                                        bool append,
-                                       FaultToleranceType faultToleranceType,
+                                       FaultToleranceType::Value faultToleranceType,
                                        uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)),
       append(append) {}

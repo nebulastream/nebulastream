@@ -21,7 +21,7 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
-                                             FaultToleranceType faultToleranceType,
+                                             FaultToleranceType::Value faultToleranceType,
                                              uint64_t uniqueNetworkSinkDescriptorId,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
@@ -31,7 +31,7 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
-                                                FaultToleranceType faultToleranceType,
+                                                FaultToleranceType::Value faultToleranceType,
                                                 uint64_t numberOfOrigins,
                                                 uint64_t uniqueNetworkSinkOperatorId) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
@@ -66,9 +66,9 @@ uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
 uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
-FaultToleranceType NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType::Value NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
-void NetworkSinkDescriptor::setFaultToleranceType(FaultToleranceType faultToleranceType) {
+void NetworkSinkDescriptor::setFaultToleranceType(FaultToleranceType::Value faultToleranceType) {
     NetworkSinkDescriptor::faultToleranceType = faultToleranceType;
 }
 

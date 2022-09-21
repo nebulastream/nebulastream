@@ -53,7 +53,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const std::string& placementStrategyName,
-                                                      const FaultToleranceType faultTolerance,
+                                                      const FaultToleranceType::Value faultTolerance,
                                                       const LineageType::Value lineage) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
@@ -101,7 +101,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
                                       const std::string& placementStrategyName,
-                                      const FaultToleranceType faultTolerance,
+                                      const FaultToleranceType::Value faultTolerance,
                                       const LineageType::Value lineage) {
 
     QueryId queryId = PlanIdGenerator::getNextQueryId();

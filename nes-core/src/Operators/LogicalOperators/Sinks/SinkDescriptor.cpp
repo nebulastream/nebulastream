@@ -16,12 +16,12 @@
 
 namespace NES {
 
-SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins)
+SinkDescriptor::SinkDescriptor(FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins)
     : faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {}
 
-FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType::Value SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
-void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { faultToleranceType = faultTolerance; }
+void SinkDescriptor::setFaultToleranceType(FaultToleranceType::Value faultTolerance) { faultToleranceType = faultTolerance; }
 
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 

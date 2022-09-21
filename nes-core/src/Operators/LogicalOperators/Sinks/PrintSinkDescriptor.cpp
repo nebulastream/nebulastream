@@ -17,17 +17,17 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins)
+PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins) {}
 
-SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins) {
+SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins) {
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(faultToleranceType, numberOfOrigins));
 }
 
 std::string PrintSinkDescriptor::toString() { return "PrintSinkDescriptor()"; }
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
 
-FaultToleranceType PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType::Value PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 uint64_t PrintSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 

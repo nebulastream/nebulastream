@@ -200,7 +200,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 return errorHandler->handleError(Status::CODE_400, errorMessage);
             }
 
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+            auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageMode = LineageType::getFromString(lineageString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
                       << userQuery << ", strategyName= " << placement
@@ -261,7 +261,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             std::string* queryString = protobufMessage->mutable_querystring();
             std::string placementStrategy = context->at("placement").value();
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+            auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageType = LineageType::getFromString(lineageString);
             QueryId queryId = queryService->addQueryRequest(*queryString,
                                                             queryPlan,
@@ -334,9 +334,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validateFaultToleranceType(const std::string& faultToleranceString) {
-        auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-        if (faultToleranceMode == FaultToleranceType::INVALID) {
-            NES_ERROR("QueryController: handlePost -execute-query: Invalid Fault Tolerance Type provided: " + faultToleranceString);
+        try {
+           FaultToleranceType::getFromString(faultToleranceString);
+        } catch (Exceptions::RuntimeException exc) {
             return false;
         }
         return true;

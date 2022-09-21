@@ -51,7 +51,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
                                     std::string&& clientId = "",
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -112,7 +112,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief getter for fault-tolerance type
      * @return fault-tolerance type
      */
-    FaultToleranceType getFaultToleranceType() const;
+    FaultToleranceType::Value getFaultToleranceType() const;
 
     /**
      * @brief getter for number of origins
@@ -147,7 +147,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient,
-                                FaultToleranceType faultToleranceType,
+                                FaultToleranceType::Value faultToleranceType,
                                 uint64_t numberOfOrigins);
 
   private:

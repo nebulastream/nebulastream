@@ -19,14 +19,14 @@
 namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSinkDescriptor::MaterializedViewSinkDescriptor(uint64_t viewId,
-                                                               FaultToleranceType faultToleranceType,
+                                                               FaultToleranceType::Value faultToleranceType,
                                                                uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), viewId(viewId) {
     NES_ASSERT(this->viewId > 0, "invalid materialized view id");
 }
 
 SinkDescriptorPtr
-MaterializedViewSinkDescriptor::create(uint64_t viewId, FaultToleranceType faultToleranceType, uint64_t numberOfOrigins) {
+MaterializedViewSinkDescriptor::create(uint64_t viewId, FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins) {
     return std::make_shared<MaterializedViewSinkDescriptor>(
         MaterializedViewSinkDescriptor(viewId, faultToleranceType, numberOfOrigins));
 }
@@ -41,7 +41,7 @@ bool MaterializedViewSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     return otherSinkDescriptor->getViewId() == viewId;
 }
 
-FaultToleranceType MaterializedViewSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType::Value MaterializedViewSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 uint64_t MaterializedViewSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
