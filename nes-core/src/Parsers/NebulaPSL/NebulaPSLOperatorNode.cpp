@@ -31,4 +31,4 @@ void NebulaPSLOperatorNode::setMinMax(const std::pair<int32_t, int32_t>& minMax)
 int32_t NebulaPSLOperatorNode::getParentNodeId() const { return this->parentNodeId; }
 void NebulaPSLOperatorNode::setParentNodeId(int32_t parentNodeId) { this->parentNodeId = parentNodeId; }
 
-}// namespace NES
+}// namespace NES::Parsers

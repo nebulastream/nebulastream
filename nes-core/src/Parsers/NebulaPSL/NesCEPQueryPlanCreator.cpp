@@ -13,14 +13,14 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 
 namespace NES::Parsers {
@@ -135,9 +135,9 @@ void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context
     const QueryPlanPtr& queryPlan = query.getQueryPlan();
     const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
     // add the sinks to the query plan
-    for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()){
+    for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()) {
         auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
-        for (auto &rootOperator : rootOperators){
+        for (auto& rootOperator : rootOperators) {
             sinkOperator->addChild(rootOperator);
             queryPlan->removeAsRootOperator(rootOperator);
             queryPlan->addRootOperator(sinkOperator);
@@ -154,13 +154,13 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     node.setParentNodeId(-1);
     node.setEventName("TIMES");
     node.setLeftChildId(lastSeenSourcePtr);
-    if (context->LBRACKET()) { // context contains []
-        if (context->D_POINTS()) { //e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
+    if (context->LBRACKET()) {    // context contains []
+        if (context->D_POINTS()) {//e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
             NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: " + context->iterMin()->INT()->getText()
                       + "and Max " + context->iterMin()->INT()->getText());
             node.setMinMax(
                 std::make_pair(stoi(context->iterMin()->INT()->getText()), stoi(context->iterMax()->INT()->getText())));
-        } else { // e.g., A[2] means that we except exact 2 occurrences of A
+        } else {// e.g., A[2] means that we except exact 2 occurrences of A
             node.setMinMax(std::make_pair(stoi(context->INT()->getText()), stoi(context->INT()->getText())));
         }
     } else if (context->PLUS()) {//e.g., A+, means a occurs at least once
@@ -300,7 +300,8 @@ void NesCEPQueryPlanCreator::addFilters() {
     }
 }
 
-std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTimeMeasurements(std::string timeMeasure, int32_t time) {
+std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTimeMeasurements(std::string timeMeasure,
+                                                                                              int32_t time) {
 
     if (timeMeasure == "MILLISECOND") {
         TimeMeasure size = Minutes(time);
@@ -329,4 +330,4 @@ void NesCEPQueryPlanCreator::addProjections() { query.project(pattern.getProject
 
 const Query& NesCEPQueryPlanCreator::getQuery() const { return this->query; }
 
-}// end namespace NES
+}// namespace NES::Parsers

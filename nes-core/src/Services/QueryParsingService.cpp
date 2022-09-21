@@ -19,13 +19,13 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Services/PatternParsingService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <log4cxx/helpers/exception.h>
 #include <sstream>
-#include <Services/PatternParsingService.hpp>
 
 namespace NES {
 
@@ -75,7 +75,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
 
 QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
 
-    if(queryCodeSnippet.starts_with("PATTERN")){
+    if (queryCodeSnippet.starts_with("PATTERN")) {
         NES::PatternParsingService patternParsingService;
         NES_DEBUG("QueryCatalog: parse pattern query from declarative PSL.");
         return patternParsingService.createPatternFromCodeString(queryCodeSnippet);

@@ -44,14 +44,10 @@ class PatternParsingServiceTest : public Testing::TestWithErrorHandling<testing:
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        NES_INFO("Setup QueryPlanTest test case.");
-    }
+    void TearDown() override { NES_INFO("Setup QueryPlanTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down QueryPlanTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryPlanTest test class."); }
 };
 
 TEST_F(PatternParsingServiceTest, simplePattern) {
@@ -66,7 +62,9 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode() ,  NES::Attribute("allowedSpeed").getExpressionNode())));
+    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
+                                                     NES::Attribute("allowedSpeed").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter);
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -75,13 +73,13 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     //pattern string as received from the NES UI and create query plan from parsing service
-    std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed && A.value > A.random INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed && A.value > "
+                                "A.random INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr patternPlan = query->getQueryPlan();
@@ -90,9 +88,13 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    LogicalOperatorNodePtr filter1 = LogicalOperatorFactory::createFilterOperator(ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(), NES::Attribute("allowedSpeed").getExpressionNode())));
+    LogicalOperatorNodePtr filter1 = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
+                                                     NES::Attribute("allowedSpeed").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter1);
-    LogicalOperatorNodePtr filter2 = LogicalOperatorFactory::createFilterOperator(ExpressionNodePtr(GreaterExpressionNode::create(NES::Attribute("value").getExpressionNode(), NES::Attribute("random").getExpressionNode())));
+    LogicalOperatorNodePtr filter2 = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(GreaterExpressionNode::create(NES::Attribute("value").getExpressionNode(),
+                                                        NES::Attribute("random").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter2);
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -101,7 +103,7 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
@@ -115,12 +117,9 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    LogicalOperatorNodePtr sinkPrint =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
-    LogicalOperatorNodePtr sinkFile =
-        LogicalOperatorFactory::createSinkOperator(NES::FileSinkDescriptor::create("testSink2"));
-    LogicalOperatorNodePtr sinkNull =
-        LogicalOperatorFactory::createSinkOperator(NES::NullOutputSinkDescriptor::create());
+    LogicalOperatorNodePtr sinkPrint = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sinkFile = LogicalOperatorFactory::createSinkOperator(NES::FileSinkDescriptor::create("testSink2"));
+    LogicalOperatorNodePtr sinkNull = LogicalOperatorFactory::createSinkOperator(NES::NullOutputSinkDescriptor::create());
     sinkPrint->addChild(source);
     sinkFile->addChild(source);
     sinkNull->addChild(source);
@@ -132,7 +131,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
@@ -149,19 +148,19 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     LogicalOperatorNodePtr source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    LogicalOperatorNodePtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
     NES::Query qOR = NES::Query(queryPlan).orWith(NES::Query(subQueryPlan));
     queryPlan = qOR.getQueryPlan();
-    LogicalOperatorNodePtr sink =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
@@ -178,25 +177,27 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     LogicalOperatorNodePtr source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    LogicalOperatorNodePtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
-    NES::Query query = Query(queryPlan).andWith(Query(subQueryPlan)).window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)));
+    NES::Query query = Query(queryPlan)
+                           .andWith(Query(subQueryPlan))
+                           .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)));
     queryPlan = query.getQueryPlan();
-    LogicalOperatorNodePtr sink =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical_b AS B  WHERE A.currentSpeed < A.allowedSpeed WITHIN [3 MINUTE] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical_b AS B  WHERE "
+                                "A.currentSpeed < A.allowedSpeed WITHIN [3 MINUTE] INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr pattern = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr patternPlan = pattern->getQueryPlan();
@@ -207,21 +208,25 @@ TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     LogicalOperatorNodePtr source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    LogicalOperatorNodePtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
-    NES::Query query = Query(queryPlan).andWith(Query(subQueryPlan)).window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(3),Minutes(1)));
+    NES::Query query = Query(queryPlan)
+                           .andWith(Query(subQueryPlan))
+                           .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = query.getQueryPlan();
-    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode() ,  NES::Attribute("allowedSpeed").getExpressionNode())));
+    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
+                                                     NES::Attribute("allowedSpeed").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter);
-    LogicalOperatorNodePtr sink =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, SequencePattern) {
@@ -238,25 +243,26 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     LogicalOperatorNodePtr source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    LogicalOperatorNodePtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
-    NES::Query qSEQ = NES::Query(queryPlan).seqWith(NES::Query(subQueryPlan)).window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(3),Minutes(1)));
+    NES::Query qSEQ = NES::Query(queryPlan)
+                          .seqWith(NES::Query(subQueryPlan))
+                          .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qSEQ.getQueryPlan();
-    LogicalOperatorNodePtr sink4 =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink4 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink4);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [id=TU] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [id=TU] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
@@ -271,22 +277,20 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
     expression.push_back(Attribute("id").getExpressionNode());
     LogicalOperatorNodePtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
     queryPlan->appendOperatorAsNewRoot(projection);
-    LogicalOperatorNodePtr sink =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
-
 
 TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA ] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, "
+                                "department=DIMA ] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
@@ -303,21 +307,19 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
     expression.push_back(Attribute("department").getExpressionNode());
     LogicalOperatorNodePtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
     queryPlan->appendOperatorAsNewRoot(projection);
-    LogicalOperatorNodePtr sink =
-        LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperator) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A[2:10]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A[2:10]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr patternPlan = query->getQueryPlan();
@@ -326,7 +328,8 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    NES::Query qTimes = NES::Query(queryPlan).times(2,10).window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(3),Minutes(1)));
+    NES::Query qTimes = NES::Query(queryPlan).times(2, 10).window(
+        NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTimes.getQueryPlan();
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -335,13 +338,12 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
     std::regex r2("[0-9]");
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A[2]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A[2]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr patternPlan = query->getQueryPlan();
@@ -350,7 +352,8 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    NES::Query qTime = NES::Query(queryPlan).times(2).window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(3),Minutes(1)));
+    NES::Query qTime = NES::Query(queryPlan).times(2).window(
+        NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTime.getQueryPlan();
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -360,13 +363,12 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     NES_DEBUG("PatternParsingServiceTest:" + patternPlanStr);
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A+) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A+) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr patternPlan = query->getQueryPlan();
@@ -375,7 +377,8 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    NES::Query qTimes = NES::Query(queryPlan).times().window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(3),Minutes(1)));
+    NES::Query qTimes = NES::Query(queryPlan).times().window(
+        NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTimes.getQueryPlan();
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -385,69 +388,45 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
     NES_DEBUG("PatternParsingServiceTest:" + patternPlanStr);
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ( queryPlanStr,patternPlanStr);
+    EXPECT_EQ(queryPlanStr, patternPlanStr);
 }
 
 TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
     //pattern string as received from the NES UI
-    std::string patternString =
-        "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
     const QueryPlanPtr queryPlanPattern = query->getQueryPlan();
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr op1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(op1);
-    op1=LogicalOperatorFactory::createCEPIterationOperator(2, LLONG_MAX);
+    op1 = LogicalOperatorFactory::createCEPIterationOperator(2, LLONG_MAX);
     queryPlan->appendOperatorAsNewRoot(op1);
     op1 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op1);
 
     //Comparison of the expected and the actual generated query plan
-    std::string queryPlanString=queryPlan->toString();
-    std::string queryPlanPatternString=queryPlanPattern->toString();
+    std::string queryPlanString = queryPlan->toString();
+    std::string queryPlanPatternString = queryPlanPattern->toString();
     int current = 0;
-    for (unsigned long i = 0; i <= queryPlanString.size() ; ++i) {
-        if(!isdigit(queryPlanString[i])){
+    for (unsigned long i = 0; i <= queryPlanString.size(); ++i) {
+        if (!isdigit(queryPlanString[i])) {
             queryPlanString[current] = queryPlanString[i];
             current++;
         }
     }
-    queryPlanString=queryPlanString.substr(0,current);
-    current=0;
-    for (unsigned long i = 0; i <= queryPlanPatternString.size() ; ++i) {
-        if(!isdigit(queryPlanPatternString[i])){
+    queryPlanString = queryPlanString.substr(0, current);
+    current = 0;
+    for (unsigned long i = 0; i <= queryPlanPatternString.size(); ++i) {
+        if (!isdigit(queryPlanPatternString[i])) {
             queryPlanPatternString[current] = queryPlanPatternString[i];
             current++;
         }
     }
-    queryPlanPatternString = queryPlanPatternString.substr(0,current);
-    EXPECT_TRUE( queryPlanString == queryPlanPatternString);
+    queryPlanPatternString = queryPlanPatternString.substr(0, current);
+    EXPECT_TRUE(queryPlanString == queryPlanPatternString);
 }
 
 //   std::string patternString =
 //        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

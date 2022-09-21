@@ -55,9 +55,9 @@ class NebulaPSLOperatorNode {
     int32_t leftChildId = -1;
     std::pair<int32_t, int32_t> minMax;
     int32_t parentNodeId = -1;
-   // NES::Query query = NES::Query(NULL);
+    // NES::Query query = NES::Query(NULL);
 };
 
-}// namespace NES
+}// namespace NES::Parsers
 
 #endif//NES_PARSERS_NEBULAPSL_NEBULAPSLOPERATORNODE_H_

@@ -15,8 +15,6 @@
 #ifndef NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
 #define NES_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H
 
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NebulaPSLPattern.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -29,6 +27,8 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLPattern.h>
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
 #include <string>
