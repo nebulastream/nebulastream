@@ -83,7 +83,7 @@ class QueryService {
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
                                             const std::string& placementStrategyName,
                                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                            const LineageType lineage = LineageType::NONE);
+                                            const LineageType::Value lineage = LineageType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -98,7 +98,7 @@ class QueryService {
                             const QueryPlanPtr& queryPlan,
                             const std::string& placementStrategyName,
                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                            const LineageType lineage = LineageType::NONE);
+                            const LineageType::Value lineage = LineageType::NONE);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

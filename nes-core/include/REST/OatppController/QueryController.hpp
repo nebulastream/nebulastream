@@ -201,7 +201,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-            auto lineageMode = stringToLineageTypeMap(lineageString);
+            auto lineageMode = LineageType::getFromString(lineageString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
                       << userQuery << ", strategyName= " << placement
                       << ", faultTolerance= " << faultToleranceString << ", lineage= " << lineageString);
@@ -262,12 +262,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
             std::string* queryString = protobufMessage->mutable_querystring();
             std::string placementStrategy = context->at("placement").value();
             auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-            auto lineageMode = stringToLineageTypeMap(lineageString);
+            auto lineageType = LineageType::getFromString(lineageString);
             QueryId queryId = queryService->addQueryRequest(*queryString,
                                                             queryPlan,
                                                             placementStrategy,
                                                             faultToleranceMode,
-                                                            lineageMode);
+                                                            lineageType);
 
             //Prepare the response
             nlohmann::json response;
@@ -366,12 +366,14 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validateLineageMode(const std::string& lineageModeString) {
-        auto lineageMode = stringToLineageTypeMap(lineageModeString);
-        if (lineageMode == LineageType::INVALID) {
+        try {
+            LineageType::getFromString(lineageModeString);
+        } catch (Exceptions::RuntimeException exc) {
             return false;
         }
         return true;
     }
+
     const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;

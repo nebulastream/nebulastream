@@ -46,7 +46,7 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             FaultToleranceType faultToleranceType,
-                                            LineageType lineageType,
+                                            LineageType::Value lineageType,
                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 

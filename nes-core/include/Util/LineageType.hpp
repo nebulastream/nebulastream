@@ -20,15 +20,30 @@
 #include <unordered_map>
 
 namespace NES {
-enum class LineageType : std::int8_t {
-    NONE = 0,      /// no lineage
-    IN_MEMORY = 1, /// lineage is stored in memory on nodes
-    PERSISTENT = 2,/// lineage is stored in persistent memory
-    REMOTE = 3,    /// lineage is stored in remote storage
-    INVALID = 4
-};
 
-std::string toString(const LineageType lineageMode);
-LineageType stringToLineageTypeMap(const std::string lineageMode);
-}// namespace NES
+class LineageType {
+  public:
+    enum Value : uint8_t {
+        NONE = 0,      /// no lineage
+        IN_MEMORY = 1, /// lineage is stored in memory on nodes
+        PERSISTENT = 2,/// lineage is stored in persistent memory
+        REMOTE = 3,    /// lineage is stored in remote storage
+        INVALID = 4
+    };
+
+    /**
+     * @brief Get lineage type in string representation
+     * @param lineageType : enum value of the lineage type
+     * @return string representation of lineage type
+     */
+    static std::string toString(const Value lineageType);
+
+    /**
+     * @brief Get lineage type from string
+     * @param lineageType : string representation of lineage Type
+     * @return enum representing lineage Type
+     */
+    static Value getFromString(const std::string lineageType);
+};
+} // namespace NES
 #endif// NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
