@@ -47,10 +47,6 @@ using BaseJoinActionDescriptorPtr = std::shared_ptr<BaseJoinActionDescriptor>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-// todo create NES::InferModel namespace
-class InferModelOperatorHandler;
-using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-
 namespace Experimental {
 class AbstractBatchJoinHandler;
 using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
@@ -60,4 +56,10 @@ using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Experimental
 
 }// namespace NES::Join
+
+namespace InferModel {
+    class InferModelOperatorHandler;
+    using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
+}// namespace NES::InferModel
+
 #endif// NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_

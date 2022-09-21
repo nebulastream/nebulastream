@@ -336,7 +336,7 @@ bool NesWorker::connect() {
                                                                  workerConfig->nodeSpatialType.getValue(),
                                                                  *(locationWrapper->getLocation()),
                                                                  locationWrapper->isMobileNode(),
-                                                                 false);
+                                                                 /*isMobile*/ false);
 
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();

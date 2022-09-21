@@ -202,7 +202,7 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
-    BoolOption tfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
+    BoolOption isTfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
 
     /**
      * @brief Factory function for a worker config

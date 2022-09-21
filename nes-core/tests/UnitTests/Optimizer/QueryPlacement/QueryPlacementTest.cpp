@@ -148,11 +148,9 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         TopologyNodePtr sourceNode3 = TopologyNode::create(4, "localhost", 123, 124, resources[1]);
-//        sourceNode3->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode3);
 
         TopologyNodePtr sourceNode4 = TopologyNode::create(5, "localhost", 123, 124, resources[2]);
-//        sourceNode4->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode4);
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))

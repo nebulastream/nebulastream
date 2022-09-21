@@ -304,10 +304,10 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(10);
 
-    std::cout << "\n\n --------- CONTENT --------- \n\n";
+    NES_INFO("\n\n --------- CONTENT --------- \n\n");
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    std::cout << content;
+    NES_INFO(content);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);

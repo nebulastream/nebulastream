@@ -319,7 +319,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
 //            SourceDescriptor::InputFormat inputFormatEnum = MQTTSourceDescriptor::JSON;
 //            if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "JSON") == 0) {
-//                inputFormatEnum = SourceDescriptor::InputFormat::CSV;
+//                inputFormatEnum = SourceDescriptor::InputFormat::JSON;
 //            } else if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "CSV") == 0) {
 //                inputFormatEnum = SourceDescriptor::InputFormat::CSV;
 //            }

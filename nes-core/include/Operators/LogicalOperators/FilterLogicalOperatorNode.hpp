@@ -34,7 +34,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
    */
     ExpressionNodePtr getPredicate();
     float getSelectivity();
-    void setSelectivity(float s);
+    void setSelectivity(float newSelectivity);
 
     /**
      * @brief check if two operators have the same filter predicate.
@@ -46,7 +46,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
     std::string toString() const override;
 
     /**
-    * @brief infers the input and out schema of this operator depending on its child.
+    * @brief infers the input and output schema of this operator depending on its child.
     * @throws Exception the predicate expression has to return a boolean.
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred

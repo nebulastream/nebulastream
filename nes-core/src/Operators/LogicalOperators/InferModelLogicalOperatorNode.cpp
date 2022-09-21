@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <filesystem>
+
 #include <API/AttributeField.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
@@ -31,15 +33,6 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, 
 std::string InferModelLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "INFER_MODEL(" << id << ")";
-//    ss << "Model: " << model << std::endl;
-//    ss << "input fields:" << std::endl;
-//    for (auto v : inputFieldsPtr){
-//        ss << "    " << v->getExpressionNode()->toString() << std::endl;
-//    }
-//    ss << "output fields:" << std::endl;
-//    for (auto v : outputFieldsPtr){
-//        ss << "    " << v->getExpressionNode()->toString() << std::endl;
-//    }
     return ss.str();
 }
 
@@ -105,12 +98,12 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         if (outputSchema->hasFieldName(fieldName)) {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
-            NES_TRACE("MAP Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
+            NES_TRACE("Infer Model Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
         } else {
             // The assigned field is not part of the current schema.
             // Thus we extend the schema by the new attribute.
-            NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
+            NES_TRACE("Infer Model Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
             outputSchema->addField(fieldName, outputExpression->getStamp());
         }
     }
@@ -140,7 +133,7 @@ const std::string& InferModelLogicalOperatorNode::getModel() const { return mode
 const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     int idx = model.find_last_of('/');
     std::string path = model.substr(idx);
-    path = "/tmp" + path;
+    path = std::filesystem::temp_directory_path() + path;
     return path;
 }
 

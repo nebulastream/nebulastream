@@ -21,7 +21,7 @@
 #include <Windowing/JoinForwardRefs.hpp>
 
 // todo create NES::InferModel namespace
-namespace NES::Join {
+namespace NES::InferModel {
 
 /**
  * @brief Operator handler for inferModel.
@@ -44,13 +44,13 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
-  private:
-    std::string model;
-    TensorflowAdapterPtr tfAdapter;
-
-  public:
     const std::string& getModel() const;
     const TensorflowAdapterPtr& getTensorflowAdapter() const;
+
+  private:
+    std::string model;
+
+    TensorflowAdapterPtr tfAdapter;
 };
 }// namespace NES::InferModel
 

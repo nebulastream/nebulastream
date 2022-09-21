@@ -162,8 +162,8 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
             auto* mutableOutputFields = inferModelDetails.mutable_outputfields()->Add();
             ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableOutputFields);
         }
-        inferModelDetails.set_mlfilename(inferModelOperator->getDeployedModelPath());
 
+        inferModelDetails.set_mlfilename(inferModelOperator->getDeployedModelPath());
         std::ifstream input(inferModelOperator->getModel(), std::ios::binary);
 
         std::string bytes(

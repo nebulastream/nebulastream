@@ -25,7 +25,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 namespace NES::Optimizer {
 
-/**\brief:
+/**
+ * @brief
  *          This class implements Bottom Up placement strategy. In this strategy, the source and sink operators are
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
@@ -40,13 +41,28 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
     static const bool DEFAULT_ML_HARDWARE = false;
 
-
+    /**
+     * @brief Implementation of the virtual function of BasePlacementStrategy
+     * @param queryId
+     * @param faultToleranceType
+     * @param lineageType
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
+     * @return
+     */
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
+    /**
+     * @brief creates an Object of this class through a static create function
+     * @param globalExecutionPlan
+     * @param topology
+     * @param typeInferencePhase
+     * @return
+     */
     static std::unique_ptr<BasePlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
@@ -98,7 +114,20 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      */
     static QueryPlanPtr
     getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+
+    /**
+     * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities
+     * @param operatorNode
+     * @return
+     */
     bool pushUpBasedOnFilterSelectivity(const OperatorNodePtr& operatorNode);
+
+    /**
+     * @brief removes redundant operators
+     * @param queryId
+     * @param faultToleranceType
+     * @param lineageType
+     */
     void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 };
 }// namespace NES::Optimizer
