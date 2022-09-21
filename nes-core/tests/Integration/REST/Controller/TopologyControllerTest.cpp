@@ -47,9 +47,7 @@ TEST_F(TopologyControllerTest, testGetTopology) {
     NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology"});
     EXPECT_EQ(r.status_code, 200l);
     NES_DEBUG(r.text);
@@ -75,9 +73,7 @@ TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
     NES_INFO("TopologyControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["childId"] = 1;
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
@@ -100,9 +96,7 @@ TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
     NES_INFO("TopologyControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 1;
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
@@ -125,9 +119,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
     NES_INFO("TopologyControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 7;
@@ -157,9 +149,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 3;
     request["childId"] = 2;
@@ -183,9 +173,7 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
     NES_INFO("TopologyControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 7;
     request["childId"] = 7;
@@ -215,9 +203,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
@@ -246,9 +232,7 @@ TEST_F(TopologyControllerTest, testRemoveParent) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    ASSERT_TRUE(success);
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
