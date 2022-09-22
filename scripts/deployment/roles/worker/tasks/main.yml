@@ -26,5 +26,5 @@
 
 - name: Copy dummy data file
   copy:
-    src: wind-turbine-1.csv.j2
-    dest: /tmp/wind-turbine-1.csv
+    src: smartgrid.csv.j2
+    dest: /tmp/smartgrid.csv

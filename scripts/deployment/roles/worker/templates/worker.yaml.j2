@@ -19,11 +19,11 @@ dataPort: {{ default_worker_ports[1] }}
 ### Physical source configuration
 ###
 physicalSources:
-        - logicalSourceName: wind_turbines
-          physicalSourceName: wind_turbine_1
+        - logicalSourceName: smartgrid
+          physicalSourceName: smartgrid_{{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
           type: CSVSource
           configuration:
-                  filePath: /tmp/wind-turbine-1.csv
+                  filePath: /tmp/smartgrid.csv
                   numberOfBuffersToProduce: 1024
                   numberOfTuplesToProducePerBuffer: 0
-                  skipHeader: true
+                  skipHeader: false
