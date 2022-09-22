@@ -867,7 +867,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 20; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
     testHarness.validate().setupTopology();
