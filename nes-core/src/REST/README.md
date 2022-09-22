@@ -100,9 +100,9 @@ Get query plan for the user query.
 
 ### Getting NebulaStream Topology graph
 
-To get the NebulaStream topologyManagerService graph as JSON.
+To get the NebulaStream topology graph as JSON.
 
-**API**: /query/nes-topologyManagerService\
+**API**: /query/nes-topology\
 **Verb**: GET\
 **Response Code**: 200 OK
 

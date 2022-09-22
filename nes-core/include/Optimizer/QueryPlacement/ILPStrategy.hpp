@@ -127,7 +127,18 @@ class ILPStrategy : public BasePlacementStrategy {
     */
     void computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages);
 
+    /**
+     * Get default operator output value
+     * @param operatorNode : the operator for which output values are needed
+     * @return weight for the output
+     */
     double getDefaultOperatorOutput(OperatorNodePtr operatorNode);
+
+    /**
+     * Get default value for operator cost
+     * @param operatorNode : operator for which cost is to be computed
+     * @return weight indicating operator cost
+     */
     int getDefaultOperatorCost(OperatorNodePtr operatorNode);
 };
 }// namespace NES::Optimizer
