@@ -198,7 +198,7 @@ class TestHarness {
                                                uint32_t parentId,
                                                WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
         workerConfiguration->parentId = parentId;
-        workerConfiguration->tfInstalled = true;
+        workerConfiguration->isTfInstalled = true;
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,

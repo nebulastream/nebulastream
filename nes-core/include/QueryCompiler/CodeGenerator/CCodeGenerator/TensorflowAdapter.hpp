@@ -23,6 +23,7 @@
 #include <tensorflow/lite/c/common.h>
 #endif
 
+
 namespace NES {
 
 class TensorflowAdapter;

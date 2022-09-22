@@ -4109,7 +4109,7 @@ uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
     return 0;
 }
 
-uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler){
+uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler){
 
     context->registerOperatorHandler(operatorHandler);
     return 0;

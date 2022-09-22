@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <tensorflow/lite/c/c_api.h>
-#include <tensorflow/lite/c/common.h>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
 #include <stdio.h>
+#include <tensorflow/lite/c/c_api.h>
+#include <tensorflow/lite/c/common.h>
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
@@ -31,9 +32,9 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
             (std::istreambuf_iterator<char>()));
 
     input.close();
-    std::cout << "MODEL SIZE: " << bytes.size() << std::endl;
+    NES_INFO("MODEL SIZE: " + std::to_string(bytes.size()));
 
-    NES_INFO("Hello from TensorFlow C library version %s\n", TfLiteVersion());
+    NES_INFO(std::string("Hello from TensorFlow C library version ") << TfLiteVersion());
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(model.c_str()), options);
     TfLiteInterpreterAllocateTensors(interpreter);

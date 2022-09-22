@@ -35,8 +35,8 @@ InferModelOperatorHandler::InferModelOperatorHandler(std::string model) {
 void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                       Runtime::StateManagerPtr stateManager,
                                 uint32_t localStateVariableId) {
-    NES_DEBUG(stateManager->getNodeId() << std::endl);
-    NES_DEBUG(std::cout << localStateVariableId << std::endl);
+    NES_DEBUG("nodeId: " << stateManager->getNodeId());
+    NES_DEBUG("localStateVaribaleId: " << localStateVariableId);
 }
 
 void InferModelOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {

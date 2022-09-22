@@ -27,19 +27,19 @@ namespace GeneratableOperators {
  */
 class GeneratableInferModelOperator : public GeneratableOperator {
   public:
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler);
+    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
+    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler);
     const std::string model;
     const std::vector<ExpressionItemPtr> inputFields;
     const std::vector<ExpressionItemPtr> outputFields;
-    Join::InferModelOperatorHandlerPtr operatorHandler;
+    InferModel::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

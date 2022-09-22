@@ -29,11 +29,11 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
                                                std::string model,
                                                std::vector<ExpressionItemPtr> inputFields,
                                                std::vector<ExpressionItemPtr> outputFields,
-                                               Join::InferModelOperatorHandlerPtr operatorHandler)
+                                               InferModel::InferModelOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields), operatorHandler(operatorHandler) {}
 
 GeneratableOperatorPtr
-GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler) {
+GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 
@@ -43,7 +43,7 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
                                                       std::string model,
                                                       std::vector<ExpressionItemPtr> inputFields,
                                                       std::vector<ExpressionItemPtr> outputFields,
-                                                      Join::InferModelOperatorHandlerPtr operatorHandler) {
+                                                      InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return std::make_shared<GeneratableInferModelOperator>(GeneratableInferModelOperator(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler));
 }
 
