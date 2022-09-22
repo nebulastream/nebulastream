@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v3)
+set(VCPKG_BINARY_VERSION v4)
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
@@ -428,7 +428,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 11.1.0 CONFIG REQUIRED)
+find_package(LLVM 11.0.0 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")

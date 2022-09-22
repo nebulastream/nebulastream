@@ -173,7 +173,6 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     } else {
         sourceNamesToSharedQueryPlanMap[queryPlan->getSourceConsumed()] = {sharedQueryPlan};
     }
-
     return true;
 }
 
@@ -185,6 +184,12 @@ bool GlobalQueryPlan::clearQueryPlansToAdd() {
 }
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansConsumingSources(std::string sourceNames) {
+
+//    std::vector<SharedQueryPlanPtr> listOfCandidatePlans;
+//    for (const auto& item : sharedQueryIdToPlanMap){
+//        listOfCandidatePlans.emplace_back(item.second);
+//    }
+//    return listOfCandidatePlans;
     auto item = sourceNamesToSharedQueryPlanMap.find(sourceNames);
     if (item != sourceNamesToSharedQueryPlanMap.end()) {
         return item->second;

@@ -83,6 +83,16 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
                                  ->addField("time1", NES::UINT64)
                                  ->addField("time2", NES::UINT64);
 
+    NES::SchemaPtr schema4 = NES::Schema::create()
+                                 ->addField("s", NES::UINT64)
+                                 ->addField("t", NES::UINT64)
+                                 ->addField("u", NES::UINT64)
+                                 ->addField("v", NES::UINT64)
+                                 ->addField("w", NES::UINT64)
+                                 ->addField("x", NES::UINT64)
+                                 ->addField("time1", NES::UINT64)
+                                 ->addField("time2", NES::UINT64);
+
     uint16_t counter = 1;
     for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
         if (counter == 1) {
@@ -91,6 +101,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema2);
         } else if (counter == 3) {
             streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema3);
+        } else if (counter == 4) {
+            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema4);
             counter = 0;
         }
         counter++;
@@ -205,7 +217,7 @@ int main(int argc, const char* argv[]) {
 //        loadConfigFromYAMLFile(
 //            "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
                 loadConfigFromYAMLFile(
-                    "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+                    "/data-ssd/ankit/remote-dev/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
     NES::setupLogging("BM.log", loglevel);
@@ -225,11 +237,11 @@ int main(int argc, const char* argv[]) {
         uint64_t noOfQueries = queries.size();
         QueryPtr queryObjects[noOfQueries];
 
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
 #pragma omp parallel for
         for (uint64_t i = 0; i < queries.size(); i++) {
-            auto cppCompiler = Compiler::CPPCompiler::create();
-            auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-            auto queryParsingService = QueryParsingService::create(jitCompiler);
             auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
             queryObjects[i] = queryObj;
         }

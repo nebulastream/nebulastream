@@ -28,7 +28,7 @@ if (NES_BUILD_BENCHMARKS)
             CMAKE_ARGS -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
     )
 
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -L/usr/lib/llvm-10/lib/")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -L/usr/lib/llvm-11/lib/")
 #    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp=libomp")
 #    find_package(OpenMP REQUIRED)
 #    if (OPENMP_FOUND)

@@ -2,7 +2,7 @@
 
 #Location of query set
 # For each query set we will run the experiments
-querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
+querySetLocation: '/data-ssd/ankit/remote-dev/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 #querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
@@ -13,15 +13,15 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
   #,SyntaxBasedCompleteQueryMergerRule
 # Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
 #,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
-queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,HashSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+queryMergerRule: ImprovedStringSignatureBasedCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerBottomUpRule
-noOfPhysicalSources: 1,1,1,1,1,1
+noOfPhysicalSources: 1,1
 #  ,1,1,1,1
-batchSize: 1,1,1,1,1,1
+batchSize: 1,1
 #  ,1,1,1,1
 
 #benchmark internal parameter
-logLevel: LOG_NONE
-numberOfDistinctSources: 10
+logLevel: LOG_ERROR
+numberOfDistinctSources: 26
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 3
