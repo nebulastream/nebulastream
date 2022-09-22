@@ -133,7 +133,7 @@ const std::string& InferModelLogicalOperatorNode::getModel() const { return mode
 const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     int idx = model.find_last_of('/');
     std::string path = model.substr(idx);
-    path = std::filesystem::temp_directory_path() + path;
+    path = std::filesystem::temp_directory_path().string() + "/" + path;
     return path;
 }
 

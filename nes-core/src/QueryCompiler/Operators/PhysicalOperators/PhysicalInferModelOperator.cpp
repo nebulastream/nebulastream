@@ -32,7 +32,7 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
                                                 std::string model,
                                                 std::vector<ExpressionItemPtr> inputFields,
                                                 std::vector<ExpressionItemPtr> outputFields,
-                                                Join::InferModelOperatorHandlerPtr operatorHandler) {
+                                                InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 
@@ -52,7 +52,7 @@ const std::string& PhysicalInferModelOperator::getModel() const { return model; 
 const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
 const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
 
-Join::InferModelOperatorHandlerPtr PhysicalInferModelOperator::getInferModelHandler() {
+InferModel::InferModelOperatorHandlerPtr PhysicalInferModelOperator::getInferModelHandler() {
     return operatorHandler;
 }
 

@@ -209,7 +209,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
 
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
-    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
+    auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
     auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
                                                                                             inferModelOperator->getOutputSchema(),
                                                                                             inferModelOperator->getModel(),

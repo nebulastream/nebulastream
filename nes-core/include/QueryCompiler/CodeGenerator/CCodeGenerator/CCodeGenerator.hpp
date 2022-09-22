@@ -286,7 +286,7 @@ class CCodeGenerator : public CodeGenerator {
      * @param operatorHandler
      * @return
      */
-    uint64_t generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler) override;
+    uint64_t generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler) override;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

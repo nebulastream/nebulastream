@@ -418,7 +418,7 @@ class CodeGenerator {
     /**
     * @brief Code generation the setup method for inferModel operators.
     */
-    virtual uint64_t generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler) = 0;
+    virtual uint64_t generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

@@ -939,7 +939,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
-    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
     context->registerOperatorHandler(inferModelOperatorHandler);
 
     auto inputSchema = source->getSchema();
