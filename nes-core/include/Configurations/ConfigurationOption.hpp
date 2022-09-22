@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include <Util/Logger/Logger.hpp>
 #include <Util/GatheringMode.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <any>
 #include <memory>

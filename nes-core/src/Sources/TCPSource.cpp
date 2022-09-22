@@ -283,7 +283,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
 uint64_t TCPSource::sizeUntilSearchToken(char token) {
     uint64_t places = 0;
-    for(auto itr = circularBuffer.end() - 1; itr != circularBuffer.begin() - 1; --itr) {
+    for (auto itr = circularBuffer.end() - 1; itr != circularBuffer.begin() - 1; --itr) {
         if (*itr == token) {
             return places;
         }

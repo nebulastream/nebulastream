@@ -1084,13 +1084,16 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         }
         switch (tcpSourceDescriptor->getSourceConfig()->getDecideMessageSize()->getValue()) {
             case Configurations::TUPLE_SEPARATOR:
-                tcpSerializedSourceConfig.set_tcpdecidemessagesize(SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
+                tcpSerializedSourceConfig.set_tcpdecidemessagesize(
+                    SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
                 break;
             case Configurations::USER_SPECIFIED_BUFFER_SIZE:
-                tcpSerializedSourceConfig.set_tcpdecidemessagesize(SerializablePhysicalSourceType_TCPDecideMessageSize_USER_SPECIFIED_BUFFER_SIZE);
+                tcpSerializedSourceConfig.set_tcpdecidemessagesize(
+                    SerializablePhysicalSourceType_TCPDecideMessageSize_USER_SPECIFIED_BUFFER_SIZE);
                 break;
             case Configurations::BUFFER_SIZE_FROM_SOCKET:
-                tcpSerializedSourceConfig.set_tcpdecidemessagesize(SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
+                tcpSerializedSourceConfig.set_tcpdecidemessagesize(
+                    SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
                 break;
         }
         tcpSerializedSourceConfig.set_socketbuffersize(tcpSourceDescriptor->getSourceConfig()->getSocketBufferSize()->getValue());

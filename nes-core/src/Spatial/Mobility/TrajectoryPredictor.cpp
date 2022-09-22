@@ -293,25 +293,26 @@ void TrajectoryPredictor::startReconnectPlanning() {
 #endif
 }
 
-void TrajectoryPredictor::reconnect(uint64_t newParentId, std::pair<Spatial::Index::Experimental::LocationPtr, Timestamp> ownLocation) {
-        std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
-        //todo #2918: pass pointer here
-        reconnectConfigurator->reconnect(parentId, newParentId);
-        devicePositionTupleAtLastReconnect = ownLocation;
+void TrajectoryPredictor::reconnect(uint64_t newParentId,
+                                    std::pair<Spatial::Index::Experimental::LocationPtr, Timestamp> ownLocation) {
+    std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
+    //todo #2918: pass pointer here
+    reconnectConfigurator->reconnect(parentId, newParentId);
+    devicePositionTupleAtLastReconnect = ownLocation;
 
-        auto nextReconnect = getNextPredictedReconnect();
-        std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
-        if (nextReconnect) {
-            updatedPrediction = nextReconnect->reconnectPrediction;
-        } else {
-            updatedPrediction = {};
-        }
-        reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
+    auto nextReconnect = getNextPredictedReconnect();
+    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
+    if (nextReconnect) {
+        updatedPrediction = nextReconnect->reconnectPrediction;
+    } else {
+        updatedPrediction = {};
+    }
+    reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
 
-        //update locally saved information about parent
-        parentId = newParentId;
+    //update locally saved information about parent
+    parentId = newParentId;
 #ifdef S2DEF
-        currentParentLocation = fieldNodeMap.at(newParentId);
+    currentParentLocation = fieldNodeMap.at(newParentId);
 #endif
 }
 

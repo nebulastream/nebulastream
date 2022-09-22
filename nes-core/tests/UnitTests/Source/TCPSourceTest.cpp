@@ -70,7 +70,7 @@ class TCPSourceTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
-         tcpSourceType= TCPSourceType::create();
+        tcpSourceType = TCPSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -103,12 +103,13 @@ class TCPSourceTest : public Testing::NESBaseTest {
 TEST_F(TCPSourceTest, TCPSourceInit) {
 
     auto mqttSource = createTCPSource(test_schema,
-                                       bufferManager,
-                                       queryManager, tcpSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS);
+                                      bufferManager,
+                                      queryManager,
+                                      tcpSourceType,
+                                      OPERATORID,
+                                      ORIGINID,
+                                      NUMSOURCELOCALBUFFERS,
+                                      SUCCESSORS);
 
     SUCCEED();
 }
@@ -117,16 +118,22 @@ TEST_F(TCPSourceTest, TCPSourceInit) {
  * Test if schema, MQTT server address, clientId, user, and topic are the same
  */
 TEST_F(TCPSourceTest, TCPSourcePrint) {
-     tcpSourceType->setUrl("tcp://127.0.0.1:1883"); tcpSourceType->setCleanSession(false); tcpSourceType->setClientId("nes-mqtt-test-client"); tcpSourceType->setUserName("rfRqLGZRChg8eS30PEeR"); tcpSourceType->setTopic("v1/devices/me/telemetry"); tcpSourceType->setQos(1);
+    tcpSourceType->setUrl("tcp://127.0.0.1:1883");
+    tcpSourceType->setCleanSession(false);
+    tcpSourceType->setClientId("nes-mqtt-test-client");
+    tcpSourceType->setUserName("rfRqLGZRChg8eS30PEeR");
+    tcpSourceType->setTopic("v1/devices/me/telemetry");
+    tcpSourceType->setQos(1);
 
     auto mqttSource = createTCPSource(test_schema,
-                                       bufferManager,
-                                       queryManager, tcpSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS,
-                                       INPUTFORMAT);
+                                      bufferManager,
+                                      queryManager,
+                                      tcpSourceType,
+                                      OPERATORID,
+                                      ORIGINID,
+                                      NUMSOURCELOCALBUFFERS,
+                                      SUCCESSORS,
+                                      INPUTFORMAT);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -147,13 +154,14 @@ TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
     auto mqttSource = createTCPSource(test_schema,
-                                       bufferManager,
-                                       queryManager, tcpSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS,
-                                       INPUTFORMAT);
+                                      bufferManager,
+                                      queryManager,
+                                      tcpSourceType,
+                                      OPERATORID,
+                                      ORIGINID,
+                                      NUMSOURCELOCALBUFFERS,
+                                      SUCCESSORS,
+                                      INPUTFORMAT);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -193,7 +201,14 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->coordinatorPort = port; tcpSourceType->setUrl("ws://127.0.0.1:9002"); tcpSourceType->setClientId("testClients"); tcpSourceType->setUserName("testUser"); tcpSourceType->setTopic("demoCityHospital_1"); tcpSourceType->setQos(2); tcpSourceType->setCleanSession(true); tcpSourceType->setFlushIntervalMS(2000);
+    wrkConf->coordinatorPort = port;
+    tcpSourceType->setUrl("ws://127.0.0.1:9002");
+    tcpSourceType->setClientId("testClients");
+    tcpSourceType->setUserName("testUser");
+    tcpSourceType->setTopic("demoCityHospital_1");
+    tcpSourceType->setQos(2);
+    tcpSourceType->setCleanSession(true);
+    tcpSourceType->setFlushIntervalMS(2000);
     auto physicalSource = PhysicalSource::create("stream", "test_stream", tcpSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
