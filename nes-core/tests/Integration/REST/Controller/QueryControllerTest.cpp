@@ -144,7 +144,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
 }
 
 //Check if submitting a POST request with an unsupported 'lineage' type returns 400
-TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
+TEST_F(QueryControllerTest, DISABLED_testSubmitQueryInvalidLineage) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
