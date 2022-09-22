@@ -51,7 +51,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->numberofslots(),
                                                   request->ismobile(),
                                                   NES::Spatial::Index::Experimental::Location(request->coordinates()),
-                                                  request->tfinstalled());
+                                                  request->istfinstalled());
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
         of geographical location */
@@ -61,7 +61,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->numberofslots(),
                                                   request->ismobile(),
                                                   NES::Spatial::Index::Experimental::Location(),
-                                                  request->tfinstalled());
+                                                  request->istfinstalled());
     }
 
     auto registrationMetrics =

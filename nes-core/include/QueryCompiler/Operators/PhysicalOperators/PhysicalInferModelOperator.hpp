@@ -32,23 +32,23 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                         std::string model,
                         std::vector<ExpressionItemPtr> inputFields,
                         std::vector<ExpressionItemPtr> outputFields,
-                        Join::InferModelOperatorHandlerPtr operatorHandler);
+                               InferModel::InferModelOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, InferModel::InferModelOperatorHandlerPtr operatorHandler);
     std::string toString() const override;
     OperatorNodePtr copy() override;
     const std::string& getModel() const;
     const std::vector<ExpressionItemPtr>& getInputFields() const;
     const std::vector<ExpressionItemPtr>& getOutputFields() const;
-    Join::InferModelOperatorHandlerPtr getInferModelHandler();
+    InferModel::InferModelOperatorHandlerPtr getInferModelHandler();
 
   protected:
     const std::string model;
     const std::vector<ExpressionItemPtr> inputFields;
     const std::vector<ExpressionItemPtr> outputFields;
-    Join::InferModelOperatorHandlerPtr operatorHandler;
+    InferModel::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

@@ -282,7 +282,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
-                &tfInstalled};
+                &isTfInstalled};
     }
 };
 }// namespace Configurations
