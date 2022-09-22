@@ -65,8 +65,10 @@ TCPSourceType::TCPSourceType()
           "between them, tupleSeperator needs to be set USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, "
           "socketBufferSize needs to be set BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of "
           "bytes with the size of the next message, bytesUsedForSocketBufferSizeTransfer needs to be set.")),
-      tupleSeparator(Configurations::ConfigurationOption<char>::create(Configurations::TUPLE_SEPARATOR_CONFIG,
-          '\n', "Tuple separator defines how the incoming TCP messages can be distinguished into tuples.")),
+      tupleSeparator(Configurations::ConfigurationOption<char>::create(
+          Configurations::TUPLE_SEPARATOR_CONFIG,
+          '\n',
+          "Tuple separator defines how the incoming TCP messages can be distinguished into tuples.")),
       socketBufferSize(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOCKET_BUFFER_SIZE_CONFIG,
                                                                              0,
                                                                              "Size of a message send via TCP connection")),

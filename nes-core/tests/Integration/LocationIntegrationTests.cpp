@@ -882,13 +882,15 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
 
     uint64_t parentId = 0;
     std::vector<uint64_t> reconnectSequence({10045, 10006, 10008, 10051, 10046, 10000, 10033, 10031});
-    parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+    parentId =
+        std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
     while (parentId != reconnectSequence.back()) {
         if (parentId != reconnectSequence.front()) {
-           reconnectSequence.erase(reconnectSequence.begin());
-           EXPECT_EQ(parentId, reconnectSequence.front());
+            reconnectSequence.erase(reconnectSequence.begin());
+            EXPECT_EQ(parentId, reconnectSequence.front());
         }
-        parentId = std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+        parentId =
+            std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     bool retStopCord = crd->stopCoordinator(false);

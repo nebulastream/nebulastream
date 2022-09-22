@@ -151,10 +151,8 @@ void RestServer::run() {
                                                                                          globalQueryPlan,
                                                                                          "/queryCatalog",
                                                                                          errorHandler);
-    auto topologyController = REST::Controller::TopologyController::createShared(objectMapper,
-                                                                                 topology,
-                                                                                 "/topology",
-                                                                                 errorHandler);
+    auto topologyController =
+        REST::Controller::TopologyController::createShared(objectMapper, topology, "/topology", errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(topologyController);

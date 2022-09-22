@@ -13,14 +13,14 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_TOPOLOGYCONTROLLER_HPP_
-#include <oatpp/core/macro/codegen.hpp>
-#include <oatpp/core/macro/component.hpp>
-#include <oatpp/web/server/api/ApiController.hpp>
-#include <nlohmann/json.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <nlohmann/json.hpp>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -43,11 +43,11 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                           TopologyPtr topology,
-                           oatpp::String completeRouterPrefix,
-                           ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          topology(std::move(topology)), errorHandler(errorHandler) {}
+                       TopologyPtr topology,
+                       oatpp::String completeRouterPrefix,
+                       ErrorHandlerPtr errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(std::move(topology)),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -57,18 +57,15 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<TopologyController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                                TopologyPtr topology,
-                                                                std::string routerPrefixAddition,
-                                                                ErrorHandlerPtr errorHandler) {
+                                                            TopologyPtr topology,
+                                                            std::string routerPrefixAddition,
+                                                            ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper,
-                                                        std::move(topology),
-                                                        completeRouterPrefix,
-                                                        errorHandler);
+        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler);
     }
 
     ENDPOINT("GET", "", getTopology) {
-        try{
+        try {
             auto topologyJson = getTopologyAsJson(topology);
             return createResponse(Status::CODE_200, topologyJson.dump());
         } catch (nlohmann::json::exception e) {
@@ -78,8 +75,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                       "topology:"
                       << exc.what());
             return errorHandler->handleError(Status::CODE_500,
-                                             "Exception occurred while building topology"
-                                                 + std::string(exc.what()));
+                                             "Exception occurred while building topology" + std::string(exc.what()));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
@@ -89,7 +85,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         try {
             std::string req = request.getValue("{}");
             //check if json is valid
-            if(!nlohmann::json::accept(req)){
+            if (!nlohmann::json::accept(req)) {
                 return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
             };
             nlohmann::json reqJson = nlohmann::json::parse(req);
@@ -116,7 +112,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             return createResponse(Status::CODE_200, response);
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
-        } catch(...){
+        } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
@@ -125,7 +121,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         try {
             std::string req = request.getValue("{}");
             //check if json is valid
-            if(!nlohmann::json::accept(req)){
+            if (!nlohmann::json::accept(req)) {
                 return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
             };
             nlohmann::json reqJson = nlohmann::json::parse(req);
@@ -149,43 +145,44 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             nlohmann::json response;
             response["success"] = removed;
             return createResponse(Status::CODE_200, response.dump());
-        }catch(nlohmann::json::exception e ){
+        } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
-        }
-        catch(...){
+        } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
 
   private:
-
-    std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
-        validateRequest(nlohmann::json reqJson){
-        if(reqJson.empty()){
+    std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>> validateRequest(nlohmann::json reqJson) {
+        if (reqJson.empty()) {
             return errorHandler->handleError(Status::CODE_400, "empty body");
         }
-        if(!reqJson.contains("parentId")){
+        if (!reqJson.contains("parentId")) {
             return errorHandler->handleError(Status::CODE_400, " Request body missing 'parentId'");
         }
-        if(!reqJson.contains("childId")){
+        if (!reqJson.contains("childId")) {
             return errorHandler->handleError(Status::CODE_400, " Request body missing 'childId'");
         }
         uint64_t parentId = reqJson["parentId"].get<uint64_t>();
         uint64_t childId = reqJson["childId"].get<uint64_t>();
         if (parentId == childId) {
-            return errorHandler->handleError(Status::CODE_400,"Could not add parent for node in topology: childId and parentId must be different.");
+            return errorHandler->handleError(
+                Status::CODE_400,
+                "Could not add parent for node in topology: childId and parentId must be different.");
         }
 
         TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
         if (!childPhysicalNode) {
-            return errorHandler->handleError(Status::CODE_400,"Could not add parent for node in topology: Node with childId="
-                                                 + std::to_string(childId) + " not found.");
+            return errorHandler->handleError(
+                Status::CODE_400,
+                "Could not add parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
         }
 
         TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
         if (!parentPhysicalNode) {
-            return errorHandler->handleError(Status::CODE_400, "Could not add parent for node in topology: Node with parentId="
-                                                 + std::to_string(parentId) + " not found.");
+            return errorHandler->handleError(
+                Status::CODE_400,
+                "Could not add parent for node in topology: Node with parentId=" + std::to_string(parentId) + " not found.");
         }
         return std::nullopt;
     }
@@ -195,7 +192,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
       * @param root of the Topology
       * @return JSON representation of the Topology
       */
-    nlohmann::json getTopologyAsJson(TopologyPtr topology){
+    nlohmann::json getTopologyAsJson(TopologyPtr topology) {
         NES_INFO("TopologyController: getting topology as JSON");
 
         nlohmann::json topologyJson{};
@@ -225,8 +222,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 }
                 currentNodeJsonValue["location"] = locationInfo;
             }
-            currentNodeJsonValue["nodeType"] =
-                NES::Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
+            currentNodeJsonValue["nodeType"] = NES::Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
 
             for (const auto& child : currentNode->getChildren()) {
                 // Add edge information for current topology node
@@ -255,7 +251,6 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     TopologyPtr topology;
     ErrorHandlerPtr errorHandler;
-
 };
 }//namespace Controller
 }// namespace REST
