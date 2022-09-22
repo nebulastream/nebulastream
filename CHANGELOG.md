@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.2.90](https://github.com/nebulastream/nebulastream/tree/v0.2.90) (2022-09-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.89...v0.2.90)
+
+**Implemented enhancements:**
+
+- \[Feature\] Improve TCP Source [\#2877](https://github.com/nebulastream/nebulastream/issues/2877)
+
+### Bug Fixes 🐛
+
+- \[BUG\] No reconnect planning after parent is further away than coverage [\#2958](https://github.com/nebulastream/nebulastream/issues/2958)
+
+### Miscellaneous Issues ✌️
+
+- Make TopologyController an oatpp endpoint \(Move to oatapp REST server\) [\#2842](https://github.com/nebulastream/nebulastream/issues/2842)
+
 ## [v0.2.89](https://github.com/nebulastream/nebulastream/tree/v0.2.89) (2022-09-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.88...v0.2.89)
