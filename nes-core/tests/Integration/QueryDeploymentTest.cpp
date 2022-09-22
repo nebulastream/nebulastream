@@ -847,7 +847,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 #ifdef TFDEF
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
     struct Test {
         uint32_t id;
         uint32_t value;
@@ -867,7 +867,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
 
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
     testHarness.validate().setupTopology();
