@@ -144,16 +144,15 @@ message GetLocationRequest {
 message GetLocationReply {
   Coordinates coord = 1;
 }
-<<<<<<< HEAD
 
-<<<<<<< HEAD
 message GetReconnectScheduleRequest {
   uint64 id = 1;
 }
 
 message GetReconnectScheduleReply {
   ReconnectSchedule schedule = 1;
-=======
+}
+
 enum MlModelFileUploadStatus {
   PENDING = 0;
   IN_PROGRESS = 1;
@@ -172,7 +171,4 @@ message MlModelFileUploadRequest {
 message MlModelFileUploadResponse {
   string filename = 1;
   MlModelFileUploadStatus status = 2;
->>>>>>> #1779 integration test, infer model operator handler and serialization
 }
-=======
->>>>>>> #1779 cleanup
