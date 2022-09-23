@@ -54,7 +54,7 @@ class PlacementStrategyFactory {
   public:
     /**
      * @brief Factory method returning different kind of optimizer.
-     * @param strategyName : name of the strategy
+     * @param placementStrategy : name of the strategy
      * @param topology : topology information
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance

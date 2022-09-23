@@ -149,7 +149,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
               ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
         ss << outputFilePath;
         ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-        ss << R"());","strategyName" : "BottomUp"})";
+        ss << R"());","placement" : "BottomUp"})";
         ss << endl;
 
         NES_INFO("query string submit=" << ss.str());
