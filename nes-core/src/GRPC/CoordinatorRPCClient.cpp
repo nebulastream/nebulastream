@@ -387,7 +387,6 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         const Monitoring::RegistrationMetrics& registrationMetrics,
                                         Spatial::Index::Experimental::Location fixedCoordinates,
                                         Spatial::Index::Experimental::NodeType spatialType,
-                                        bool isMobile,
                                         bool isTfInstalled) {
 
     RegisterNodeRequest request;

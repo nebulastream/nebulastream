@@ -165,7 +165,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -221,7 +221,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
 TEST_F(QueryCompilerTest, mapQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
