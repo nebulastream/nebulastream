@@ -24,7 +24,7 @@ Submitting user query for execution.
 **_Example_**: 
 
 **Request**:
-{"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
+{"userQuery":"InputQuery::from(temperature).print(std::cout);", "placement": "BottomUp"}
 
 **Response**:
 {"queryId": "system_generate_uuid"}
@@ -54,7 +54,7 @@ Getting the execution plan for the user query.
 **_Example_**: 
 
 **Request**:
-{"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
+{"userQuery":"InputQuery::from(temperature).print(std::cout);", "placement": "BottomUp"}
 
 **Response**:
 {"nodes": [{

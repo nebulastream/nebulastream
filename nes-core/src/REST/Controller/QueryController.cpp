@@ -159,7 +159,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
-                              << userQuery << ", strategyName= " << placementStrategyName
+                              << userQuery << ", placement= " << placementStrategyName
                               << ", faultTolerance= " << faultToleranceString << ", lineage= " << lineageString);
                     QueryId queryId = queryService->validateAndQueueAddQueryRequest(userQuery,
                                                                                     placementStrategyName,

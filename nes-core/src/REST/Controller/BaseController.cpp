@@ -101,7 +101,7 @@ void BaseController::handleException(const web::http::http_request& message, con
             }
         } else if (paths[0] == "query") {
             if (paths[1] == "execution-plan" || paths[1] == "execute-query") {
-                errorResponse["detail"] = web::json::value::string("Parameter userQuery and strategyName must be provided");
+                errorResponse["detail"] = web::json::value::string("Parameter userQuery and placement must be provided");
             } else if (paths[1] == "query-plan") {
                 errorResponse["detail"] = web::json::value::string("Parameter userQuery must be provided");
             }
