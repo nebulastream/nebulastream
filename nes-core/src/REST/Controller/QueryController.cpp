@@ -139,7 +139,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
 
                     std::string userQuery = req.at("userQuery").as_string();
-                    std::string placementStrategyName = req.at("strategyName").as_string();
+                    std::string placementStrategyName = req.at("placement").as_string();
                     std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
                     std::string lineageString = DEFAULT_TOLERANCE_TYPE;
                     if (req.has_field("faultTolerance")) {
@@ -345,12 +345,12 @@ bool QueryController::validateProtobufMessage(const std::shared_ptr<SubmitQueryR
     auto* context = protobufMessage->mutable_context();
     if (!context->contains("placement")) {
         NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                  "using 'placementStrategy'.");
+                  "using 'placement'.");
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
         errorResponse["code"] = web::json::value(statusCode);
         errorResponse["message"] =
-            web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+            web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placement'.");
         errorResponse["more_info"] =
             web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
         errorMessageImpl(request, errorResponse, statusCode);
@@ -371,21 +371,21 @@ bool QueryController::validateUserRequest(web::json::value userRequest, const we
         errorMessageImpl(httpRequest, errorResponse, statusCode);
         return false;
     }
-    if (!userRequest.has_field("strategyName")) {
+    if (!userRequest.has_field("placement")) {
         NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                  "using 'placementStrategy'.");
+                  "using 'placement'.");
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
         errorResponse["code"] = web::json::value(statusCode);
         errorResponse["message"] =
-            web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+            web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placement'.");
 
         errorResponse["more_info"] =
             web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
         errorMessageImpl(httpRequest, errorResponse, statusCode);
         return false;
     }
-    std::string placementStrategy = userRequest["strategyName"].as_string();
+    std::string placementStrategy = userRequest["placement"].as_string();
     return validatePlacementStrategy(placementStrategy, httpRequest);
 }
 
