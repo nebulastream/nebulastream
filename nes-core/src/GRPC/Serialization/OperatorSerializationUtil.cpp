@@ -88,6 +88,7 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+#include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -149,6 +150,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator.mutable_details()->PackFrom(mapDetails);
     } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        #ifdef TFDEF
         // serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperatorNode");
         auto inferModelDetails = SerializableOperator_InferModelDetails();
@@ -175,7 +177,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         inferModelDetails.set_mlfilecontent(bytes);
 
         serializedOperator.mutable_details()->PackFrom(inferModelDetails);
-
+        #endif // TFDEF
     }
     else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
