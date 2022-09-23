@@ -212,7 +212,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
-            return createResponse(Status::CODE_200, response.dump());
+            return createResponse(Status::CODE_202, response.dump());
         }
         catch (const InvalidQueryException& exc) {
             NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
@@ -272,7 +272,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
-            return createResponse(Status::CODE_200, response.dump());
+            return createResponse(Status::CODE_202, response.dump());
         }
         catch(nlohmann::json::exception e){
             return errorHandler->handleError(Status::CODE_500, e.what());
