@@ -25,7 +25,7 @@ class TCPSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr
-    create(SchemaPtr schema, TCPSourceTypePtr csvSourceType, std::string logicalSourceName, std::string physicalSourceName);
+    create(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, std::string logicalSourceName, std::string physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, TCPSourceTypePtr sourceConfig);
     /**

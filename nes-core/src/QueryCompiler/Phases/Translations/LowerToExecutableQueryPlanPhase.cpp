@@ -22,6 +22,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -34,6 +35,7 @@
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -379,6 +381,10 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                 physicalSourceType->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceType>();
             return NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(schema,
                                                                                                  materializeView->getId());
+        }
+        case TCP_SOURCE: {
+            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
+            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
         }
         default:
             throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
