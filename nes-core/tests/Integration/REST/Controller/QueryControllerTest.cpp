@@ -89,7 +89,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
 }
 
 //Check if submitting a POST request with an unsupported 'placement' strategy returns 400
-TEST_F(QueryControllerTest, DISABLED_testSubmitQueryInvalidPlacement) {
+TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -144,7 +144,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
 }
 
 //Check if submitting a POST request with an unsupported 'lineage' type returns 400
-TEST_F(QueryControllerTest, DISABLED_testSubmitQueryInvalidLineage) {
+TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -198,7 +198,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                               cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    EXPECT_EQ(response.status_code, 200l);
+    EXPECT_EQ(response.status_code, 202l);
     nlohmann::json res = nlohmann::json::parse(response.text);
     EXPECT_EQ(res["queryId"], 1);
 
@@ -232,7 +232,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                               cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    EXPECT_EQ(r1.status_code, 200l);
+    EXPECT_EQ(r1.status_code, 202l);
 
     nlohmann::json response1 = nlohmann::json::parse(r1.text);
     uint64_t queryId = response1["queryId"];
@@ -286,7 +286,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                         cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                         cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    EXPECT_EQ(r1.status_code, 200l);
+    EXPECT_EQ(r1.status_code, 202l);
 
     nlohmann::json response1 = nlohmann::json::parse(r1.text);
     uint64_t queryId = response1["queryId"];
@@ -329,7 +329,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                         cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                         cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    EXPECT_EQ(r1.status_code, 200l);
+    EXPECT_EQ(r1.status_code, 202l);
 
     nlohmann::json response1 = nlohmann::json::parse(r1.text);
     uint64_t queryId = response1["queryId"];
@@ -376,7 +376,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     auto r1   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                         cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                         cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    EXPECT_EQ(r1.status_code, 200l);
+    EXPECT_EQ(r1.status_code, 202l);
 
     nlohmann::json response1 = nlohmann::json::parse(r1.text);
     uint64_t queryId = response1["queryId"];
