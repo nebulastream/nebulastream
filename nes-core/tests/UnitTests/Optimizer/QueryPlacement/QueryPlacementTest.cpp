@@ -161,7 +161,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("SpeciesCode", UINT64));)";
         const std::string sourceName = "iris";
 
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
@@ -170,10 +170,10 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
-        SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
-        SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
@@ -217,7 +217,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("SpeciesCode", UINT64));)";
         const std::string streamName = "iris";
 
-        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(streamName);
 
@@ -227,7 +227,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
         for (int source : sources) {
-            SourceCatalogEntryPtr streamCatalogEntry = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
+            Catalogs::Source::SourceCatalogEntryPtr streamCatalogEntry = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 

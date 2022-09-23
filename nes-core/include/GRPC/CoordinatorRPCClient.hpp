@@ -136,8 +136,7 @@ class CoordinatorRPCClient {
                       const Monitoring::RegistrationMetrics& registrationMetrics,
                       NES::Spatial::Index::Experimental::Location fixedCoordinates,
                       NES::Spatial::Index::Experimental::NodeType spatialType,
-                      bool isMobile,
-                      bool tfInstalled);
+                      bool isTfInstalled);
 
     /**
      * @brief method to check if the coordinator is alive
