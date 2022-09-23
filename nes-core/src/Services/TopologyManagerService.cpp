@@ -39,8 +39,8 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t grpcPort,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
-                                              Spatial::Index::Experimental::NodeType spatialType,
                                               Spatial::Index::Experimental::Location fixedCoordinates,
+                                              Spatial::Index::Experimental::NodeType spatialType,
                                               bool isTfInstalled) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);

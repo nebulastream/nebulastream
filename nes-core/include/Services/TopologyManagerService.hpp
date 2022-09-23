@@ -59,8 +59,8 @@ class TopologyManagerService {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          NES::Spatial::Index::Experimental::NodeType spatialType,
                           NES::Spatial::Index::Experimental::Location fixedCoordinates,
+                          NES::Spatial::Index::Experimental::NodeType spatialType,
                           bool isTfInstalled);
 
     /**

@@ -41,4 +41,5 @@ class TensorflowAdapter {
 };
 
 }// namespace NES
+
 #endif//NES_TENSORFLOWADAPTER_HPP

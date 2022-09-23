@@ -104,7 +104,8 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
     uint64_t nodeId =
-        topologyManagerService->registerNode(address, 4000, 5000, 6, false, NES::Spatial::Index::Experimental::Location(), false);
+        topologyManagerService->registerNode(address, 4000, 5000, 6, NES::Spatial::Index::Experimental::Location(),
+                                             NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION, false);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

@@ -233,7 +233,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
 TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
 
-    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("default_logical")
