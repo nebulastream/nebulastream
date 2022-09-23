@@ -16,6 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/EntryNotFoundException.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -224,6 +225,9 @@ bool SourceCatalog::removePhysicalSourceByHashId(uint64_t hashId) {
 
 SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
+    if(logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()){
+        throw EntryNotFoundException("SourceCatalog: No schema found for logical source " + logicalSourceName);
+    }
     return logicalSourceNameToSchemaMapping[logicalSourceName];
 }
 
@@ -295,6 +299,10 @@ std::string SourceCatalog::getPhysicalSourceAndSchemaAsString() {
 }
 
 std::vector<SourceCatalogEntryPtr> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) {
+    if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()){
+        NES_ERROR("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
+        throw EntryNotFoundException("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
+    }
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
 

@@ -31,4 +31,5 @@ add_source_files(nes-core
         WindowProcessingException.cpp
         CoordinatesOutOfRangeException.cpp
         InvalidCoordinateFormatException.cpp
+        EntryNotFoundException.cpp
 )
