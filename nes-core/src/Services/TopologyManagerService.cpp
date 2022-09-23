@@ -40,10 +40,9 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
                                               Spatial::Index::Experimental::NodeType spatialType,
-                                              Spatial::Index::Experimental::Location fixedCoordinates) {
                                               bool isMobile,
                                               Spatial::Index::Experimental::Location fixedCoordinates,
-                                              bool tfInstalled) {
+                                              bool isTfInstalled) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -62,7 +61,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
     newTopologyNode->setSpatialNodeType(spatialType);
     newTopologyNode->setMobile(isMobile);
-    newTopologyNode->addNodeProperty("tf_installed", tfInstalled);
+    newTopologyNode->addNodeProperty("tf_installed", isTfInstalled);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
