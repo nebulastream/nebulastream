@@ -15,21 +15,22 @@
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
-#include <REST/DTOs/LogicalSourceResponse.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Exceptions/EntryNotFoundException.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/DTOs/LogicalSourceInfo.hpp>
-#include <REST/DTOs/SourceCatalogStringResponse.hpp>
+#include <REST/DTOs/LogicalSourceResponse.hpp>
 #include <REST/DTOs/SourceCatalogBoolResponse.hpp>
 #include <REST/DTOs/SourceCatalogControllerSubmitLogicalSourceRequest.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
-#include <oatpp/web/server/api/ApiController.hpp>
-#include <cpprest/json.h>
-#include <REST/Handlers/ErrorHandler.hpp>
-#include <SerializableOperator.pb.h>
 #include <oatpp/core/parser/Caret.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
 #include <utility>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
@@ -64,24 +65,21 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/allLogicalSource", getAllLogicalSource) {
-        auto dto = LogicalSourceResponse::createShared();
-        oatpp::List<oatpp::Object<LogicalSourceInfo>> list({});
         try{
+            nlohmann::json logicalSources;
             const std::map<std::string, std::string>& allLogicalSourceAsString = sourceCatalog->getAllLogicalSourceAsString();
             uint64_t count = 0;
             for (auto const& [key, val] : allLogicalSourceAsString) {
-                auto entry = LogicalSourceInfo::createShared();
-                entry->name = key;
-                entry->schema = val;
+                nlohmann::json entry;
+                entry[key] = val;
                 count++;
-                list->push_back(entry);
+                logicalSources.push_back(entry);
             }
             if (count == 0) {
                 NES_DEBUG("No Logical Source Found");
-                return errorHandler->handleError(Status::CODE_404, "Ressource not found.");
+                return errorHandler->handleError(Status::CODE_404, "Resource not found.");
             }
-            dto->entries = list;
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, logicalSources.dump());
         }
         catch(...){
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -90,25 +88,18 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET",  "/allPhysicalSource", getPhysicalSource,
              QUERY(String, logicalSourceName, "logicalSourceName")) {
-        auto dto = SourceCatalogStringResponse::createShared();
-        if (logicalSourceName == "") {
-            NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the GET allPhysicalSource request");
-            return errorHandler->handleError(Status::CODE_400, "Bad Request: Parameter logicalSourceName must be provided");
-        }
         try {
             const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource = sourceCatalog->getPhysicalSources(logicalSourceName);
-            if (allPhysicalSource.empty()) {
-                NES_DEBUG("No Physical Source Found");
-                return errorHandler->handleError(Status::CODE_404, "Resource Not Found: Logical source has no physical source defined.");
-            }
-            web::json::value result{};
-            std::vector<web::json::value> allSource = {};
+
+            nlohmann::json result;
+            nlohmann::json::array_t allSource = {};
             for (auto const& physicalSource : std::as_const(allPhysicalSource)) {
-                allSource.push_back(web::json::value::string(physicalSource->toString()));
+                allSource.push_back(physicalSource->toString());
             }
-            result["Physical Sources"] = web::json::value::array(allSource);
-            dto->sourceInformation = result.to_string();
-            return createDtoResponse(Status::CODE_200, dto);
+            result["Physical Sources"] = allSource;
+            return createResponse(Status::CODE_200, result.dump());
+        } catch(EntryNotFoundException e ){
+            return errorHandler->handleError(Status::CODE_404, "Resource Not Found: Logical source " + logicalSourceName + " has no physical source defined.");
         } catch (const std::exception& exc) {
             NES_ERROR("SourceCatalogController: get allPhysicalSource: Exception occurred while building the query plan for user request.");
             return errorHandler->handleError(Status::CODE_500, exc.what());
@@ -119,16 +110,13 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET",  "/schema", getSchema,
              QUERY(String, logicalSourceName, "logicalSourceName")) {
-        auto dto = SourceCatalogStringResponse::createShared();
-        if (logicalSourceName == "") {
-            NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the GET allPhysicalSource request");
-            return errorHandler->handleError(Status::CODE_400, "Bad Request: Parameter logicalSourceName must be provided");
-        }
+
         try {
             SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
             SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
-            dto->sourceInformation = serializableSchema->SerializeAsString();
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, serializableSchema->SerializeAsString());
+        } catch(EntryNotFoundException e ){
+            return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
         } catch (const std::exception& exc) {
             NES_ERROR(
                 "SourceCatalogController: get schema: Exception occurred while retrieving the schema for a logical source"
