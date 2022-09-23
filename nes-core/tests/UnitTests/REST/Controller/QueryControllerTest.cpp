@@ -143,7 +143,7 @@ TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
-    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["placement"] = web::json::value::string("BottomUp");
     messageContent["faultTolerance"] = web::json::value::string("AT_MOST_ONCE");
     messageContent["lineage"] = web::json::value::string("IN_MEMORY");
     msg.set_body(messageContent);
@@ -184,7 +184,7 @@ TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
-    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["placement"] = web::json::value::string("BottomUp");
     msg.set_body(messageContent);
 
     web::http::http_response httpResponse;
@@ -262,7 +262,7 @@ TEST_F(QueryControllerTest, testExecuteQueryInvalidPlacementStrategyProvided) {
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
     std::string invalidPlacementStrategy = "MumboJumbo";
-    messageContent["strategyName"] = web::json::value::string(invalidPlacementStrategy);
+    messageContent["placement"] = web::json::value::string(invalidPlacementStrategy);
     msg.set_body(messageContent);
 
     web::http::http_response httpResponse;
@@ -301,7 +301,7 @@ TEST_F(QueryControllerTest, testExecuteQueryIncorrectOrMissingUserQuery) {
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["wrongKeyword"] = web::json::value::string(queryString);
-    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["placement"] = web::json::value::string("BottomUp");
     msg.set_body(messageContent);
 
     web::http::http_response httpResponse;
@@ -340,7 +340,7 @@ TEST_F(QueryControllerTest, testExecuteQueryInvalidFaultToleranceType) {
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
-    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["placement"] = web::json::value::string("BottomUp");
     std::string invalidFaultToleranceType = "EXACTLY_TWICE";
     messageContent["faultTolerance"] = web::json::value::string(invalidFaultToleranceType);
     msg.set_body(messageContent);
@@ -449,7 +449,7 @@ TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
         R"(Query::from("default_logical").filter(Attribute("BAD") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
-    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["placement"] = web::json::value::string("BottomUp");
     msg.set_body(messageContent);
 
     web::http::http_response httpResponse;
