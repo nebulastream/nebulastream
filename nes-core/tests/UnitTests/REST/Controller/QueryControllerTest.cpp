@@ -250,7 +250,7 @@ TEST_F(QueryControllerTest, testExecuteQueryNoPlacementStrategyProvided) {
     auto result = response.as_object();
     auto message = response.at("message").as_string();
     NES_DEBUG("Response: " << response.serialize());
-    EXPECT_EQ(message, "No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+    EXPECT_EQ(message, "No placement strategy specified. Specify a placement strategy using 'placement'.");
     EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
 }
 
