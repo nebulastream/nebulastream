@@ -14,25 +14,25 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include "NesBaseTest.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
+#include "Catalogs/Query/QueryCatalog.hpp"
+#include "Catalogs/Source/PhysicalSource.hpp"
+#include "Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp"
+#include "Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp"
+#include "Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp"
+#include "Common/DataTypes/DataTypeFactory.hpp"
+#include "Components/NesCoordinator.hpp"
+#include "Components/NesWorker.hpp"
+#include "Configurations/Coordinator/CoordinatorConfiguration.hpp"
+#include "Configurations/Worker/WorkerConfiguration.hpp"
+#include "Services/QueryService.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TestHarness/TestHarness.hpp"
+#include "Util/TestUtils.hpp"
 #include <iostream>
 
 using namespace std;

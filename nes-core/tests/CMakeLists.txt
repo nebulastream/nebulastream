@@ -319,7 +319,7 @@ add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 
 
 # Lambda Source Integration tests
-add_nes_integration_test(lambda-source-integration-test "Integration/LambdaSourceIntegrationTest.cpp")
+add_nes_integration_test(lambda-source-integration-test "Integration/Source/LambdaSourceIntegrationTest.cpp")
 
 
 ### Pattern Query Plan Tests ###
@@ -553,9 +553,13 @@ add_nes_integration_test(complex-sequence-test "Integration/ComplexSequenceTest.
 ### unionDeploymentTest ###
 add_nes_integration_test(union-deployment-test "Integration/UnionDeploymentTest.cpp" )
 
+# TCPSourceIntegrationTest
+add_nes_integration_test(tcp-source-integration-test "Integration/Source/TCPSourceIntegrationTest.cpp" )
+set_tests_properties(tcp-source-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
 
 ### ContiniousSourceTest ###
-add_nes_integration_test(continuous-source-test "Integration/ContinuousSourceTest.cpp" )
+add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp" )
 
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
@@ -563,7 +567,7 @@ add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyT
 
 
 ### Catalog Remote Tests ###
-add_nes_integration_test(source-catalog-remote-test "Integration/SourceCatalogRemoteTest.cpp" )
+add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCatalogRemoteTest.cpp" )
 
 
 ### WorkerCoordinatorStarter Tests ###
@@ -616,7 +620,7 @@ add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.
 add_dependencies(nemo-integration-test nesCoordinator nesWorker)
 
 ### MemorySourceIntegrationTest ###
-add_nes_integration_test(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp" )
+add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp" )
 
 
 ### StaticDataSourceIntegrationTest ###
@@ -624,7 +628,7 @@ add_nes_integration_test(static-data-source-integration-test "Integration/Static
 
 
 ### BenchmarkSourceIntegrationTest ###
-add_nes_integration_test(benchmark-source-integration-test "Integration/BenchmarkSourceIntegrationTest.cpp" )
+add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp" )
 
 
 ### TestHarnessUtilTest ###
