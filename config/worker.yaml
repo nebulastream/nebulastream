@@ -54,8 +54,10 @@
 #enableMonitoring: false
 
 # Set the number of buffers per epoch
-# numberOfBuffersPerEpoch: 100
+#numberOfBuffersPerEpoch: 100
 
+# Set the network channel's max number of in-flight buffers before blocking
+#networkSenderHighWatermark: 8
 
 #queryCompiler:
   # Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]

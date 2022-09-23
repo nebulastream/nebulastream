@@ -132,7 +132,7 @@ if (NES_BUILD_BENCHMARKS)
 
     add_executable(output-channel-benchmark "src/Micro-Benchmarks/BenchmarkOutputChannel.cpp")
     target_link_libraries(output-channel-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json)
+    add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json)
 
     message("---Done building benchmarks")
 

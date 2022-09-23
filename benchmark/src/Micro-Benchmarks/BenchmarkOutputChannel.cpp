@@ -183,17 +183,17 @@ int main(int argc, char** argv) {
                                                                    (uint64_t) 4 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 1 * 1024 * 1024 * 1024);
 
-//    std::string benchmarkName = "DataChannel";
-//    std::string benchmarkFolderName = "DataChannel";
-//    if (!std::filesystem::create_directory(benchmarkFolderName))
-//        throw NES::Exceptions::RuntimeException("Could not create folder " + benchmarkFolderName);
-//
+    std::string benchmarkName = "DataChannel";
+    std::string benchmarkFolderName = "DataChannel";
+    if (!std::filesystem::create_directory(benchmarkFolderName))
+        throw NES::Exceptions::RuntimeException("Could not create folder " + benchmarkFolderName);
 
-    // Writing header to csv file
-//    std::ofstream benchmarkFile;
-//    benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
-//    benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,THROUGHPUT\n";
-//    benchmarkFile.close();
+
+     Writing header to csv file
+    std::ofstream benchmarkFile;
+    benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
+    benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,THROUGHPUT\n";
+    benchmarkFile.close();
 
     uint64_t totalParamCombinations =
         allDataSizesToBeSent.size() * allServerThreads.size() * allSenderThreads.size() * allBufferSizes.size();
@@ -221,14 +221,14 @@ int main(int argc, char** argv) {
                         throughputVec.emplace_back(throughput);
                     }
                     // Writing whole throughput vector to csv to csv file
-//                    for (auto throughput : throughputVec) {
-//                        benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
-//                        benchmarkFile << std::to_string(dataSize) << "," << std::to_string(numServerThreads) << ","
-//                                      << std::to_string(numSenderThreads) << "," << std::to_string(bufferSize) << ","
-//                                      << std::to_string(buffersManaged) << "," << std::to_string(NUM_REPS) << ","
-//                                      << std::to_string(throughput) << "\n";
-//                        benchmarkFile.close();
-//                    }
+                    for (auto throughput : throughputVec) {
+                        benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
+                        benchmarkFile << std::to_string(dataSize) << "," << std::to_string(numServerThreads) << ","
+                                      << std::to_string(numSenderThreads) << "," << std::to_string(bufferSize) << ","
+                                      << std::to_string(buffersManaged) << "," << std::to_string(NUM_REPS) << ","
+                                      << std::to_string(throughput) << "\n";
+                        benchmarkFile.close();
+                    }
 
                     // After a single experiment was done NUM_REPS, it is now time to calculate mean, stddev
                     double sum = 0.0;
