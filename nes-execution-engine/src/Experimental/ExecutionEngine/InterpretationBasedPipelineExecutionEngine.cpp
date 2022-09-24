@@ -15,14 +15,14 @@
 #include <Experimental/ExecutionEngine/InterpretationBasedExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>

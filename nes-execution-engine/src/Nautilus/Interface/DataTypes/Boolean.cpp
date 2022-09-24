@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataValue/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Boolean::Boolean(bool value) : TraceableType(&type), value(value){};
 
-std::unique_ptr<Any> Boolean::copy() { return std::make_unique<Boolean>(this->value); }
+std::shared_ptr<Any> Boolean::copy() { return std::make_unique<Boolean>(this->value); }
 
 Boolean::operator bool() const { return value; }
 

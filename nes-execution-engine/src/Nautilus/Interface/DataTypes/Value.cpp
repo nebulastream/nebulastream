@@ -12,19 +12,96 @@
     limitations under the License.
 */
 #include <Experimental/Utility/PluginRegistry.hpp>
-#include <Nautilus/Interface/DataValue/Any.hpp>
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+Nautilus::Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp) {
+    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+    if (ctx) {
+        return ctx->createNextRef(std::move(stamp));
+    }
+    return Nautilus::Tracing::ValueRef(0, 0, nullptr);
+}
+
+bool traceBoolOperation(const Interpreter::AnyPtr& value, const Nautilus::Tracing::ValueRef& sourceRef) {
+    if (value->isType<Boolean>()) {
+        auto boolValue = cast<Boolean>(value);
+        if (Nautilus::Tracing::isInSymbolicExecution()) {
+            auto* sec = Nautilus::Tracing::getThreadLocalSymbolicExecutionContext();
+            auto result = sec->executeCMP();
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+            ctx->traceCMP(sourceRef, result);
+            return result;
+        } else {
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+            if (ctx != nullptr) {
+                ctx->traceCMP(sourceRef, boolValue->getValue());
+            }
+            return boolValue->getValue();
+        }
+    }
+    NES_THROW_RUNTIME_ERROR("Can't evaluate bool on non Boolean value");
+}
+
+void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef) {
+    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::ASSIGN, targetRef, {sourceRef});
+        Nautilus::Tracing::getThreadLocalTraceContext()->trace(operation);
+    }
+};
+
+void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
+                          const Nautilus::Tracing::ValueRef& resultRef,
+                          const Nautilus::Tracing::ValueRef& leftRef,
+                          const Nautilus::Tracing::ValueRef& rightRef) {
+    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        // fast case for expected operations
+        if (ctx->isExpectedOperation(op)) {
+            ctx->incrementOperationCounter();
+            return;
+        }
+        auto operation = Nautilus::Tracing::TraceOperation(op, resultRef, {leftRef, rightRef});
+        ctx->trace(operation);
+    }
+}
+
+void traceUnaryOperation(const Nautilus::Tracing::OpCode& op, const Nautilus::Tracing::ValueRef& resultRef, const Nautilus::Tracing::ValueRef& inputRef) {
+    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        if (ctx->isExpectedOperation(op)) {
+            ctx->incrementOperationCounter();
+            return;
+        }
+        auto operation = Nautilus::Tracing::TraceOperation(op, resultRef, {inputRef});
+        ctx->trace(operation);
+    }
+}
+
+void TraceConstOperation(const Interpreter::AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
+    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        // fast case for expected operations
+        if (ctx->isExpectedOperation(Nautilus::Tracing::CONST)) {
+            ctx->incrementOperationCounter();
+            return;
+        }
+        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CONST, valueReference, {Nautilus::Tracing::ConstantValue(constValue)});
+        ctx->trace(operation);
+    }
+};
 
 std::optional<Value<>> CastToOp(const Value<>& left, const TypeIdentifier* toType) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
     for (auto& plugin : plugins) {
         if (plugin->IsCastable(left, toType)) {
             auto castedValue = plugin->CastTo(left, toType).value();
-            if (auto* ctx = Trace::getThreadLocalTraceContext()) {
-                auto operation = Trace::Operation(Trace::CAST, castedValue.ref, {left.ref});
+            if (auto* ctx = Nautilus::Tracing::getThreadLocalTraceContext()) {
+                auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CAST, castedValue.ref, {left.ref});
                 ctx->trace(operation);
             }
             return castedValue;
@@ -78,10 +155,8 @@ Value<> evalWithCast(
 Value<> AddOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Add(left, right);
-        if (result.has_value() && Trace::getThreadLocalTraceContext()) {
-            //if(dynamic_cast<const TraceableType*>(&result.value().getValue()) != nullptr){
-            TraceOperation(Trace::OpCode::ADD, left, right, result.value());
-            //}
+        if (result.has_value() && Nautilus::Tracing::getThreadLocalTraceContext()) {
+            traceBinaryOperation(Nautilus::Tracing::OpCode::ADD, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -91,7 +166,7 @@ Value<> SubOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Sub(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::SUB, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::SUB, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -101,9 +176,7 @@ Value<> MulOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Mul(left, right);
         if (result.has_value()) {
-            //if(static_cast<const TraceableType*>(&result.value().getValue()) != nullptr){
-            TraceOperation(Trace::OpCode::MUL, left, right, result.value());
-            //}
+            traceBinaryOperation(Nautilus::Tracing::OpCode::MUL, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -113,7 +186,7 @@ Value<> DivOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Div(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::DIV, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::DIV, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -123,7 +196,7 @@ Value<> EqualsOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Equals(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::EQUALS, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::EQUALS, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -133,7 +206,7 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->LessThan(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::LESS_THAN, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::LESS_THAN, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -143,7 +216,7 @@ Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->LessThan(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::GREATER_THAN, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::GREATER_THAN, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -153,7 +226,7 @@ Value<> OrOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Or(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::OR, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::OR, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -163,7 +236,7 @@ Value<> AndOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->And(left, right);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::AND, left, right, result.value());
+            traceBinaryOperation(Nautilus::Tracing::OpCode::AND, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -174,12 +247,11 @@ Value<> NegateOp(const Value<>& input) {
     for (auto& plugin : plugins) {
         auto result = plugin->Negate(input);
         if (result.has_value()) {
-            TraceOperation(Trace::OpCode::NEGATE, input, result.value());
+            traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, result->ref, input.ref);
             return result.value();
         }
     };
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-IR::Types::StampPtr Any::getType() const { return IR::Types::StampFactory::createVoidStamp(); }
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

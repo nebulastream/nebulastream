@@ -15,8 +15,8 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_
 
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <memory>
 #include <ostream>

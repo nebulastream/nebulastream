@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
@@ -43,9 +43,12 @@ class ValueTest : public testing::Test {
 };
 
 TEST_F(ValueTest, assignMentTest) {
-    auto intValue = std::make_unique<Int32>(42);
-    std::unique_ptr<Any> valAny = cast<Any>(intValue);
-    std::unique_ptr<Any> valAny2 = cast<Any>(valAny);
+
+
+    auto intV = Int32(42);
+    auto intValue = std::make_shared<Int32>(intV);
+    std::shared_ptr<Any> valAny = cast<Any>(intValue);
+    std::shared_ptr<Any> valAny2 = cast<Any>(valAny);
 
     auto anyValue = Value<Int32>(std::move(intValue));
     anyValue = anyValue + 10;

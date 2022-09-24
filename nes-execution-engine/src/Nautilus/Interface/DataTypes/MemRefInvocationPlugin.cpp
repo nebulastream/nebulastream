@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Experimental/NESIR/Types/IntegerStamp.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
@@ -41,7 +41,7 @@ class MemRefInvocationPlugin : public InvocationPlugin {
     std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
         if (left->isType<MemRef>() && right->isType<Int32>()) {
             auto result = left.getValue().staticCast<MemRef>().value == nullptr;
-            return Value(std::make_unique<Boolean>(result));
+            return Value(std::make_shared<Boolean>(result));
         }
         return InvocationPlugin::Equals(left, right);
     }

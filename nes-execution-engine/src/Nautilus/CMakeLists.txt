@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(Interface)
+add_subdirectory(Tracing)

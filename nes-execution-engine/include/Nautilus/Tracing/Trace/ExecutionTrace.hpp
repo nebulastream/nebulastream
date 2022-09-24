@@ -1,0 +1,59 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
+#include <Nautilus/Tracing/Trace/Block.hpp>
+#include <Nautilus/Tracing/Tag.hpp>
+#include <memory>
+#include <unordered_map>
+namespace NES::Nautilus::Tracing {
+
+class ExecutionTrace {
+  public:
+    ExecutionTrace();
+    ~ExecutionTrace() = default;
+    void addOperation(TraceOperation& operation);
+    void addArgument(const ValueRef& argument);
+
+    uint32_t createBlock();
+
+    Block& getBlock(uint32_t blockIndex) { return blocks[blockIndex]; }
+    std::vector<Block>& getBlocks() { return blocks; }
+    Block& getCurrentBlock() { return blocks[currentBlock]; }
+    uint32_t getCurrentBlockIndex() { return currentBlock; }
+
+    bool hasNextOperation() { return currentBlock; }
+
+    void setCurrentBloc(uint32_t index) { currentBlock = index; }
+    void traceCMP(TraceOperation& operation);
+    ValueRef findReference(ValueRef ref, const ValueRef value);
+    void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
+    ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
+    Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
+    friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
+
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> tagMap;
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> localTagMap;
+
+    std::shared_ptr<OperationRef> returnRef;
+    std::vector<ValueRef> getArguments();
+  private:
+    uint32_t currentBlock;
+    std::vector<Block> blocks;
+    std::vector<ValueRef> arguments;
+};
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_

@@ -19,8 +19,8 @@
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -36,10 +36,10 @@
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -60,8 +60,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
  */
 class ProxyInliningTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -108,12 +108,12 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
     RecordBuffer recordBuffer = RecordBuffer(memRef);
 
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    memRefPCTX.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
+    wctxRefPCTX.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
     RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX);
 
-    auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);
         scan.close(executionContext, recordBuffer);
     });

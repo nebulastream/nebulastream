@@ -11,19 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Float::Float(float value) : TraceableType(&type), value(value){};
 IR::Types::StampPtr Float::getType() const { return IR::Types::StampFactory::createFloatStamp(); }
-std::unique_ptr<Any> Float::copy() { return create<Float>(value); }
-std::unique_ptr<Float> Float::add(const Float& otherValue) const { return create<Float>(value + otherValue.value); }
-std::unique_ptr<Float> Float::sub(const Float& otherValue) const { return create<Float>(value - otherValue.value); }
-std::unique_ptr<Float> Float::mul(const Float& otherValue) const { return create<Float>(value * otherValue.value); }
-std::unique_ptr<Float> Float::div(const Float& otherValue) const { return create<Float>(value / otherValue.value); }
-std::unique_ptr<Boolean> Float::equals(const Float& otherValue) const { return create<Boolean>(value == otherValue.value); }
-std::unique_ptr<Boolean> Float::lessThan(const Float& otherValue) const { return create<Boolean>(value < otherValue.value); }
-std::unique_ptr<Boolean> Float::greaterThan(const Float& otherValue) const { return create<Boolean>(value > otherValue.value); }
+std::shared_ptr<Any> Float::copy() { return create<Float>(value); }
+std::shared_ptr<Float> Float::add(const Float& otherValue) const { return create<Float>(value + otherValue.value); }
+std::shared_ptr<Float> Float::sub(const Float& otherValue) const { return create<Float>(value - otherValue.value); }
+std::shared_ptr<Float> Float::mul(const Float& otherValue) const { return create<Float>(value * otherValue.value); }
+std::shared_ptr<Float> Float::div(const Float& otherValue) const { return create<Float>(value / otherValue.value); }
+std::shared_ptr<Boolean> Float::equals(const Float& otherValue) const { return create<Boolean>(value == otherValue.value); }
+std::shared_ptr<Boolean> Float::lessThan(const Float& otherValue) const { return create<Boolean>(value < otherValue.value); }
+std::shared_ptr<Boolean> Float::greaterThan(const Float& otherValue) const { return create<Boolean>(value > otherValue.value); }
 float Float::getValue() const { return value; }
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

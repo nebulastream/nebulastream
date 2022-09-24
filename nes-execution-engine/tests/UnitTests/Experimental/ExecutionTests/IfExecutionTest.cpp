@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
@@ -27,8 +27,8 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class IfExecutionTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -59,7 +59,7 @@ Value<> ifThenCondition() {
 }
 
 TEST_F(IfExecutionTest, ifConditionTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -88,7 +88,7 @@ Value<> ifThenElseCondition() {
 }
 
 TEST_F(IfExecutionTest, ifThenElseConditionTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
        return ifThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -119,7 +119,7 @@ Value<> nestedIfThenElseCondition() {
 }
 
 TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -151,7 +151,7 @@ Value<> nestedIfNoElseCondition() {
 }
 
 TEST_F(IfExecutionTest, nestedIFThenNoElse) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfNoElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -181,7 +181,7 @@ Value<> doubleIfCondition() {
 }
 
 TEST_F(IfExecutionTest, doubleIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return doubleIfCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -211,7 +211,7 @@ Value<> ifElseIfCondition() {
 }
 
 TEST_F(IfExecutionTest, ifElseIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseIfCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -249,7 +249,7 @@ Value<> deeplyNestedIfElseCondition() {
 }
 
 TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -285,7 +285,7 @@ Value<> deeplyNestedIfElseIfCondition() {
 
 // Currently fails, because an empty block (Block 7) is created, during trace building.
 TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
     std::cout << *executionTrace.get() << std::endl;

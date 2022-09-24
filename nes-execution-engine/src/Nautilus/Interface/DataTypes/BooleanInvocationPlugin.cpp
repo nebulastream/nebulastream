@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Experimental/NESIR/Types/IntegerStamp.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
@@ -24,26 +24,26 @@ class BooleanInvocationPlugin : public InvocationPlugin {
         if (left->isType<Boolean>() && right->isType<Boolean>()) {
             auto& leftVal = left.getValue().staticCast<Boolean>();
             auto& rightVal = right.getValue().staticCast<Boolean>();
-            return Value(std::make_unique<Boolean>(leftVal == rightVal));
+            return Value(std::make_shared<Boolean>(leftVal == rightVal));
         }
         return std::nullopt;
     }
 
     std::optional<Value<>> Negate(const Value<>& left) const override {
         auto& val = left.getValue().staticCast<Boolean>();
-        return Value(std::make_unique<Boolean>(!val));
+        return Value(std::make_shared<Boolean>(!val));
     }
 
     std::optional<Value<>> And(const Value<>& left, const Value<>& right) const override {
         auto& leftVal = left.getValue().staticCast<Boolean>();
         auto& rightVal = right.getValue().staticCast<Boolean>();
-        return Value(std::make_unique<Boolean>(leftVal && rightVal));
+        return Value(std::make_shared<Boolean>(leftVal && rightVal));
     }
 
     std::optional<Value<>> Or(const Value<>& left, const Value<>& right) const override {
         auto& leftVal = left.getValue().staticCast<Boolean>();
         auto& rightVal = right.getValue().staticCast<Boolean>();
-        return Value(std::make_unique<Boolean>(leftVal || rightVal));
+        return Value(std::make_shared<Boolean>(leftVal || rightVal));
     }
 };
 
