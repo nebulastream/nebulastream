@@ -623,8 +623,19 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 endif (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 # Add target for client
 add_subdirectory(nes-client)
-# Add target for benchmarks
-add_subdirectory(benchmark)
+
+# Add target for old benchmarks
+#if (NES_BUILD_BENCHMARKS)
+#    add_subdirectory(benchmark)
+#endif(NES_BUILD_BENCHMARKS)
+
+# Add targets for benchmarks
+if (NES_BUILD_BENCHMARKS)
+    add_subdirectory(nes-benchmark)
+endif(NES_BUILD_BENCHMARKS)
+
+
+
 # Documentation
 add_subdirectory(cmake/docs)
 
