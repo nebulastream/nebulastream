@@ -120,48 +120,6 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     }
 }
 
-TEST_F(MonitoringIntegrationTest, testMonitoringStart) {
-    uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableMonitoring(),
-                                                    TestUtils::enableDebug()});
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test2"),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring()});
-
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("DefaultSource"),
-                                           TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test1"),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableMonitoring()});
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
-
-    auto jsons = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
-    cout << "dummy line!";
-//    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
-//
-//    ASSERT_EQ(jsons.size(), noWorkers + 1);
-//
-//    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-//        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
-//        auto json = jsons[std::to_string(i)];
-//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-//        //        ASSERT_TRUE(MetricValidator::isValidAll(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-//        ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
-//    }
-}
-
 TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart01) {
     uint64_t noWorkers = 1;
     std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system\" sampleRate: 6000"
