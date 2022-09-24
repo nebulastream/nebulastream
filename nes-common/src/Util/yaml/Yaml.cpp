@@ -841,14 +841,14 @@ const std::string& Node::AsString() const {
 
 // Reader implementations
 /**
-    * @breif Line information structure.
+    * @brief Line information structure.
     *
     */
 class ReaderLine {
 
   public:
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         */
     explicit ReaderLine(std::string data = "",
@@ -865,37 +865,37 @@ class ReaderLine {
     };
 
     /**
-        * @breif Set flag.
+        * @brief Set flag.
         *
         */
     void SetFlag(const eFlag flag) { Flags |= FlagMask[static_cast<size_t>(flag)]; }
 
     /**
-        * @breif Set flags by mask value.
+        * @brief Set flags by mask value.
         *
         */
     void SetFlags(const unsigned char flags) { Flags |= flags; }
 
     /**
-        * @breif Unset flag.
+        * @brief Unset flag.
         *
         */
     void UnsetFlag(const eFlag flag) { Flags &= ~FlagMask[static_cast<size_t>(flag)]; }
 
     /**
-        * @breif Unset flags by mask value.
+        * @brief Unset flags by mask value.
         *
         */
     void UnsetFlags(const unsigned char flags) { Flags &= ~flags; }
 
     /**
-        * @breif Get flag value.
+        * @brief Get flag value.
         *
         */
     [[nodiscard]] bool GetFlag(const eFlag flag) const { return Flags & FlagMask[static_cast<size_t>(flag)]; }
 
     /**
-        * @breif Copy and replace scalar flags from another ReaderLine.
+        * @brief Copy and replace scalar flags from another ReaderLine.
         *
         */
     void CopyScalarFlags(ReaderLine* from) {
@@ -920,7 +920,7 @@ class ReaderLine {
 const unsigned char ReaderLine::FlagMask[3] = {0x01, 0x02, 0x04};
 
 /**
-    * @breif Implementation class of Yaml parsing.
+    * @brief Implementation class of Yaml parsing.
     *        Parsing incoming stream and outputs a root node.
     *
     */
@@ -928,19 +928,19 @@ class ParseImp {
 
   public:
     /**
-        * @breif Default constructor.
+        * @brief Default constructor.
         *
         */
     ParseImp() = default;
 
     /**
-        * @breif Destructor.
+        * @brief Destructor.
         *
         */
     ~ParseImp() { ClearLines(); }
 
     /**
-        * @breif Run full parsing procedure.
+        * @brief Run full parsing procedure.
         *
         */
     void Parse(Node& root, std::iostream& stream) {
@@ -958,13 +958,13 @@ class ParseImp {
 
   private:
     /**
-     * @breif Copy constructor.
+     * @brief Copy constructor.
      *
      */
     ParseImp(const ParseImp&) {}
 
     /**
-     * @breif Read all lines.
+     * @brief Read all lines.
      *        Ignoring:
      *           - Empty lines.
      *           - Comments.
@@ -1054,7 +1054,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Run post-processing on all lines.
+        * @brief Run post-processing on all lines.
         *        Basically split lines into multiple lines if needed, to follow the parsing algorithm.
         *
         */
@@ -1095,7 +1095,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Run post-processing and check for sequence.
+        * @brief Run post-processing and check for sequence.
         *        Split line into two lines if sequence token is not on it's own line.
         *
         * @return true if line is sequence, else false.
@@ -1127,7 +1127,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Run post-processing and check for mapping.
+        * @brief Run post-processing and check for mapping.
         *        Split line into two lines if mapping value is not on it's own line.
         *
         * @return true if line is mapping, else move on to scalar parsing.
@@ -1211,7 +1211,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Run post-processing and check for scalar.
+        * @brief Run post-processing and check for scalar.
         *        Checking for multi-line scalars.
         *
         * @return true if scalar search should continue, else false.
@@ -1247,7 +1247,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Process root node and start of document.
+        * @brief Process root node and start of document.
         *
         */
     void ParseRoot(Node& root) {
@@ -1273,7 +1273,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Process sequence node.
+        * @brief Process sequence node.
         *
         */
     void ParseSequence(Node& node, std::list<ReaderLine*>::iterator& it) {
@@ -1312,7 +1312,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Process map node.
+        * @brief Process map node.
         *
         */
     void ParseMap(Node& node, std::list<ReaderLine*>::iterator& it) {
@@ -1351,7 +1351,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Process scalar node.
+        * @brief Process scalar node.
         *
         */
     void ParseScalar(Node& node, std::list<ReaderLine*>::iterator& it) {
@@ -1479,7 +1479,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Debug printing.
+        * @brief Debug printing.
         *
         */
     void Print() {
@@ -1540,7 +1540,7 @@ class ParseImp {
     }
 
     /**
-        * @breif Clear all read lines.
+        * @brief Clear all read lines.
         *
         */
     void ClearLines() {

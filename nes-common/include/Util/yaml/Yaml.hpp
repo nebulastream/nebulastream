@@ -40,22 +40,22 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #include <string>
 
 /**
- * @breif Namespace wrapping mini-yaml classes.
+ * @brief Namespace wrapping mini-yaml classes.
  */
 namespace Yaml {
 
 /**
- * @breif Forward declarations.
+ * @brief Forward declarations.
  */
 class Node;
 
 /**
- * @breif Helper classes and functions
+ * @brief Helper classes and functions
  */
 namespace impl {
 
 /**
- * @breif Helper functionality, converting string to any data type.
+ * @brief Helper functionality, converting string to any data type.
  *        Strings are left untouched.
  */
 template<typename T>
@@ -111,14 +111,14 @@ struct StringConverter<bool> {
 }// namespace impl
 
 /**
-    * @breif Exception class.
+    * @brief Exception class.
     *
     */
 class Exception : public std::runtime_error {
 
   public:
     /**
-        * @breif Enumeration of exception types.
+        * @brief Enumeration of exception types.
         *
         */
     enum eType {
@@ -128,7 +128,7 @@ class Exception : public std::runtime_error {
     };
 
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         * @param message    Exception message.
         * @param type       Type of exception.
@@ -137,13 +137,13 @@ class Exception : public std::runtime_error {
     Exception(const std::string& message, eType type);
 
     /**
-        * @breif Get type of exception.
+        * @brief Get type of exception.
         *
         */
     [[nodiscard]] eType Type() const;
 
     /**
-        * @breif Get message of exception.
+        * @brief Get message of exception.
         *
         */
     [[nodiscard]] const char* Message() const;
@@ -153,7 +153,7 @@ class Exception : public std::runtime_error {
 };
 
 /**
-    * @breif Internal exception class.
+    * @brief Internal exception class.
     *
     * @see Exception
     *
@@ -162,7 +162,7 @@ class InternalException : public Exception {
 
   public:
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         * @param message Exception message.
         *
@@ -171,7 +171,7 @@ class InternalException : public Exception {
 };
 
 /**
-    * @breif Parsing exception class.
+    * @brief Parsing exception class.
     *
     * @see Exception
     *
@@ -180,7 +180,7 @@ class ParsingException : public Exception {
 
   public:
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         * @param message Exception message.
         *
@@ -189,7 +189,7 @@ class ParsingException : public Exception {
 };
 
 /**
-    * @breif Operation exception class.
+    * @brief Operation exception class.
     *
     * @see Exception
     *
@@ -198,7 +198,7 @@ class OperationFatalException : public Exception {
 
   public:
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         * @param message Exception message.
         *
@@ -207,7 +207,7 @@ class OperationFatalException : public Exception {
 };
 
 /**
-    * @breif Iterator class.
+    * @brief Iterator class.
     *
     */
 class Iterator {
@@ -216,56 +216,56 @@ class Iterator {
     friend class Node;
 
     /**
-        * @breif Default constructor.
+        * @brief Default constructor.
         *
         */
     Iterator();
 
     /**
-        * @breif Copy constructor.
+        * @brief Copy constructor.
         *
         */
     Iterator(const Iterator& it);
 
     /**
-        * @breif Assignment operator.
+        * @brief Assignment operator.
         *
         */
     Iterator& operator=(const Iterator& it);
 
     /**
-        * @breif Destructor.
+        * @brief Destructor.
         *
         */
     ~Iterator();
 
     /**
-        * @breif Get node of iterator.
+        * @brief Get node of iterator.
         *        First pair item is the key of map value, empty if type is sequence.
         *
         */
     std::pair<const std::string&, Node&> operator*();
 
     /**
-        * @breif Post-increment operator.
+        * @brief Post-increment operator.
         *
         */
     Yaml::Iterator operator++(int);
 
     /**
-        * @breif Post-decrement operator.
+        * @brief Post-decrement operator.
         *
         */
     Yaml::Iterator operator--(int);
 
     /**
-        * @breif Check if iterator is equal to other iterator.
+        * @brief Check if iterator is equal to other iterator.
         *
         */
     bool operator==(const Iterator& it) const;
 
     /**
-        * @breif Check if iterator is not equal to other iterator.
+        * @brief Check if iterator is not equal to other iterator.
         *
         */
     bool operator!=(const Iterator& it) const;
@@ -278,7 +278,7 @@ class Iterator {
 };
 
 /**
-    * @breif Constant iterator class.
+    * @brief Constant iterator class.
     *
     */
 class ConstIterator {
@@ -287,56 +287,56 @@ class ConstIterator {
     friend class Node;
 
     /**
-        * @breif Default constructor.
+        * @brief Default constructor.
         *
         */
     ConstIterator();
 
     /**
-        * @breif Copy constructor.
+        * @brief Copy constructor.
         *
         */
     ConstIterator(const ConstIterator& it);
 
     /**
-        * @breif Assignment operator.
+        * @brief Assignment operator.
         *
         */
     ConstIterator& operator=(const ConstIterator& it);
 
     /**
-        * @breif Destructor.
+        * @brief Destructor.
         *
         */
     ~ConstIterator();
 
     /**
-        * @breif Get node of iterator.
+        * @brief Get node of iterator.
         *        First pair item is the key of map value, empty if type is sequence.
         *
         */
     std::pair<const std::string&, const Node&> operator*();
 
     /**
-        * @breif Post-increment operator.
+        * @brief Post-increment operator.
         *
         */
     Yaml::ConstIterator operator++(int);
 
     /**
-        * @breif Post-decrement operator.
+        * @brief Post-decrement operator.
         *
         */
     Yaml::ConstIterator operator--(int);
 
     /**
-        * @breif Check if iterator is equal to other iterator.
+        * @brief Check if iterator is equal to other iterator.
         *
         */
     friend bool operator==(const ConstIterator& lhs, const ConstIterator& rhs);
 
     /**
-        * @breif Check if iterator is not equal to other iterator.
+        * @brief Check if iterator is not equal to other iterator.
         *
         */
     friend bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs);
@@ -349,7 +349,7 @@ class ConstIterator {
 };
 
 /**
-    * @breif Node class.
+    * @brief Node class.
     *
     */
 class Node {
@@ -358,25 +358,25 @@ class Node {
     friend class Iterator;
 
     /**
-        * @breif Enumeration of node types.
+        * @brief Enumeration of node types.
         *
         */
     enum eType { None, SequenceType, MapType, ScalarType };
 
     /**
-        * @breif Default constructor.
+        * @brief Default constructor.
         *
         */
     Node();
 
     /**
-        * @breif Copy constructor.
+        * @brief Copy constructor.
         *
         */
     Node(const Node& node);
 
     /**
-        * @breif Assignment constructors.
+        * @brief Assignment constructors.
         *        Converts node to scalar type if needed.
         *
         */
@@ -384,13 +384,13 @@ class Node {
     explicit Node(const char* value);
 
     /**
-        * @breif Destructor.
+        * @brief Destructor.
         *
         */
     ~Node();
 
     /**
-        * @breif Functions for checking type of node.
+        * @brief Functions for checking type of node.
         *
         */
     [[nodiscard]] eType Type() const;
@@ -400,13 +400,13 @@ class Node {
     [[nodiscard]] bool IsScalar() const;
 
     /**
-        * @breif Completely clear node.
+        * @brief Completely clear node.
         *
         */
     void Clear();
 
     /**
-        * @breif Get node as given template type.
+        * @brief Get node as given template type.
         *
         */
     template<typename T>
@@ -415,7 +415,7 @@ class Node {
     }
 
     /**
-        * @breif Get node as given template type.
+        * @brief Get node as given template type.
         *
         */
     template<typename T>
@@ -424,7 +424,7 @@ class Node {
     }
 
     /**
-        * @breif Get size of node.
+        * @brief Get size of node.
         *        Serialization of type None or Scalar will return 0.
         *
         */
@@ -433,7 +433,7 @@ class Node {
     // Sequence operators
 
     /**
-        * @breif Insert sequence item at given index.
+        * @brief Insert sequence item at given index.
         *        Converts node to sequence type if needed.
         *        Adding new item to end of sequence if index is larger than sequence size.
         *
@@ -441,21 +441,21 @@ class Node {
     Node& Insert(size_t index);
 
     /**
-        * @breif Add new sequence index to back.
+        * @brief Add new sequence index to back.
         *        Converts node to sequence type if needed.
         *
         */
     Node& PushFront();
 
     /**
-        * @breif Add new sequence index to front.
+        * @brief Add new sequence index to front.
         *        Converts node to sequence type if needed.
         *
         */
     Node& PushBack();
 
     /**
-        * @breif    Get sequence/map item.
+        * @brief    Get sequence/map item.
         *           Converts node to sequence/map type if needed.
         *
         * @param index  Sequence index. Returns None type Node if index is unknown.
@@ -466,7 +466,7 @@ class Node {
     Node& operator[](const std::string& key);
 
     /**
-        * @breif Erase item.
+        * @brief Erase item.
         *        No action if node is not a sequence or map.
         *
         */
@@ -474,7 +474,7 @@ class Node {
     void Erase(const std::string& key);
 
     /**
-        * @breif Assignment operators.
+        * @brief Assignment operators.
         *
         */
     Node& operator=(const Node& node);
@@ -482,14 +482,14 @@ class Node {
     Node& operator=(const char* value);
 
     /**
-        * @breif Get start iterator.
+        * @brief Get start iterator.
         *
         */
     Iterator Begin();
     [[nodiscard]] ConstIterator Begin() const;
 
     /**
-        * @breif Get end iterator.
+        * @brief Get end iterator.
         *
         */
     Iterator End();
@@ -497,7 +497,7 @@ class Node {
 
   private:
     /**
-        * @breif Get as string. If type is scalar, else empty.
+        * @brief Get as string. If type is scalar, else empty.
         *
         */
     [[nodiscard]] const std::string& AsString() const;
@@ -506,7 +506,7 @@ class Node {
 };
 
 /**
-    * @breif Parsing functions.
+    * @brief Parsing functions.
     *        Population given root node with deserialized data.
     *
     * @param root       Root node to populate.
@@ -527,14 +527,14 @@ void Parse(Node& root, const std::string& string);
 void Parse(Node& root, const char* buffer, size_t size);
 
 /**
-    * @breif    Serialization configuration structure,
+    * @brief    Serialization configuration structure,
     *           describing output behavior.
     *
     */
 struct SerializeConfig {
 
     /**
-        * @breif Constructor.
+        * @brief Constructor.
         *
         * @param spaceIndentation       Number of spaces per indentation.
         * @param scalarMaxLength        Maximum length of scalars. Serialized as folder scalars if exceeded.
@@ -555,7 +555,7 @@ struct SerializeConfig {
 };
 
 /**
-    * @breif Serialization functions.
+    * @brief Serialization functions.
     *
     * @param root       Root node to serialize.
     * @param filename   Path of output file.
