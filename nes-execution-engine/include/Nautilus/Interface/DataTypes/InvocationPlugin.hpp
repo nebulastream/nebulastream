@@ -13,7 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
-#include <Experimental/NESIR/Types/Stamp.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 #include <Experimental/Utility/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <optional>

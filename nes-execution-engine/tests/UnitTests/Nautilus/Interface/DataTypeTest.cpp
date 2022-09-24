@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>

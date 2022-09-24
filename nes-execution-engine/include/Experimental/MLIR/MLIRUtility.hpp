@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
-#include <Experimental/NESIR/NESIR.hpp>
+#include <Nautilus/IR/NESIR.hpp>
 #include <memory>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/MLIRContext.h>

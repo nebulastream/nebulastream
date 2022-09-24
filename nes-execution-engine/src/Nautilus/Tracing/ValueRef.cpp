@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 

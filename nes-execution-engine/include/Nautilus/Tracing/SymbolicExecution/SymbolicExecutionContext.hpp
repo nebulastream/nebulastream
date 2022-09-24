@@ -16,7 +16,7 @@
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Nautilus/Tracing/Tag.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <functional>
 #include <list>
 #include <unordered_map>

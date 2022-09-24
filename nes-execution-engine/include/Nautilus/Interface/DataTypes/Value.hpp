@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>

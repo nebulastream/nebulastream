@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
-#include <Experimental/NESIR/Operations/Operation.hpp>
-#include <Experimental/NESIR/Types/Stamp.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 #include <memory>
 namespace NES::Nautilus::Tracing {
 

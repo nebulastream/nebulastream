@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
-#include <Experimental/NESIR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 

@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
 #define NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
 
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/NESIR.hpp"
+#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
+#include "Nautilus/IR/NESIR.hpp"
 #include <unordered_set>
 #include <memory>
 

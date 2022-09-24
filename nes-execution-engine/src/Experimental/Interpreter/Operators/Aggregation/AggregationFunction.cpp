@@ -13,8 +13,8 @@
 */
 
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
-#include <Experimental/NESIR/Types/FloatStamp.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
