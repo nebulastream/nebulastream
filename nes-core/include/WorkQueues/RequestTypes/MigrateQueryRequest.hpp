@@ -26,7 +26,7 @@ class MigrateQueryRequest;
 typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
 
 /**
-     * @breif this request is used to migrate a query sub plan
+     * @brief this request is used to migrate a query sub plan
      */
 class MigrateQueryRequest : public Request {
 
