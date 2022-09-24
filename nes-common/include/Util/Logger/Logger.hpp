@@ -70,6 +70,14 @@ enum class LogLevel : uint8_t {
  * @return integer between 1 and 7 to identify the log level.
  */
 constexpr uint64_t getLogLevel(const LogLevel value) { return magic_enum::enum_integer(value); }
+
+/**
+ * @brief getLogName returns the string representation LogLevel value for a specific LogLevel value.
+ * @param value LogLevel
+ * @return string of value
+ */
+constexpr auto getLogName(const LogLevel value) { return magic_enum::enum_name(value); }
+
 namespace detail {
 class LoggerDetails;
 using LoggerDetailsPtr = std::unique_ptr<LoggerDetails>;
