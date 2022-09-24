@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Experimental/NESIR/Types/IntegerStamp.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {

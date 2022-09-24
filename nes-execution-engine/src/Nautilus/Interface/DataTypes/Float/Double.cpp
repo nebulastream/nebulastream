@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Double::Double(double value) : TraceableType(&type), value(value){};
 IR::Types::StampPtr Double::getType() const { return IR::Types::StampFactory::createDoubleStamp(); }
-std::unique_ptr<Any> Double::copy() { return create<Double>(value); }
-std::unique_ptr<Double> Double::add(const Double& otherValue) const { return create<Double>(value + otherValue.value); }
-std::unique_ptr<Double> Double::sub(const Double& otherValue) const { return create<Double>(value - otherValue.value); }
-std::unique_ptr<Double> Double::mul(const Double& otherValue) const { return create<Double>(value * otherValue.value); }
-std::unique_ptr<Double> Double::div(const Double& otherValue) const { return create<Double>(value / otherValue.value); }
-std::unique_ptr<Boolean> Double::equals(const Double& otherValue) const { return create<Boolean>(value == otherValue.value); }
-std::unique_ptr<Boolean> Double::lessThan(const Double& otherValue) const { return create<Boolean>(value < otherValue.value); }
-std::unique_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
+std::shared_ptr<Any> Double::copy() { return create<Double>(value); }
+std::shared_ptr<Double> Double::add(const Double& otherValue) const { return create<Double>(value + otherValue.value); }
+std::shared_ptr<Double> Double::sub(const Double& otherValue) const { return create<Double>(value - otherValue.value); }
+std::shared_ptr<Double> Double::mul(const Double& otherValue) const { return create<Double>(value * otherValue.value); }
+std::shared_ptr<Double> Double::div(const Double& otherValue) const { return create<Double>(value / otherValue.value); }
+std::shared_ptr<Boolean> Double::equals(const Double& otherValue) const { return create<Boolean>(value == otherValue.value); }
+std::shared_ptr<Boolean> Double::lessThan(const Double& otherValue) const { return create<Boolean>(value < otherValue.value); }
+std::shared_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
 double Double::getValue() const { return value; }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

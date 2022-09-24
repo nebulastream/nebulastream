@@ -24,7 +24,6 @@ endif ()
 
 add_subdirectory(NESIR)
 add_subdirectory(Interpreter)
-add_subdirectory(Trace)
 add_subdirectory(Utility)
 add_subdirectory(Runtime)
 add_subdirectory(ExecutionEngine)

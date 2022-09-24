@@ -11,41 +11,41 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Experimental/NESIR/Types/IntegerStamp.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 UInt16::UInt16(uint16_t value) : Int(&type), value(value){};
 IR::Types::StampPtr UInt16::getType() const { return IR::Types::StampFactory::createUInt16Stamp(); }
-std::unique_ptr<Any> UInt16::copy() { return create<UInt16>(value); }
-const std::unique_ptr<Int> UInt16::add(const Int& other) const {
+std::shared_ptr<Any> UInt16::copy() { return create<UInt16>(value); }
+const std::shared_ptr<Int> UInt16::add(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<UInt16>(value + otherValue.value);
 }
 
-const std::unique_ptr<Int> UInt16::sub(const Int& other) const {
+const std::shared_ptr<Int> UInt16::sub(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<UInt16>(value - otherValue.value);
 }
-const std::unique_ptr<Int> UInt16::div(const Int& other) const {
+const std::shared_ptr<Int> UInt16::div(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<UInt16>(value / otherValue.value);
 }
-const std::unique_ptr<Int> UInt16::mul(const Int& other) const {
+const std::shared_ptr<Int> UInt16::mul(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<UInt16>(value * otherValue.value);
 }
-const std::unique_ptr<Boolean> UInt16::equals(const Int& other) const {
+const std::shared_ptr<Boolean> UInt16::equals(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<Boolean>(value == otherValue.value);
 }
-const std::unique_ptr<Boolean> UInt16::lessThan(const Int& other) const {
+const std::shared_ptr<Boolean> UInt16::lessThan(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<Boolean>(value < otherValue.value);
 }
-const std::unique_ptr<Boolean> UInt16::greaterThan(const Int& other) const {
+const std::shared_ptr<Boolean> UInt16::greaterThan(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
     return create<Boolean>(value < otherValue.value);
 }

@@ -13,9 +13,9 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
-#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <memory>
 #include <stdio.h>
@@ -100,7 +100,7 @@ auto transform(Arg argument) {
 }
 
 template<typename Arg>
-Trace::InputVariant getRefs(Arg argument) {
+Nautilus::Tracing::InputVariant getRefs(Arg argument) {
     return argument.ref;
 }
 
@@ -198,32 +198,32 @@ template<typename R>
 auto FunctionCall(std::string functionName, R (*fnptr)()) {
     //auto mangledName = getMangledName((void*) fnptr);
     //NES_DEBUG("Function " << mangledName);
-    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
+    std::vector<Nautilus::Tracing::InputVariant> varRefs = {Nautilus::Tracing::FunctionCallTarget(functionName, (void*) fnptr)};
 
     if constexpr (std::is_void_v<R>) {
-        if (!Trace::isInSymbolicExecution()) {
+        if (!Nautilus::Tracing::isInSymbolicExecution()) {
             fnptr();
         }
-        auto ctx = Trace::getThreadLocalTraceContext();
+        auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
         if (ctx != nullptr) {
-            auto operation = Trace::Operation(Trace::CALL, varRefs);
+            auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, varRefs);
             ctx->trace(operation);
         }
     } else {
-        if (!Trace::isInSymbolicExecution()) {
+        if (!Nautilus::Tracing::isInSymbolicExecution()) {
             auto res = fnptr();
             auto resultValue = transformReturn(res);
-            auto ctx = Trace::getThreadLocalTraceContext();
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
             if (ctx != nullptr) {
 
-                auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+                auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultValue.ref, varRefs);
                 ctx->trace(operation);
             }
             return resultValue;
         } else {
             auto resultValue = createDefault<R>();
-            auto ctx = Trace::getThreadLocalTraceContext();
-            auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+            auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultValue.ref, varRefs);
             ctx->trace(operation);
             return resultValue;
         }
@@ -235,35 +235,35 @@ template<typename R, typename... Args2, typename... Args>
 auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... arguments) {
     //auto mangledName = getMangledName((void*) fnptr);
     //NES_DEBUG("Function " << mangledName);
-    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
+    std::vector<Nautilus::Tracing::InputVariant> varRefs = {Nautilus::Tracing::FunctionCallTarget(functionName, (void*) fnptr)};
 
-    for (const Trace::InputVariant& p : {getRefs(arguments)...}) {
+    for (const Nautilus::Tracing::InputVariant& p : {getRefs(arguments)...}) {
         varRefs.emplace_back(p);
     }
 
     if constexpr (std::is_void_v<R>) {
-        if (!Trace::isInSymbolicExecution()) {
+        if (!Nautilus::Tracing::isInSymbolicExecution()) {
             fnptr(transform(std::forward<Args>(arguments))...);
         }
-        auto ctx = Trace::getThreadLocalTraceContext();
+        auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
         if (ctx != nullptr) {
-            auto operation = Trace::Operation(Trace::CALL, varRefs);
+            auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, varRefs);
             ctx->trace(operation);
         }
     } else {
-        if (!Trace::isInSymbolicExecution()) {
+        if (!Nautilus::Tracing::isInSymbolicExecution()) {
             auto res = fnptr(transform(std::forward<Args>(arguments))...);
             auto resultValue = transformReturn(res);
-            auto ctx = Trace::getThreadLocalTraceContext();
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
             if (ctx != nullptr) {
-                auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+                auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultValue.ref, varRefs);
                 ctx->trace(operation);
             }
             return resultValue;
         } else {
             auto resultValue = createDefault<R>();
-            auto ctx = Trace::getThreadLocalTraceContext();
-            auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+            auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
+            auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultValue.ref, varRefs);
             ctx->trace(operation);
             return resultValue;
         }

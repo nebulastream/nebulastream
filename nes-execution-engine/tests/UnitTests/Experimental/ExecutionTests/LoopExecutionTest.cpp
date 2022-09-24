@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
@@ -25,10 +25,10 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -42,8 +42,8 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class LoopExecutionTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -74,7 +74,7 @@ Value<> sumLoop(int upperLimit) {
 
 
 TEST_F(LoopExecutionTest, sumLoopTestSCF) {
-    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop(10);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -106,7 +106,7 @@ Value<> nestedSumLoop(int upperLimit) {
 
 
 TEST_F(LoopExecutionTest, nestedLoopTest) {
-    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedSumLoop(10);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -126,7 +126,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 }
 
 // TEST_F(LoopExecutionTest, sumLoopTestCF) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return sumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -156,7 +156,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, ifSumLoopTest) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return ifSumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -188,7 +188,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return ifElseSumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -219,7 +219,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return elseOnlySumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -253,7 +253,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return nestedIfSumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -289,7 +289,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return nestedIfElseSumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));
@@ -324,7 +324,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
 // }
 
 // TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
-//     auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
 //         return nestedElseOnlySumLoop();
 //     });
 //     execution = ssaCreationPhase.apply(std::move(execution));

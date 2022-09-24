@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <Experimental/MLIR/MLIRExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-
+#include <Experimental/MLIR/MLIRExecutablePipeline.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 
@@ -27,7 +26,7 @@ void MLIRExecutablePipeline::setup() {
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, executionContext.get());
     auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
         std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
-    runtimeExecutionContextRef.ref = Trace::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
+    runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
     auto ctx = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
 }

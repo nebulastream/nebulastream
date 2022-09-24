@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Any.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 

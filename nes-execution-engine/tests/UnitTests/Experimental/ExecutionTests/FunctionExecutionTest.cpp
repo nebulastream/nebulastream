@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/NESIR/ProxyFunctions.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -29,8 +29,8 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class FunctionExecutionTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -61,7 +61,7 @@ Value<> addIntFunction() {
 
 TEST_F(FunctionExecutionTest, addIntFunctionTest) {
 
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return addIntFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -88,7 +88,7 @@ Value<> returnConstFunction() {
 
 TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
 
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return returnConstFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -116,7 +116,7 @@ void voidExceptionFunction() {
 
 TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
 
-    auto executionTrace = Trace::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         voidExceptionFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -144,8 +144,8 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 
 TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     Value<Int64> tempPara = Value<Int64>(0l);
-    tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&tempPara]() {
+    tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
     });
     std::cout << *executionTrace.get() << std::endl;

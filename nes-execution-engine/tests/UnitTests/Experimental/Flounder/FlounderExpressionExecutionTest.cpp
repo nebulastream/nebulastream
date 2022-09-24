@@ -15,8 +15,8 @@
 
 
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
@@ -28,10 +28,10 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>

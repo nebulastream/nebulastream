@@ -13,35 +13,21 @@
 */
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/DataValue/MemRef.hpp>
-#include <Nautilus/Interface/DataValue/Value.hpp>
-#include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/NESIR/Types/FloatStamp.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
-#include <Experimental/Trace/ExecutionTrace.hpp>
-#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class TraceTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
@@ -66,7 +52,7 @@ void assignmentOperator() {
 
 TEST_F(TraceTest, assignmentOperatorTest) {
 
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace =  Nautilus::Tracing::traceFunction([]() {
         assignmentOperator();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -75,10 +61,10 @@ TEST_F(TraceTest, assignmentOperatorTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::ADD);
-    ASSERT_EQ(block0.operations[3].op, Trace::RETURN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::RETURN);
 }
 
 void arithmeticExpression() {
@@ -89,7 +75,7 @@ void arithmeticExpression() {
 }
 
 TEST_F(TraceTest, arithmeticExpressionTest) {
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         arithmeticExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -99,15 +85,15 @@ TEST_F(TraceTest, arithmeticExpressionTest) {
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
 
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
 
-    ASSERT_EQ(block0.operations[3].op, Trace::SUB);
-    ASSERT_EQ(block0.operations[4].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[5].op, Trace::MUL);
-    ASSERT_EQ(block0.operations[6].op, Trace::DIV);
-    ASSERT_EQ(block0.operations[7].op, Trace::ADD);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::SUB);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::MUL);
+    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::DIV);
+    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::ADD);
 }
 
 void logicalExpressionLessThan() {
@@ -116,15 +102,15 @@ void logicalExpressionLessThan() {
 }
 
 TEST_F(TraceTest, logicalExpressionLessThanTest) {
-    auto executionTrace = Trace::traceFunction(logicalExpressionLessThan);
+    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessThan);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::LESS_THAN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::LESS_THAN);
 }
 
 void logicalExpressionEquals() {
@@ -133,16 +119,16 @@ void logicalExpressionEquals() {
 }
 
 TEST_F(TraceTest, logicalExpressionEqualsTest) {
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         logicalExpressionEquals();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::EQUALS);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::EQUALS);
 }
 
 void logicalExpressionLessEquals() {
@@ -151,17 +137,17 @@ void logicalExpressionLessEquals() {
 }
 
 TEST_F(TraceTest, logicalExpressionLessEqualsTest) {
-    auto executionTrace = Trace::traceFunction(logicalExpressionLessEquals);
+    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::LESS_THAN);
-    ASSERT_EQ(block0.operations[3].op, Trace::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Trace::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OR);
 }
 
 void logicalExpressionGreater() {
@@ -170,15 +156,15 @@ void logicalExpressionGreater() {
 }
 
 TEST_F(TraceTest, logicalExpressionGreaterTest) {
-    auto executionTrace = Trace::traceFunction(logicalExpressionGreater);
+    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreater);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::GREATER_THAN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::GREATER_THAN);
 }
 
 void logicalExpressionGreaterEquals() {
@@ -187,16 +173,16 @@ void logicalExpressionGreaterEquals() {
 }
 
 TEST_F(TraceTest, logicalExpressionGreaterEqualsTest) {
-    auto executionTrace = Trace::traceFunction(logicalExpressionGreaterEquals);
+    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreaterEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::GREATER_THAN);
-    ASSERT_EQ(block0.operations[3].op, Trace::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Trace::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::GREATER_THAN);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OR);
 }
 
 void logicalExpression() {
@@ -205,7 +191,7 @@ void logicalExpression() {
 }
 
 TEST_F(TraceTest, logicalExpressionTest) {
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         logicalExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -213,14 +199,14 @@ TEST_F(TraceTest, logicalExpressionTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::EQUALS);
-    ASSERT_EQ(block0.operations[3].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[4].op, Trace::LESS_THAN);
-    ASSERT_EQ(block0.operations[5].op, Trace::AND);
-    ASSERT_EQ(block0.operations[6].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[7].op, Trace::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::AND);
+    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::OR);
 }
 
 void ifCondition(bool flag) {
@@ -233,9 +219,9 @@ void ifCondition(bool flag) {
 }
 
 TEST_F(TraceTest, ifConditionTest) {
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         ifCondition(true);
-        Trace::getThreadLocalTraceContext()->reset();
+        Nautilus::Tracing::getThreadLocalTraceContext()->reset();
         ifCondition(false);
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -245,25 +231,25 @@ TEST_F(TraceTest, ifConditionTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
 
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::CMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 0);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::SUB);
-    ASSERT_EQ(block1.operations[2].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::SUB);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
-    ASSERT_EQ(blockref.arguments[0], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Trace::JMP);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::JMP);
 
-    auto blockref2 = std::get<Trace::BlockRef>(block2.operations[0].input[0]);
+    auto blockref2 = std::get<Nautilus::Tracing::BlockRef>(block2.operations[0].input[0]);
     ASSERT_EQ(blockref2.block, 3);
     ASSERT_EQ(blockref2.arguments.size(), 1);
     ASSERT_EQ(blockref2.arguments[0], block2.arguments[0]);
@@ -272,8 +258,8 @@ TEST_F(TraceTest, ifConditionTest) {
     ASSERT_EQ(block3.predecessors[0], 1);
     ASSERT_EQ(block3.predecessors[1], 2);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::ADD);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
 }
 
 void ifElseCondition(bool flag) {
@@ -289,9 +275,9 @@ void ifElseCondition(bool flag) {
 }
 
 TEST_F(TraceTest, ifElseConditionTest) {
-    auto executionTrace = Trace::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         ifElseCondition(true);
-        Trace::getThreadLocalTraceContext()->reset();
+        Nautilus::Tracing::getThreadLocalTraceContext()->reset();
         ifElseCondition(false);
     });
     std::cout << *executionTrace << std::endl;
@@ -300,37 +286,37 @@ TEST_F(TraceTest, ifElseConditionTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[3].op, Trace::CMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::CMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 0);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::SUB);
-    ASSERT_EQ(block1.operations[2].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::SUB);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
-    ASSERT_EQ(blockref.arguments[0], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
     ASSERT_EQ(block2.arguments.size(), 2);
-    ASSERT_EQ(block2.operations[0].op, Trace::MUL);
-    ASSERT_EQ(block2.operations[1].op, Trace::JMP);
-    auto blockref2 = std::get<Trace::BlockRef>(block2.operations[1].input[0]);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::MUL);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::JMP);
+    auto blockref2 = std::get<Nautilus::Tracing::BlockRef>(block2.operations[1].input[0]);
     ASSERT_EQ(blockref2.block, 3);
     ASSERT_EQ(blockref2.arguments.size(), 1);
-    auto resultRef = std::get<Trace::ValueRef>(block2.operations[0].result);
+    auto resultRef = std::get<Nautilus::Tracing::ValueRef>(block2.operations[0].result);
     ASSERT_EQ(blockref2.arguments[0], resultRef);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 1);
     ASSERT_EQ(block3.predecessors[1], 2);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::ADD);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
 }
 
 void emptyLoop() {
@@ -348,7 +334,7 @@ void emptyLoop() {
 }
 
 TEST_F(TraceTest, emptyLoopTest) {
-    auto execution = Trace::traceFunction([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         emptyLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -356,33 +342,33 @@ TEST_F(TraceTest, emptyLoopTest) {
     auto basicBlocks = execution->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::ADD);
-    ASSERT_EQ(block1.operations[2].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[1], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block2.operations[1].op, Trace::SUB);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::SUB);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Trace::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
 }
 
 void longEmptyLoop() {
@@ -395,7 +381,7 @@ void longEmptyLoop() {
 }
 
 TEST_F(TraceTest, longEmptyLoopTest) {
-    auto execution = Trace::traceFunction([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         longEmptyLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -403,33 +389,33 @@ TEST_F(TraceTest, longEmptyLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     std::cout << execution << std::endl;
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::ADD);
-    ASSERT_EQ(block1.operations[2].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[1], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block2.operations[1].op, Trace::SUB);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::SUB);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Trace::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
 }
 
 void sumLoop() {
@@ -442,7 +428,7 @@ void sumLoop() {
 
 TEST_F(TraceTest, sumLoopTest) {
 
-    auto execution = Trace::traceFunction([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -450,36 +436,36 @@ TEST_F(TraceTest, sumLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     std::cout << execution << std::endl;
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::ADD);
-    ASSERT_EQ(block1.operations[2].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[3].op, Trace::ADD);
-    ASSERT_EQ(block1.operations[4].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[4].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[3].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block1.operations[4].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[4].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[1], std::get<Trace::ValueRef>(block1.operations[3].result));
-    ASSERT_EQ(blockref.arguments[0], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<Nautilus::Tracing::ValueRef>(block1.operations[3].result));
+    ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block2.operations[1].op, Trace::EQUALS);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::EQUALS);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Trace::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
 }
 
 void sumWhileLoop() {
@@ -491,7 +477,7 @@ void sumWhileLoop() {
 }
 
 TEST_F(TraceTest, sumWhileLoopTest) {
-    auto execution = Trace::traceFunction([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         sumWhileLoop();
     });
 
@@ -500,32 +486,32 @@ TEST_F(TraceTest, sumWhileLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     std::cout << *execution << std::endl;
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block1.operations[1].op, Trace::ADD);
-    ASSERT_EQ(block1.operations[2].op, Trace::JMP);
-    auto blockref = std::get<Trace::BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 1);
-    ASSERT_EQ(blockref.arguments[0], std::get<Trace::ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block2.operations[1].op, Trace::EQUALS);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::EQUALS);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Trace::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
 }
 
 void invertedLoop() {
@@ -538,7 +524,7 @@ void invertedLoop() {
 }
 
 TEST_F(TraceTest, invertedLoopTest) {
-    auto execution = Trace::traceFunction([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         invertedLoop();
     });
     std::cout << execution << std::endl;
@@ -547,13 +533,13 @@ TEST_F(TraceTest, invertedLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     std::cout << execution << std::endl;
-    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op, Trace::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Trace::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::JMP);
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -563,10 +549,10 @@ TEST_F(TraceTest, invertedLoopTest) {
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op, Trace::ADD);
-    ASSERT_EQ(block3.operations[2].op, Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[3].op, Trace::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block3.operations[3].op, Nautilus::Tracing::CMP);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

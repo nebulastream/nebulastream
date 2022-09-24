@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
-#include <Nautilus/Interface/DataValue/Value.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class WorkerContext {

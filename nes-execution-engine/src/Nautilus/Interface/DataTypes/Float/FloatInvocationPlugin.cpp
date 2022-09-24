@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataValue/Float/Double.hpp>
-#include <Nautilus/Interface/DataValue/Float/Float.hpp>
-#include <Nautilus/Interface/DataValue/Integer/Int.hpp>
-#include <Nautilus/Interface/DataValue/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Experimental/NESIR/Types/FloatStamp.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class FloatInvocationPlugin : public InvocationPlugin {
