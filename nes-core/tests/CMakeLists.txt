@@ -44,15 +44,13 @@ target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
-### BasicTest ###
-add_executable(basic-test "Integration/BasicTest.cpp")
-target_link_libraries(basic-test nes-tests)
-add_test(NAME basic-test COMMAND basic-test)
 
-### Fault tolerance based query merger test ###
-add_executable(fault-tolerance-based-query-merger-test "UnitTests/Optimizer/QueryMerger/FaultToleranceBasedQueryMergerRuleTest.cpp")
-target_link_libraries(fault-tolerance-based-query-merger-test nes-tests)
-add_test(NAME fault-tolerance-based-query-merger-test COMMAND fault-tolerance-based-query-merger-test)
+### OutputQueueTest ###
+add_executable(fault-tolerance-test "UnitTests/Optimizer/QueryPlacement/FaultToleranceTest.cpp")
+target_link_libraries(fault-tolerance-test nes-tests)
+add_test(NAME fault-tolerance-test COMMAND fault-tolerance-test)
+
+
 
 ### Query Placement Test Sandbox ###
 add_executable(query-placement-test-sandbox "UnitTests/Optimizer/QueryPlacement/QueryPlacementTestSandbox.cpp")
@@ -457,7 +455,7 @@ add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPla
 target_link_libraries(query-placement-test nes-tests)
 add_test(NAME query-placement-test COMMAND query-placement-test)
 
-add_executable(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp")
+add_executable(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp" UnitTests/Optimizer/QueryPlacement/FaultToleranceTest.cpp)
 target_link_libraries(ilp-placement-test nes-tests)
 add_test(NAME ilp-placement-test COMMAND ilp-placement-test)
 

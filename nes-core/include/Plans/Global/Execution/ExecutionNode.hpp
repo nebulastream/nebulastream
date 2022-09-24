@@ -108,11 +108,21 @@ class ExecutionNode : public Node {
      */
     uint32_t getOccupiedResources(QueryId queryId);
 
+    void setAdjustedCosts(QueryId queryId, float adjustedCosts);
+
+    float getAdjustedCostsByQueryId(QueryId queryId);
+
+    void setDownstreamRatio(float ratio);
+
+    float getDownstreamRatio();
+
     bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
 
     std::vector<std::string> toMultilineString() override;
+
+
 
   private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
@@ -135,6 +145,9 @@ class ExecutionNode : public Node {
      */
     std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
     const std::vector<std::string> toMultilineString() const;
+
+    float downstreamRatio;
+    std::map<QueryId, float> adjustedCosts;
 };
 }// namespace NES
 

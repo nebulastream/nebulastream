@@ -61,8 +61,8 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         //3. Check fault tolerance
         //FaultToleranceType ftApproach = checkFaultTolerance(globalExecutionPlan, topology, queryId);
-        faultToleranceType = checkFaultTolerance(globalExecutionPlan, topology, queryId);
-        NES_INFO("\nCHOSEN FAULT-TOLERANCE APPROACH: " + toString(faultToleranceType));
+        //faultToleranceType = checkFaultTolerance(globalExecutionPlan, topology, queryId);
+        //NES_INFO("\nCHOSEN FAULT-TOLERANCE APPROACH: " + toString(faultToleranceType));
 
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -274,7 +274,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
         placeOperator(queryId, parent->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
 }
-
+/*
 FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr globalExecutionPlan,
                                               TopologyPtr topology,
                                               QueryId queryId) {
@@ -319,6 +319,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     double totalAvailableResources = 0;
     double totalUsedResources = 0;
     double totalResourceCapacity = 0;
+    */
 
     /*if(!otherNodesAvailable(globalExecutionPlan, topologyIds,queryId)){
         NES_WARNING("\nFAULT-TOLERANCE CANNOT BE PROVIDED. THERE ARE NO POTENTIAL BACKUP NODES AVAILABLE.");
@@ -327,7 +328,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
 
 
-
+/*
     double highestCost = 0;
 
     //Determine resource values of nodes from the Global Execution Plan after placing the query.
@@ -395,16 +396,18 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     std::vector<int> checkpointingCandidateIds;
     bool activeStandbyPossible = false;
     bool checkpointingPossible = false;
-
+*/
 
     //Check if there are nodes in the topology that can support the maximum query fragment cost. If there are such nodes, choose active standby.
     //TODO Potentially change the if condition so that only nodes are considered on which there is no fragment of the same query already running.
     //TODO Only consider nodes of the same depth
-    for (auto& topologyId : topologyIds) {
+   /* for (auto& topologyId : topologyIds) {
 
 
 
-        if (topology->findNodeWithId(topologyId)->getAvailableResources() < highestCost /*&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))*/) {
+        if (topology->findNodeWithId(topologyId)->getAvailableResources() < highestCost
+            //&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))
+            ) {
             NES_WARNING("\n[CPU] ACTIVE_STANDBY not possible on node#" + std::to_string(topologyId) + " because it only has "
                         + std::to_string(topology->findNodeWithId(topologyId)->getAvailableResources()) + " available resources when "
                         + std::to_string(highestCost) + " was needed.")
@@ -417,7 +420,9 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
             activeStandbyPossible = true;
         }
 
-        if (topology->findNodeWithId(topologyId)->getResourceCapacity() < highestCost /*&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))*/) {
+        if (topology->findNodeWithId(topologyId)->getResourceCapacity() < highestCost
+            //&& (!globalExecutionPlan->checkIfExecutionNodeExists(topologyNode->getId()))
+            ) {
             NES_WARNING("\n[CPU] CHECKPOINTING not possible on node#" + std::to_string(topologyId) + " because it only has a capacity of "
                         + std::to_string(topology->findNodeWithId(topologyId)->getAvailableResources()) + " when "
                         + std::to_string(highestCost) + " was needed.")
@@ -484,7 +489,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
 
     float highestExecutionPlanCost = calcExecutionPlanCosts(globalExecutionPlan);
 
-    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();*/
 
 
 
@@ -540,7 +545,7 @@ FaultToleranceType BottomUpStrategy::checkFaultTolerance(GlobalExecutionPlanPtr 
     }
     }*/
 
-    NES_INFO("HIGHEST ACTIVE STANDBY COST: " + std::to_string(highestExecutionPlanCost));
+    /*NES_INFO("HIGHEST ACTIVE STANDBY COST: " + std::to_string(highestExecutionPlanCost));
 
 
     //Print results.
@@ -640,31 +645,9 @@ float BottomUpStrategy::calcExecutionPlanCosts(GlobalExecutionPlanPtr globalExec
     }
 
     return cost;
-}
+}*/
 
-int BottomUpStrategy::getDepth(NodePtr enode){
-    if (!enode){
-        return 0;
-    }
-
-
-    std::vector<NodePtr> nodev = enode->getChildren();
-
-    int depth = 0;
-
-    for(std::vector<NodePtr>::iterator it = nodev.begin(); it != nodev.end(); it++){
-
-        auto otherDepth = getDepth(*it);
-
-        if(otherDepth > depth){
-            depth = otherDepth;
-        }
-    }
-
-    return depth + 1;
-}
-
-
+/*
 void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topologyNodes, QueryId queryId){
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -857,7 +840,248 @@ void BottomUpStrategy::calcEffectiveValues(std::vector<TopologyNodePtr> topology
 
             }
         }
+
+
+
     }
 
+
+
 }
+
+std::tuple<float,float,float> BottomUpStrategy::calcCheckpointing(ExecutionNodePtr executionNode){
+    ExecutionNodePtr eNode = executionNode;
+    return {0,0,0};
+}
+
+int BottomUpStrategy::getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter){
+
+
+    for(auto& parent : executionNode->getParents()){
+        TopologyNodePtr topParent = parent->as<TopologyNode>();
+
+        counter++;
+        if(std::find(globalExecutionPlan->getRootNodes().begin(), globalExecutionPlan->getRootNodes().end(), parent->as<ExecutionNode>())
+            != globalExecutionPlan->getRootNodes().end()){
+            return counter;
+        }else{
+            for(auto& parent : executionNode->getParents()){
+                ExecutionNodePtr exParent = globalExecutionPlan->getExecutionNodeByNodeId(parent->as<TopologyNode>()->getId());
+                return getDepth(globalExecutionPlan, exParent, counter);
+            }
+        }
+    }
+
+    return 0;
+}
+
+std::vector<ExecutionNodePtr> BottomUpStrategy::getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth){
+
+    std::vector<ExecutionNodePtr> answer;
+
+    if(targetDepth - levelsLower == 0){
+        for(auto& child : executionNode->getChildren()){
+            answer.push_back(child->as<ExecutionNode>());
+        }
+    }else{
+        for(auto& child : executionNode->getChildren()){
+            std::vector<ExecutionNodePtr> answer2 = getNeighborNodes(child->as<ExecutionNode>(), levelsLower + 1, targetDepth);
+            answer.insert(answer.end(), answer2.begin(), answer2.end());
+        }
+    }
+
+    return answer;
+
+}
+
+std::tuple<float,float,float> BottomUpStrategy::calcActiveStandby(ExecutionNodePtr executionNode, int replicas, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    QueryId q = queryId;
+
+    float procCost = 0;
+
+    std::vector<TopologyNodePtr> executionNodeParents;
+    std::vector<TopologyNodePtr> usedParents;
+
+    //TODO determine how to choose which downstream nodes to use as replicas.
+    for(auto& parent : topNode->getParents()){
+        TopologyNodePtr parentTop = parent->as<TopologyNode>();
+        if(globalExecutionPlan->checkIfExecutionNodeExists(parentTop->getId())){
+            executionNodeParents.push_back(parentTop);
+        }
+    }
+
+    if(executionNodeParents.size() < static_cast<size_t>(replicas)){
+        return {-1,-1,-1};
+    }else{
+        for (int i = 0; i < replicas; ++i) {
+            usedParents.push_back(executionNodeParents[i]);
+            procCost += getEffectiveProcessingCosts(globalExecutionPlan->getExecutionNodeByNodeId(executionNodeParents[i]->getId()));
+        }
+    }
+
+    float networkCost = 0;
+
+    float memoryCost = calcOutputQueue(executionNode);
+
+    for(auto& replica : usedParents){
+        networkCost += calcLinkWeight(executionNode, globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
+        memoryCost += calcOutputQueue(globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
+    }
+
+    return {procCost,networkCost,memoryCost};
+}*/
+
+/*float BottomUpStrategy::calcUpstreamBackup(ExecutionNodePtr executionNode, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float procCost = getEffectiveProcessingCosts(executionNode);
+
+    float networkCost = 0;
+
+    //TODO determine which node to use as primary and which one to use as secondary
+    networkCost += calcLinkWeight(executionNode, primary);
+    networkCost += calcLinkWeight(executionNode, secondary);
+    for(auto& upstreamNode : getDownstreamTree(primary, false)){
+        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    }
+    for(auto& upstreamNode : getDownstreamTree(secondary, false)){
+        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    }
+
+    float memoryCost = calcOutputQueue(executionNode);
+
+
+    return 0;
+
+}*/
+
+/*
+float BottomUpStrategy::calcDownstreamLinkWeights(ExecutionNodePtr executionNode, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float downstreamLinkWeights = 0;
+
+    for(auto& parent : topNode->getParents()){
+        TopologyNodePtr topParent = parent->as<TopologyNode>();
+        ExecutionNodePtr exParent = globalExecutionPlan->getExecutionNodeByNodeId(topParent->getId());
+        if(globalExecutionPlan->checkIfExecutionNodeExists(topParent->getId()) && exParent->hasQuerySubPlans(queryId)){
+            downstreamLinkWeights += calcLinkWeight(executionNode, exParent);
+        }
+    }
+
+    return downstreamLinkWeights;
+}
+
+std::vector<TopologyNodePtr> BottomUpStrategy::getUpstreamTree(TopologyNodePtr topNode, bool reversed){
+
+    std::queue<TopologyNodePtr> q;
+    std::vector<TopologyNodePtr> answer;
+
+    q.push(topNode);
+
+    while(!q.empty()){
+        TopologyNodePtr first = q.front();
+        answer.push_back(first);
+        q.pop();
+
+        for(auto& child : first->getChildren()){
+            q.push(child->as<TopologyNode>());
+        }
+    }
+
+    if(reversed){
+        std::reverse(begin(answer),end(answer));
+    }
+    return answer;
+}
+
+std::vector<TopologyNodePtr> BottomUpStrategy::getDownstreamTree(TopologyNodePtr topNode, bool reversed){
+
+    std::queue<TopologyNodePtr> q;
+    std::vector<TopologyNodePtr> answer;
+
+    q.push(topNode);
+
+    while(!q.empty()){
+        TopologyNodePtr first = q.front();
+        answer.push_back(first);
+        q.pop();
+
+        for(auto& parent : first->getParents()){
+            q.push(parent->as<TopologyNode>());
+        }
+    }
+
+    if(reversed){
+        std::reverse(begin(answer),end(answer));
+    }
+    return answer;
+}
+
+float BottomUpStrategy::calcNetworkingCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId, ExecutionNodePtr executionNode){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float cost = 0;
+
+    for(auto& parent : topNode->getParents()){
+        TopologyNodePtr topParent = parent->as<TopologyNode>();
+        ExecutionNodePtr exParent = globalExecutionPlan->getExecutionNodeByNodeId(topParent->getId());
+        if(globalExecutionPlan->checkIfExecutionNodeExists(topParent->getId()) && exParent->hasQuerySubPlans(queryId)){
+            cost += calcLinkWeight(executionNode, exParent);
+        }
+    }
+
+    return cost;
+}
+
+float BottomUpStrategy::calcLinkWeight(ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+    TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
+    TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
+
+
+    float weight =(calcOutputQueue(upstreamNode) - calcOutputQueue(downstreamNode))
+        * getNetworkConnectivity(upstreamNode,downstreamNode) * topDownstreamNode->getResourceCapacity();
+
+    return weight;
+}
+
+float BottomUpStrategy::getNetworkConnectivity(ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+    TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
+    TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
+
+    int conn = std::any_cast<std::map<int,int>>(topUpstreamNode->getNodeProperty("connectivity")).at(downstreamNode->getId());
+    return conn;
+}
+
+float BottomUpStrategy::calcOutputQueue(ExecutionNodePtr executionNode){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    //TODO get queue-trimming / checkpointing interval
+    //TODO get number of stateful operators within one ExecutionNode
+
+    float interval = (rand() % 3 + 0.8);
+    float statefulOperators = 0;
+
+    for(auto& subPlanMap : executionNode->getAllQuerySubPlans()){
+        for (auto& subPlan : subPlanMap.second){
+            for(auto& op : subPlan->getRootOperators()){
+                statefulOperators += 1;
+            }
+        }
+    }
+
+    float queueSize = (topNode->getAvailableBuffers() / (statefulOperators + 1)) / interval;
+    return queueSize;
+}
+
+float BottomUpStrategy::getEffectiveProcessingCosts(ExecutionNodePtr executionNode){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    return std::get<1>(std::any_cast<std::tuple<int,float>>(topNode->getNodeProperty("ressources")));
+}
+
+*/
+
 }// namespace NES::Optimizer

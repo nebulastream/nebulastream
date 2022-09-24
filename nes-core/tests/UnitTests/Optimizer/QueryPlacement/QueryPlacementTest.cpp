@@ -64,7 +64,13 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase2;
     std::shared_ptr<Catalogs::UdfCatalog> udfCatalog;
+    std::vector<ExecutionNodePtr> executionNodes;
+    QueryId queryId;
+    QueryId queryId2;
+    std::string schema;
+    std::string sourceName;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 

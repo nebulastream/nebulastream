@@ -61,6 +61,26 @@ bool ExecutionNode::removeQuerySubPlans(QueryId queryId) {
     return false;
 }
 
+void ExecutionNode::setAdjustedCosts(QueryId queryId, float adjustedCosts){
+    if(this->adjustedCosts.contains(queryId)){
+        this->adjustedCosts.erase(queryId);
+    }
+
+    this->adjustedCosts.insert({queryId, adjustedCosts});
+}
+
+float ExecutionNode::getAdjustedCostsByQueryId(QueryId queryId){
+    return this->adjustedCosts.find(queryId)->second;
+}
+
+void ExecutionNode::setDownstreamRatio(float ratio){
+    this->downstreamRatio = ratio;
+}
+
+float ExecutionNode::getDownstreamRatio(){
+    return this->downstreamRatio;
+}
+
 uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
     // In this method we iterate from the root operators to all their child operator within a query sub plan

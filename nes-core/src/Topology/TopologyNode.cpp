@@ -202,7 +202,21 @@ Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
     return fixedCoordinates;
 }
 
+void TopologyNode::addConnectivity(int nodeId, float connectivity) {
+    if(this->connectivities.contains(nodeId)){
+        this->connectivities.erase(nodeId);
+    }
 
+    this->connectivities.insert({nodeId, connectivity});
+}
+
+float TopologyNode::getConnectivity(int nodeId){
+    return this->connectivities.find(nodeId)->second;
+}
+
+std::map<int,float> TopologyNode::getAllConnectivities(){
+    return this->connectivities;
+}
 
 
 void TopologyNode::setFixedCoordinates(double latitude, double longitude) {

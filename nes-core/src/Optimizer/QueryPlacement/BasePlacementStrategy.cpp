@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "GRPC/WorkerRPCClient.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -615,4 +616,550 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
     candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
     return candidateQueryPlan;
 }
+
+std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth){
+
+    std::vector<ExecutionNodePtr> answer;
+
+    if(targetDepth - levelsLower == 0){
+            answer.push_back(executionNode);
+    }else{
+        for(auto& child : executionNode->getChildren()){
+            std::vector<ExecutionNodePtr> answer2 = getNeighborNodes(child->as<ExecutionNode>(), levelsLower + 1, targetDepth);
+            answer.insert(answer.end(), answer2.begin(), answer2.end());
+        }
+    }
+
+    return answer;
+
+}
+
+int BasePlacementStrategy::getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter){
+
+    std::vector<ExecutionNodePtr> rootNodes = globalExecutionPlan->getRootNodes();
+
+    for(auto& parent : executionNode->getParents()){
+
+
+        counter++;
+        ExecutionNodePtr exParent = parent->as<ExecutionNode>();
+        if(std::find(rootNodes.begin(), rootNodes.end(), exParent)!= rootNodes.end()){
+            return counter;
+        }else{
+            for(auto& parent : executionNode->getParents()){
+
+                ExecutionNodePtr exParent = parent->as<ExecutionNode>();
+                return getDepth(globalExecutionPlan, exParent, counter);
+            }
+        }
+    }
+
+    return counter;
+}
+
+float BasePlacementStrategy::calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float downstreamLinkWeights = 0;
+
+    for(auto& parent : topNode->getParents()){
+        TopologyNodePtr topParent = parent->as<TopologyNode>();
+        ExecutionNodePtr exParent = globalExecutionPlan->getExecutionNodeByNodeId(topParent->getId());
+        if(globalExecutionPlan->checkIfExecutionNodeExists(topParent->getId()) && exParent->hasQuerySubPlans(queryId)){
+            downstreamLinkWeights += calcLinkWeight(topology, executionNode, exParent);
+        }
+    }
+
+    return downstreamLinkWeights;
+}
+
+float BasePlacementStrategy::calcLinkWeight(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+    TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
+    TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
+
+    float queueSizeUpstream = calcOutputQueue(topology, upstreamNode);
+    float queueSizeDownstream = calcOutputQueue(topology, downstreamNode);
+    float networkConnectivity = getNetworkConnectivity(topology, upstreamNode, downstreamNode);
+    float processingCapacity = topDownstreamNode->getResourceCapacity();
+    float formula = (queueSizeUpstream - queueSizeDownstream) * networkConnectivity * processingCapacity;
+
+    float weight = std::max(static_cast<float>(0), formula);
+
+    return weight;
+}
+
+
+float BasePlacementStrategy::calcOutputQueue(TopologyPtr topology, ExecutionNodePtr executionNode){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    //TODO get queue-trimming / checkpointing interval
+    //TODO get number of stateful operators within one ExecutionNode
+
+
+
+    float interval = (rand() % 3 + 0.8);
+    float statefulOperators = 0;
+
+    for(auto& subPlanMap : executionNode->getAllQuerySubPlans()){
+        for (auto& subPlan : subPlanMap.second){
+            for(auto& op : subPlan->getRootOperators()){
+                statefulOperators += 1;
+            }
+        }
+    }
+
+    //TODO some nodes have no available buffers?
+    if(topNode->getAvailableBuffers() == 0){
+        topNode->setAvailableBuffers(rand() % 200000 + 50000);
+    }
+
+    float queueSize = (topNode->getAvailableBuffers() / (statefulOperators + 1)) / interval;
+    return queueSize;
+}
+
+float BasePlacementStrategy::getNetworkConnectivity(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+    TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
+    TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
+
+    return topUpstreamNode->connectivities.find(topDownstreamNode->getId())->second;
+}
+
+void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId){
+
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+    for(auto& exNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
+
+        TopologyNodePtr topNode = topology->findNodeWithId(exNode->getId());
+        for(auto& exNodeParent : topNode->getParents()){
+            TopologyNodePtr topNodeParent = topology->findNodeWithId(exNodeParent->as<TopologyNode>()->getId());
+            if(globalExecutionPlan->checkIfExecutionNodeExists(topNodeParent->getId()) &&
+                globalExecutionPlan->getExecutionNodeByNodeId(topNodeParent->getId())->hasQuerySubPlans(queryId)){
+                TopologyNodePtr topNodeParent = exNodeParent->as<TopologyNode>();
+                auto startIpAddress = topNode->getIpAddress();
+                auto startGrpcPort = topNode->getGrpcPort();
+                std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
+
+                auto destIpAddress = topNodeParent->getIpAddress();
+                auto destGrpcPort = topNodeParent->getGrpcPort();
+                std::string destRpcAddress = destIpAddress + ":" + std::to_string(destGrpcPort);
+
+                int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
+
+                //TODO remove randomness.
+                if(conn == -1){
+                    conn = (rand() % 100 + 10);
+                }
+
+                NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
+                         + " HAS CONN OF: " + std::to_string(conn));
+
+                topNode->addConnectivity(topNodeParent->getId(), conn);
+
+            }
+        }
+
+
+
+    }
+}
+
+void BasePlacementStrategy::initAdjustedCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId){
+
+    for(auto& node : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
+        node->setAdjustedCosts(queryId, 0);
+        node->setDownstreamRatio(0);
+    }
+}
+
+
+void BasePlacementStrategy::calcAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId){
+
+    rootNode->setAdjustedCosts(queryId, rootNode->getOccupiedResources(queryId));
+
+    for(auto& node : getUpstreamTree(topology->findNodeWithId(rootNode->getId()),false)){
+        ExecutionNodePtr nodeEx = globalExecutionPlan->getExecutionNodeByNodeId(node->getId());
+
+
+        for(auto& child : node->getChildren()){
+            TopologyNodePtr childTop = child->as<TopologyNode>();
+
+            if(globalExecutionPlan->checkIfExecutionNodeExists(childTop->getId())){
+                ExecutionNodePtr childEx = globalExecutionPlan->getExecutionNodeByNodeId(child->as<TopologyNode>()->getId());
+
+                float childExOccupiedResources = childEx->getOccupiedResources(queryId);
+                float nodeResourceCapacity = node->getResourceCapacity();
+                float childExResourceCapacity = childEx->getTopologyNode()->getResourceCapacity();
+                float resourceCapacityRatio =  nodeResourceCapacity / childExResourceCapacity;
+
+                float childEffectiveCost = childExOccupiedResources * resourceCapacityRatio;
+
+                if(resourceCapacityRatio > childEx->getDownstreamRatio()){
+                    childEx->setDownstreamRatio(resourceCapacityRatio);
+                }
+
+                if(childEffectiveCost > childEx->getAdjustedCostsByQueryId(queryId)){
+                    childEx->setAdjustedCosts(queryId, childEffectiveCost);
+                }
+            }
+        }
+    }
+
+}
+
+
+
+void BasePlacementStrategy::calcEffectiveValues(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, std::vector<TopologyNodePtr> topologyNodes, QueryId queryId){
+
+
+
+
+
+
+
+
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+
+
+    for(auto& topNode : topologyNodes){
+
+
+        auto ipAddress = topNode->getIpAddress();
+        auto grpcPort = topNode->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+        int localLatency = workerRpcClient->getRTT(rpcAddress);
+
+        if(localLatency != (-1)){
+            topNode->setLatency(localLatency);
+        }else{
+            topNode->setLatency(rand() % 500 + 1);
+        }
+    }
+
+    //prev working: for(auto& enode: executionNodes){
+    for(auto& enode: globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
+
+        TopologyNodePtr node = topology->findNodeWithId(enode->getId());
+
+        auto ipAddress = node->getIpAddress();
+        auto grpcPort = node->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+        //TODO implement latency restraints
+        int localAvailableBuffers = workerRpcClient->sayHi(queryId, rpcAddress);
+
+        if(localAvailableBuffers != (-1)){
+            node->setAvailableBuffers(localAvailableBuffers);
+        }else{
+            node->setAvailableBuffers(rand() % 2000 + 500);
+        }
+    }
+
+    for(auto&root : globalExecutionPlan->getRootNodes()){
+        std::vector<TopologyNodePtr> downstreamTree = getUpstreamTree(topology->findNodeWithId(root->getId()),false);
+
+        float latestOccupiedResources = 0;
+
+        for(auto& node : getUpstreamTree(topology->findNodeWithId(root->getId()),false)){
+
+            ExecutionNodePtr nodeEx = globalExecutionPlan->getExecutionNodeByNodeId(node->getId());
+
+
+
+            if(node->getEffectiveRessources() != 0){
+                float latestOccupiedResources = node->getEffectiveRessources();
+            }
+
+            if(globalExecutionPlan->checkIfExecutionNodeExists(node->getId())){
+
+                if(!node->getChildren().empty()){
+
+                    for(auto& child : node->getChildren()){
+
+                        TopologyNodePtr childTop = child->as<TopologyNode>();
+
+                        if(globalExecutionPlan->checkIfExecutionNodeExists(childTop->getId())){
+
+                            ExecutionNodePtr childEx = globalExecutionPlan->getExecutionNodeByNodeId(childTop->getId());
+
+                            float childExOccupiedResources = childEx->getOccupiedResources(queryId);
+                            float nodeResourceCapacity = node->getResourceCapacity();
+                            float childExResourceCapacity = childEx->getTopologyNode()->getResourceCapacity();
+                            float resourceCapacityRatio =  nodeResourceCapacity / childExResourceCapacity;
+
+                            if(nodeEx->getOccupiedResources(queryId) != 0){
+                                float childEffectiveCost = nodeEx->getOccupiedResources(queryId) * resourceCapacityRatio;
+                            }else{
+                                float childEffectiveCost = latestOccupiedResources * resourceCapacityRatio;
+                            }
+
+                            float childEffectiveCost = nodeEx->getOccupiedResources(queryId) * resourceCapacityRatio;
+
+                            if(childEffectiveCost > childTop->getEffectiveRessources()){
+                                childTop->setEffectiveRessources(childEffectiveCost);
+                                childTop->addNodeProperty("ressources",std::tuple<int,float>{childEx->getOccupiedResources(queryId),
+                                                                                               childEffectiveCost});
+                            }
+                        }
+                    }
+                }
+                if(node->getParents().empty()){
+                    node->addNodeProperty("ressources",std::tuple<int,float>{nodeEx->getOccupiedResources(queryId),
+                                                                               nodeEx->getOccupiedResources(queryId)});
+                    node->setEffectiveRessources(nodeEx->getOccupiedResources(queryId));
+                }
+            }
+        }
+        for (auto& node : getUpstreamTree(topology->findNodeWithId(root->getId()),true)){
+
+            TopologyNodePtr topNode = node->as<TopologyNode>();
+
+            if(node->getChildren().empty() && globalExecutionPlan->checkIfExecutionNodeExists(topNode->getId())){
+                topNode->setEffectiveLatency(node->as<TopologyNode>()->getLatency());
+                topNode->addNodeProperty(std::to_string(queryId),std::tuple<float,float>{topNode->getLatency(),topNode->getLatency()});
+            }
+
+            if(!node->getParents().empty()){
+                for (auto& parent : node->getParents()){
+
+                    bool hasExNodeChild = false;
+
+                    for(auto& child : parent->getChildren()){
+                        TopologyNodePtr childTop = child->as<TopologyNode>();
+                        if(globalExecutionPlan->checkIfExecutionNodeExists(childTop->getId())){
+                            hasExNodeChild = true;
+                            break;
+                        }
+                    }
+
+                    TopologyNodePtr parentTop = parent->as<TopologyNode>();
+
+                    float parentTopLatency = static_cast<float>(parentTop->getLatency());
+                    float floatSize = static_cast<float>(globalExecutionPlan->getAllExecutionNodes().size());
+                    float latencyRatio = static_cast<float>(1.0 / (floatSize));
+                    float newEffectiveLatency = parentTopLatency * latencyRatio;
+
+                    if(globalExecutionPlan->checkIfExecutionNodeExists(topNode->getId())){
+                        if(globalExecutionPlan->checkIfExecutionNodeExists(parentTop->getId())){
+
+
+                            if(newEffectiveLatency > parentTop->getEffectiveLatency()){
+                                parentTop->setEffectiveLatency(newEffectiveLatency);
+                                parentTop->removeNodeProperty("latency");
+                                parentTop->addNodeProperty("latency",std::tuple<float,float>{parentTop->getLatency(),newEffectiveLatency});
+                            }
+                        }
+                    }
+                    else{
+                        if(globalExecutionPlan->checkIfExecutionNodeExists(parentTop->getId())){
+                            if(!hasExNodeChild){
+                                parentTop->setEffectiveLatency(parentTop->getLatency());
+                                parentTop->removeNodeProperty("latency");
+                                parentTop->addNodeProperty("latency",std::tuple<float,float>{parentTop->getLatency(),parentTop->getLatency()});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    for(auto& exNode : executionNodes){
+        TopologyNodePtr topNode = topology->findNodeWithId(exNode->getId());
+        for(auto& exNodeParent : topNode->getParents()){
+            if(globalExecutionPlan->getExecutionNodeByNodeId(topology->findNodeWithId(exNodeParent->as<TopologyNode>()->getId())->getId())->hasQuerySubPlans(queryId)){
+                TopologyNodePtr topNodeParent = exNodeParent->as<TopologyNode>();
+                auto startIpAddress = topNode->getIpAddress();
+                auto startGrpcPort = topNode->getGrpcPort();
+                std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
+
+                auto destIpAddress = topNodeParent->getIpAddress();
+                auto destGrpcPort = topNodeParent->getGrpcPort();
+                std::string destRpcAddress = destIpAddress + ":" + std::to_string(destGrpcPort);
+
+                int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
+
+                if(conn == -1){
+                    conn = (rand() % 100 + 10);
+                }
+
+                NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
+                         + " HAS CONN OF: " + std::to_string(conn));
+
+                if(topNode->hasNodeProperty("connectivity")){
+                    std::map<int,int> linkConnecitivites = std::any_cast<std::map<int,int>>(topNode->getNodeProperty("connectivity"));
+
+                    linkConnecitivites.insert({topNodeParent->getId(),conn});
+                    topNode->removeNodeProperty("connectivity");
+                    topNode->addNodeProperty("connectivity",(topNodeParent->getId(),linkConnecitivites));
+                }else{
+                    std::map<int,int> map = {{topNodeParent->getId(),conn}};
+                    topNode->addNodeProperty("connectivity",map);
+                }
+
+
+
+
+            }
+        }
+
+
+
+    }
+
+
+
+}
+
+std::vector<TopologyNodePtr> BasePlacementStrategy::getDownstreamTree(TopologyNodePtr topNode, bool reversed){
+
+    std::queue<TopologyNodePtr> q;
+    std::vector<TopologyNodePtr> answer;
+
+    q.push(topNode);
+
+    while(!q.empty()){
+        TopologyNodePtr first = q.front();
+        answer.push_back(first);
+        q.pop();
+
+        for(auto& parent : first->getParents()){
+            q.push(parent->as<TopologyNode>());
+        }
+    }
+
+    if(reversed){
+        std::reverse(begin(answer),end(answer));
+    }
+    return answer;
+}
+
+std::vector<TopologyNodePtr> BasePlacementStrategy::getUpstreamTree(TopologyNodePtr topNode, bool reversed){
+
+    std::queue<TopologyNodePtr> q;
+    std::vector<TopologyNodePtr> answer;
+
+    q.push(topNode);
+
+
+    while(!q.empty()){
+        TopologyNodePtr first = q.front();
+        answer.push_back(first);
+        q.pop();
+
+        for(auto& child : first->getChildren()){
+            q.push(child->as<TopologyNode>());
+        }
+    }
+
+    if(reversed){
+        std::reverse(begin(answer),end(answer));
+    }
+    return answer;
+}
+
+//TODO solve all cases of random values
+
+std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                         ExecutionNodePtr executionNode, int replicas, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float downstreamCost = 0;
+
+    //Get the highest possible operator cost of a parent node because this is the worst case load put on replicas
+    for(auto& parent : executionNode->getParents()){
+        int parentCost = parent->as<ExecutionNode>()->getOccupiedResources(queryId);
+        if (parentCost > downstreamCost){
+            downstreamCost = parentCost;
+        }
+    }
+    std::vector<ExecutionNodePtr> downstreamNodes;
+    std::map<float,int> ranks;
+    std::vector<float> linkWeights(downstreamNodes.size());
+
+    //Get all nodes that are one level downstream. Has to be looped because the globalExecutionPlan may have multiple roots
+    for(auto& rootNode : globalExecutionPlan->getRootNodes()){
+        std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
+        downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
+    }
+
+    //Abort if there are less downstream nodes than required replicas
+    if(downstreamNodes.size() < static_cast<size_t>(replicas)){
+        return {-1,-1,-1};
+    }else{
+        //Index linkWeights to nodeIds so that they can be sorted afterwards
+        for(auto& downstreamNode : downstreamNodes){
+            float linkWeight = calcLinkWeight(topology, executionNode, downstreamNode);
+            ranks.insert({linkWeight, downstreamNode->getId()});
+            linkWeights.push_back(linkWeight);
+        }
+    }
+
+    //Sort linkWeights to downstream nodes in descending order so that the first n can be used as replicas.
+    std::sort(linkWeights.begin(), linkWeights.end(), std::greater<float>());
+
+
+
+    float procCost = 0;
+    std::vector<ExecutionNodePtr> downstreamNodesToUse;
+
+    //Get n nodes with the highest linkWeight to the executionNode
+    for (int i = 0; i < replicas; ++i) {
+        downstreamNodesToUse.push_back(globalExecutionPlan->getExecutionNodeByNodeId(ranks.find(linkWeights[i])->second));
+    }
+
+
+    //TODO does replicas mean total number of downstream operator instances or is it 1 origin + k replicas?
+    //Add up the adjustedCosts of placing the operator replicas onto every selected node
+        for(auto& replicatedNode : downstreamNodesToUse){
+            procCost += (replicatedNode->getDownstreamRatio() * downstreamCost);
+        }
+
+
+    float networkCost = 0;
+
+    float memoryCost = calcOutputQueue(topology, executionNode);
+
+    for(auto& replica : downstreamNodesToUse){
+        networkCost += calcLinkWeight(topology, executionNode, globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
+        memoryCost += calcOutputQueue(topology, globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
+    }
+
+    return {procCost,memoryCost,networkCost};
+}
+
+/*std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, ExecutionNodePtr executionNode, QueryId queryId){
+    TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+
+    float procCost = executionNode->getAdjustedCostsByQueryId(queryId);
+
+    float networkCost = 0;
+
+    if(executionNode->getParents().size() < 2){
+        return {-1,-1,-1};
+    }
+
+    //TODO determine which node to use as primary and which one to use as secondary
+    networkCost += calcLinkWeight(executionNode, primary);
+    networkCost += calcLinkWeight(executionNode, secondary);
+    for(auto& upstreamNode : getDownstreamTree(primary, false)){
+        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    }
+    for(auto& upstreamNode : getDownstreamTree(secondary, false)){
+        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    }
+
+    float memoryCost = calcOutputQueue(topology, executionNode);
+
+
+    return {procCost,networkCost,memoryCost};
+
+}*/
+
 }// namespace NES::Optimizer

@@ -130,6 +130,27 @@ class BasePlacementStrategy {
      */
     static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix);
 
+    static int getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter);
+    static std::vector<ExecutionNodePtr> getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth);
+    static float calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcLinkWeight(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
+    static float getNetworkConnectivity(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
+    static float calcOutputQueue(TopologyPtr topology, ExecutionNodePtr executionNode);
+    static void calcEffectiveValues(TopologyPtr topology,
+                                    GlobalExecutionPlanPtr globalExecutionPlan,
+                                    std::vector<TopologyNodePtr> topologyNodes,
+                                    QueryId queryId);
+    static std::vector<TopologyNodePtr> getDownstreamTree(TopologyNodePtr topNode, bool reversed);
+    static std::vector<TopologyNodePtr> getUpstreamTree(TopologyNodePtr topNode, bool reversed);
+    static void initAdjustedCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId);
+    static void calcAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
+    static void initNetworkConnectivities(TopologyPtr topology,
+                                   GlobalExecutionPlanPtr globalExecutionPlan,
+                                   QueryId queryId);
+    static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                             ExecutionNodePtr executionNode, int replicas, QueryId queryId);
+    static std::tuple<float,float,float> calcUpstreamBackup(TopologyPtr topology, ExecutionNodePtr executionNode, QueryId queryId);
+
   protected:
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
@@ -251,6 +272,8 @@ class BasePlacementStrategy {
      * @return true if operators connected otherwise false
      */
     bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
+
+
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

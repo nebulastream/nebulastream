@@ -232,6 +232,14 @@ class TopologyNode : public Node {
 
     bool hasNodeProperty(const std::string& key);
 
+    void addConnectivity(int nodeId, float connectivity);
+
+    float getConnectivity(int nodeId);
+
+    std::map<int,float> getAllConnectivities();
+
+    std::map<int,float> connectivities;
+
   private:
     uint64_t id;
     std::string ipAddress;
@@ -246,6 +254,7 @@ class TopologyNode : public Node {
     bool maintenanceFlag;
     NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
     bool isMobile;
+
 
     /**
      * @brief A field to store a map of node properties

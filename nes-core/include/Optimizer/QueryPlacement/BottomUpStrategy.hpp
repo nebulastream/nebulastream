@@ -37,6 +37,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy() override = default;
 
+
+    std::vector<ExecutionNodePtr> getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth);
+    int getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter);
     static std::unique_ptr<BasePlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
@@ -51,7 +54,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase);
 
-    int getDepth(NodePtr enode);
+
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
@@ -101,6 +104,19 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryId
      */
     void calcEffectiveValues(std::vector<TopologyNodePtr> topologyNodes, QueryId queryId);
+    float getEffectiveProcessingCosts(ExecutionNodePtr executionNode);
+    float calcOutputQueue(ExecutionNodePtr executionNode);
+    float getNetworkConnectivity(ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
+    float calcLinkWeight(ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
+    float calcNetworkingCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId, ExecutionNodePtr executionNode);
+    std::vector<TopologyNodePtr> getDownstreamTree(TopologyNodePtr topNode, bool bottomUp);
+    float calcUpstreamBackup(ExecutionNodePtr executionNode, QueryId queryId);
+    std::vector<TopologyNodePtr> getUpstreamTree(TopologyNodePtr topNode, bool reversed);
+    float calcDownstreamLinkWeights(ExecutionNodePtr executionNode, QueryId queryId);
+    std::tuple<float,float,float> calcActiveStandby(ExecutionNodePtr executionNode, int replicas, QueryId queryId);
+
+    std::tuple<float, float, float> calcCheckpointing(ExecutionNodePtr executionNode);
+
 };
 }// namespace NES::Optimizer
 
