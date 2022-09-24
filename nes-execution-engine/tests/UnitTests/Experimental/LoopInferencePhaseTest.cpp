@@ -14,7 +14,7 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>

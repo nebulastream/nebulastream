@@ -12,24 +12,24 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/Operations/ConstBooleanOperation.hpp"
-#include "Experimental/NESIR/Types/IntegerStamp.hpp"
+#include "Nautilus/IR/Operations/ConstBooleanOperation.hpp"
+#include "Nautilus/IR/Types/IntegerStamp.hpp"
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
-#include <Experimental/NESIR/Operations/CastOperation.hpp>
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
-#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
-#include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
+#include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
+#include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>

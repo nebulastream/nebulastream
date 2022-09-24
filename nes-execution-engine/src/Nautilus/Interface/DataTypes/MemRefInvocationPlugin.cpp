@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class MemRefInvocationPlugin : public InvocationPlugin {

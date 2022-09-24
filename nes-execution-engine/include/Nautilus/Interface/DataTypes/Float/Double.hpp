@@ -13,7 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_DOUBLE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_DOUBLE_HPP_
-#include "Experimental/NESIR/Types/StampFactory.hpp"
+#include "Nautilus/IR/Types/StampFactory.hpp"
 #include "Nautilus/Interface/DataTypes/Any.hpp"
 #include "Nautilus/Interface/DataTypes/Boolean.hpp"
 namespace NES::ExecutionEngine::Experimental::Interpreter {

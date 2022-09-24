@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PIPELINECOMPILERBACKEND_HPP_
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/NESIR/NESIR.hpp>
+#include <Nautilus/IR/NESIR.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <memory>
 namespace NES::ExecutionEngine::Experimental::IR {

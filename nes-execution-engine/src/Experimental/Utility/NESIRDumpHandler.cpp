@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/Operations/BranchOperation.hpp"
-#include "Experimental/NESIR/Operations/IfOperation.hpp"
-#include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/Operation.hpp>
+#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
+#include "Nautilus/IR/Operations/BranchOperation.hpp"
+#include "Nautilus/IR/Operations/IfOperation.hpp"
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Experimental/Utility/NESIRDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>

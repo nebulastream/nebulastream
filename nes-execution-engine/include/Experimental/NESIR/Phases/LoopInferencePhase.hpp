@@ -13,9 +13,9 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
-#include <Experimental/NESIR/NESIR.hpp>
+#include <Nautilus/IR/NESIR.hpp>
 #include <optional>
-#include <Experimental/NESIR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 namespace NES::ExecutionEngine::Experimental::IR {
 class LoopInferencePhase {
 

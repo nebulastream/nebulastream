@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Experimental/NESIR/Types/IntegerStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {

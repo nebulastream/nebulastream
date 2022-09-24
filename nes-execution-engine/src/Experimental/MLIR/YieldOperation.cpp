@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
+#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/MLIR/YieldOperation.hpp>
-#include <Experimental/NESIR/Types/StampFactory.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 YieldOperation::YieldOperation(std::vector<OperationPtr> arguments, BasicBlockPtr nextBlock)
