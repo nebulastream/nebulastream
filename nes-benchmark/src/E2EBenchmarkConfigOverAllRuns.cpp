@@ -32,13 +32,13 @@ NES::Benchmark::E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns()  
 }
 std::string NES::Benchmark::E2EBenchmarkConfigOverAllRuns::toString()  {
     std::stringstream oss;
-    oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds << std::endl
-        << "- numMeasurementsToCollect: " << numMeasurementsToCollect << std::endl
-        << "- experimentMeasureIntervalInSeconds: " << experimentMeasureIntervalInSeconds << std::endl
-        << "- outputFile: " << outputFile << std::endl
-        << "- benchmarkName: " << benchmarkName << std::endl
-        << "- inputType: " << inputType << std::endl
-        << "- query: " << query << std::endl;
+    oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
+        << "- numMeasurementsToCollect: " << numMeasurementsToCollect->getValueAsString() << std::endl
+        << "- experimentMeasureIntervalInSeconds: " << experimentMeasureIntervalInSeconds->getValueAsString() << std::endl
+        << "- outputFile: " << outputFile->getValue() << std::endl
+        << "- benchmarkName: " << benchmarkName->getValue() << std::endl
+        << "- inputType: " << inputType->getValue() << std::endl
+        << "- query: " << query->getValue() << std::endl;
 
 
     return oss.str();

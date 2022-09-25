@@ -18,8 +18,11 @@ limitations under the License.
 #define NES_E2EBENCHMARKCONFIGPERRUN_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <vector>
 
 namespace NES::Benchmark {
+
+
     class E2EBenchmarkConfigPerRun {
 
       public:

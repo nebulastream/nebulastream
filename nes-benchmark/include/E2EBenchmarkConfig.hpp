@@ -21,14 +21,15 @@ limitations under the License.
 #include <Configurations/ConfigurationOption.hpp>
 #include <E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2EBenchmarkConfigPerRun.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 #include <vector>
 
 namespace NES::Benchmark {
 
-
     /**
-     * @brief this class saves all the configurations of a single run
+     * @brief this class saves all the configuration parameters and
+     * creates benchmarks from a provided yaml file
      */
     class E2EBenchmarkConfig {
 
@@ -47,6 +48,21 @@ namespace NES::Benchmark {
          */
         static NES::LogLevel getLogLevel(const std::string& yamlConfigFile,
                                          NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_NONE);
+
+
+        /**
+         * @brief
+         * @param e2EBenchmarkConfig
+         * @param yamlConfig
+         */
+        static void generateConfigOverAllRuns(E2EBenchmarkConfig& e2EBenchmarkConfig, Yaml::Node yamlConfig);
+
+        /**
+         * @brief Generates all runs
+         * @param e2EBenchmarkConfig
+         * @param configFile
+         */
+        static void generateAllConfigsPerRun(E2EBenchmarkConfig& e2EBenchmarkConfig, Yaml::Node configFile);
 
         /**
          * @brief creates a string representation of this object

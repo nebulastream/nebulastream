@@ -44,6 +44,9 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
  */
 namespace Yaml {
 
+constexpr uint32_t YAML_UNSPECIFIED_INTEGER = 32759;
+
+
 /**
  * @brief Forward declarations.
  */

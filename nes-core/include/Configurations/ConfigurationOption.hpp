@@ -82,7 +82,7 @@ class ConfigurationOption {
      * @brief converts the value of this object into a string
      * @return string of the value of this object
      */
-    [[nodiscard]] std::string getValueAsString() const { return string(value); };
+    [[nodiscard]] std::string getValueAsString() const { return std::to_string(value); };
 
     /**
      * @brief get the name of the ConfigurationOption Object
