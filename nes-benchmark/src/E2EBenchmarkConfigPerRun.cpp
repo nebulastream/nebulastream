@@ -26,11 +26,11 @@ NES::Benchmark::E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun()  {
 
 std::string NES::Benchmark::E2EBenchmarkConfigPerRun::toString()  {
     std::stringstream oss;
-    oss << "- numWorkerThreads: " << numWorkerThreads<< std::endl
-        << "- numSources: " << numSources << std::endl
+    oss << "- numWorkerThreads: " << numWorkerThreads->getValueAsString() << std::endl
+        << "- numSources: " << numSources->getValueAsString() << std::endl
 
-        << "- numBuffersToProduce: " << numBuffersToProduce << std::endl
-        << "- bufferSizeInBytes: " << bufferSizeInBytes << std::endl;
+        << "- numBuffersToProduce: " << numBuffersToProduce->getValueAsString() << std::endl
+        << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl;
 
     return oss.str();
 }

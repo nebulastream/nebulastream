@@ -1,1 +1,18 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1,2,4
+numberOfSources: 1,1,1
+bufferSizeInBytes: 1048576
+numberOfBuffersToProduce: 500000000
+
+
+# Benchmark parameter for the entire run
+logLevel: LOG_DEBUG
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+
+inputType: MemoryMode
+dataProviderMode: ZeroCopy
+outputFile: FilterOneSource.csv
+benchmarkName: FilterOneSource
+query: 'Query::from("input").filter(Attribute("value") < 50).sink(NullOutputSinkDescriptor::create());'

@@ -1,0 +1,56 @@
+/*
+Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <DataGeneration/DataGenerator.hpp>
+#include <DataGeneration/DefaultDataGenerator.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <API/Schema.hpp>
+
+namespace NES::DataGeneration {
+
+    DataGenerator::DataGenerator(NES::Runtime::BufferManagerPtr bufferManager)
+        : bufferManager(std::move(bufferManager)) {}
+
+    Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
+
+        auto schema = this->getSchema();
+        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+            return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+            return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        }
+
+        return nullptr;
+    }
+
+    NES::Runtime::TupleBuffer DataGenerator::allocateBuffer(size_t bufferSize) {
+        return bufferManager->getUnpooledBuffer(bufferSize).value();
+    }
+
+    std::shared_ptr<DataGenerator> DataGenerator::createGeneratorByName(std::string name,
+                                                                        Runtime::BufferManagerPtr bufferManager) {
+
+
+        if (name == "Default") {
+            return std::make_shared<DefaultDataGenerator>(bufferManager, /* minValue */ 0, /* maxValue */ 1000);
+        } else {
+            // For now we only support a single data generator
+            NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
+        }
+    }
+}

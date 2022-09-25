@@ -46,6 +46,7 @@ namespace NES::Benchmark {
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;
         Configurations::StringConfigOption query;
+        Configurations::StringConfigOption dataProviderMode;
     };
 }
 

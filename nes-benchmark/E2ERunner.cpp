@@ -13,13 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+#include "../nes-core/tests/include/Util/TestUtils.hpp"
+#include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <DataGeneration/DataGenerator.hpp>
+#include <DataProvider/DataProvider.hpp>
 #include <E2EBenchmarkConfig.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
-#include <string>
 
 namespace NES::Exceptions {
     extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
@@ -91,8 +96,71 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
+    // Creates the data providers
+    NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+
+
+    int portOffset = 0;
+    auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
+        auto coordinatorConf = NES::Configurations::CoordinatorConfiguration::create();
+        auto workerConf = NES::Configurations::WorkerConfiguration::create();
+
+        portOffset += 23;
+
+        // Coordinator configurations
+        coordinatorConf->rpcPort = (5000 + portOffset);
+        coordinatorConf->restPort = (9082 + portOffset);
+        coordinatorConf->enableMonitoring = false;
+
+        // Worker configurations
+        coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerThreads->getValue();
+        coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
+        coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
+        coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
+        coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
+        coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
+        coordinatorConf->worker.queryCompiler.windowingStrategy = NES::QueryCompilation::QueryCompilerOptions::DEFAULT;
+        coordinatorConf->worker.numaAwareness = true;
+        coordinatorConf->worker.queryCompiler.useCompilationCache = true;
+
+        NES_INFO("Starting nesCoordinator...");
+        auto coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConf);
+        auto rpcPort = coordinator->startCoordinator(/**blocking**/ false);
+        NES_INFO("Started nesCoordinator!");
+
+        auto queryService = coordinator->getQueryService();
+        auto queryCatalog = coordinator->getQueryCatalogService();
+
+
+        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
+        bool queryResult = NES::TestUtils::waitForQueryToStart(queryId, queryCatalog);
+        if (!queryResult) {
+            NES_ERROR("Run does not succeed for id=" << queryId);
+            return -1;
+        }
+        NES_INFO("E2ERunner: Started query with id=" << queryId);
+
+
+        NES_INFO("Starting the data providers...");
+        auto buffers = dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(),
+                                                 configPerRun.bufferSizeInBytes->getValue());
+        auto provider = NES::DataProviding::DataProvider::createProvider(/*source Index*/ 1,
+                                                                        e2EBenchmarkConfig,
+                                                                        buffers);
+
+        provider->start();
+        NES_INFO("Started the data povider!");
+
+        // Wait for the system to come to a steady state
+        sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
+
+        // TODO: Collect here the measurements and then write them to a csv file
+        
+
+
+
 
     }
-
 }

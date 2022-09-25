@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include <E2EBenchmarkConfig.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 NES::LogLevel NES::Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfigFile,
@@ -46,24 +47,8 @@ NES::Benchmark::E2EBenchmarkConfig NES::Benchmark::E2EBenchmarkConfig::createBen
         Yaml::Node configFile = *(new Yaml::Node());
         Yaml::Parse(configFile, yamlConfigFile.c_str());
 
-        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-        configOverAllRuns.startupSleepIntervalInSeconds->setValue(configFile["startupSleepIntervalInSeconds"].As<uint32_t>());
-        configOverAllRuns.numMeasurementsToCollect->setValue(configFile["numMeasurementsToCollect"].As<uint32_t>());
-        configOverAllRuns.experimentMeasureIntervalInSeconds->setValue(configFile["experimentMeasureIntervalInSeconds"].As<uint32_t>());
-        configOverAllRuns.outputFile->setValue(configFile["outputFile"].As<std::string>());
-        configOverAllRuns.benchmarkName->setValue(configFile["benchmarkName"].As<std::string>());
-
-        e2EBenchmarkConfig.configOverAllRuns = configOverAllRuns;
-
-        auto
-
-
-
-
-
-        ask user if he wants to run benchmarks as some values have to be duplicated
-
-
+        generateConfigOverAllRuns(e2EBenchmarkConfig, configFile);
+        generateAllConfigsPerRun(e2EBenchmarkConfig, configFile);
 
     } catch (std::exception& e) {
         std::cerr << "Error while trying to create the benchmarks" << std::endl;
@@ -75,12 +60,55 @@ NES::Benchmark::E2EBenchmarkConfig NES::Benchmark::E2EBenchmarkConfig::createBen
 
 std::string NES::Benchmark::E2EBenchmarkConfig::toString() {
     std::stringstream oss;
-    oss << "Parameters over all Runs:\n" << configOverAllRuns.toString() << "\n";
+    oss << "\n###############################################\n"
+        << "Parameters over all Runs:\n" << configOverAllRuns.toString() << "\n";
 
     for (size_t experiment = 0; experiment < allConfigPerRuns.size(); ++experiment) {
-        oss << "Experiment " << experiment << " parameters:\n";
-        oss << allConfigPerRuns[experiment].toString();
+        oss << "Experiment " << experiment << ":" << std::endl;
+        oss << allConfigPerRuns[experiment].toString() << std::endl;
     }
 
     return oss.str();
+}
+void NES::Benchmark::E2EBenchmarkConfig::generateAllConfigsPerRun(E2EBenchmarkConfig& e2EBenchmarkConfig,
+                                                                  Yaml::Node yamlConfig) {
+    /* Getting all parameters per experiment run in vectors */
+    auto numWorkerThreads = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(), ",");
+    auto numSources = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfSources"].As<std::string>(), ",");
+    auto numBuffersToProduce = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersToProduce"].As<std::string>(), ",");
+    auto bufferSizeInBytes = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(), ",");
+
+    size_t totalBenchmarkRuns = numWorkerThreads.size();
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, numSources.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, numBuffersToProduce.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
+
+    Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
+    Util::padVectorToSize<uint32_t>(numSources, totalBenchmarkRuns, numSources.back());
+    Util::padVectorToSize<uint32_t>(numBuffersToProduce, totalBenchmarkRuns, numBuffersToProduce.back());
+    Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
+
+    e2EBenchmarkConfig.allConfigPerRuns.reserve(totalBenchmarkRuns);
+
+    for (size_t i = 0; i < numBuffersToProduce.size(); ++i) {
+        E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
+        e2EBenchmarkConfigPerRun.numWorkerThreads->setValue(numWorkerThreads[i]);
+        e2EBenchmarkConfigPerRun.numBuffersToProduce->setValue(numBuffersToProduce[i]);
+        e2EBenchmarkConfigPerRun.numSources->setValue(numSources[i]);
+        e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
+
+        e2EBenchmarkConfig.allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
+    }
+}
+void NES::Benchmark::E2EBenchmarkConfig::generateConfigOverAllRuns(E2EBenchmarkConfig& e2EBenchmarkConfig,
+                                                                   Yaml::Node yamlConfig) {
+    E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+    configOverAllRuns.startupSleepIntervalInSeconds->setValue(yamlConfig["startupSleepIntervalInSeconds"].As<uint32_t>());
+    configOverAllRuns.numMeasurementsToCollect->setValue(yamlConfig["numMeasurementsToCollect"].As<uint32_t>());
+    configOverAllRuns.experimentMeasureIntervalInSeconds->setValue(yamlConfig["experimentMeasureIntervalInSeconds"].As<uint32_t>());
+    configOverAllRuns.outputFile->setValue(yamlConfig["outputFile"].As<std::string>());
+    configOverAllRuns.benchmarkName->setValue(yamlConfig["benchmarkName"].As<std::string>());
+    configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
+
+    e2EBenchmarkConfig.configOverAllRuns = configOverAllRuns;
 }

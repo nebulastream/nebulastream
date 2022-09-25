@@ -261,6 +261,19 @@ std::vector<std::vector<T>> partition(const std::vector<T>& vec, size_t n) {
     return outVec;
 }
 
+/**
+ * @brief appends newValue until the vector contains a minimum of newSize elements
+ * @tparam T
+ * @param vector
+ * @param newSize
+ * @param newValue
+ */
+template<typename T>
+void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
+    while (vector.size() < newSize) {
+        vector.push_back(newValue);
+    }
+}
 
 
 };// namespace Util

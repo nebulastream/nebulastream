@@ -1,0 +1,86 @@
+/*
+Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#ifndef NES_DATAPROVIDER_HPP
+#define NES_DATAPROVIDER_HPP
+
+#include <DataProvider/TupleBufferHolder.hpp>
+#include <E2EBenchmarkConfig.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+#include <cstdint>
+
+namespace NES::DataProviding {
+    class DataProvider {
+      public:
+        enum DataProviderMode {
+            ZERO_COPY,
+            MEM_COPY
+        };
+
+        /**
+         * @brief creates a DataProvider object
+         * @param id
+         * @param providerMode
+         */
+        explicit DataProvider(uint64_t id, DataProviderMode providerMode);
+
+        /**
+         * @brief default destructor
+         */
+        virtual ~DataProvider() = default;
+
+        /**
+         * @brief provides the next buffer to the runtime by a DataProviderMode way
+         * @param buffer
+         * @param sourceId
+         */
+        void provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId);
+
+        /**
+         * @brief
+         * @param sourceId
+         * @return
+         */
+        virtual std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) = 0;
+
+
+        /**
+         * @brief
+         * @return
+         */
+        static std::shared_ptr<DataProvider> createProvider(uint64_t id,
+                                                            NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,
+                                                            std::vector<Runtime::TupleBuffer> preAllocatedBuffers);
+
+        /**
+         * @brief starts this provider
+         */
+        virtual void start() = 0;
+
+        /**
+         * @brief stops this provider
+         */
+        virtual void stop() = 0;
+
+      private:
+        DataProviderMode providerMode;
+        cuckoohash_map<uintptr_t, TupleBufferHolder> collector;
+    };
+}
+
+
+#endif//NES_DATAPROVIDER_HPP
