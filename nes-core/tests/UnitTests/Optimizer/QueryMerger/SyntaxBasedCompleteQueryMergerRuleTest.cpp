@@ -128,6 +128,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
+
     //execute
     auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);

@@ -142,14 +142,18 @@ class BasePlacementStrategy {
                                     QueryId queryId);
     static std::vector<TopologyNodePtr> getDownstreamTree(TopologyNodePtr topNode, bool reversed);
     static std::vector<TopologyNodePtr> getUpstreamTree(TopologyNodePtr topNode, bool reversed);
-    static void initAdjustedCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId);
-    static void calcAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
+    static void initAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
     static void initNetworkConnectivities(TopologyPtr topology,
                                    GlobalExecutionPlanPtr globalExecutionPlan,
                                    QueryId queryId);
     static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
                                                              ExecutionNodePtr executionNode, int replicas, QueryId queryId);
-    static std::tuple<float,float,float> calcUpstreamBackup(TopologyPtr topology, ExecutionNodePtr executionNode, QueryId queryId);
+    static std::tuple<float,float,float> calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
+    static std::tuple<float, float, float> calcCheckpointing(TopologyPtr topology,
+                                                      GlobalExecutionPlanPtr globalExecutionPlan,
+                                                      ExecutionNodePtr executionNode,
+                                                      QueryId queryId);
+
 
   protected:
     /**

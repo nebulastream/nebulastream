@@ -764,18 +764,11 @@ void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, Glob
     }
 }
 
-void BasePlacementStrategy::initAdjustedCosts(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId){
-
-    for(auto& node : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
-        node->setAdjustedCosts(queryId, 0);
-        node->setDownstreamRatio(0);
-    }
-}
-
-
-void BasePlacementStrategy::calcAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId){
+void BasePlacementStrategy::initAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId){
 
     rootNode->setAdjustedCosts(queryId, rootNode->getOccupiedResources(queryId));
+
+
 
     for(auto& node : getUpstreamTree(topology->findNodeWithId(rootNode->getId()),false)){
         ExecutionNodePtr nodeEx = globalExecutionPlan->getExecutionNodeByNodeId(node->getId());
@@ -1131,18 +1124,80 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
         memoryCost += calcOutputQueue(topology, globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
     }
 
-    return {procCost,memoryCost,networkCost};
+    return {procCost,networkCost,memoryCost};
 }
 
-/*std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, ExecutionNodePtr executionNode, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+
+std::vector<ExecutionNodePtr> downstreamNodes;
+    for(auto& rootNode : globalExecutionPlan->getRootNodes()){
+        std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
+        downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
+    }
+
+    if(downstreamNodes.size() < 2){
+        return {-1,-1,-1};
+    }
+
+    auto max = std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
+                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
+                                {
+                                    return a->getOccupiedResources(queryId) < b->getOccupiedResources(queryId);
+                                } );
+
+    auto min = std::min_element( downstreamNodes.begin(), downstreamNodes.end(),
+                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
+                                {
+                                    return a->getOccupiedResources(queryId) > b->getOccupiedResources(queryId);
+                                } );
+
+    ExecutionNodePtr primary = downstreamNodes[std::distance(downstreamNodes.begin(), max)];
+    TopologyNodePtr topPrimary = topology->findNodeWithId(primary->getId());
+    ExecutionNodePtr secondary = downstreamNodes[std::distance(downstreamNodes.begin(), min)];
+    TopologyNodePtr topSecondary = topology->findNodeWithId(secondary->getId());
+
+    //TODO get "real" weight of operators if implemented?
+    int numOfOperatorsOnPrimary = 0;
+    for(auto& subPlan : primary->getQuerySubPlans(queryId)){
+        numOfOperatorsOnPrimary += subPlan->getRootOperators().size();
+    }
+
+    float procCost = (numOfOperatorsOnPrimary * secondary->getDownstreamRatio());
+
+    //TODO get interval
+    float interval = (rand() % 3 + 0.8);
+
+    //TODO some nodes have no available buffers?
+    if(topPrimary->getAvailableBuffers() == 0){
+        topPrimary->setAvailableBuffers(rand() % 200000 + 50000);
+    }
+
+    float networkCost = (calcLinkWeight(topology,executionNode,secondary) / interval);
+
+    float memoryCost = (topPrimary->getAvailableBuffers() / interval);
+
+    return {procCost, networkCost, memoryCost};
+
+}
+
+/*std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
-    float procCost = executionNode->getAdjustedCostsByQueryId(queryId);
+    //TODO get number of operators that are not sink or source
+    int numOfOperators = 0;
+    for(auto&subPlan : executionNode->getQuerySubPlans(queryId)){
+        numOfOperators += subPlan->getRootOperators().size();
+    }
+    float procCost = (executionNode->getDownstreamRatio() * numOfOperators);
 
     float networkCost = 0;
 
-    if(executionNode->getParents().size() < 2){
-        return {-1,-1,-1};
+    std::vector<ExecutionNodePtr> downstreamNodes;
+
+    //Get all nodes that are one level downstream. Has to be looped because the globalExecutionPlan may have multiple roots
+    for(auto& rootNode : globalExecutionPlan->getRootNodes()){
+        std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
+        downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
     }
 
     //TODO determine which node to use as primary and which one to use as secondary

@@ -146,7 +146,7 @@ class ExecutionNode : public Node {
     std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
     const std::vector<std::string> toMultilineString() const;
 
-    float downstreamRatio;
+    float downstreamRatio = 0;
     std::map<QueryId, float> adjustedCosts;
 };
 }// namespace NES
