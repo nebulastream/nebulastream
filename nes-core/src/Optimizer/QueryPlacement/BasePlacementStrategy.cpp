@@ -1129,7 +1129,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
 
 std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
 
-std::vector<ExecutionNodePtr> downstreamNodes;
+    std::vector<ExecutionNodePtr> downstreamNodes;
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
         std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
         downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
@@ -1180,7 +1180,7 @@ std::vector<ExecutionNodePtr> downstreamNodes;
 
 }
 
-/*std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
     //TODO get number of operators that are not sink or source
@@ -1188,11 +1188,36 @@ std::vector<ExecutionNodePtr> downstreamNodes;
     for(auto&subPlan : executionNode->getQuerySubPlans(queryId)){
         numOfOperators += subPlan->getRootOperators().size();
     }
-    float procCost = (executionNode->getDownstreamRatio() * numOfOperators);
+    float procCost = numOfOperators;
 
     float networkCost = 0;
 
     std::vector<ExecutionNodePtr> downstreamNodes;
+    for(auto& rootNode : globalExecutionPlan->getRootNodes()){
+        std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
+        downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
+    }
+
+    if(downstreamNodes.size() < 2){
+        return {-1,-1,-1};
+    }
+
+    auto max = std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
+                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
+                                {
+                                    return a->getOccupiedResources(queryId) < b->getOccupiedResources(queryId);
+                                } );
+
+    auto min = std::min_element( downstreamNodes.begin(), downstreamNodes.end(),
+                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
+                                {
+                                    return a->getOccupiedResources(queryId) > b->getOccupiedResources(queryId);
+                                } );
+
+    ExecutionNodePtr primary = downstreamNodes[std::distance(downstreamNodes.begin(), max)];
+    TopologyNodePtr topPrimary = topology->findNodeWithId(primary->getId());
+    ExecutionNodePtr secondary = downstreamNodes[std::distance(downstreamNodes.begin(), min)];
+    TopologyNodePtr topSecondary = topology->findNodeWithId(secondary->getId());
 
     //Get all nodes that are one level downstream. Has to be looped because the globalExecutionPlan may have multiple roots
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
@@ -1200,14 +1225,16 @@ std::vector<ExecutionNodePtr> downstreamNodes;
         downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
     }
 
+    //TODO get interval
+    float interval = (rand() % 3 + 0.8);
     //TODO determine which node to use as primary and which one to use as secondary
-    networkCost += calcLinkWeight(executionNode, primary);
-    networkCost += calcLinkWeight(executionNode, secondary);
-    for(auto& upstreamNode : getDownstreamTree(primary, false)){
-        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    networkCost += calcLinkWeight(topology, executionNode, primary) / interval;
+    networkCost += calcLinkWeight(topology, executionNode, secondary) / interval;
+    for(auto& upstreamNode : getDownstreamTree(topPrimary, false)){
+        networkCost += calcDownstreamLinkWeights(topology, globalExecutionPlan, executionNode, queryId) / interval;
     }
-    for(auto& upstreamNode : getDownstreamTree(secondary, false)){
-        networkCost += calcDownstreamLinkWeights(upstreamNode, queryId);
+    for(auto& upstreamNode : getDownstreamTree(topSecondary, false)){
+        networkCost += calcDownstreamLinkWeights(topology, globalExecutionPlan, executionNode, queryId) / interval;
     }
 
     float memoryCost = calcOutputQueue(topology, executionNode);
@@ -1215,6 +1242,6 @@ std::vector<ExecutionNodePtr> downstreamNodes;
 
     return {procCost,networkCost,memoryCost};
 
-}*/
+}
 
 }// namespace NES::Optimizer
