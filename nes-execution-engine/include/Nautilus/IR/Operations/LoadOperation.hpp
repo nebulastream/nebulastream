@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class LoadOperation : public Operation {
   public:
     explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address, Types::StampPtr stamp);
@@ -27,5 +27,5 @@ class LoadOperation : public Operation {
   private:
     OperationWPtr address;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_LOADOPERATION_HPP

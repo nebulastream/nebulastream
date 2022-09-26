@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class AndOperation : public Operation {
   public:
@@ -32,5 +32,5 @@ class AndOperation : public Operation {
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_AND_OPERATION_HPP

@@ -3,6 +3,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/Experimental/HashMap.hpp>
+
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class HashMap {
@@ -22,8 +23,8 @@ class HashMap {
     };
     HashMap(Value<MemRef> hashTableRef,
             int64_t valueOffset,
-            std::vector<IR::Types::StampPtr> keyTypes,
-            std::vector<IR::Types::StampPtr> valueTypes);
+            std::vector<Nautilus::IR::Types::StampPtr> keyTypes,
+            std::vector<Nautilus::IR::Types::StampPtr> valueTypes);
 
     Entry findOrCreate(std::vector<Value<>> keys);
     Entry findOne(std::vector<Value<>> keys);
@@ -36,8 +37,8 @@ class HashMap {
   private:
     Value<MemRef> hashTableRef;
     const int64_t valueOffset;
-    const std::vector<IR::Types::StampPtr> keyTypes;
-    const std::vector<IR::Types::StampPtr> valueTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

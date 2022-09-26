@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 UInt32::UInt32(uint32_t value) : Int(&type), value(value){};
-IR::Types::StampPtr UInt32::getType()const { return IR::Types::StampFactory::createUInt32Stamp(); }
+Nautilus::IR::Types::StampPtr UInt32::getType()const { return Nautilus::IR::Types::StampFactory::createUInt32Stamp(); }
 std::shared_ptr<Any> UInt32::copy() { return create<UInt32>(value); }
 const std::shared_ptr<Int> UInt32::add(const Int& other) const {
     auto& otherValue = other.staticCast<UInt32>();

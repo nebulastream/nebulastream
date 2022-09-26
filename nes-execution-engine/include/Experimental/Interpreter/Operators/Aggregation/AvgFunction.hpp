@@ -23,7 +23,7 @@ class AvgState : public AggregationState {
 
 class AvgFunction : public AggregationFunction {
   public:
-    AvgFunction(ExpressionPtr expression, IR::Types::StampPtr stamp);
+    AvgFunction(ExpressionPtr expression, Nautilus::IR::Types::StampPtr stamp);
     std::unique_ptr<AggregationState> createGlobalState() override;
     std::unique_ptr<AggregationState> createState() override;
     void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) override;
@@ -35,7 +35,7 @@ class AvgFunction : public AggregationFunction {
 
   private:
     ExpressionPtr expression;
-    IR::Types::StampPtr stamp;
+    Nautilus::IR::Types::StampPtr stamp;
 };
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_AVGFUNCTION_HPP_

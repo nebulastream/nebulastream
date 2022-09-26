@@ -33,7 +33,7 @@ class Boolean : public TraceableType {
     bool getValue();
 
     ~Boolean() {}
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
 
   private:
     const bool value;

@@ -17,7 +17,7 @@
 #include <utility>
 #include <Experimental/Utility/NESIRDumpHandler.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 
 std::shared_ptr<Operations::FunctionOperation> NESIR::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
     this->rootOperation = std::move(rootOperation);
@@ -34,7 +34,7 @@ void NESIR::setIsSCF(bool isSCF) { this->isSCF = isSCF; }
 std::string NESIR::toString() {
     std::stringstream ss;
     ss << "NESIR {\n";
-    auto dumpHandler = ExecutionEngine::Experimental::IR::NESIRDumpHandler::create(ss);
+    auto dumpHandler = Nautilus::IR::NESIRDumpHandler::create(ss);
     dumpHandler->dump(rootOperation);
     ss << "} //NESIR";
     return ss.str();

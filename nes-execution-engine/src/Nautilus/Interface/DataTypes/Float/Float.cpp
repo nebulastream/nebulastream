@@ -16,7 +16,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Float::Float(float value) : TraceableType(&type), value(value){};
-IR::Types::StampPtr Float::getType() const { return IR::Types::StampFactory::createFloatStamp(); }
+Nautilus::IR::Types::StampPtr Float::getType() const { return Nautilus::IR::Types::StampFactory::createFloatStamp(); }
 std::shared_ptr<Any> Float::copy() { return create<Float>(value); }
 std::shared_ptr<Float> Float::add(const Float& otherValue) const { return create<Float>(value + otherValue.value); }
 std::shared_ptr<Float> Float::sub(const Float& otherValue) const { return create<Float>(value - otherValue.value); }

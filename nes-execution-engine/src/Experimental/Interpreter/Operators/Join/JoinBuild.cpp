@@ -1,7 +1,7 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 extern "C" void* getJoinState(void* state) {

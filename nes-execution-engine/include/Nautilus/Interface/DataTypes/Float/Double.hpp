@@ -26,7 +26,7 @@ class Double : public TraceableType {
     static const inline auto type = TypeIdentifier::create<Double>();
     Double(double value);
     ~Double() {}
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     std::shared_ptr<Double> add(const Double& otherValue) const;
     std::shared_ptr<Double> sub(const Double& otherValue) const;

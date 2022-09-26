@@ -152,8 +152,8 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(
-        TraceOperation(JMP, ValueRef(0, 0, ExecutionEngine::Experimental::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
-    auto operation = TraceOperation(JMP, ValueRef(0, 0, ExecutionEngine::Experimental::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
+        TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
+    auto operation = TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
     addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);

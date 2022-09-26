@@ -1,6 +1,6 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
@@ -69,7 +69,7 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
 
 Value<> HashMap::isValid(std::vector<Value<>>& keyValue, Entry& entry) const {
     Value<Boolean> valid = false;
-    if(!entry.isNull()){
+    if (!entry.isNull()) {
         valid = compareKeys(keyValue, entry.getKeyPtr());
     }
     return valid;
@@ -83,7 +83,7 @@ HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
     auto entry = getEntryFromHashTable(hash);
     //for (; !isValid(keys, entry); entry = entry.getNext()) {
     //}
-    if(entry.isNull()){
+    if (entry.isNull()) {
         entry = createEntry(keys, hash);
     }
     // creates a new hashm11.8143ap entry and place it to the right spot.
@@ -110,7 +110,5 @@ HashMap::HashMap(Value<MemRef> hashTableRef,
                  std::vector<IR::Types::StampPtr> keyTypes,
                  std::vector<IR::Types::StampPtr> valueTypes)
     : hashTableRef(hashTableRef), valueOffset(valueOffset), keyTypes(keyTypes), valueTypes(valueTypes) {}
-
-
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

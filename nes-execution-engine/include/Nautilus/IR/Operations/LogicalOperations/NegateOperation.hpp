@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class NegateOperation : public Operation {
   public:
@@ -29,5 +29,5 @@ class NegateOperation : public Operation {
   private:
     OperationWPtr input;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_AND_OPERATION_HPP

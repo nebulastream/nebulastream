@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Int16::Int16(int16_t value) : Int(&type), value(value){};
-IR::Types::StampPtr Int16::getType() const { return IR::Types::StampFactory::createInt16Stamp(); }
+Nautilus::IR::Types::StampPtr Int16::getType() const { return Nautilus::IR::Types::StampFactory::createInt16Stamp(); }
 std::shared_ptr<Any> Int16::copy() { return create<Int16>(value); }
 const std::shared_ptr<Int> Int16::add(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();

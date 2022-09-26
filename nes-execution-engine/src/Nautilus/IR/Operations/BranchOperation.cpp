@@ -15,7 +15,7 @@
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, Types::StampFactory::createVoidStamp()), basicBlock() {}
 
@@ -33,4 +33,4 @@ std::string BranchOperation::toString() {
 }
 bool BranchOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

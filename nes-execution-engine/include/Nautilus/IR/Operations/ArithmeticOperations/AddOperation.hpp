@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 //Todo: Decide: Leave type
 class AddOperation : public Operation {
@@ -32,5 +32,5 @@ class AddOperation : public Operation {
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_ADDFLOATOPERATION_HPP

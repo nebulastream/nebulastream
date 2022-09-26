@@ -49,7 +49,7 @@ class MemRef : public TraceableType {
         *reinterpret_cast<int64_t*>(value) = v.getValue();
     }
 
-    IR::Types::StampPtr getType() const override { return IR::Types::StampFactory::createAddressStamp(); }
+    Nautilus::IR::Types::StampPtr getType() const override { return Nautilus::IR::Types::StampFactory::createAddressStamp(); }
     int8_t* value;
 };
 

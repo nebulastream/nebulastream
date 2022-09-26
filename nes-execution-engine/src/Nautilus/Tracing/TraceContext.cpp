@@ -43,7 +43,7 @@ void TraceContext::reset() {
     executionTrace->localTagMap.clear();
 };
 
-ValueRef TraceContext::createNextRef(ExecutionEngine::Experimental::IR::Types::StampPtr type) { return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type); }
+ValueRef TraceContext::createNextRef(NES::Nautilus::IR::Types::StampPtr type) { return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type); }
 
 std::shared_ptr<ExecutionTrace> TraceContext::getExecutionTrace() { return executionTrace; }
 

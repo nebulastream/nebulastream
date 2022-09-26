@@ -26,7 +26,7 @@ class Float : public TraceableType {
     static const inline auto type = TypeIdentifier::create<Float>();
 
     Float(float value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     std::shared_ptr<Float> add(const Float& otherValue) const;
     std::shared_ptr<Float> sub(const Float& otherValue) const;

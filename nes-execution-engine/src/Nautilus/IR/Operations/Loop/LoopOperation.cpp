@@ -15,7 +15,7 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <utility>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType)
     : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
 
@@ -40,4 +40,4 @@ std::string LoopOperation::toString() {
     return baseString + ")";
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

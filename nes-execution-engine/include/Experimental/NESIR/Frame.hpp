@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_FRAME_HPP_
 #include <unordered_map>
 #include <Util/Logger/Logger.hpp>
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 
 template<class K, class V>
 class Frame {
@@ -39,6 +39,6 @@ class Frame {
     std::unordered_map<K, V> frameMap;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_FRAME_HPP_

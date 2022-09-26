@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_ADDRESSSTAMP_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_ADDRESSSTAMP_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 /**
  * @brief A address stamp, which represents a data type for a memory address.
@@ -31,6 +31,6 @@ class AddressStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_ADDRESSSTAMP_HPP_

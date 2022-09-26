@@ -16,7 +16,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Double::Double(double value) : TraceableType(&type), value(value){};
-IR::Types::StampPtr Double::getType() const { return IR::Types::StampFactory::createDoubleStamp(); }
+Nautilus::IR::Types::StampPtr Double::getType() const { return Nautilus::IR::Types::StampFactory::createDoubleStamp(); }
 std::shared_ptr<Any> Double::copy() { return create<Double>(value); }
 std::shared_ptr<Double> Double::add(const Double& otherValue) const { return create<Double>(value + otherValue.value); }
 std::shared_ptr<Double> Double::sub(const Double& otherValue) const { return create<Double>(value - otherValue.value); }

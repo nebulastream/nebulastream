@@ -55,7 +55,7 @@ class MLIRUtility {
     * @param debugFlags: Determine whether and how to print/write MLIR.
     * @return int: 1 if error occurred, else 0
     */
-    int loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
+    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
 
     int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
     int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);

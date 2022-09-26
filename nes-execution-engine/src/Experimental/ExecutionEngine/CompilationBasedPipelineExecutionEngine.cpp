@@ -42,11 +42,11 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, pipelineContext.get());
     auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
         std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
-    runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
+    runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto executionContext = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
 
     auto memRef = Interpreter::Value<Interpreter::MemRef>(std::make_unique<Interpreter::MemRef>(Interpreter::MemRef(0)));
-    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto recordBuffer = Interpreter::RecordBuffer(memRef);
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();

@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class CastOperation : public Operation {
   public:
@@ -32,5 +32,5 @@ class CastOperation : public Operation {
     OperationWPtr input;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_CAST_OPERATION_HPP

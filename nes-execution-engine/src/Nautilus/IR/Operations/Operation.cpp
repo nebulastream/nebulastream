@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 Operation::Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp)
     : opType(opType), identifier(identifier), stamp(stamp) {}
 Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(""), stamp(stamp) {}
@@ -26,4 +26,4 @@ void Operation::addUsage(const Operation* operation) { usages.emplace_back(opera
 
 const std::vector<const Operation*>& Operation::getUsages() { return usages; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

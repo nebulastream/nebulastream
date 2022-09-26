@@ -13,8 +13,8 @@
 */
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 AddressStamp::AddressStamp() : Stamp(&type) {}
 const std::string AddressStamp::toString() const { return "ptr"; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

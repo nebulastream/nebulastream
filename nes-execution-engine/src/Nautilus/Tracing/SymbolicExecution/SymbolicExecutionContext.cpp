@@ -106,7 +106,7 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
     auto resultRef = function();
     TraceOperation result = TraceOperation(RETURN);
     if(!resultRef.type->isVoid()){
-        auto intV = cast<ExecutionEngine::Experimental::IR::Types::IntegerStamp>(resultRef.type);
+        auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(resultRef.type);
         result.input.emplace_back(resultRef);
         result.result = resultRef;
     }else{

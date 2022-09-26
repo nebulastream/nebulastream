@@ -20,7 +20,7 @@ namespace NES::Nautilus::Tracing {
 
 ValueRef::ValueRef() : blockId(), operationId(){};
 
-ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, const ExecutionEngine::Experimental::IR::Types::StampPtr& type)
+ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, const NES::Nautilus::IR::Types::StampPtr& type)
     : blockId(blockId), operationId(operationId), type(type){};
 
 ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
@@ -41,12 +41,12 @@ ValueRef& ValueRef::operator=(const ValueRef&& other) {
     return *this;
 }
 
-ValueRef createNextRef(ExecutionEngine::Experimental::IR::Types::StampPtr type) {
+ValueRef createNextRef(NES::Nautilus::IR::Types::StampPtr type) {
     auto ctx = getThreadLocalTraceContext();
     if (ctx) {
         return ctx->createNextRef(type);
     }
-    return ValueRef(0, 0, ExecutionEngine::Experimental::IR::Types::StampFactory::createVoidStamp());
+    return ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
 }
 
 std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {

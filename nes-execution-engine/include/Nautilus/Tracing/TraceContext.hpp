@@ -43,7 +43,7 @@ class TraceContext {
     bool isExpectedOperation(OpCode operation);
     std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
     std::shared_ptr<ExecutionTrace> getExecutionTrace();
-    ValueRef createNextRef(ExecutionEngine::Experimental::IR::Types::StampPtr type);
+    ValueRef createNextRef(Nautilus::IR::Types::StampPtr type);
     void addTraceArgument(const ValueRef& value);
     void incrementOperationCounter();
 

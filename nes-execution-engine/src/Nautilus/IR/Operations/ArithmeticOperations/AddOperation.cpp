@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 AddOperation::AddOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::AddOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
@@ -29,4 +29,4 @@ bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr AddOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr AddOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

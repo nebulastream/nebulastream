@@ -14,7 +14,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 BasicBlockInvocation::BasicBlockInvocation()
     : Operation(OperationType::BlockInvocation, Types::StampFactory::createVoidStamp()) {}
@@ -39,4 +39,4 @@ std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
 }
 std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

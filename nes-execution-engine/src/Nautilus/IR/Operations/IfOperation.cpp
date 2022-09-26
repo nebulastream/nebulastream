@@ -15,7 +15,7 @@
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 IfOperation::IfOperation(OperationPtr booleanValue)
     : Operation(Operation::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
 
@@ -47,4 +47,4 @@ std::string IfOperation::toString() {
     return baseString += ')';
 }
 bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getBlock() != nullptr; }
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

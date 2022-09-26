@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::OrOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
@@ -30,4 +30,4 @@ std::string OrOperation::toString() {
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr OrOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

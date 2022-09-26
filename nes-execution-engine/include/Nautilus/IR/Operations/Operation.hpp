@@ -20,12 +20,12 @@
 #include <memory>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 using OperationIdentifier = std::string;
 class Operation {
   public:
@@ -77,5 +77,5 @@ using OperationPtr = std::shared_ptr<Operation>;
 using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_OPERATION_HPP

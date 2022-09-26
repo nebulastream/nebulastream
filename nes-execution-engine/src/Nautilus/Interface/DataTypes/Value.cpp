@@ -18,7 +18,7 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-Nautilus::Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp) {
+Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp) {
     auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
     if (ctx) {
         return ctx->createNextRef(std::move(stamp));

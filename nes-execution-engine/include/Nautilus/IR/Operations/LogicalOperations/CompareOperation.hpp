@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class CompareOperation : public Operation {
   public:
     enum Comparator {
@@ -55,5 +55,5 @@ class CompareOperation : public Operation {
     OperationWPtr rightInput;
     Comparator comparator;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_COMPAREOPERATION_HPP

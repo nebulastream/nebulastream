@@ -52,7 +52,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**

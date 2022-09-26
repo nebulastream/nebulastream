@@ -20,7 +20,7 @@
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 
 std::shared_ptr<NESIR> LoopInferencePhase::apply(std::shared_ptr<NESIR> ir) {
     auto context = Context(ir);
@@ -164,4 +164,4 @@ LoopInferencePhase::Context::isCountedLoop(BasicBlockPtr preLoopBlock) {
     return countedLoopInfo;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR

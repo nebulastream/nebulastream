@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 
 class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
   public:
@@ -63,5 +63,5 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR
 #endif//NES_BASICBLOCK_HPP

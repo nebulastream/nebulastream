@@ -1,7 +1,7 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
 #include <Experimental/Interpreter/Record.hpp>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 JoinProbe::JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap,

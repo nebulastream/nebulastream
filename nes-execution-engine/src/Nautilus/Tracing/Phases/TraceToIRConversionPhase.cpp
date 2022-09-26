@@ -36,21 +36,21 @@
 
 namespace NES::Nautilus::Tracing {
 
-std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> TraceToIRConversionPhase::apply(std::shared_ptr<ExecutionTrace> trace) {
+std::shared_ptr<NES::Nautilus::IR::NESIR> TraceToIRConversionPhase::apply(std::shared_ptr<ExecutionTrace> trace) {
     auto phaseContext = IRConversionContext(std::move(trace));
     return phaseContext.process();
 };
 
-std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> TraceToIRConversionPhase::IRConversionContext::process() {
+std::shared_ptr<NES::Nautilus::IR::NESIR> TraceToIRConversionPhase::IRConversionContext::process() {
     auto& rootBlock = trace->getBlocks().front();
     auto rootIrBlock = processBlock(0, rootBlock);
 
     auto& returnOperation = trace->getBlock(trace->returnRef->blockId).operations.back();
     auto returnType = std::get<ValueRef>(returnOperation.result).type;
-    auto intV = cast<ExecutionEngine::Experimental::IR::Types::IntegerStamp>(returnType);
+    auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(returnType);
     auto functionOperation =
-        std::make_shared<ExecutionEngine::Experimental::IR::Operations::FunctionOperation>("execute",
-                                                            /*argumentTypes*/ std::vector<ExecutionEngine::Experimental::IR::Operations::PrimitiveStamp>{},
+        std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>("execute",
+                                                            /*argumentTypes*/ std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp>{},
                                                             /*arguments*/ std::vector<std::string>{},
                                                             returnType);
     functionOperation->addFunctionBasicBlock(rootIrBlock);
@@ -59,20 +59,20 @@ std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> TraceToIRConversionPha
     return ir;
 }
 
-ExecutionEngine::Experimental::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block) {
+NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block) {
     // create new frame and block
     ValueFrame blockFrame;
-    std::vector<std::shared_ptr<ExecutionEngine::Experimental::IR::Operations::BasicBlockArgument>> blockArguments;
+    std::vector<std::shared_ptr<NES::Nautilus::IR::Operations::BasicBlockArgument>> blockArguments;
     for (auto& arg : block.arguments) {
         auto argumentIdentifier = createValueIdentifier(arg);
-        auto blockArgument = std::make_shared<ExecutionEngine::Experimental::IR::Operations::BasicBlockArgument>(argumentIdentifier, arg.type);
+        auto blockArgument = std::make_shared<NES::Nautilus::IR::Operations::BasicBlockArgument>(argumentIdentifier, arg.type);
         blockArguments.emplace_back(blockArgument);
         blockFrame.setValue(argumentIdentifier, blockArgument);
     }
 
-    ExecutionEngine::Experimental::IR::BasicBlockPtr irBasicBlock = std::make_shared<ExecutionEngine::Experimental::IR::BasicBlock>(std::to_string(block.blockId),
+    NES::Nautilus::IR::BasicBlockPtr irBasicBlock = std::make_shared<NES::Nautilus::IR::BasicBlock>(std::to_string(block.blockId),
                                                                       scope,
-                                                                      /*operations*/ std::vector<ExecutionEngine::Experimental::IR::Operations::OperationPtr>{},
+                                                                      /*operations*/ std::vector<NES::Nautilus::IR::Operations::OperationPtr>{},
                                                                       /*arguments*/ blockArguments);
     blockMap[block.blockId] = irBasicBlock;
     for (auto& operation : block.operations) {
@@ -84,7 +84,7 @@ ExecutionEngine::Experimental::IR::BasicBlockPtr TraceToIRConversionPhase::IRCon
 void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t scope,
                                                                      ValueFrame& frame,
                                                                      Block& currentBlock,
-                                                                     ExecutionEngine::Experimental::IR::BasicBlockPtr& currentIrBlock,
+                                                                     NES::Nautilus::IR::BasicBlockPtr& currentIrBlock,
                                                                      TraceOperation& operation) {
 
     switch (operation.op) {
@@ -143,11 +143,11 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
         case ASSIGN: break;
         case RETURN: {
             if (std::get<ValueRef>(operation.result).type->isVoid()) {
-                auto operation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>();
+                auto operation = std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>();
                 currentIrBlock->addOperation(operation);
             } else {
                 auto returnValue = frame.getValue(createValueIdentifier(operation.input[0]));
-                auto operation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>(returnValue);
+                auto operation = std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>(returnValue);
                 currentIrBlock->addOperation(operation);
             }
 
@@ -172,11 +172,11 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
 
 void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& block,
+                                                               NES::Nautilus::IR::BasicBlockPtr& block,
                                                                TraceOperation& operation) {
     std::cout << "current block " << block->getIdentifier() << " " << operation << std::endl;
     auto blockRef = get<BlockRef>(operation.input[0]);
-    ExecutionEngine::Experimental::IR::Operations::BasicBlockInvocation blockInvocation;
+    NES::Nautilus::IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);
 
     if (blockMap.contains(blockRef.block)) {
@@ -194,8 +194,8 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
 #ifdef USE_BABELFISH
         if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
             NES_DEBUG("1. found loop");
-            auto loopOperator = std::make_shared<ExecutionEngine::Experimental::IR::Operations::LoopOperation>(ExecutionEngine::Experimental::IR::Operations::LoopOperation::LoopType::ForLoop);
-            loopOperator->setLoopInfo(std::make_shared<ExecutionEngine::Experimental::IR::Operations::DefaultLoopInfo>());
+            auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
+            loopOperator->setLoopInfo(std::make_shared<NES::Nautilus::IR::Operations::DefaultLoopInfo>());
             auto loopHeadBlock = processBlock(scope + 1, trace->getBlock(blockRef.block));
             loopOperator->getLoopHeadBlock().setBlock(loopHeadBlock);
             for (auto& arg : blockRef.arguments) {
@@ -218,7 +218,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
 void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                Block&,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentIrBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentIrBlock,
                                                                TraceOperation& operation) {
 
     auto valueRef = get<ValueRef>(operation.result);
@@ -231,7 +231,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     //    NES_DEBUG("2. found loop");
     //} else {
     auto booleanValue = frame.getValue(createValueIdentifier(valueRef));
-    auto ifOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::IfOperation>(booleanValue);
+    auto ifOperation = std::make_shared<NES::Nautilus::IR::Operations::IfOperation>(booleanValue);
     auto trueCaseBlock = processBlock(scope + 1, trace->getBlock(trueCaseBlockRef.block));
 
     ifOperation->getTrueBlockInvocation().setBlock(trueCaseBlock);
@@ -255,17 +255,17 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
-ExecutionEngine::Experimental::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(ExecutionEngine::Experimental::IR::BasicBlockPtr currentBlock,
+NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
                                                                                       int32_t targetScope) {
     if (currentBlock->getScopeLevel() <= targetScope) {
         return currentBlock;
     }
-    if (currentBlock->getTerminatorOp()->getOperationType() == ExecutionEngine::Experimental::IR::Operations::Operation::BranchOp) {
-        auto branchOp = std::static_pointer_cast<ExecutionEngine::Experimental::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
         return findControlFlowMerge(branchOp->getNextBlockInvocation().getBlock(), targetScope);
     }
-    if (currentBlock->getTerminatorOp()->getOperationType() == ExecutionEngine::Experimental::IR::Operations::Operation::IfOp) {
-        auto branchOp = std::static_pointer_cast<ExecutionEngine::Experimental::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::IfOp) {
+        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
         auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
         if (resultFromTrueBranch) {
             return resultFromTrueBranch;
@@ -275,10 +275,10 @@ ExecutionEngine::Experimental::IR::BasicBlockPtr TraceToIRConversionPhase::IRCon
             return resultFromFalseBranch;
         }
     }
-    if (currentBlock->getTerminatorOp()->getOperationType() == ExecutionEngine::Experimental::IR::Operations::Operation::ReturnOp) {
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::ReturnOp) {
         return nullptr;
     }
-    if (currentBlock->getTerminatorOp()->getOperationType() == ExecutionEngine::Experimental::IR::Operations::Operation::LoopOp) {
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::LoopOp) {
         return currentBlock;
     }
     NES_NOT_IMPLEMENTED();
@@ -293,7 +293,7 @@ std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBl
 }
 
 void TraceToIRConversionPhase::IRConversionContext::createBlockArguments(ValueFrame& frame,
-                                                                         ExecutionEngine::Experimental::IR::Operations::BasicBlockInvocation& blockInvocation,
+                                                                         NES::Nautilus::IR::Operations::BasicBlockInvocation& blockInvocation,
                                                                          BlockRef val) {
     for (auto& arg : val.arguments) {
         auto valueIdentifier = createValueIdentifier(arg);
@@ -311,157 +311,157 @@ std::string TraceToIRConversionPhase::IRConversionContext::createValueIdentifier
 
 void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto addOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::AddOperation>(resultIdentifier, leftInput, rightInput);
+    auto addOperation = std::make_shared<NES::Nautilus::IR::Operations::AddOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, addOperation);
     currentBlock->addOperation(addOperation);
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processSub(int32_t,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto subOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::SubOperation>(resultIdentifier, leftInput, rightInput);
+    auto subOperation = std::make_shared<NES::Nautilus::IR::Operations::SubOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, subOperation);
     currentBlock->addOperation(subOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processMul(int32_t,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto mulOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::MulOperation>(resultIdentifier, leftInput, rightInput);
+    auto mulOperation = std::make_shared<NES::Nautilus::IR::Operations::MulOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, mulOperation);
     currentBlock->addOperation(mulOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processDiv(int32_t,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto divOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::DivOperation>(resultIdentifier, leftInput, rightInput);
+    auto divOperation = std::make_shared<NES::Nautilus::IR::Operations::DivOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, divOperation);
     currentBlock->addOperation(divOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t,
                                                                   ValueFrame& frame,
-                                                                  ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                  NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                   TraceOperation& operation) {
     auto input = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto negateOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::NegateOperation>(resultIdentifier, input);
+    auto negateOperation = std::make_shared<NES::Nautilus::IR::Operations::NegateOperation>(resultIdentifier, input);
     frame.setValue(resultIdentifier, negateOperation);
     currentBlock->addOperation(negateOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
                                                                     ValueFrame& frame,
-                                                                    ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                    NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                     TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto compareOperation =
-        std::make_shared<ExecutionEngine::Experimental::IR::Operations::CompareOperation>(resultIdentifier,
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
                                                            leftInput,
                                                            rightInput,
-                                                           ExecutionEngine::Experimental::IR::Operations::CompareOperation::Comparator::ISLT);
+                                                           NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
                                                                     ValueFrame& frame,
-                                                                    ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                    NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                        TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto compareOperation =
-        std::make_shared<ExecutionEngine::Experimental::IR::Operations::CompareOperation>(resultIdentifier,
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
                                                            leftInput,
                                                            rightInput,
-                                                           ExecutionEngine::Experimental::IR::Operations::CompareOperation::Comparator::ISGT);
+                                                           NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
                                                                   ValueFrame& frame,
-                                                                  ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                  NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                   TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::CompareOperation>(resultIdentifier,
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
                                                                                leftInput,
                                                                                rightInput,
-                                                                               ExecutionEngine::Experimental::IR::Operations::CompareOperation::Comparator::IEQ);
+                                                                               NES::Nautilus::IR::Operations::CompareOperation::Comparator::IEQ);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processAnd(int32_t,
                                                                ValueFrame& frame,
-                                                               ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto andOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::AndOperation>(resultIdentifier, leftInput, rightInput);
+    auto andOperation = std::make_shared<NES::Nautilus::IR::Operations::AndOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, andOperation);
     currentBlock->addOperation(andOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processOr(int32_t,
                                                               ValueFrame& frame,
-                                                              ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                               TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::OrOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::OrOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t,
                                                                 ValueFrame& frame,
-                                                                ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                 TraceOperation& operation) {
     // TODO add load data type
-    //auto constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
+    //auto constOperation = std::make_shared<NES::Nautilus::IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
     //                                                                      createValueIdentifier(operation.input[0]),
-    //                                                                      ExecutionEngine::Experimental::IR::Operations::Operation::BasicType::VOID);
+    //                                                                      NES::Nautilus::IR::Operations::Operation::BasicType::VOID);
     //currentBlock->addOperation(constOperation);
     auto address = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto resultType = std::get<ValueRef>(operation.result).type;
-    auto loadOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::LoadOperation>(resultIdentifier, address, resultType);
+    auto loadOperation = std::make_shared<NES::Nautilus::IR::Operations::LoadOperation>(resultIdentifier, address, resultType);
     frame.setValue(resultIdentifier, loadOperation);
     currentBlock->addOperation(loadOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processStore(int32_t,
                                                                  ValueFrame& frame,
-                                                                 ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                 NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                  TraceOperation& operation) {
     auto address = frame.getValue(createValueIdentifier(operation.input[1]));
     auto value = frame.getValue(createValueIdentifier(operation.input[0]));
-    auto storeOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::StoreOperation>(address, value);
+    auto storeOperation = std::make_shared<NES::Nautilus::IR::Operations::StoreOperation>(address, value);
     currentBlock->addOperation(storeOperation);
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
                                                                 ValueFrame& frame,
-                                                                ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                 TraceOperation& operation) {
 
-    auto inputArguments = std::vector<ExecutionEngine::Experimental::IR::Operations::OperationWPtr>{};
+    auto inputArguments = std::vector<NES::Nautilus::IR::Operations::OperationWPtr>{};
     auto functionCallTarget = std::get<FunctionCallTarget>(operation.input[0]);
 
     for (uint32_t i = 1; i < operation.input.size(); i++) {
@@ -469,11 +469,11 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
         inputArguments.emplace_back(input);
     }
 
-    auto resultType = std::holds_alternative<None>(operation.result) ? ExecutionEngine::Experimental::IR::Types::StampFactory::createVoidStamp()
+    auto resultType = std::holds_alternative<None>(operation.result) ? NES::Nautilus::IR::Types::StampFactory::createVoidStamp()
                                                                      : std::get<ValueRef>(operation.result).type;
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto proxyCallOperation =
-        std::make_shared<ExecutionEngine::Experimental::IR::Operations::ProxyCallOperation>(ExecutionEngine::Experimental::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
+        std::make_shared<NES::Nautilus::IR::Operations::ProxyCallOperation>(NES::Nautilus::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
                                                              functionCallTarget.mangledName,
                                                              functionCallTarget.functionPtr,
                                                              resultIdentifier,
@@ -509,35 +509,35 @@ bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t paren
 }
 void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
                                                                  TraceToIRConversionPhase::ValueFrame& frame,
-                                                                 ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                 NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                  TraceOperation& operation) {
     auto valueRef = get<ConstantValue>(operation.input[0]);
     auto resultIdentifier = createValueIdentifier(operation.result);
-    ExecutionEngine::Experimental::IR::Operations::OperationPtr constOperation;
+    NES::Nautilus::IR::Operations::OperationPtr constOperation;
     if (auto* i8 = cast_if<ExecutionEngine::Experimental::Interpreter::Int8>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, i8->getValue(), i8->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i8->getValue(), i8->getType());
     } else if (auto* i16 = cast_if<ExecutionEngine::Experimental::Interpreter::Int16>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, i16->getValue(), i16->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i16->getValue(), i16->getType());
     } else if (auto* i32 = cast_if<ExecutionEngine::Experimental::Interpreter::Int32>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, i32->getValue(), i32->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i32->getValue(), i32->getType());
     } else if (auto* i64 = cast_if<ExecutionEngine::Experimental::Interpreter::Int64>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, i64->getValue(), i64->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i64->getValue(), i64->getType());
     } else if (auto* ui8 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt8>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, ui8->getValue(), ui8->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui8->getValue(), ui8->getType());
     } else if (auto* ui16 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt16>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, ui16->getValue(), ui16->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui16->getValue(), ui16->getType());
     } else if (auto* ui32 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt32>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, ui32->getValue(), ui32->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui32->getValue(), ui32->getType());
     } else if (auto* ui64 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt64>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>(resultIdentifier, ui64->getValue(), ui64->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui64->getValue(), ui64->getType());
     } else if (auto* float32 = cast_if<ExecutionEngine::Experimental::Interpreter::Float>(valueRef.value.get())) {
         constOperation =
-            std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstFloatOperation>(resultIdentifier, float32->getValue(), float32->getType());
+            std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float32->getValue(), float32->getType());
     } else if (auto* float64 = cast_if<ExecutionEngine::Experimental::Interpreter::Double>(valueRef.value.get())) {
         constOperation =
-            std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstFloatOperation>(resultIdentifier, float64->getValue(), float64->getType());
+            std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float64->getValue(), float64->getType());
     } else if (auto* boolean = cast_if<ExecutionEngine::Experimental::Interpreter::Boolean>(valueRef.value.get())) {
-        constOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }
@@ -547,13 +547,13 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
 }
 void TraceToIRConversionPhase::IRConversionContext::processCast(int32_t,
                                                                 TraceToIRConversionPhase::ValueFrame& frame,
-                                                                ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock,
+                                                                NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                 TraceOperation& operation) {
 
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto input = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultType = std::get<ValueRef>(operation.result).type;
-    auto castOperation = std::make_shared<ExecutionEngine::Experimental::IR::Operations::CastOperation>(resultIdentifier, input, resultType);
+    auto castOperation = std::make_shared<NES::Nautilus::IR::Operations::CastOperation>(resultIdentifier, input, resultType);
     currentBlock->addOperation(castOperation);
     frame.setValue(resultIdentifier, castOperation);
 }

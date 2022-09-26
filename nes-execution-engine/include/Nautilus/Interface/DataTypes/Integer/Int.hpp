@@ -43,7 +43,7 @@ class Int8 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<Int8>();
     Int8(int8_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& other) const override;
@@ -66,7 +66,7 @@ class Int16 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<Int16>();
     Int16(int16_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -89,7 +89,7 @@ class Int32 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<Int32>();
     Int32(int32_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -112,7 +112,7 @@ class Int64 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<Int64>();
     Int64(int64_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -135,7 +135,7 @@ class UInt8 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<UInt8>();
     UInt8(uint8_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -158,7 +158,7 @@ class UInt16 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<UInt16>();
     UInt16(uint16_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -180,7 +180,7 @@ class UInt32 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<UInt32>();
     UInt32(uint32_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
@@ -202,7 +202,7 @@ class UInt64 : public Int {
   public:
     static const inline auto type = TypeIdentifier::create<UInt64>();
     UInt64(uint64_t value);
-    IR::Types::StampPtr getType() const override;
+    Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;

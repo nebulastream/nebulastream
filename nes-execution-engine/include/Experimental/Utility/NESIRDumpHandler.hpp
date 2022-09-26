@@ -21,7 +21,7 @@
 #include <memory>
 
 namespace NES {
-namespace ExecutionEngine::Experimental::IR {
+namespace Nautilus::IR {
 
 // class Operation;
 using OperationPtr = std::shared_ptr<Operations::Operation>;
@@ -70,7 +70,7 @@ class NESIRDumpHandler {
     void dumpHelper(BasicBlockPtr const& basicBlock) ;
 };
 
-}// namespace ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR
 }// namespace NES
 
 #endif// NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_

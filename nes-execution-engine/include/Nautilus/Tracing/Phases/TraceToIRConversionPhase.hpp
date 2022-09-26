@@ -32,54 +32,54 @@ namespace NES::Nautilus::Tracing {
 
 class TraceToIRConversionPhase {
   public:
-    std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> apply(std::shared_ptr<ExecutionTrace> trace);
+    std::shared_ptr<NES::Nautilus::IR::NESIR> apply(std::shared_ptr<ExecutionTrace> trace);
 
   private:
-    using ValueFrame = ExecutionEngine::Experimental::IR::Frame<std::string, ExecutionEngine::Experimental::IR::Operations::OperationPtr>;
+    using ValueFrame = NES::Nautilus::IR::Frame<std::string, NES::Nautilus::IR::Operations::OperationPtr>;
     class IRConversionContext {
       public:
-        IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<ExecutionEngine::Experimental::IR::NESIR>()){};
-        std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> process();
+        IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<NES::Nautilus::IR::NESIR>()){};
+        std::shared_ptr<NES::Nautilus::IR::NESIR> process();
 
       private:
-        ExecutionEngine::Experimental::IR::BasicBlockPtr processBlock(int32_t scope, Block& block);
+        NES::Nautilus::IR::BasicBlockPtr processBlock(int32_t scope, Block& block);
         void processOperation(int32_t scope,
                               ValueFrame& frame,
                               Block& currentBlock,
-                              ExecutionEngine::Experimental::IR::BasicBlockPtr& currentIRBlock,
+                              NES::Nautilus::IR::BasicBlockPtr& currentIRBlock,
                               TraceOperation& operation);
-        void processJMP(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& block, TraceOperation& operation);
+        void processJMP(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& block, TraceOperation& operation);
         void processCMP(int32_t scope,
                         ValueFrame& frame,
                         Block& currentBlock,
-                        ExecutionEngine::Experimental::IR::BasicBlockPtr& currentIRBlock,
+                        NES::Nautilus::IR::BasicBlockPtr& currentIRBlock,
                         TraceOperation& operation);
-        void processAdd(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processSub(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processMul(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processDiv(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processEquals(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processLessThan(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processGreaterThan(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processNegate(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processAnd(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processOr(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processLoad(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processStore(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processCall(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processConst(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processCast(int32_t scope, ValueFrame& frame, ExecutionEngine::Experimental::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processAdd(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processSub(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processMul(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processDiv(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processEquals(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processLessThan(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processGreaterThan(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processNegate(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processAnd(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processOr(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processLoad(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processStore(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processCall(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processConst(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processCast(int32_t scope, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         bool isBlockInLoop(uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
-        void createBlockArguments(ValueFrame& frame, ExecutionEngine::Experimental::IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);
+        void createBlockArguments(ValueFrame& frame, NES::Nautilus::IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);
         std::string createValueIdentifier(InputVariant val);
 
       private:
         std::shared_ptr<ExecutionTrace> trace;
-        std::shared_ptr<ExecutionEngine::Experimental::IR::NESIR> ir;
+        std::shared_ptr<NES::Nautilus::IR::NESIR> ir;
         bool isSCF = true;
-        std::unordered_map<uint32_t, ExecutionEngine::Experimental::IR::BasicBlockPtr> blockMap;
-        ExecutionEngine::Experimental::IR::BasicBlockPtr findControlFlowMerge(ExecutionEngine::Experimental::IR::BasicBlockPtr currentBlock, int32_t targetScope);
+        std::unordered_map<uint32_t, NES::Nautilus::IR::BasicBlockPtr> blockMap;
+        NES::Nautilus::IR::BasicBlockPtr findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock, int32_t targetScope);
     };
 };
 

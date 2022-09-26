@@ -37,7 +37,7 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-namespace ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 namespace Operations {
 class MLIRGeneratorArithmeticOpsTest : public testing::Test {
   public:
@@ -395,5 +395,5 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
 }*/
 
 }// namespace Operations
-}// namespace ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR
 }// namespace NES

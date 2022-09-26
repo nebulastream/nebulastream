@@ -61,7 +61,7 @@
 #include <mlir/IR/Value.h>
 #include <unordered_map>
 #include <unordered_set>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::MLIR {
 
 class MLIRGenerator {

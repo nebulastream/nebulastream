@@ -23,6 +23,6 @@ Boolean::operator bool() const { return value; }
 
 bool Boolean::getValue() { return value; }
 
-IR::Types::StampPtr Boolean::getType() const { return IR::Types::StampFactory::createBooleanStamp(); }
+Nautilus::IR::Types::StampPtr Boolean::getType() const { return Nautilus::IR::Types::StampFactory::createBooleanStamp(); }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
