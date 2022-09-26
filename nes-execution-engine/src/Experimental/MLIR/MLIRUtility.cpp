@@ -52,6 +52,7 @@
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/OperationSupport.h>
 #include <mlir/Parser.h>
+#include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
@@ -67,6 +68,9 @@
 #include <llvm/Support/Host.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/MC/MCSubtargetInfo.h>
+
+#include <mlir/Dialect/Affine/Passes.h>
+#include <mlir/Dialect/SCF/Passes.h>
 // #include <llvm-c/ExternC.h>
 // #include <llvm-c/Target.h>
 // #include <llvm-c/Types.h>
@@ -260,7 +264,24 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags
     // Apply any generic pass manager command line options and run the pipeline.
     mlir::PassManager passManager(&context);
     applyPassManagerCLOptions(passManager);
-    // passManager.addPass(mlir::createInlinerPass());
+     // opt passes
+    passManager.addPass(mlir::createInlinerPass());
+    passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
+    passManager.addPass(mlir::createCSEPass());
+    passManager.addPass(mlir::createControlFlowSinkPass());
+    passManager.addPass(mlir::createCanonicalizerPass());
+    // passManager.addPass(mlir::createAffineParallelizePass()); //Either below or this
+    passManager.addPass(mlir::createSuperVectorizePass(8));
+    passManager.addPass(mlir::createLoopUnrollPass());
+    passManager.addPass(mlir::createLoopTilingPass());
+    passManager.addPass(mlir::createLoopFusionPass());
+    passManager.addPass(mlir::createForLoopPeelingPass());
+    passManager.addPass(mlir::createSCFForLoopCanonicalizationPass());
+    passManager.addPass(mlir::createForLoopSpecializationPass());
+    
+    
+
+    //lowering passes
     passManager.addPass(mlir::createLowerAffinePass());
     passManager.addPass(mlir::createLowerToCFGPass());//SCF
     passManager.addPass(mlir::createConvertVectorToLLVMPass());
@@ -433,6 +454,8 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxy
     parentTimer->snapshot("JIT Compilation");
 
     //Todo #2936: do we need to register symbols and addresses
+    // -> is it only necessary when we 'invoke' the function, but not if we return a function pointer?
+    // -> possibly, if we return a function pointer, and execute it in a context where the proxy function symbols & addresses are known, this step is irrelevant
     if(mlirGenerator && !mlirGenerator->getJitProxyFunctionSymbols().empty()) {
         auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
             auto symbolMap = llvm::orc::SymbolMap();
