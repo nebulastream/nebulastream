@@ -14,14 +14,15 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 
 namespace NES {
 
-STWithinExpressionNode::STWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STWithinExpressionNode::STWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}
 
-STWithinExpressionNode::STWithinExpressionNode(STWithinExpressionNode* other) : ExpressionNode(other) {
+STWithinExpressionNode::STWithinExpressionNode(STWithinExpressionNode* other) : ExpressionNode(other), GeographyExpressionNode() {
     addChildWithEqual(getPoint()->copy());
     addChildWithEqual(getShape()->copy());
 }
@@ -42,12 +43,23 @@ bool STWithinExpressionNode::equal(NodePtr const& rhs) const {
 }
 
 std::string STWithinExpressionNode::toString() const {
+    if (children.size() != 2) {
+        NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::toString(): children.size() = ",
+                                       std::to_string(children.size()));
+    }
     std::stringstream ss;
     ss << "ST_WITHIN(" << children[0]->toString() << ", " << children[1]->toString() << ")";
     return ss.str();
 }
 
 void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& shapeExpression) {
+    if (!point->instanceOf<GeographyFieldsAccessExpressionNode>()
+        || (shapeExpression->getShapeType() != Polygon && shapeExpression->getShapeType() != Rectangle)) {
+        throw InvalidArgumentException("Invalid arguments in STDWithinExpressionNode::setChildren(): ",
+                                       "Point is : " + point->toString()
+                                           + ", and shape expression is : " + shapeExpression->toString());
+    }
     addChildWithEqual(point);
     addChildWithEqual(shapeExpression);
 }
@@ -55,6 +67,8 @@ void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeEx
 ExpressionNodePtr STWithinExpressionNode::getPoint() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::getPoint(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
@@ -62,6 +76,8 @@ ExpressionNodePtr STWithinExpressionNode::getPoint() const {
 ShapeExpressionNodePtr STWithinExpressionNode::getShape() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::getShape(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[1]->as<ShapeExpressionNode>();
 }
@@ -87,7 +103,10 @@ void STWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseConte
 }
 
 ExpressionNodePtr STWithinExpressionNode::copy() {
-    return std::make_shared<STWithinExpressionNode>(STWithinExpressionNode(this));
+    auto point = getPoint()->copy();
+    auto geographyFieldsAccessExpressionNode = point->as<GeographyFieldsAccessExpressionNode>();
+    auto shape = getShape()->copy();
+    return create(geographyFieldsAccessExpressionNode, shape);
 }
 
 }// namespace NES
