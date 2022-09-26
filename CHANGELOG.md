@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.91](https://github.com/nebulastream/nebulastream/tree/v0.2.91) (2022-09-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.90...v0.2.91)
+
+### Bug Fixes 🐛
+
+- cpprestsdk QueryController endpoint doesnt match with documentation [\#2997](https://github.com/nebulastream/nebulastream/issues/2997)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Introduce ZMQ High  Watermark  [\#2898](https://github.com/nebulastream/nebulastream/issues/2898)
+
 ## [v0.2.90](https://github.com/nebulastream/nebulastream/tree/v0.2.90) (2022-09-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.89...v0.2.90)
