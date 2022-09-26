@@ -165,7 +165,6 @@ int main(int argc, char** argv) {
     ((void) argv);
     NES::Logger::setupLogging("NetworkChannelBenchmark.log", NES::LogLevel::LOG_INFO);
 
-
     const uint64_t buffersManaged = 32 * 1024;
     const uint64_t NUM_REPS = 10;
 
@@ -188,9 +187,7 @@ int main(int argc, char** argv) {
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw NES::Exceptions::RuntimeException("Could not create folder " + benchmarkFolderName);
 
-
-     Writing header to csv file
-    std::ofstream benchmarkFile;
+    Writing header to csv file std::ofstream benchmarkFile;
     benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
     benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,THROUGHPUT\n";
     benchmarkFile.close();
