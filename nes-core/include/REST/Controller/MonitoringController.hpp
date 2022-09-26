@@ -24,6 +24,7 @@ namespace NES {
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
+//TODO: to be deleted with #3001
 class MonitoringController : public BaseController {
 
   public:

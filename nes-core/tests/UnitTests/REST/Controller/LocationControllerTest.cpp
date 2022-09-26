@@ -28,6 +28,7 @@
 using namespace std;
 namespace NES {
 
+//TODO: to be deleted with #3001
 class LocationControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {

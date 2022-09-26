@@ -20,6 +20,7 @@
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;

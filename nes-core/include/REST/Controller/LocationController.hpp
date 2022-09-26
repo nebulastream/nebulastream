@@ -25,6 +25,7 @@ class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 }// namespace Spatial::Index::Experimental
 
+//TODO: to be deleted with #3001
 class LocationController : public BaseController {
   public:
     LocationController(NES::Spatial::Index::Experimental::LocationServicePtr locationService);

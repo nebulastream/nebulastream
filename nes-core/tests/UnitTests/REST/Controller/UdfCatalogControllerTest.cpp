@@ -28,6 +28,7 @@ using namespace NES::Catalogs;
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 class UdfCatalogControllerTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {

@@ -27,6 +27,7 @@ namespace NES {
  * QueryManager class represents the basic interface for a
  * web service handler.
  */
+//TODO: to be deleted with #3001
 class BaseController {
   public:
     virtual ~BaseController() = default;

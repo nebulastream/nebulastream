@@ -21,6 +21,7 @@
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 class TopologyController : public BaseController {
   public:
     explicit TopologyController(TopologyPtr topology);

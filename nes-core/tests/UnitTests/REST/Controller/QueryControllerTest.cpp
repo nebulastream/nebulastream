@@ -34,6 +34,7 @@
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 class QueryControllerTest : public Testing::NESBaseTest {
   public:
     //use of TestCase to refer to a group of logically connected tests is deprecated

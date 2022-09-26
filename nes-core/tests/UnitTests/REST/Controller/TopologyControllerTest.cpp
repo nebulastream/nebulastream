@@ -25,6 +25,7 @@
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 class TopologyControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {

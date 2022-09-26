@@ -27,6 +27,7 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
+//TODO: to be deleted with #3001
 class QueryCatalogController : public BaseController {
 
   public:
