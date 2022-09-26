@@ -20,11 +20,11 @@
 #include <Network/NodeLocation.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <chrono>
 
 namespace NES::Network {
 
