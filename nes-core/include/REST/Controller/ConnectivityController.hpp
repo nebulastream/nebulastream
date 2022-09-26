@@ -21,6 +21,7 @@
 
 namespace NES {
 
+//TODO: to be deleted with #3001
 class ConnectivityController : public BaseController {
 
   public:

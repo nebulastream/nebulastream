@@ -99,6 +99,7 @@ using LocationServicePtr = std::shared_ptr<LocationService>;
 class UdfCatalogController;
 using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 
+//TODO: to be deleted with #3001
 class RestEngine {
 
   public:

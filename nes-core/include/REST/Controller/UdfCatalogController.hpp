@@ -27,6 +27,7 @@ using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 
 using namespace Catalogs::UDF;
 
+//TODO: class to be deleted with #3001
 class UdfCatalogController : public BaseController {
 
   public:

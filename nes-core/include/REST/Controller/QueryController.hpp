@@ -34,6 +34,7 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
+//TODO: to be deleted with #3001
 class QueryController : public BaseController {
   public:
     explicit QueryController(QueryServicePtr queryService,
