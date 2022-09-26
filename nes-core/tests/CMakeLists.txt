@@ -263,6 +263,12 @@ add_nes_unit_test(query-tests "UnitTests/API/QueryTest.cpp")
 # SpatialQueryTest
 add_nes_unit_test(spatial-query-tests "UnitTests/API/SpatialQueryTest.cpp")
 
+# SpatialExpressionNodeTest
+add_nes_unit_test(spatial-expression-node-test "UnitTests/Operators/SpatialExpressionNodeTest.cpp")
+
+# GeographyExpressionNodeTest
+add_nes_unit_test(geography-expression-node-test "UnitTests/Operators/GeographyExpressionNodeTest.cpp")
+
 
 # QueryPlanIteratorTest
 add_nes_unit_test(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")

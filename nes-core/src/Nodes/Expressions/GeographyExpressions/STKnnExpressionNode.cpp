@@ -14,13 +14,15 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 
 namespace NES {
-STKnnExpressionNode::STKnnExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STKnnExpressionNode::STKnnExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}
 
-STKnnExpressionNode::STKnnExpressionNode(STKnnExpressionNode* other) : ExpressionNode(other) {
+STKnnExpressionNode::STKnnExpressionNode(STKnnExpressionNode* other) : ExpressionNode(other), GeographyExpressionNode() {
     addChildWithEqual(getPoint()->copy());
     addChildWithEqual(getQueryPoint()->copy());
     addChildWithEqual(getK()->copy());
@@ -44,6 +46,11 @@ bool STKnnExpressionNode::equal(NodePtr const& rhs) const {
 }
 
 std::string STKnnExpressionNode::toString() const {
+    if (children.size() != 3) {
+        NES_FATAL_ERROR("A STKnnExpressionNode should always access two children, but it had: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::toString(): children.size() = ",
+                                       std::to_string(children.size()));
+    }
     std::stringstream ss;
     ss << "ST_KNN(" << children[0]->toString() << ", " << children[1]->toString() << ", " << children[2]->toString() << ")";
     return ss.str();
@@ -52,6 +59,12 @@ std::string STKnnExpressionNode::toString() const {
 void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
                                       ShapeExpressionNodePtr const& queryPoint,
                                       ExpressionNodePtr const& k) {
+    if (!point->instanceOf<GeographyFieldsAccessExpressionNode>() || !queryPoint->instanceOf<PointExpressionNode>()
+        || !k->instanceOf<ConstantValueExpressionNode>()) {
+        throw InvalidArgumentException("Invalid arguments in STKnnExpressionNode::setChildren(): ",
+                                       "Point is : " + point->toString() + ", shape expression is : " + queryPoint->toString()
+                                           + ", and k is : " + k->toString());
+    }
     addChildWithEqual(point);
     addChildWithEqual(queryPoint);
     addChildWithEqual(k);
@@ -60,6 +73,8 @@ void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
 ExpressionNodePtr STKnnExpressionNode::getPoint() const {
     if (children.size() != 3) {
         NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getPoint(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
@@ -67,6 +82,8 @@ ExpressionNodePtr STKnnExpressionNode::getPoint() const {
 ShapeExpressionNodePtr STKnnExpressionNode::getQueryPoint() const {
     if (children.size() != 3) {
         NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getQueryPoint(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[1]->as<ShapeExpressionNode>();
 }
@@ -74,6 +91,8 @@ ShapeExpressionNodePtr STKnnExpressionNode::getQueryPoint() const {
 ExpressionNodePtr STKnnExpressionNode::getK() const {
     if (children.size() != 3) {
         NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getK(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[2]->as<ConstantValueExpressionNode>();
 }
@@ -98,6 +117,14 @@ void STKnnExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
     NES_TRACE("ST_KnnExpressionNode: The following stamp was assigned: " << toString());
 }
 
-ExpressionNodePtr STKnnExpressionNode::copy() { return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this)); }
+ExpressionNodePtr STKnnExpressionNode::copy() {
+    auto point = getPoint()->copy();
+    auto geographyFieldsAccessExpressionNode = point->as<GeographyFieldsAccessExpressionNode>();
+    auto queryPoint = getQueryPoint()->copy();
+    auto queryPointExpressionNode = queryPoint->as<PointExpressionNode>();
+    auto constant = getK()->copy();
+    auto k = constant->as<ConstantValueExpressionNode>();
+    return create(geographyFieldsAccessExpressionNode, queryPointExpressionNode, k);
+}
 
 }// namespace NES

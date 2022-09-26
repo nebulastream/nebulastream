@@ -28,7 +28,6 @@ namespace NES {
 class GeographyFieldsAccessExpressionNode : public ExpressionNode, public GeographyExpressionNode {
   public:
     explicit GeographyFieldsAccessExpressionNode(DataTypePtr stamp);
-
     /**
      * @brief Create a new GeographyFieldsAccess expression.
      * @param latitude is the latitude field.
@@ -68,6 +67,7 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode, public Geogra
     ExpressionNodePtr copy() override;
 
   protected:
+    explicit GeographyFieldsAccessExpressionNode(const FieldAccessExpressionNodePtr& latitude, const FieldAccessExpressionNodePtr& longitude);
     explicit GeographyFieldsAccessExpressionNode(GeographyFieldsAccessExpressionNode* other);
 };
 

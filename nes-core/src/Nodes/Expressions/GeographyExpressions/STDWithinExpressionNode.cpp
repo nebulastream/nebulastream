@@ -14,13 +14,16 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
 
 namespace NES {
-STDWithinExpressionNode::STDWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STDWithinExpressionNode::STDWithinExpressionNode()
+    : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}
 
-STDWithinExpressionNode::STDWithinExpressionNode(STDWithinExpressionNode* other) : ExpressionNode(other) {
+STDWithinExpressionNode::STDWithinExpressionNode(STDWithinExpressionNode* other)
+    : ExpressionNode(other), GeographyExpressionNode() {
     addChildWithEqual(getPoint()->copy());
     addChildWithEqual(getCircle()->copy());
 }
@@ -34,33 +37,46 @@ ExpressionNodePtr STDWithinExpressionNode::create(GeographyFieldsAccessExpressio
 
 bool STDWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STDWithinExpressionNode>()) {
-        auto otherAndNode = rhs->as<STDWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint()) && getCircle()->equal(otherAndNode->getCircle());
+        auto otherNode = rhs->as<STDWithinExpressionNode>();
+        return getPoint()->equal(otherNode->getPoint()) && getCircle()->equal(otherNode->getCircle());
     }
     return false;
 }
 
 std::string STDWithinExpressionNode::toString() const {
+    if (children.size() != 2) {
+        NES_FATAL_ERROR("A STDWithinExpressionNode should always access two children, but it had: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::toString(): children.size() = ",
+                                       std::to_string(children.size()));
+    }
     std::stringstream ss;
     ss << "ST_DWITHIN(" << children[0]->toString() << ", " << children[1]->toString() << ")";
     return ss.str();
 }
 
 void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& circle) {
+    if (!point->instanceOf<GeographyFieldsAccessExpressionNode>() || circle->getShapeType() != Circle) {
+        throw InvalidArgumentException("Invalid arguments in STDWithinExpressionNode::setChildren(): ",
+                                       "Point is : " + point->toString() + ", and shape expression is : " + circle->toString());
+    }
     addChildWithEqual(point);
     addChildWithEqual(circle);
 }
 
 ExpressionNodePtr STDWithinExpressionNode::getPoint() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("An ST_DWithin Expression should always have two children, but it has: " << children.size());
+        NES_FATAL_ERROR("An STDWithinExpressionNode should always have two children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::getPoint(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
 
 ShapeExpressionNodePtr STDWithinExpressionNode::getCircle() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("An ST_DWithin Expression should always have two children, but it has: " << children.size());
+        NES_FATAL_ERROR("An STDWithinExpressionNode should always have two children, but it has: " << children.size());
+        throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::getCircle(): children.size() = ",
+                                       std::to_string(children.size()));
     }
     return children[1]->as<CircleExpressionNode>();
 }
@@ -85,7 +101,10 @@ void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCont
 }
 
 ExpressionNodePtr STDWithinExpressionNode::copy() {
-    return std::make_shared<STDWithinExpressionNode>(STDWithinExpressionNode(this));
+    auto expressionNode = getPoint()->copy();
+    auto geographyFieldsAccessExpressionNode = expressionNode->as<GeographyFieldsAccessExpressionNode>();
+    auto circle = getCircle()->copy();
+    return create(geographyFieldsAccessExpressionNode, circle);
 }
 
 }// namespace NES

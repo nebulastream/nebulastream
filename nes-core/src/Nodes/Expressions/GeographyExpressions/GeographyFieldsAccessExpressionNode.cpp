@@ -12,17 +12,29 @@
     limitations under the License.
 */
 
+#include <memory>
+
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 
 namespace NES {
-GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)){};
+GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(DataTypePtr stamp)
+    : ExpressionNode(std::move(stamp)), GeographyExpressionNode(){};
+
+GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(const FieldAccessExpressionNodePtr& latitude,
+                                                                         const FieldAccessExpressionNodePtr& longitude)
+    : ExpressionNode(DataTypeFactory::createDouble()), GeographyExpressionNode() {
+    addChildWithEqual(latitude->copy());
+    addChildWithEqual(longitude->copy());
+}
 
 GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(GeographyFieldsAccessExpressionNode* other)
-    : ExpressionNode(other) {
-    addChildWithEqual(getLatitude()->copy());
-    addChildWithEqual(getLongitude()->copy());
+    : ExpressionNode(other), GeographyExpressionNode() {
+    auto lat = other->getLatitude()->copy();
+    auto lng = other->getLongitude()->copy();
+    setChildren(lat, lng);
 }
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::create(const FieldAccessExpressionNodePtr& latitude,
@@ -42,6 +54,10 @@ bool GeographyFieldsAccessExpressionNode::equal(NodePtr const& rhs) const {
 }
 
 std::string GeographyFieldsAccessExpressionNode::toString() const {
+    if(children.size() != 2) {
+        NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::toString(): children.size() = ", std::to_string(children.size()));
+    }
     std::stringstream ss;
     ss << "Geography(" << children[0]->toString() << ", " << children[1]->toString() << ")";
     return ss.str();
@@ -55,6 +71,7 @@ void GeographyFieldsAccessExpressionNode::setChildren(ExpressionNodePtr const& l
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::getLatitude(): children.size() = ", std::to_string(children.size()));
     }
     return children[0]->as<FieldAccessExpressionNode>();
 }
@@ -62,6 +79,7 @@ ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLongitude() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::getLongitude(): children.size() = ", std::to_string(children.size()));
     }
     return children[1]->as<FieldAccessExpressionNode>();
 }
@@ -86,7 +104,12 @@ void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInfere
 }
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::copy() {
-    return std::make_shared<GeographyFieldsAccessExpressionNode>(GeographyFieldsAccessExpressionNode(this));
+    // copy the field access expression nodes
+    auto latitudeExpressionNode = getLatitude()->copy();
+    auto longitudeExpressionNode = getLongitude()->copy();
+    auto latitudeFieldAccessExpressionNode = latitudeExpressionNode->as<FieldAccessExpressionNode>();
+    auto longitudeFieldAccessExpressionNode = longitudeExpressionNode->as<FieldAccessExpressionNode>();
+    return create(latitudeFieldAccessExpressionNode, longitudeFieldAccessExpressionNode);
 }
 
 }// namespace NES
