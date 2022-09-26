@@ -11,12 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_FRAME_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_FRAME_HPP_
-#include <unordered_map>
+#ifndef NES_NAUTILUS_UTIL_FRAME_HPP_
+#define NES_NAUTILUS_UTIL_FRAME_HPP_
 #include <Util/Logger/Logger.hpp>
-namespace NES::Nautilus::IR {
+#include <unordered_map>
+namespace NES::Nautilus {
 
+/**
+ * @brief A simple frame abstraction for code generation.
+ * @tparam K key type
+ * @tparam V value type
+ */
 template<class K, class V>
 class Frame {
   public:
@@ -28,17 +33,15 @@ class Frame {
         return value->second;
     }
 
-    bool contains(K key){
-        return frameMap.contains(key);
-    }
+    bool contains(K key) { return frameMap.contains(key); }
 
-    void setValue(K key, V value) { frameMap.emplace(std::make_pair(key,value)); }
+    void setValue(K key, V value) { frameMap.emplace(std::make_pair(key, value)); }
     std::unordered_map<K, V>& getContent() { return frameMap; }
 
   private:
     std::unordered_map<K, V> frameMap;
 };
 
-}// namespace NES::Nautilus::IR
+}// namespace NES::Nautilus
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_FRAME_HPP_
+#endif//NES_NAUTILUS_UTIL_FRAME_HPP_

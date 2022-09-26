@@ -11,14 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
+#ifndef NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_
+#define NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Nautilus/Tracing/Tag.hpp>
 #include <memory>
 #include <unordered_map>
 namespace NES::Nautilus::Tracing {
 
+/**
+ * @brief The execution trace captures the trace of a program
+ */
 class ExecutionTrace {
   public:
     ExecutionTrace();
@@ -56,4 +59,4 @@ class ExecutionTrace {
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
+#endif//NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_

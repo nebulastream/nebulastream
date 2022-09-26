@@ -36,12 +36,12 @@
 
 namespace NES::Nautilus::Tracing {
 
-std::shared_ptr<NES::Nautilus::IR::NESIR> TraceToIRConversionPhase::apply(std::shared_ptr<ExecutionTrace> trace) {
+std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::apply(std::shared_ptr<ExecutionTrace> trace) {
     auto phaseContext = IRConversionContext(std::move(trace));
     return phaseContext.process();
 };
 
-std::shared_ptr<NES::Nautilus::IR::NESIR> TraceToIRConversionPhase::IRConversionContext::process() {
+std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversionContext::process() {
     auto& rootBlock = trace->getBlocks().front();
     auto rootIrBlock = processBlock(0, rootBlock);
 

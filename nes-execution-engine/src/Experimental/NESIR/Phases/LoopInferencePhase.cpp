@@ -14,6 +14,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
@@ -22,14 +23,14 @@
 
 namespace NES::Nautilus::IR {
 
-std::shared_ptr<NESIR> LoopInferencePhase::apply(std::shared_ptr<NESIR> ir) {
+std::shared_ptr<IRGraph> LoopInferencePhase::apply(std::shared_ptr<IRGraph> ir) {
     auto context = Context(ir);
     return context.process();
 }
 
-LoopInferencePhase::Context::Context(std::shared_ptr<NESIR> ir) : ir(ir) {}
+LoopInferencePhase::Context::Context(std::shared_ptr<IRGraph> ir) : ir(ir) {}
 
-std::shared_ptr<NESIR> LoopInferencePhase::Context::process() {
+std::shared_ptr<IRGraph> LoopInferencePhase::Context::process() {
     auto rootBasicBlock = ir->getRootOperation()->getFunctionBasicBlock();
     processBlock(rootBasicBlock);
     return ir;

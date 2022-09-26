@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
+#ifndef NES_NAUTILUS_TRACING_CONSTANTVALUE_HPP_
+#define NES_NAUTILUS_TRACING_CONSTANTVALUE_HPP_
 #include <memory>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Any;
@@ -31,4 +31,4 @@ class ConstantValue {
 };
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
+#endif//NES_NAUTILUS_TRACING_CONSTANTVALUE_HPP_

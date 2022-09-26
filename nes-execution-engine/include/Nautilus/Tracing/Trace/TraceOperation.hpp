@@ -22,7 +22,7 @@
 #include <variant>
 #include <vector>
 namespace NES::Nautilus::Tracing {
-
+class None {};
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
 class OperationRef;
 /**

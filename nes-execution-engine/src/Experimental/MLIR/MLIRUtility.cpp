@@ -162,7 +162,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* , bool useSCF) {
+int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFlags* , bool useSCF) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
