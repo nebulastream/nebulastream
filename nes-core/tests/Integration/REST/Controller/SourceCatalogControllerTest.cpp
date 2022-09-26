@@ -41,7 +41,6 @@ const std::string defaultLogicalSourceName = "default_logical";
 
 class SourceCatalogControllerTest : public Testing::NESBaseTest {
   public:
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -50,48 +49,70 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
     }
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down SourceCatalogControllerTest test class."); }
+
+    /**
+     * Starts a coordinator with the following configurations
+     * rpcPort = rpcCoordinatorPort specified in NESBaseTest
+     * restPort = restPort specified in NESBaseTest
+     * restServerType = Oatpp
+     */
+    void startCoordinator(){
+        NES_INFO("SourceCatalogControllerTest: Start coordinator");
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
+        coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+        ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    }
+
+    /**
+     * Starts a coordinator with the given configurations
+     * Use when configurations mentioned in startCoordinator() dont suit needs
+     * @param coordinatorConfig
+     */
+    void startCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration){
+        NES_INFO("SourceCatalogControllerTest: Start coordinator");
+        coordinatorConfig = coordinatorConfiguration;
+        coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+        ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    }
+
+    void checkRestServer(uint64_t customTimeout = 5){
+        NES_INFO("SourceCatalogControllerTest: Check if REST Server starts");
+        ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), customTimeout));
+    }
+
+    CoordinatorConfigurationPtr coordinatorConfig;
+    NesCoordinatorPtr coordinator;
 };
 
 TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    startCoordinator();
+    checkRestServer();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
+
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allLogicalSource"});
     EXPECT_EQ(r.status_code, 200l);
-    // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
+    nlohmann::json response = nlohmann::json::parse(r.text);
+    bool found = false;
+    for (auto& el : response.items())
+    {
+        if(el.key() == "test_stream") {
+            found = true;
+            break;
+        }
+    }
+    ASSERT_TRUE(found);
 }
 
 TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = coordinator->startCoordinator(/**blocking**/ false);
-    ASSERT_EQ(port, *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    startCoordinator();
+    checkRestServer();
     NES_DEBUG("SourceCatalogControllerTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
@@ -101,119 +122,71 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogControllerTest: Worker1 started successfully");
     NES_INFO(coordinator->getSourceCatalog()->getPhysicalSourceAndSchemaAsString());
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allPhysicalSource"},
                                cpr::Parameters{{"logicalSourceName", "default_logical"}});
     EXPECT_EQ(r.status_code, 200l);
-    // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
-    NES_INFO("stopping worker");
+    nlohmann::json response = nlohmann::json::parse(r.text);
+    ASSERT_TRUE(response.contains("Physical Sources") && response["Physical Sources"].size() != 0);
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 }
 
-TEST_F(SourceCatalogControllerTest, DISABLED_testGetSchema) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addLogicalSource("test_stream", Schema::create());
+TEST_F(SourceCatalogControllerTest, testGetSchema) {
+    startCoordinator();
+    checkRestServer();
+    SchemaPtr schema = Schema::create();
+    schema->addField("ID", UINT64);
+    coordinator->getSourceCatalog()->addLogicalSource("test_stream", schema);
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/schema"}, cpr::Parameters{{"logicalSourceName", "test_stream"}});
     EXPECT_EQ(r.status_code, 200l);
-    // TODO compare value of response with expected value To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
+    //TODO: take string representation (r) of Schema object and deserialize it back into a Schema object. Check if ID field exists.
 }
 
-TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+TEST_F(SourceCatalogControllerTest, DISABLED_testPostLogicalSource) {
+    startCoordinator();
+    checkRestServer();
     nlohmann::json request;
-    request["logicalSourceName"] = "logicalSourceName";
-    request["schema"] = "test_schema";
+    SchemaPtr schema = Schema::create();
+    schema->addField("ID", UINT64);
+    request["logicalSourceName"] = "test";
+    request["schema"] = schema->toString(); //TODO: What does a schema in string form look like? Must be compilable
     auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource"},
-                                cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
-                                cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+                                cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()});
     EXPECT_EQ(response.status_code, 200l);
-    // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_DEBUG("This is the content of response:");
-    NES_DEBUG(response.text);
+    nlohmann::json success = nlohmann::json::parse(response.text);
+    ASSERT_TRUE(success["success"]);
 }
 
-TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+TEST_F(SourceCatalogControllerTest, DISABLED_testUpdateLogicalSource) {
+    startCoordinator();
+    checkRestServer();
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    auto schema = Schema::create();
+    SchemaPtr schema = Schema::create();
+    schema->addField("ID", UINT64);
     sourceCatalog->addLogicalSource("test_stream", schema);
-
     nlohmann::json request;
     request["logicalSourceName"] = "test_stream";
-    request["schema"] = "schema";
+    request["schema"] = schema->toString(); //TODO: What does a schema in string form look like? Must be compilable
     auto r = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/updateLogicalSource"},
                        cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
                        cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     EXPECT_EQ(r.status_code, 200l);
-    // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
 }
 
-TEST_F(SourceCatalogControllerTest, DISABLED_testDeleteLogicalSource) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("SourceCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addLogicalSource("test_stream", Schema::create());
-    cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/deleteLogicalSource"},
+TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
+    startCoordinator();
+    checkRestServer();
+    SchemaPtr schema = Schema::create();
+    schema->addField("ID", UINT64);
+    coordinator->getSourceCatalog()->addLogicalSource("test_stream", schema);
+    cpr::Response r = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/deleteLogicalSource"},
                                cpr::Parameters{{"logicalSourceName", "test_stream"}});
-    EXPECT_EQ(r.status_code, 200l);
-    // TODO compare value of response with expected value  To be added once json library found #2950
-    NES_INFO("This is the content of response:");
-    NES_INFO(r.text);
+    ASSERT_EQ(r.status_code, 200l);
+    nlohmann::json success = nlohmann::json::parse(r.text);
+    ASSERT_TRUE(success["success"]);
 }
 
 } // NES

@@ -18,10 +18,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/EntryNotFoundException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <REST/DTOs/LogicalSourceInfo.hpp>
-#include <REST/DTOs/LogicalSourceResponse.hpp>
-#include <REST/DTOs/SourceCatalogBoolResponse.hpp>
-#include <REST/DTOs/SourceCatalogControllerSubmitLogicalSourceRequest.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <SerializableOperator.pb.h>
@@ -127,23 +123,35 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-        // TODO: DTO for body string!
-    ENDPOINT("POST", "/addLogicalSource", addLogicalSource, BODY_DTO(Object<DTO::SourceCatalogControllerSubmitLogicalSourceRequest>, request)) {
-        //OATPP_LOGV(TAG, "POST body %s", body->c_str());
-        auto dto = SourceCatalogBoolResponse::createShared();
+    ENDPOINT("POST", "/addLogicalSource", addLogicalSource, BODY_STRING(String, request)) {
+
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
         try {
-            std::string sourceName = request->logicalSourceName->c_str();
-            std::string schema = request->schema->c_str();
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            }
+            //validate post request body
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            if(!reqJson.contains("logicalSourceName")){
+                return errorHandler->handleError(Status::CODE_400, "Request body must contain 'logicalSourceName'");
+            }
+            if(!reqJson.contains("schema")){
+                return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
+            }
+            std::string logicalSourceName = reqJson["logicalSourceName"];
+            std::string schema = reqJson["schema"];
             NES_DEBUG("SourceCatalogController: addLogicalSource: Try to add new Logical Source "
-                      << sourceName << " and " << schema);
-            bool added = sourceCatalog->addLogicalSource(request->logicalSourceName, request->schema);
+                      << logicalSourceName << " and " << schema);
+            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?"
                       << added);
             //Prepare the response
             if (added){
-                dto->success = added;
-                return createDtoResponse(Status::CODE_200, dto);
+                nlohmann::json success;
+                success["success"] = added;
+                return createResponse(Status::CODE_200, success.dump());
             }
             else{
                 return errorHandler->handleError(Status::CODE_400, "Logical Source with same name already exists!");
@@ -156,17 +164,27 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
         }
-        // TODO Do I need a wait() here?
     }
 
-    // TODO: DTO for body string!
-    ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource, BODY_DTO(Object<DTO::SourceCatalogControllerSubmitLogicalSourceRequest>, request))  {
-        //OATPP_LOGV(TAG, "POST body %s", body->c_str());
-        auto dto = SourceCatalogBoolResponse::createShared();
+    ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource, BODY_STRING(String, request))  {
+
         NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
         try {
-            std::string sourceName = request->logicalSourceName->c_str();
-            std::string schemaName = request->schema->c_str();
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            }
+            //validate post request body
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            if(!reqJson.contains("logicalSourceName")){
+                return errorHandler->handleError(Status::CODE_400, "Request body must contain 'logicalSourceName'");
+            }
+            if(!reqJson.contains("schema")){
+                return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
+            }
+            std::string sourceName = reqJson["logicalSourceName"];
+            std::string schemaName = reqJson["schema"];
             NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source "
                        << sourceName << " and" << schemaName);
             bool updated = sourceCatalog->updatedLogicalSource(sourceName, schemaName);
@@ -174,8 +192,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                       << updated);
             // Prepare the response
             if (updated){
-                dto->success = updated;
-                return createDtoResponse(Status::CODE_200, dto);
+                nlohmann::json success;
+                success["success"] = updated;
+                return createResponse(Status::CODE_200, success.dump());
             }
             else{
                 NES_DEBUG("SourceCatalogController: updateLogicalSource: unable to find given source");
@@ -193,11 +212,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource,
              QUERY(String, logicalSourceName, "logicalSourceName")) {
-        if (logicalSourceName == "") {
-            NES_ERROR("SourceCatalogController: Unable to find logicalSourceName for the delete request");
-            return errorHandler->handleError(Status::CODE_400, "Bad Request: Parameter logicalSourceName must be provided");
-        }
-        auto dto = SourceCatalogBoolResponse::createShared();
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
             bool deleted = sourceCatalog->removeLogicalSource(logicalSourceName);
@@ -205,12 +219,15 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                       << deleted);
             // Prepare the response
             if (deleted){
-                dto->success = deleted;
-                return createDtoResponse(Status::CODE_200, dto);
+                nlohmann::json success;
+                success["success"] = deleted;
+                return createResponse(Status::CODE_200, success.dump());
             }
             else{
                 NES_DEBUG("SourceCatalogController: deleteLogicalSource: unable to find given source");
-                return errorHandler->handleError(Status::CODE_400, "Unable to delete logical source.");
+                return errorHandler->handleError(Status::CODE_400, "Unable to delete logical source. Either logical source doesnt exist or"
+                                                                                 " there are still physical sources mapped to the logical source");
+
             }
         } catch (const std::exception& exc) {
             NES_ERROR("SourceCatalogController: deleteLogicalSource: Exception occurred while building the query plan for user request.");
