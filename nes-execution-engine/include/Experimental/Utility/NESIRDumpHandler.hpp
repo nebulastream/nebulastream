@@ -16,9 +16,9 @@
 #define NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
 
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
-#include "Nautilus/IR/NESIR.hpp"
-#include <unordered_set>
+#include "Nautilus/IR/IRGraph.hpp"
 #include <memory>
+#include <unordered_set>
 
 namespace NES {
 namespace Nautilus::IR {

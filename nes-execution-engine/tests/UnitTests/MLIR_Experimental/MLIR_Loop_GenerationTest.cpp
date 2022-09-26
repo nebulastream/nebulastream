@@ -75,7 +75,7 @@ createBB(std::string identifier, int level, std::vector<std::shared_ptr<Operatio
  *  return x;
  */
 TEST_F(MLIR_LOOP_GenerationTest, testCountedLoop) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto rootBasicBlock = createBB("executeBodyBB", 0, {x});
@@ -145,7 +145,7 @@ TEST_F(MLIR_LOOP_GenerationTest, testCountedLoop) {
  *  return x;
  */
 TEST_F(MLIR_LOOP_GenerationTest, testDefaultLoop) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto rootBasicBlock = createBB("executeBodyBB", 0, {x});

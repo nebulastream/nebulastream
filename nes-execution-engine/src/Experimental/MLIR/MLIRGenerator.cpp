@@ -260,7 +260,7 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR) {
+mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
     ValueFrame firstframe;
     generateMLIR(nesIR->getRootOperation(), firstframe);
     theModule->dump();

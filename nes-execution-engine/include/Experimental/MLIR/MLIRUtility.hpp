@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
-#include <Nautilus/IR/NESIR.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 #include <memory>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
+#include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/OwningOpRef.h>
-#include <mlir/IR/BuiltinOps.h>
 #include <string>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
@@ -55,7 +55,7 @@ class MLIRUtility {
     * @param debugFlags: Determine whether and how to print/write MLIR.
     * @return int: 1 if error occurred, else 0
     */
-    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
+    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
 
     int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
     int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);

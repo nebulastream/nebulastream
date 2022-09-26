@@ -13,11 +13,11 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_SRC_EXPERIMENTAL_BABELFISH_IRSERIALIZATION_HPP_
 #define NES_NES_EXECUTION_ENGINE_SRC_EXPERIMENTAL_BABELFISH_IRSERIALIZATION_HPP_
-#include <cpprest/json.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
-#include <Nautilus/IR/NESIR.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <cpprest/json.h>
 
 namespace web::json {
 class value;

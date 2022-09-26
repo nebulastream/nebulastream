@@ -78,7 +78,7 @@ createBB(std::string identifier, int level, std::vector<std::shared_ptr<Operatio
  *  return x
  */
 TEST_F(MLIR_IF_GenerationTest, testIfEquals) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto rootBasicBlock = createBB("executeBodyBB", 0, {x});
@@ -151,7 +151,7 @@ TEST_F(MLIR_IF_GenerationTest, testIfEquals) {
  *  return x
  */
 TEST_F(MLIR_IF_GenerationTest, testNestedIfEquals) {
-    auto nesIR = std::make_shared<NESIR>();
+    auto nesIR = std::make_shared<IRGraph>();
 
     auto x = std::make_shared<BasicBlockArgument>("x", Types::StampFactory::createInt64Stamp());
     auto y = std::make_shared<BasicBlockArgument>("y", Types::StampFactory::createInt64Stamp());

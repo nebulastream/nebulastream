@@ -12,29 +12,33 @@
     limitations under the License.
 */
 
-#ifndef NES_NESIR_HPP
-#define NES_NESIR_HPP
-
-#include <Nautilus/IR/Operations/FunctionOperation.hpp>
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#ifndef NES_NAUTILUS_IR_IRGRAPH_HPP_
+#define NES_NAUTILUS_IR_IRGRAPH_HPP_
 
 namespace NES::Nautilus::IR {
-class NESIR {
-  public:
-    NESIR() = default;
-    ~NESIR() = default;
 
+namespace Operations {
+class FunctionOperation;
+}
+
+/**
+ * @brief The IRGraph represents a fragment of nautilus ir.
+ */
+class IRGraph {
+  public:
+    IRGraph() = default;
+    ~IRGraph() = default;
     std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
     std::shared_ptr<Operations::FunctionOperation> getRootOperation();
-
     bool getIsSCF();
     void setIsSCF(bool isCF);
     std::string toString();
+
   private:
     std::shared_ptr<Operations::FunctionOperation> rootOperation;
     bool isSCF;
 };
 
-}// namespace NESIR
+}// namespace NES::Nautilus::IR
 
-#endif //NES_NESIR_HPP
+#endif//NES_NAUTILUS_IR_IRGRAPH_HPP_

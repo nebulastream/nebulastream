@@ -15,33 +15,33 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/NESIR.hpp>
 #include <Experimental/MLIR/YieldOperation.hpp>
-#include <Experimental/NESIR/Frame.hpp>
+#include <Experimental/NESIR/ProxyFunctions.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
-#include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
+#include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
-#include <Experimental/NESIR/ProxyFunctions.hpp>
+#include <Nautilus/Util/Frame.hpp>
 #include <cstdint>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/StringSet.h>
@@ -67,7 +67,7 @@ namespace NES::ExecutionEngine::Experimental::MLIR {
 class MLIRGenerator {
   public:
     bool useSCF = true;
-    using ValueFrame = IR::Frame<std::string, mlir::Value>;
+    using ValueFrame = Frame<std::string, mlir::Value>;
 
     /**
      * @brief Inserts mlir versions of frequently needed class member functions.
@@ -83,7 +83,7 @@ class MLIRGenerator {
     MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncOp>& memberFunctions);
     ~MLIRGenerator() = default;
 
-    mlir::ModuleOp generateModuleFromNESIR(std::shared_ptr<IR::NESIR> nesIR);
+    mlir::ModuleOp generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR);
 
     std::vector<std::string> getJitProxyFunctionSymbols();
     std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
@@ -148,8 +148,11 @@ class MLIRGenerator {
      * @param varArgs: Include variable arguments.
      * @return FlatSymbolRefAttr: Reference to function used in CallOps.
      */
-    mlir::FlatSymbolRefAttr
-    insertExternalFunction(const std::string& name, void* functionPtr, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs);
+    mlir::FlatSymbolRefAttr insertExternalFunction(const std::string& name,
+                                                   void* functionPtr,
+                                                   mlir::Type resultType,
+                                                   std::vector<mlir::Type> argTypes,
+                                                   bool varArgs);
 
     /**
      * @brief Inserts an mlir::LLVM::UnknownOp into module with comment string

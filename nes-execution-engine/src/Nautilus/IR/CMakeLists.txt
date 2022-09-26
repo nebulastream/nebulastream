@@ -15,4 +15,4 @@ add_subdirectory(BasicBlocks)
 add_subdirectory(Operations)
 add_subdirectory(Types)
 
-add_source_files(nes-execution-engine NESIR.cpp)
+add_source_files(nes-execution-engine IRGraph.cpp)

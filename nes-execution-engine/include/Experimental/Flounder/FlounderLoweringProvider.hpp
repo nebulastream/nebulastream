@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Frame.hpp>
-#include <Nautilus/IR/NESIR.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>

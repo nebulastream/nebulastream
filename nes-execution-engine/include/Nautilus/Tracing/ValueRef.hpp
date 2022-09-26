@@ -11,14 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
+#ifndef NES_NAUTILUS_TRACING_VALUEREF_HPP_
+#define NES_NAUTILUS_TRACING_VALUEREF_HPP_
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <memory>
 namespace NES::Nautilus::Tracing {
-
-class None {};
 
 /**
  * @brief References of a value with a block_id and operation_id tag
@@ -75,7 +73,6 @@ class ValueRef {
  */
 ValueRef createNextRef(IR::Types::StampPtr type);
 
-
 struct ValueRefHasher {
     std::size_t operator()(const ValueRef& k) const {
         auto hasher = std::hash<uint64_t>();
@@ -84,7 +81,6 @@ struct ValueRefHasher {
     }
 };
 
-
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
+#endif//NES_NAUTILUS_TRACING_VALUEREF_HPP_

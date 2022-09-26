@@ -12,26 +12,27 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/NESIR.hpp>
+#include <Experimental/Utility/NESIRDumpHandler.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <sstream>
 #include <utility>
-#include <Experimental/Utility/NESIRDumpHandler.hpp>
 
 namespace NES::Nautilus::IR {
 
-std::shared_ptr<Operations::FunctionOperation> NESIR::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
+std::shared_ptr<Operations::FunctionOperation>
+IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
     this->rootOperation = std::move(rootOperation);
     return this->rootOperation;
 }
 
-std::shared_ptr<Operations::FunctionOperation> NESIR::getRootOperation() {
-    return rootOperation;
-}
+std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation() { return rootOperation; }
 
-bool NESIR::getIsSCF() { return isSCF; }
-void NESIR::setIsSCF(bool isSCF) { this->isSCF = isSCF; }
+bool IRGraph::getIsSCF() { return isSCF; }
+void IRGraph::setIsSCF(bool isSCF) { this->isSCF = isSCF; }
 
-std::string NESIR::toString() {
+std::string IRGraph::toString() {
     std::stringstream ss;
     ss << "NESIR {\n";
     auto dumpHandler = Nautilus::IR::NESIRDumpHandler::create(ss);
@@ -40,4 +41,4 @@ std::string NESIR::toString() {
     return ss.str();
 }
 
-}// namespace NES
+}// namespace NES::Nautilus::IR

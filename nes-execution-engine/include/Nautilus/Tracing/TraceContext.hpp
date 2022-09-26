@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
+#ifndef NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#define NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #include <Nautilus/Tracing/Tag.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
@@ -74,4 +74,4 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
+#endif//NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
