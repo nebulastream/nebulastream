@@ -41,8 +41,8 @@ class JoinBuild : public ExecutableOperator {
     std::shared_ptr<NES::Experimental::Hashmap> hashMap;
     const std::vector<ExpressionPtr> keyExpressions;
     const std::vector<ExpressionPtr> valueExpressions;
-    const std::vector<IR::Types::StampPtr> keyTypes;
-    const std::vector<IR::Types::StampPtr> valueTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;
+    const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
     mutable uint32_t tag;
 };
 

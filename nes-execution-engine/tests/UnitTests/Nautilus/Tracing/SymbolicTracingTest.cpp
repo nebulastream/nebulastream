@@ -12,33 +12,21 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
-class SymbolicExecutionTest : public testing::Test {
+using namespace NES::ExecutionEngine::Experimental::Interpreter;
+namespace NES::Nautilus::Tracing {
+class SymbolicTracingTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     /* Will be called before any test in this class are executed. */
@@ -63,7 +51,7 @@ void assignmentOperator() {
     iw = iw2 + iw;
 }
 
-TEST_F(SymbolicExecutionTest, assignmentOperatorTest) {
+TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         assignmentOperator();
     });
@@ -85,7 +73,7 @@ void arithmeticExpression() {
     auto result = iw - iw3 + 2 * iw2 / iw;
 }
 
-TEST_F(SymbolicExecutionTest, arithmeticExpressionTest) {
+TEST_F(SymbolicTracingTest, arithmeticExpressionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         arithmeticExpression();
     });
@@ -112,7 +100,7 @@ void logicalExpressionLessThan() {
     auto result = iw < 2;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionLessThanTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionLessThanTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessThan);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
@@ -129,7 +117,7 @@ void logicalExpressionEquals() {
     auto result = iw == 2;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionEqualsTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionEqualsTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         logicalExpressionEquals();
     });
@@ -147,7 +135,7 @@ void logicalExpressionLessEquals() {
     auto result = iw <= 2;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionLessEqualsTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionLessEqualsTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -165,7 +153,7 @@ void logicalExpressionGreater() {
     auto result = iw > 2;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionGreaterTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionGreaterTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreater);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -181,7 +169,7 @@ void logicalExpressionGreaterEquals() {
     auto result = iw >= 2;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionGreaterEqualsTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionGreaterEqualsTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreaterEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -204,7 +192,7 @@ Value<> logicalAssignTest() {
     return res && z == 42;
 }
 
-TEST_F(SymbolicExecutionTest, logicalAssignEqualsTest) {
+TEST_F(SymbolicTracingTest, logicalAssignEqualsTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return logicalAssignTest();
     });
@@ -223,7 +211,7 @@ void logicalExpression() {
     auto result = iw == 2 && iw < 1 || true;
 }
 
-TEST_F(SymbolicExecutionTest, logicalExpressionTest) {
+TEST_F(SymbolicTracingTest, logicalExpressionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         logicalExpression();
     });
@@ -251,7 +239,7 @@ void ifCondition(bool flag) {
     iw + 42;
 }
 
-TEST_F(SymbolicExecutionTest, ifConditionTest) {
+TEST_F(SymbolicTracingTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         ifCondition(true);
     });
@@ -305,7 +293,7 @@ void ifElseCondition(bool flag) {
     iw + 1;
 }
 
-TEST_F(SymbolicExecutionTest, ifElseConditionTest) {
+TEST_F(SymbolicTracingTest, ifElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         ifElseCondition(true);
     });
@@ -360,7 +348,7 @@ void nestedIfThenElseCondition() {
     }
 }
 
-TEST_F(SymbolicExecutionTest, nestedIfElseConditionTest) {
+TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         nestedIfThenElseCondition();
     });
@@ -421,7 +409,7 @@ void emptyLoop() {
     auto iw3 = iw2 - 5;
 }
 
-TEST_F(SymbolicExecutionTest, emptyLoopTest) {
+TEST_F(SymbolicTracingTest, emptyLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         emptyLoop();
     });
@@ -468,7 +456,7 @@ void longEmptyLoop() {
     auto iw3 = iw2 - 5;
 }
 
-TEST_F(SymbolicExecutionTest, longEmptyLoopTest) {
+TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         longEmptyLoop();
     });
@@ -514,7 +502,7 @@ void sumLoop() {
     auto res = agg == 10;
 }
 
-TEST_F(SymbolicExecutionTest, sumLoopTest) {
+TEST_F(SymbolicTracingTest, sumLoopTest) {
 
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         sumLoop();
@@ -564,7 +552,7 @@ void sumWhileLoop() {
     auto res = agg == 10;
 }
 
-TEST_F(SymbolicExecutionTest, sumWhileLoopTest) {
+TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         sumWhileLoop();
     });
@@ -611,7 +599,7 @@ void invertedLoop() {
     } while (i < end);
 }
 
-TEST_F(SymbolicExecutionTest, invertedLoopTest) {
+TEST_F(SymbolicTracingTest, invertedLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         invertedLoop();
     });
@@ -654,7 +642,7 @@ void nestedLoop() {
     }
 }
 
-TEST_F(SymbolicExecutionTest, nestedLoop) {
+TEST_F(SymbolicTracingTest, nestedLoop) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         nestedLoop();
     });
@@ -680,7 +668,7 @@ void nestedLoopIf() {
     }
 }
 
-TEST_F(SymbolicExecutionTest, nestedLoopIf) {
+TEST_F(SymbolicTracingTest, nestedLoopIf) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         nestedLoopIf();
     });
@@ -691,4 +679,4 @@ TEST_F(SymbolicExecutionTest, nestedLoopIf) {
     ASSERT_EQ(basicBlocks.size(), 10);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus::Tracing

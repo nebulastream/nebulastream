@@ -18,7 +18,7 @@
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 class NESIR {
   public:
     NESIR() = default;

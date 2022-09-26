@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class DataTypeTest : public testing::Test {

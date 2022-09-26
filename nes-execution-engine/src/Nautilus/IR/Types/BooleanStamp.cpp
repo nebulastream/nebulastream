@@ -13,9 +13,9 @@
 */
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 BooleanStamp::BooleanStamp() : Stamp(&type) {}
 const std::string BooleanStamp::toString() const { return "bool"; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

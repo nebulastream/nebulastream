@@ -29,7 +29,7 @@
 #include <memory>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-Nautilus::Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
+Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp);
 void TraceConstOperation(const Interpreter::AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference);
 void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
 bool traceBoolOperation(const Interpreter::AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
@@ -249,7 +249,7 @@ Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
-Value<> CastToOp(const Value<>& leftExp, IR::Types::StampPtr toStamp);
+Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
 template<class T>
     requires(std::is_same_v<T, const bool> == true)

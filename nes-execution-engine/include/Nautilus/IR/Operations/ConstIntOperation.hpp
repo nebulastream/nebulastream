@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class ConstIntOperation : public Operation {
   public:

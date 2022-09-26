@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 ConstIntOperation::ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp)
     : Operation(OperationType::ConstIntOp, identifier, stamp), constantValue(constantValue) {}
@@ -28,4 +28,4 @@ bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationTy
 
 std::string ConstIntOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

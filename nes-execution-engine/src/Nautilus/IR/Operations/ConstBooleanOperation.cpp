@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 ConstBooleanOperation::ConstBooleanOperation(OperationIdentifier identifier, bool constantValue)
     : Operation(OperationType::ConstBooleanOp, identifier, Types::StampFactory::createBooleanStamp()),
@@ -29,4 +29,4 @@ bool ConstBooleanOperation::classof(const Operation* Op) { return Op->getOperati
 
 std::string ConstBooleanOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

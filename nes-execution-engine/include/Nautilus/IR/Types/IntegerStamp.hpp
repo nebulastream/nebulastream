@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 /**
  * @brief A integer stamp represents the type of an integer value.
@@ -76,6 +76,6 @@ class IntegerStamp : public Stamp {
     const SignednessSemantics signedness;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_INTEGERSTAMP_HPP_

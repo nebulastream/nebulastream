@@ -19,7 +19,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 StampPtr StampFactory::createVoidStamp() { return std::make_shared<VoidStamp>(); }
 
@@ -71,4 +71,4 @@ StampPtr StampFactory::createArrayStamp(uint64_t size, StampPtr component) {
     return std::make_shared<ArrayStamp>(size, component);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

@@ -18,7 +18,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class FunctionOperation : public Operation {
   public:
     explicit FunctionOperation(std::string name,
@@ -43,6 +43,6 @@ class FunctionOperation : public Operation {
     std::vector<PrimitiveStamp> inputArgs;
     std::vector<std::string> inputArgNames;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 
 #endif//NES_FUNCTIONOPERATION_HPP

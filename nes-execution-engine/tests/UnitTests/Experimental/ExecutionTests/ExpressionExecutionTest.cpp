@@ -22,7 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 /**
  * @brief This test tests execution of scala expression

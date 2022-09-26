@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_BOLEANSTAMP_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 class BooleanStamp : public Stamp {
   public:
@@ -28,6 +28,6 @@ class BooleanStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_BOLEANSTAMP_HPP_

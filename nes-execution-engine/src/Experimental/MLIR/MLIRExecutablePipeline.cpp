@@ -14,7 +14,7 @@
 
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/MLIR/MLIRExecutablePipeline.hpp>
-
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental {
 
 MLIRExecutablePipeline::MLIRExecutablePipeline(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,

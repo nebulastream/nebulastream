@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 ConstFloatOperation::ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp)
     : Operation(OperationType::ConstFloatOp, identifier, stamp), constantValue(constantValue) {}
@@ -30,4 +30,4 @@ std::string ConstFloatOperation::toString() {
     return "ConstantFloat" + getStamp()->toString() + "Operation_" + identifier + "(" + std::to_string(constantValue) + ")";
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

@@ -16,24 +16,25 @@
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 std::unique_ptr<AggregationState> SumFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
 std::unique_ptr<AggregationState> SumFunction::createState() {
-    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
+    if (auto integerStamp = cast_if<Nautilus::IR::Types::IntegerStamp>(stamp.get())) {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: {
+                case Nautilus::IR::Types::IntegerStamp::I8: {
                     return std::make_unique<SumState>(Value<>((uint8_t) 0));
                 };
-                case IR::Types::IntegerStamp::I16: {
+                case Nautilus::IR::Types::IntegerStamp::I16: {
                     return std::make_unique<SumState>(Value<>((uint16_t) 0));
                 };
-                case IR::Types::IntegerStamp::I32: {
+                case Nautilus::IR::Types::IntegerStamp::I32: {
                     return std::make_unique<SumState>(Value<>((uint32_t) 0));
                 };
-                case IR::Types::IntegerStamp::I64: {
+                case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<SumState>(Value<>((uint64_t) 0));
                 };
             }

@@ -17,7 +17,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class LoopInfo {
   public:
@@ -40,6 +40,6 @@ class CountedLoopInfo : public LoopInfo {
     bool isCountedLoop() override { return true; }
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_OPERATIONS_LOOP_LOOPINFO_HPP_

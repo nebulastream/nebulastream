@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPIPELINECOMPILERBACKEND_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPIPELINECOMPILERBACKEND_HPP_
 #include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental {
 class MLIRPipelineCompilerBackend : public PipelineCompilerBackend {
   public:

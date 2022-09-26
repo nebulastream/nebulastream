@@ -22,9 +22,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+using namespace NES::ExecutionEngine::Experimental::Interpreter;
+namespace NES::Nautilus::IR {
 
-namespace NES::ExecutionEngine::Experimental::IR {
-using namespace Interpreter;
 class LoopInferencePhaseTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -75,4 +75,4 @@ TEST_F(LoopInferencePhaseTest, sumLoopTest) {
     NES_DEBUG(loopOperation);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR

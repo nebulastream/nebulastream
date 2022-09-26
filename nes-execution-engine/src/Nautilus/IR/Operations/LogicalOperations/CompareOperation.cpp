@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 CompareOperation::CompareOperation(OperationIdentifier identifier,
                                    OperationPtr leftInput,
                                    OperationPtr rightInput,
@@ -53,4 +53,4 @@ std::string CompareOperation::toString() {
     return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

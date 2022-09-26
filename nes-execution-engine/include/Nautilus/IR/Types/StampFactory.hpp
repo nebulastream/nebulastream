@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_STAMPFACTORY_HPP_
 
 #include <memory>
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
 class StampFactory {
@@ -36,6 +36,6 @@ class StampFactory {
     static StampPtr createArrayStamp(uint64_t size, StampPtr component);
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_STAMP_HPP_

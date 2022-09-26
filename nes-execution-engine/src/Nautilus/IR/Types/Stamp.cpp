@@ -19,7 +19,7 @@
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 Stamp::Stamp(const TypeIdentifier* typeIdentifier) : Typed(typeIdentifier) {}
 
@@ -34,4 +34,4 @@ bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
 
 bool Stamp::isVoid() { return isa<VoidStamp>(*this); }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

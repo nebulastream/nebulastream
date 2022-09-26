@@ -45,8 +45,8 @@
 
 using namespace std;
 using namespace NES::ExecutionEngine::Experimental::MLIR;
-using namespace NES::ExecutionEngine::Experimental::IR;
-using namespace NES::ExecutionEngine::Experimental::IR::Operations;
+using namespace NES::Nautilus::IR;
+using namespace NES::Nautilus::IR::Operations;
 
 namespace NES {
 class MLIRNESIRTest_ArithmeticOps : public testing::Test {

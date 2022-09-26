@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
@@ -86,4 +86,4 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     operations.insert(position, operation);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR
+}// namespace NES::Nautilus::IR

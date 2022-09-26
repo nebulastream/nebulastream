@@ -13,7 +13,7 @@
 */
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 IntegerStamp::IntegerStamp(BitWidth bitWidth, SignednessSemantics signedness)
     : Stamp(&type), bitWidth(bitWidth), signedness(signedness) {}
@@ -40,4 +40,4 @@ const std::string IntegerStamp::toString() const {
     return prefix + std::to_string(getNumberOfBits());
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

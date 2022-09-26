@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <string>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 DivOperation::DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::DivOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {

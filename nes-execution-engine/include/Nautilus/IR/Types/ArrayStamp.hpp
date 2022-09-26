@@ -16,7 +16,7 @@
 
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 /**
  * @brief A array stamp that represents a array data type of a fixed size and a specific component type.
@@ -39,6 +39,6 @@ class ArrayStamp : public Stamp {
     const StampPtr componentStamp;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_ARRAYSTAMP_HPP_

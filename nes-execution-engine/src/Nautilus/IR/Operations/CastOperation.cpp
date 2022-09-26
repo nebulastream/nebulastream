@@ -13,7 +13,7 @@
 */
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp)
     : Operation(CastOp, identifier, targetStamp), input(input) {
@@ -26,4 +26,4 @@ std::string CastOperation::toString() {
     return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
 }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

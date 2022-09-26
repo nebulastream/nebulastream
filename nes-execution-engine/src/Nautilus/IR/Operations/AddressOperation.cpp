@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 AddressOperation::AddressOperation(OperationIdentifier identifier,
                                    PrimitiveStamp dataType, uint64_t getRecordWidth,
                                    uint64_t fieldOffset, std::string recordIdxName, std::string addressSourceName)

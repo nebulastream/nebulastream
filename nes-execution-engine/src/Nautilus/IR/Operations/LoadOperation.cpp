@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 LoadOperation::LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr type)
     : Operation(OperationType::LoadOp, identifier, type), address(std::move(address)) {
@@ -25,4 +25,4 @@ OperationPtr LoadOperation::getAddress() { return address.lock(); }
 
 std::string LoadOperation::toString() { return identifier + " = load(" + getAddress()->getIdentifier() + ")"; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

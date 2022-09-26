@@ -15,7 +15,7 @@
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <utility>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 FunctionOperation::FunctionOperation(std::string name, std::vector<PrimitiveStamp> inputArgs,
                                      std::vector<std::string> inputArgNames,

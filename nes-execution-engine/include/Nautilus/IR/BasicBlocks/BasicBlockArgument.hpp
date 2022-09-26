@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <ostream>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class BasicBlockArgument : public Operation {
   public:
@@ -27,6 +27,6 @@ class BasicBlockArgument : public Operation {
     std::string toString() override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_

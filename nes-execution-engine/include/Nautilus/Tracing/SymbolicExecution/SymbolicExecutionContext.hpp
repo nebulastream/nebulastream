@@ -87,7 +87,7 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolically(const Functor func) {
     auto symbolicExecution = initThreadSymbolicExecutionContext();
     auto result = symbolicExecution->apply([&func] {
         func();
-        return createNextRef(ExecutionEngine::Experimental::IR::Types::StampFactory::createVoidStamp());
+        return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
     });
     disableSymbolicExecution();
     return result;

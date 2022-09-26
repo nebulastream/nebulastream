@@ -18,7 +18,7 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class AddressOperation : public Operation {
   public:
     explicit AddressOperation(OperationIdentifier identifier,
@@ -45,6 +45,6 @@ class AddressOperation : public Operation {
     std::string recordIdxName;
     std::string addressSourceName;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 
 #endif//NES_ADDRESSOPERATION_HPP

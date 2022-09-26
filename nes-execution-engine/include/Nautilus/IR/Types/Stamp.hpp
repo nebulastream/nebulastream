@@ -18,7 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <typeinfo>
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 class Stamp : public Typed {
   public:
@@ -36,6 +36,6 @@ class Stamp : public Typed {
 
 using StampPtr = std::shared_ptr<Stamp>;
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_STAMP_HPP_

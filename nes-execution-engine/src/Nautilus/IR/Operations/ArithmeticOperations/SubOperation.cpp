@@ -14,7 +14,7 @@
 
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <string>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
@@ -27,4 +27,4 @@ std::string SubOperation::toString() {
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
 OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

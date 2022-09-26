@@ -15,10 +15,10 @@
 #ifndef NES_RETURNOPERATION_HPP
 #define NES_RETURNOPERATION_HPP
 
-#include "Nautilus/IR/Operations/Operation.hpp"
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <cstdint>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class ReturnOperation : public Operation {
   public:
     ReturnOperation();

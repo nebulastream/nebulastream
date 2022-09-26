@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 /**
  * @brief A void stamp, which represents a data type without a value.
@@ -32,6 +32,6 @@ class VoidStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_VOIDSTAMP_HPP_

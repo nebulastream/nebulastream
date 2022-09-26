@@ -17,7 +17,7 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 class ConstBooleanOperation : public Operation {
   public:
@@ -31,5 +31,5 @@ class ConstBooleanOperation : public Operation {
     bool constantValue;// Can also hold uInts
 };
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_CONSTANTBOOLEANOPERATION_HPP

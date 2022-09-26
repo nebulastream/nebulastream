@@ -15,7 +15,7 @@
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/MLIR/YieldOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 
 YieldOperation::YieldOperation(std::vector<OperationPtr> arguments, BasicBlockPtr nextBlock)
     : Operation(OperationType::MLIR_YIELD, Types::StampFactory::createVoidStamp()), nextBlock(nextBlock) {
@@ -44,4 +44,4 @@ std::string YieldOperation::toString() {
 }
 bool YieldOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::MLIR_YIELD; }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations

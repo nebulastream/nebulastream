@@ -18,7 +18,7 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class StoreOperation : public Operation{
   public:
     explicit StoreOperation(OperationPtr value, OperationPtr address);

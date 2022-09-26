@@ -41,8 +41,8 @@
 
 using namespace std;
 using namespace NES::ExecutionEngine::Experimental::MLIR;
-using namespace NES::ExecutionEngine::Experimental::IR;
-using namespace NES::ExecutionEngine::Experimental::IR::Operations;
+using namespace NES::Nautilus::IR;
+using namespace NES::Nautilus::IR::Operations;
 
 namespace NES {
 class MLIRNESIRTest_ArithmeticOps : public testing::Test {
@@ -306,7 +306,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                                     "loopEndIncIOp",
                                                     "iOp",
                                                     "const1Op",
-                                                    ExecutionEngine::Experimental::IR::Operations::INT64))
+                                                    NES::Nautilus::IR::Operations::INT64))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                                 ->addNextBlock(savedBBs["loopHeadBB"]))))

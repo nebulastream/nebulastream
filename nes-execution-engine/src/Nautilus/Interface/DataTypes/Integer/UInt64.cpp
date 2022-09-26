@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 UInt64::UInt64(uint64_t value) : Int(&type), value(value){};
-IR::Types::StampPtr UInt64::getType() const { return IR::Types::StampFactory::createUInt64Stamp(); }
+Nautilus::IR::Types::StampPtr UInt64::getType() const { return Nautilus::IR::Types::StampFactory::createUInt64Stamp(); }
 std::shared_ptr<Any> UInt64::copy() { return create<UInt64>(value); }
 const std::shared_ptr<Int> UInt64::add(const Int& other) const {
     auto& otherValue = other.staticCast<UInt64>();

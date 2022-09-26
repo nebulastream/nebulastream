@@ -18,7 +18,7 @@
 #include "Nautilus/IR/Operations/Operation.hpp"
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 class ProxyCallOperation : public Operation {
   public:
     ProxyCallOperation(ProxyCallType proxyCallType,
@@ -44,5 +44,5 @@ class ProxyCallOperation : public Operation {
     void* functionPtr;
     std::vector<OperationWPtr> inputArguments;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_PROXYCALLOPERATION_HPP

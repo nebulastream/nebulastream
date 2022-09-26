@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 UInt8::UInt8(uint8_t value) : Int(&type), value(value){};
-IR::Types::StampPtr UInt8::getType() const { return IR::Types::StampFactory::createUInt8Stamp(); }
+Nautilus::IR::Types::StampPtr UInt8::getType() const { return Nautilus::IR::Types::StampFactory::createUInt8Stamp(); }
 std::shared_ptr<Any> UInt8::copy() { return create<UInt8>(value); }
 const std::shared_ptr<Int> UInt8::add(const Int& other) const {
     auto& otherValue = other.staticCast<UInt8>();

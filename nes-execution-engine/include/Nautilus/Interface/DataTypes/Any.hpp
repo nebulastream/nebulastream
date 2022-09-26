@@ -42,7 +42,7 @@ class Any : public Typed {
         return static_cast<const Type&>(*this);
     }
 
-    virtual IR::Types::StampPtr getType() const;
+    virtual Nautilus::IR::Types::StampPtr getType() const;
 };
 
 class TraceableType : public Any {

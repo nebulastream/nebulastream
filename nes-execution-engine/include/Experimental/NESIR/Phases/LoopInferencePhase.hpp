@@ -16,7 +16,7 @@
 #include <Nautilus/IR/NESIR.hpp>
 #include <optional>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
-namespace NES::ExecutionEngine::Experimental::IR {
+namespace NES::Nautilus::IR {
 class LoopInferencePhase {
 
   public:
@@ -34,5 +34,5 @@ class LoopInferencePhase {
         std::shared_ptr<NESIR> ir;
     };
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_

@@ -13,7 +13,7 @@
 */
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::IR::Types {
+namespace NES::Nautilus::IR::Types {
 
 FloatStamp::FloatStamp(BitWidth bitWidth) : Stamp(&type), bitWidth(bitWidth) {}
 
@@ -28,4 +28,4 @@ uint32_t FloatStamp::getNumberOfBits() const {
 
 const std::string FloatStamp::toString() const { return "f" + std::to_string(getNumberOfBits()); }
 
-}// namespace NES::ExecutionEngine::Experimental::IR::Types
+}// namespace NES::Nautilus::IR::Types

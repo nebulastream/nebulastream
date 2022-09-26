@@ -21,7 +21,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::Nautilus::IR::Operations {
 /**
  * @brief Iterates over a buffer. Loads a record on each iteration. Contains operations which are nested inside of the LoopBlock.
  * Points to other BasicBlocks if there is control flow.
