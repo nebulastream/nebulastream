@@ -57,7 +57,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
-    static std::shared_ptr<UdfCatalogController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<UdfCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                               UdfCatalogPtr udfCatalog,
                                                               std::string routerPrefixAddition,
                                                               ErrorHandlerPtr errorHandler) {
@@ -65,6 +65,16 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
     }
 
+
+
+    /**
+     *  Endpoint to retrieve udf descriptor
+     *  returns 200 and descriptor if present
+     *  returns 400 if request doesnt contain udf as query parameter
+     *  returns 404 if no udf found with given name
+     *  returns 500 for internal server errors
+     * @param udf : name of udf to retrieve
+     */
     ENDPOINT("GET", "/getUdfDescriptor", getUdfDescriptor, QUERY(String, udf, "udfName")) {
         try {
             std::string udfName = udf.getValue("");
@@ -74,6 +84,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                 // Signal that the UDF does not exist in the catalog.
                 NES_DEBUG("REST client tried retrieving UDF descriptor for non-existing Java UDF: " << udfName);
                 response.set_found(false);
+                return createResponse(Status::CODE_404, response.SerializeAsString());
             } else {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
@@ -88,13 +99,19 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                     javaClass->set_class_name(className);
                     javaClass->set_byte_code(byteCode.data(), byteCode.size());
                 }
+                return createResponse(Status::CODE_200, response.SerializeAsString());
             }
-            return createResponse(Status::CODE_200, response.SerializeAsString());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
 
+    /**
+     * Endpoint to retrieve names of all udfs
+     * returns 200 and list of udf names. Lists can be empty
+     * returns 500 for internal server errors
+     *
+     */
     ENDPOINT("GET", "/listUdfs", listUdfs) {
         try{
             nlohmann::json response;
@@ -109,6 +126,13 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    /**
+     * Endpoint to register a java udf
+     * Request body must contain a protobuf message serialized as string
+     * returns 200 if java udf was successfully registered
+     * returns 400 if request body is emtpy or if errors occur parsing protobuf message into a JavaUdfDescriptor object
+     * returns 500 for internal server errors
+     */
     ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
         auto udfCatalog = this->udfCatalog;
         try{
@@ -151,6 +175,13 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    /**
+     * Endpoint for deleting udfs
+     * returns 200 if delete is successful
+     * returns 404 if no udf with given name is found
+     * returns 500 for internal server errors
+     * @param udf : name of udf to delete
+     */
     ENDPOINT("DELETE", "/removeUdf", removeUdf, QUERY(String, udf, "udfName")) {
         try{
             std::string udfName = udf.getValue("");
@@ -158,7 +189,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             auto removed = udfCatalog->removeUdf(udfName);
             nlohmann::json result;
             result["removed"] = removed;
-            return createResponse(Status::CODE_200, result.dump());
+            return createResponse(removed ? Status::CODE_200 : Status::CODE_404, result.dump());
         }
         catch(...){
            return errorHandler->handleError(Status::CODE_500, "Internal Server error");

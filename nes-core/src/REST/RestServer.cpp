@@ -154,10 +154,8 @@ void RestServer::run() {
                                                                                          errorHandler);
     auto topologyController =
         REST::Controller::TopologyController::createShared(objectMapper, topology, "/topology", errorHandler);
-    auto udfCatalogController = REST::Controller::UdfCatalogController::createShared(objectMapper,
-                                                                                     udfCatalog,
-                                                                                     "/udfCatalog",
-                                                                                     errorHandler);
+    auto udfCatalogController =
+        REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(topologyController);
