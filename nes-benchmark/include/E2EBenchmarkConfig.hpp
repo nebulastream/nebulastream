@@ -49,21 +49,6 @@ namespace NES::Benchmark {
         static NES::LogLevel getLogLevel(const std::string& yamlConfigFile,
                                          NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_NONE);
 
-
-        /**
-         * @brief
-         * @param e2EBenchmarkConfig
-         * @param yamlConfig
-         */
-        static void generateConfigOverAllRuns(E2EBenchmarkConfig& e2EBenchmarkConfig, Yaml::Node yamlConfig);
-
-        /**
-         * @brief Generates all runs
-         * @param e2EBenchmarkConfig
-         * @param configFile
-         */
-        static void generateAllConfigsPerRun(E2EBenchmarkConfig& e2EBenchmarkConfig, Yaml::Node configFile);
-
         /**
          * @brief creates a string representation of this object
          * @return the string representation

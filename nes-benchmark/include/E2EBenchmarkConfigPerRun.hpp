@@ -18,6 +18,7 @@ limitations under the License.
 #define NES_E2EBENCHMARKCONFIGPERRUN_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <vector>
 
 namespace NES::Benchmark {
@@ -36,6 +37,14 @@ namespace NES::Benchmark {
          * @return the string representation
          */
         std::string toString();
+
+        /**
+         * @brief parses and generates the config for the parameters changing per run
+         * runs by parsing the yamlConfig
+         * @param yamlConfig
+         * @return
+         */
+        static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
 
 
       public:

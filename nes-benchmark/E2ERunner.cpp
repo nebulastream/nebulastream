@@ -14,17 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "../nes-core/tests/include/Util/TestUtils.hpp"
+#include <Util/BenchmarkUtils.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataProvider/DataProvider.hpp>
 #include <E2EBenchmarkConfig.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Measurements.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Version/version.hpp>
+
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Sources/LambdaSource.hpp>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 
 namespace NES::Exceptions {
     extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
@@ -90,9 +99,9 @@ int main(int argc, const char* argv[]) {
 
     try {
         e2EBenchmarkConfig = NES::Benchmark::E2EBenchmarkConfig::createBenchmarks(configPath);
-        NES_INFO("Created the following experiments: " << e2EBenchmarkConfig.toString());
+        NES_INFO("E2ERunner: Created the following experiments: " << e2EBenchmarkConfig.toString());
     } catch (std::exception& e) {
-        NES_ERROR("Error while creating benchmarks!");
+        NES_ERROR("E2ERunner: Error while creating benchmarks!");
         return -1;
     }
 
@@ -100,6 +109,13 @@ int main(int argc, const char* argv[]) {
     NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>();
     auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
 
+
+    std::stringstream outputCsvStream;
+    outputCsvStream << "BM_NAME,NES_VERSION,SchemaSizeInB";
+    outputCsvStream << ",Time,ProcessedTasks,ProcessedBuffers,ProcessedTuples,LatencySum,QueueSizeSum";
+    outputCsvStream << ",ThroughputInTupsPerSec,ThroughputInTasksPerSec,ThroughputInBuffersPerSec,ThroughputInMiBPerSec";
+    outputCsvStream << ",WorkerThreads,SourceCnt,BufferSizeInB,InputType,DataProviderMode,Query";
+    outputCsvStream << "\n";
 
     int portOffset = 0;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
@@ -124,43 +140,160 @@ int main(int argc, const char* argv[]) {
         coordinatorConf->worker.queryCompiler.windowingStrategy = NES::QueryCompilation::QueryCompilerOptions::DEFAULT;
         coordinatorConf->worker.numaAwareness = true;
         coordinatorConf->worker.queryCompiler.useCompilationCache = true;
+        coordinatorConf->worker.enableMonitoring = false;
 
-        NES_INFO("Starting nesCoordinator...");
+        NES_INFO("E2ERunner: Creating a data generator and a data provider...")
+        auto buffers = dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(),
+                                                 configPerRun.bufferSizeInBytes->getValue());
+        auto provider = NES::DataProviding::DataProvider::createProvider(/*source Index*/ 0,
+                                                                         e2EBenchmarkConfig,
+                                                                         buffers);
+
+        size_t taskQueueId = 0;
+        size_t queryIndex = 0;
+        size_t generatorQueueIndex = 0;
+        size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
+        auto schema = dataGenerator->getSchema();
+        auto logicalStreamName = "input";
+        auto physicalStreamName = "input1";
+        auto func = [provider, generatorQueueIndex](NES::Runtime::TupleBuffer& buffer, uint64_t) {
+            provider->provideNextBuffer(buffer, generatorQueueIndex);
+        };
+        NES::LambdaSourceTypePtr sourceConf = NES::LambdaSourceType::create(func,
+                                                                            configPerRun.numBuffersToProduce->getValue(),
+                                                                            0, NES::GatheringMode::INTERVAL_MODE,
+                                                                            sourceAffinity,
+                                                                            taskQueueId);
+        NES::LogicalSourcePtr logicalSource = NES::LogicalSource::create(logicalStreamName, schema);
+        auto physicalSource = NES::PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConf);
+        coordinatorConf->logicalSources.add(logicalSource);
+        coordinatorConf->worker.physicalSources.add(physicalSource);
+
+        NES_INFO("E2ERunner: Starting nesCoordinator...");
         auto coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConf);
         auto rpcPort = coordinator->startCoordinator(/**blocking**/ false);
-        NES_INFO("Started nesCoordinator!");
+        NES_INFO("E2ERunner: Started nesCoordinator at port " << rpcPort << "!");
 
         auto queryService = coordinator->getQueryService();
         auto queryCatalog = coordinator->getQueryCatalogService();
 
 
         auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-        bool queryResult = NES::TestUtils::waitForQueryToStart(queryId, queryCatalog);
+        bool queryResult = NES::Benchmark::Utils::waitForQueryToStart(queryId, queryCatalog);
         if (!queryResult) {
-            NES_ERROR("Run does not succeed for id=" << queryId);
+            NES_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
             return -1;
         }
         NES_INFO("E2ERunner: Started query with id=" << queryId);
 
-
-        NES_INFO("Starting the data providers...");
-        auto buffers = dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(),
-                                                 configPerRun.bufferSizeInBytes->getValue());
-        auto provider = NES::DataProviding::DataProvider::createProvider(/*source Index*/ 1,
-                                                                        e2EBenchmarkConfig,
-                                                                        buffers);
-
+        NES_INFO("E2ERunner: Starting the data provider...");
         provider->start();
-        NES_INFO("Started the data povider!");
+        NES_INFO("E2ERunner: Started the data povider!");
 
         // Wait for the system to come to a steady state
+        NES_INFO("E2ERunner: Now waiting for " << configOverAllRuns.startupSleepIntervalInSeconds->getValue()
+                 << "s to let the system come to a steady state!");
         sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
 
-        // TODO: Collect here the measurements and then write them to a csv file
-        
+
+        // For now, we only support one way of collecting the measurements
+        NES_INFO("E2ERunner: Starting to collect measurements...")
+        auto nodeEngine = coordinator->getNodeEngine();
+        bool found = false;
+
+        while (!found) {
+            auto stats = coordinator->getNodeEngine()->getQueryStatistics(queryId);
+            for (auto iter : stats) {
+                while (iter->getProcessedBuffers() < 2) {
+                    NES_INFO("E2ERunner: Query  with id " << queryId << " not ready with value= " << iter->getProcessedBuffers()
+                                               << ". Sleeping for a second now...");
+                    sleep(1);
+                }
+                NES_INFO("E2ERunner: Query  with id " << queryId << " not ready with value= " << iter->getProcessedBuffers());
+                found = true;
+            }
+        }
+
+        NES::Measurements::Measurements measurements;
+        // We have to measure once more than the required numMeasurementsToCollect as we build deltas
+        for (uint64_t cnt = 0; cnt <= e2EBenchmarkConfig.getConfigOverAllRuns().numMeasurementsToCollect->getValue(); ++cnt) {
+            int64_t nextPeriodStartTime = e2EBenchmarkConfig.getConfigOverAllRuns().experimentMeasureIntervalInSeconds->getValue() * 1000;
+            nextPeriodStartTime += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+            auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(queryId);
+            uint64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            size_t processedTasks = 0;
+            size_t processedBuffers = 0;
+            size_t processedTuples = 0;
+            size_t latencySum = 0;
+            size_t queueSizeSum = 0;
+            size_t availGlobalBufferSum = 0;
+            size_t availFixedBufferSum = 0;
+            for (auto subPlanStatistics : statisticsCoordinator) {
+                if (subPlanStatistics->getProcessedBuffers() != 0) {
+                    processedTasks += subPlanStatistics->getProcessedTasks();
+                    processedBuffers += subPlanStatistics->getProcessedBuffers();
+                    processedTuples += subPlanStatistics->getProcessedTuple();
+                    latencySum += (subPlanStatistics->getLatencySum() / subPlanStatistics->getProcessedBuffers());
+                    queueSizeSum += (subPlanStatistics->getQueueSizeSum() / subPlanStatistics->getProcessedBuffers());
+                    availGlobalBufferSum += (subPlanStatistics->getAvailableGlobalBufferSum() / subPlanStatistics->getProcessedBuffers());
+                    availFixedBufferSum += (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
+                }
+
+                measurements.addNewMeasurement(processedTasks, processedBuffers, processedTuples,
+                                               latencySum, queueSizeSum, availGlobalBufferSum,
+                                               availFixedBufferSum, timeStamp);
+            }
+
+
+            // Calculating the time to sleep
+            auto curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            auto sleepTime = nextPeriodStartTime - curTime;
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+        }
+
+        // Shutting everything down
+        NES_INFO("E2ERunner: Shutting everything down...");
+        buffers.clear();
+
+        // Removing query from the system
+        NES_INFO("E2ERunner: Removing query from the system...");
+        NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+        provider->stop();
+        coordinator->stopCoordinator(true);
+
+
+        coordinator.reset();
+        queryService.reset();
+        queryCatalog.reset();
+        provider.reset();
+        buffers.clear();
 
 
 
 
+        auto schemaSizeInB = dataGenerator->getSchema()->getSchemaSizeInBytes();
+        for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB)) {
+            outputCsvStream << e2EBenchmarkConfig.getConfigOverAllRuns().benchmarkName->getValue();
+            outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
+            outputCsvStream << "," << measurementsCsv;
+            outputCsvStream << "," << configPerRun.numWorkerThreads->getValue();
+            outputCsvStream << "," << configPerRun.numSources->getValue();
+            outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
+            outputCsvStream << "," << configOverAllRuns.inputType->getValue();
+            outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
+            outputCsvStream << "," << configOverAllRuns.query->getValue();
+            outputCsvStream << "\n";
+        }
+
+
+        std::ofstream ofs;
+        ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(),
+                 std::ofstream::out | std::ofstream::app);
+        ofs << outputCsvStream.str();
+        ofs.close();
+
+        outputCsvStream.clear();
     }
+
 }
