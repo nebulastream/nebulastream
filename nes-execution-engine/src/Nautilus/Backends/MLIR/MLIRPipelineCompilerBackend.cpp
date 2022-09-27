@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include "Util/Timer.hpp"
-#include <Experimental/MLIR/MLIRExecutablePipeline.hpp>
-#include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Util/Timer.hpp>
+#include <Nautilus/Backends/MLIR/MLIRExecutablePipeline.hpp>
+#include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 
@@ -28,7 +28,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     timer.start();
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr);
     auto engine = mlirUtility->prepareEngine();
     auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
     timer.snapshot("MLIRGeneration");
