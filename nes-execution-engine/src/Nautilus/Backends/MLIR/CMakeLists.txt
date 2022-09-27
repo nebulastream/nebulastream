@@ -1,3 +1,4 @@
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,16 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
-    add_subdirectory(Babelfish)
-endif ()
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
-    add_subdirectory(Flounder)
-endif ()
-
-add_subdirectory(NESIR)
-add_subdirectory(Interpreter)
-add_subdirectory(Utility)
-add_subdirectory(Runtime)
-add_subdirectory(ExecutionEngine)
+add_source_files(nes-execution-engine
+        MLIRUtility.cpp
+        MLIRLoweringProvider.cpp
+        MLIRExecutablePipeline.cpp
+        MLIRPipelineCompilerBackend.cpp
+        YieldOperation.cpp
+)

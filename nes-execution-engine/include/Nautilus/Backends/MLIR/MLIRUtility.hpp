@@ -25,7 +25,7 @@
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 
-class MLIRGenerator;
+class MLIRLoweringProvider;
 
 class MLIRUtility {
   public:
@@ -55,7 +55,7 @@ class MLIRUtility {
     * @param debugFlags: Determine whether and how to print/write MLIR.
     * @return int: 1 if error occurred, else 0
     */
-    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
+    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> nesIR, DebugFlags* debugFlags = nullptr);
 
     int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
     int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);
@@ -85,7 +85,7 @@ class MLIRUtility {
   private:
     mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
-    std::shared_ptr<MLIRGenerator> mlirGenerator;
+    std::shared_ptr<MLIRLoweringProvider> mlirGenerator;
     std::string mlirFilepath;
     bool debugFromFile;
 
