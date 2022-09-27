@@ -18,6 +18,7 @@ limitations under the License.
 #define NES_E2EBENCHMARKCONFIGOVERALLRUNS_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
     class E2EBenchmarkConfigOverAllRuns {
@@ -33,6 +34,15 @@ namespace NES::Benchmark {
          * @return the string representation
          */
         std::string toString();
+
+        /**
+         * @brief parses and generates the config for the parameters constant over all
+         * runs by parsing the yamlConfig
+         * @param yamlConfig
+         * @return
+         */
+        static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
+
 
         /**
          * @brief all configurations that are constant over all runs

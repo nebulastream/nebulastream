@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <DataProvider/DataProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
+#include <cstring>
 
 namespace NES::DataProviding {
     std::shared_ptr<DataProvider>
@@ -35,4 +36,31 @@ namespace NES::DataProviding {
         // Later on we might have a second data provider. For now all data providers are of type InternalProvider
         return std::make_shared<InternalProvider>(id, dataProviderMode, preAllocatedBuffers);
     }
+
+    DataProvider::DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode) : id(id), providerMode(providerMode) {}
+
+    void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId) {
+        auto providedBuffer = readNextBuffer(sourceId);
+        if (providedBuffer.has_value()) {
+            switch (providerMode) {
+                case ZERO_COPY: {
+                    auto dataPtr = reinterpret_cast<uintptr_t>(buffer.getBuffer());
+                    bool success = collector.insert(dataPtr, TupleBufferHolder(buffer));
+                    NES_ASSERT(success, "could not put buffer into collector");
+                    auto gcCallback = [dataPtr, this](Runtime::detail::MemorySegment*, Runtime::BufferRecycler*) {
+                        NES_ASSERT(collector.erase(dataPtr), "Cannot recycler buffer");
+                    };
+                    providedBuffer.value().addRecycleCallback(std::move(gcCallback));
+                    buffer = providedBuffer.value();
+                    return;
+                };
+                case MEM_COPY: {
+                    std::memcpy(buffer.getBuffer(), providedBuffer.value().getBuffer(), buffer.getBufferSize());
+                    providedBuffer.value().setCreationTimestamp(buffer.getCreationTimestamp());
+                    return;
+                };
+            }
+        }
+    }
+
 }

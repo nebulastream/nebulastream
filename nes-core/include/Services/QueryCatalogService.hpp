@@ -20,6 +20,8 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/QueryStatus.hpp>
+#include <vector>
+#include <map>
 #include <memory>
 #include <mutex>
 

@@ -33,9 +33,13 @@ namespace NES::DataGeneration {
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> distribution(minValue, maxValue);
 
-        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++ curBuffer) {
-            auto buffer = this->allocateBuffer(bufferSize);
+        uint64_t noTuplesInOnePercent = numberOfBuffers / 100;
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            auto buffer = allocateBuffer(bufferSize);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            if (curBuffer % noTuplesInOnePercent == 0) {
+                NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
+            }
 
             for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                 auto value = distribution(gen);
@@ -47,6 +51,8 @@ namespace NES::DataGeneration {
             dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
             createdBuffers.push_back(buffer);
         }
+
+        NES_INFO("Created all buffers!");
 
         return createdBuffers;
     }

@@ -76,6 +76,9 @@ namespace NES::DataProviding {
          */
         virtual void stop() = 0;
 
+      protected:
+        uint64_t id;
+
       private:
         DataProviderMode providerMode;
         cuckoohash_map<uintptr_t, TupleBufferHolder> collector;
