@@ -12,23 +12,28 @@
     limitations under the License.
 */
 
-#include <Util/ProtobufMessageFactory.hpp>
 #include <API/Query.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <nes-grpc/UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
+#include <google/protobuf/text_format.h>
+#include <oatpp/web/protocol/http/Http.hpp>
 
 namespace NES {
 using namespace std::string_literals;
 using namespace NES::Catalogs;
+using namespace google::protobuf;
+using namespace oatpp::web::protocol::http;
 class UdfCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
@@ -37,30 +42,6 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
-
-    static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
-                                                               const std::string& udfClassName,
-                                                               const std::string& methodName,
-                                                               const UDF::JavaSerializedInstance& serializedInstance,
-                                                               const UDF::JavaUdfByteCodeList& byteCodeList) {
-        auto javaUdfRequest = RegisterJavaUdfRequest{};
-        javaUdfRequest.set_udf_name(udfName);
-        auto* descriptorMessage = javaUdfRequest.mutable_java_udf_descriptor();
-        descriptorMessage->set_udf_class_name(udfClassName);
-        descriptorMessage->set_udf_method_name(methodName);
-        descriptorMessage->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
-        for (const auto& [className, byteCode] : byteCodeList) {
-            auto* javaClass = descriptorMessage->add_classes();
-            javaClass->set_class_name(className);
-            javaClass->set_byte_code(byteCode.data(), byteCode.size());
-        }
-        return javaUdfRequest;
-    }
-
-    static void verifyResponseStatusCode(const cpr::Response& response,
-                                         long expectedStatusCode) {
-        ASSERT_EQ(response.status_code, expectedStatusCode);
-    }
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
         NES_DEBUG(response.text);
@@ -93,338 +74,274 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         return udfResponse;
     }
 
+    void startCoordinator(){
+        NES_INFO("UdfCatalogController: Start coordinator");
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
+        coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+        ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+        NES_INFO("UdfCatalogControllerTest: Coordinator started successfully");
+    }
+
+    NesCoordinatorPtr coordinator;
+    CoordinatorConfigurationPtr coordinatorConfig;
 };
 
-//Test if submitting a UDF and then retrieving it works as expected
-TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-
-
-    // given a REST message containing a Java UDF
-    auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
-                                                                               "some_package.my_udf",
-                                                                               "udf_method",
-                                                                               {1},
-                                                                               {{"some_package.my_udf", {1}}});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    // then the HTTP response is OK
-    verifyResponseStatusCode(response, 200);
-
-    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
-                              cpr::Parameters{{"udfName", javaUdfRequest.udf_name()}},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    //check if udf entry exists
-    ASSERT_EQ(response2.status_code, 200l);
-    // and the catalog contains a Java UDF descriptor representing the Java UDF
+//Test if retrieval of a UDF added directly to UdfCatalog over POST returns same UDF
+TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     auto udfCatalog = coordinator->getUdfCatalog();
-    auto javaUdfDescriptor = UDF::UdfDescriptor::as<UDF::JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(javaUdfRequest.udf_name()));
-    //JavaUdfDescriptorn
-    ASSERT_NE(javaUdfDescriptor, nullptr);
-    auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
-    ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptorMessage.udf_class_name());
-    ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptorMessage.udf_method_name());
-    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptorMessage.serialized_instance());
-    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptorMessage.classes());
+
+    // create a Java Udf descriptor and specify an udf name
+    std::string udfName = "my_udf";
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
+                                                                      "udf_method",
+                                                                      {1},
+                                                                      {{"some_package.my_udf", {1}}});
+
+
+    //register udf with coordinator
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
+
+    //send a GET request to REST API of coordinator for the previously defined java udf
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
+                              cpr::Parameters{{"udfName", udfName}},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    //check if response code indicates a udf has been retrieved
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    // extract protobuf message from string response
+    GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
+    // from protobuf message, get the java udf descriptor
+    auto descriptor = udfResponse.java_udf_descriptor();
+    // and compare udf descriptor with the one registered to the coordinator earlier
+    ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptor.udf_class_name());
+    ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptor.udf_method_name());
+    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptor.serialized_instance());
+    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptor.classes());
 }
 
-//Test if Oatpp framework correctly returns 404 when URL path isnt supported
-TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+// Test behavior of GET for a UDF that doesn't exist
+TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    auto udfCatalog = coordinator->getUdfCatalog();
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    std::string udfName = "my_udf";
+    //send a GET request to REST API of coordinator for an udf that doesn't exist
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
+                             cpr::Parameters{{"udfName", udfName}},
+                             cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    //check that status code indicates specified udf doesn't exist
+    ASSERT_EQ(response.status_code,Status::CODE_404.code);
+    // and compare contents of response
+    // extract protobuf message from string response
+    GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
+    ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
+}
 
+//Test if Oatpp framework correctly returns 404 when endpoint isn't defined
+TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+
+    //create a request to an endpoint that isn't defined
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/SUPER_SECRET_URL"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{"Whats the object-oriented way to become wealthy? Inheritance."},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    // given a REST message
-    verifyResponseStatusCode(response, 404l);
+    // and see if the response code is 404
+    ASSERT_EQ(response.status_code,Status::CODE_404.code);
 }
 
-//Test if POST endpoint handles exceptions without returning a stack trace
-TEST_F(UdfCatalogControllerTest, DISABLED_HandlePostHandlesException) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+//Test if RegisterJavaUdf endpoint handles exceptions without returning a stack trace
+TEST_F(UdfCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutReturningAStackTrace) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest =
-        ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
+        ProtobufMessageFactory::createRegisterJavaUdfRequest(
+            "my_udf",
+            "some_package.my_udf",
+            "udf_method",
+            {1},
+            {});
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()});
     // then the response is BadRequest
-    verifyResponseStatusCode(response, 400);
+    ASSERT_EQ(response.status_code,Status::CODE_400.code);
     // make sure the response does not contain the stack trace
     ASSERT_TRUE(response.text.find("Stack trace") == std::string::npos);
 }
 
-//Test if deleting a Udf catalog entry works as expected
-TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+//Test if registerJavaUdf endpoint correctly adds java udf
+TEST_F(UdfCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-
-
-    // given a REST message containing a Java UDF
+    auto udfCatalog = coordinator->getUdfCatalog();
+    //check to see if no udfs registered
+    ASSERT_TRUE(udfCatalog->listUdfs().empty());
+    // create a javaUdfRequest
     auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
                                                                                "some_package.my_udf",
                                                                                "udf_method",
                                                                                {1},
                                                                                {{"some_package.my_udf", {1}}});
+
+    // submit the javaUdfRequest to the registerJavaUdf endpoint
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                               cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+
     // then the HTTP response is OK
-    verifyResponseStatusCode(response, 200);
+    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    ASSERT_EQ(response.text, "Registered Java UDF");
+    // check to see if a udf has been added to the udf catalog
+    ASSERT_FALSE(udfCatalog->listUdfs().empty());
+    // get udf catalog entry
+    auto descriptorFromCoordinator = UDF::UdfDescriptor::as<UDF::JavaUdfDescriptor>(udfCatalog->getUdfDescriptor("my_udf"));
+    //extract the udf descriptor from the udf post request
+    JavaUdfDescriptorMessage descriptorFromPostRequest = javaUdfRequest.java_udf_descriptor();
+    //and compare its fields to the java udf catalog entry now found in the coordinator
+    ASSERT_EQ(descriptorFromCoordinator->getClassName(), descriptorFromPostRequest.udf_class_name());
+    ASSERT_EQ(descriptorFromCoordinator->getMethodName(), descriptorFromPostRequest.udf_method_name());
+    verifySerializedInstance(descriptorFromCoordinator->getSerializedInstance(), descriptorFromPostRequest.serialized_instance());
+    verifyByteCodeList(descriptorFromCoordinator->getByteCodeList(), descriptorFromPostRequest.classes());
+}
+
+//Test if deleting an Udf catalog entry works as expected
+TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    auto udfCatalog = coordinator->getUdfCatalog();
+
+    // create a Java Udf descriptor and specify an udf name
+    std::string udfName = "my_udf";
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
+                                                                      "udf_method",
+                                                                      {1},
+                                                                      {{"some_package.my_udf", {1}}});
+
+
+    //register udf with coordinator
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
+
     // given the UDF catalog contains a Java UDF
     // when a REST message is passed to the controller to remove the UDF
-    auto response2   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
-                              cpr::Parameters{{"udfName", "my_udf"}},
+    auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
+                              cpr::Parameters{{"udfName", udfName}},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
-    verifyResponseStatusCode(response2, 200);
-    // and the UDF does no longer exist in the catalog
-    auto udfCatalog = coordinator->getUdfCatalog();
+    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    // and the UDF no longer exists in the catalog
     ASSERT_EQ(UDF::UdfDescriptor::as<UDF::JavaUdfDescriptor>(udfCatalog->getUdfDescriptor("my_udf")), nullptr);
     // and the response shows that the UDF was removed
     nlohmann::json json;
     json["removed"] = true;
-    auto responseJson = nlohmann::json::parse(response2.text);
-    verifyResponseResult(response2, json);
+    auto responseJson = nlohmann::json::parse(response.text);
+    verifyResponseResult(response, json);
 }
 
-//Test if DELETE handles non existent UDF correctly
-TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+//Test if removeUdf endpoint handles non-existent UDF correctly
+TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointIfUdfDoesNotExist) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller to remove a UDF that does not exist
     auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                  cpr::Parameters{{"udfName", "my_udf"}},
                                  cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    // then the response is OK
-    verifyResponseStatusCode(response, 200);
+    // then the response is NOT FOUND
+    ASSERT_EQ(response.status_code,Status::CODE_404.code);
     // and the response shows that the UDF was not removed
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
 }
 
-//Test if DELETE handles missing query parameter correctly
-TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+//Test if removeUdf endpoint handles missing query parameter correctly
+TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointHandlesMissingQueryParametersCorrectly) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is missing the udfName parameter
     auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                 cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is BadRequest
-    verifyResponseStatusCode(response, 400);
+    ASSERT_EQ(response.status_code,Status::CODE_400.code);
 }
 
-//Test if DELETE handles extra query parameters correctly
-TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreIgnored) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+//Test if removeUdf endpoint handles extra query parameters correctly
+TEST_F(UdfCatalogControllerTest,  testIfRemoveUdfEndpointHandlesExtraQueryParametersCorrectly) {
+    // Oatpp framework ignores all query parameters that aren't defined in the endpoint, effectively ignoring them.
+    // Superfluous query parameters have no effect on the behavior of an endpoint
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
     auto response   = cpr::Delete(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
                                 cpr::Parameters{{"udfName", "my_udf"}, {"meaning_of_life", "42"}},
                                 cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
 
-    // then the response is BadRequest
-    verifyResponseStatusCode(response, 200);
-    //Oatpp ignores all query parameters that arent defined in the endpoint
+    // then the response is NOT FOUND
+    ASSERT_EQ(response.status_code,Status::CODE_404.code);
+    nlohmann::json json;
+    json["removed"] = false;
+    verifyResponseResult(response, json);
 }
 
-//Test if GET returns expected results if no UDF is foound
-TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
-    // when a REST message is passed to the controller to get the UDF descriptor of an UDF that does not exist
-    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
-                              cpr::Parameters{{"udfName", "greatest-udf-of-all-time"}},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    auto request = web::http::http_request{web::http::methods::GET};
-    // then the response is OK
-    verifyResponseStatusCode(response, 200);
-    // and the response message indicates that the UDF was not found
-    auto response1 = extractGetJavaUdfDescriptorResponse(response);
-    ASSERT_FALSE(response1.found());
-}
-
-//Test if GET endpoint handles missing query parameters correclty
-TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+//Test if listUdfs endpoint handles missing query parameters correctly
+TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParameters) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is missing the udfName parameter
     auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     auto request = web::http::http_request{web::http::methods::GET};
     // then the response is BadRequest
-    verifyResponseStatusCode(response, 400);
+    ASSERT_EQ(response.status_code,Status::CODE_400.code);
 }
 
-//Test if GET for list of udfs behaves as expected
-TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+//Test if listUdfs endpoint behaves as expected when all else is correct
+TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    auto udfCatalog = coordinator->getUdfCatalog();
 
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
+    // create a Java Udf descriptor and specify an udf name
+    std::string udfName = "my_udf";
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
+                                                                      "udf_method",
+                                                                      {1},
+                                                                      {{"some_package.my_udf", {1}}});
+    //register udf with coordinator
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 
-
-    // given a REST message containing a Java UDF
-    auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
-                                                                               "some_package.my_udf",
-                                                                               "udf_method",
-                                                                               {1},
-                                                                               {{"some_package.my_udf", {1}}});
-    auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    // then the HTTP response is OK
-    verifyResponseStatusCode(response, 200);
-    // when a REST message is passed to the controller to get a list of the UDFs
-    auto response2   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
-    // then the response is OK
-    verifyResponseStatusCode(response2, 200);
-    // and the response message contains a list of UDFs
-    nlohmann::json json;
-    std::vector<std::string> udfs;
-    udfs.emplace_back("my_udf");
-    json["udfs"] = udfs;
-    verifyResponseResult(response2, json);
-}
-
-//Test if GET for udf List behaves correctly when no UDFs are registered
-TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    if (!success) {
-        FAIL() << "Rest server failed to start";
-    }
     // when a REST message is passed to the controller to get a list of the UDFs
     auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"},
                               cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
     // then the response is OK
-    verifyResponseStatusCode(response, 200);
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    // and the response message contains a list of UDFs
+    nlohmann::json json;
+    std::vector<std::string> udfs = udfCatalog->listUdfs();
+    json["udfs"] = udfs;
+    verifyResponseResult(response, json);
+}
+
+//Test if listUdfs endpoint behaves correctly when no UDFs are registered
+TEST_F(UdfCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    auto udfCatalog = coordinator->getUdfCatalog();
+    // when a REST message is passed to the controller to get a list of the UDFs
+    auto response   = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"},
+                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+    // then the response is OK
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
     // and the response message contains an empty list of UDFs
     nlohmann::json json;
-    std::vector<std::string> udfs = {};
+    std::vector<std::string> udfs = udfCatalog->listUdfs();;
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
 }
