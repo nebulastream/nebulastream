@@ -13,7 +13,7 @@
 */
 
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Experimental/MLIR/MLIRExecutablePipeline.hpp>
+#include <Nautilus/Backends/MLIR/MLIRExecutablePipeline.hpp>
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental {
 

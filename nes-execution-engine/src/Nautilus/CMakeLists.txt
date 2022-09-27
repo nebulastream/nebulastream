@@ -13,3 +13,4 @@
 add_subdirectory(Interface)
 add_subdirectory(Tracing)
 add_subdirectory(IR)
+add_subdirectory(Backends)

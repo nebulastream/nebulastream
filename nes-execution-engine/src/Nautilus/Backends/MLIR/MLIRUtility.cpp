@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Experimental/MLIR/MLIRGenerator.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
@@ -162,7 +162,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFlags* , bool useSCF) {
+int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFlags*) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
@@ -177,9 +177,7 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFla
     } else {
         // create NESAbstraction for testing and an MLIRGenerator
         // Insert functions necessary to get information from TupleBuffer objects and more.
-        auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
-        mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
-        mlirGenerator->useSCF = useSCF;
+        mlirGenerator = std::make_shared<MLIRLoweringProvider>(context);
         module = mlirGenerator->generateModuleFromNESIR(nesIR);
        // printMLIRModule(module, debugFlags);
     }

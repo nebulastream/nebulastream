@@ -53,8 +53,8 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #ifdef USE_MLIR
-#include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
