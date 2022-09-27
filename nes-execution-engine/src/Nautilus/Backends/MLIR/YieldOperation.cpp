@@ -13,7 +13,7 @@
 */
 
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
-#include <Experimental/MLIR/YieldOperation.hpp>
+#include <Nautilus/Backends/MLIR/YieldOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 

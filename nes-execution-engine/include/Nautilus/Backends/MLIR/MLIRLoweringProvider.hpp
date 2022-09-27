@@ -15,10 +15,11 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
-#include <Experimental/MLIR/YieldOperation.hpp>
 #include <Experimental/NESIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/Backends/MLIR/YieldOperation.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
@@ -37,16 +38,13 @@
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Util/Frame.hpp>
-#include <cstdint>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
-#include <memory>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/SCF.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
@@ -59,42 +57,44 @@
 #include <mlir/IR/Operation.h>
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/IR/Value.h>
-#include <unordered_map>
 #include <unordered_set>
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::MLIR {
 
-class MLIRGenerator {
+class MLIRLoweringProvider {
   public:
     bool useSCF = true;
     using ValueFrame = Frame<std::string, mlir::Value>;
 
     /**
-     * @brief Inserts mlir versions of frequently needed class member functions.
+     * @brief Allows to lower NESIR to MLIR.
+     * @param MLIRContext: Used by MLIR to manage MLIR module creation.
      */
-    static std::vector<mlir::FuncOp> GetMemberFunctions(mlir::MLIRContext& context);
+    MLIRLoweringProvider(mlir::MLIRContext& context);
 
+    ~MLIRLoweringProvider() = default;
     /**
-     * @brief Enables converting a NESAbstraction to executable MLIR code.
-     * @param MLIRBuilder Builder that provides functionalities to generate MLIR.
-     * @param MLIRModule The MLIR module that the generated MLIR is inserted into.
-     * @param rootNode The first node of the NES abstraction.
+     * @brief Root MLIR generation function. Takes NESIR as an IRGraph, and recursively lowers its operations to MLIR.
+     * @param nesIR: NESIR represented as an IRGraph.
+     * @return mlir::ModuleOp that is equivalent to the NESIR module, and can be lowered to LLVM IR in one step.
      */
-    MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncOp>& memberFunctions);
-    ~MLIRGenerator() = default;
-
     mlir::ModuleOp generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR);
 
+    /**
+     * @return std::vector<std::string>: All proxy function symbols used in the module.
+     */
     std::vector<std::string> getJitProxyFunctionSymbols();
+
+    /**
+     * @return std::vector<llvm::JITTargetAddress>: All proxy function addresses used in the module.
+     */
     std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
 
   private:
     // MLIR variables
-    std::shared_ptr<mlir::OpBuilder> builder;
     mlir::MLIRContext* context;
     mlir::ModuleOp theModule;
-    // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
-    std::vector<mlir::FuncOp> memberFunctions;
+    std::unique_ptr<mlir::OpBuilder> builder;
     NES::ProxyFunctions ProxyFunctions;
     std::vector<std::string> jitProxyFunctionSymbols;
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
@@ -133,13 +133,9 @@ class MLIRGenerator {
     void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, ValueFrame& frame);
-    void generateSCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
-    void generateCFIf(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
-    mlir::Block* generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
-    void generateSCFCountedLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
-    void generateCFDefaultLoop(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
 
+    mlir::Block* generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame& frame);
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
      * @param name: Function name.
@@ -153,13 +149,6 @@ class MLIRGenerator {
                                                    mlir::Type resultType,
                                                    std::vector<mlir::Type> argTypes,
                                                    bool varArgs);
-
-    /**
-     * @brief Inserts an mlir::LLVM::UnknownOp into module with comment string
-     as named location. When debug printing, UnknownOp is converted to comment.
-     * @param comment: Used to create named location. Turned to comment if debug.
-     */
-    void insertComment(const std::string& comment);
 
     /**
      * @brief Generates a Name(d)Loc(ation) that is attached to the operation.
@@ -183,12 +172,18 @@ class MLIRGenerator {
 
     /**
      * @brief Get a constant MLIR Integer.
-     * @param loc: NamedLocation for debugging purposes.
+     * @param location: NamedLocation for debugging purposes.
      * @param numBits: Bit width of the returned constant Integer.
      * @param value: Value of the returned Integer.
-     * @return mlir::Value: Constant MLIR Integer value
+     * @return mlir::Value: Constant MLIR Integer value.
      */
     mlir::Value getConstInt(const std::string& location, IR::Types::StampPtr stamp, int64_t value);
+
+    /**
+     * @brief Get a constant MLIR Integer.
+     * @param location: NamedLocation for debugging purposes.
+     * @param value: Value of the returned boolean.
+     */
     mlir::Value getConstBool(const std::string& location, bool value);
 
     /**
@@ -198,8 +193,6 @@ class MLIRGenerator {
      */
     int8_t getBitWidthFromType(IR::Operations::PrimitiveStamp type);
 
-    //
-    IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel);
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
     std::unordered_map<std::string, mlir::Block*> blockMapping;
 };
