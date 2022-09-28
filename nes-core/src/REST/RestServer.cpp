@@ -153,21 +153,20 @@ void RestServer::run() {
     auto router = oatpp::web::server::HttpRouter::createShared();
 
     /* Create controllers and add all of their endpoints to the router */
-    auto connectivityController = REST::Controller::ConnectivityController::createShared(objectMapper, "/connectivity");
-    auto queryCatalogController = REST::Controller::QueryCatalogController::createShared(objectMapper,
-                                                                                         queryCatalogService,
-                                                                                         coordinator,
-                                                                                         globalQueryPlan,
-                                                                                         "/queryCatalog",
-                                                                                         errorHandler);
-    auto topologyController =
-        REST::Controller::TopologyController::createShared(objectMapper, topology, "/topology", errorHandler);
-    auto queryController = REST::Controller::QueryController::createShared(objectMapper,
-                                                                           queryService,
-                                                                           queryCatalogService,
-                                                                           globalExecutionPlan,
-                                                                           "/query",
-                                                                           errorHandler);
+    auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
+    auto queryCatalogController = REST::Controller::QueryCatalogController::create(objectMapper,
+                                                                                   queryCatalogService,
+                                                                                   coordinator,
+                                                                                   globalQueryPlan,
+                                                                                   "/queryCatalog",
+                                                                                   errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto queryController = REST::Controller::QueryController::create(objectMapper,
+                                                                     queryService,
+                                                                     queryCatalogService,
+                                                                     globalExecutionPlan,
+                                                                     "/query",
+                                                                     errorHandler);
     auto udfCatalogController =
         REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     router->addController(connectivityController);

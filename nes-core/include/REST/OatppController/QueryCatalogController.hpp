@@ -74,7 +74,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
-    static std::shared_ptr<QueryCatalogController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<QueryCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                                 QueryCatalogServicePtr queryCatalogService,
                                                                 NesCoordinatorWeakPtr coordinator,
                                                                 GlobalQueryPlanPtr globalQueryPlan,
