@@ -16,7 +16,7 @@
 #include "Experimental/Utility/PluginRegistry.hpp"
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -30,9 +30,9 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class TypeConversionTest : public testing::Test {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TypeConversionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -57,7 +57,7 @@ Value<> negativeIntegerTest() {
 }
 
 TEST_F(TypeConversionTest, negativeIntegerTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return negativeIntegerTest();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -66,10 +66,7 @@ TEST_F(TypeConversionTest, negativeIntegerTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int32_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), -1);
 }
@@ -85,7 +82,7 @@ Value<> unsignedIntegerTest() {
 
 // We should be able to create Values with unsigned ints, but currently we cannot.
 TEST_F(TypeConversionTest, DISABLED_unsignedIntegerTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return unsignedIntegerTest();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -94,10 +91,7 @@ TEST_F(TypeConversionTest, DISABLED_unsignedIntegerTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (uint32_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), UINT32_MAX);
 }
@@ -113,7 +107,7 @@ Value<> boolCompareTest() {
 
 // Should return 1, but returns 41 (Value(true) in interpreted as 0).
 TEST_F(TypeConversionTest, DISABLED_boolCompareTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return boolCompareTest();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -122,10 +116,7 @@ TEST_F(TypeConversionTest, DISABLED_boolCompareTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }
@@ -138,7 +129,7 @@ Value<> floatTest() {
 
 // Above approach, to return a float Value, does not work.
 TEST_F(TypeConversionTest, DISABLED_floatTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return floatTest();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -147,10 +138,7 @@ TEST_F(TypeConversionTest, DISABLED_floatTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }
@@ -163,7 +151,7 @@ Value<> mixBoolAndIntTest() {
 
 // Should return 5, but returns 4. Could extend to check for bool-int edge cases
 TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return mixBoolAndIntTest();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -172,10 +160,7 @@ TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
 }
@@ -185,17 +170,17 @@ class CustomType : public Any {
     static const inline auto type = TypeIdentifier::create<CustomType>();
     CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
 
-    std::unique_ptr<CustomType> add(const CustomType& other) const {
+    std::shared_ptr<CustomType> add(const CustomType& other) const {
         return std::make_unique<CustomType>(x + other.x, y + other.y);
     }
 
-    std::unique_ptr<CustomType> mulInt(const Int64& other) const {
+    std::shared_ptr<CustomType> mulInt(const Int64& other) const {
         return std::make_unique<CustomType>(x * other.getValue(), y * other.getValue());
     }
 
-    std::unique_ptr<Int64> power(const CustomType& other) const { return std::make_unique<Int64>(x * other.x - y); }
+    std::shared_ptr<Int64> power(const CustomType& other) const { return std::make_unique<Int64>(x * other.x - y); }
 
-    std::unique_ptr<Any> copy() override { return std::make_unique<CustomType>(x, y); }
+    std::shared_ptr<Any> copy() override { return std::make_shared<CustomType>(x, y); }
 
     Value<> x;
     Value<> y;
@@ -235,7 +220,7 @@ Value<> customValueType() {
 }
 
 TEST_F(TypeConversionTest, customValueTypeTest) {
-    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return customValueType();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -245,9 +230,7 @@ TEST_F(TypeConversionTest, customValueTypeTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 128);
 }

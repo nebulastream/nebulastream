@@ -15,6 +15,9 @@
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
+#include "Util/Timer.hpp"
+#include "Util/UtilityFunctions.hpp"
+#include <API/Schema.hpp>
 #include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
@@ -22,9 +25,6 @@
 #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
 #include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
 #include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
-#include "Util/Timer.hpp"
-#include "Util/UtilityFunctions.hpp"
-#include <API/Schema.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
@@ -53,8 +53,8 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #ifdef USE_MLIR
-#include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
@@ -203,7 +203,7 @@ TEST_P(Query6Test, tpchQ6) {
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
 
-TEST_P(Query6Test, tpchQ6and) {
+TEST_P(Query6Test, DISABLED_tpchQ6and) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
 
@@ -296,9 +296,10 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
 #else
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
-                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        ::testing::Combine(::testing::Values("MLIR"),
+                        // ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                                            //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {

@@ -13,6 +13,7 @@
 */
 
 #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
+#include "Nautilus/Backends/MLIR/MLIRUtility.hpp"
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
 #include <API/Schema.hpp>
@@ -122,10 +123,7 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
     loopInferencePhase.apply(ir);
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine(true);
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     assert(engine);
 }
 

@@ -23,7 +23,7 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -84,11 +84,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 101);
 }
@@ -116,231 +112,200 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1001);
+}
+
+TEST_F(LoopExecutionTest, sumLoopTestCF) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return sumLoop(10);
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 101);
 }
 
-// TEST_F(LoopExecutionTest, sumLoopTestCF) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return sumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> ifSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            agg = agg + 10;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 101);
-// }
+TEST_F(LoopExecutionTest, ifSumLoopTest) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return ifSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> ifSumLoop() {
-//     Value agg = Value(1);
-//     for (Value start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//             agg = agg + 10;
-//         }
-//     }
-//     return agg;
-// }
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 51);
+}
 
-// TEST_F(LoopExecutionTest, ifSumLoopTest) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return ifSumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> ifElseSumLoop() {
+    Value agg = Value(1);
+    for (Value<Int32> start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            agg = agg + 10;
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 51);
-// }
+TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return ifElseSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> ifElseSumLoop() {
-//     Value agg = Value(1);
-//     for (Value<Int32> start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//             agg = agg + 10;
-//         } else {
-//             agg = agg + 1;
-//         }
-//     }
-//     return agg;
-// }
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 56);
+}
 
-// TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return ifElseSumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> elseOnlySumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 56);
-// }
+TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return elseOnlySumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> elseOnlySumLoop() {
-//     Value agg = Value(1);
-//     for (Value start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//         } else {
-//             agg = agg + 1;
-//         }
-//     }
-//     return agg;
-// }
+    // create and print MLIR
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
 
-// TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return elseOnlySumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> nestedIfSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+                agg = agg + 10;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 1);
-// }
+TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> nestedIfSumLoop() {
-//     Value agg = Value(1);
-//     for (Value start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//             if (agg < 40) {
-//                 agg = agg + 10;
-//             }
-//         } else {
-//             agg = agg + 1;
-//         }
-//     }
-//     return agg;
-// }
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 41);
+}
 
-// TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return nestedIfSumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> nestedIfElseSumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+                agg = agg + 10;
+            } else {
+                agg = agg + 100;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 41);
-// }
+TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfElseSumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> nestedIfElseSumLoop() {
-//     Value agg = Value(1);
-//     for (Value start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//             if (agg < 40) {
-//                 agg = agg + 10;
-//             } else {
-//                 agg = agg + 100;
-//             }
-//         } else {
-//             agg = agg + 1;
-//         }
-//     }
-//     return agg;
-// }
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 146);
+}
 
-// TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return nestedIfElseSumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
+Value<> nestedElseOnlySumLoop() {
+    Value agg = Value(1);
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            if (agg < 40) {
+            } else {
+                agg = agg + 100;
+            }
+        } else {
+            agg = agg + 1;
+        }
+    }
+    return agg;
+}
 
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 146);
-// }
+TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedElseOnlySumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
 
-// Value<> nestedElseOnlySumLoop() {
-//     Value agg = Value(1);
-//     for (Value start = 0; start < 10; start = start + 1) {
-//         if (agg < 50) {
-//             if (agg < 40) {
-//             } else {
-//                 agg = agg + 100;
-//             }
-//         } else {
-//             agg = agg + 1;
-//         }
-//     }
-//     return agg;
-// }
-
-// TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
-//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return nestedElseOnlySumLoop();
-//     });
-//     execution = ssaCreationPhase.apply(std::move(execution));
-//     std::cout << *execution.get() << std::endl;
-//     auto ir = irCreationPhase.apply(execution);
-//     std::cout << ir->toString() << std::endl;
-//     ir = loopInferencePhase.apply(ir);
-//     std::cout << ir->toString() << std::endl;
-
-//     // create and print MLIR
-//     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     MLIR::MLIRUtility::DebugFlags df = {false, false, false};
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-//     auto engine = mlirUtility->prepareEngine();
-//     auto function = (int64_t(*)()) engine->lookup("execute").get();
-//     ASSERT_EQ(function(), 1);
-// }
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
