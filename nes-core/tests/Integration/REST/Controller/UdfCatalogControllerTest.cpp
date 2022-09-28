@@ -284,7 +284,7 @@ TEST_F(UdfCatalogControllerTest,  testIfRemoveUdfEndpointHandlesExtraQueryParame
                                 cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
 
     // then the response is NOT FOUND
-    ASSERT_EQ(response.status_code,Status::CODE_404.code);
+    ASSERT_EQ(response.status_code,Status::CODE_200.code);
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
