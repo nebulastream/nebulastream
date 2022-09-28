@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_ENTRYNOTFOUNDEXCEPTION_HPP
-#define NES_ENTRYNOTFOUNDEXCEPTION_HPP
+#ifndef NES_MAPENTRYNOTFOUNDEXCEPTION_HPP
+#define NES_MAPENTRYNOTFOUNDEXCEPTION_HPP
 
 #include <stdexcept>
 #include <string>
@@ -21,10 +21,10 @@ namespace NES {
 /**
  * @brief This exception is raised when the query you are looking for is not found
  */
-class EntryNotFoundException : public std::runtime_error {
+class MapEntryNotFoundException : public std::runtime_error {
   public:
-    explicit EntryNotFoundException(const std::string& message);
+    explicit MapEntryNotFoundException(const std::string& message);
 };
 } // namespace NES
 
-#endif//NES_ENTRYNOTFOUNDEXCEPTION_HPP
+#endif//NES_MAPENTRYNOTFOUNDEXCEPTION_HPP

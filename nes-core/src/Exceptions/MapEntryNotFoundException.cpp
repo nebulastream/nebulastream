@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/EntryNotFoundException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
 
 namespace NES{
-EntryNotFoundException::EntryNotFoundException(const std::string& message)  : std::runtime_error(message) {}
+MapEntryNotFoundException::MapEntryNotFoundException(const std::string& message)  : std::runtime_error(message) {}
 }
