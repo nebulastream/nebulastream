@@ -248,7 +248,7 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseCondition) {
     // std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 12);
 }
@@ -281,8 +281,7 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
     // Todo print fails
     // std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 12);
 }
