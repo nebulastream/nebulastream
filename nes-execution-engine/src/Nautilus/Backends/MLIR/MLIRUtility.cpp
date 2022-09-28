@@ -12,312 +12,65 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/ExecutionEngine/JITSymbol.h>
-#include <llvm/ExecutionEngine/Orc/Mangling.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/FileCollector.h>
-#include <llvm/Transforms/IPO/SCCP.h>
-#include <llvm/IRReader/IRReader.h>
-#include <llvm/Linker/Linker.h>
-#include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/TargetSelect.h>
-#include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
-#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
-#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
-#include <mlir/Dialect/SCF/SCF.h>
-#include <mlir/Dialect/StandardOps/IR/Ops.h>
-#include <mlir/ExecutionEngine/ExecutionEngine.h>
-#include <mlir/ExecutionEngine/OptUtils.h>
-#include <mlir/IR/BuiltinOps.h>
-#include <mlir/IR/MLIRContext.h>
-#include <mlir/IR/OperationSupport.h>
+#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
+#include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
+#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
+#include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <mlir/Parser.h>
-#include <mlir/Pass/PassManager.h>
-#include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
-#include <mlir/Target/LLVMIR/Export.h>
-#include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
-#include <mlir/Transforms/Passes.h>
-#include <string>
-#include <utility>
-#include <filesystem>
+
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
-MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
-    : mlirFilepath(std::move(mlirFilepath)), debugFromFile(debugFromFile){};
 
-std::string MLIRUtility::insertComments(const std::string& moduleString) {
-    std::string moduleWithComments;
-    std::istringstream moduleStream(moduleString);
+void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath) {    
+    std::string mlirString;
+    llvm::raw_string_ostream llvmStringStream(mlirString);
+    auto* basicError = new std::error_code();
+    llvm::raw_fd_ostream fileStream(mlirFilepath, *basicError);
 
-    for (std::string line; std::getline(moduleStream, line);) {
-        int lastWhiteSpaceIdx = (int) line.find('%');
-        int equalIdx = (int) line.find('=', lastWhiteSpaceIdx);
-        if (line.substr(equalIdx + 2, 15) == "llvm.mlir.undef") {
-            int commentStartIdx = equalIdx + 19;
-            int commentEndIdx = (int) line.find('=', equalIdx + 19) - 1;
-            std::string whiteSpaces = line.substr(0, lastWhiteSpaceIdx);
-            std::string commentString = line.substr(commentStartIdx, commentEndIdx - commentStartIdx);
-            commentString.erase(std::remove(commentString.begin(), commentString.end(), '"'), commentString.end());
-            moduleWithComments += whiteSpaces + commentString + '\n';
-        } else {
-            moduleWithComments += line + '\n';
-        }
+    auto* opPrintFlags = new mlir::OpPrintingFlags();
+    mlirModule->print(llvmStringStream, *opPrintFlags);
+    if (!mlirFilepath.empty()) {
+        fileStream.write(mlirString.c_str(), mlirString.length());
     }
-    return moduleWithComments;
+    std::cout << mlirString.c_str() << std::endl;
 }
 
-void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags) {
-    if (!debugFlags) {
-        printf("No debug flags.\n");
-        //        mlirModule->dump();
-    } else {
-        // Print location names and replace mlir::LLVM::UndefOp(s) with comments.
-        std::string mlirString;
-        llvm::raw_string_ostream llvmStringStream(mlirString);
-        auto* basicError = new std::error_code();
-        llvm::raw_fd_ostream fileStream(mlirFilepath, *basicError);
-        // Enable debug info. Write module content to stream.
-        auto* opPrintFlags = new mlir::OpPrintingFlags();
-        if (debugFlags->enableDebugInfo) {
-            opPrintFlags->enableDebugInfo(debugFlags->prettyDebug);
-        }
-        mlirModule->print(llvmStringStream, *opPrintFlags);
-        // Insert comments. Print module to console. Write module to file.
-        if (debugFlags->comments) {
-            mlirString = insertComments(mlirString);
-        }
-        if (!mlirFilepath.empty()) {
-            fileStream.write(mlirString.c_str(), mlirString.length());
-        }
-        std::cout << mlirString.c_str() << std::endl;
-    }
-}
+int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& rootFunctionName) {
+    mlir::OwningOpRef<mlir::ModuleOp> module;
+    mlir::MLIRContext context;
+    module = mlir::parseSourceString(mlirString, &context);
 
-int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags) {
-    context.loadDialect<mlir::StandardOpsDialect>();
-    context.loadDialect<mlir::LLVM::LLVMDialect>();
-    context.loadDialect<mlir::scf::SCFDialect>();
-    module = parseSourceString(mlirString, &context);
-
-    if (debugFlags) {
-        printf("Kek %d", debugFlags->comments);
-    }
-    //    auto opIterator = module->getOps().begin()->getBlock()->getOperations().begin();
-    //    opIterator->dump();
-    module->dump();
-    if (!module) {
-        llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
-        return 1;
+    // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    if(!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
-    mlir::PassManager passManager(&context);
-    applyPassManagerCLOptions(passManager);
-    passManager.addPass(mlir::createInlinerPass());
-    passManager.addPass(mlir::createLowerToCFGPass());
-    passManager.addPass(mlir::createLowerToLLVMPass());
+    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
-    if (mlir::failed(passManager.run(*module))) {
-        return 1;
-    }
-    return 0;
-}
-
-//Todo remove!!
-int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags) {
-    //    auto texst = mlir::UnrealizedConversionCastOp();
-    //    auto whatDialect = mlir::UnrealizedConversionCastOp()->getDialect();
-    //    mlir::LLVMTranslationDialectInterface testTransInt(mlir::UnrealizedConversionCastOp()->getDialect());
-    //    context.loadDialect<testTransInt.getDialect()>();
-    context.loadDialect<mlir::StandardOpsDialect>();
-    context.loadDialect<mlir::LLVM::LLVMDialect>();
-    context.loadDialect<mlir::scf::SCFDialect>();
-
-    module = parseSourceString(mlirString, &context);
-    auto module2 = parseSourceString(mlirString2, &context);
-
-    if (debugFlags) {
-        printf("Kek %d", debugFlags->comments);
-    }
-    //    auto opIterator = module2->getOps().begin()->getBlock()->getOperations().front();
-    //    module-> push_back(module2->getOps().begin()->getBlock()->getOperations().front().clone());
-    module->dump();
-
-    if (!module) {
-        llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
-        return 1;
-    }
-
-    mlir::PassManager passManager(&context);
-    applyPassManagerCLOptions(passManager);
-    passManager.addPass(mlir::createInlinerPass());
-    passManager.addPass(mlir::createLowerToCFGPass());
-    passManager.addPass(mlir::createLowerToLLVMPass());
-
-    if (mlir::failed(passManager.run(*module))) {
-        return 1;
-    }
-    return 0;
-}
-
-int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFlags*) {
-
-    // Todo find a good place to load the required Dialects
-    // Load all Dialects required to process/generate the required MLIR.
-    context.loadDialect<mlir::StandardOpsDialect>();
-    context.loadDialect<mlir::LLVM::LLVMDialect>();
-    context.loadDialect<mlir::scf::SCFDialect>();
-    //    context.loadDialect<>()
-    // Generate MLIR for the sample NESAbstraction or load from file.
-    if (debugFromFile) {
-        assert(!mlirFilepath.empty() && "No MLIR filename to read from given.");
-        module = mlir::parseSourceFile(mlirFilepath, &context);
-    } else {
-        // create NESAbstraction for testing and an MLIRGenerator
-        // Insert functions necessary to get information from TupleBuffer objects and more.
-        mlirGenerator = std::make_shared<MLIRLoweringProvider>(context);
-        module = mlirGenerator->generateModuleFromNESIR(nesIR);
-       // printMLIRModule(module, debugFlags);
-    }
-
-    if (!module) {
-        llvm::errs() << "MLIRUtility::loadAndProcessMLIR: Could not load MLIR module" << '\n';
-        return 1;
-    }
-
-    // Todo encapsulate print and pass functionality
-    // Todo #54 establish proper optimization pipeline (acknowledge debugging)
-    // Apply any generic pass manager command line options and run the pipeline.
-    mlir::PassManager passManager(&context);
-    applyPassManagerCLOptions(passManager);
-    passManager.addPass(mlir::createInlinerPass());
-    passManager.addPass(mlir::createLowerToCFGPass());
-    passManager.addPass(mlir::createLowerToLLVMPass());
-
-    if (mlir::failed(passManager.run(*module))) {
-        llvm::errs() << "MLIRUtility::loadAndProcessMLIR: Failed to apply passes on generated MLIR" << '\n';
-        return 1;
-    }
-    return 0;
-}
-
-
-llvm::function_ref<llvm::Error(llvm::Module*)> MLIRUtility::getOptimizingTransformer(bool linkProxyFunctions) {
-       if (linkProxyFunctions) {
-        return [] (llvm::Module* llvmIRModule) mutable {
-            llvm::SMDiagnostic Err;
-            //Todo 
-            // 1. Find a way to reliably pass paths as captured parameters to lambda.
-            // -> tried using capture parameter, but every try lead to errors/garage strings
-            // -> moving code into runJit/prepareJit function makes it possible to print correct strings from within lambda
-            // -> BUT: if the string contains "../." or "../.." or "../../", the string is also turned to garbage
-            // 2. find better way to get the correct path
-            // assumes 'nebulastream/cmake-build-debug/nes-execution-engine/Folder/Folder/Folder/CWD'
-            auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR),
-                                                      Err, llvmIRModule->getContext());
-            llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
-
-
-            auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
-            auto optimizedModule = optPipeline(llvmIRModule);
-
-            std::string llvmIRString;
-            llvm::raw_string_ostream llvmStringStream(llvmIRString);
-            llvmIRModule->print(llvmStringStream, nullptr);
-
-            auto* basicError = new std::error_code();
-            llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
-            fileStream.write(llvmIRString.c_str(), llvmIRString.length());
-            return optimizedModule;
-        };
-    } else {
-        return [](llvm::Module* llvmIRModule) {
-            auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
-            auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::outs(), nullptr);
-            return optimizedModule;
-        };
-    }
-}
-
-/**
- * @brief Takes loaded and lowered MLIR module, jit compiles it and calls 'execute()'
- * @param module: MLIR module that contains the 'execute' function.
- * @return int: 1 if error occurred, else 0
- */
-int MLIRUtility::runJit(bool linkProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
-    // Initialize LLVM targets.
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
-
-    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
-    mlir::registerLLVMDialectTranslation(*module->getContext());
-
-    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
-    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
-
-    // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
-    auto maybeEngine =
-        mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
-    assert(maybeEngine && "failed to construct an execution engine");
-    auto& engine = maybeEngine.get();
-
-    auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
-        auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
-                llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
-        }
-        return symbolMap;
-    };
-    engine->registerSymbols(runtimeSymbolMap);
-
-    // Invoke the JIT-compiled function.
-    int64_t result = 0;
-    auto invocationResult =
-        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
-    printf("Result: %ld\n", result);
-
-    if (invocationResult) {
-        llvm::errs() << "JIT invocation failed\n";
+    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
+    if(!engine->invoke(rootFunctionName)) {
         return -1;
     }
-
-    return (bool) inputBufferPtr + (bool) outputBufferPtr;
+    else return 0;
 }
 
-std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::prepareEngine(bool linkProxyFunctions) {
-    // Initialize LLVM targets.
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
+std::unique_ptr<mlir::ExecutionEngine> 
+MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir) {
+    mlir::MLIRContext context;
+    auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
+    auto module = loweringProvider->generateModuleFromNESIR(ir);
+    // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
+    }
 
-    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
-    mlir::registerLLVMDialectTranslation(*module->getContext());
+    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
-    /// Link proxyFunctions into MLIR module. Optimize MLIR module.
-    llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer = getOptimizingTransformer(linkProxyFunctions);
-
-    // Create an MLIR execution engine. The execution engine eagerly JIT-compiles the module.
-    auto maybeEngine =
-        mlir::ExecutionEngine::create(*module, nullptr, printOptimizingTransformer, llvm::CodeGenOpt::Level::Aggressive);
-
-    assert(maybeEngine && "failed to construct an execution engine");
-    auto& engine = maybeEngine.get();
-
-    auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
-        auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
-                llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
-        }
-        return symbolMap;
-    };
-    engine->registerSymbols(runtimeSymbolMap);
-
-    // Invoke the JIT-compiled function.
-    int64_t result = 0;
-    return std::move(engine);
+    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
 }
 }// namespace NES::ExecutionEngine::Experimental::MLIR

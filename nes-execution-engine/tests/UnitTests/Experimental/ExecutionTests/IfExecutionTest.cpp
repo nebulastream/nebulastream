@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -69,9 +69,7 @@ TEST_F(IfExecutionTest, ifConditionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 43);
 }
@@ -98,9 +96,7 @@ TEST_F(IfExecutionTest, ifThenElseConditionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, true);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 85);
 }
@@ -129,9 +125,7 @@ TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
 }
@@ -161,9 +155,7 @@ TEST_F(IfExecutionTest, nestedIFThenNoElse) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 12);
 }
@@ -191,9 +183,7 @@ TEST_F(IfExecutionTest, doubleIfCondition) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 23);
 }
@@ -221,9 +211,7 @@ TEST_F(IfExecutionTest, ifElseIfCondition) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 23);
 }
@@ -260,9 +248,7 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseCondition) {
     // std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 12);
 }
@@ -296,9 +282,7 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
     // std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 12);
 }
