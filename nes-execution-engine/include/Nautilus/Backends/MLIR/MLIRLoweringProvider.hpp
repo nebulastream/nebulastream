@@ -19,7 +19,6 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/Backends/MLIR/YieldOperation.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
@@ -45,18 +44,8 @@
 #include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
-#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
-#include <mlir/Dialect/SCF/SCF.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
-#include <mlir/IR/Attributes.h>
-#include <mlir/IR/Builders.h>
-#include <mlir/IR/BuiltinAttributes.h>
-#include <mlir/IR/BuiltinOps.h>
-#include <mlir/IR/BuiltinTypes.h>
-#include <mlir/IR/MLIRContext.h>
-#include <mlir/IR/Operation.h>
 #include <mlir/IR/PatternMatch.h>
-#include <mlir/IR/Value.h>
 #include <unordered_set>
 
 
@@ -80,9 +69,9 @@ class MLIRLoweringProvider {
     /**
      * @brief Root MLIR generation function. Takes NESIR as an IRGraph, and recursively lowers its operations to MLIR.
      * @param nesIR: NESIR represented as an IRGraph.
-     * @return mlir::ModuleOp that is equivalent to the NESIR module, and can be lowered to LLVM IR in one step.
+     * @return mlir::mlir::OwningOpRef<mlir::ModuleOp> that is equivalent to the NESIR module, and can be lowered to LLVM IR in one step.
      */
-    mlir::ModuleOp generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR);
+    mlir::OwningOpRef<mlir::ModuleOp> generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR);
 
     /**
      * @return std::vector<std::string>: All proxy function symbols used in the module.
@@ -140,7 +129,6 @@ class MLIRLoweringProvider {
     void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::YieldOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame& frame);

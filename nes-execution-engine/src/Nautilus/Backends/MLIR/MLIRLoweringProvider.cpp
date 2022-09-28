@@ -12,22 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
-#include <Nautilus/Backends/MLIR/YieldOperation.hpp>
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
-#include <Nautilus/IR/Operations/BranchOperation.hpp>
-#include <Nautilus/IR/Operations/CastOperation.hpp>
-#include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
@@ -43,7 +28,6 @@
 #include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/Location.h>
-#include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/Operation.h>
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/IR/TypeRange.h>
@@ -51,7 +35,6 @@
 #include <mlir/IR/Verifier.h>
 #include <mlir/Parser.h>
 #include <mlir/Support/LLVM.h>
-#include <optional>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
 
@@ -162,13 +145,19 @@ mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(const std::
 //==---------------------------------==//
 MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context(&context) {
     // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
+    // context->loadDialect<mlir::StandardOpsDialect>();
+    // context->loadDialect<mlir::LLVM::LLVMDialect>();
+    // context->loadDialect<mlir::scf::SCFDialect>();
     builder = std::make_unique<mlir::OpBuilder>(&context);
+    builder->getContext()->loadDialect<mlir::StandardOpsDialect>();
+    builder->getContext()->loadDialect<mlir::LLVM::LLVMDialect>();
+    builder->getContext()->loadDialect<mlir::scf::SCFDialect>();
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-mlir::ModuleOp MLIRLoweringProvider::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
+mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
     ValueFrame firstFrame;
     generateMLIR(nesIR->getRootOperation(), firstFrame);
     theModule->dump();
@@ -236,9 +225,6 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
             break;
         case IR::Operations::Operation::OperationType::ReturnOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::ReturnOperation>(operation), frame);
-            break;
-        case IR::Operations::Operation::OperationType::MLIR_YIELD:
-            generateMLIR(std::static_pointer_cast<IR::Operations::YieldOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::OrOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::OrOperation>(operation), frame);
@@ -624,15 +610,6 @@ MLIRLoweringProvider::ValueFrame MLIRLoweringProvider::createFrameFromParentBloc
     return childFrame;
 }
 
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::YieldOperation> yieldOperation,
-                                 MLIRLoweringProvider::ValueFrame& frame) {
-    std::vector<mlir::Value> ifYieldOps;
-    for (auto yieldArgument : yieldOperation->getArguments()) {
-        ifYieldOps.push_back(frame.getValue(yieldArgument->getIdentifier()));
-    }
-    builder->create<mlir::scf::YieldOp>(getNameLoc("yield"), ifYieldOps);
-}
-
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, MLIRLoweringProvider::ValueFrame& frame) {
     auto inputStamp = castOperation->getInput()->getStamp();
     auto outputStamp = castOperation->getStamp();
@@ -666,6 +643,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBoo
     frame.setValue(constBooleanOp->getIdentifier(), constOp);
 }
 
-std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols() { return jitProxyFunctionSymbols; }
-std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses() { return jitProxyFunctionTargetAddresses; }
+std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols() { return std::move(jitProxyFunctionSymbols); }
+std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses() { return std::move(jitProxyFunctionTargetAddresses); }
 }// namespace NES::ExecutionEngine::Experimental::MLIR
