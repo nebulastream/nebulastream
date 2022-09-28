@@ -56,7 +56,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
-    static std::shared_ptr<TopologyController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<TopologyController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                             TopologyPtr topology,
                                                             std::string routerPrefixAddition,
                                                             ErrorHandlerPtr errorHandler) {

@@ -76,7 +76,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
      * @param objectMapper
      * @return
      */
-    static std::shared_ptr<QueryController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                          QueryServicePtr queryService,
                                                          QueryCatalogServicePtr queryCatalogService,
                                                          GlobalExecutionPlanPtr globalExecutionPlan,
@@ -174,7 +174,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto userQuery = requestJson["userQuery"].get<std::string>();
             auto placement = requestJson["placement"].get<std::string>();
             std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
-            std::string lineageString = DEFAULT_TOLERANCE_TYPE;
+            std::string lineageString = DEFAULT_LINEAGE_TYPE;
             if (requestJson.contains("faultTolerance")) {
                 if(!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())){
                     std::string errorMessage = "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>() +
@@ -194,12 +194,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     lineageString = requestJson["lineage"].get<std::string>();
                 }
             }
-            if(!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())){
-                std::string errorMessage = "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>() +
-                    ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
-                return errorHandler->handleError(Status::CODE_400, errorMessage);
-            }
-
             auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageMode = LineageType::getFromString(lineageString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
@@ -375,6 +369,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
+    const std::string DEFAULT_LINEAGE_TYPE = "NONE";
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;

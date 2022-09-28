@@ -42,7 +42,7 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
-    static std::shared_ptr<ConnectivityController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<ConnectivityController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                                 std::string routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<ConnectivityController>(objectMapper, completeRouterPrefix);

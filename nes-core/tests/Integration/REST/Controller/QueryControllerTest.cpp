@@ -144,16 +144,28 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
 
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
-    startRestServer();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    workerConfiguration->physicalSources.add(physicalSource);
+    coordinatorConfig->worker = *(workerConfiguration);
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] ="AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
-                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()},
-                              cpr::ConnectTimeout{3000}, cpr::Timeout{3000});
+                              cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()});
     EXPECT_EQ(response.status_code, 202l);
     nlohmann::json res = nlohmann::json::parse(response.text);
     EXPECT_EQ(res["queryId"], 1);
