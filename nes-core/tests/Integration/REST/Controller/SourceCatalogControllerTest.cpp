@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
+#include "GRPC/Serialization/SchemaSerializationUtil.hpp"
+#include <SerializableOperator.pb.h>
 #include <API/Query.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
-#include <nlohmann/json.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -30,6 +28,7 @@
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 using namespace std;
 
@@ -136,12 +135,21 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
 TEST_F(SourceCatalogControllerTest, testGetSchema) {
     startCoordinator();
     checkRestServer();
+    // create a schema
     SchemaPtr schema = Schema::create();
     schema->addField("ID", UINT64);
+    // and add it to the source catalog
     coordinator->getSourceCatalog()->addLogicalSource("test_stream", schema);
+    // submitting a GET request for the above defined schema
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/schema"}, cpr::Parameters{{"logicalSourceName", "test_stream"}});
+    // returns 200 OK
     EXPECT_EQ(r.status_code, 200l);
-    //TODO: take string representation (r) of Schema object and deserialize it back into a Schema object. Check if ID field exists.
+    SerializableSchema response;
+    // parse the returned schema
+    response.ParseFromString(r.text);
+    // and check if its fields match with the fields defined in the schema above
+    ASSERT_TRUE(response.fields().size() == 1);
+    ASSERT_TRUE(response.fields(0).name() == "ID");
 }
 
 TEST_F(SourceCatalogControllerTest, DISABLED_testPostLogicalSource) {

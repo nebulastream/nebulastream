@@ -16,7 +16,7 @@
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Exceptions/EntryNotFoundException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
@@ -64,16 +64,14 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         try{
             nlohmann::json logicalSources;
             const std::map<std::string, std::string>& allLogicalSourceAsString = sourceCatalog->getAllLogicalSourceAsString();
-            uint64_t count = 0;
+            if (allLogicalSourceAsString.empty()) {
+                NES_DEBUG("No Logical Source Found");
+                return errorHandler->handleError(Status::CODE_404, "Resource not found.");
+            }
             for (auto const& [key, val] : allLogicalSourceAsString) {
                 nlohmann::json entry;
                 entry[key] = val;
-                count++;
                 logicalSources.push_back(entry);
-            }
-            if (count == 0) {
-                NES_DEBUG("No Logical Source Found");
-                return errorHandler->handleError(Status::CODE_404, "Resource not found.");
             }
             return createResponse(Status::CODE_200, logicalSources.dump());
         }
@@ -94,7 +92,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
             result["Physical Sources"] = allSource;
             return createResponse(Status::CODE_200, result.dump());
-        } catch(EntryNotFoundException e ){
+        } catch(MapEntryNotFoundException e ){
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: Logical source " + logicalSourceName + " has no physical source defined.");
         } catch (const std::exception& exc) {
             NES_ERROR("SourceCatalogController: get allPhysicalSource: Exception occurred while building the query plan for user request.");
@@ -104,14 +102,12 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("GET",  "/schema", getSchema,
-             QUERY(String, logicalSourceName, "logicalSourceName")) {
-
+    ENDPOINT("GET",  "/schema", getSchema, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
             SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
             SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
             return createResponse(Status::CODE_200, serializableSchema->SerializeAsString());
-        } catch(EntryNotFoundException e ){
+        } catch(MapEntryNotFoundException e ){
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
         } catch (const std::exception& exc) {
             NES_ERROR(
