@@ -14,7 +14,7 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -46,17 +46,14 @@ class ExpressionExecutionTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ExpressionExecutionTest test class." << std::endl; }
 
-    auto prepate(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         std::cout << *executionTrace.get() << std::endl;
         auto ir = irCreationPhase.apply(executionTrace);
         std::cout << ir->toString() << std::endl;
 
         // create and print MLIR
-        auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-        int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
-        assert(loadedModuleSuccess == 0);
-        return mlirUtility->prepareEngine();
+        return MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     }
 };
 
@@ -71,7 +68,7 @@ TEST_F(ExpressionExecutionTest, addI8Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int8AddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int8_t(*)(int8_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(1), 3.0);
 }
@@ -87,7 +84,7 @@ TEST_F(ExpressionExecutionTest, addI16Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int16AddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int16_t(*)(int16_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(8), 13);
 }
@@ -103,7 +100,7 @@ TEST_F(ExpressionExecutionTest, addI32Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int32AddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int32_t(*)(int32_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(8), 13);
 }
@@ -119,7 +116,7 @@ TEST_F(ExpressionExecutionTest, addI64Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int64AddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
@@ -137,7 +134,7 @@ TEST_F(ExpressionExecutionTest, addFloatTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return floatAddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (float (*)(float)) engine->lookup("execute").get();
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
@@ -155,7 +152,7 @@ TEST_F(ExpressionExecutionTest, addDobleTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return doubleAddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (double (*)(double)) engine->lookup("execute").get();
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
@@ -173,7 +170,7 @@ TEST_F(ExpressionExecutionTest, castFloatToDoubleTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castFloatToDoubleAddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (double (*)(float)) engine->lookup("execute").get();
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
@@ -191,7 +188,7 @@ TEST_F(ExpressionExecutionTest, castInt8ToInt64Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int64_t(*)(int8_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
@@ -209,7 +206,7 @@ TEST_F(ExpressionExecutionTest, castInt8ToInt64Test2) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);
     });
-    auto engine = prepate(executionTrace);
+    auto engine = prepare(executionTrace);
     auto function = (int64_t(*)(int8_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(8), 50);
     ASSERT_EQ(function(-2), 40);

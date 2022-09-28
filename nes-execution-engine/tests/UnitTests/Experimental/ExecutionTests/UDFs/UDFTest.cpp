@@ -53,8 +53,8 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #ifdef USE_MLIR
-#include <Experimental/MLIR/MLIRPipelineCompilerBackend.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
 #include <Experimental/Interpreter/Operators/Streaming/WindowAggregation.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
@@ -85,14 +85,14 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
  */
 class UDFTest : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
-    Trace::SSACreationPhase ssaCreationPhase;
-    Trace::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup QueryExecutionTest test class." << std::endl;
+        NES::Logger::setupLogging("UDFExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup UDFExecutionTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
@@ -124,10 +124,10 @@ class UDFTest : public testing::Test, public ::testing::WithParamInterface<std::
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down QueryExecutionTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down UDFExecutionTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryExecutionTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down UDFExecutionTest test class." << std::endl; }
 };
 
 SchemaPtr getSchema() {
@@ -236,7 +236,7 @@ TEST_P(UDFTest, distanceUDF) {
 }
 
 
-TEST_F(QueryExecutionTest, longAggregationUDFQueryTest) {
+TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
 
     auto bm = std::make_shared<Runtime::BufferManager>();
 

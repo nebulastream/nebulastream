@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include "Nautilus/Backends/MLIR/MLIRUtility.hpp"
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/NESIR/ProxyFunctions.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -71,9 +72,7 @@ TEST_F(FunctionExecutionTest, addIntFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
 }
@@ -98,9 +97,7 @@ TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 42);
 }
@@ -126,9 +123,7 @@ TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_ANY_THROW(function());
 }
@@ -155,9 +150,7 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);

@@ -14,7 +14,7 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
@@ -63,10 +63,7 @@ TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
     ASSERT_EQ(function(&valI), 42);
 }
@@ -92,10 +89,7 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
     function(&valI);
     ASSERT_EQ(valI, 43);
@@ -125,10 +119,7 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, false);
-    auto engine = mlirUtility->prepareEngine();
+    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
 
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};

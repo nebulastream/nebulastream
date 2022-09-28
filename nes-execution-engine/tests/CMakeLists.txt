@@ -13,46 +13,6 @@
 
 include(ExternalProject)
 
-### MLIR Tests ###
-
-#add_executable(mlir-nesir-loop-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Loop.cpp")
-#target_link_libraries(mlir-nesir-loop-test
-#        nes-execution-engine)
-#add_test(NAME mlir-nesir-loop-test COMMAND mlir-nesir-loop-test)
-
-#add_executable(mlir-nesir-if-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_IF.cpp")
-#target_link_libraries(mlir-nesir-if-test
-#        nes-execution-engine)
-#add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
-    add_executable(mlir-nesir-if-generation-test "UnitTests/MLIR_Experimental/MLIR_IF_GenerationTest.cpp")
-    target_link_libraries(mlir-nesir-if-generation-test
-             nes-execution-engine ${GTEST_LIBRARIES})
-    add_test(NAME mlir-nesir-if-generation-test COMMAND mlir-nesir-if-generation-test)
-
-    add_executable(mlir-nesir-loop-generation-test "UnitTests/MLIR_Experimental/MLIR_Loop_GenerationTest.cpp")
-    target_link_libraries(mlir-nesir-loop-generation-test
-             nes-execution-engine ${GTEST_LIBRARIES})
-    add_test(NAME mlir-nesir-loop-generation-test COMMAND mlir-nesir-loop-generation-test)
-
-endif ()
-
-#add_executable(mlir-nesir-print-test "UnitTests/MLIR_Experimental/NESIRPrintTest.cpp")
-#target_link_libraries(mlir-nesir-print-test
-#        nes-execution-engine)
-#add_test(NAME mlir-nesir-print-test COMMAND mlir-nesir-print-test)
-
-#add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
-#target_link_libraries(mlir-nesir-types-test
-#       nes-execution-engine)
-#add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
-
-#add_executable(mlir-nesir-arithmetic-ops-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_ArithmeticOps.cpp")
-#target_link_libraries(mlir-nesir-arithmetic-ops-test
-#        nes-execution-engine)
-#add_test(NAME mlir-nesir-arithmetic-ops-test COMMAND mlir-nesir-arithmetic-ops-test)
-
 add_executable(execution-engine-trace-test "UnitTests/Experimental/TraceTest.cpp")
 target_link_libraries(execution-engine-trace-test
          nes-execution-engine ${GTEST_LIBRARIES})
