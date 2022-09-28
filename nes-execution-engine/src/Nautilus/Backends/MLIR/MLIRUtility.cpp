@@ -71,6 +71,7 @@ MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGrap
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
-    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
+    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
+                                                loweringProvider->getJitProxyTargetAddresses());
 }
 }// namespace NES::ExecutionEngine::Experimental::MLIR
