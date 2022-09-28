@@ -29,6 +29,7 @@ RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
     && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update && apt install -y cmake
 
+
 RUN git clone https://github.com/tensorflow/tensorflow.git tensorflow_src && \
     cd tensorflow_src && \
     git checkout v2.6.0 && \

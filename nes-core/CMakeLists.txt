@@ -68,6 +68,7 @@ target_include_directories(nes PUBLIC
 target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 
 if(USE_TF)
+    message(STATUS "Building with tensorflowlite")
     add_compile_definitions(TFDEF)
     target_link_libraries(nes PUBLIC libtensorflowlite_c.so)
 endif()
@@ -145,14 +146,9 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompile
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
-if(USE_TF)
-    target_link_libraries(nesCoordinator PUBLIC libtensorflowlite_c.so)
-endif()
+
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes)
-if(USE_TF)
-    target_link_libraries(nesWorker PUBLIC libtensorflowlite_c.so)
-endif()
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
