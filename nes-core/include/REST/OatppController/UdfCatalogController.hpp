@@ -177,8 +177,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
 
     /**
      * Endpoint for deleting udfs
-     * returns 200 if delete is successful
-     * returns 404 if no udf with given name is found
+     * returns 200 if delete is successful or no such udf found
      * returns 500 for internal server errors
      * @param udf : name of udf to delete
      */
@@ -189,7 +188,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             auto removed = udfCatalog->removeUdf(udfName);
             nlohmann::json result;
             result["removed"] = removed;
-            return createResponse(removed ? Status::CODE_200 : Status::CODE_404, result.dump());
+            return createResponse(Status::CODE_200, result.dump());
         }
         catch(...){
            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
