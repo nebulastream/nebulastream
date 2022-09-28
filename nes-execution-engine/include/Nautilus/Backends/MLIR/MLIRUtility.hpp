@@ -16,7 +16,6 @@
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
 #include <Nautilus/IR/IRGraph.hpp>
-#include <memory>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
@@ -29,67 +28,32 @@ class MLIRLoweringProvider;
 
 class MLIRUtility {
   public:
+
+    MLIRUtility();
+    ~MLIRUtility();
+
     /**
-     * @brief Controls debugging related aspects of MLIR parsing and creation.
-     * comments: Insert comments into MLIR module.
-     * enableDebugInfo: Create MLIR with named locations.
-     * prettyDebug: Prettily write debug info. Invalidates MLIR!
+     * @brief Writes an MLIR module to a file. A module that is loaded from file allows for step-through debugging.
+     * @param mlirModule: The module to write.
      */
-    struct DebugFlags {
-        bool comments;
-        bool enableDebugInfo;
-        bool prettyDebug;
-    };
+    static void writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath);
 
     /**
-     * @brief Used to generate MLIR, print/write and JIT compile it.
-     * @param mlirFilepath: Path from/to which to read/write MLIR.
-     * @param debugFromFile: If true, create MLIR from mlirFilePath (enables debugging)
+     * @brief 
+     * @param mlirString 
+     * @param rootFunctionName 
+     * @return int 
      */
-    MLIRUtility(std::string mlirFilepath, bool debugFromFile);
-    ~MLIRUtility() = default;
+    static int loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& rootFunctionName);
 
     /**
-    * @brief Creates MLIR and if successful, applies lowering passes to it
-    * @param NESTree: NES abstraction tree from which MLIR is generated.
-    * @param debugFlags: Determine whether and how to print/write MLIR.
-    * @return int: 1 if error occurred, else 0
-    */
-    int loadAndProcessMLIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> nesIR, DebugFlags* debugFlags = nullptr);
-
-    int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
-    int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);
-
-    /**
-     * @brief Takes symbols and JITAddresses and JIT runs created module.
-     * @param llvmIRModule External symbol names, e.g. function names.
-     * @param jitAddresses: Memory addresses of external functions, objects, etc.
-     * @return int: 1 if error occurred, else 0
+     * @brief 
+     * @param mlirString 
+     * @param rootFunctionName 
+     * @return int 
      */
-    int runJit(bool linkProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
-    std::unique_ptr<mlir::ExecutionEngine> prepareEngine(bool linkProxyFunctions = false);
-
-    /**
-     * @brief Can print a module and write it to a file, depending on debugFlags.
-     * @param mlirModule: The module to print/write.
-     * @param debugFlags: Determine whether and how to print/write MLIR.
-     */
-    void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags);
-
-    /**
-     * @brief Creates a function that applies a custom LLVM IR optimizer the LLVM IR query code generated from MLIR
-     * @param linkProxyFunctions: if true, link proxy function definitions from prepared LLVM IR module
-     */
-    llvm::function_ref<llvm::Error(llvm::Module*)> getOptimizingTransformer(bool linkProxyFunctions);
-
-  private:
-    mlir::OwningOpRef<mlir::ModuleOp> module;
-    mlir::MLIRContext context;
-    std::shared_ptr<MLIRLoweringProvider> mlirGenerator;
-    std::string mlirFilepath;
-    bool debugFromFile;
-
-    static std::string insertComments(const std::string& moduleString);
+    static std::unique_ptr<mlir::ExecutionEngine> 
+    compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
 }// namespace NES::ExecutionEngine::Experimental::MLIR

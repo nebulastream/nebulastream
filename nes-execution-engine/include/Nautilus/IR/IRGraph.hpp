@@ -15,6 +15,7 @@
 #ifndef NES_NAUTILUS_IR_IRGRAPH_HPP_
 #define NES_NAUTILUS_IR_IRGRAPH_HPP_
 
+#include <memory>
 namespace NES::Nautilus::IR {
 
 namespace Operations {
