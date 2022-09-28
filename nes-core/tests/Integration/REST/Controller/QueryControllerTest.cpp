@@ -34,21 +34,27 @@ class QueryControllerTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
+
+    void startRestServer(){
+        NES_INFO("QueryControllerTest: Start coordinator");
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
+        coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+        ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+        NES_INFO("QueryControllerTest: Coordinator started successfully");
+    }
+
+    NesCoordinatorPtr coordinator;
+    CoordinatorConfigurationPtr coordinatorConfig;
 };
 
 //Check if submitting a POST request without defining 'userQuery' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
-    ASSERT_TRUE(success);
     nlohmann::json request;
     request["faultTolerance"] ="AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -64,17 +70,8 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
 
 //Check if submitting a POST request without defining 'placement' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    ASSERT_TRUE(success);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     auto response   = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
@@ -90,17 +87,8 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
 
 //Check if submitting a POST request with an unsupported 'placement' strategy returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    ASSERT_TRUE(success);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "FAST";
@@ -117,17 +105,8 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
 
 //Check if submitting a POST request with an unsupported 'faultTolerance' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    ASSERT_TRUE(success);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -145,17 +124,8 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
 
 //Check if submitting a POST request with an unsupported 'lineage' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    ASSERT_TRUE(success);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
@@ -174,22 +144,8 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
 
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
-    auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
-    coordinatorConfig->worker = *(workerConfiguration);
-    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
-    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
-
-    ASSERT_TRUE(success);
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
