@@ -58,12 +58,16 @@
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/IR/Value.h>
 #include <unordered_set>
+
+
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::MLIR {
 
 class MLIRLoweringProvider {
   public:
-    bool useSCF = true;
+    // A ValueFrame is hashmap that binds operation names to MLIR values. 
+    // It is used to 'pass' values between mlir operations. 
+    // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
     using ValueFrame = Frame<std::string, mlir::Value>;
 
     /**
@@ -104,12 +108,20 @@ class MLIRLoweringProvider {
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
+    std::unordered_map<std::string, mlir::Block*> blockMapping; //Keeps track of already created basic blocks.
 
+    /**
+     * @brief Generates MLIR from a NESIR basic block. Iterates over basic block operations and calls generate.
+     * 
+     * @param basicBlock: The NESIR basic block that MLIR code is generated for.
+     * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
+     */
     void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
-     * @param parentBlock MLIR Block that new operation is inserted into.
+     * @param Operation: NESIR operation that the MLIRLoweringProvider generates MLIR code for.
+     * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      */
     void generateMLIR(const IR::Operations::OperationPtr& operation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, ValueFrame& frame);
@@ -135,7 +147,14 @@ class MLIRLoweringProvider {
     void generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
 
+    /**
+     * @brief Generates a basic block inside of the current MLIR module. Used for control flow (if,loop).
+     * @param blockInvocation: NESIR basic block that is invocated.
+     * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
+     * @return mlir::Block*: Returns a pointer to an MLIR basic block.
+     */
     mlir::Block* generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame& frame);
+
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
      * @param name: Function name.
@@ -157,16 +176,16 @@ class MLIRLoweringProvider {
     mlir::Location getNameLoc(const std::string& name);
 
     /**
-     * @brief Get MLIR Type from a basic NES type.
-     * @param type: NES basic type.
+     * @brief Get MLIR Type from a basic NESIR type.
+     * @param type: NESIR basic type.
      * @return mlir::Type: MLIR Type.
      */
     mlir::Type getMLIRType(IR::Types::StampPtr type);
 
     /**
-     * @brief Get MLIR Type from a basic NES type.
-     * @param type: NES basic type.
-     * @return mlir::Type: MLIR Type.
+     * @brief Get a vector of MLIR Types from a vector of NESIR types.
+     * @param types: Vector of basic NESIR types.
+     * @return mlir::Type: Vector of MLIR types.
      */
     std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::OperationPtr> types);
 
@@ -193,8 +212,14 @@ class MLIRLoweringProvider {
      */
     int8_t getBitWidthFromType(IR::Operations::PrimitiveStamp type);
 
+    /**
+     * @brief Create a ValueFrame From Parent Block object.
+     * 
+     * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
+     * @param invocation: The parent basic block.
+     * @return ValueFrame: An unordered map with identifiers and MLIR values in it.
+     */
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
-    std::unordered_map<std::string, mlir::Block*> blockMapping;
 };
 }// namespace NES::ExecutionEngine::Experimental::MLIR
 #endif//NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

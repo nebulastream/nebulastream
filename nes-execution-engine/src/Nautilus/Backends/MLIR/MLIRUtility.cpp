@@ -183,7 +183,7 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFla
     }
 
     if (!module) {
-        llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
+        llvm::errs() << "MLIRUtility::loadAndProcessMLIR: Could not load MLIR module" << '\n';
         return 1;
     }
 
@@ -197,6 +197,7 @@ int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::IRGraph> nesIR, DebugFla
     passManager.addPass(mlir::createLowerToLLVMPass());
 
     if (mlir::failed(passManager.run(*module))) {
+        llvm::errs() << "MLIRUtility::loadAndProcessMLIR: Failed to apply passes on generated MLIR" << '\n';
         return 1;
     }
     return 0;
