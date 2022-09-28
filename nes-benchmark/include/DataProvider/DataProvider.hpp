@@ -51,7 +51,7 @@ namespace NES::DataProviding {
         void provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId);
 
         /**
-         * @brief
+         * @brief reads the next buffer for the given sourceId
          * @param sourceId
          * @return
          */
@@ -59,7 +59,7 @@ namespace NES::DataProviding {
 
 
         /**
-         * @brief
+         * @brief creates a data provider
          * @return
          */
         static std::shared_ptr<DataProvider> createProvider(uint64_t id,

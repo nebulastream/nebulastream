@@ -25,21 +25,24 @@ namespace NES::DataGeneration {
 
     std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
         std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
 
         auto memoryLayout = this->getMemoryLayout(bufferSize);
         NES_INFO("Default source mode");
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distribution(minValue, maxValue);
 
-        uint64_t noTuplesInOnePercent = numberOfBuffers / 100;
+
+        uint64_t noTuplesInOnePercent = (numberOfBuffers) / 100;
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             auto buffer = allocateBuffer(bufferSize);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
             if (curBuffer % noTuplesInOnePercent == 0) {
                 NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
             }
+
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> distribution(minValue, maxValue);
 
             for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                 auto value = distribution(gen);
@@ -48,9 +51,11 @@ namespace NES::DataGeneration {
                 dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
                 dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
+
             dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
-            createdBuffers.push_back(buffer);
+            createdBuffers[curBuffer] = buffer;
         }
+
 
         NES_INFO("Created all buffers!");
 
