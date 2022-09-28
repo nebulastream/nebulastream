@@ -63,7 +63,7 @@ then
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
-        rm -rf /nebulastream/build 
+        rm -rf /nebulastream/build
         if [ "$RequireTest" = "true" ];
         then
           echo "Required Tests Failed"
