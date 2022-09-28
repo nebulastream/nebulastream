@@ -262,7 +262,6 @@ int main(int argc, const char* argv[]) {
         provider->stop();
         coordinator->stopCoordinator(true);
 
-
         coordinator.reset();
         queryService.reset();
         queryCatalog.reset();

@@ -2,7 +2,7 @@
 numberOfWorkerThreads: 1
 numberOfSources: 1
 bufferSizeInBytes: 512
-numberOfBuffersToProduce: 500000
+numberOfBuffersToProduce: 5000000
 
 
 # Benchmark parameter for the entire run
@@ -15,4 +15,4 @@ inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: FilterOneSource.csv
 benchmarkName: FilterOneSource
-query: 'Query::from("input").filter(Attribute("value") < 50).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").filter(Attribute("value") < 500).sink(NullOutputSinkDescriptor::create());'
