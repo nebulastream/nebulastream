@@ -22,8 +22,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+    
 /**
  * @brief This test tests execution of scala expression
  */
@@ -53,7 +55,7 @@ class ExpressionExecutionTest : public testing::Test {
         std::cout << ir->toString() << std::endl;
 
         // create and print MLIR
-        return MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+        return Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     }
 };
 

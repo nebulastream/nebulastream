@@ -22,10 +22,11 @@
 #include <mlir/IR/OwningOpRef.h>
 #include <string>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
-class MLIRLoweringProvider;
-
+/**
+ * @brief Provides utility functions for the MLIR backend.
+ */
 class MLIRUtility {
   public:
 
@@ -39,22 +40,21 @@ class MLIRUtility {
     static void writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath);
 
     /**
-     * @brief 
-     * @param mlirString 
-     * @param rootFunctionName 
-     * @return int 
+     * @brief Takes an MLIR module in string representation,  and lowers, compiles, and executes it.
+     * @param moduleString: String that should represent a valid MLIR module.
+     * @param rootFunctionName: Name of the function that is called to initiate execution.
+     * @return int: 0 if success, 1 otherwise.
      */
-    static int loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& rootFunctionName);
+    static int loadAndExecuteModuleFromString(const std::string& moduleString, const std::string& rootFunctionName);
 
     /**
-     * @brief 
-     * @param mlirString 
-     * @param rootFunctionName 
-     * @return int 
+     * @brief Takes NESIR, lowers it to MLIR, optimizes it, and returns an MLIR ExecutionEngine.
+     * @param ir: NESIR that is lowered to MLIR, and JIT compiled.
+     * @return std::unique_ptr<mlir::ExecutionEngine> Provides a function pointer to executable function.
      */
     static std::unique_ptr<mlir::ExecutionEngine> 
     compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
-}// namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_

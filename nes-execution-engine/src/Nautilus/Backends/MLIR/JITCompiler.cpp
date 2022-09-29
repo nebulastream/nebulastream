@@ -29,7 +29,7 @@
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
 
 std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
@@ -64,4 +64,4 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     return std::move(engine);
     
 }
-}//namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR
