@@ -91,6 +91,15 @@ ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref, 
     return ref;
 }
 
+std::shared_ptr<OperationRef> ExecutionTrace::isKnownOperation(Tag& tag) {
+    if (tagMap.contains(tag)) {
+        return tagMap.find(tag)->second;
+    } else if (localTagMap.contains(tag)) {
+        return localTagMap.find(tag)->second;
+    }
+    return nullptr;
+}
+
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
     // perform a control flow merge and merge the current block with operations in some other block.
     // create new block
@@ -153,12 +162,13 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(
         TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
-    auto operation = TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
+    auto operation =
+        TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
     addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);
     mergeBlock.predecessors.emplace_back(currentBlock);
-    setCurrentBloc(mergedBlockId);
+    setCurrentBlock(mergedBlockId);
 
     //
     auto& lastMergeOperation = mergeBlock.operations[mergeBlock.operations.size() - 1];
@@ -226,19 +236,15 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
     }
 }
 
-
 std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace) {
     for (size_t i = 0; i < executionTrace.blocks.size(); i++) {
-        os << "Block" << i ;
+        os << "Block" << i;
 
         os << executionTrace.blocks[i];
     }
     return os;
 }
 
-std::vector<ValueRef> ExecutionTrace::getArguments() {
-    return arguments;
-}
-
+std::vector<ValueRef> ExecutionTrace::getArguments() { return arguments; }
 
 }// namespace NES::Nautilus::Tracing

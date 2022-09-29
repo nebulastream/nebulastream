@@ -18,11 +18,11 @@ namespace NES::ExecutionEngine::Experimental {
 
 class PhysicalOperatorPipeline {
   public:
-    Interpreter::Operator* getRootOperator() const { return rootOperator; }
-    void setRootOperator(Interpreter::Operator* rootOperator) { PhysicalOperatorPipeline::rootOperator = rootOperator; }
+    Nautilus::Operator* getRootOperator() const { return rootOperator; }
+    void setRootOperator(Nautilus::Operator* rootOperator) { PhysicalOperatorPipeline::rootOperator = rootOperator; }
 
   private:
-      Interpreter::Operator* rootOperator;
+      Nautilus::Operator* rootOperator;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

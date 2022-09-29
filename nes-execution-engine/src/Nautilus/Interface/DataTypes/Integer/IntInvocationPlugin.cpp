@@ -14,7 +14,7 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class IntInvocationPlugin : public InvocationPlugin {
   public:
@@ -161,4 +161,4 @@ class IntInvocationPlugin : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<IntInvocationPlugin> intPlugin;
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

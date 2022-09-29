@@ -17,7 +17,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 std::unique_ptr<AggregationState> SumFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
@@ -138,7 +138,7 @@ uint64_t SumFunction::getStateSize() const { return 8; }
 
 std::unique_ptr<AggregationState> CountFunction::createGlobalState() { return std::make_unique<GlobalCountState>(); }
 
-std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0l)); }
+std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0L)); }
 
 CountFunction::CountFunction() {}
 
@@ -168,4 +168,4 @@ void CountFunction::combine(std::unique_ptr<AggregationState>& ctx1, std::unique
 }
 uint64_t CountFunction::getStateSize() const { return 8; }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

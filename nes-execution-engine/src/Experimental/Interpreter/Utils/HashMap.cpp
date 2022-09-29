@@ -1,7 +1,20 @@
-#include <Experimental/Interpreter/FunctionCall.hpp>
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <Experimental/Interpreter/Util/HashMap.hpp>
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+#include <Nautilus/Interface/FunctionCall.hpp>
+
+namespace NES::Nautilus {
 
 HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
     : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
@@ -32,7 +45,7 @@ Value<> HashMap::compareKeys(std::vector<Value<>> keyValues, Value<MemRef> ref) 
     Value<Boolean> equals = true;
     for (auto& keyValue : keyValues) {
         equals = equals && keyValue == ref.load<Int64>();
-        ref = ref + 8ul;
+        ref = ref + (uint64_t) 8;
     }
     return equals;
 }
@@ -62,7 +75,7 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
     auto keyPtr = entry.getKeyPtr();
     for (auto i = 0ul; i < keys.size(); i++) {
         keyPtr.store(keys[i]);
-        keyPtr = keyPtr + 8ul;
+        keyPtr = keyPtr + (uint64_t) 8;
     }
     return entry;
 }
@@ -84,9 +97,9 @@ HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
     //for (; !isValid(keys, entry); entry = entry.getNext()) {
     //}
     if (entry.isNull()) {
+        // creates a new entry and place it to the right spot.
         entry = createEntry(keys, hash);
     }
-    // creates a new hashm11.8143ap entry and place it to the right spot.
 
     return entry;
 }
@@ -97,11 +110,11 @@ HashMap::Entry HashMap::findOne(std::vector<Value<>> keys) {
 
     // return entry if it exists
     auto entry = getEntryFromHashTable(hash);
-    //for (; !entry.isNull(); entry = entry.getNext()) {
-    //    if (compareKeys(keys, entry.getKeyPtr())) {
-    //        return entry;
-    //    }
-    //}
+    for (; !entry.isNull(); entry = entry.getNext()) {
+        if (compareKeys(keys, entry.getKeyPtr())) {
+            return entry;
+        }
+    }
     return entry;
 }
 
@@ -111,4 +124,4 @@ HashMap::HashMap(Value<MemRef> hashTableRef,
                  std::vector<IR::Types::StampPtr> valueTypes)
     : hashTableRef(hashTableRef), valueOffset(valueOffset), keyTypes(keyTypes), valueTypes(valueTypes) {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

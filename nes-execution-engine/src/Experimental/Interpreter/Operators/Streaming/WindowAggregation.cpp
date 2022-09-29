@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Streaming/WindowAggregation.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 extern "C" void* getSliceState(void* state, int64_t ts) {
     auto groupedAggregationState = (GroupedWindowAggregationState*) state;
@@ -79,4 +79,4 @@ void WindowAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {
     */
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

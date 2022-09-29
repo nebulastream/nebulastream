@@ -16,7 +16,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_MULEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_MULEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class MulExpression : public Expression {
   private:

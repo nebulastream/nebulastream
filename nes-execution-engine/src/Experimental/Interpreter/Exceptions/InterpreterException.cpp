@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/Exceptions/InterpreterException.hpp>
+#include <Nautilus/Exceptions/InterpreterException.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 InterpreterException::InterpreterException(const std::string& message, const std::source_location location)
     : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

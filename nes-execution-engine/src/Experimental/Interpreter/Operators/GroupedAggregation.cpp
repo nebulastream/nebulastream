@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/GroupedAggregation.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 extern "C" void* getHashMapState(void* state) {
     auto groupedAggregationState = (GroupedAggregationState*) state;
@@ -40,9 +40,7 @@ void GroupedAggregation::setup(RuntimeExecutionContext& executionCtx) const {
     Operator::setup(executionCtx);
 }
 
-void GroupedAggregation::open(RuntimeExecutionContext&, RecordBuffer&) const {
-    // executionCtx.getPipelineContext().getGlobalOperatorState(this);
-}
+void GroupedAggregation::open(RuntimeExecutionContext&, RecordBuffer&) const {}
 
 void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& record) const {
 
@@ -66,17 +64,6 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
     }
 }
 
-void GroupedAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {
-    /* auto localAggregationState = (ThreadLocalAggregationState*) executionCtx.getLocalState(this);
+void GroupedAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {}
 
-    auto pipelineContext = executionCtx.getPipelineContext();
-    auto globalOperatorState = pipelineContext.getGlobalOperatorState(this);
-
-    auto function = aggregationFunctions[0];
-    auto state = function->loadState(threadLocalAggregationState);
-    function->combine(state, localAggregationState->contexts[0]);
-    function->storeState(threadLocalAggregationState, state);
-    */
-}
-
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

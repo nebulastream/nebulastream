@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class Emit : public ExecutableOperator {
   public:
@@ -29,5 +29,5 @@ class Emit : public ExecutableOperator {
     const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_

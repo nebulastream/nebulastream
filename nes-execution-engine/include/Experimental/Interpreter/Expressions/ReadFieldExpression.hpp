@@ -16,21 +16,21 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief This expression reads a specific field from the input record and returns its value.
  */
 class ReadFieldExpression : public Expression {
   public:
-    ReadFieldExpression(uint64_t fieldIndex);
+    ReadFieldExpression(Record::RecordFieldIdentifier field);
     Value<> execute(Record& record) override;
   private:
-    const uint64_t fieldIndex;
+    const Record::RecordFieldIdentifier field;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_READFIELDEXPRESSION_HPP_

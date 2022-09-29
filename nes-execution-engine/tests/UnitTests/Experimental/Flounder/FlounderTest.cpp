@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <cxxabi.h>
@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class FlounderTest : public testing::Test {
   public:
@@ -176,4 +176,4 @@ TEST_F(FlounderTest, flounderGenTestBlocks) {
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

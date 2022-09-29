@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Utility/PluginRegistry.hpp>
+#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp) {
     auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
@@ -26,7 +26,7 @@ Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampP
     return Nautilus::Tracing::ValueRef(0, 0, nullptr);
 }
 
-bool traceBoolOperation(const Interpreter::AnyPtr& value, const Nautilus::Tracing::ValueRef& sourceRef) {
+bool traceBoolOperation(const AnyPtr& value, const Nautilus::Tracing::ValueRef& sourceRef) {
     if (value->isType<Boolean>()) {
         auto boolValue = cast<Boolean>(value);
         if (Nautilus::Tracing::isInSymbolicExecution()) {
@@ -82,7 +82,7 @@ void traceUnaryOperation(const Nautilus::Tracing::OpCode& op, const Nautilus::Tr
     }
 }
 
-void TraceConstOperation(const Interpreter::AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
+void TraceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
     auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
     if (ctx != nullptr) {
         // fast case for expected operations
@@ -247,11 +247,11 @@ Value<> NegateOp(const Value<>& input) {
     for (auto& plugin : plugins) {
         auto result = plugin->Negate(input);
         if (result.has_value()) {
-            traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, result->ref, input.ref);
+            traceUnaryOperation(Nautilus::Tracing::OpCode::NEGATE, result->ref, input.ref);
             return result.value();
         }
     };
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

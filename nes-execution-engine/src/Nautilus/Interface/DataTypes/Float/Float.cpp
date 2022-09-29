@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Float::Float(float value) : TraceableType(&type), value(value){};
 Nautilus::IR::Types::StampPtr Float::getType() const { return Nautilus::IR::Types::StampFactory::createFloatStamp(); }
@@ -26,4 +26,4 @@ std::shared_ptr<Boolean> Float::equals(const Float& otherValue) const { return c
 std::shared_ptr<Boolean> Float::lessThan(const Float& otherValue) const { return create<Boolean>(value < otherValue.value); }
 std::shared_ptr<Boolean> Float::greaterThan(const Float& otherValue) const { return create<Boolean>(value > otherValue.value); }
 float Float::getValue() const { return value; }
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

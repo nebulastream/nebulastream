@@ -13,7 +13,7 @@
 */
 
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 void RuntimeExecutionContext::setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
     localStateMap.insert(std::make_pair(op, std::move(state)));
@@ -67,4 +67,4 @@ const Value<MemRef>& RuntimeExecutionContext::getReference() {
     return this->executionContext;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

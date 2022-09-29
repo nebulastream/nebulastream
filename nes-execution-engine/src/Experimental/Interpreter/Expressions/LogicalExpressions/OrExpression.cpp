@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/OrExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 OrExpression::OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
@@ -25,4 +25,4 @@ Value<> OrExpression::execute(Record& record) {
     return leftValue || rightValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

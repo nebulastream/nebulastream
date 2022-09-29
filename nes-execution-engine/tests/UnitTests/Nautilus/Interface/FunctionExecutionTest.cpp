@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-#include "Nautilus/Backends/MLIR/MLIRUtility.hpp"
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/NESIR/ProxyFunctions.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -27,14 +25,12 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class FunctionExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FunctionExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -161,4 +157,4 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
 
 
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

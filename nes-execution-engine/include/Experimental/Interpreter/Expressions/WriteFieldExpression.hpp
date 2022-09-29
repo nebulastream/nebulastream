@@ -13,21 +13,20 @@
 */
 
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class WriteFieldExpression : public Expression {
-  private:
-    uint64_t fieldIndex;
-    ExpressionPtr subExpression;
-
   public:
-    WriteFieldExpression(uint64_t fieldIndex, const ExpressionPtr& subExpression);
-
-  public:
+    WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
     Value<> execute(Record& record) override;
+
+  private:
+    Record::RecordFieldIdentifier field;
+    ExpressionPtr subExpression;
 };
 }// namespace NES
 

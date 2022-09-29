@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Int::Int(const TypeIdentifier* identifier) : TraceableType(identifier) {}
 Int::~Int() {}
@@ -25,4 +25,4 @@ bool Int::isInteger(const Any& val) {
         || isa<UInt16>(val) || isa<UInt32>(val) || isa<UInt64>(val);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

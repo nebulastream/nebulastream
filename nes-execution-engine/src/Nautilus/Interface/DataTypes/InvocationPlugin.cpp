@@ -14,7 +14,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 std::optional<Value<>> InvocationPlugin::Add(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::Mul(const Value<>&, const Value<>&) const { return std::nullopt; }
@@ -29,4 +29,4 @@ std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) cons
 std::optional<Value<>> InvocationPlugin::CastTo(const Value<>&, const TypeIdentifier* ) const { return std::nullopt; }
 bool InvocationPlugin::IsCastable(const Value<>&, const TypeIdentifier* ) const { return false; }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

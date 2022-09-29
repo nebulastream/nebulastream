@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/WorkerContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 WorkerContext::WorkerContext(Value<MemRef> workerContextRef) : workerContextRef(workerContextRef) {}
 
@@ -40,4 +40,4 @@ extern "C" uint64_t getWorkerIdProxy(void* workerContext) {
 
 Value<UInt64> WorkerContext::getWorkerId() { return FunctionCall<>("getWorkerId", getWorkerIdProxy, workerContextRef); }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

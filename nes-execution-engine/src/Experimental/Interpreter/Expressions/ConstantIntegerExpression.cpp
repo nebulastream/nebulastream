@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 ConstantIntegerExpression::ConstantIntegerExpression(int64_t integerValue): integerValue(integerValue) {}
 

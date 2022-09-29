@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 LessThanExpression::LessThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
@@ -25,4 +25,4 @@ Value<> LessThanExpression::execute(Record& record) {
     return leftValue < rightValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

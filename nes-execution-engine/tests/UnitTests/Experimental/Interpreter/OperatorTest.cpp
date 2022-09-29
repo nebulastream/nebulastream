@@ -11,22 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <boost/preprocessor/stringize.hpp>
-#include <cxxabi.h>
-#include <dlfcn.h>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class OperatorTest : public testing::Test {
   public:
@@ -48,12 +41,10 @@ class OperatorTest : public testing::Test {
 
 TEST_F(OperatorTest, FilterOperatorTest) {
    // setup operator
-   auto readField1 =  std::make_shared<ReadFieldExpression>(0);
-   auto readField2 =  std::make_shared<ReadFieldExpression>(1);
+   auto readField1 =  std::make_shared<ReadFieldExpression>("0");
+   auto readField2 =  std::make_shared<ReadFieldExpression>("1");
    auto equalsExpression =  std::make_shared<EqualsExpression>(readField1, readField2);
    auto selection = std::make_shared<Selection>(equalsExpression);
-
-   Record({Value<Int32>(1), Value<Int32>(1)});
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

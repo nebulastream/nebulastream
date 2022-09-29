@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Utility/CastUtils.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
-namespace NES {
+namespace NES::Nautilus {
 
 TypeIdentifier::TypeIdentifier(const std::type_info& typeInfo) : typeInfo(typeInfo) {}
 

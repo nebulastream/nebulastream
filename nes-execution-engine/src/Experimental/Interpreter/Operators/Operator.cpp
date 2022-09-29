@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Operator.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 void Operator::setup(RuntimeExecutionContext& executionCtx) const {
     if (hasChildren()) {
@@ -40,4 +40,4 @@ void Operator::setChild(ExecuteOperatorPtr child) { this->child = std::move(chil
 
 Operator::~Operator() {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

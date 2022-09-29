@@ -14,7 +14,6 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -25,13 +24,12 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class IfExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("IfExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -288,4 +286,4 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
     ASSERT_EQ(function(), 12);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

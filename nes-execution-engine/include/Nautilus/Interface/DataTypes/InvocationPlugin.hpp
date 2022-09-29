@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
+#ifndef NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
+#define NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
-#include <Experimental/Utility/PluginRegistry.hpp>
+#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <optional>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class InvocationPlugin {
   public:
@@ -37,8 +37,8 @@ class InvocationPlugin {
     virtual bool IsCastable(const Value<>&, const TypeIdentifier*) const;
 };
 
-using InvocationPluginRegistry = PluginRegistry<InvocationPlugin>;
+using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
+#endif//NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

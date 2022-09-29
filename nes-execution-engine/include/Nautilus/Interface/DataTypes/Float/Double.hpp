@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_DOUBLE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_DOUBLE_HPP_
-#include "Nautilus/IR/Types/StampFactory.hpp"
-#include "Nautilus/Interface/DataTypes/Any.hpp"
-#include "Nautilus/Interface/DataTypes/Boolean.hpp"
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_DOUBLE_HPP_
+#define NES_NAUTILUS_INTERFACE_DATATYPES_DOUBLE_HPP_
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+namespace NES::Nautilus {
 
 /**
  * @brief Double data type.
@@ -40,6 +40,6 @@ class Double : public TraceableType {
   private:
     const double value;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_DOUBLE_HPP_
+#endif//NES_NAUTILUS_INTERFACE_DATATYPES_DOUBLE_HPP_

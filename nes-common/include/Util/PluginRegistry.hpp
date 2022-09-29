@@ -12,29 +12,35 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_PLUGINREGISTRY_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_PLUGINREGISTRY_HPP_
+#ifndef NES_UTIL_HPP_
+#define NES_UTIL_HPP_
 #include <list>
 #include <memory>
-namespace NES {
 
+namespace NES::Util {
+
+/**
+ * @brief The plugin registry allows the dynamic registration of plugins at runtime.
+ * A plugin is a provider of a specific type T, which defines the plugin interface.
+ * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the plugin.
+ * @tparam T plugin interface type
+ */
 template<typename T>
 class PluginRegistry {
 
   private:
     static inline std::list<std::unique_ptr<T>> items = std::list<std::unique_ptr<T>>();
+
   public:
-    static std::list<std::unique_ptr<T>>& getPlugins(){
-        return items;
-    }
-    /// A static registration template. Use like such:
-    ///
-    ///   Registry<Collector>::Add<FancyGC>
-    ///   X("fancy-gc", "Newfangled garbage collector.");
-    ///
-    /// Use of this template requires that:
-    ///
-    ///  1. The registered subclass has a default constructor.
+    static std::list<std::unique_ptr<T>>& getPlugins() { return items; }
+    /** A static registration template. Use like such:
+    *
+    * Registry<PluginInterfaceType>::Add<PluginType> X;
+    *
+    * Use of this template requires that:
+    *
+    * 1. The registered subclass has a default constructor.
+    */
     template<typename V>
     class Add {
         static std::unique_ptr<T> CtorFn() { return std::make_unique<V>(); }
@@ -43,6 +49,6 @@ class PluginRegistry {
         Add() { PluginRegistry<T>::items.emplace_back(CtorFn()); }
     };
 };
-}// namespace NES
+}// namespace NES::Util
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_PLUGINREGISTRY_HPP_
+#endif//NES_UTIL_HPP_

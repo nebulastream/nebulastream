@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/NegateExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 NegateExpression::NegateExpression(ExpressionPtr subExpression)
     : subExpression(std::move(subExpression)){};
@@ -24,4 +24,4 @@ Value<> NegateExpression::execute(Record& record) {
     return !leftValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

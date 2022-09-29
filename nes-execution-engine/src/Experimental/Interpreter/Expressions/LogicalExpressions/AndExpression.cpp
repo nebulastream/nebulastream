@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 AndExpression::AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
@@ -25,4 +25,4 @@ Value<> AndExpression::execute(Record& record) {
     return leftValue && rightValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class Map : public ExecutableOperator {
   public:
@@ -27,5 +27,5 @@ class Map : public ExecutableOperator {
     const ExpressionPtr mapExpression;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_
