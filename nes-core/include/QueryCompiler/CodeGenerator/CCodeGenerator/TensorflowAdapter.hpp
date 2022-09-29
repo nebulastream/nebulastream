@@ -17,10 +17,12 @@
 
 #include <memory>
 #include <vector>
+
+#ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/c_api_experimental.h>
 #include <tensorflow/lite/c/common.h>
-
+#endif // TFDEF
 
 namespace NES {
 
@@ -28,6 +30,7 @@ class TensorflowAdapter;
 typedef std::shared_ptr<TensorflowAdapter> TensorflowAdapterPtr;
 
 class TensorflowAdapter {
+#ifdef TFDEF
   public:
     static TensorflowAdapterPtr create();
     TensorflowAdapter();
@@ -38,6 +41,7 @@ class TensorflowAdapter {
   private:
     TfLiteInterpreter* interpreter;
     float* output{};
+#endif // TFDEF
 };
 
 }// namespace NES

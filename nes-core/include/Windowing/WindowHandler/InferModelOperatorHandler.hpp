@@ -27,6 +27,7 @@ namespace NES::InferModel {
  * @brief Operator handler for inferModel.
  */
 class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
+#ifdef TFDEF
   public:
     InferModelOperatorHandler(std::string model);
 
@@ -51,6 +52,7 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
     std::string model;
 
     TensorflowAdapterPtr tfAdapter;
+#endif // TFDEF
 };
 }// namespace NES::InferModel
 

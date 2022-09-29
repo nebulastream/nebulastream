@@ -230,6 +230,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), MapEntryNotFoundException);
 }
 
+#ifdef TFDEF
 TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
 
@@ -243,5 +244,6 @@ TEST_F(SemanticQueryValidationTest, validInferModelTest) {
         .filter(Attribute("prediction") > 42)
         .sink(FileSinkDescriptor::create(""));
 }
+#endif // TFDEF
 
 }// namespace NES

@@ -162,8 +162,11 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerWatermarkAssignmentOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         lowerMapOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+    }
+    else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        #ifdef TFDEF
         lowerInferModelOperator(queryPlan, operatorNode);
+        #endif // TFDEF
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
@@ -207,6 +210,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
     operatorNode->replace(physicalProjectOperator);
 }
 
+#ifdef TFDEF
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
     auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
@@ -218,6 +222,7 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, Logi
                                                                                             inferModelOperatorHandler);
     operatorNode->replace(physicalInferModelOperator);
 }
+#endif // TFDEF
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
