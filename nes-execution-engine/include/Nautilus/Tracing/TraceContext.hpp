@@ -31,6 +31,8 @@ class TraceOperation;
 class OperationRef;
 class Tag;
 
+
+
 /**
  * @brief Represents the thread local trace context.
  */
@@ -41,7 +43,6 @@ class TraceContext {
     void trace(TraceOperation& operation);
     void traceCMP(const ValueRef& valueRef, bool result);
     bool isExpectedOperation(OpCode operation);
-    std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
     std::shared_ptr<ExecutionTrace> getExecutionTrace();
     ValueRef createNextRef(Nautilus::IR::Types::StampPtr type);
     void addTraceArgument(const ValueRef& value);
@@ -54,7 +55,6 @@ class TraceContext {
     uint64_t currentOperationCounter = 0;
     TagAddress startAddress;
 };
-
 TraceContext* getThreadLocalTraceContext();
 void initThreadLocalTraceContext();
 void disableThreadLocalTraceContext();

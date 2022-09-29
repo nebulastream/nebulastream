@@ -86,7 +86,6 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

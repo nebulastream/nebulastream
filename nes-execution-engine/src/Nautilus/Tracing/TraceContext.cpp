@@ -37,7 +37,7 @@ TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()
 
 void TraceContext::reset() {
 
-    executionTrace->setCurrentBloc(0);
+    executionTrace->setCurrentBlock(0);
     currentOperationCounter = 0;
     executionTrace->tagMap.merge(executionTrace->localTagMap);
     executionTrace->localTagMap.clear();
@@ -84,20 +84,11 @@ bool TraceContext::isExpectedOperation(OpCode opCode) {
     auto currentOperation = &currentBlock.operations[currentOperationCounter];
     // the next operation is a jump we transfer to that block.
     while (currentOperation->op == JMP) {
-        executionTrace->setCurrentBloc(std::get<BlockRef>(currentOperation->input[0]).block);
+        executionTrace->setCurrentBlock(std::get<BlockRef>(currentOperation->input[0]).block);
         currentOperationCounter = 0;
         currentOperation = &executionTrace->getCurrentBlock().operations[currentOperationCounter];
     }
     return currentOperation->op == opCode;
-}
-
-std::shared_ptr<OperationRef> TraceContext::isKnownOperation(Tag& tag) {
-    if (executionTrace->tagMap.contains(tag)) {
-        return executionTrace->tagMap.find(tag)->second;
-    } else if (executionTrace->localTagMap.contains(tag)) {
-        return executionTrace->localTagMap.find(tag)->second;
-    }
-    return nullptr;
 }
 
 void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
@@ -119,9 +110,9 @@ void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
 
     // set next block
     if (result) {
-        executionTrace->setCurrentBloc(trueBlock);
+        executionTrace->setCurrentBlock(trueBlock);
     } else {
-        executionTrace->setCurrentBloc(falseBlock);
+        executionTrace->setCurrentBlock(falseBlock);
     }
     currentOperationCounter = 0;
 }
@@ -133,7 +124,7 @@ void TraceContext::trace(TraceOperation& operation) {
     // std::cout << *executionTrace.get() << std::endl;
     if (!isExpectedOperation(operation.op)) {
         auto tag = Tag::createTag(startAddress);
-        if (auto ref = isKnownOperation(tag)) {
+        if (auto ref = executionTrace->isKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
                 // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
