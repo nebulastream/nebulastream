@@ -19,7 +19,7 @@
 #include <mlir/Pass/Pass.h>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
 // The MLIRPassManager takes a generated MLIR module, 
 // and applies configured lowering & optimization passes to it.
@@ -35,5 +35,5 @@ class MLIRPassManager {
                                           std::vector<LoweringPass> loweringPasses, 
                                           std::vector<OptimizationPass> optimizationPasses);
 };
-}// namespace NES::ExecutionEngine::Experimental
+}// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPASSMANAGER_HPP_

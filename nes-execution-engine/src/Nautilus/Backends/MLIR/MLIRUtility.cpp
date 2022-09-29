@@ -20,7 +20,7 @@
 #include <mlir/Parser.h>
 
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
 void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath) {    
     std::string mlirString;
@@ -36,7 +36,7 @@ void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirM
     std::cout << mlirString.c_str() << std::endl;
 }
 
-int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& rootFunctionName) {
+int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& moduleString) {
     mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
     module = mlir::parseSourceString(mlirString, &context);
@@ -51,7 +51,7 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
-    if(!engine->invoke(rootFunctionName)) {
+    if(!engine->invoke(moduleString)) {
         return -1;
     }
     else return 0;
@@ -74,4 +74,4 @@ MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGrap
     return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
                                                 loweringProvider->getJitProxyTargetAddresses());
 }
-}// namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR

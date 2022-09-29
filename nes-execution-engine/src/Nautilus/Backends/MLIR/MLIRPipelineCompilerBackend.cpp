@@ -22,7 +22,8 @@
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <mlir/IR/MLIRContext.h>
 
-namespace NES::ExecutionEngine::Experimental {
+using namespace NES::ExecutionEngine::Experimental;
+namespace NES::Nautilus::Backends::MLIR {
 
 std::shared_ptr<ExecutablePipeline>
 MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,

@@ -36,7 +36,7 @@
 #include <mlir/Parser.h>
 #include <mlir/Support/LLVM.h>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
 //==-----------------------==//
 //==-- UTILITY FUNCTIONS --==//
@@ -645,4 +645,4 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBoo
 
 std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols() { return std::move(jitProxyFunctionSymbols); }
 std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses() { return std::move(jitProxyFunctionTargetAddresses); }
-}// namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR

@@ -50,7 +50,7 @@
 
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
 class MLIRLoweringProvider {
   public:
@@ -209,5 +209,5 @@ class MLIRLoweringProvider {
      */
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
 };
-}// namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
