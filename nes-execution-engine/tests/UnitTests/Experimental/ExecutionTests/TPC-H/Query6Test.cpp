@@ -76,6 +76,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**
@@ -83,8 +84,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
  */
 class Query6Test : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Tracing::SSACreationPhase ssaCreationPhase;
+    Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
@@ -102,7 +103,7 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
 #ifdef USE_MLIR
-            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<Nautilus::Backends::MLIR::MLIRPipelineCompilerBackend>();
             executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "FLOUNDER") {

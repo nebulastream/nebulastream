@@ -33,7 +33,7 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -123,7 +123,7 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
     loopInferencePhase.apply(ir);
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     assert(engine);
 }
 

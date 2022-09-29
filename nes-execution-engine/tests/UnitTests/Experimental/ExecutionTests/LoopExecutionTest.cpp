@@ -38,8 +38,10 @@
 #include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
+
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+    
 class LoopExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -84,7 +86,7 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 101);
 }
@@ -112,7 +114,7 @@ TEST_F(LoopExecutionTest, nestedLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1001);
 }
@@ -128,7 +130,7 @@ TEST_F(LoopExecutionTest, sumLoopTestCF) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 101);
 }
@@ -154,7 +156,7 @@ TEST_F(LoopExecutionTest, ifSumLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 51);
 }
@@ -182,7 +184,7 @@ TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 56);
 }
@@ -210,7 +212,7 @@ TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }
@@ -240,7 +242,7 @@ TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 41);
 }
@@ -272,7 +274,7 @@ TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 146);
 }
@@ -303,7 +305,7 @@ TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
     ir = loopInferencePhase.apply(ir);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }

@@ -20,7 +20,7 @@
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/Passes.h>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 /**
  * @brief Takes a LoweringPass Enum and returns the corresponding mlir lowering pass.
  * 
@@ -81,4 +81,4 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
     }
     return 0;
 }
-}//namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR

@@ -15,17 +15,19 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_
 
-#include "Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp"
+#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <llvm/IR/Module.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
-// The JITCompiler takes a generated MLIR module, 
-// and applies configured lowering & optimization passes to it.
+/**
+ * @brief The JITCompiler takes a generated MLIR module, 
+ * and applies configured lowering & optimization passes to it.
+ */
 class JITCompiler {
   public:
 
@@ -37,5 +39,5 @@ class JITCompiler {
         const std::vector<std::string> &jitProxyFunctionSymbols, 
         const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses);
 };
-}// namespace NES::ExecutionEngine::Experimental
+}// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_

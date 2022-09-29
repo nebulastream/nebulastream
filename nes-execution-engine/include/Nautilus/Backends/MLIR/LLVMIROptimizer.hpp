@@ -20,10 +20,12 @@
 #include <mlir/Pass/Pass.h>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
+namespace NES::Nautilus::Backends::MLIR {
 
-// The LLVMIROptimizer takes a generated MLIR module, 
-// and applies configured lowering & optimization passes to it.
+/**
+ * @brief The LLVMIROptimizer takes a generated MLIR module, 
+ * and applies configured lowering & optimization passes to it.
+ */
 class LLVMIROptimizer {
   public:
 
@@ -32,5 +34,5 @@ class LLVMIROptimizer {
 
     static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions);
 };
-}// namespace NES::ExecutionEngine::Experimental
+}// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_

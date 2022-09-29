@@ -76,6 +76,7 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**
@@ -83,8 +84,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 */
 class EmitOperatorTest : public testing::Test, public ::testing::WithParamInterface<std::string> {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Tracing::SSACreationPhase ssaCreationPhase;
+    Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
@@ -101,7 +102,7 @@ class EmitOperatorTest : public testing::Test, public ::testing::WithParamInterf
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (param == "MLIR") {
 #ifdef USE_MLIR
-            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<Nautilus::Backends::MLIR::MLIRPipelineCompilerBackend>();
             executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (param == "FLOUNDER") {

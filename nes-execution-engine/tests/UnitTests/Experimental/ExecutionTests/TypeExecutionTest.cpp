@@ -27,7 +27,9 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+    
 class TypeConversionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -66,7 +68,7 @@ TEST_F(TypeConversionTest, negativeIntegerTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int32_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), -1);
 }
@@ -91,7 +93,7 @@ TEST_F(TypeConversionTest, DISABLED_unsignedIntegerTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (uint32_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), UINT32_MAX);
 }
@@ -116,7 +118,7 @@ TEST_F(TypeConversionTest, DISABLED_boolCompareTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }
@@ -138,7 +140,7 @@ TEST_F(TypeConversionTest, DISABLED_floatTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 1);
 }
@@ -160,7 +162,7 @@ TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
 }
@@ -230,7 +232,7 @@ TEST_F(TypeConversionTest, customValueTypeTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 128);
 }
