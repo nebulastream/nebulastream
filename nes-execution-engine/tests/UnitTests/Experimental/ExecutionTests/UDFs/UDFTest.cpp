@@ -78,6 +78,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**
@@ -85,8 +86,8 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
  */
 class UDFTest : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Tracing::SSACreationPhase ssaCreationPhase;
+    Tracing::TraceToIRConversionPhase irCreationPhase;
     IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
@@ -104,7 +105,7 @@ class UDFTest : public testing::Test, public ::testing::WithParamInterface<std::
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
 #ifdef USE_MLIR
-            auto backend = std::make_shared<MLIRPipelineCompilerBackend>();
+            auto backend = std::make_shared<Nautilus::Backends::MLIR::MLIRPipelineCompilerBackend>();
             executionEngine = std::make_shared<CompilationBasedPipelineExecutionEngine>(backend);
 #endif
         } else if (compiler == "FLOUNDER") {
@@ -260,8 +261,8 @@ TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
     mapOperator->setChild(aggregation);
-    //backend = std::make_shared<MLIRPipelineCompilerBackend>();
-    //backend = std::make_shared<FlounderPipelineCompilerBackend>();
+    // auto backend = std::make_shared<Nautilus::Backends::MLIR::MLIRPipelineCompilerBackend>();
+    //auto backend = std::make_shared<FlounderPipelineCompilerBackend>();
     auto executionEngine = CompilationBasedPipelineExecutionEngine(backend);
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);

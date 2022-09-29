@@ -26,8 +26,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
+    
 class FunctionExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -72,7 +74,7 @@ TEST_F(FunctionExecutionTest, addIntFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 5);
 }
@@ -97,7 +99,7 @@ TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_EQ(function(), 42);
 }
@@ -123,7 +125,7 @@ TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
     ASSERT_ANY_THROW(function());
 }
@@ -150,7 +152,7 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     std::cout << ir->toString() << std::endl;
 
     // create and print MLIR
-    auto engine = MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);

@@ -13,7 +13,6 @@
 */
 
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
-
 #include <iostream>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
@@ -28,45 +27,8 @@
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 
-// #include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
-// #include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
-// #include <mlir/ExecutionEngine/OptUtils.h>
-// #include <mlir/IR/MLIRContext.h>
-// #include <mlir/Pass/PassManager.h>
-// #include <mlir/Transforms/Passes.h>
 
-namespace NES::ExecutionEngine::Experimental::MLIR {
-
-// llvm::function_ref<llvm::Error(llvm::Module*)> getOptimizingTransformer(bool linkProxyFunctions) {
-//     if (linkProxyFunctions) {
-//         return [] (llvm::Module* llvmIRModule) mutable {
-//             llvm::SMDiagnostic Err;
-//             auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR),
-//                                                       Err, llvmIRModule->getContext());
-//             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
-
-
-//             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
-//             auto optimizedModule = optPipeline(llvmIRModule);
-
-//             std::string llvmIRString;
-//             llvm::raw_string_ostream llvmStringStream(llvmIRString);
-//             llvmIRModule->print(llvmStringStream, nullptr);
-
-//             auto* basicError = new std::error_code();
-//             llvm::raw_fd_ostream fileStream("../../../../llvm-ir/nes-runtime_opt/generated.ll", *basicError);
-//             fileStream.write(llvmIRString.c_str(), llvmIRString.length());
-//             return optimizedModule;
-//         };
-//     } else {
-//         return [](llvm::Module* llvmIRModule) {
-//             auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
-//             auto optimizedModule = optPipeline(llvmIRModule);
-//             llvmIRModule->print(llvm::outs(), nullptr);
-//             return optimizedModule;
-//         };
-//     }
-// }
+namespace NES::Nautilus::Backends::MLIR {
 
 llvm::function_ref<llvm::Error(llvm::Module*)> 
 LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {    
@@ -100,4 +62,4 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {
         };
     }
 }
-}//namespace NES::ExecutionEngine::Experimental::MLIR
+}// namespace NES::Nautilus::Backends::MLIR
