@@ -45,17 +45,17 @@ class CustomType : public Any {
     static const inline auto type = TypeIdentifier::create<CustomType>();
     CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
 
-    std::shared_ptr<CustomType> add(const CustomType& other) const {
-        return std::make_unique<CustomType>(x + other.x, y + other.y);
+    auto add(const CustomType& other) const {
+        return create<CustomType>(x + other.x, y + other.y);
     }
 
-    std::shared_ptr<Int64> power(const CustomType& other) const {
-        return std::make_unique<Int64>(x * other.x - y);
+    auto power(const CustomType& other) const {
+        return create<Int64>(x * other.x - y);
     }
 
     Value<> x;
     Value<> y;
-    std::shared_ptr<Any> copy() override { return std::make_unique<CustomType>(x, y); }
+    AnyPtr copy() override { return create<CustomType>(x, y); }
 };
 
 class CustomTypeInvocationPlugin : public InvocationPlugin {
@@ -77,8 +77,8 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
     Value<Int64> x = 32l;
     Value<Int64> y = 32l;
 
-    auto c1 = Value<CustomType>(std::make_shared<CustomType>(x, y));
-    auto c2 = Value<CustomType>(std::make_shared<CustomType>(x, y));
+    auto c1 = Value<CustomType>(CustomType(x, y));
+    auto c2 = Value<CustomType>(CustomType(x, y));
 
     auto c3 = c1 + c2;
     c1 = c2;

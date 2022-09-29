@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_DATAVALUE_INVOCATIONPLUGIN_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
-#include <Experimental/Utility/PluginRegistry.hpp>
+#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <optional>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -37,7 +37,7 @@ class InvocationPlugin {
     virtual bool IsCastable(const Value<>&, const TypeIdentifier*) const;
 };
 
-using InvocationPluginRegistry = PluginRegistry<InvocationPlugin>;
+using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
