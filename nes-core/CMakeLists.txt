@@ -67,7 +67,7 @@ target_include_directories(nes PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 
-if(USE_TF)
+if(NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
     add_compile_definitions(TFDEF)
     target_link_libraries(nes PUBLIC libtensorflowlite_c.so)

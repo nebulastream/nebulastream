@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef TFDEF
+
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -740,3 +742,5 @@ std::vector<TopologyNodePtr> MlHeuristicStrategy::getTopologyNodesForChildrenOpe
 }
 
 }// namespace NES::Optimizer
+
+#endif //TFDEF

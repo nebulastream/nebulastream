@@ -156,13 +156,14 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
 }
 
 OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
-    NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
+    NES_DEBUG("QueryPlan: Checking if the operator with id " << operatorId << " exists in the query plan or not");
     for (auto rootOperator : rootOperators) {
         if (rootOperator->getId() == operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return rootOperator;
         }
         for (const auto& child : rootOperator->getChildren()) {
+            NES_DEBUG("QueryPlan: Searching for  " << operatorId << " in the children");
             NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
             if (found) {
                 return found->as<OperatorNode>();
