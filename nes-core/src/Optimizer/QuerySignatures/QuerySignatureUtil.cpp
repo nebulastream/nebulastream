@@ -107,9 +107,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+            #ifdef TFDEF
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
+            #endif // TFDEF
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     } catch (const std::exception& ex) {
@@ -206,6 +208,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                                   std::move(windowExpressions));
 }
 
+#ifdef TFDEF
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3::ContextPtr& context,
                                                                  const InferModelLogicalOperatorNodePtr& inferModelOperator) {
     //Fetch query signature of the child operator
@@ -262,6 +265,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowsExpressions));
 }
+#endif // TFDEF
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context,
                                                                  const MapLogicalOperatorNodePtr& mapOperator) {

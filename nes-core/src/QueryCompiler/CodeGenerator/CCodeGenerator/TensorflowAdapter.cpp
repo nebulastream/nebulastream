@@ -17,9 +17,13 @@
 #include <iostream>
 #include <stdarg.h>
 #include <stdio.h>
+
+#ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
+#endif // TFDEF
 
+#ifdef TFDEF
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model){
@@ -76,3 +80,5 @@ void NES::TensorflowAdapter::infer(int n, ...){
     output = (float*) malloc(output_size);
     TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 }
+
+#endif // TFDEF

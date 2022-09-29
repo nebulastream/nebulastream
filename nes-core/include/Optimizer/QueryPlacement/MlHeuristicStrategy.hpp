@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef TFDEF
+
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTIC_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTIC_HPP_
 
@@ -133,3 +135,5 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
 }// namespace NES::Optimizer
 
 #endif//MLHEURISTIC_HPP
+
+#endif //TFDEF

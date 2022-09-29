@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#ifdef TFDEF
+
 #include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -53,3 +56,5 @@ const std::string& InferModelOperatorHandler::getModel() const { return model; }
 const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() const { return tfAdapter; }
 
 }// namespace NES::InferModel
+
+#endif // TFDEF

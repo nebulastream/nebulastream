@@ -480,6 +480,7 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
+#ifdef TFDEF
 Query& Query::inferModel(const std::string model, const std::initializer_list<ExpressionItem> inputFields, const std::initializer_list<ExpressionItem> outputFields) {
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
@@ -500,6 +501,7 @@ Query& Query::inferModel(const std::string model, const std::initializer_list<Ex
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
+#endif // TFDEF
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");

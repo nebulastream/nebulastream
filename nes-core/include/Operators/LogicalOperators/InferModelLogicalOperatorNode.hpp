@@ -25,6 +25,7 @@ namespace NES {
  * @brief Infer model operator
  */
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
+#ifdef TFDEF
   public:
     InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id);
 
@@ -101,8 +102,12 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     std::vector<ExpressionItemPtr> inputFieldsPtr;
     std::vector<ExpressionItemPtr> outputFieldsPtr;
     std::string model;
+
+#endif // TFDEF
 };
 
 }// namespace NES
+
+
 
 #endif// INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP

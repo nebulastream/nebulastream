@@ -197,16 +197,20 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         std::vector<TopologyNodePtr> nodes;
         for (int i = 0; i < (int) resources.size(); i++) {
             nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i]));
-            if(i == 0)
+            if(i == 0) {
                 topology->setAsRoot(nodes[i]);
-            else
+            } else {
                 topology->addNewTopologyNodeAsChild(nodes[parents[i]], nodes[i]);
-            if(std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i))
+            }
+            if(std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i)) {
                 nodes[i]->addNodeProperty("tf_installed", true);
-            if(std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i))
+            }
+            if(std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i)) {
                 nodes[i]->addNodeProperty("low_throughput_source", true);
-            if(std::count(ml_hardwares.begin(), ml_hardwares.end(), i))
+            }
+            if(std::count(ml_hardwares.begin(), ml_hardwares.end(), i)) {
                 nodes[i]->addNodeProperty("ml_hardware", true);
+            }
         }
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
@@ -308,11 +312,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 }
 
 /* Test query placement with Ml heuristic strategy  */
+#ifdef TFDEF
 TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     topologyGenerator();
     Query query = Query::from("iris")
-                      .inferModel("models/iris.tflite",
+                      .inferModel("../../../test_data/iris_95acc.tflite",
                                   {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
                                   {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                       .filter(Attribute("iris0") < 3.0, 1)
@@ -325,7 +330,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -337,6 +343,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
 }
+#endif
 
 /* Test query placement with top down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
