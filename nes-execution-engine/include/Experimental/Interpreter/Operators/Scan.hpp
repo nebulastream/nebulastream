@@ -16,16 +16,16 @@
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class Scan : public Operator {
   public:
-    Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<uint64_t> projections = {});
+    Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Record::RecordFieldIdentifier> projections = {});
     void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
   private:
     const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    const std::vector<uint64_t> projections;
+    const std::vector<Record::RecordFieldIdentifier> projections;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_

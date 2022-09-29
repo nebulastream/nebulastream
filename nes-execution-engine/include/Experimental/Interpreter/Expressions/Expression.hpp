@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EXPRESSION_HPP_
 #include <memory>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class Any;
 class Record;

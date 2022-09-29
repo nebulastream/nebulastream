@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
+#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -22,7 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-using namespace NES::ExecutionEngine::Experimental::Interpreter;
+using namespace NES::Nautilus;
 namespace NES::Nautilus::IR {
 
 class LoopInferencePhaseTest : public testing::Test {

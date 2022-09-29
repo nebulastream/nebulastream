@@ -16,7 +16,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class NegateExpression : public Expression {
   private:
@@ -26,6 +26,6 @@ class NegateExpression : public Expression {
     NegateExpression(ExpressionPtr subExpression);
     Value<> execute(Record& record) override;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_

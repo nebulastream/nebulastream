@@ -13,7 +13,6 @@
 
 
 add_source_files(nes-execution-engine
-        CastUtils.cpp
         NESIRDumpHandler.cpp
         PluginRegistry.cpp
         TPCHUtil.cpp

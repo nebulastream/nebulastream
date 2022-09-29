@@ -38,12 +38,15 @@ class ExecutionTrace {
 
     bool hasNextOperation() { return currentBlock; }
 
-    void setCurrentBloc(uint32_t index) { currentBlock = index; }
+    void setCurrentBlock(uint32_t index) { currentBlock = index; }
     void traceCMP(TraceOperation& operation);
     ValueRef findReference(ValueRef ref, const ValueRef value);
     void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
     ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
+
+    std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
+
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
     std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> tagMap;
@@ -57,6 +60,6 @@ class ExecutionTrace {
     std::vector<ValueRef> arguments;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_

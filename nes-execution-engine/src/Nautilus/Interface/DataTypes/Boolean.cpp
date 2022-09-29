@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Boolean::Boolean(bool value) : TraceableType(&type), value(value){};
 
@@ -25,4 +25,4 @@ bool Boolean::getValue() { return value; }
 
 Nautilus::IR::Types::StampPtr Boolean::getType() const { return Nautilus::IR::Types::StampFactory::createBooleanStamp(); }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

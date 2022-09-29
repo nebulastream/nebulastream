@@ -118,7 +118,6 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
     // in the following we will explore all remaining control-flow splits.
     // as each function evaluation can cause another execution path this loop processes as long inflightExecutionPaths has elements.
     while (symExCtx->inflightExecutionPaths.size() > 0) {
-        NES_DEBUG("InflightExecutions: " << symExCtx->inflightExecutionPaths.size())
         // get the next trace and start in follow mode as we first want to follow the execution till we reach the target control-flow split.
         auto trace = symExCtx->inflightExecutionPaths.front();
         symExCtx->inflightExecutionPaths.pop_front();

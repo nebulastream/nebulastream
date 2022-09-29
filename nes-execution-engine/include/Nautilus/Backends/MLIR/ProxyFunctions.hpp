@@ -11,23 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <cstdio>
+#include <string>
+#include <unordered_map>
 
-#include <Experimental/Interpreter/Record.hpp>
-#include <Experimental/Interpreter/Exceptions/InterpreterException.hpp>
+inline __attribute__((always_inline)) void printValueFromMLIR(uint64_t) {}
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES {
+class ProxyFunctions {
+  public:
+    ProxyFunctions() { functionNameToAddressMap.emplace(std::pair{"printValueFromMLIR", (void*) &printValueFromMLIR}); };
+    ~ProxyFunctions() = default;
+    void* getProxyFunctionAddress(std::string name) { return functionNameToAddressMap[name]; }
 
-Record::Record(std::vector<Value<Any>> records): records(std::move(records)) {}
-
-Value<Any>& Record::read(uint64_t fieldIndex) {
-    if(fieldIndex >= records.size()){
-        throw new InterpreterException("Filed dose not exists");
-    }
-    return records[fieldIndex];
-}
-
-void Record::write(uint64_t fieldIndex, Value<Any>& value) {
-    records[fieldIndex] = value;
-}
-
-}
+  private:
+    std::unordered_map<std::string, void*> functionNameToAddressMap;
+};
+}// namespace NES

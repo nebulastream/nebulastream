@@ -15,7 +15,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class WorkerContext {
   public:
@@ -27,5 +27,5 @@ class WorkerContext {
    mutable Value<MemRef> workerContextRef;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_

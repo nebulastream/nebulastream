@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class ThreadLocalAggregationState : public OperatorState {
   public:
@@ -50,8 +50,8 @@ void Aggregation::execute(RuntimeExecutionContext& executionCtx, Record& record)
     }
 }
 
-extern "C" void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t threadId){
-    auto gas = (GlobalAggregationState*)globalAggregationState;
+extern "C" void* getThreadLocalAggregationStateProxy(void* globalAggregationState, uint64_t threadId) {
+    auto gas = (GlobalAggregationState*) globalAggregationState;
     return gas->threadLocalAggregationSlots[threadId].get();
 }
 
@@ -60,19 +60,17 @@ void Aggregation::close(RuntimeExecutionContext& executionCtx, RecordBuffer&) co
 
     auto pipelineContext = executionCtx.getPipelineContext();
     auto globalOperatorState = pipelineContext.getGlobalOperatorState(this);
-    auto threadLocalAggregationState =
-        FunctionCall<>("getThreadLocalAggregationState", getThreadLocalAggregationStateProxy,
-                       globalOperatorState, executionCtx.getWorkerContext().getWorkerId());
+    auto threadLocalAggregationState = FunctionCall<>("getThreadLocalAggregationState",
+                                                      getThreadLocalAggregationStateProxy,
+                                                      globalOperatorState,
+                                                      executionCtx.getWorkerContext().getWorkerId());
 
-    auto function = aggregationFunctions[0];
-    auto state = function->loadState(threadLocalAggregationState);
-    function->combine(state, localAggregationState->contexts[0]);
-    function->storeState(threadLocalAggregationState, state);
-    /*
-    auto globalAggregationState = (GlobalAggregationState*) executionCtx.getGlobalState(this);
     for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
-
-    }*/
+        auto function = aggregationFunctions[aggIndex];
+        auto state = function->loadState(threadLocalAggregationState);
+        function->combine(state, localAggregationState->contexts[aggIndex]);
+        function->storeState(threadLocalAggregationState, state);
+    }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -14,10 +14,10 @@
 #ifndef NES_NAUTILUS_TRACING_CONSTANTVALUE_HPP_
 #define NES_NAUTILUS_TRACING_CONSTANTVALUE_HPP_
 #include <memory>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 namespace NES::Nautilus::Tracing {
 
 /**
@@ -25,8 +25,8 @@ namespace NES::Nautilus::Tracing {
  */
 class ConstantValue {
   public:
-    ConstantValue(const ExecutionEngine::Experimental::Interpreter::AnyPtr& anyPtr);
-    ExecutionEngine::Experimental::Interpreter::AnyPtr value;
+    ConstantValue(const AnyPtr& anyPtr);
+    AnyPtr value;
     friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
 }// namespace NES::Nautilus::Tracing

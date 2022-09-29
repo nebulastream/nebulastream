@@ -14,7 +14,7 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class BooleanInvocationPlugin : public InvocationPlugin {
   public:
@@ -48,4 +48,4 @@ class BooleanInvocationPlugin : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<BooleanInvocationPlugin> booleanInvocationPlugin;
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

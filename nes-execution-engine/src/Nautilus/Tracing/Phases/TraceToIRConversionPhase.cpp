@@ -514,29 +514,29 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
     auto valueRef = get<ConstantValue>(operation.input[0]);
     auto resultIdentifier = createValueIdentifier(operation.result);
     NES::Nautilus::IR::Operations::OperationPtr constOperation;
-    if (auto* i8 = cast_if<ExecutionEngine::Experimental::Interpreter::Int8>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i8->getValue(), i8->getType());
-    } else if (auto* i16 = cast_if<ExecutionEngine::Experimental::Interpreter::Int16>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i16->getValue(), i16->getType());
-    } else if (auto* i32 = cast_if<ExecutionEngine::Experimental::Interpreter::Int32>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i32->getValue(), i32->getType());
-    } else if (auto* i64 = cast_if<ExecutionEngine::Experimental::Interpreter::Int64>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, i64->getValue(), i64->getType());
-    } else if (auto* ui8 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt8>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui8->getValue(), ui8->getType());
-    } else if (auto* ui16 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt16>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui16->getValue(), ui16->getType());
-    } else if (auto* ui32 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt32>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui32->getValue(), ui32->getType());
-    } else if (auto* ui64 = cast_if<ExecutionEngine::Experimental::Interpreter::UInt64>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstIntOperation>(resultIdentifier, ui64->getValue(), ui64->getType());
-    } else if (auto* float32 = cast_if<ExecutionEngine::Experimental::Interpreter::Float>(valueRef.value.get())) {
+    if (auto* i8 = cast_if<Int8>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, i8->getValue(), i8->getType());
+    } else if (auto* i16 = cast_if<Int16>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, i16->getValue(), i16->getType());
+    } else if (auto* i32 = cast_if<Int32>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, i32->getValue(), i32->getType());
+    } else if (auto* i64 = cast_if<Int64>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, i64->getValue(), i64->getType());
+    } else if (auto* ui8 = cast_if<UInt8>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, ui8->getValue(), ui8->getType());
+    } else if (auto* ui16 = cast_if<UInt16>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, ui16->getValue(), ui16->getType());
+    } else if (auto* ui32 = cast_if<UInt32>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, ui32->getValue(), ui32->getType());
+    } else if (auto* ui64 = cast_if<UInt64>(valueRef.value.get())) {
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, ui64->getValue(), ui64->getType());
+    } else if (auto* float32 = cast_if<Float>(valueRef.value.get())) {
         constOperation =
             std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float32->getValue(), float32->getType());
-    } else if (auto* float64 = cast_if<ExecutionEngine::Experimental::Interpreter::Double>(valueRef.value.get())) {
+    } else if (auto* float64 = cast_if<Double>(valueRef.value.get())) {
         constOperation =
             std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float64->getValue(), float64->getType());
-    } else if (auto* boolean = cast_if<ExecutionEngine::Experimental::Interpreter::Boolean>(valueRef.value.get())) {
+    } else if (auto* boolean = cast_if<Boolean>(valueRef.value.get())) {
         constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");

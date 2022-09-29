@@ -40,14 +40,14 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, pipelineContext.get());
-    auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
-        std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
+    auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
+        std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto executionContext = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
+    auto executionContext = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
 
-    auto memRef = Interpreter::Value<Interpreter::MemRef>(std::make_unique<Interpreter::MemRef>(Interpreter::MemRef(0)));
+    auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
     memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto recordBuffer = Interpreter::RecordBuffer(memRef);
+    auto recordBuffer = Nautilus::RecordBuffer(memRef);
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
     // generate trace

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
+#ifndef NES_NAUTILUS_EXCEPTION_HPP_
+#define NES_NAUTILUS_EXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 /**
  * @brief Represents an wrapper for all interpretation related exceptions.
  */
@@ -24,4 +24,4 @@ class InterpreterException : public Exceptions::RuntimeException {
     explicit InterpreterException(const std::string& message, const std::source_location location = std::source_location::current());
 };
 }
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
+#endif//NES_NAUTILUS_EXCEPTION_HPP_

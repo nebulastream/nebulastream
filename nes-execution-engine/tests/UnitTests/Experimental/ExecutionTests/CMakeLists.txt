@@ -8,11 +8,6 @@
              nes-execution-engine ${GTEST_LIBRARIES})
      add_test(NAME execution-engine-expression-if-test COMMAND execution-engine-if-execution-test)
 
-     add_executable(execution-engine-function-execution-test "FunctionExecutionTest.cpp")
-     target_link_libraries(execution-engine-function-execution-test
-             nes-execution-engine ${GTEST_LIBRARIES})
-     add_test(NAME execution-engine-function-test COMMAND execution-engine-function-execution-test)
-
      add_executable(execution-engine-memory-access-execution-test "MemoryAccessExecutionTest.cpp")
      target_link_libraries(execution-engine-memory-access-execution-test
              nes-execution-engine ${GTEST_LIBRARIES})

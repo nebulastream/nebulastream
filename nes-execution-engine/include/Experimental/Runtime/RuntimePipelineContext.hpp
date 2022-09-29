@@ -21,7 +21,7 @@
 namespace NES::ExecutionEngine::Experimental {
 class ExecutablePipeline;
 }
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class Operator;
 };
 namespace NES::Runtime::Execution {
@@ -33,18 +33,14 @@ namespace NES::Runtime::Execution {
 class RuntimePipelineContext : public std::enable_shared_from_this<RuntimePipelineContext> {
   public:
     using OperatorStateTag = uint32_t;
-    RuntimePipelineContext::OperatorStateTag
-    registerGlobalOperatorState(int64_t op,
-                                std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState);
-    __attribute__((always_inline)) ExecutionEngine::Experimental::Interpreter::OperatorState*
-    getGlobalOperatorState(int64_t tag);
+    RuntimePipelineContext::OperatorStateTag registerGlobalOperatorState(int64_t op,
+                                                                         std::unique_ptr<Nautilus::OperatorState> operatorState);
+    __attribute__((always_inline)) Nautilus::OperatorState* getGlobalOperatorState(int64_t tag);
     void dispatchBuffer(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& tb);
     void addSuccessorPipeline(std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline> pipeline);
 
   private:
-    std::unordered_map<int64_t,
-                       std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState>>
-        operatorStates;
+    std::unordered_map<int64_t, std::unique_ptr<Nautilus::OperatorState>> operatorStates;
     std::vector<std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline>> successors;
 };
 

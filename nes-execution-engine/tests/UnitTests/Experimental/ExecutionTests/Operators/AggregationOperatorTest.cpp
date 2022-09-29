@@ -1,15 +1,15 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #ifdef USE_BABELFISH
@@ -42,7 +42,7 @@ limitations under the License.
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -56,7 +56,6 @@ limitations under the License.
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
@@ -76,8 +75,8 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+using namespace NES::ExecutionEngine::Experimental;
+namespace NES::Nautilus {
 
 /**
 * @brief This test tests query execution using th mlir backend
@@ -86,7 +85,6 @@ class AggregationOperatorTest : public testing::Test, public ::testing::WithPara
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -145,8 +143,8 @@ TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan scan = Scan(memoryLayout);
-    auto keyField = std::make_shared<ReadFieldExpression>(0);
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto keyField = std::make_shared<ReadFieldExpression>("key");
+    auto aggField = std::make_shared<ReadFieldExpression>("value");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     std::vector<ExpressionPtr> keys = {keyField, keyField};
@@ -181,7 +179,7 @@ TEST_P(AggregationOperatorTest, aggQueryTest) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan scan = Scan(memoryLayout);
-    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto aggField = std::make_shared<ReadFieldExpression>("f1");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
@@ -211,4 +209,4 @@ INSTANTIATE_TEST_CASE_P(testAggregationOperator,
                         [](const testing::TestParamInfo<AggregationOperatorTest::ParamType>& info) {
                             return info.param;
                         });
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

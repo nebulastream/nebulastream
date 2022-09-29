@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
+#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#define NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
@@ -26,18 +26,20 @@
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
+#include <type_traits>
 #include <memory>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
-Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp);
-void TraceConstOperation(const Interpreter::AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference);
-void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
-bool traceBoolOperation(const Interpreter::AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
-void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
-                          const Nautilus::Tracing::ValueRef& resultRef,
-                          const Nautilus::Tracing::ValueRef& leftRef,
-                          const Nautilus::Tracing::ValueRef& rightRef);
-void traceUnaryOperation(const Nautilus::Tracing::OpCode& op, const Nautilus::Tracing::ValueRef& resultRef, const Nautilus::Tracing::ValueRef& inputRef);
+Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
+void TraceConstOperation(const AnyPtr& constValue, const Tracing::ValueRef& valueReference);
+void traceAssignmentOperation(const Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
+bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
+void traceBinaryOperation(const Tracing::OpCode& op,
+                          const Tracing::ValueRef& resultRef,
+                          const Tracing::ValueRef& leftRef,
+                          const Tracing::ValueRef& rightRef);
+void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
 
 class BaseValue {};
 
@@ -62,42 +64,42 @@ class Value : BaseValue {
 
   public:
     /*
-     * Creates a Value<Int8> object from an int8_t.
+     * Creates a Value<Int8> object from an std::int8_t.
      */
     Value(int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int16> object from an int16_t.
-     */
-    Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<Int32> object from an int32_t.
-     */
-    Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<Int64> object from an int64_t.
-     */
-    Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<UInt8> object from an uint8_t.
+     * Creates a Value<UInt8> object from an std::uint8_t.
      */
     Value(uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int16> object from an int16_t.
+     * Creates a Value<Int16> object from an std::int16_t.
+     */
+    Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int16> object from an std::int16_t.
      */
     Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int32> object from an int32_t.
+     * Creates a Value<Int32> object from an std::int32_t.
+     */
+    Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int32> object from an std::int32_t.
      */
     Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int64> object from an int64_t.
+     * Creates a Value<Int64> object from an std::int64_t.
+     */
+    Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int64> object from an std::int64_t.
      */
     Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
 
@@ -117,9 +119,9 @@ class Value : BaseValue {
     Value(bool value) : Value(std::make_shared<Boolean>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<MemRef> object from an int8_t*.
+     * Creates a Value<MemRef> object from an std::int8_t*.
      */
-    Value(int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /**
      * @brief copy constructor
@@ -251,42 +253,10 @@ Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
-template<class T>
-    requires(std::is_same_v<T, const bool> == true)
-inline auto toValue(T&& t) -> Value<> {
-    auto value = Value<Boolean>(std::make_unique<Boolean>(t));
-    TraceConstOperation(value.value, value.ref);
-    return value;
-}
-
-template<class T>
-    requires(std::is_same_v<T, const float> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Float>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const int64_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int64>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const uint64_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<UInt64>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const int32_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int32>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const int8_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int8>(t);
+template<typename T,
+         typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
+inline auto toValue(T&& t) {
+    return Value<>(std::forward<T>(t));
 }
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -308,7 +278,7 @@ auto inline operator+(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS>
 auto inline operator++(const LHS& left) {
-    return left + (uint32_t) 1;
+    return left + (std::uint32_t) 1;
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -506,6 +476,6 @@ auto inline operator||(const LHS& left, const RHS& right) {
     return OrOp(left, right);
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
+#endif//NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

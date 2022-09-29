@@ -19,8 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class DataTypeTest : public testing::Test {
   public:
@@ -218,4 +217,4 @@ TEST_F(DataTypeTest, FloatTest) {
     ASSERT_TRUE(f2.value->getType()->isFloat());
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

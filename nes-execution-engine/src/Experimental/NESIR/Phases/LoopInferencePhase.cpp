@@ -18,7 +18,7 @@
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
+#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::IR {

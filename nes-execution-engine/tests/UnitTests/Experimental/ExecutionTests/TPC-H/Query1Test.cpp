@@ -42,7 +42,7 @@
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -56,7 +56,6 @@
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
@@ -76,8 +75,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+using namespace NES::ExecutionEngine::Experimental;
+namespace NES::Nautilus {
 
 /**
  * @brief This test tests query execution using th mlir backend
@@ -86,7 +85,6 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -143,7 +141,7 @@ TEST_P(Query1Test, tpchQ1) {
      *   1998-09-02
      */
     auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(10);
+    auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
     auto selection = std::make_shared<Selection>(lessThanExpression1);
     scan.setChild(selection);
@@ -163,26 +161,26 @@ TEST_P(Query1Test, tpchQ1) {
         avg(l_discount) as avg_disc,
         count(*) as count_order
      */
-    auto l_returnflagField = std::make_shared<ReadFieldExpression>(8);
-    auto l_linestatusFiled = std::make_shared<ReadFieldExpression>(9);
+    auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
+    auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
 
     //  sum(l_quantity) as sum_qty,
-    auto l_quantityField = std::make_shared<ReadFieldExpression>(4);
+    auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
     auto sumAggFunction1 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
 
     // sum(l_extendedprice) as sum_base_price,
-    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>(5);
+    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
     auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
 
     // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
-    auto l_discountField = std::make_shared<ReadFieldExpression>(6);
+    auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
     auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
     auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
     auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
     auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
 
     //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    auto l_taxField = std::make_shared<ReadFieldExpression>(6);
+    auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
     auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
     auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
     auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
@@ -294,4 +292,4 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                             }
                         });
 #endif
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

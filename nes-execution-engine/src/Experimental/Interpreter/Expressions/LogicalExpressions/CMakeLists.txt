@@ -15,6 +15,7 @@ add_source_files(nes-execution-engine
         EqualsExpression.cpp
         AndExpression.cpp
         LessThanExpression.cpp
+        GreaterThanExpression.cpp
         NegateExpression.cpp
         OrExpression.cpp
         LogicalExpression.cpp

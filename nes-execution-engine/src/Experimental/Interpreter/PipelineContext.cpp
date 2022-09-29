@@ -13,14 +13,14 @@
 */
 
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
@@ -66,4 +66,4 @@ Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* tag) {
                           tagValue);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

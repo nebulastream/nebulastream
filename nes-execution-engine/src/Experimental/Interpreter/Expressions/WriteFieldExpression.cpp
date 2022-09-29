@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
-
+namespace NES::Nautilus {
+WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
+    : field(field), subExpression(subExpression) {}
 Value<> WriteFieldExpression::execute(Record& record) {
     Value<> newValue = subExpression->execute(record);
-    record.write(fieldIndex, newValue);
+    record.write(field, newValue);
     return newValue;
 }
-WriteFieldExpression::WriteFieldExpression(uint64_t fieldIndex, const ExpressionPtr& subExpression)
-    : fieldIndex(fieldIndex), subExpression(subExpression) {}
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+}// namespace NES::Nautilus

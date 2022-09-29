@@ -42,7 +42,7 @@
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -57,7 +57,6 @@
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
 #include <Experimental/Interpreter/Operators/Streaming/WindowAggregation.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
@@ -78,8 +77,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+using namespace NES::ExecutionEngine::Experimental;
+namespace NES::Nautilus {
 
 /**
  * @brief This test tests query execution using th mlir backend
@@ -88,7 +87,6 @@ class YSBTest : public testing::Test, public ::testing::WithParamInterface<std::
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -187,12 +185,12 @@ TEST_P(YSBTest, ysbSelectionCampain) {
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    Scan scan = Scan(memoryLayout, {4});
+    Scan scan = Scan(memoryLayout, {"campaign_id"});
     /*
      *   campaing_id = 0
      */
     auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
-    auto readCampaignId = std::make_shared<ReadFieldExpression>(0);
+    auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
     auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
     auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(selection);
@@ -246,12 +244,12 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    Scan scan = Scan(memoryLayout, {2, 4, 5});
+    Scan scan = Scan(memoryLayout, {"current_ms", "campaign_id", "event_type"});
     /*
      *   campaing_id = 0
      */
     auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
-    auto readCampaignId = std::make_shared<ReadFieldExpression>(1);
+    auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
     auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
     auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(selection);
@@ -260,8 +258,8 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     auto sliceStore = std::make_shared<Windowing::Experimental::KeyedThreadLocalSliceStore>(hashMapFactory,
                                                                                             tumblingWindowSize,
                                                                                             tumblingWindowSize);
-    auto tsExpression = std::make_shared<ReadFieldExpression>(2);
-    auto keyExpression = std::make_shared<ReadFieldExpression>(0);
+    auto tsExpression = std::make_shared<ReadFieldExpression>("current_ms");
+    auto keyExpression = std::make_shared<ReadFieldExpression>("campaign_id");
     std::vector<ExpressionPtr> keyExpressions = {keyExpression};
     auto countAggregation = std::make_shared<CountFunction>();
     std::vector<std::shared_ptr<AggregationFunction>> functions = {countAggregation};
@@ -333,4 +331,4 @@ INSTANTIATE_TEST_CASE_P(testYSB,
                             }
                         });
 #endif
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

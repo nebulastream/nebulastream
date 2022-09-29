@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class RecordBuffer;
 class ExecutableOperator;
 class RuntimeExecutionContext;
@@ -42,6 +42,6 @@ class Operator {
     mutable ExecuteOperatorPtr child;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_

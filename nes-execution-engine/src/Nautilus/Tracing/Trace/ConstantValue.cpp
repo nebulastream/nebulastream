@@ -16,7 +16,7 @@
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 
 namespace NES::Nautilus::Tracing {
-ConstantValue::ConstantValue(const ExecutionEngine::Experimental::Interpreter::AnyPtr& anyPtr) : value(anyPtr){};
+ConstantValue::ConstantValue(const AnyPtr& anyPtr) : value(anyPtr){};
 
 std::ostream& operator<<(std::ostream& os, const ConstantValue& valueRef) {
     os << "c" << valueRef.value;
