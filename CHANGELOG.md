@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.2](https://github.com/nebulastream/nebulastream/tree/v0.3.2) (2022-09-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.1...v0.3.2)
+
+### Miscellaneous Issues ✌️
+
+- Make QueryController an oatpp endpoint \(Move to oatapp REST server\) [\#2840](https://github.com/nebulastream/nebulastream/issues/2840)
+
 ## [v0.3.1](https://github.com/nebulastream/nebulastream/tree/v0.3.1) (2022-09-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.0...v0.3.1)
