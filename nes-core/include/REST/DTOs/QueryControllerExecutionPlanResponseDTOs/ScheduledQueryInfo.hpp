@@ -15,9 +15,9 @@
 #ifndef NES_NES_CORE_INCLUDE_REST_DTOS_SCHEDULEDQUERYINFO_HPP_
 #define NES_NES_CORE_INCLUDE_REST_DTOS_SCHEDULEDQUERYINFO_HPP_
 
+#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/QuerySubPlanDTO.hpp>
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
-#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/QuerySubPlanDTO.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)

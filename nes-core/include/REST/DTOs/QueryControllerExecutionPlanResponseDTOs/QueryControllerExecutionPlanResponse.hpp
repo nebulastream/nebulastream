@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-
 #ifndef NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLEREXECUTIONPLANRESPONSE_HPP_
 #define NES_CORE_INCLUDE_REST_DTOS_QUERYCONTROLLEREXECUTIONPLANRESPONSE_HPP_
 
+#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/ExecutionNodeDTO.hpp>
 #include <oatpp/core/data/mapping/type/Object.hpp>
 #include <oatpp/core/macro/codegen.hpp>
-#include <REST/DTOs/QueryControllerExecutionPlanResponseDTOs/ExecutionNodeDTO.hpp>
 
 /* Begin DTO code-generation */
 #include OATPP_CODEGEN_BEGIN(DTO)

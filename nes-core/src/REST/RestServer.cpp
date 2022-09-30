@@ -18,9 +18,9 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
+#include <REST/OatppController/QueryController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
-#include <REST/OatppController/QueryController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -62,8 +62,9 @@ RestServer::RestServer(std::string host,
                                               udfCatalog,
                                               bufferManager,
                                               locationService)),
-      host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService), globalExecutionPlan(globalExecutionPlan),
-      queryService(queryService), globalQueryPlan(globalQueryPlan), topology(topology), udfCatalog(udfCatalog) {}
+      host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
+      globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan), topology(topology),
+      udfCatalog(udfCatalog) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {

@@ -73,7 +73,7 @@ class PlanJsonGenerator {
      * @return a JSON object representing the execution plan
      */
     static nlohmann::json getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                   QueryId queryId = INVALID_QUERY_ID);
+                                                         QueryId queryId = INVALID_QUERY_ID);
 
   private:
     /**

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Util/LineageType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 
 namespace NES {
