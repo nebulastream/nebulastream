@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -20,7 +21,6 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NesBaseTest.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -226,7 +226,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .project(Attribute("id").as("new_id"), Attribute("value"))
                      .sink(FileSinkDescriptor::create(""));
-    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), MapEntryNotFoundException);
 }
 
 }// namespace NES
