@@ -13,6 +13,7 @@ limitations under the License.
 */
 
 #include <DataGeneration/DefaultDataGenerator.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
@@ -30,30 +31,63 @@ namespace NES::DataGeneration {
         auto memoryLayout = this->getMemoryLayout(bufferSize);
         NES_INFO("Default source mode");
 
-
+//        I think that most gets from allocating all buffers. How can I allocate all buffers at the beginning?
 
         uint64_t noTuplesInOnePercent = (numberOfBuffers) / 100;
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
-            auto buffer = allocateBuffer(bufferSize);
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            createdBuffers[curBuffer] = allocateBuffer(bufferSize);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, createdBuffers[curBuffer]);
+            if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+                auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
+                auto rowLayoutBuffer = rowLayout->bind(createdBuffers[curBuffer]);
+
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                std::uniform_int_distribution<> distribution(minValue, maxValue);
+
+                for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                    auto value = distribution(gen);
+                    rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord,
+                                                                                                          value,
+                                                                                                          curRecord,
+                                                                                                          curRecord));
+                }
+
+            } else {
+
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                std::uniform_int_distribution<> distribution(minValue, maxValue);
+
+                for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                    auto value = distribution(gen);
+                    dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
+                    dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                    dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+                }
+            }
+
             if (curBuffer % noTuplesInOnePercent == 0) {
                 NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
             }
 
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<> distribution(minValue, maxValue);
-
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                auto value = distribution(gen);
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
-            }
-
             dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
-            createdBuffers[curBuffer] = buffer;
+
+//            std::random_device rd;
+//            std::mt19937 gen(rd());
+//            std::uniform_int_distribution<> distribution(minValue, maxValue);
+//
+//            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+//                auto value = distribution(gen);
+//                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+//                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
+//                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+//                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+//            }
+//
+//            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+//            createdBuffers[curBuffer] = buffer;
         }
 
 
