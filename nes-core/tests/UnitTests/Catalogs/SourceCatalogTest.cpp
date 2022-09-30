@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -86,8 +86,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 
     EXPECT_TRUE(sourceCatalog->removeLogicalSource("test_stream"));
 
-    SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
-    EXPECT_EQ(sPtr, nullptr);
+    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream"), MapEntryNotFoundException);
 
     string exp = "logical stream name=default_logical schema: name=id UINT32 name=value UINT64\n\nlogical stream "
                  "name=test_stream schema:\n\n";
@@ -102,8 +101,7 @@ TEST_F(SourceCatalogTest, testGetNotExistingKey) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
 
-    SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream22");
-    EXPECT_EQ(sPtr, nullptr);
+    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream22"), MapEntryNotFoundException);
 }
 
 TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
