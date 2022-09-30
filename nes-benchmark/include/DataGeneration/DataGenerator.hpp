@@ -71,7 +71,7 @@ namespace NES::DataGeneration {
          */
         Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
-      private:
+      protected:
         Runtime::BufferManagerPtr bufferManager;
     };
 }

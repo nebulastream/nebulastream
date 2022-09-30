@@ -133,6 +133,9 @@ int main(int argc, const char* argv[]) {
         // Worker configurations
         coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerThreads->getValue();
         coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
+        coordinatorConf->worker.numberOfBuffersPerWorker = configPerRun.numBuffersToProduce->getValue();
+        coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numBuffersToProduce->getValue();
+
         coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
         coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
         coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
