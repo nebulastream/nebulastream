@@ -29,11 +29,11 @@ namespace NES {
 class QueryCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup QueryCatalogControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class.");}
 
     void startRestServer(){
         NES_INFO("QueryCatalogControllerTest: Start coordinator");
@@ -129,7 +129,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     EXPECT_EQ(r3.status_code, 200l);
     // and a non-empty json
     nlohmann::json jsonResponse2 = nlohmann::json::parse(r3.text);
-    ASSERT_TRUE(jsonResponse2.empty());
+    ASSERT_TRUE(!jsonResponse2.empty());
 }
 
 //Test status endpoint correctly returns status of a query
@@ -178,8 +178,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     ASSERT_TRUE(jsonResponse["queryId"] == queryId);
 }
 
-// test numberOfBuffersProducedEndpoint
-TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
+TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQueryParameter) {
     startRestServer();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -191,18 +190,28 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
 
     // return 400 BAD REQUEST
     EXPECT_EQ(r1.status_code, 400l);
+}
+
+TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // when sending a getNumberOfProducedBuffers request with 'queryId' specified but no such query can be found
     cpr::AsyncResponse f2 =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
-                 cpr::Parameters{{"queryId", "1"}});
+                      cpr::Parameters{{"queryId", "1"}});
     f2.wait();
     auto r2 = f2.get();
-    //return 404 NO CONENT
+    //return 404 NO CONTENT
     EXPECT_EQ(r2.status_code, 404l);
     nlohmann::json jsonResponse1 = nlohmann::json::parse(r2.text);
     std::string message1 = "no query found with ID: 1";
     ASSERT_TRUE(jsonResponse1["message"] == message1);
+}
+
+TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStatistics) {
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // create a query and register with coordinator
     std::string queryString =
@@ -221,7 +230,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProduced) {
     // when sending a getNumberOfProducedBuffers with 'queryId' specified and a query can be found but no buffers produced yet
     cpr::AsyncResponse f3 =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
-                 cpr::Parameters{{"queryId", "1"}});
+                      cpr::Parameters{{"queryId", std::to_string(queryId)}});
     f3.wait();
     auto r3 = f3.get();
 
