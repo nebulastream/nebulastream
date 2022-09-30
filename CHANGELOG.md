@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.1](https://github.com/nebulastream/nebulastream/tree/v0.3.1) (2022-09-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.0...v0.3.1)
+
+### Miscellaneous Issues ✌️
+
+- Make UdfCatalogController an oatpp endpoint \(Move to oatapp REST server\) [\#2843](https://github.com/nebulastream/nebulastream/issues/2843)
+
+## [v0.3.0](https://github.com/nebulastream/nebulastream/tree/v0.3.0) (2022-09-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.91...v0.3.0)
+
 ## [v0.2.91](https://github.com/nebulastream/nebulastream/tree/v0.2.91) (2022-09-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.90...v0.2.91)
