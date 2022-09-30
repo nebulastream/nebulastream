@@ -129,7 +129,7 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
 
 TEST_P(Query6Test, tpchQ6) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+    auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     Scan scan = Scan(lineitemBuffer.first, {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"});
     /*
