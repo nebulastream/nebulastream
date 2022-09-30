@@ -280,9 +280,10 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
 #else
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                         Query1Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
-                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        ::testing::Combine(::testing::Values("MLIR"),
+                        // ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
+                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                                            //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {

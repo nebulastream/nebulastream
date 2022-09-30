@@ -343,12 +343,22 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
         NES_THROW_RUNTIME_ERROR("Cant load a boolean");
     }
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
-
-    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Bitcasted address"),
-                                                          mlir::LLVM::LLVMPointerType::get(getMLIRType(loadOp->getStamp())),
-                                                          address);
-    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), bitcast);
-    frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
+    std::cout << "Typeeee: " << loadOp->getStamp();
+    if(!loadOp->getStamp()->isBoolean()) {
+        auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Bitcasted address"),
+                                                            mlir::LLVM::LLVMPointerType::get(getMLIRType(loadOp->getStamp())),
+                                                            address);
+        auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), bitcast);
+        frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
+    } else {
+        if(!address.getType().isInteger(1)) {
+            std::cout << "Found BOOOOLEAN\n";
+            auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), address);
+            frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
+        } else {
+            frame.setValue(loadOp->getIdentifier(), address);
+        }
+    }
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {

@@ -320,7 +320,8 @@ INSTANTIATE_TEST_CASE_P(testYSB,
 #else
 INSTANTIATE_TEST_CASE_P(testYSB,
                         YSBTest,
-                        ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
+                        ::testing::Combine(::testing::Values("MLIR"),
+                        // ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                         [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
