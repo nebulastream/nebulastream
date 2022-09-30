@@ -22,11 +22,11 @@
 #include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
+#include <google/protobuf/text_format.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <nes-grpc/UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
-#include <google/protobuf/text_format.h>
 #include <oatpp/web/protocol/http/Http.hpp>
 
 namespace NES {
@@ -45,9 +45,8 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
         NES_DEBUG(response.text);
-        auto responseJson =  nlohmann::json::parse(response.text);
+        auto responseJson = nlohmann::json::parse(response.text);
         ASSERT_TRUE(responseJson == expected);
-
     }
 
     static void verifySerializedInstance(const UDF::JavaSerializedInstance& actual, const std::string& expected) {
@@ -67,14 +66,13 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         }
     }
 
-    [[nodiscard]] static GetJavaUdfDescriptorResponse
-    extractGetJavaUdfDescriptorResponse(const cpr::Response& response) {
+    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const cpr::Response& response) {
         GetJavaUdfDescriptorResponse udfResponse;
         udfResponse.ParseFromString(response.text);
         return udfResponse;
     }
 
-    void startCoordinator(){
+    void startCoordinator() {
         NES_INFO("UdfCatalogController: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -97,18 +95,15 @@ TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
-                                                                      "udf_method",
-                                                                      {1},
-                                                                      {{"some_package.my_udf", {1}}});
-
+    auto javaUdfDescriptor =
+        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 
     //send a GET request to REST API of coordinator for the previously defined java udf
-    auto future= cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
-                              cpr::Parameters{{"udfName", udfName}});
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
+                                cpr::Parameters{{"udfName", udfName}});
     future.wait();
     auto response = future.get();
     //check if response code indicates a udf has been retrieved
@@ -132,13 +127,13 @@ TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
 
     std::string udfName = "my_udf";
     //send a GET request to REST API of coordinator for an udf that doesn't exist
-    auto future   = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
-                             cpr::Parameters{{"udfName", udfName}});
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"},
+                                cpr::Parameters{{"udfName", udfName}});
 
     future.wait();
     auto response = future.get();
     //check that status code indicates specified udf doesn't exist
-    ASSERT_EQ(response.status_code,Status::CODE_404.code);
+    ASSERT_EQ(response.status_code, Status::CODE_404.code);
     // and compare contents of response
     // extract protobuf message from string response
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
@@ -151,13 +146,14 @@ TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     //create a request to an endpoint that isn't defined
-    auto future   = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/SUPER_SECRET_URL"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{"Whats the object-oriented way to become wealthy? Inheritance."});
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/SUPER_SECRET_URL"},
+                                 cpr::Header{{"Content-Type", "text/plain"}},
+                                 cpr::Body{"Whats the object-oriented way to become wealthy? Inheritance."});
 
     future.wait();
     auto response = future.get();
     // and see if the response code is 404
-    ASSERT_EQ(response.status_code,Status::CODE_404.code);
+    ASSERT_EQ(response.status_code, Status::CODE_404.code);
 }
 
 //Test if RegisterJavaUdf endpoint handles exceptions without returning a stack trace
@@ -167,18 +163,14 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
 
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest =
-        ProtobufMessageFactory::createRegisterJavaUdfRequest(
-            "my_udf",
-            "some_package.my_udf",
-            "udf_method",
-            {1},
-            {});
-    auto future   = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()});
+        ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
+                                 cpr::Header{{"Content-Type", "text/plain"}},
+                                 cpr::Body{javaUdfRequest.SerializeAsString()});
     future.wait();
     auto response = future.get();
     // then the response is BadRequest
-    ASSERT_EQ(response.status_code,Status::CODE_400.code);
+    ASSERT_EQ(response.status_code, Status::CODE_400.code);
     // make sure the response does not contain the stack trace
     ASSERT_TRUE(response.text.find("Stack trace") == std::string::npos);
 }
@@ -199,12 +191,13 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
                                                                                {{"some_package.my_udf", {1}}});
 
     // submit the javaUdfRequest to the registerJavaUdf endpoint
-    auto future   = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
-                              cpr::Header{{"Content-Type", "text/plain"}}, cpr::Body{javaUdfRequest.SerializeAsString()});
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
+                                 cpr::Header{{"Content-Type", "text/plain"}},
+                                 cpr::Body{javaUdfRequest.SerializeAsString()});
     future.wait();
     auto response = future.get();
     // then the HTTP response is OK
-    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
     ASSERT_EQ(response.text, "Registered Java UDF");
     // check to see if a udf has been added to the udf catalog
     ASSERT_FALSE(udfCatalog->listUdfs().empty());
@@ -227,23 +220,20 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
-                                                                      "udf_method",
-                                                                      {1},
-                                                                      {{"some_package.my_udf", {1}}});
-
+    auto javaUdfDescriptor =
+        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 
     // given the UDF catalog contains a Java UDF
     // when a REST message is passed to the controller to remove the UDF
-    auto future   = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
-                              cpr::Parameters{{"udfName", udfName}});
+    auto future = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
+                                   cpr::Parameters{{"udfName", udfName}});
     future.wait();
     auto response = future.get();
     // then the response is OK
-    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
     // and the UDF no longer exists in the catalog
     ASSERT_EQ(UDF::UdfDescriptor::as<UDF::JavaUdfDescriptor>(udfCatalog->getUdfDescriptor("my_udf")), nullptr);
     // and the response shows that the UDF was removed
@@ -258,12 +248,12 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointIfUdfDoesNotExist) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller to remove a UDF that does not exist
-    auto future   = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
-                                 cpr::Parameters{{"udfName", "my_udf"}});
+    auto future = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
+                                   cpr::Parameters{{"udfName", "my_udf"}});
     future.wait();
     auto response = future.get();
     // then the response is NOT FOUND
-    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
     // and the response shows that the UDF was not removed
     nlohmann::json json;
     json["removed"] = false;
@@ -275,26 +265,26 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointHandlesMissingQueryParamet
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is missing the udfName parameter
-    auto future   = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"});
+    auto future = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"});
     future.wait();
     auto response = future.get();
     // then the response is BadRequest
-    ASSERT_EQ(response.status_code,Status::CODE_400.code);
+    ASSERT_EQ(response.status_code, Status::CODE_400.code);
 }
 
 //Test if removeUdf endpoint handles extra query parameters correctly
-TEST_F(UdfCatalogControllerTest,  testIfRemoveUdfEndpointHandlesExtraQueryParametersCorrectly) {
+TEST_F(UdfCatalogControllerTest, testIfRemoveUdfEndpointHandlesExtraQueryParametersCorrectly) {
     // Oatpp framework ignores all query parameters that aren't defined in the endpoint, effectively ignoring them.
     // Superfluous query parameters have no effect on the behavior of an endpoint
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
-    auto future   = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
-                                cpr::Parameters{{"udfName", "my_udf"}, {"meaning_of_life", "42"}});
+    auto future = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/removeUdf"},
+                                   cpr::Parameters{{"udfName", "my_udf"}, {"meaning_of_life", "42"}});
     future.wait();
     auto response = future.get();
     // then the response is NOT FOUND
-    ASSERT_EQ(response.status_code,Status::CODE_200.code);
+    ASSERT_EQ(response.status_code, Status::CODE_200.code);
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
@@ -305,11 +295,11 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParame
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // when a REST message is passed to the controller that is missing the udfName parameter
-    auto future   = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"});
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/getUdfDescriptor"});
     future.wait();
-    auto response  = future.get();
+    auto response = future.get();
     // then the response is BadRequest
-    ASSERT_EQ(response.status_code,Status::CODE_400.code);
+    ASSERT_EQ(response.status_code, Status::CODE_400.code);
 }
 
 //Test if listUdfs endpoint behaves as expected when all else is correct
@@ -320,15 +310,13 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
-                                                                      "udf_method",
-                                                                      {1},
-                                                                      {{"some_package.my_udf", {1}}});
+    auto javaUdfDescriptor =
+        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto future   = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"});
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"});
     future.wait();
     auto response = future.get();
     // then the response is OK
@@ -346,14 +334,15 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     auto udfCatalog = coordinator->getUdfCatalog();
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto future   = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"});
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/listUdfs"});
     // then the response is OK
     future.wait();
     auto response = future.get();
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
     // and the response message contains an empty list of UDFs
     nlohmann::json json;
-    std::vector<std::string> udfs = udfCatalog->listUdfs();;
+    std::vector<std::string> udfs = udfCatalog->listUdfs();
+    ;
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
 }
