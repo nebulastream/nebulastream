@@ -301,8 +301,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
 bool QueryController::validateLineageMode(const std::string& lineageModeString, const web::http::http_request& request) {
     try {
         LineageType::getFromString(lineageModeString);
-    }
-    catch(Exceptions::RuntimeException e){
+    } catch (Exceptions::RuntimeException e) {
         NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: " + lineageModeString);
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
@@ -320,8 +319,7 @@ bool QueryController::validateFaultToleranceType(const std::string& faultToleran
                                                  const web::http::http_request& request) {
     try {
         FaultToleranceType::getFromString(faultToleranceString);
-    }
-    catch (Exceptions::RuntimeException e){
+    } catch (Exceptions::RuntimeException e) {
         NES_ERROR("QueryController: handlePost -execute-query: Invalid Fault Tolerance Type provided: " + faultToleranceString);
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
@@ -334,7 +332,6 @@ bool QueryController::validateFaultToleranceType(const std::string& faultToleran
     }
     return true;
 }
-
 
 bool QueryController::validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage,
                                               const web::http::http_request& request,

@@ -32,8 +32,9 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @param materialized view id
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr
-    create(uint64_t viewId, FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(uint64_t viewId,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    uint64_t numberOfOrigins = 1);
 
     /**
      * @brief returns the string representation of the network sink

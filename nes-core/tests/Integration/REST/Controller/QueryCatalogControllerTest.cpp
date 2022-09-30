@@ -33,9 +33,9 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
         NES_INFO("Setup QueryCatalogControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class.");}
+    static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class."); }
 
-    void startRestServer(){
+    void startRestServer() {
         NES_INFO("QueryCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -55,7 +55,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     startRestServer();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
-    cpr::AsyncResponse future1 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    cpr::AsyncResponse future1 =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future1.wait();
     auto r = future1.get();
     EXPECT_EQ(r.status_code, 200l);
@@ -73,13 +74,13 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    cpr::AsyncResponse future2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    cpr::AsyncResponse future2 =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future2.wait();
     auto response2 = future2.get();
     EXPECT_EQ(response2.status_code, 200l);
     nlohmann::json jsonResponse2 = nlohmann::json::parse(response2.text);
     ASSERT_TRUE(!jsonResponse2.empty());
-
 }
 
 // Test queries endpoint: 400 if no status provided, otherwise 200. Depending on if a query is registered or not either an empty json body or non-empty
@@ -96,7 +97,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
 
     // When including the status
     cpr::AsyncResponse future2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                                cpr::Parameters{{"status", "REGISTERED"}});
+                                               cpr::Parameters{{"status", "REGISTERED"}});
 
     future2.wait();
     auto r2 = future2.get();
@@ -121,7 +122,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
 
     // when making a request for a query with a specific status after having submitted a query
     cpr::AsyncResponse future3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                                cpr::Parameters{{"status", "REGISTERED"}});
+                                               cpr::Parameters{{"status", "REGISTERED"}});
 
     future3.wait();
     auto r3 = future3.get();
@@ -146,7 +147,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
 
     // when sending a request to the status endpoint with 'queryId' supplied but no such query registered
     cpr::AsyncResponse f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                                cpr::Parameters{{"queryId", "1"}});
+                                          cpr::Parameters{{"queryId", "1"}});
     f2.wait();
     auto r2 = f2.get();
     //return 400 NO CONTENT
@@ -167,7 +168,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
     cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
+                                          cpr::Parameters{{"queryId", std::to_string(queryId)}});
     f3.wait();
     auto r3 = f3.get();
     //return 200 OK

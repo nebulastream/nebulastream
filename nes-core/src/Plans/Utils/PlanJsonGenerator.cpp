@@ -252,8 +252,8 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 }
 
 void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
-                                    std::vector<nlohmann::json>& nodes,
-                                    std::vector<nlohmann::json>& edges) {
+                                            std::vector<nlohmann::json>& nodes,
+                                            std::vector<nlohmann::json>& edges) {
 
     std::vector<nlohmann::json> childrenNode;
 
@@ -280,8 +280,7 @@ void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
         } else {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)
-            node["name"] =
-               childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
+            node["name"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
         }
         node["nodeType"] = childOPeratorType;
 
@@ -295,8 +294,7 @@ void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
             // window operator node needs more information, therefore we added information about window type and aggregation
             edge["source"] = childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString();
         } else {
-            edge["source"] =
-                childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
+            edge["source"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
         }
 
         if (getOperatorType(root) == "WINDOW AGGREGATION") {
@@ -327,12 +325,12 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
         currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap ;
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);;
+        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        ;
         if (!querySubPlans.empty()) {
             queryToQuerySubPlansMap[queryId] = querySubPlans;
         }
-
 
         std::vector<nlohmann::json> scheduledQueries = {};
 

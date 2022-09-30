@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger/Logger.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 
 namespace NES {
