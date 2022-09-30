@@ -69,12 +69,6 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         return true;
     }
-    /*
-    if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE && reconnectBuffering) {
-        workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        return true;
-    }
-     */
 
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
