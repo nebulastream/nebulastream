@@ -18,9 +18,7 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
-#include <REST/DTOs/BuffersProducedResponse.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
-#include <REST/DTOs/QueryCatalogEntriesResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -90,22 +88,20 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
-        auto dto = DTO::QueryCatalogEntriesResponse::createShared();
-        oatpp::List<oatpp::Object<DTO::QueryCatalogEntryResponse>> list({});
+        nlohmann::json response;
         try {
             std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries =
                 queryCatalogService->getAllQueryCatalogEntries();
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
-                auto entry = DTO::QueryCatalogEntryResponse::createShared();
-                entry->queryId = queryId;
-                entry->queryString = catalogEntry->getQueryString();
-                entry->queryStatus = catalogEntry->getQueryStatusAsString();
-                entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
-                entry->queryMetaData = catalogEntry->getMetaInformation();
-                list->push_back(entry);
+                nlohmann::json entry;
+                entry["queryId"] = queryId;
+                entry["queryString"] = catalogEntry->getQueryString();
+                entry["queryStatus"] = catalogEntry->getQueryStatusAsString();
+                entry["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
+                entry["queryMetaData"] = catalogEntry->getMetaInformation();
+                response.push_back(entry);
             }
-            dto->entries = list;
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, response.dump());
         } catch (const std::exception& exc) {
             NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
                       "query plan for user request:"
@@ -121,20 +117,18 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/queries", getQueriesWithASpecificStatus, QUERY(String, status, "status")) {
         try {
             std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus(status);
-            auto dto = DTO::QueryCatalogEntriesResponse::createShared();
-            oatpp::List<oatpp::Object<DTO::QueryCatalogEntryResponse>> list({});
+            nlohmann::json response;
             for (auto [key, value] : queries) {
-                auto entry = DTO::QueryCatalogEntryResponse::createShared();
+                nlohmann::json entry;
                 auto catalogEntry = queryCatalogService->getEntryForQuery(key);
-                entry->queryId = key;
-                entry->queryString = catalogEntry->getQueryString();
-                entry->queryStatus = catalogEntry->getQueryStatusAsString();
-                entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
-                entry->queryMetaData = catalogEntry->getMetaInformation();
-                list->push_back(entry);
+                entry["queryId"] = key;
+                entry["queryString"] = catalogEntry->getQueryString();
+                entry["queryStatus"] = catalogEntry->getQueryStatusAsString();
+                entry["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
+                entry["queryMetaData"] = catalogEntry->getMetaInformation();
+                response.push_back(entry);
             }
-            dto->entries = list;
-            return createDtoResponse(Status::CODE_200, dto);
+            return createResponse(Status::CODE_200, response.dump());
         } catch (InvalidArgumentException e) {
             return errorHandler->handleError(Status ::CODE_400, "Invalid Status provided");
         } catch (...) {
@@ -146,13 +140,13 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         try {
             NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            auto entry = DTO::QueryCatalogEntryResponse::createShared();
-            entry->queryId = queryId;
-            entry->queryString = catalogEntry->getQueryString();
-            entry->queryStatus = catalogEntry->getQueryStatusAsString();
-            entry->queryPlan = catalogEntry->getInputQueryPlan()->toString();
-            entry->queryMetaData = catalogEntry->getMetaInformation();
-            return createDtoResponse(Status::CODE_200, entry);
+            nlohmann::json response;
+            response["queryId"] = queryId.getValue(0);
+            response["queryString"] = catalogEntry->getQueryString();
+            response["status"] = catalogEntry->getQueryStatusAsString();
+            response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
+            response["queryMetaData"] = catalogEntry->getMetaInformation();
+            return createResponse(Status::CODE_200, response.dump());
         } catch (QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
@@ -177,9 +171,9 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                 }
                 processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
             }
-            auto result = DTO::BuffersProducedResponse::createShared();
-            result->producedBuffers = processedBuffers;
-            return createDtoResponse(Status::CODE_200, result);
+            nlohmann::json response;
+            response["producedBuffers"] = processedBuffers;
+            return createResponse(Status::CODE_200, response.dump());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
         }
