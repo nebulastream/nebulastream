@@ -16,29 +16,29 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <map>
 #include <memory>
 #include <ostream>
-#include <vector>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
+/**
+ * @brief A record is the primitive abstraction of a single entry/tuple in a data set.
+ * Operators receive records can read and write fields.
+ */
 class Record {
   public:
-    explicit Record(std::vector<Value<>> records);
+    using RecordFieldIdentifier = std::string;
+    explicit Record();
+    explicit Record(std::unordered_map<RecordFieldIdentifier, Value<>>&  fields);
     ~Record() = default;
-    Value<>& read(uint64_t fieldIndex);
-    void write(uint64_t fieldIndex, Value<>& value);
-    //  virtual Value<AnyPtr> read(std::string fieldName);
-    //  virtual Value<AnyPtr> read(uint64_t fieldIndex);
-    // virtual void write(std::string fieldName, Value<AnyPtr> value);
-    // virtual void write(uint64_t fieldIndex, Value<AnyPtr> value);
-    //friend std::ostream& operator<<(std::ostream&, const RecordPtr&);
+    Value<>& read(RecordFieldIdentifier fieldName);
+    void write(RecordFieldIdentifier fieldName, Value<>& value);
+    uint64_t numberOfFields();
 
   private:
-    std::vector<Value<>> records;
+    std::unordered_map<RecordFieldIdentifier, Value<>> fields;
 };
-
-using RecordPtr = std::shared_ptr<Record>;
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 

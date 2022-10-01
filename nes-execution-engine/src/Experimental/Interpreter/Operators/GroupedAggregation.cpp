@@ -40,9 +40,7 @@ void GroupedAggregation::setup(RuntimeExecutionContext& executionCtx) const {
     Operator::setup(executionCtx);
 }
 
-void GroupedAggregation::open(RuntimeExecutionContext&, RecordBuffer&) const {
-    // executionCtx.getPipelineContext().getGlobalOperatorState(this);
-}
+void GroupedAggregation::open(RuntimeExecutionContext&, RecordBuffer&) const {}
 
 void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& record) const {
 
@@ -66,17 +64,6 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
     }
 }
 
-void GroupedAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {
-    /* auto localAggregationState = (ThreadLocalAggregationState*) executionCtx.getLocalState(this);
-
-    auto pipelineContext = executionCtx.getPipelineContext();
-    auto globalOperatorState = pipelineContext.getGlobalOperatorState(this);
-
-    auto function = aggregationFunctions[0];
-    auto state = function->loadState(threadLocalAggregationState);
-    function->combine(state, localAggregationState->contexts[0]);
-    function->storeState(threadLocalAggregationState, state);
-    */
-}
+void GroupedAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

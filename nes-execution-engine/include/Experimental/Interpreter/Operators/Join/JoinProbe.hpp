@@ -16,18 +16,25 @@
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class JoinProbe : public ExecutableOperator {
   public:
-    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap, std::vector<ExpressionPtr> keyExpressions, std::vector<ExpressionPtr> valueExpressions, std::vector<Nautilus::IR::Types::StampPtr> hashmapKeyStamps, std::vector<Nautilus::IR::Types::StampPtr> hashmapValueStamps);
+    JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap,
+              std::vector<Record::RecordFieldIdentifier> resultFields,
+              std::vector<ExpressionPtr> keyExpressions,
+              std::vector<ExpressionPtr> valueExpressions,
+              std::vector<Nautilus::IR::Types::StampPtr> hashmapKeyStamps,
+              std::vector<Nautilus::IR::Types::StampPtr> hashmapValueStamps);
     void setup(RuntimeExecutionContext& executionCtx) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
 
   private:
     std::shared_ptr<NES::Experimental::Hashmap> hashMap;
+    const std::vector<Record::RecordFieldIdentifier> resultFields;
     const std::vector<ExpressionPtr> keyExpressions;
     const std::vector<ExpressionPtr> valueExpressions;
     const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;

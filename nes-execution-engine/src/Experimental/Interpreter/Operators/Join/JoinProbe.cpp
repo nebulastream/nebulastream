@@ -1,16 +1,17 @@
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 JoinProbe::JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap,
+                     std::vector<Record::RecordFieldIdentifier> resultFields,
                      std::vector<ExpressionPtr> keyExpressions,
                      std::vector<ExpressionPtr> valueExpressions,
                      std::vector<IR::Types::StampPtr> hashmapKeyStamps,
                      std::vector<IR::Types::StampPtr> hashmapValueStamps)
-    : hashMap(hashmap), keyExpressions(keyExpressions), valueExpressions(valueExpressions), keyTypes(hashmapKeyStamps),
-      valueTypes(hashmapValueStamps) {}
+    : hashMap(hashmap), resultFields(resultFields), keyExpressions(keyExpressions), valueExpressions(valueExpressions),
+      keyTypes(hashmapKeyStamps), valueTypes(hashmapValueStamps) {}
 
 void JoinProbe::setup(RuntimeExecutionContext& executionCtx) const {
     auto globalState = std::make_unique<GlobalJoinState>();
@@ -33,28 +34,31 @@ void JoinProbe::execute(RuntimeExecutionContext& ctx, Record& record) const {
     auto entry = hashMapObject.findOne(keyValues);
 
     if (!entry.isNull()) {
-        // todo load values from table values
-        std::vector<Value<>> joinResults;
+
+        // create result record
+        Record joinResult;
 
         // add keys to result
-        for (auto& keys : keyValues) {
-            joinResults.push_back(keys);
+        for (auto& keyValue : keyValues) {
+            auto fieldName = resultFields[joinResult.numberOfFields()];
+            joinResult.write(fieldName, keyValue);
         }
 
-        // add left results
+        // add result from build table
         auto valuePtr = entry.getValuePtr();
         for (auto& valueType : valueTypes) {
             Value<> leftValue = valuePtr.load<Int64>();
-            joinResults.push_back(leftValue);
+            auto fieldName = resultFields[joinResult.numberOfFields()];
+            joinResult.write(fieldName, leftValue);
             valuePtr = valuePtr + 8ul;
         }
 
         // add right values to the result
         for (auto& valueExpression : valueExpressions) {
             auto rightValue = valueExpression->execute(record);
-            joinResults.push_back(rightValue);
+            auto fieldName = resultFields[joinResult.numberOfFields()];
+            joinResult.write(fieldName, rightValue);
         }
-        auto joinResult = Record(joinResults);
         child->execute(ctx, joinResult);
     }
 }

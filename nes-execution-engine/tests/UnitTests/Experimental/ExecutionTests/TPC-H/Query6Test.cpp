@@ -15,9 +15,6 @@
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
-#include "Util/Timer.hpp"
-#include "Util/UtilityFunctions.hpp"
-#include <API/Schema.hpp>
 #include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
 #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
@@ -25,6 +22,9 @@
 #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
 #include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
 #include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
+#include "Util/Timer.hpp"
+#include "Util/UtilityFunctions.hpp"
+#include <API/Schema.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
@@ -32,8 +32,6 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -52,6 +50,8 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #ifdef USE_MLIR
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
@@ -59,9 +59,9 @@
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -133,20 +133,20 @@ TEST_P(Query6Test, tpchQ6) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-    Scan scan = Scan(lineitemBuffer.first,{4,5,6,10});
+    Scan scan = Scan(lineitemBuffer.first, {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"});
     /*
      *   l_shipdate >= date '1994-01-01'
      *   and l_shipdate < date '1995-01-01'
      */
     auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
     auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(3);
+    auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
     auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
 
     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(2);
+    auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
     auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
     auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
@@ -155,7 +155,7 @@ TEST_P(Query6Test, tpchQ6) {
 
     // l_quantity < 24
     auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(0);
+    auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
     auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
     auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
@@ -164,7 +164,7 @@ TEST_P(Query6Test, tpchQ6) {
     scan.setChild(selection);
 
     // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto aggField = std::make_shared<ReadFieldExpression>("l_extendedprice");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
@@ -201,6 +201,7 @@ TEST_P(Query6Test, tpchQ6) {
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
+
     ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }
 
@@ -216,7 +217,7 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
      */
     auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
     auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-    auto readShipdate = std::make_shared<ReadFieldExpression>(10);
+    auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
     auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
@@ -224,7 +225,7 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
     scan.setChild(selection1);
 
     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-    auto readDiscount = std::make_shared<ReadFieldExpression>(6);
+    auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
     auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
     auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
@@ -233,14 +234,14 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
 
     // l_quantity < 24
     auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-    auto readQuantity = std::make_shared<ReadFieldExpression>(4);
+    auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
     auto andExpression3 = std::make_shared<AndExpression>(andExpression2, lessThanExpression5);
 
     auto selection2 = std::make_shared<Selection>(andExpression3);
     selection1->setChild(selection2);
     // sum(l_extendedprice)
-    auto aggField = std::make_shared<ReadFieldExpression>(5);
+    auto aggField = std::make_shared<ReadFieldExpression>("l_extendedprice");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);
@@ -298,9 +299,9 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
                         ::testing::Combine(::testing::Values("MLIR"),
-                        // ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
+                                           // ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
-                                                            //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {

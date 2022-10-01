@@ -143,7 +143,7 @@ TEST_P(Query3Test, tpchQ3) {
 
     // c_mktsegment = 'BUILDING' -> currently modeled as 1
     auto BUILDING = std::make_shared<ConstantIntegerExpression>(1);
-    auto readC_mktsegment = std::make_shared<ReadFieldExpression>(/*mktsegment*/ 6);
+    auto readC_mktsegment = std::make_shared<ReadFieldExpression>("mktsegment");
     auto equalsExpression = std::make_shared<EqualsExpression>(readC_mktsegment, BUILDING);
     auto selection = std::make_shared<Selection>(equalsExpression);
     customersScan.setChild(selection);

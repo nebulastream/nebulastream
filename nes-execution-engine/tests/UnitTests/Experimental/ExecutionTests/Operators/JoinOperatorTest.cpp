@@ -32,8 +32,6 @@ limitations under the License.
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -52,6 +50,8 @@ limitations under the License.
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #ifdef USE_MLIR
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
@@ -59,9 +59,9 @@ limitations under the License.
 #include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -146,8 +146,8 @@ TEST_P(JoinOperatorTest, joinBuildQueryTest) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan buildSideScan = Scan(buildSideMemoryLayout);
-    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
-    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>("key")};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>("value")};
     NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 8, 1000);
     auto map = factory.createPtr();
     std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = std::move(map);
@@ -171,7 +171,7 @@ TEST_P(JoinOperatorTest, joinBuildQueryTest) {
     ASSERT_EQ(currentSize, (int64_t) 10);
 }
 
-TEST_P(JoinOperatorTest, DISABLED_joinBuildAndPropeQueryTest) {
+TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(1000);
 
     auto buildSideSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -186,15 +186,15 @@ TEST_P(JoinOperatorTest, DISABLED_joinBuildAndPropeQueryTest) {
 
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("key", BasicType::INT64);
-    resultSchema->addField("leftValue", BasicType::INT64);
-    resultSchema->addField("rightValue", BasicType::INT64);
+    resultSchema->addField("valueLeft", BasicType::INT64);
+    resultSchema->addField("valueRight", BasicType::INT64);
     auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan buildSideScan = Scan(buildSideMemoryLayout);
-    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>(0)};
-    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>(1)};
+    std::vector<ExpressionPtr> joinBuildKeys = {std::make_shared<ReadFieldExpression>("key")};
+    std::vector<ExpressionPtr> joinBuildValues = {std::make_shared<ReadFieldExpression>("valueLeft")};
     NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 8, 1000);
     std::shared_ptr<NES::Experimental::Hashmap> sharedHashMap = factory.createPtr();
     auto joinBuild = std::make_shared<JoinBuild>(sharedHashMap, joinBuildKeys, joinBuildValues);
@@ -206,9 +206,11 @@ TEST_P(JoinOperatorTest, DISABLED_joinBuildAndPropeQueryTest) {
     Scan probSideScan = Scan(probeSideMemoryLayout);
     std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
     std::vector<IR::Types::StampPtr> valueStamps = {IR::Types::StampFactory::createInt64Stamp()};
-    std::vector<ExpressionPtr> joinProbeKeys = {std::make_shared<ReadFieldExpression>(0)};
-    std::vector<ExpressionPtr> joinProbeValues = {std::make_shared<ReadFieldExpression>(1)};
-    auto joinProb = std::make_shared<JoinProbe>(sharedHashMap, joinProbeKeys, joinProbeValues, keyStamps, valueStamps);
+    std::vector<ExpressionPtr> joinProbeKeys = {std::make_shared<ReadFieldExpression>("key")};
+    std::vector<ExpressionPtr> joinProbeValues = {std::make_shared<ReadFieldExpression>("valueRight")};
+    std::vector<Record::RecordFieldIdentifier> joinProbeResultFields = {"key", "valueLeft", "valueRight"};
+    auto joinProb =
+        std::make_shared<JoinProbe>(sharedHashMap, joinProbeResultFields, joinProbeKeys, joinProbeValues, keyStamps, valueStamps);
     probSideScan.setChild(joinProb);
     auto emit = std::make_shared<Emit>(resultMemoryLayout);
     joinProb->setChild(emit);

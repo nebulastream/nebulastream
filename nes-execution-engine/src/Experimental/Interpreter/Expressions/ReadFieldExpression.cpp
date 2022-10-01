@@ -15,8 +15,8 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-ReadFieldExpression::ReadFieldExpression(uint64_t fieldIndex) : fieldIndex(fieldIndex) {}
+ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field) : field(field) {}
 
-Value<> ReadFieldExpression::execute(Record& record) { return record.read(fieldIndex); }
+Value<> ReadFieldExpression::execute(Record& record) { return record.read(field); }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

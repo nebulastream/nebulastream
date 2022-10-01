@@ -18,8 +18,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/ProxyFunctions.hpp>
-#include <Experimental/Interpreter/Record.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 
@@ -76,7 +76,7 @@ Value<> load(PhysicalTypePtr type, Value<MemRef> memRef) {
 }
 
 Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                          const std::vector<uint64_t>& projections,
+                          const std::vector<Record::RecordFieldIdentifier>& projections,
                           Value<MemRef> bufferAddress,
                           Value<UInt64> recordIndex) {
     // read all fields
@@ -89,13 +89,14 @@ Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLa
 }
 
 Record RecordBuffer::readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                        const std::vector<uint64_t>& projections,
+                                        const std::vector<Record::RecordFieldIdentifier>& projections,
                                         Value<MemRef> bufferAddress,
                                         Value<UInt64> recordIndex) {
     auto columnLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(memoryLayout);
-    std::vector<Value<Any>> fieldValues;
+    Record record;
     for (uint64_t i = 0; i < columnLayout->getSchema()->getSize(); i++) {
-        if (!includeField(projections, i))
+        auto fieldName = columnLayout->getSchema()->fields[i]->getName();
+        if (!includeField(projections, fieldName))
             continue;
         auto fieldSize = columnLayout->getFieldSizes()[i];
         auto columnOffset = columnLayout->getColumnOffsets()[i];
@@ -103,13 +104,13 @@ Record RecordBuffer::readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayo
         auto fieldAddress = bufferAddress + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
         auto value = load(memoryLayout->getPhysicalTypes()[i], memRef);
-        fieldValues.emplace_back(value);
+        record.write(columnLayout->getSchema()->fields[i]->getName(), value);
     }
-    return Record(fieldValues);
+    return record;
 }
 
 Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                   const std::vector<uint64_t>& projections,
+                                   const std::vector<Record::RecordFieldIdentifier>& projections,
                                    Value<MemRef> bufferAddress,
                                    Value<UInt64> recordIndex) {
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
@@ -117,16 +118,18 @@ Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr
     std::vector<Value<Any>> fieldValues;
     fieldValues.reserve(rowLayout->getFieldSizes().size());
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
+    Record record;
     for (uint64_t i = 0; i < rowLayout->getSchema()->getSize(); i++) {
-        if (!includeField(projections, i))
+        auto fieldName = rowLayout->getSchema()->fields[i]->getName();
+        if (!includeField(projections, fieldName))
             continue;
         auto fieldOffset = rowLayout->getFieldOffSets()[i];
         auto fieldAddress = recordOffset + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
         auto value = load(memoryLayout->getPhysicalTypes()[i], memRef);
-        fieldValues.emplace_back(value);
+        record.write(rowLayout->getSchema()->fields[i]->getName(), value);
     }
-    return Record(fieldValues);
+    return record;
 }
 
 void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& rec) {
@@ -135,16 +138,17 @@ void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLay
     auto tupleSize = rowLayout->getTupleSize();
     auto bufferAddress = getBuffer();
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
+    auto schema = memoryLayout->getSchema();
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
         auto fieldOffset = rowLayout->getFieldOffSets()[i];
         auto fieldAddress = recordOffset + fieldOffset;
-        auto value = rec.read(i).as<Int64>();
+        auto value = rec.read(schema->fields[i]->getName()).as<Int64>();
         auto memRef = fieldAddress.as<MemRef>();
         memRef.store(value);
     }
 }
 
-bool RecordBuffer::includeField(const std::vector<uint64_t>& projections, uint64_t fieldIndex) {
+bool RecordBuffer::includeField(const std::vector<Record::RecordFieldIdentifier>& projections, Record::RecordFieldIdentifier fieldIndex) {
     if (projections.empty())
         return true;
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
