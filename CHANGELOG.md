@@ -395,7 +395,7 @@
 
 #### Query Compiler
 
-- IRGraph: Add Print Functionality [\#2834](https://github.com/nebulastream/nebulastream/issues/2834)
+- NESIR: Add Print Functionality [\#2834](https://github.com/nebulastream/nebulastream/issues/2834)
 
 ## [v0.2.49](https://github.com/nebulastream/nebulastream/tree/v0.2.49) (2022-06-18)
 

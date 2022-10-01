@@ -16,7 +16,7 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 

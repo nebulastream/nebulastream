@@ -84,9 +84,9 @@ HashMap::Entry HashMap::findOrCreate(std::vector<Value<>> keys) {
     //for (; !isValid(keys, entry); entry = entry.getNext()) {
     //}
     if (entry.isNull()) {
+        // creates a new entry and place it to the right spot.
         entry = createEntry(keys, hash);
     }
-    // creates a new hashm11.8143ap entry and place it to the right spot.
 
     return entry;
 }
@@ -97,11 +97,11 @@ HashMap::Entry HashMap::findOne(std::vector<Value<>> keys) {
 
     // return entry if it exists
     auto entry = getEntryFromHashTable(hash);
-    //for (; !entry.isNull(); entry = entry.getNext()) {
-    //    if (compareKeys(keys, entry.getKeyPtr())) {
-    //        return entry;
-    //    }
-    //}
+    for (; !entry.isNull(); entry = entry.getNext()) {
+        if (compareKeys(keys, entry.getKeyPtr())) {
+            return entry;
+        }
+    }
     return entry;
 }
 

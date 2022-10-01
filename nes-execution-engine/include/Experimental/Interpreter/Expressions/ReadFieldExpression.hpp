@@ -16,7 +16,7 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
@@ -25,10 +25,10 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
  */
 class ReadFieldExpression : public Expression {
   public:
-    ReadFieldExpression(uint64_t fieldIndex);
+    ReadFieldExpression(Record::RecordFieldIdentifier field);
     Value<> execute(Record& record) override;
   private:
-    const uint64_t fieldIndex;
+    const Record::RecordFieldIdentifier field;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

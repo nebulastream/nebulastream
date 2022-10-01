@@ -145,8 +145,8 @@ TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan scan = Scan(memoryLayout);
-    auto keyField = std::make_shared<ReadFieldExpression>(0);
-    auto aggField = std::make_shared<ReadFieldExpression>(1);
+    auto keyField = std::make_shared<ReadFieldExpression>("key");
+    auto aggField = std::make_shared<ReadFieldExpression>("value");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     std::vector<ExpressionPtr> keys = {keyField, keyField};
@@ -181,7 +181,7 @@ TEST_P(AggregationOperatorTest, aggQueryTest) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
     Scan scan = Scan(memoryLayout);
-    auto aggField = std::make_shared<ReadFieldExpression>(0);
+    auto aggField = std::make_shared<ReadFieldExpression>("f1");
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createUInt64Stamp());
     std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
     auto aggregation = std::make_shared<Aggregation>(functions);

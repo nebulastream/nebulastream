@@ -12,22 +12,25 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Record.hpp>
 #include <Experimental/Interpreter/Exceptions/InterpreterException.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-Record::Record(std::vector<Value<Any>> records): records(std::move(records)) {}
+Record::Record() {}
 
-Value<Any>& Record::read(uint64_t fieldIndex) {
-    if(fieldIndex >= records.size()){
-        throw new InterpreterException("Filed dose not exists");
+Record::Record(std::unordered_map<RecordFieldIdentifier, Value<>>& fields) : fields(std::move(fields)) {}
+
+Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
+    auto fieldValue = fields.find(fieldIdentifier);
+    if (fieldValue == fields.end()) {
+        throw new InterpreterException("Filed " + fieldIdentifier + " dose not exists");
     }
-    return records[fieldIndex];
+    return fieldValue->second;
 }
 
-void Record::write(uint64_t fieldIndex, Value<Any>& value) {
-    records[fieldIndex] = value;
-}
+uint64_t Record::numberOfFields() { return fields.size(); }
 
-}
+void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert(std::make_pair(fieldIndex, value)); }
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

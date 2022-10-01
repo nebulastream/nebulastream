@@ -247,7 +247,7 @@ Value<> NegateOp(const Value<>& input) {
     for (auto& plugin : plugins) {
         auto result = plugin->Negate(input);
         if (result.has_value()) {
-            traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, result->ref, input.ref);
+            traceUnaryOperation(Nautilus::Tracing::OpCode::NEGATE, result->ref, input.ref);
             return result.value();
         }
     };

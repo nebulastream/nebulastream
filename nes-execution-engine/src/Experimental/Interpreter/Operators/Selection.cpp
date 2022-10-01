@@ -13,7 +13,7 @@
 */
 
 #include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Experimental/Interpreter/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {

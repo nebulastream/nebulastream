@@ -17,6 +17,7 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <memory>
 #include <ostream>
@@ -29,7 +30,7 @@ class RecordBuffer {
     explicit RecordBuffer(Value<MemRef> tupleBufferRef);
     ~RecordBuffer() = default;
     Record read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                const std::vector<uint64_t>& projections,
+                const std::vector<Record::RecordFieldIdentifier>& projections,
                 Value<MemRef> bufferAddress,
                 Value<UInt64> recordIndex);
     Value<UInt64> getNumRecords();
@@ -43,15 +44,15 @@ class RecordBuffer {
 
   private:
     Record readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                         const std::vector<uint64_t>& projections,
+                         const std::vector<Record::RecordFieldIdentifier>& projections,
                          Value<MemRef> bufferAddress,
                          Value<UInt64> recordIndex);
     Record readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                              const  std::vector<uint64_t>& projections,
+                              const std::vector<Record::RecordFieldIdentifier>& projections,
                               Value<MemRef> bufferAddress,
                               Value<UInt64> recordIndex);
 
-    bool includeField(const std::vector<uint64_t>& projections, uint64_t fieldIndex);
+    bool includeField(const std::vector<Record::RecordFieldIdentifier>& projections, Record::RecordFieldIdentifier fieldIndex);
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
