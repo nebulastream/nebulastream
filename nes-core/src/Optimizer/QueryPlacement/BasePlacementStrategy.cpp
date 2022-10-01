@@ -1057,22 +1057,35 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getUpstreamTree(TopologyNode
     return answer;
 }
 
+
+
 //TODO solve all cases of random values
 
 std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
                                                                          ExecutionNodePtr executionNode, int replicas, QueryId queryId){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
-    float downstreamCost = 0;
-
-    //Get the highest possible operator cost of a parent node because this is the worst case load put on replicas
-    for(auto& parent : executionNode->getParents()){
-        int parentCost = parent->as<ExecutionNode>()->getOccupiedResources(queryId);
-        if (parentCost > downstreamCost){
-            downstreamCost = parentCost;
-        }
-    }
     std::vector<ExecutionNodePtr> downstreamNodes;
+    for(auto& rootNode : globalExecutionPlan->getRootNodes()){
+        std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
+        downstreamNodes.insert(downstreamNodes.end(), x.begin(), x.end());
+    }
+
+
+    if(downstreamNodes.size() < static_cast<size_t>(replicas) && ){
+        return {-1,-1,-1};
+    }
+
+    auto maxCost= std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
+                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
+                                {
+                                    return a->getOccupiedResources(queryId) < b->getOccupiedResources(queryId);
+                                } );
+
+    ExecutionNodePtr primary = downstreamNodes[std::distance(downstreamNodes.begin(), maxCost)];
+    float downstreamCost = primary->getOccupiedResources(queryId);
+
+
     std::map<float,int> ranks;
     std::vector<float> linkWeights(downstreamNodes.size());
 
@@ -1096,7 +1109,6 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
 
     //Sort linkWeights to downstream nodes in descending order so that the first n can be used as replicas.
     std::sort(linkWeights.begin(), linkWeights.end(), std::greater<float>());
-
 
 
     float procCost = 0;

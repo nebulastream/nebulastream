@@ -437,7 +437,7 @@ TEST_F(QueryPlacementTest, getDepthTest){
     setupSimpleQuery();
 
     EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(9),0),3);
-    EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(10),0),2);
+    ASSERT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(10),0),2);
     EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(16),0),4);
 }
 
@@ -665,8 +665,6 @@ TEST_F(QueryPlacementTest, calcUpstreamBackupTest){
     topology->addNewTopologyNodeAsChild(node14, node16);
 
     topology->addNewTopologyNodeAsChild(node7, node15);
-
-
 
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64)"
@@ -899,7 +897,7 @@ TEST_F(QueryPlacementTest, calcCheckpointingTest){
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
-    NES_INFO("\n"+globalExecutionPlan->getAsString())
+    NES_INFO("\n"+globalExecutionPlan->getAsString());
 
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
     Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
@@ -922,6 +920,107 @@ TEST_F(QueryPlacementTest, calcCheckpointingTest){
 }
 
 TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
+    topology = Topology::create();
+
+    TopologyNodePtr node1 = TopologyNode::create(1, "localhost", 123, 124, 40);
+    topology->setAsRoot(node1);
+
+    TopologyNodePtr node2 = TopologyNode::create(2, "localhost", 125, 126, 30);
+    TopologyNodePtr node3 = TopologyNode::create(3, "localhost", 127, 128, 32);
+    TopologyNodePtr node4 = TopologyNode::create(4, "localhost", 129, 130, 22);
+    TopologyNodePtr node5 = TopologyNode::create(5, "localhost", 131, 132, 24);
+    TopologyNodePtr node6 = TopologyNode::create(6, "localhost", 133, 134, 20);
+    TopologyNodePtr node7 = TopologyNode::create(7, "localhost", 135, 136, 26);
+    TopologyNodePtr node8 = TopologyNode::create(8, "localhost", 137, 138, 14);
+    TopologyNodePtr node9 = TopologyNode::create(9, "localhost", 139, 140, 12);
+    TopologyNodePtr node10 = TopologyNode::create(10, "localhost", 141, 142, 19);
+    TopologyNodePtr node11 = TopologyNode::create(11, "localhost", 143, 144, 12);
+    TopologyNodePtr node12 = TopologyNode::create(12, "localhost", 145, 146, 10);
+    TopologyNodePtr node13 = TopologyNode::create(13, "localhost", 147, 148, 14);
+    TopologyNodePtr node14 = TopologyNode::create(14, "localhost", 149, 150, 8);
+    TopologyNodePtr node15 = TopologyNode::create(15, "localhost", 151, 152, 8);
+    TopologyNodePtr node16 = TopologyNode::create(16, "localhost", 153, 154, 4);
+
+
+    topology->addNewTopologyNodeAsChild(node1, node2);
+    topology->addNewTopologyNodeAsChild(node1, node3);
+
+    topology->addNewTopologyNodeAsChild(node2, node4);
+    topology->addNewTopologyNodeAsChild(node2, node5);
+
+    topology->addNewTopologyNodeAsChild(node3, node6);
+    topology->addNewTopologyNodeAsChild(node3, node7);
+    topology->addNewTopologyNodeAsChild(node3, node10);
+
+    topology->addNewTopologyNodeAsChild(node4, node8);
+    topology->addNewTopologyNodeAsChild(node4, node9);
+    topology->addNewTopologyNodeAsChild(node4, node10);
+
+    topology->addNewTopologyNodeAsChild(node5, node9);
+    topology->addNewTopologyNodeAsChild(node5, node10);
+
+    topology->addNewTopologyNodeAsChild(node7, node11);
+    topology->addNewTopologyNodeAsChild(node7, node12);
+    topology->addNewTopologyNodeAsChild(node7, node13);
+
+    topology->addNewTopologyNodeAsChild(node10, node14);
+    topology->addNewTopologyNodeAsChild(node10, node15);
+
+    topology->addNewTopologyNodeAsChild(node14, node16);
+
+    topology->addNewTopologyNodeAsChild(node7, node15);
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64)"
+                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";;
+    const std::string sourceName = "car";
+
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(0);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType2->setGatheringInterval(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(sourceName, "test1", csvSourceType);
+
+    SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node8);
+    SourceCatalogEntryPtr sourceCatalogEntry2 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node9);
+    SourceCatalogEntryPtr sourceCatalogEntry3 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node16);
+    SourceCatalogEntryPtr sourceCatalogEntry4 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node15);
+    SourceCatalogEntryPtr sourceCatalogEntry5 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node6);
+    SourceCatalogEntryPtr sourceCatalogEntry6 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node11);
+    SourceCatalogEntryPtr sourceCatalogEntry7 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node12);
+    SourceCatalogEntryPtr sourceCatalogEntry8 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node13);
+
+    SourceCatalogEntryPtr sourceCatalogEntry10 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node5);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry4);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry5);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry6);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry7);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry8);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry10);
+
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite =
@@ -933,8 +1032,18 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     auto globalQueryPlan = GlobalQueryPlan::create();
 
-    auto queryPlan1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create()).getQueryPlan();
-    queryPlan1->setQueryId(1);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
 
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
     queryPlan1 = typeInferencePhase->execute(queryPlan1);
@@ -943,23 +1052,6 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
     z3InferencePhase->execute(queryPlan1);
 
     globalQueryPlan->addQueryPlan(queryPlan1);
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
-
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-
-    std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
-    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[0]);
-    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
-
-    // new Query
-    auto queryPlan2 = Query::from("car")
-                          .filter(Attribute("id") < 45)
-                          .map(Attribute("newId") = 2)
-                          .sink(PrintSinkDescriptor::create())
-                          .getQueryPlan();
-    queryPlan2->setQueryId(2);
 
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
@@ -968,11 +1060,45 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
     z3InferencePhase->execute(queryPlan2);
 
     globalQueryPlan->addQueryPlan(queryPlan2);
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
+    //execute
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[0]);
+    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[1]);
+    updatedSharedQMToDeploy[1]->setStatus(SharedQueryPlanStatus::Deployed);
+
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getRootNodes()[0], queryId1);
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getRootNodes()[0], queryId2);
+    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId1);
+    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId2);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId1);
+
+    int replicas = 4;
+
+    for(auto& node : executionNodes){
+
+        std::tuple<float,float,float> activeStandbyResult =
+            Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId1);
+
+        float procCost = std::get<0>(activeStandbyResult);
+        float networkingCost = std::get<1>(activeStandbyResult);
+        float memoryCost = std::get<2>(activeStandbyResult);
+
+        if((procCost + networkingCost + memoryCost) != -3){
+            NES_INFO("\nACTIVE STANDBY COST OF NODE#" + std::to_string(node->getId()) + ": [" +
+                     std::to_string(procCost) + ", " + std::to_string(networkingCost) +
+                     ", " + std::to_string(memoryCost) + "]");
+        }
+    }
 
 }
 
