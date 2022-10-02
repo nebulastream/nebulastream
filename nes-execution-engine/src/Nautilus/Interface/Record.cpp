@@ -19,7 +19,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Record::Record() {}
 
-Record::Record(std::unordered_map<RecordFieldIdentifier, Value<>>& fields) : fields(std::move(fields)) {}
+Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
 
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
     auto fieldValue = fields.find(fieldIdentifier);

@@ -17,30 +17,15 @@
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
 #include <API/Schema.hpp>
-#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
-#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
-#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
-#include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
-#include <Experimental/Runtime/RuntimeExecutionContext.hpp>
-#include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -63,7 +48,6 @@ class ProxyInliningTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProxyInliningTest.log", NES::LogLevel::LOG_DEBUG);
@@ -122,7 +106,6 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
     std::cout << *execution.get() << std::endl;
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
-    loopInferencePhase.apply(ir);
     auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     assert(engine);
 }

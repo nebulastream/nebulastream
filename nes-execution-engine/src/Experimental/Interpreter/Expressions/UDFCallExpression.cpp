@@ -14,7 +14,7 @@
 
 #ifdef USE_JNI
 
-#include "Experimental/Interpreter/FunctionCall.hpp"
+#include "Nautilus/Interface/FunctionCall.hpp"
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <jni.h>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -131,7 +131,7 @@ Value<> UDFCallExpression::execute(Record& record) {
 #ifdef USE_BABELFISH
 
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments, std::string, std::string, std::string)

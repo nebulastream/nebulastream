@@ -40,7 +40,7 @@
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -56,7 +56,6 @@
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #endif
-#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -86,7 +85,6 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
