@@ -30,14 +30,14 @@ class Record {
   public:
     using RecordFieldIdentifier = std::string;
     explicit Record();
-    explicit Record(std::unordered_map<RecordFieldIdentifier, Value<>>&  fields);
+    explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
     ~Record() = default;
     Value<>& read(RecordFieldIdentifier fieldName);
     void write(RecordFieldIdentifier fieldName, Value<>& value);
     uint64_t numberOfFields();
 
   private:
-    std::unordered_map<RecordFieldIdentifier, Value<>> fields;
+    std::map<RecordFieldIdentifier, Value<>> fields;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -15,10 +15,9 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
-#include <Experimental/NESIR/ProxyFunctions.hpp>
+#include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
@@ -37,6 +36,7 @@
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
@@ -48,14 +48,12 @@
 #include <mlir/IR/PatternMatch.h>
 #include <unordered_set>
 
-
-using namespace NES::Nautilus;
 namespace NES::Nautilus::Backends::MLIR {
 
 class MLIRLoweringProvider {
   public:
-    // A ValueFrame is hashmap that binds operation names to MLIR values. 
-    // It is used to 'pass' values between mlir operations. 
+    // A ValueFrame is hashmap that binds operation names to MLIR values.
+    // It is used to 'pass' values between mlir operations.
     // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
     using ValueFrame = Frame<std::string, mlir::Value>;
 
@@ -97,7 +95,7 @@ class MLIRLoweringProvider {
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
-    std::unordered_map<std::string, mlir::Block*> blockMapping; //Keeps track of already created basic blocks.
+    std::unordered_map<std::string, mlir::Block*> blockMapping;//Keeps track of already created basic blocks.
 
     /**
      * @brief Generates MLIR from a NESIR basic block. Iterates over basic block operations and calls generate.
