@@ -19,6 +19,15 @@
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/Passes.h>
+// MLIR Lowering Passes
+#include <mlir/Conversion/LLVMCommon/LoweringOptions.h>
+#include <mlir/Conversion/VectorToLLVM/ConvertVectorToLLVM.h>
+#include <mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h>
+#include <mlir/Conversion/AffineToStandard/AffineToStandard.h>
+#include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+// MLIR Opt passes
+#include <mlir/Dialect/Affine/Passes.h>
+#include <mlir/Dialect/SCF/Passes.h>
 
 namespace NES::Nautilus::Backends::MLIR {
 /**
@@ -63,6 +72,18 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
         }
     } else {
         passManager.addPass(mlir::createInlinerPass());
+        passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
+        passManager.addPass(mlir::createCSEPass());
+        passManager.addPass(mlir::createControlFlowSinkPass());
+        passManager.addPass(mlir::createCanonicalizerPass());
+        // passManager.addPass(mlir::createAffineParallelizePass()); //Either below or this
+        // passManager.addPass(mlir::createSuperVectorizePass(8));
+        // passManager.addPass(mlir::createLoopUnrollPass());
+        // passManager.addPass(mlir::createLoopTilingPass());
+        // passManager.addPass(mlir::createLoopFusionPass());
+        // passManager.addPass(mlir::createForLoopPeelingPass());
+        // passManager.addPass(mlir::createSCFForLoopCanonicalizationPass());
+        // passManager.addPass(mlir::createForLoopSpecializationPass());
     }
     // Apply lowering passes.
     if(!loweringPasses.empty()) {
@@ -70,8 +91,17 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
             passManager.addPass(getMLIRLoweringPass(loweringPass));
         }
     } else {
-        passManager.addPass(mlir::createLowerToCFGPass());
-        passManager.addPass(mlir::createLowerToLLVMPass());
+    //     passManager.addPass(mlir::createLowerToCFGPass());
+    //     passManager.addPass(mlir::createLowerToLLVMPass());
+        passManager.addPass(mlir::createLowerAffinePass());
+        passManager.addPass(mlir::createLowerToCFGPass());//SCF
+        passManager.addPass(mlir::createConvertVectorToLLVMPass());
+        mlir::LowerToLLVMOptions llvmLoweringOptions(module->getContext()); 
+        // mlir::LowerToLLVMOptions llvmLoweringOptions(&context);
+        llvmLoweringOptions.emitCWrappers = true;
+        passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
+        passManager.addPass(mlir::createMemRefToLLVMPass()); //Needs to be second to last for unrealized pass to work
+        passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
     }
 
     // Run passes.
@@ -82,3 +112,5 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
     return 0;
 }
 }// namespace NES::Nautilus::Backends::MLIR
+
+    

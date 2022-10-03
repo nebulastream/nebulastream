@@ -32,7 +32,7 @@ class LLVMIROptimizer {
     LLVMIROptimizer();  // Disable default constructor
     ~LLVMIROptimizer(); // Disable default destructor
 
-    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions);
+    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool inlining);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_

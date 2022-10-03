@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/Dialect/Math/IR/Math.h>
+#include <mlir/Dialect/Vector/IR/VectorOps.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
+#include <mlir/Dialect/Affine/IR/AffineOps.h>
+#include <mlir/IR/MLIRContext.h>
 #include <mlir/Parser.h>
 
 
@@ -37,8 +45,8 @@ void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirM
 }
 
 int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& moduleString) {
-    mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
+    mlir::OwningOpRef<mlir::ModuleOp> module;
     module = mlir::parseSourceString(mlirString, &context);
 
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
@@ -74,4 +82,56 @@ MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGrap
     return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
                                                 loweringProvider->getJitProxyTargetAddresses());
 }
+
+mlir::OwningOpRef<mlir::ModuleOp>
+MLIRUtility::loadMLIRModuleFromFilePath(const std::string &mlirFilePath, mlir::MLIRContext &context) {
+    // mlir::MLIRContext context;
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::math::MathDialect>();
+    context.loadDialect<mlir::AffineDialect>();
+    context.loadDialect<mlir::vector::VectorDialect>();
+    context.loadDialect<mlir::memref::MemRefDialect>();
+    assert(!mlirFilePath.empty() && "No MLIR filename to read from given.");
+    mlir::OwningOpRef<mlir::ModuleOp> module;
+    module = mlir::parseSourceFile(mlirFilePath, &context);
+    return module;
+}
+
+mlir::OwningOpRef<mlir::ModuleOp>
+MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context) {
+    // mlir::MLIRContext context;
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::math::MathDialect>();
+    context.loadDialect<mlir::AffineDialect>();
+    context.loadDialect<mlir::vector::VectorDialect>();
+    context.loadDialect<mlir::memref::MemRefDialect>();
+    auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
+    auto module = loweringProvider->generateModuleFromNESIR(ir);
+    // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
+    }
+    return module;
+}
+
+std::unique_ptr<mlir::ExecutionEngine> 
+MLIRUtility::compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, bool inlining) {
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
+    }
+
+    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    // Todo enable toggling inlining
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(inlining);
+
+    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(*module->getContext());
+    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
+                                                loweringProvider->getJitProxyTargetAddresses());
+}
+
 }// namespace NES::Nautilus::Backends::MLIR

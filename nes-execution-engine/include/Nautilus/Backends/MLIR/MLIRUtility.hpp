@@ -54,6 +54,24 @@ class MLIRUtility {
      */
     static std::unique_ptr<mlir::ExecutionEngine> 
     compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
+    
+    //Todo doc
+    static mlir::OwningOpRef<mlir::ModuleOp>
+    loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context);
+
+    /**
+     * @brief Takes a path to an MLIR module, lowers it to MLIR, optimizes it, and returns an MLIR ExecutionEngine.
+     * @param mlirFilePath: path to MLIR file with MLIR code that is loaded.
+     * @return mlir::OwningOpRef<mlir::ModuleOp>: MLIR Module created from provided filePath.
+     */
+    static mlir::OwningOpRef<mlir::ModuleOp> loadMLIRModuleFromFilePath(const std::string &mlirFilePath, mlir::MLIRContext &context);
+
+    /**
+     * @brief Takes a path to an MLIR module, lowers it to MLIR, optimizes it, and returns an MLIR ExecutionEngine.
+     * @param mlirFilePath: path to MLIR file with MLIR code that is loaded.
+     * @return mlir::OwningOpRef<mlir::ModuleOp>: MLIR Module created from provided filePath.
+     */
+    static std::unique_ptr<mlir::ExecutionEngine> compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, bool inlining = false);
 };
 
 }// namespace NES::Nautilus::Backends::MLIR

@@ -160,7 +160,7 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
     ValueFrame firstFrame;
     generateMLIR(nesIR->getRootOperation(), firstFrame);
-    theModule->dump();
+    // theModule->dump();
     
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
