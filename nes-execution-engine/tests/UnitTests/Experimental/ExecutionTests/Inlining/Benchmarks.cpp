@@ -228,13 +228,14 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
     //Setup timing, and results logging.
     const bool PERFORM_INLINING = true;
     const int NUM_ITERATIONS = 10;
-    const int NUM_SNAPSHOTS = 7;
+    const int NUM_SNAPSHOTS = 8; // 7 -> 8
     const std::string RESULTS_FILE_NAME = "scanAndMap.csv";
     const std::vector<std::string> snapshotNames {
         "Symbolic Execution Trace     ",
         "SSA Phase                    ",
         "IR Created                   ",
         "MLIR Created                 ",
+        "MLIR Lowered And Optimized   ",
         "MLIR Compiled to Function Ptr",
         "Executed                     ",
         "Overall Time                 "
@@ -243,10 +244,10 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
 
     // Execute workload NUM_ITERATIONS number of times.
     for(int i = 0; i < NUM_ITERATIONS; ++i) {
-        Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
+        auto timer = std::make_shared<Timer<>>("Scan Map Benchmark Timer Nr." + std::to_string(i));
 
         // Set up empty values for symbolic execution
-        timer.start();
+        timer->start();
         auto inPtr = Value<MemRef>(nullptr);
         auto outPtr = Value<MemRef>(nullptr);
         inPtr.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
@@ -262,41 +263,41 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
             // return standardDeviationAggregation();
         });
         std::cout << "Created Execution Trace.\n";
-        timer.snapshot(snapshotNames.at(0));
+        timer->snapshot(snapshotNames.at(0));
 
         // Create SSA from trace.
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        timer.snapshot(snapshotNames.at(1));
+        timer->snapshot(snapshotNames.at(1));
 
         // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
-        timer.snapshot(snapshotNames.at(2));
+        timer->snapshot(snapshotNames.at(2));
 
         // Create MLIR
         mlir::MLIRContext context;
-        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context);
-        timer.snapshot(snapshotNames.at(3));
+        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context, timer);
+        timer->snapshot(snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
         auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, PERFORM_INLINING); //Todo toggle inlining
         auto function = (int64_t(*)(int, void*, void*)) engine->lookup("execute").get();
-        timer.snapshot(snapshotNames.at(4));
+        timer->snapshot(snapshotNames.at(5));
 
         // Execute function
         int64_t scanMapResult = function(buffer.getNumberOfTuples(), buffer.getBuffer(), outBuffer.getBuffer());
-        timer.snapshot(snapshotNames.at(5));
+        timer->snapshot(snapshotNames.at(6));
 
         // Print aggregation result to force execution.
         std::cout << "Scan Map Add Result: " << scanMapResult << '\n';
 
         // Wrap up timing
-        timer.pause();
-        NES_DEBUG("Overall time: " << timer.getPrintTime());
-        auto snapshots = timer.getSnapshots();
+        timer->pause();
+        NES_DEBUG("Overall time: " << timer->getPrintTime());
+        auto snapshots = timer->getSnapshots();
         for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer.getPrintTime());
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
     testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 }

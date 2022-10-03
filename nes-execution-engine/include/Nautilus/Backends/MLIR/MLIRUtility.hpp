@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
+#include "Util/Timer.hpp"
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
@@ -57,7 +58,8 @@ class MLIRUtility {
     
     //Todo doc
     static mlir::OwningOpRef<mlir::ModuleOp>
-    loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context);
+    loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context, 
+                            std::shared_ptr<Timer<>> parentTimer = nullptr);
 
     /**
      * @brief Takes a path to an MLIR module, lowers it to MLIR, optimizes it, and returns an MLIR ExecutionEngine.
@@ -71,7 +73,8 @@ class MLIRUtility {
      * @param mlirFilePath: path to MLIR file with MLIR code that is loaded.
      * @return mlir::OwningOpRef<mlir::ModuleOp>: MLIR Module created from provided filePath.
      */
-    static std::unique_ptr<mlir::ExecutionEngine> compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, bool inlining = false);
+    static std::unique_ptr<mlir::ExecutionEngine> compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
+    bool inlining = false);
 };
 
 }// namespace NES::Nautilus::Backends::MLIR

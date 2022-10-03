@@ -100,7 +100,8 @@ MLIRUtility::loadMLIRModuleFromFilePath(const std::string &mlirFilePath, mlir::M
 }
 
 mlir::OwningOpRef<mlir::ModuleOp>
-MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context) {
+MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context, 
+                                     std::shared_ptr<Timer<>> parentTimer) {
     // mlir::MLIRContext context;
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
@@ -112,6 +113,7 @@ MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph>
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto module = loweringProvider->generateModuleFromNESIR(ir);
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    if(parentTimer) { parentTimer->snapshot("MLIR Generation"); }
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
