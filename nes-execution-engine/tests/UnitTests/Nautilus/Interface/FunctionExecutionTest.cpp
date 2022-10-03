@@ -25,7 +25,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
 namespace NES::Nautilus {
     
 class FunctionExecutionTest : public testing::Test {

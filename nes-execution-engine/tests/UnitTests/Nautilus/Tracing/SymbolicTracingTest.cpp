@@ -24,7 +24,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
 namespace NES::Nautilus::Tracing {
 class SymbolicTracingTest : public testing::Test {
   public:
