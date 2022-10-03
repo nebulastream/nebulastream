@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
+#ifndef NES_NAUTILUS_INTERFACE_RECORD_HPP_
+#define NES_NAUTILUS_INTERFACE_RECORD_HPP_
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <map>
@@ -42,4 +42,4 @@ class Record {
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_
+#endif//NES_NAUTILUS_INTERFACE_RECORD_HPP_

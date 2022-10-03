@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
-#include "Any.hpp"
-#include "Nautilus/IR/Types/StampFactory.hpp"
+#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#define NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /**
@@ -41,4 +41,4 @@ class Boolean : public TraceableType {
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
+#endif//NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_

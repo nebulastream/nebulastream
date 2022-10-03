@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_MEMREF_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_MEMREF_HPP_
+#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
+#define NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -55,4 +55,4 @@ class MemRef : public TraceableType {
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_MEMREF_HPP_
+#endif//NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_

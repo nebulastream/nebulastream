@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
+#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#define NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
@@ -508,4 +508,4 @@ auto inline operator||(const LHS& left, const RHS& right) {
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
+#endif//NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
