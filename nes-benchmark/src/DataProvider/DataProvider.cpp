@@ -16,13 +16,14 @@ limitations under the License.
 
 #include <DataProvider/DataProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstring>
 
 namespace NES::DataProviding {
     std::shared_ptr<DataProvider>
     NES::DataProviding::DataProvider::createProvider(uint64_t id,
                                                      NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,
-                                                     std::vector<Runtime::TupleBuffer> preAllocatedBuffers) {
+                                                     std::vector<Runtime::TupleBuffer> buffers) {
         DataProviderMode dataProviderMode;
         if (e2EBenchmarkConfig.getConfigOverAllRuns().dataProviderMode->getValue() == "ZeroCopy") {
             dataProviderMode = DataProviderMode::ZERO_COPY;
@@ -34,10 +35,10 @@ namespace NES::DataProviding {
         }
 
         // Later on we might have a second data provider. For now all data providers are of type InternalProvider
-        return std::make_shared<InternalProvider>(id, dataProviderMode, preAllocatedBuffers);
+        return std::make_shared<InternalProvider>(id, dataProviderMode, buffers);
     }
 
-    DataProvider::DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode) : id(id), providerMode(providerMode) {}
+    DataProvider::DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode) : id(id), providerMode(providerMode){}
 
     void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId) {
         auto providedBuffer = readNextBuffer(sourceId);

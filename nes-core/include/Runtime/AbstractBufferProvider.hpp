@@ -15,6 +15,7 @@
 #define NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <vector>
 #include <chrono>
 #include <cstddef>
 #include <optional>
@@ -81,6 +82,7 @@ class AbstractBufferProvider {
      * @return a new buffer
      */
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+
 };
 
 class AbstractPoolProvider {

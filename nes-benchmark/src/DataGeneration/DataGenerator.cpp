@@ -38,8 +38,8 @@ namespace NES::DataGeneration {
         return nullptr;
     }
 
-    NES::Runtime::TupleBuffer DataGenerator::allocateBuffer(size_t bufferSize) {
-        return bufferManager->getUnpooledBuffer(bufferSize).value();
+    NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() {
+        return bufferManager->getBufferBlocking();
     }
 
     std::shared_ptr<DataGenerator> DataGenerator::createGeneratorByName(std::string name,

@@ -31,8 +31,8 @@ namespace NES::DataProviding {
          * @param providerMode
          * @param preAllocatedBuffers
          */
-        InternalProvider(uint64_t id, DataProviderMode providerMode,
-                         std::vector<Runtime::TupleBuffer> preAllocatedBuffers);
+        InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode,
+                         std::vector<Runtime::TupleBuffer> buffers);
         /**
          * @brief
          */

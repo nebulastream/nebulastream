@@ -215,6 +215,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
 
+
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     std::unique_lock lock(unpooledBuffersMutex);
     UnpooledBufferHolder probe(bufferSize);
