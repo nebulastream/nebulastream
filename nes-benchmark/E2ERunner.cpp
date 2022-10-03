@@ -105,10 +105,6 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
-    // Creates the data providers
-    NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>();
-    auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
-
 
     std::stringstream outputCsvStream;
     outputCsvStream << "BM_NAME,NES_VERSION,SchemaSizeInB";
@@ -120,6 +116,11 @@ int main(int argc, const char* argv[]) {
     int portOffset = 0;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
+        // Creates the data providers
+        NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+                                                                                                     configPerRun.numBuffersToProduce->getValue());
+        auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+
         auto coordinatorConf = NES::Configurations::CoordinatorConfiguration::create();
         auto workerConf = NES::Configurations::WorkerConfiguration::create();
 
@@ -133,8 +134,6 @@ int main(int argc, const char* argv[]) {
         // Worker configurations
         coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerThreads->getValue();
         coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
-        coordinatorConf->worker.numberOfBuffersPerWorker = configPerRun.numBuffersToProduce->getValue();
-        coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numBuffersToProduce->getValue();
 
         coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
         coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
@@ -152,6 +151,7 @@ int main(int argc, const char* argv[]) {
                                                                          e2EBenchmarkConfig,
                                                                          buffers);
 
+
         size_t taskQueueId = 0;
         size_t queryIndex = 0;
         size_t generatorQueueIndex = 0;
@@ -164,9 +164,11 @@ int main(int argc, const char* argv[]) {
         };
         NES::LambdaSourceTypePtr sourceConf = NES::LambdaSourceType::create(func,
                                                                             configPerRun.numBuffersToProduce->getValue(),
-                                                                            0, NES::GatheringMode::INTERVAL_MODE,
+                                                                            /* gatheringInterval */0,
+                                                                            NES::GatheringMode::INTERVAL_MODE,
                                                                             sourceAffinity,
                                                                             taskQueueId);
+
         NES::LogicalSourcePtr logicalSource = NES::LogicalSource::create(logicalStreamName, schema);
         auto physicalSource = NES::PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConf);
         coordinatorConf->logicalSources.add(logicalSource);
@@ -255,22 +257,79 @@ int main(int argc, const char* argv[]) {
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         }
 
-        // Shutting everything down
-        NES_INFO("E2ERunner: Shutting everything down...");
-        buffers.clear();
+
+
 
         // Removing query from the system
         NES_INFO("E2ERunner: Removing query from the system...");
         NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+
+
+        auto timeout = 30;
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
+            if (queryCatalog->getEntryForQuery(queryId)->getQueryStatus() == NES::QueryStatus::Stopped) {
+                NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
+                break;
+            }
+            NES_DEBUG("checkStoppedOrTimeout: status not reached for "
+                      << queryId << " as status is=" << queryCatalog->getEntryForQuery(queryId)->getQueryStatusAsString());
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
+        NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+
+        NES_INFO("E2ERunner: stopping data provider...");
         provider->stop();
-        coordinator->stopCoordinator(true);
+
+
+        std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+        std::thread waitThreadCoordinator([&coordinator, stopPromiseCord]() {
+            std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+            bool satisfied = false;
+            while (!satisfied) {
+                switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
+                    case std::future_status::ready: {
+                        satisfied = true;
+                    }
+                    case std::future_status::timeout:
+                    case std::future_status::deferred: {
+                        if (coordinator->isCoordinatorRunning()) {
+                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "// todo <-
+                                        // worker or
+                                        // coordinator
+                                        // here?
+                                        << coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
+                        } else {
+                            NES_WARNING("worker stopped");
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+
+
+        NES_INFO("E2ERunner: Stopping coordinator...");
+        bool retStoppingCoord = coordinator->stopCoordinator(true);
+        stopPromiseCord->set_value(retStoppingCoord);
+        NES_ASSERT(stopPromiseCord, stopPromiseCord);
+
+        waitThreadCoordinator.join();
+        NES_INFO("E2ERunner: Coordinator stopped!");
 
         coordinator.reset();
         queryService.reset();
         queryCatalog.reset();
         provider.reset();
-        buffers.clear();
+        sourceConf->reset();
+        coordinatorConf.reset();
+        workerConf.reset();
+        physicalSource.reset();
 
+
+        NES_INFO("E2ERunner: Done removing query from the system!");
 
 
 
@@ -296,6 +355,7 @@ int main(int argc, const char* argv[]) {
         ofs.close();
 
         outputCsvStream.clear();
+        outputCsvStream.str("");
     }
 
 }

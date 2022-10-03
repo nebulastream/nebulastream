@@ -35,7 +35,7 @@ namespace NES::DataGeneration {
          * randomly from a uniform distribution in the range [minValue, maxValue]
          * @param numberOfBuffers
          * @param bufferSize
-         * @return
+         * @return success
          */
         std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
 

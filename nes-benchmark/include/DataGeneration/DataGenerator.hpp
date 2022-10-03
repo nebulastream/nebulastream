@@ -58,11 +58,10 @@ namespace NES::DataGeneration {
 
       protected:
         /**
-         * @brief allocates a buffer
-         * @param bufferSize
+         * @brief allocates a buffer from the bufferManager
          * @return TupleBuffer
          */
-        Runtime::TupleBuffer allocateBuffer(size_t bufferSize);
+        Runtime::TupleBuffer allocateBuffer();
 
         /**
          * @brief
@@ -71,7 +70,7 @@ namespace NES::DataGeneration {
          */
         Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
-      protected:
+      private:
         Runtime::BufferManagerPtr bufferManager;
     };
 }

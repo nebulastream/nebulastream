@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef NES_DATAPROVIDER_HPP
 #define NES_DATAPROVIDER_HPP
 
+#include <Runtime/BufferManager.hpp>
 #include <DataProvider/TupleBufferHolder.hpp>
 #include <E2EBenchmarkConfig.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -36,7 +37,7 @@ namespace NES::DataProviding {
          * @param id
          * @param providerMode
          */
-        explicit DataProvider(uint64_t id, DataProviderMode providerMode);
+        explicit DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode);
 
         /**
          * @brief default destructor
@@ -64,7 +65,7 @@ namespace NES::DataProviding {
          */
         static std::shared_ptr<DataProvider> createProvider(uint64_t id,
                                                             NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,
-                                                            std::vector<Runtime::TupleBuffer> preAllocatedBuffers);
+                                                            std::vector<Runtime::TupleBuffer> buffers);
 
         /**
          * @brief starts this provider
