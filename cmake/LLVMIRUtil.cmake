@@ -251,7 +251,7 @@ function(llvmir_attach_opt_pass_target)
     set(FULL_OUT_LLVMIR_FILE "${WORK_DIR}/${OUT_LLVMIR_FILE}")
 
     add_custom_command(OUTPUT ${FULL_OUT_LLVMIR_FILE}
-      COMMAND ${LLVMIR_OPT} 
+      COMMAND ${LLVMIR_OPT}
       ARGS
       ${LLVMIR_ATTACH_UNPARSED_ARGUMENTS} ${INFILE} -o ${FULL_OUT_LLVMIR_FILE}
       DEPENDS ${INFILE}
