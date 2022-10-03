@@ -19,7 +19,7 @@
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 extern "C" void* getSliceState(void* state, int64_t ts) {
     auto groupedAggregationState = (GroupedWindowAggregationState*) state;
@@ -79,4 +79,4 @@ void WindowAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {
     */
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

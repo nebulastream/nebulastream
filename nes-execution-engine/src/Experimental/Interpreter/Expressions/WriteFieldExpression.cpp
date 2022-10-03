@@ -16,7 +16,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
     : field(field), subExpression(subExpression) {}
 Value<> WriteFieldExpression::execute(Record& record) {
@@ -25,4 +25,4 @@ Value<> WriteFieldExpression::execute(Record& record) {
     return newValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

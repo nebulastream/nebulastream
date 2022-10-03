@@ -6,7 +6,7 @@
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class GlobalAvgState : public AggregationState {
   public:
@@ -37,5 +37,5 @@ class AvgFunction : public AggregationFunction {
     ExpressionPtr expression;
     Nautilus::IR::Types::StampPtr stamp;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_AVGFUNCTION_HPP_

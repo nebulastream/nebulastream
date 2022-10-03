@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <regex>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 void traceFunctionCall(Nautilus::Tracing::ValueRef resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
     auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
@@ -33,4 +33,4 @@ void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& a
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -2,7 +2,7 @@
 #include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 extern "C" void* getJoinState(void* state) {
     auto joinState = (GlobalJoinState*) state;
@@ -48,4 +48,4 @@ void JoinBuild::execute(RuntimeExecutionContext& executionCtx, Record& record) c
 
 void JoinBuild::close(RuntimeExecutionContext&, RecordBuffer&) const {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

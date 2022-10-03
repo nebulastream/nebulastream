@@ -22,7 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-using namespace NES::ExecutionEngine::Experimental::Interpreter;
+using namespace NES::Nautilus;
 namespace NES::Nautilus::IR {
 
 class LoopInferencePhaseTest : public testing::Test {

@@ -60,6 +60,6 @@ class ExecutionTrace {
     std::vector<ValueRef> arguments;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_

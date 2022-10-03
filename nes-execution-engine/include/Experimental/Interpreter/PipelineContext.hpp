@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_PIPELINECONTEXT_HPP_
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class RecordBuffer;
 class Operator;
 class OperatorState;
@@ -34,5 +34,5 @@ class PipelineContext {
     std::unordered_map<const Operator*, uint32_t> operatorIndexMap;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_PIPELINECONTEXT_HPP_

@@ -39,7 +39,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief This test tests query execution using th mlir backend
@@ -111,4 +111,4 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
 }
 
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

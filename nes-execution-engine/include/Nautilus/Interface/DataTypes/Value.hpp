@@ -27,17 +27,17 @@
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
-Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp);
-void TraceConstOperation(const Interpreter::AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference);
-void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
-bool traceBoolOperation(const Interpreter::AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
-void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
-                          const Nautilus::Tracing::ValueRef& resultRef,
-                          const Nautilus::Tracing::ValueRef& leftRef,
-                          const Nautilus::Tracing::ValueRef& rightRef);
-void traceUnaryOperation(const Nautilus::Tracing::OpCode& op, const Nautilus::Tracing::ValueRef& resultRef, const Nautilus::Tracing::ValueRef& inputRef);
+Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
+void TraceConstOperation(const AnyPtr& constValue, const Tracing::ValueRef& valueReference);
+void traceAssignmentOperation(const Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
+bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
+void traceBinaryOperation(const Tracing::OpCode& op,
+                          const Tracing::ValueRef& resultRef,
+                          const Tracing::ValueRef& leftRef,
+                          const Tracing::ValueRef& rightRef);
+void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
 
 class BaseValue {};
 
@@ -506,6 +506,6 @@ auto inline operator||(const LHS& left, const RHS& right) {
     return OrOp(left, right);
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

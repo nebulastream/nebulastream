@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class OperatorTest : public testing::Test {
   public:
@@ -47,4 +47,4 @@ TEST_F(OperatorTest, FilterOperatorTest) {
    auto selection = std::make_shared<Selection>(equalsExpression);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

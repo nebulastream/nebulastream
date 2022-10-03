@@ -12,7 +12,7 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 GreaterThanExpression::GreaterThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
@@ -23,4 +23,4 @@ Value<> GreaterThanExpression::execute(Record& record) {
     return leftValue > rightValue;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -25,21 +25,21 @@ InterpretationBasedExecutablePipeline::InterpretationBasedExecutablePipeline(
 
 void InterpretationBasedExecutablePipeline::setup() {
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, executionContext.get());
-    auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
-        std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
+    auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
+        std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto ctx = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
+    auto ctx = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
 }
 void InterpretationBasedExecutablePipeline::execute(NES::Runtime::WorkerContext& workerContext,
                                                     NES::Runtime::TupleBuffer& buffer) {
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(&workerContext, executionContext.get());
-    auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
-        std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
-    auto ctx = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
-    auto bufferRef = Interpreter::Value<Interpreter::MemRef>(
-        std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) std::addressof(buffer))));
-    auto rBuffer = Interpreter::RecordBuffer(bufferRef);
+    auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
+        std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
+    auto ctx = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
+    auto bufferRef = Nautilus::Value<Nautilus::MemRef>(
+        std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) std::addressof(buffer))));
+    auto rBuffer = Nautilus::RecordBuffer(bufferRef);
     physicalOperatorPipeline->getRootOperator()->open(ctx, rBuffer);
     physicalOperatorPipeline->getRootOperator()->close(ctx, rBuffer);
 }

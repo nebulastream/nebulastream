@@ -17,7 +17,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class FloatInvocationPlugin : public InvocationPlugin {
   public:
@@ -147,4 +147,4 @@ class FloatInvocationPlugin : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<FloatInvocationPlugin> floatPlugin;
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -16,13 +16,13 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class LogicalExpression : public Expression {
   public:
     LogicalExpression();
     Value<> execute(Record& record) = 0;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_

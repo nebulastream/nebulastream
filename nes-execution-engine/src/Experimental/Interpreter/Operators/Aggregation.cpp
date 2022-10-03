@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class ThreadLocalAggregationState : public OperatorState {
   public:
@@ -73,4 +73,4 @@ void Aggregation::close(RuntimeExecutionContext& executionCtx, RecordBuffer&) co
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

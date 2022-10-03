@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class Scan : public Operator {
   public:
@@ -27,5 +27,5 @@ class Scan : public Operator {
     const std::vector<Record::RecordFieldIdentifier> projections;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_

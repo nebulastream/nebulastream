@@ -15,7 +15,7 @@
 #define NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief Data type to represent a memory location.
@@ -53,6 +53,6 @@ class MemRef : public TraceableType {
     int8_t* value;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_

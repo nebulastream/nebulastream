@@ -19,7 +19,7 @@
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 extern "C" void* getJoinState(void* state);
 class GlobalJoinState : public OperatorState {
   public:
@@ -46,5 +46,5 @@ class JoinBuild : public ExecutableOperator {
     mutable uint32_t tag;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_

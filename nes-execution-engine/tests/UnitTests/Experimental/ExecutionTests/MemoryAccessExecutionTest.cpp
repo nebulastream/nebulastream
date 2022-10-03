@@ -25,7 +25,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class MemoryAccessExecutionTest : public testing::Test {
   public:
@@ -126,4 +126,4 @@ TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     ASSERT_EQ(function(7, array), 28);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

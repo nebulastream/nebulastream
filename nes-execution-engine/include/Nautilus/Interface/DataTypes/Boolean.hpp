@@ -15,7 +15,7 @@
 #define NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief Boolean data type.
@@ -39,6 +39,6 @@ class Boolean : public TraceableType {
     const bool value;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_

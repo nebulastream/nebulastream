@@ -17,7 +17,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 std::unique_ptr<AggregationState> SumFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
@@ -168,4 +168,4 @@ void CountFunction::combine(std::unique_ptr<AggregationState>& ctx1, std::unique
 }
 uint64_t CountFunction::getStateSize() const { return 8; }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

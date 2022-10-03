@@ -1,7 +1,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
     : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
@@ -111,4 +111,4 @@ HashMap::HashMap(Value<MemRef> hashTableRef,
                  std::vector<IR::Types::StampPtr> valueTypes)
     : hashTableRef(hashTableRef), valueOffset(valueOffset), keyTypes(keyTypes), valueTypes(valueTypes) {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

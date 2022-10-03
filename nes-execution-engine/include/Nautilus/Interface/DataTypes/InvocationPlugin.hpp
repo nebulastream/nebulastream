@@ -17,7 +17,7 @@
 #include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <optional>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class InvocationPlugin {
   public:
@@ -39,6 +39,6 @@ class InvocationPlugin {
 
 using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

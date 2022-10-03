@@ -76,7 +76,7 @@ limitations under the License.
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
 * @brief This test tests query execution using th mlir backend
@@ -209,4 +209,4 @@ INSTANTIATE_TEST_CASE_P(testAggregationOperator,
                         [](const testing::TestParamInfo<AggregationOperatorTest::ParamType>& info) {
                             return info.param;
                         });
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

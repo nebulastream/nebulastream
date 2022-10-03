@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class ValueTest : public testing::Test {
   public:
@@ -79,4 +79,4 @@ TEST_F(ValueTest, addValueTest) {
     ASSERT_EQ(anyZ.as<Int32>().value->getValue(), 6);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

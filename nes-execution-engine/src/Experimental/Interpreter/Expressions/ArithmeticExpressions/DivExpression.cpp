@@ -13,7 +13,7 @@
 */
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/DivExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Value<> DivExpression::execute(Record& record) {
     Value leftValue = leftSubExpression->execute(record);
@@ -23,4 +23,4 @@ Value<> DivExpression::execute(Record& record) {
 DivExpression::DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_CASTUTILS_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_CASTUTILS_HPP_
+#ifndef NES_NAUTILUS_UTIL_CASTUTILS_HPP_
+#define NES_NAUTILUS_UTIL_CASTUTILS_HPP_
 #include <concepts>
 #include <memory>
 #include <typeinfo>
@@ -20,7 +20,7 @@
 /**
  * This file provides simple and fast type checks and casts.
  */
-namespace NES {
+namespace NES::Nautilus {
 
 /**
  * @brief Provides an identifier for runtime types.
@@ -135,4 +135,4 @@ T* cast_if(Typed* typed) {
 
 }// namespace NES
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_CASTUTILS_HPP_
+#endif//NES_NAUTILUS_UTIL_CASTUTILS_HPP_

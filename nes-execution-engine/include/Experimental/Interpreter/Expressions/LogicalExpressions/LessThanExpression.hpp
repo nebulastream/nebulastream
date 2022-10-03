@@ -16,7 +16,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LESSTHANEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LESSTHANEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class LessThanExpression : public Expression {
   private:
@@ -28,6 +28,6 @@ class LessThanExpression : public Expression {
     Value<> execute(Record& record) override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LESSTHANEXPRESSION_HPP_

@@ -25,7 +25,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class LoopExecutionTest : public testing::Test {
   public:
@@ -295,4 +295,4 @@ TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
     ASSERT_EQ(function(), 1);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

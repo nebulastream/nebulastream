@@ -14,7 +14,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class MemRefInvocationPlugin : public InvocationPlugin {
   public:
@@ -48,4 +48,4 @@ class MemRefInvocationPlugin : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<MemRefInvocationPlugin> memRefInvocationPlugin;
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

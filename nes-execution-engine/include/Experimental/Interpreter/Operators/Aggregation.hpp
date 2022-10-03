@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class AggregationFunction;
 class AggregationState;
 
@@ -40,5 +40,5 @@ class Aggregation : public ExecutableOperator {
     mutable uint32_t tag;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_

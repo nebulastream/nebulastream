@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class FlounderTest : public testing::Test {
   public:
@@ -176,4 +176,4 @@ TEST_F(FlounderTest, flounderGenTestBlocks) {
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -4,7 +4,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/Experimental/HashMap.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class HashMap {
   public:
@@ -41,6 +41,6 @@ class HashMap {
     const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_

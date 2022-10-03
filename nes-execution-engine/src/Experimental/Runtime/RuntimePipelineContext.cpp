@@ -26,12 +26,12 @@ void RuntimePipelineContext::dispatchBuffer(Runtime::WorkerContext& workerContex
 
 RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalOperatorState(
     int64_t op,
-    std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState) {
+    std::unique_ptr<Nautilus::OperatorState> operatorState) {
     operatorStates.insert(std::make_pair(op, std::move(operatorState)));
     return operatorStates.size() - 1;
 }
 
-ExecutionEngine::Experimental::Interpreter::OperatorState* RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
+Nautilus::OperatorState* RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
     return operatorStates[tag].get();
 }
 

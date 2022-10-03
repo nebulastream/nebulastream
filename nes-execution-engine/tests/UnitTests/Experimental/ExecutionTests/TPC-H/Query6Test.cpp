@@ -76,7 +76,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief This test tests query execution using th mlir backend
@@ -309,4 +309,4 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                             }
                         });
 #endif
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

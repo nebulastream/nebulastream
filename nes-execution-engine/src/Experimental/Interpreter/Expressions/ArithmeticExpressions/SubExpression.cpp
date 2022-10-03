@@ -13,7 +13,7 @@
 */
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Value<> SubExpression::execute(Record& record) {
     Value leftValue = leftSubExpression->execute(record);
@@ -23,4 +23,4 @@ Value<> SubExpression::execute(Record& record) {
 SubExpression::SubExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Exceptions/InterpreterException.hpp>
+#include <Nautilus/Exceptions/InterpreterException.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Record::Record() {}
 
@@ -33,4 +33,4 @@ uint64_t Record::numberOfFields() { return fields.size(); }
 
 void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert(std::make_pair(fieldIndex, value)); }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

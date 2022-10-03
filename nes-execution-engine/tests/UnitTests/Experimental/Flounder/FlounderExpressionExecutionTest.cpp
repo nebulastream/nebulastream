@@ -44,7 +44,7 @@
 #include <execinfo.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 /**
  * @brief This test tests execution of scala expression
  */
@@ -586,4 +586,4 @@ TEST_F(FlounderExpressionExecutionTest, castInt8ToInt64Test2) {
 }
  */
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

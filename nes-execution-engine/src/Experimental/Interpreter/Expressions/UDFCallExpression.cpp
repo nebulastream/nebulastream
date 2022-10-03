@@ -17,7 +17,7 @@
 #include "Nautilus/Interface/FunctionCall.hpp"
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <jni.h>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 JavaVM* jvm;
 JNIEnv* env;
@@ -124,7 +124,7 @@ Value<> UDFCallExpression::execute(Record& record) {
     return FunctionCall<>("callJavaUDF_1", callJavaUDF_1, argumentValues[0]);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif
 
@@ -132,7 +132,7 @@ Value<> UDFCallExpression::execute(Record& record) {
 
 #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments, std::string, std::string, std::string)
     : arguments(arguments) {}
@@ -171,6 +171,6 @@ Value<> UDFCallExpression::execute(Record& record) {
     return FunctionCall<>("callJavaUDF_1", callJavaUDF_1, argumentValues[0].as<Int64>());
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif

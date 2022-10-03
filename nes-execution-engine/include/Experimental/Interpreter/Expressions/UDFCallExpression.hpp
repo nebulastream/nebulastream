@@ -16,7 +16,7 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class UDFCallExpression : public Expression {
   private:
@@ -26,7 +26,7 @@ class UDFCallExpression : public Expression {
     UDFCallExpression(std::vector<ExpressionPtr> argument, std::string javaClass, std::string javaFunction, std::string signature);
     Value<> execute(Record& record) override;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_EXPRESSIONS_UDFCALLEXPRESSION_HPP_

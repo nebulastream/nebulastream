@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 UInt16::UInt16(uint16_t value) : Int(&type), value(value){};
 Nautilus::IR::Types::StampPtr UInt16::getType() const { return Nautilus::IR::Types::StampFactory::createUInt16Stamp(); }
@@ -52,4 +52,4 @@ const std::shared_ptr<Boolean> UInt16::greaterThan(const Int& other) const {
 
 uint16_t UInt16::getValue() const { return value; }
 int64_t UInt16::getRawInt() const { return value; }
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

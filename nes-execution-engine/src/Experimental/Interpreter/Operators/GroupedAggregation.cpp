@@ -19,7 +19,7 @@
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 extern "C" void* getHashMapState(void* state) {
     auto groupedAggregationState = (GroupedAggregationState*) state;
@@ -66,4 +66,4 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
 
 void GroupedAggregation::close(RuntimeExecutionContext&, RecordBuffer&) const {}
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

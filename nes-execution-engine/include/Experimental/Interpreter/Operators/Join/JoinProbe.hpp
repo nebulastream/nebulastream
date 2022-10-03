@@ -19,7 +19,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class JoinProbe : public ExecutableOperator {
   public:
@@ -42,5 +42,5 @@ class JoinProbe : public ExecutableOperator {
     mutable uint32_t tag;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINPROBE_HPP_

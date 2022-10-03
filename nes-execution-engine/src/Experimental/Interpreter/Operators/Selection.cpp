@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
@@ -24,4 +24,4 @@ void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

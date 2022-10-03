@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 void Map::execute(RuntimeExecutionContext& ctx, Record& record) const {
     // assume that map expression performs a field write
@@ -23,4 +23,4 @@ void Map::execute(RuntimeExecutionContext& ctx, Record& record) const {
     child->execute(ctx, record);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

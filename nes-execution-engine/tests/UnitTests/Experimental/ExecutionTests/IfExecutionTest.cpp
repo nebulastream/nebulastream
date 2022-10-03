@@ -24,7 +24,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class IfExecutionTest : public testing::Test {
   public:
@@ -286,4 +286,4 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
     ASSERT_EQ(function(), 12);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

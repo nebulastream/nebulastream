@@ -24,7 +24,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 /**
  * @brief This test tests execution of scala expression
@@ -214,4 +214,4 @@ TEST_F(ExpressionExecutionTest, castInt8ToInt64Test2) {
     ASSERT_EQ(function(-2), 40);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

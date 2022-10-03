@@ -24,7 +24,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class TraceTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -555,4 +555,4 @@ TEST_F(TraceTest, invertedLoopTest) {
     ASSERT_EQ(block3.operations[3].op, Nautilus::Tracing::CMP);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

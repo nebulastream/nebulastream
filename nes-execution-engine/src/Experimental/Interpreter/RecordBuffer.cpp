@@ -23,7 +23,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
@@ -166,4 +166,4 @@ Value<MemRef> RecordBuffer::getBuffer() {
 }
 const Value<MemRef>& RecordBuffer::getReference() { return tupleBufferRef; }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

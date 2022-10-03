@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief Float data type.
@@ -39,6 +39,6 @@ class Float : public TraceableType {
   private:
     const float value;
 };
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_FLOAT_HPP_

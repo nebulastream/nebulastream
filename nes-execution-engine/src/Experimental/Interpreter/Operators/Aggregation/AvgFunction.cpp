@@ -3,7 +3,7 @@
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 std::unique_ptr<AggregationState> AvgFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
@@ -127,4 +127,4 @@ void AvgFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationStat
     valueRef.store(sumState->sum);
 }
 uint64_t AvgFunction::getStateSize() const { return 16; }
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

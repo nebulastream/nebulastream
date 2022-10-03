@@ -21,7 +21,7 @@
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class AggregationFunction;
 class AggregationState;
 
@@ -53,5 +53,5 @@ class WindowAggregation : public ExecutableOperator {
     mutable uint32_t tag;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_WINDOW_AGGREGATION_HPP_

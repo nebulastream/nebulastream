@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 UInt64::UInt64(uint64_t value) : Int(&type), value(value){};
 Nautilus::IR::Types::StampPtr UInt64::getType() const { return Nautilus::IR::Types::StampFactory::createUInt64Stamp(); }
@@ -52,4 +52,4 @@ const std::shared_ptr<Boolean> UInt64::greaterThan(const Int& other) const {
 
 uint64_t UInt64::getValue() const { return value; }
 int64_t UInt64::getRawInt() const { return value; }
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

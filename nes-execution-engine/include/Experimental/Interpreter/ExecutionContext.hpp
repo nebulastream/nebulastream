@@ -23,7 +23,7 @@
 namespace NES::Runtime {
 class WorkerContext;
 }
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 class Operator;
 class RecordBuffer;
 class OperatorState {
@@ -46,6 +46,6 @@ class RuntimeExecutionContext {
     Value<MemRef> executionContext;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_

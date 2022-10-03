@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class ExpressionTest : public testing::Test {
   public:
@@ -61,4 +61,4 @@ TEST_F(ExpressionTest, ExpressionReadInvalidField) {
     ASSERT_ANY_THROW(readField1->execute(r1));
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -2,7 +2,7 @@
 #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 JoinProbe::JoinProbe(std::shared_ptr<NES::Experimental::Hashmap> hashmap,
                      std::vector<Record::RecordFieldIdentifier> resultFields,
@@ -63,4 +63,4 @@ void JoinProbe::execute(RuntimeExecutionContext& ctx, Record& record) const {
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

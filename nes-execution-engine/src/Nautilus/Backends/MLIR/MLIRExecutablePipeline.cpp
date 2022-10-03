@@ -24,10 +24,10 @@ MLIRExecutablePipeline::MLIRExecutablePipeline(std::shared_ptr<Runtime::Executio
 
 void MLIRExecutablePipeline::setup() {
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, executionContext.get());
-    auto runtimeExecutionContextRef = Interpreter::Value<Interpreter::MemRef>(
-        std::make_unique<Interpreter::MemRef>(Interpreter::MemRef((int8_t*) &runtimeExecutionContext)));
+    auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
+        std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
-    auto ctx = Interpreter::RuntimeExecutionContext(runtimeExecutionContextRef);
+    auto ctx = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
 }
 void MLIRExecutablePipeline::execute(NES::Runtime::WorkerContext& workerContext, NES::Runtime::TupleBuffer& buffer) {

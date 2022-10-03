@@ -20,7 +20,7 @@
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 template<class T>
 struct dependent_false : std::false_type {};
@@ -158,6 +158,6 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

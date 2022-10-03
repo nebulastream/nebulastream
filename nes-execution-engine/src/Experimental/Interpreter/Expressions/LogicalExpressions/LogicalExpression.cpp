@@ -14,8 +14,8 @@
 
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/LogicalExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 LogicalExpression::LogicalExpression(){};
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -13,10 +13,10 @@
 */
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field) : field(field) {}
 
 Value<> ReadFieldExpression::execute(Record& record) { return record.read(field); }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

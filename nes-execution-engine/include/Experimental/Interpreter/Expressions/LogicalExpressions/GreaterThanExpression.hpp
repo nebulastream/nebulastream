@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class GreaterThanExpression : public Expression {
   private:
@@ -26,6 +26,6 @@ class GreaterThanExpression : public Expression {
     Value<> execute(Record& record) override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_

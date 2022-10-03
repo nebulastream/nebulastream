@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 PipelineContext::PipelineContext(Value<MemRef> pipelineContextRef) : pipelineContextRef(pipelineContextRef) {}
 
@@ -66,4 +66,4 @@ Value<MemRef> PipelineContext::getGlobalOperatorState(const Operator* tag) {
                           tagValue);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

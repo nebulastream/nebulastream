@@ -17,7 +17,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class WriteFieldExpression : public Expression {
   public:

@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 class CustomDataTypeTest : public testing::Test {
   public:
@@ -85,4 +85,4 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
     NES_DEBUG(c3.value);
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

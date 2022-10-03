@@ -26,7 +26,7 @@
 #include <memory>
 
 using namespace NES::Nautilus;
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
     
 class FunctionExecutionTest : public testing::Test {
   public:
@@ -158,4 +158,4 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
 
 
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

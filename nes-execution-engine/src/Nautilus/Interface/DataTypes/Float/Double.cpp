@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Double::Double(double value) : TraceableType(&type), value(value){};
 Nautilus::IR::Types::StampPtr Double::getType() const { return Nautilus::IR::Types::StampFactory::createDoubleStamp(); }
@@ -27,4 +27,4 @@ std::shared_ptr<Boolean> Double::lessThan(const Double& otherValue) const { retu
 std::shared_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
 double Double::getValue() const { return value; }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief Abstract integer data type.
@@ -217,6 +217,6 @@ class UInt64 : public Int {
     uint64_t value;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_INT_HPP_

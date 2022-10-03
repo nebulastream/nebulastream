@@ -15,7 +15,7 @@
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
            std::vector<Record::RecordFieldIdentifier> projections)
@@ -33,4 +33,4 @@ void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const 
     }
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus

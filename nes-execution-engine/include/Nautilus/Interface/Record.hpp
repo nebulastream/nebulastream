@@ -20,7 +20,7 @@
 #include <memory>
 #include <ostream>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief A record is the primitive abstraction of a single entry/tuple in a data set.
@@ -40,6 +40,6 @@ class Record {
     std::map<RecordFieldIdentifier, Value<>> fields;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_RECORD_HPP_

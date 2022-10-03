@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::ExecutionEngine::Experimental::Interpreter {
+namespace NES::Nautilus {
 
 /**
  * @brief This expression reads a specific field from the input record and returns its value.
@@ -31,6 +31,6 @@ class ReadFieldExpression : public Expression {
     const Record::RecordFieldIdentifier field;
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::Nautilus
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_READFIELDEXPRESSION_HPP_
