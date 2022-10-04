@@ -28,11 +28,11 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class LLVMIROptimizer {
   public:
-
+    enum OptimizationLevel{O0 = 0, O1 = 1, O2 = 2, O3 = 3};
     LLVMIROptimizer();  // Disable default constructor
     ~LLVMIROptimizer(); // Disable default destructor
 
-    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool inlining);
+    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlining);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_

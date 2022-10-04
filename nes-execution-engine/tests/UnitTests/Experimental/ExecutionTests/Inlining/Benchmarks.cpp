@@ -107,7 +107,7 @@ class InliningBenchmark : public testing::Test {
 //Todo allow loading specific column via TestUtility
 auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
     // Todo handle filepaths
-    std::ifstream inFile("/home/pgrulich/projects/tpch-dbgen/lineitem.tbl");
+    std::ifstream inFile("/home/alepping/tpch/dbgen/lineitem.tbl");
     uint64_t linecount = 0;
     std::string line;
     while (std::getline(inFile, line)) {
@@ -186,22 +186,16 @@ Value<Double> standardDeviationAggregation(Value<MemRef> ptr, Value<Int64> size)
     return FunctionCall<>("standardDeviationGetStdDev", NES::Runtime::ProxyFunctions::standardDeviationGetStdDev, runningDeviationSum, size);
 }
 
-Value<Int64> filterAndMap(Value<MemRef> inPtr, Value<MemRef> outPtr, Value<Int64> size) {
-    // 1. calculate mean via a single proxy call
-    // Value<Double> mean = FunctionCall<>("standardDeviationGetMean", NES::Runtime::ProxyFunctions::standardDeviationGetMean, size, meanPtr);
-
-    // 2. Aggregate squared difference between mean and values
+void scan(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
     auto inputPtr = inPtr;
     auto outputPtr = outPtr;
+    // Value<Int64> result = 0l;
     for (Value<Int64> i = 0l; i < size; i = i + 1l) {
         auto inAddress = inputPtr + i * 8l;
         auto outAddress = outputPtr + i * 8l;
         Value<Int64> value = inAddress.as<MemRef>().load<Int64>();
-        value = value + 42l;
         outAddress.as<MemRef>().store<Int64>(value);
     }
-    Value<Int64> result = 0l;
-    return result;
 }
 
 // Struct to convert TupleBufferPtrs to Memrefs in MLIR. 'N' is the dimension of the Memref.
@@ -217,7 +211,7 @@ struct MemRefDescriptor {
 //==-------------------------------------------------------------==//
 //==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, scanMapBenchmark) {
+TEST_F(InliningBenchmark, DISABLED_scanBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -226,10 +220,11 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
     auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
 
     //Setup timing, and results logging.
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O2;
     const bool PERFORM_INLINING = true;
-    const int NUM_ITERATIONS = 10;
+    const int NUM_ITERATIONS = 1;
     const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME = "scanAndMap.csv";
+    const std::string RESULTS_FILE_NAME = "scan.csv";
     const std::vector<std::string> snapshotNames {
         "Symbolic Execution Trace     ",
         "SSA Phase                    ",
@@ -251,15 +246,15 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
         auto inPtr = Value<MemRef>(nullptr);
         auto outPtr = Value<MemRef>(nullptr);
         inPtr.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-        outPtr.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+        outPtr.ref = Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
         auto size = Value<Int64>(0l);
-        size.ref = Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
+        size.ref = Tracing::ValueRef(INT32_MAX, 2, IR::Types::StampFactory::createInt64Stamp());
         std::shared_ptr<Tracing::ExecutionTrace> executionTrace;
         std::cout << "Creating Execution Trace.\n";
         // executionTrace = Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        executionTrace = Tracing::traceFunctionSymbolicallyWithReturn([&inPtr, &outPtr, &size]() {
+        executionTrace = Tracing::traceFunctionSymbolically([&size, &inPtr, &outPtr]() {
             // return standardDeviationAggregation(memPtr, size);
-            return filterAndMap(inPtr, outPtr, size);
+            scan(size, inPtr, outPtr);
             // return standardDeviationAggregation();
         });
         std::cout << "Created Execution Trace.\n";
@@ -271,6 +266,7 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
 
         // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
+
         timer->snapshot(snapshotNames.at(2));
 
         // Create MLIR
@@ -279,16 +275,119 @@ TEST_F(InliningBenchmark, scanMapBenchmark) {
         timer->snapshot(snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
-        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, PERFORM_INLINING); //Todo toggle inlining
-        auto function = (int64_t(*)(int, void*, void*)) engine->lookup("execute").get();
+        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, OPT_LEVEL, PERFORM_INLINING);
+        auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
         timer->snapshot(snapshotNames.at(5));
 
         // Execute function
-        int64_t scanMapResult = function(buffer.getNumberOfTuples(), buffer.getBuffer(), outBuffer.getBuffer());
+        int64_t scanMapResult = 0;
+        function(buffer.getNumberOfTuples(), outBuffer.getBuffer(), buffer.getBuffer()); // Wrong order on purpose.
         timer->snapshot(snapshotNames.at(6));
 
         // Print aggregation result to force execution.
-        std::cout << "Scan Map Add Result: " << scanMapResult << '\n';
+        std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[buffer.getNumberOfTuples()-1] << '\n';
+
+        // Wrap up timing
+        timer->pause();
+        NES_DEBUG("Overall time: " << timer->getPrintTime());
+        auto snapshots = timer->getSnapshots();
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+    }
+    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+}
+
+
+void filter(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
+    auto inputPtr = inPtr;
+    auto outputPtr = outPtr;
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        auto inAddress = inputPtr + i * 8l;
+        Value<Int64> value = inAddress.as<MemRef>().load<Int64>();
+        if(value > 30l) {
+            outputPtr.as<MemRef>().store<Int64>(value);
+            outputPtr = outputPtr + 8l;
+        }
+    }
+}
+
+TEST_F(InliningBenchmark, filterBenchmark) {
+    // Setup test for proxy inlining with reduced and non-reduced proxy file.
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = loadLineItemTable(bm);
+    auto buffer = lineitemBuffer.second.getBuffer();
+    auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
+
+    //Setup timing, and results logging.
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O2;
+    const bool PERFORM_INLINING = true;
+    const int NUM_ITERATIONS = 1;
+    const int NUM_SNAPSHOTS = 8; // 7 -> 8
+    const std::string RESULTS_FILE_NAME = "filter.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ",
+        "SSA Phase                    ",
+        "IR Created                   ",
+        "MLIR Created                 ",
+        "MLIR Lowered And Optimized   ",
+        "MLIR Compiled to Function Ptr",
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+
+    // Execute workload NUM_ITERATIONS number of times.
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        auto timer = std::make_shared<Timer<>>("Scan Map Benchmark Timer Nr." + std::to_string(i));
+
+        // Set up empty values for symbolic execution
+        timer->start();
+        auto inPtr = Value<MemRef>(nullptr);
+        auto outPtr = Value<MemRef>(nullptr);
+        inPtr.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+        outPtr.ref = Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
+        auto size = Value<Int64>(0l);
+        size.ref = Tracing::ValueRef(INT32_MAX, 2, IR::Types::StampFactory::createInt64Stamp());
+        std::shared_ptr<Tracing::ExecutionTrace> executionTrace;
+        std::cout << "Creating Execution Trace.\n";
+        // executionTrace = Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        executionTrace = Tracing::traceFunctionSymbolically([&size, &inPtr, &outPtr]() {
+            // return standardDeviationAggregation(memPtr, size);
+            filter(size, inPtr, outPtr);
+            // return standardDeviationAggregation();
+        });
+        std::cout << "Created Execution Trace.\n";
+        timer->snapshot(snapshotNames.at(0));
+
+        // Create SSA from trace.
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        timer->snapshot(snapshotNames.at(1));
+
+        // Create Nautilus IR from SSA trace.
+        auto ir = irCreationPhase.apply(executionTrace);
+
+        timer->snapshot(snapshotNames.at(2));
+
+        // Create MLIR
+        mlir::MLIRContext context;
+        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context, timer);
+        timer->snapshot(snapshotNames.at(3));
+
+        // Compile MLIR -> return function pointer
+        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, OPT_LEVEL, PERFORM_INLINING);
+        auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
+        timer->snapshot(snapshotNames.at(5));
+
+        // Execute function
+        int64_t scanMapResult = 0;
+        function(buffer.getNumberOfTuples(), outBuffer.getBuffer(), buffer.getBuffer()); // Wrong order on purpose.
+        timer->snapshot(snapshotNames.at(6));
+
+        // Print aggregation result to force execution.
+        std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[0] << '\n';
 
         // Wrap up timing
         timer->pause();

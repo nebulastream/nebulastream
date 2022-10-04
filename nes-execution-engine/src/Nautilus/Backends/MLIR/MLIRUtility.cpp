@@ -55,7 +55,7 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
-    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(MLIR::LLVMIROptimizer::O3, /*inlining*/ false);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
@@ -76,7 +76,7 @@ MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGrap
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
-    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(MLIR::LLVMIROptimizer::O3, /*inlining*/ false);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
@@ -121,14 +121,15 @@ MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph>
 }
 
 std::unique_ptr<mlir::ExecutionEngine> 
-MLIRUtility::compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, bool inlining) {
+MLIRUtility::compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
+                                            MLIR::LLVMIROptimizer::OptimizationLevel optLevel, bool inlining) {
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
     // Todo enable toggling inlining
-    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(inlining);
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(optLevel, inlining);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(*module->getContext());

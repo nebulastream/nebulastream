@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
+#include "Nautilus/Backends/MLIR/LLVMIROptimizer.hpp"
 #include "Util/Timer.hpp"
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
@@ -73,8 +74,9 @@ class MLIRUtility {
      * @param mlirFilePath: path to MLIR file with MLIR code that is loaded.
      * @return mlir::OwningOpRef<mlir::ModuleOp>: MLIR Module created from provided filePath.
      */
-    static std::unique_ptr<mlir::ExecutionEngine> compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
-    bool inlining = false);
+    static std::unique_ptr<mlir::ExecutionEngine> 
+    compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
+                                   MLIR::LLVMIROptimizer::OptimizationLevel optLevel = MLIR::LLVMIROptimizer::O3, bool inlining = false);
 };
 
 }// namespace NES::Nautilus::Backends::MLIR
