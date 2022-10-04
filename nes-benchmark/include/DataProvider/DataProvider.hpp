@@ -17,9 +17,9 @@ limitations under the License.
 #ifndef NES_DATAPROVIDER_HPP
 #define NES_DATAPROVIDER_HPP
 
-#include <Runtime/BufferManager.hpp>
 #include <DataProvider/TupleBufferHolder.hpp>
-#include <E2EBenchmarkConfig.hpp>
+#include <E2E/E2EBenchmarkConfig.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <cstdint>
