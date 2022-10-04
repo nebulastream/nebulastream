@@ -19,8 +19,8 @@ limitations under the License.
 #define NES_E2EBENCHMARKCONFIG_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
-#include <E2EBenchmarkConfigOverAllRuns.hpp>
-#include <E2EBenchmarkConfigPerRun.hpp>
+#include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <E2E/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 #include <vector>
