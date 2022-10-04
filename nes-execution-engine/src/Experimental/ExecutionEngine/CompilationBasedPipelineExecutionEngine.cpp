@@ -33,9 +33,12 @@ namespace NES::ExecutionEngine::Experimental {
 CompilationBasedPipelineExecutionEngine::CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend): PipelineExecutionEngine(), backend(backend) {}
 
 std::shared_ptr<ExecutablePipeline>
-CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) {
-    Timer timer("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer) {
+    if(!timer) {
+        timer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
+    }
+    timer->start();
+    std::cout << "this one file\n";
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
@@ -57,16 +60,18 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
         rootOperator->open(executionContext, recordBuffer);
         rootOperator->close(executionContext, recordBuffer);
     });
+    timer->snapshot("Symbolic Execution Trace");
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    timer.snapshot("TraceGeneration");
+    
+    // std::cout << *executionTrace.get() << std::endl;
+    timer->snapshot("SSA Phase");
     auto ir = irCreationPhase.apply(executionTrace);
-    timer.snapshot("NESIRGeneration");
-    std::cout << ir->toString() << std::endl;
-    std::cout <<timer << std::endl;
+    timer->snapshot("IR Generated");
+    // std::cout << ir->toString() << std::endl;
+    // std::cout <<timer << std::endl;
     //ir = loopInferencePhase.apply(ir);
 
-    return backend->compile(pipelineContext, physicalOperatorPipeline, ir);
+    return backend->compile(pipelineContext, physicalOperatorPipeline, ir, timer);
 }
 
 }// namespace NES::ExecutionEngine::Experimental

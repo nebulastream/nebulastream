@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Experimental/Utility/TestUtility.hpp"
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
@@ -128,140 +129,163 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
 };
 
 TEST_P(Query1Test, tpchQ1) {
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 10; //
+    const int NUM_SNAPSHOTS = 8; // 7 -> 8
+    const std::string RESULTS_FILE_NAME = "tpch-q1.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ",
+        "SSA Phase                    ",
+        "IR Created                   ",
+        "MLIR Created                 ",
+        "MLIR Lowered And Optimized   ",
+        "LLVM JIT Compilation         ",
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
-    auto ordersBuffer = TPCHUtil::getOrders("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     auto buffer = lineitemBuffer.second.getBuffer();
 
-    Timer timer("TPC-H-Q1");
-    timer.start();
-    Scan scan = Scan(lineitemBuffer.first);
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Scan scan = Scan(lineitemBuffer.first);
 
-    /*
-     *   l_shipdate <= date '1998-12-01' - interval '90' day
-     *
-     *   1998-09-02
-     */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
-    auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-    auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
-    auto selection = std::make_shared<Selection>(lessThanExpression1);
-    scan.setChild(selection);
+        /*
+        *   l_shipdate <= date '1998-12-01' - interval '90' day
+        *
+        *   1998-09-02
+        */
+        auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
+        auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
+        auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
+        auto selection = std::make_shared<Selection>(lessThanExpression1);
+        scan.setChild(selection);
 
-    /**
-     *
-     * group by
-        l_returnflag,
-        l_linestatus
+        /**
+        *
+        * group by
+            l_returnflag,
+            l_linestatus
 
-        sum(l_quantity) as sum_qty,
-        sum(l_extendedprice) as sum_base_price,
-        sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
-        sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-        avg(l_quantity) as avg_qty,
-        avg(l_extendedprice) as avg_price,
-        avg(l_discount) as avg_disc,
-        count(*) as count_order
-     */
-    auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
-    auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
+            sum(l_quantity) as sum_qty,
+            sum(l_extendedprice) as sum_base_price,
+            sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+            sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+            avg(l_quantity) as avg_qty,
+            avg(l_extendedprice) as avg_price,
+            avg(l_discount) as avg_disc,
+            count(*) as count_order
+        */
+        auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
+        auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
 
-    //  sum(l_quantity) as sum_qty,
-    auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
-    auto sumAggFunction1 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
+        //  sum(l_quantity) as sum_qty,
+        auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
+        auto sumAggFunction1 = std::make_shared<SumFunction>(l_quantityField, IR::Types::StampFactory::createInt64Stamp());
 
-    // sum(l_extendedprice) as sum_base_price,
-    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-    auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
+        // sum(l_extendedprice) as sum_base_price,
+        auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+        auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
 
-    // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
-    auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
-    auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-    auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-    auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
+        // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
+        auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
+        auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
+        auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
+        auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
+        auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
 
-    //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
-    auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-    auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
-    auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
+        //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+        auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
+        auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
+        auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
+        auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
 
-    auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
+        auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
 
-    //  count() as avg_price,
-    auto countFunction = std::make_shared<CountFunction>();
+        //  count() as avg_price,
+        auto countFunction = std::make_shared<CountFunction>();
 
-    std::vector<std::shared_ptr<AggregationFunction>> functions =
-        {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, sumAggFunction5, countFunction};
-    std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
-    // 5 * 3 + 3 * 16 = 88 value size
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
-    auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
-    scan.setChild(aggregation);
+        std::vector<std::shared_ptr<AggregationFunction>> functions =
+            {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, sumAggFunction5, countFunction};
+        std::vector<ExpressionPtr> keys = {l_returnflagField, l_linestatusFiled};
+        // 5 * 3 + 3 * 16 = 88 value size
+        NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 16, 48, 1000);
+        auto aggregation = std::make_shared<GroupedAggregation>(factory, keys, functions);
+        scan.setChild(aggregation);
 
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(&scan);
 
-    timer.snapshot("Nautilus IR Creation");
-    timer.pause();
-    auto executablePipeline = executionEngine->compile(pipeline);
-    timer.start();
+        auto timer = std::make_shared<Timer<>>("TPC-H-Q1");
+        auto executablePipeline = executionEngine->compile(pipeline, timer);
 
-    executablePipeline->setup();
+        executablePipeline->setup();
 
 
-#ifdef USE_BABELFISH
-    uint64_t warmup = 1000;
-    for (auto i = 0ul; i < warmup; i++) {
+    #ifdef USE_BABELFISH
+        uint64_t warmup = 1000;
+        for (auto i = 0ul; i < warmup; i++) {
+            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        }
+        {
+            auto tag = *((int64_t*) aggregation.get());
+            auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
+            globalState->threadLocalAggregationSlots[0].get()->clear();
+        }
+    #endif
+
         executablePipeline->execute(*runtimeWorkerContext, buffer);
-    }
-    {
+        timer->snapshot("Execute");
+        timer->pause();
+        std::cout << "num snapshots: " << timer->getSnapshots().size() << '\n';
+        NES_INFO("QueryExecutionTime: " << timer->getPrintTime());
         auto tag = *((int64_t*) aggregation.get());
         auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
-        globalState->threadLocalAggregationSlots[0].get()->clear();
+        auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
+        ASSERT_EQ(currentSize, (int64_t) 4);
+
+        auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
+
+        struct REntry {
+            void* next;
+            std::int64_t hash;
+            std::int64_t k1;
+            std::int64_t k2;
+            GlobalSumState ag1;
+            GlobalSumState ag2;
+            GlobalSumState ag3;
+            GlobalSumState ag4;
+            GlobalCountState ag8;
+        };
+
+        auto entries = entryBuffer[0].getBuffer<REntry>();
+        for (auto i = 0; i < 4; i++) {
+            NES_DEBUG("K1 " << entries[i].k1);
+            NES_DEBUG("K2 " << entries[i].k2);
+            NES_DEBUG("ag1 " << entries[i].ag1.sum);
+            NES_DEBUG("ag2 " << entries[i].ag2.sum);
+            NES_DEBUG("ag3 " << entries[i].ag3.sum);
+            NES_DEBUG("ag4 " << entries[i].ag4.sum);
+            NES_DEBUG("ag8 " << entries[i].ag8.count);
+            NES_DEBUG("\n");
+            NES_DEBUG("\n");
+        }
+
+        //ASSERT_EQ(entries[0].ag1, 37719753);
+        //ASSERT_EQ(entries[0].ag2, 5656804138090);
+        auto snapshots = timer->getSnapshots();
+        std::cout << "num snapshots: " << snapshots.size() << '\n';
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-#endif
-
-    executablePipeline->execute(*runtimeWorkerContext, buffer);
-    timer.snapshot("Execute");
-    timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
-    auto tag = *((int64_t*) aggregation.get());
-    auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
-    auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 4);
-
-    auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
-
-    struct REntry {
-        void* next;
-        std::int64_t hash;
-        std::int64_t k1;
-        std::int64_t k2;
-        GlobalSumState ag1;
-        GlobalSumState ag2;
-        GlobalSumState ag3;
-        GlobalSumState ag4;
-        GlobalCountState ag8;
-    };
-
-    auto entries = entryBuffer[0].getBuffer<REntry>();
-    for (auto i = 0; i < 4; i++) {
-        NES_DEBUG("K1 " << entries[i].k1);
-        NES_DEBUG("K2 " << entries[i].k2);
-        NES_DEBUG("ag1 " << entries[i].ag1.sum);
-        NES_DEBUG("ag2 " << entries[i].ag2.sum);
-        NES_DEBUG("ag3 " << entries[i].ag3.sum);
-        NES_DEBUG("ag4 " << entries[i].ag4.sum);
-        NES_DEBUG("ag8 " << entries[i].ag8.count);
-        NES_DEBUG("\n");
-        NES_DEBUG("\n");
-    }
-
-    //ASSERT_EQ(entries[0].ag1, 37719753);
-    //ASSERT_EQ(entries[0].ag2, 5656804138090);
+    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,

@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPIPELINECOMPILERBACKEND_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPIPELINECOMPILERBACKEND_HPP_
+
 #include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
 using namespace NES::ExecutionEngine::Experimental;
 namespace NES::Nautilus::Backends::MLIR {
@@ -20,7 +21,8 @@ class MLIRPipelineCompilerBackend : public PipelineCompilerBackend {
   public:
     std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                                 std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                std::shared_ptr<IR::IRGraph> ir) override;
+                                                std::shared_ptr<IR::IRGraph> ir,
+                                                std::shared_ptr<Timer<>> timer) override;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

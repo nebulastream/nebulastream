@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Experimental/Utility/TestUtility.hpp"
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
@@ -128,206 +129,244 @@ class Query3Test : public testing::Test, public ::testing::WithParamInterface<st
 };
 
 TEST_P(Query3Test, tpchQ3) {
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 10; //
+    const int NUM_SNAPSHOTS = 8; // 7 -> 8
+    const std::string RESULTS_FILE_NAME_P1 = "tpch-q3-p1.csv";
+    const std::string RESULTS_FILE_NAME_P2 = "tpch-q3-p2.csv";
+    const std::string RESULTS_FILE_NAME_P3 = "tpch-q3-p3.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ",
+        "SSA Phase                    ",
+        "IR Created                   ",
+        "MLIR Created                 ",
+        "MLIR Lowered And Optimized   ",
+        "LLVM JIT Compilation         ",
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectorsP1(NUM_SNAPSHOTS);
+    std::vector<std::vector<double>> runningSnapshotVectorsP2(NUM_SNAPSHOTS);
+    std::vector<std::vector<double>> runningSnapshotVectorsP3(NUM_SNAPSHOTS);
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto customersBuffer = TPCHUtil::getCustomers("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    Timer compilationTimer("QueryCompilationTime");
-    compilationTimer.start();
-    /**
-     * Pipeline 1 with scan customers -> selection -> JoinBuild
-     */
-    Scan customersScan = Scan(customersBuffer.first);
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        /**
+        * Pipeline 1 with scan customers -> selection -> JoinBuild
+        */
+        Scan customersScan = Scan(customersBuffer.first);
 
-    // c_mksegment = 'BUILDING' -> currently modeled as 1
-    auto BUILDING = std::make_shared<ConstantIntegerExpression>(1);
-    auto readC_mktsegment = std::make_shared<ReadFieldExpression>("c_mksegment");
-    auto equalsExpression = std::make_shared<EqualsExpression>(readC_mktsegment, BUILDING);
-    auto selection = std::make_shared<Selection>(equalsExpression);
-    customersScan.setChild(selection);
+        // c_mksegment = 'BUILDING' -> currently modeled as 1
+        auto BUILDING = std::make_shared<ConstantIntegerExpression>(1);
+        auto readC_mktsegment = std::make_shared<ReadFieldExpression>("c_mksegment");
+        auto equalsExpression = std::make_shared<EqualsExpression>(readC_mktsegment, BUILDING);
+        auto selection = std::make_shared<Selection>(equalsExpression);
+        customersScan.setChild(selection);
 
-    //  c_custkey = o_custkey
-    // JoinBuild
-    std::vector<ExpressionPtr> customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("c_custkey")};
-    std::vector<ExpressionPtr> customersJoinBuildValues = {};
-    NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 0, 100000);
-    std::shared_ptr<NES::Experimental::Hashmap> customersHashMap = factory.createPtr();
-    auto customersJoinBuild = std::make_shared<JoinBuild>(customersHashMap, customersJoinBuildKeys, customersJoinBuildValues);
-    selection->setChild(customersJoinBuild);
+        //  c_custkey = o_custkey
+        // JoinBuild
+        std::vector<ExpressionPtr> customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("c_custkey")};
+        std::vector<ExpressionPtr> customersJoinBuildValues = {};
+        NES::Experimental::HashMapFactory factory = NES::Experimental::HashMapFactory(bm, 8, 0, 100000);
+        std::shared_ptr<NES::Experimental::Hashmap> customersHashMap = factory.createPtr();
+        auto customersJoinBuild = std::make_shared<JoinBuild>(customersHashMap, customersJoinBuildKeys, customersJoinBuildValues);
+        selection->setChild(customersJoinBuild);
 
-    auto pipeline1 = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline1->setRootOperator(&customersScan);
+        auto pipeline1 = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline1->setRootOperator(&customersScan);
 
-    compilationTimer.snapshot("First Nautilus IR Generation");
-    compilationTimer.pause();
-    auto executablePipeline1 = executionEngine->compile(pipeline1);
-    std::cout << "First Pipeline Compiled\n";
-    compilationTimer.start();
+        auto timerP1 = std::make_shared<Timer<>>("TPC-H-Q3-P1");
+        auto executablePipeline1 = executionEngine->compile(pipeline1, timerP1);
+        timerP1->pause();
+        std::cout << "First Pipeline Compiled\n";
 
-    /**
-     * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
-     */
-    auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-    Scan orderScan = Scan(ordersBuffer.first);
+        /**
+        * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
+        */
+        auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+        Scan orderScan = Scan(ordersBuffer.first);
 
-    //  o_orderdate < date '1995-03-15'
-    auto const_1995_03_15 = std::make_shared<ConstantIntegerExpression>(19950315);
-    auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
-    auto orderDateSelection =
-        std::make_shared<Selection>(std::make_shared<LessThanExpression>(readO_orderdate, const_1995_03_15));
-    orderScan.setChild(orderDateSelection);
+        //  o_orderdate < date '1995-03-15'
+        auto const_1995_03_15 = std::make_shared<ConstantIntegerExpression>(19950315);
+        auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
+        auto orderDateSelection =
+            std::make_shared<Selection>(std::make_shared<LessThanExpression>(readO_orderdate, const_1995_03_15));
+        orderScan.setChild(orderDateSelection);
 
-    // join probe with customers
-    std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-    std::vector<IR::Types::StampPtr> valueStamps = {};
-    std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
-    std::vector<ExpressionPtr> orderProbeValues = {std::make_shared<ReadFieldExpression>("o_orderkey"),
-                                                   std::make_shared<ReadFieldExpression>("o_orderdate"),
-                                                   std::make_shared<ReadFieldExpression>("o_shippriority")};
+        // join probe with customers
+        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+        std::vector<IR::Types::StampPtr> valueStamps = {};
+        std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
+        std::vector<ExpressionPtr> orderProbeValues = {std::make_shared<ReadFieldExpression>("o_orderkey"),
+                                                    std::make_shared<ReadFieldExpression>("o_orderdate"),
+                                                    std::make_shared<ReadFieldExpression>("o_shippriority")};
 
-    std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_custkey", "o_orderkey", "o_orderdate", "o_shippriority"};
-    auto customersJoinProbe = std::make_shared<JoinProbe>(customersHashMap,
-                                                          joinProbeResults,
-                                                          ordersProbeKeys,
-                                                          orderProbeValues,
-                                                          keyStamps,
-                                                          valueStamps);
-    orderDateSelection->setChild(customersJoinProbe);
+        std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_custkey", "o_orderkey", "o_orderdate", "o_shippriority"};
+        auto customersJoinProbe = std::make_shared<JoinProbe>(customersHashMap,
+                                                            joinProbeResults,
+                                                            ordersProbeKeys,
+                                                            orderProbeValues,
+                                                            keyStamps,
+                                                            valueStamps);
+        orderDateSelection->setChild(customersJoinProbe);
 
-    // join build for order_customers
-    std::vector<ExpressionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
-    std::vector<ExpressionPtr> order_customersJoinBuildValues = {std::make_shared<ReadFieldExpression>("o_orderdate"),
-                                                                 std::make_shared<ReadFieldExpression>("o_shippriority")};
-    NES::Experimental::HashMapFactory order_customersfactory = NES::Experimental::HashMapFactory(bm, 8, 16, 100000);
-    std::shared_ptr<NES::Experimental::Hashmap> order_customersHashMap = order_customersfactory.createPtr();
-    auto order_customersJoinBuild =
-        std::make_shared<JoinBuild>(order_customersHashMap, order_customersJoinBuildKeys, order_customersJoinBuildValues);
-    customersJoinProbe->setChild(order_customersJoinBuild);
+        // join build for order_customers
+        std::vector<ExpressionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
+        std::vector<ExpressionPtr> order_customersJoinBuildValues = {std::make_shared<ReadFieldExpression>("o_orderdate"),
+                                                                    std::make_shared<ReadFieldExpression>("o_shippriority")};
+        NES::Experimental::HashMapFactory order_customersfactory = NES::Experimental::HashMapFactory(bm, 8, 16, 100000);
+        std::shared_ptr<NES::Experimental::Hashmap> order_customersHashMap = order_customersfactory.createPtr();
+        auto order_customersJoinBuild =
+            std::make_shared<JoinBuild>(order_customersHashMap, order_customersJoinBuildKeys, order_customersJoinBuildValues);
+        customersJoinProbe->setChild(order_customersJoinBuild);
 
-    auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline2->setRootOperator(&orderScan);
+        auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline2->setRootOperator(&orderScan);
+
+        auto timerP2 = std::make_shared<Timer<>>("TPC-H-Q3-P2");
+        auto executablePipeline2 = executionEngine->compile(pipeline2, timerP2);
+        timerP2->pause();
+        std::cout << "Second Pipeline Compiled\n";
+
+        /**
+        * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
+        */
+        auto lineitemsBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+        Scan lineitemsScan = Scan(lineitemsBuffer.first);
+        //   date '1995-03-15' < l_shipdate
+        auto readL_shipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
+        auto shipDateSelection = std::make_shared<Selection>(std::make_shared<LessThanExpression>(const_1995_03_15, readL_shipdate));
+        lineitemsScan.setChild(shipDateSelection);
+
+        // join probe
+        std::vector<IR::Types::StampPtr> order_customersKeyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+        std::vector<IR::Types::StampPtr> order_customersValueStamps = {IR::Types::StampFactory::createInt64Stamp(),
+                                                                    IR::Types::StampFactory::createInt64Stamp()};
+        //  l_orderkey,
+        std::vector<ExpressionPtr> lineitemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
+        //  sum(l_extendedprice * (1 - l_discount)) as revenue,
+        std::vector<ExpressionPtr> lineitemProbeValues = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
+                                                        std::make_shared<ReadFieldExpression>("l_discount")};
+        std::vector<Record::RecordFieldIdentifier> lineItemjoinProbeResults = {"l_orderkey", "leftv1", "leftv2","l_extendedprice", "l_discount"};
+        auto lineitemJoinProbe = std::make_shared<JoinProbe>(order_customersHashMap,
+                                                            lineItemjoinProbeResults,
+                                                            lineitemProbeKeys,
+                                                            lineitemProbeValues,
+                                                            order_customersKeyStamps,
+                                                            order_customersValueStamps);
+        shipDateSelection->setChild(lineitemJoinProbe);
+
+        NES::Experimental::HashMapFactory groupedAggregationFactory = NES::Experimental::HashMapFactory(bm, 24, 8, 100000);
+
+        auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+        auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
+        auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
+        auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
+        auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
+        auto sumAggFunction = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
+
+        std::vector<ExpressionPtr> keys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
+        std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+        auto aggregation = std::make_shared<GroupedAggregation>(groupedAggregationFactory, keys, functions);
+        lineitemJoinProbe->setChild(aggregation);
+
+        auto pipeline3 = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline3->setRootOperator(&lineitemsScan);
+
+        //todo use timerP3
+        auto timerP3 = std::make_shared<Timer<>>("TPC-H-Q3-P3");
+        auto executablePipeline3 = executionEngine->compile(pipeline3, timerP3);
+        timerP3->pause();
+        std::cout << "Third Pipeline Compiled\n";
+
+        //todo how to include setups?
+        timerP1->start();
+        executablePipeline1->setup();
+        timerP1->pause();
+        timerP2->start();
+        executablePipeline2->setup();
+        timerP2->pause();
+        timerP3->start();
+        executablePipeline3->setup();
+        timerP3->pause();
+    #ifdef USE_BABELFISH
+
+        uint64_t warmup = 10000;
+        for (auto i = 0ul; i < warmup; i++) {
+            Timer timer("QueryExecutionTime");
+            timer.start();
+            auto buffer1 = customersBuffer.second.getBuffer();
+            executablePipeline1->execute(*runtimeWorkerContext, buffer1);
+            auto buffer2 = ordersBuffer.second.getBuffer();
+            executablePipeline2->execute(*runtimeWorkerContext, buffer2);
+            auto buffer3 = lineitemsBuffer.second.getBuffer();
+            executablePipeline3->execute(*runtimeWorkerContext, buffer3);
+            timer.snapshot("Execute Warmup");
+            timer.pause();
+            NES_INFO("QueryExecutionTime Warmup: " << timer);
+            customersHashMap->clear();
+            order_customersHashMap->clear();
+            auto tag = *((int64_t*) aggregation.get());
+            auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
+            globalState->threadLocalAggregationSlots[0]->clear();
+        }
+
+    #endif
 
 
-    compilationTimer.snapshot("Second Nautilus IR Generation");
-    compilationTimer.pause();
-    auto executablePipeline2 = executionEngine->compile(pipeline2);
-    std::cout << "Second Pipeline Compiled\n";
-    compilationTimer.start();
+        {
+            auto buffer = customersBuffer.second.getBuffer();
+            timerP1->start();
+            executablePipeline1->execute(*runtimeWorkerContext, buffer);
+            timerP1->snapshot("Executed");
+            timerP1->pause();
+            // EXPECT_EQ(customersHashMap->numberOfEntries(), 30142);
+        }
+        {
+            auto buffer = ordersBuffer.second.getBuffer();
+            timerP2->start();
+            executablePipeline2->execute(*runtimeWorkerContext, buffer);
+            timerP2->snapshot("Executed");
+            timerP2->pause();
+            // EXPECT_EQ(order_customersHashMap->numberOfEntries(), 147126);
+        }
 
-    /**
-     * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
-     */
-    auto lineitemsBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-    Scan lineitemsScan = Scan(lineitemsBuffer.first);
-    //   date '1995-03-15' < l_shipdate
-    auto readL_shipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-    auto shipDateSelection = std::make_shared<Selection>(std::make_shared<LessThanExpression>(const_1995_03_15, readL_shipdate));
-    lineitemsScan.setChild(shipDateSelection);
+        {
+            auto buffer = lineitemsBuffer.second.getBuffer();
+            timerP3->start();
+            executablePipeline3->execute(*runtimeWorkerContext, buffer);
+            timerP3->snapshot("Executed");
+            timerP3->pause();
+            auto tag = *((int64_t*) aggregation.get());
+            auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
+            auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
+            // EXPECT_EQ(currentSize, (int64_t) 11620);
+        }
 
-    // join probe
-    std::vector<IR::Types::StampPtr> order_customersKeyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-    std::vector<IR::Types::StampPtr> order_customersValueStamps = {IR::Types::StampFactory::createInt64Stamp(),
-                                                                   IR::Types::StampFactory::createInt64Stamp()};
-    //  l_orderkey,
-    std::vector<ExpressionPtr> lineitemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
-    //  sum(l_extendedprice * (1 - l_discount)) as revenue,
-    std::vector<ExpressionPtr> lineitemProbeValues = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
-                                                      std::make_shared<ReadFieldExpression>("l_discount")};
-    std::vector<Record::RecordFieldIdentifier> lineItemjoinProbeResults = {"l_orderkey", "leftv1", "leftv2","l_extendedprice", "l_discount"};
-    auto lineitemJoinProbe = std::make_shared<JoinProbe>(order_customersHashMap,
-                                                         lineItemjoinProbeResults,
-                                                         lineitemProbeKeys,
-                                                         lineitemProbeValues,
-                                                         order_customersKeyStamps,
-                                                         order_customersValueStamps);
-    shipDateSelection->setChild(lineitemJoinProbe);
-
-    NES::Experimental::HashMapFactory groupedAggregationFactory = NES::Experimental::HashMapFactory(bm, 24, 8, 100000);
-
-    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-    auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
-    auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-    auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-    auto sumAggFunction = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
-
-    std::vector<ExpressionPtr> keys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-    auto aggregation = std::make_shared<GroupedAggregation>(groupedAggregationFactory, keys, functions);
-    lineitemJoinProbe->setChild(aggregation);
-
-    auto pipeline3 = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline3->setRootOperator(&lineitemsScan);
-
-    compilationTimer.snapshot("Third Nautilus IR Generation");
-    compilationTimer.pause();
-    auto executablePipeline3 = executionEngine->compile(pipeline3);
-    std::cout << "Third Pipeline Compiled\n";
-    compilationTimer.start();
-
-    executablePipeline1->setup();
-    executablePipeline2->setup();
-    executablePipeline3->setup();
-    compilationTimer.snapshot("Setup");
-    compilationTimer.pause();
-#ifdef USE_BABELFISH
-
-    uint64_t warmup = 10000;
-    for (auto i = 0ul; i < warmup; i++) {
-        Timer timer("QueryExecutionTime");
-        timer.start();
-        auto buffer1 = customersBuffer.second.getBuffer();
-        executablePipeline1->execute(*runtimeWorkerContext, buffer1);
-        auto buffer2 = ordersBuffer.second.getBuffer();
-        executablePipeline2->execute(*runtimeWorkerContext, buffer2);
-        auto buffer3 = lineitemsBuffer.second.getBuffer();
-        executablePipeline3->execute(*runtimeWorkerContext, buffer3);
-        timer.snapshot("Execute Warmup");
-        timer.pause();
-        NES_INFO("QueryExecutionTime Warmup: " << timer);
-        customersHashMap->clear();
-        order_customersHashMap->clear();
-        auto tag = *((int64_t*) aggregation.get());
-        auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
-        globalState->threadLocalAggregationSlots[0]->clear();
+        NES_INFO("QueryCompilationTime: " << timerP1);
+        NES_INFO("QueryCompilationTime: " << timerP2);
+        NES_INFO("QueryCompilationTime: " << timerP3);
+        auto snapshotsP1 = timerP1->getSnapshots();
+        auto snapshotsP2 = timerP2->getSnapshots();
+        auto snapshotsP3 = timerP3->getSnapshots();
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectorsP1.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
+            runningSnapshotVectorsP2.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
+            runningSnapshotVectorsP3.at(snapShotIndex).emplace_back(snapshotsP3[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectorsP1.at(NUM_SNAPSHOTS-1).emplace_back(timerP1->getPrintTime());
+        runningSnapshotVectorsP2.at(NUM_SNAPSHOTS-1).emplace_back(timerP2->getPrintTime());
+        runningSnapshotVectorsP3.at(NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
     }
-
-#endif
-
-    Timer executionTimer("QueryExecutionTime");
-
-    {
-        auto buffer = customersBuffer.second.getBuffer();
-        executionTimer.start();
-        executablePipeline1->execute(*runtimeWorkerContext, buffer);
-        executionTimer.snapshot("Execute P1");
-        executionTimer.pause();
-        EXPECT_EQ(customersHashMap->numberOfEntries(), 30142);
-    }
-    {
-        auto buffer = ordersBuffer.second.getBuffer();
-        executionTimer.start();
-        executablePipeline2->execute(*runtimeWorkerContext, buffer);
-        executionTimer.snapshot("Execute P2");
-        executionTimer.pause();
-        EXPECT_EQ(order_customersHashMap->numberOfEntries(), 147126);
-    }
-
-    {
-        auto buffer = lineitemsBuffer.second.getBuffer();
-        executionTimer.start();
-        executablePipeline3->execute(*runtimeWorkerContext, buffer);
-        executionTimer.snapshot("Execute P3");
-        executionTimer.pause();
-        auto tag = *((int64_t*) aggregation.get());
-        auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
-        auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-        EXPECT_EQ(currentSize, (int64_t) 11620);
-    }
-
-    NES_INFO("QueryCompilationTime: " << compilationTimer);
-    NES_INFO("QueryExecutionTime: " << executionTimer);
+    testUtility->produceResults(runningSnapshotVectorsP1, snapshotNames, RESULTS_FILE_NAME_P1);
+    testUtility->produceResults(runningSnapshotVectorsP2, snapshotNames, RESULTS_FILE_NAME_P2);
+    testUtility->produceResults(runningSnapshotVectorsP3, snapshotNames, RESULTS_FILE_NAME_P3);
 }
 
 #ifdef USE_BABELFISH

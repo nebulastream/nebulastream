@@ -28,20 +28,21 @@ namespace NES::Nautilus::Backends::MLIR {
 std::shared_ptr<ExecutablePipeline>
 MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                      std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                     std::shared_ptr<IR::IRGraph> ir) {
+                                     std::shared_ptr<IR::IRGraph> ir,
+                                     std::shared_ptr<Timer<>> timer) {
     // 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an MLIR module.
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
-    Timer timer("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+    // Timer timer("CompilationBasedPipelineExecutionEngine");
+    timer->start();
     auto module = loweringProvider->generateModuleFromNESIR(ir);
-    timer.snapshot("MLIR Generation");
+    timer->snapshot("MLIR Generation");
 
     // 2. Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
-    timer.snapshot("MLIR Lowering and Optimization");
+    timer->snapshot("MLIR Lowering and Optimization");
 
     // 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline. //Todo adapt v flag for benchmarks
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(MLIR::LLVMIROptimizer::O3, /*inlining*/ false);
@@ -53,8 +54,8 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     // 5. Get execution function from engine. Create and return execution context.
     auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
     auto exec = std::make_shared<MLIRExecutablePipeline>(executionContext, physicalOperatorPipeline, std::move(engine));
-    timer.snapshot("LLVM JIT Compilation");
-    timer.pause();
+    timer->snapshot("LLVM JIT Compilation");
+    // timer->pause();
     NES_INFO("MLIRPipelineCompilerBackend TIME: " << timer);
     return exec;
 }

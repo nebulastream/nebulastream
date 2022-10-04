@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_EXECUTIONENGINE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_EXECUTIONENGINE_HPP_
+#include "Util/Timer.hpp"
 #include <memory>
 namespace NES::ExecutionEngine::Experimental {
 
@@ -29,7 +30,8 @@ class PipelineExecutionEngine {
      * @param physicalOperatorPipeline
      * @return ExecutablePipeline
      */
-    virtual std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) = 0;
+    virtual std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, 
+                                                        std::shared_ptr<Timer<>> timer = nullptr) = 0;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

@@ -120,9 +120,7 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
                                                     const std::string &resultsFileName, bool writeRawData) {
     std::ifstream inlineFS("llvmLambda.csv");
 
-    std::cout << "lambda open?\n";
     if(inlineFS.is_open()) {
-    std::cout << "lambda open!\n";
         std::cout << "Adding Inlining Informatinon\n";
         std::string line;
         std::vector<double> llvmParsingTimes;

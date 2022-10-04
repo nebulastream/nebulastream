@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Experimental/Utility/TestUtility.hpp"
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
@@ -235,6 +236,23 @@ TEST_P(YSBTest, DISABLED_ysbSelectionCampain) {
 }
 
 TEST_P(YSBTest, ysbTumblingWindow) {
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 2; //todo change
+    const int NUM_SNAPSHOTS = 8; // 7 -> 8
+    const std::string RESULTS_FILE_NAME = "ysb.csv";
+    const std::vector<std::string> snapshotNames {
+        "Symbolic Execution Trace     ",
+        "SSA Phase                    ",
+        "IR Created                   ",
+        "MLIR Created                 ",
+        "MLIR Lowered And Optimized   ",
+        "LLVM JIT Compilation         ",
+        "Executed                     ",
+        "Overall Time                 "
+    };
+    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     uint64_t tumblingWindowSize = 1000;
     auto bm = std::make_shared<Runtime::BufferManager>();
 
@@ -244,69 +262,74 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Scan scan = Scan(memoryLayout, {"current_ms", "campaign_id", "event_type"});
+        /*
+        *   campaing_id = 0
+        */
+        auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
+        auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
+        auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
+        auto selection = std::make_shared<Selection>(equalsExpression);
+        scan.setChild(selection);
 
-    Timer timer("YSB Timer");
-    timer.start();
-    Scan scan = Scan(memoryLayout, {"current_ms", "campaign_id", "event_type"});
-    /*
-     *   campaing_id = 0
-     */
-    auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
-    auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
-    auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
-    auto selection = std::make_shared<Selection>(equalsExpression);
-    scan.setChild(selection);
+        auto hashMapFactory = std::make_shared<NES::Experimental::HashMapFactory>(bm, 8, 16, 40000);
+        auto sliceStore = std::make_shared<Windowing::Experimental::KeyedThreadLocalSliceStore>(hashMapFactory,
+                                                                                                tumblingWindowSize,
+                                                                                                tumblingWindowSize);
+        auto tsExpression = std::make_shared<ReadFieldExpression>("current_ms");
+        auto keyExpression = std::make_shared<ReadFieldExpression>("campaign_id");
+        std::vector<ExpressionPtr> keyExpressions = {keyExpression};
+        auto countAggregation = std::make_shared<CountFunction>();
+        std::vector<std::shared_ptr<AggregationFunction>> functions = {countAggregation};
+        auto windowAggregation = std::make_shared<WindowAggregation>(sliceStore, tsExpression, keyExpressions, functions);
+        selection->setChild(windowAggregation);
 
-    auto hashMapFactory = std::make_shared<NES::Experimental::HashMapFactory>(bm, 8, 16, 40000);
-    auto sliceStore = std::make_shared<Windowing::Experimental::KeyedThreadLocalSliceStore>(hashMapFactory,
-                                                                                            tumblingWindowSize,
-                                                                                            tumblingWindowSize);
-    auto tsExpression = std::make_shared<ReadFieldExpression>("current_ms");
-    auto keyExpression = std::make_shared<ReadFieldExpression>("campaign_id");
-    std::vector<ExpressionPtr> keyExpressions = {keyExpression};
-    auto countAggregation = std::make_shared<CountFunction>();
-    std::vector<std::shared_ptr<AggregationFunction>> functions = {countAggregation};
-    auto windowAggregation = std::make_shared<WindowAggregation>(sliceStore, tsExpression, keyExpressions, functions);
-    selection->setChild(windowAggregation);
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(&scan);
 
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(&scan);
+        auto timer = std::make_shared<Timer<>>("YSB");
+        auto executablePipeline = executionEngine->compile(pipeline, timer);
 
-    timer.snapshot("Nautilus IR Generation");
-    timer.pause();
-    auto executablePipeline = executionEngine->compile(pipeline);
-    timer.start();
+        executablePipeline->setup();
 
-    executablePipeline->setup();
-    timer.snapshot("Setup");
-
-#ifdef USE_BABELFISH
-    uint64_t warmup = 1000;
-    for (auto i = 0ul; i < warmup; i++) {
-        for (auto& buffer : data) {
-            executablePipeline->execute(*runtimeWorkerContext, buffer);
+    #ifdef USE_BABELFISH
+        uint64_t warmup = 1000;
+        for (auto i = 0ul; i < warmup; i++) {
+            for (auto& buffer : data) {
+                executablePipeline->execute(*runtimeWorkerContext, buffer);
+            }
         }
-    }
-#endif
+    #endif
 
-    for (auto i = 0; i < 100; i++) {
-        for (auto& buffer : data) {
-            executablePipeline->execute(*runtimeWorkerContext, buffer);
+        for (auto i = 0; i < 100; i++) {
+            for (auto& buffer : data) {
+                executablePipeline->execute(*runtimeWorkerContext, buffer);
+            }
         }
+        timer->snapshot("Execute");
+        timer->pause();
+
+        NES_INFO(timer);
+
+        auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
+        double recordsPerMs = (double) processedTuples / timer->getPrintTime();
+        NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
+                                    << " Throughput: " << (recordsPerMs * 1000));
+
+        // ASSERT_EQ(sliceStore->getSlices().size(), 1);
+
+        // ASSERT_EQ(sliceStore->getSlices().front()->getState().numberOfEntries(), 100);
+
+        //produce results
+        auto snapshots = timer->getSnapshots();
+        std::cout << "num snapshots: " << snapshots.size() << '\n';
+        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        }
+        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    timer.snapshot("Execute");
-    timer.pause();
-
-    NES_INFO(timer);
-
-    auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
-    double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
-                                << " Throughput: " << (recordsPerMs * 1000));
-
-    ASSERT_EQ(sliceStore->getSlices().size(), 1);
-
-    ASSERT_EQ(sliceStore->getSlices().front()->getState().numberOfEntries(), 100);
+    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testYSB,

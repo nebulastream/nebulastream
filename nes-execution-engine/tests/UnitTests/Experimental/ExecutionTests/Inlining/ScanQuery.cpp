@@ -194,9 +194,9 @@ TEST_F(ScanQuery, scanBenchmark) {
     auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
 
     //Setup timing, and results logging.
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O2;
-    const bool PERFORM_INLINING = true;
-    const int NUM_ITERATIONS = 1;
+    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
+    const bool PERFORM_INLINING = false;
+    const int NUM_ITERATIONS = 10;
     const int NUM_SNAPSHOTS = 8; // 7 -> 8
     const std::string RESULTS_FILE_NAME = "scan.csv";
     const std::vector<std::string> snapshotNames {

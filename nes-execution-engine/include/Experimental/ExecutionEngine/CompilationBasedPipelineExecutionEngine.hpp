@@ -20,7 +20,8 @@ namespace NES::ExecutionEngine::Experimental {
 class CompilationBasedPipelineExecutionEngine : public PipelineExecutionEngine {
   public:
     CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend);
-    std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;
+    std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, 
+                                                std::shared_ptr<Timer<>> timer) override;
   private:
     std::shared_ptr<PipelineCompilerBackend> backend;
 };

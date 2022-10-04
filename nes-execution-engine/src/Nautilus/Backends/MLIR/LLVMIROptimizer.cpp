@@ -42,8 +42,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
                     timer->start();
                     llvm::SMDiagnostic Err;
-                    std::cout << "lambda dir: " << std::string(PROXY_FUNCTIONS_RESULT_DIR2) << '\n';
-                    std::cout << "Next line\n";
                     // std::string 
                     auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR2),
                                                             Err, llvmIRModule->getContext());
@@ -82,8 +80,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
                     timer->start();
                     llvm::SMDiagnostic Err;
-                    std::cout << "lambda dir: " << std::string(PROXY_FUNCTIONS_RESULT_DIR2) << '\n';
-                    std::cout << "Next line\n";
                     // std::string 
                     auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR2),
                                                             Err, llvmIRModule->getContext());
@@ -122,9 +118,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
                     timer->start();
                     llvm::SMDiagnostic Err;
-                    std::cout << "lambda dir: " << std::string(PROXY_FUNCTIONS_RESULT_DIR2) << '\n';
-                    std::cout << "Next line\n";
-                    // std::string 
                     auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR2),
                                                             Err, llvmIRModule->getContext());
                     timer->snapshot("Proxy Module Parsed");
@@ -163,9 +156,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
                     timer->start();
                     llvm::SMDiagnostic Err;
-                    std::cout << "lambda dir: " << std::string(PROXY_FUNCTIONS_RESULT_DIR2) << '\n';
-                    std::cout << "Next line\n";
-                    // std::string 
                     auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR2),
                                                             Err, llvmIRModule->getContext());
                     timer->snapshot("Proxy Module Parsed");
@@ -204,32 +194,100 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
         switch(optLevel) {
             case OptimizationLevel::O0: {
                 return [] (llvm::Module* llvmIRModule) mutable {
-                    auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
+                    auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
+                    timer->start();
+                    timer->snapshot("Dummy: Proxy Module Parsed");
+                    timer->snapshot("Dummy: Proxy Module Linked");
+                    
+                    auto optPipeline = mlir::makeOptimizingTransformer(0, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
+                    timer->snapshot("Module Optimized");
+                    timer->pause();
+                    std::string timerString;
+                    for(auto snapshot : timer->getSnapshots()) {
+                        timerString += std::to_string(snapshot.getPrintTime()) + ',';
+                    }
+                    timerString += '\n';
+                    // Write inlining results to folder where benchmark is executed (will be removed later).
+                    std::ofstream fs("llvmLambda.csv", std::ios::app);
+                    if(fs.is_open()) { 
+                        fs.write(timerString.c_str(), timerString.size());
+                    }
                     // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
             case OptimizationLevel::O1: {
                 return [] (llvm::Module* llvmIRModule) mutable {
-                    auto optPipeline = mlir::makeOptimizingTransformer(1, 1, nullptr);
+                    auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
+                    timer->start();
+                    timer->snapshot("Dummy: Proxy Module Parsed");
+                    timer->snapshot("Dummy: Proxy Module Linked");
+
+                    auto optPipeline = mlir::makeOptimizingTransformer(1, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
+                    timer->snapshot("Module Optimized");
+                    timer->pause();
+                    std::string timerString;
+                    for(auto snapshot : timer->getSnapshots()) {
+                        timerString += std::to_string(snapshot.getPrintTime()) + ',';
+                    }
+                    timerString += '\n';
+                    // Write inlining results to folder where benchmark is executed (will be removed later).
+                    std::ofstream fs("llvmLambda.csv", std::ios::app);
+                    if(fs.is_open()) { 
+                        fs.write(timerString.c_str(), timerString.size());
+                    }
                     // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
             case OptimizationLevel::O2: {
                 return [] (llvm::Module* llvmIRModule) mutable {
-                    auto optPipeline = mlir::makeOptimizingTransformer(2, 2, nullptr);
+                    auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
+                    timer->start();
+                    timer->snapshot("Dummy: Proxy Module Parsed");
+                    timer->snapshot("Dummy: Proxy Module Linked");
+
+                    auto optPipeline = mlir::makeOptimizingTransformer(2, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
+                    timer->snapshot("Module Optimized");
+                    timer->pause();
+                    std::string timerString;
+                    for(auto snapshot : timer->getSnapshots()) {
+                        timerString += std::to_string(snapshot.getPrintTime()) + ',';
+                    }
+                    timerString += '\n';
+                    // Write inlining results to folder where benchmark is executed (will be removed later).
+                    std::ofstream fs("llvmLambda.csv", std::ios::app);
+                    if(fs.is_open()) { 
+                        fs.write(timerString.c_str(), timerString.size());
+                    }
                     // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
             case OptimizationLevel::O3: {
                 return [] (llvm::Module* llvmIRModule) mutable {
+                    auto timer = std::make_shared<Timer<>>("LLVM IR Module Optimization");
+                    timer->start();
+                    timer->snapshot("Dummy: Proxy Module Parsed");
+                    timer->snapshot("Dummy: Proxy Module Linked");
+
                     auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
+                    timer->snapshot("Module Optimized");
+                    timer->pause();
+                    std::string timerString;
+                    for(auto snapshot : timer->getSnapshots()) {
+                        timerString += std::to_string(snapshot.getPrintTime()) + ',';
+                    }
+                    timerString += '\n';
+                    // Write inlining results to folder where benchmark is executed (will be removed later).
+                    std::ofstream fs("llvmLambda.csv", std::ios::app);
+                    if(fs.is_open()) { 
+                        fs.write(timerString.c_str(), timerString.size());
+                    }
                     // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };

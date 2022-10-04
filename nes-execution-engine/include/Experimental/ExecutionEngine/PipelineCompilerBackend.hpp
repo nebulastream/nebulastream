@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PIPELINECOMPILERBACKEND_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PIPELINECOMPILERBACKEND_HPP_
+#include <Util/Timer.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -30,7 +31,8 @@ class PipelineCompilerBackend {
     virtual std::shared_ptr<ExecutablePipeline>
     compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
             std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-            std::shared_ptr<Nautilus::IR::IRGraph> ir) = 0;
+            std::shared_ptr<Nautilus::IR::IRGraph> ir,
+            std::shared_ptr<Timer<>> timer) = 0;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

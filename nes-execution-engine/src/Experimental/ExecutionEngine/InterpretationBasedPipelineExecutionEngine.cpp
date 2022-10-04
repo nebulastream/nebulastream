@@ -34,9 +34,14 @@ namespace NES::ExecutionEngine::Experimental {
 InterpretationBasedPipelineExecutionEngine::InterpretationBasedPipelineExecutionEngine() : PipelineExecutionEngine() {}
 
 std::shared_ptr<ExecutablePipeline>
-InterpretationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) {
-    auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
-    return std::make_shared<InterpretationBasedExecutablePipeline>(pipelineContext, physicalOperatorPipeline);
+InterpretationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer) {
+    if(timer) {
+        auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
+        return std::make_shared<InterpretationBasedExecutablePipeline>(pipelineContext, physicalOperatorPipeline);
+    } else {
+        auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
+        return std::make_shared<InterpretationBasedExecutablePipeline>(pipelineContext, physicalOperatorPipeline);
+    }
 }
 
 }// namespace NES::ExecutionEngine::Experimental
