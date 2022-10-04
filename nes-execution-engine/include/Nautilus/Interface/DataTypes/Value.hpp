@@ -289,6 +289,12 @@ inline auto toValue(T&& t) -> Value<> {
     return Value<Int8>(t);
 }
 
+template<class T>
+    requires(std::is_same_v<T, const uint8_t> == true)
+inline auto toValue(T&& t) -> Value<> {
+    return Value<UInt8>(t);
+}
+
 template<IsNotValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
     auto leftValue = toValue(std::forward<const LHS>(left));
