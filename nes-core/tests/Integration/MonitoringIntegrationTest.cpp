@@ -304,7 +304,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
     auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
     NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
     ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size());
-
+//    auto nodeEngine = coordinator->getNodeEnigne();
 //    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
     auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
 

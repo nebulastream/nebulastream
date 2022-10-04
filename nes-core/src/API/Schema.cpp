@@ -161,6 +161,19 @@ std::string Schema::toString() const {
     return ss.str();
 }
 
+std::string Schema::toStringForLogicalSourceName() const {
+    std::stringstream ss;
+    std::string delimiter = ":";
+    for (const auto& f : fields) {
+        std::string tempString = f->toString();
+        std::string fieldString = tempString.substr(0,tempString.find(delimiter));
+        ss << fieldString << " ";
+    }
+    std::string finalString = ss.str();
+    finalString.pop_back();
+    return finalString;
+}
+
 SchemaPtr Schema::parse(std::string schemaString) {
     std::string prefix = "";
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT);

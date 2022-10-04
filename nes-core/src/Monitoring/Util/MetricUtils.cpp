@@ -310,7 +310,7 @@ SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
 }
 
 std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
-    std::string logicalSourceName = NES::toString(metricType) + "_" + schema->toString();
+    std::string logicalSourceName = NES::toString(metricType) + "_" + schema->toStringForLogicalSourceName();
     return logicalSourceName;
 }
 

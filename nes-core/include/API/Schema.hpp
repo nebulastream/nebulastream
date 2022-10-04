@@ -163,6 +163,8 @@ class Schema {
      */
     [[nodiscard]] std::string toString() const;
 
+    [[nodiscard]] std::string toStringForLogicalSourceName() const;
+
     static SchemaPtr parse(std::string schemaString);
 
     /**
