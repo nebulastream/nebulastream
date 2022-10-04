@@ -77,7 +77,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
+using namespace NES::ExecutionEngine::Experimental;
 namespace NES::Nautilus {
 
 /**
