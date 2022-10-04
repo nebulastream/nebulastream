@@ -116,10 +116,7 @@ int main(int argc, const char* argv[]) {
     int portOffset = 0;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-        // Creates the data providers
-        NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                                                     configPerRun.numBuffersToProduce->getValue());
-        auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+
 
         auto coordinatorConf = NES::Configurations::CoordinatorConfiguration::create();
         auto workerConf = NES::Configurations::WorkerConfiguration::create();
@@ -144,6 +141,12 @@ int main(int argc, const char* argv[]) {
         coordinatorConf->worker.queryCompiler.useCompilationCache = true;
         coordinatorConf->worker.enableMonitoring = false;
 
+
+        NES_INFO("E2ERunner: Creating buffer manager...");
+        NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+                                                                                                     configPerRun.numBuffersToProduce->getValue());
+        auto dataGenerator = NES::DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+
         NES_INFO("E2ERunner: Creating a data generator and a data provider...")
         auto buffers = dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(),
                                                  configPerRun.bufferSizeInBytes->getValue());
@@ -153,7 +156,7 @@ int main(int argc, const char* argv[]) {
 
 
         size_t taskQueueId = 0;
-        size_t queryIndex = 0;
+//        size_t queryIndex = 0;
         size_t generatorQueueIndex = 0;
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         auto schema = dataGenerator->getSchema();
@@ -164,7 +167,7 @@ int main(int argc, const char* argv[]) {
         };
         NES::LambdaSourceTypePtr sourceConf = NES::LambdaSourceType::create(func,
                                                                             configPerRun.numBuffersToProduce->getValue(),
-                                                                            /* gatheringInterval */0,
+                                                                            /* gatheringInterval */ 0,
                                                                             NES::GatheringMode::INTERVAL_MODE,
                                                                             sourceAffinity,
                                                                             taskQueueId);
