@@ -27,6 +27,7 @@
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
+#include <cstdint>
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
@@ -62,44 +63,44 @@ class Value : BaseValue {
 
   public:
     /*
-     * Creates a Value<Int8> object from an int8_t.
+     * Creates a Value<Int8> object from an std::int8_t.
      */
-    Value(int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int16> object from an int16_t.
+     * Creates a Value<Int16> object from an std::int16_t.
      */
-    Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int32> object from an int32_t.
+     * Creates a Value<Int32> object from an std::int32_t.
      */
-    Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int64> object from an int64_t.
+     * Creates a Value<Int64> object from an std::int64_t.
      */
-    Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<UInt8> object from an uint8_t.
+     * Creates a Value<UInt8> object from an std::uint8_t.
      */
-    Value(uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int16> object from an int16_t.
+     * Creates a Value<Int16> object from an std::int16_t.
      */
-    Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int32> object from an int32_t.
+     * Creates a Value<Int32> object from an std::int32_t.
      */
-    Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int64> object from an int64_t.
+     * Creates a Value<Int64> object from an std::int64_t.
      */
-    Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Float> object from a float.
@@ -117,9 +118,9 @@ class Value : BaseValue {
     Value(bool value) : Value(std::make_shared<Boolean>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<MemRef> object from an int8_t*.
+     * Creates a Value<MemRef> object from an std::int8_t*.
      */
-    Value(int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /**
      * @brief copy constructor
@@ -266,31 +267,31 @@ inline auto toValue(T&& t) -> Value<> {
 }
 
 template<class T>
-    requires(std::is_same_v<T, const int64_t> == true)
+    requires(std::is_same_v<T, const std::int64_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value<Int64>(t);
 }
 
 template<class T>
-    requires(std::is_same_v<T, const uint64_t> == true)
+    requires(std::is_same_v<T, const std::uint64_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value<UInt64>(t);
 }
 
 template<class T>
-    requires(std::is_same_v<T, const int32_t> == true)
+    requires(std::is_same_v<T, const std::int32_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value<Int32>(t);
 }
 
 template<class T>
-    requires(std::is_same_v<T, const int8_t> == true)
+    requires(std::is_same_v<T, const std::int8_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value<Int8>(t);
 }
 
 template<class T>
-    requires(std::is_same_v<T, const uint8_t> == true)
+    requires(std::is_same_v<T, const std::uint8_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value<UInt8>(t);
 }
@@ -314,7 +315,7 @@ auto inline operator+(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS>
 auto inline operator++(const LHS& left) {
-    return left + (uint32_t) 1;
+    return left + (std::uint32_t) 1;
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
