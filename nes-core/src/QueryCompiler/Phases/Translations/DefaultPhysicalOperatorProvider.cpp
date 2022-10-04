@@ -166,6 +166,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
         #ifdef TFDEF
         lowerInferModelOperator(queryPlan, operatorNode);
+        #else
+        NES_THROW_RUNTIME_ERROR("TFDEF is not defined but InferModelLogicalOperatorNode is used!");
         #endif // TFDEF
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
