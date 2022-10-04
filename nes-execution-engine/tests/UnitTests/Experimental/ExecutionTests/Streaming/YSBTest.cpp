@@ -175,7 +175,7 @@ createData(uint64_t numberOfBuffers, Runtime::MemoryLayouts::MemoryLayoutPtr mem
     return buffers;
 }
 
-TEST_P(YSBTest, ysbSelectionCampain) {
+TEST_P(YSBTest, DISABLED_ysbSelectionCampain) {
     uint64_t bufferSize = 1000000;
     auto bm = std::make_shared<Runtime::BufferManager>(bufferSize);
 
@@ -244,6 +244,9 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
+
+    Timer timer("YSB Timer");
+    timer.start();
     Scan scan = Scan(memoryLayout, {"current_ms", "campaign_id", "event_type"});
     /*
      *   campaing_id = 0
@@ -269,9 +272,13 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
+    timer.snapshot("Nautilus IR Generation");
+    timer.pause();
     auto executablePipeline = executionEngine->compile(pipeline);
+    timer.start();
 
     executablePipeline->setup();
+    timer.snapshot("Setup");
 
 #ifdef USE_BABELFISH
     uint64_t warmup = 1000;
@@ -282,8 +289,6 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     }
 #endif
 
-    Timer timer("QueryExecutionTime");
-    timer.start();
     for (auto i = 0; i < 100; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
@@ -322,7 +327,9 @@ INSTANTIATE_TEST_CASE_P(testYSB,
                         YSBTest,
                         ::testing::Combine(::testing::Values("MLIR"),
                         // ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                        //    ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                           ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                                        //    ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                         [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {

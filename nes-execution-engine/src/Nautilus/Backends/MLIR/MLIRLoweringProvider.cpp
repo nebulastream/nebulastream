@@ -160,7 +160,7 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
     ValueFrame firstFrame;
     generateMLIR(nesIR->getRootOperation(), firstFrame);
-    theModule->dump();
+    // theModule->dump();
     
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
@@ -343,7 +343,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
         NES_THROW_RUNTIME_ERROR("Cant load a boolean");
     }
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
-    std::cout << "Typeeee: " << loadOp->getStamp();
     if(!loadOp->getStamp()->isBoolean()) {
         auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Bitcasted address"),
                                                             mlir::LLVM::LLVMPointerType::get(getMLIRType(loadOp->getStamp())),

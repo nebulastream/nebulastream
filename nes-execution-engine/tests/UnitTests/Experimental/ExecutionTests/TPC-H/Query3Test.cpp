@@ -128,12 +128,13 @@ class Query3Test : public testing::Test, public ::testing::WithParamInterface<st
 };
 
 TEST_P(Query3Test, tpchQ3) {
-    Timer compilationTimer("QueryCompilationTime");
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto customersBuffer = TPCHUtil::getCustomers("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+    auto customersBuffer = TPCHUtil::getCustomers("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
+    Timer compilationTimer("QueryCompilationTime");
+    compilationTimer.start();
     /**
      * Pipeline 1 with scan customers -> selection -> JoinBuild
      */
@@ -158,10 +159,11 @@ TEST_P(Query3Test, tpchQ3) {
     auto pipeline1 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline1->setRootOperator(&customersScan);
 
-    compilationTimer.start();
-    auto executablePipeline1 = executionEngine->compile(pipeline1);
-    compilationTimer.snapshot("Compile P1");
+    compilationTimer.snapshot("First Nautilus IR Generation");
     compilationTimer.pause();
+    auto executablePipeline1 = executionEngine->compile(pipeline1);
+    std::cout << "First Pipeline Compiled\n";
+    compilationTimer.start();
 
     /**
      * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
@@ -206,10 +208,12 @@ TEST_P(Query3Test, tpchQ3) {
     auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(&orderScan);
 
-    compilationTimer.start();
-    auto executablePipeline2 = executionEngine->compile(pipeline2);
-    compilationTimer.snapshot("Compile P2");
+
+    compilationTimer.snapshot("Second Nautilus IR Generation");
     compilationTimer.pause();
+    auto executablePipeline2 = executionEngine->compile(pipeline2);
+    std::cout << "Second Pipeline Compiled\n";
+    compilationTimer.start();
 
     /**
      * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
@@ -255,14 +259,18 @@ TEST_P(Query3Test, tpchQ3) {
 
     auto pipeline3 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline3->setRootOperator(&lineitemsScan);
-    compilationTimer.start();
-    auto executablePipeline3 = executionEngine->compile(pipeline3);
-    compilationTimer.snapshot("Compile P3");
+
+    compilationTimer.snapshot("Third Nautilus IR Generation");
     compilationTimer.pause();
+    auto executablePipeline3 = executionEngine->compile(pipeline3);
+    std::cout << "Third Pipeline Compiled\n";
+    compilationTimer.start();
 
     executablePipeline1->setup();
     executablePipeline2->setup();
     executablePipeline3->setup();
+    compilationTimer.snapshot("Setup");
+    compilationTimer.pause();
 #ifdef USE_BABELFISH
 
     uint64_t warmup = 10000;
@@ -287,31 +295,31 @@ TEST_P(Query3Test, tpchQ3) {
 
 #endif
 
-    Timer timer("QueryExecutionTime");
+    Timer executionTimer("QueryExecutionTime");
 
     {
         auto buffer = customersBuffer.second.getBuffer();
-        timer.start();
+        executionTimer.start();
         executablePipeline1->execute(*runtimeWorkerContext, buffer);
-        timer.snapshot("Execute P1");
-        timer.pause();
+        executionTimer.snapshot("Execute P1");
+        executionTimer.pause();
         EXPECT_EQ(customersHashMap->numberOfEntries(), 30142);
     }
     {
         auto buffer = ordersBuffer.second.getBuffer();
-        timer.start();
+        executionTimer.start();
         executablePipeline2->execute(*runtimeWorkerContext, buffer);
-        timer.snapshot("Execute P2");
-        timer.pause();
+        executionTimer.snapshot("Execute P2");
+        executionTimer.pause();
         EXPECT_EQ(order_customersHashMap->numberOfEntries(), 147126);
     }
 
     {
         auto buffer = lineitemsBuffer.second.getBuffer();
-        timer.start();
+        executionTimer.start();
         executablePipeline3->execute(*runtimeWorkerContext, buffer);
-        timer.snapshot("Execute P3");
-        timer.pause();
+        executionTimer.snapshot("Execute P3");
+        executionTimer.pause();
         auto tag = *((int64_t*) aggregation.get());
         auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
         auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
@@ -319,7 +327,7 @@ TEST_P(Query3Test, tpchQ3) {
     }
 
     NES_INFO("QueryCompilationTime: " << compilationTimer);
-    NES_INFO("QueryExecutionTime: " << timer);
+    NES_INFO("QueryExecutionTime: " << executionTimer);
 }
 
 #ifdef USE_BABELFISH
@@ -341,9 +349,10 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ3,
 
 INSTANTIATE_TEST_CASE_P(testTPCHQ3,
                         Query3Test,
-                        ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT,
-                                                             Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                        ::testing::Combine(::testing::Values("MLIR"),
+                                           ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                                        //    ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                                            //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query3Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
                             if (layout == Schema::ROW_LAYOUT) {

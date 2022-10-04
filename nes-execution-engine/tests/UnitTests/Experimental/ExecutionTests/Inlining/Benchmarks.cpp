@@ -81,7 +81,7 @@
 
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental::Interpreter {
-class InliningBenchmark : public testing::Test {
+class Benchmarks : public testing::Test {
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -211,7 +211,7 @@ struct MemRefDescriptor {
 //==-------------------------------------------------------------==//
 //==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, DISABLED_scanBenchmark) {
+TEST_F(Benchmarks, DISABLED_scanBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -313,7 +313,7 @@ void filter(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
     }
 }
 
-TEST_F(InliningBenchmark, filterBenchmark) {
+TEST_F(Benchmarks, filterBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -401,7 +401,7 @@ TEST_F(InliningBenchmark, filterBenchmark) {
     testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 }
 
-TEST_F(InliningBenchmark, DISABLED_mlirLoadAddStoreOptimized) {
+TEST_F(Benchmarks, DISABLED_mlirLoadAddStoreOptimized) {
     // auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = loadLineItemTable(bm);
@@ -441,7 +441,7 @@ TEST_F(InliningBenchmark, DISABLED_mlirLoadAddStoreOptimized) {
     // 6.03946
 }
 
-TEST_F(InliningBenchmark, DISABLED_mlirLoadAddStore) {
+TEST_F(Benchmarks, DISABLED_mlirLoadAddStore) {
     // Todo: Establish phases for Scan + Map Query
     // Todo: Add Filter query!
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
@@ -486,7 +486,7 @@ TEST_F(InliningBenchmark, DISABLED_mlirLoadAddStore) {
 }
 
 //USING
-TEST_F(InliningBenchmark, DISABLED_stdDevMemrefVectorization) {
+TEST_F(Benchmarks, DISABLED_stdDevMemrefVectorization) {
     // Todo handle testUtility
     // auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -524,7 +524,7 @@ TEST_F(InliningBenchmark, DISABLED_stdDevMemrefVectorization) {
     std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
 }
 
-TEST_F(InliningBenchmark, DISABLED_mlirStdDevMemrefUnoptimized) {
+TEST_F(Benchmarks, DISABLED_mlirStdDevMemrefUnoptimized) {
     //Todo handle testUtility
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -562,7 +562,7 @@ TEST_F(InliningBenchmark, DISABLED_mlirStdDevMemrefUnoptimized) {
     std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
 }
 
-TEST_F(InliningBenchmark, DISABLED_mlirStdDev_No_Memref) {
+TEST_F(Benchmarks, DISABLED_mlirStdDev_No_Memref) {
     // Todo handle testUtility
     // auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -600,7 +600,7 @@ TEST_F(InliningBenchmark, DISABLED_mlirStdDev_No_Memref) {
 // //==-------------------------------------------------------------==//
 // //==-------------- ALGEBRAIC FUNCTION BENCHMARKS ---------------==//
 // //==-----------------------------------------------------------==//
-TEST_F(InliningBenchmark, DISABLED_algebraicFunctionBenchmark) {
+TEST_F(Benchmarks, DISABLED_algebraicFunctionBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);
@@ -696,7 +696,7 @@ void stringManipulation(Value<MemRef> ptr, Value<Int64> size) {
         FunctionCall<>("stringToUpperCase", Runtime::ProxyFunctions::stringToUpperCase, i, ptr);
     }
 }
-TEST_F(InliningBenchmark, DISABLED_stringManipulationBenchmark) {
+TEST_F(Benchmarks, DISABLED_stringManipulationBenchmark) {
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     // Get comment strings from Lineitem table and fill array of char pointers with it.
     auto lineitemStrings = testUtility->loadStringsFromLineitemTable();
@@ -807,7 +807,7 @@ Value<Int64> crc32HashAggregation(Value<MemRef> ptr, Value<Int64> size) {
 }
 
 // USING
-TEST_F(InliningBenchmark, DISABLED_crc32HashAggregationBenchmark) {
+TEST_F(Benchmarks, DISABLED_crc32HashAggregationBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto bm = std::make_shared<Runtime::BufferManager>(100);

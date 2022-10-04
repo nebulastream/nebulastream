@@ -129,10 +129,13 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
 
 TEST_P(Query1Test, tpchQ1) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-    auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-
+    auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
+    auto ordersBuffer = TPCHUtil::getOrders("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+    auto buffer = lineitemBuffer.second.getBuffer();
+
+    Timer timer("TPC-H-Q1");
+    timer.start();
     Scan scan = Scan(lineitemBuffer.first);
 
     /*
@@ -201,11 +204,13 @@ TEST_P(Query1Test, tpchQ1) {
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(&scan);
 
+    timer.snapshot("Nautilus IR Creation");
+    timer.pause();
     auto executablePipeline = executionEngine->compile(pipeline);
+    timer.start();
 
     executablePipeline->setup();
 
-    auto buffer = lineitemBuffer.second.getBuffer();
 
 #ifdef USE_BABELFISH
     uint64_t warmup = 1000;
@@ -219,10 +224,6 @@ TEST_P(Query1Test, tpchQ1) {
     }
 #endif
 
-
-    Timer timer("QueryExecutionTime");
-    timer.start();
-    timer.snapshot("Start");
     executablePipeline->execute(*runtimeWorkerContext, buffer);
     timer.snapshot("Execute");
     timer.pause();
@@ -282,7 +283,8 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                         Query1Test,
                         ::testing::Combine(::testing::Values("MLIR"),
                         // ::testing::Combine(::testing::Values("INTERPRETER","MLIR", "FLOUNDER"),
-                                           ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
+                                           ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
+                                        //    ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                                                             //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);

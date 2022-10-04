@@ -71,11 +71,11 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
             passManager.addPass(getMLIROptimizationPass(optimizationPass));    
         }
     } else {
-        passManager.addPass(mlir::createInlinerPass());
-        passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
-        passManager.addPass(mlir::createCSEPass());
-        passManager.addPass(mlir::createControlFlowSinkPass());
-        passManager.addPass(mlir::createCanonicalizerPass());
+        // passManager.addPass(mlir::createInlinerPass());
+        // passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
+        // passManager.addPass(mlir::createCSEPass());
+        // passManager.addPass(mlir::createControlFlowSinkPass());
+        // passManager.addPass(mlir::createCanonicalizerPass());
         // passManager.addPass(mlir::createAffineParallelizePass()); //Either below or this
         // passManager.addPass(mlir::createSuperVectorizePass(8));
         // passManager.addPass(mlir::createLoopUnrollPass());
@@ -92,16 +92,16 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
         }
     } else {
     //     passManager.addPass(mlir::createLowerToCFGPass());
-    //     passManager.addPass(mlir::createLowerToLLVMPass());
-        passManager.addPass(mlir::createLowerAffinePass());
+        passManager.addPass(mlir::createLowerToLLVMPass());
+        // passManager.addPass(mlir::createLowerAffinePass());
         passManager.addPass(mlir::createLowerToCFGPass());//SCF
-        passManager.addPass(mlir::createConvertVectorToLLVMPass());
-        mlir::LowerToLLVMOptions llvmLoweringOptions(module->getContext()); 
+        // passManager.addPass(mlir::createConvertVectorToLLVMPass());
+        // mlir::LowerToLLVMOptions llvmLoweringOptions(module->getContext()); 
         // mlir::LowerToLLVMOptions llvmLoweringOptions(&context);
-        llvmLoweringOptions.emitCWrappers = true;
-        passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
-        passManager.addPass(mlir::createMemRefToLLVMPass()); //Needs to be second to last for unrealized pass to work
-        passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
+        // llvmLoweringOptions.emitCWrappers = true;
+        // passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
+        // passManager.addPass(mlir::createMemRefToLLVMPass()); //Needs to be second to last for unrealized pass to work
+        // passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
     }
 
     // Run passes.
