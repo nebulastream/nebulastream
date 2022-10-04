@@ -13,7 +13,6 @@
 */
 #ifndef NES_NAUTILUS_UTIL_CASTUTILS_HPP_
 #define NES_NAUTILUS_UTIL_CASTUTILS_HPP_
-#include <concepts>
 #include <memory>
 #include <typeinfo>
 
