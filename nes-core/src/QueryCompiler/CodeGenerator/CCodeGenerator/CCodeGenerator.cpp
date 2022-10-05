@@ -51,6 +51,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #endif //TFDEF
 
+#include <API/Expressions/Expressions.hpp>
+#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -77,10 +79,8 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <API/Expressions/Expressions.hpp>
 
 namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() {}

@@ -442,7 +442,7 @@ class Query {
     Query& filter(ExpressionNodePtr const& filterExpression, float selectivity);
 
     /**
-     * @brief: Create watermark assginer operator.
+     * @brief: Create watermark assihner operator.
      * @param onField filed to retrieve the timestamp for watermark.
      * @param delay timestamp delay of tanuraghazrahe watermark.
      * @return query.

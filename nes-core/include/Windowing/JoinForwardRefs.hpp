@@ -56,10 +56,4 @@ using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Experimental
 
 }// namespace NES::Join
-
-namespace NES::InferModel {
-    class InferModelOperatorHandler;
-    using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-}// namespace NES::InferModel
-
 #endif// NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_

@@ -14,7 +14,7 @@
 
 #ifdef TFDEF
 
-#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
+#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/JoinForwardRefs.hpp>

@@ -58,6 +58,7 @@
 #include <utility>
 
 #include <API/Expressions/Expressions.hpp>
+#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -71,7 +72,6 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
