@@ -20,6 +20,7 @@
 #include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
 #include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
 #include "Experimental/Utility/TestUtility.hpp"
+#include "Nautilus/Backends/MLIR/LLVMIROptimizer.hpp"
 #include "Util/Timer.hpp"
 #include "Util/UtilityFunctions.hpp"
 #include <API/Schema.hpp>
@@ -185,6 +186,7 @@ struct MemRefDescriptor {
 //==-------------------------------------------------------------==//
 //==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//
 //==-----------------------------------------------------------==//
+
 TEST_F(ScanQuery, scanBenchmark) {
     // Setup test for proxy inlining with reduced and non-reduced proxy file.
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
@@ -194,25 +196,11 @@ TEST_F(ScanQuery, scanBenchmark) {
     auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
 
     //Setup timing, and results logging.
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 10;
-    const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME = "scan.csv";
-    const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ",
-        "SSA Phase                    ",
-        "IR Created                   ",
-        "MLIR Created                 ",
-        "MLIR Lowered And Optimized   ",
-        "MLIR Compiled to Function Ptr",
-        "Executed                     ",
-        "Overall Time                 "
-    };
-    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+    auto CONF = testUtility->getTestParamaterConfig("scan.csv");
+    std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
 
     // Execute workload NUM_ITERATIONS number of times.
-    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         auto timer = std::make_shared<Timer<>>("Scan Map Benchmark Timer Nr." + std::to_string(i));
 
         // Set up empty values for symbolic execution
@@ -232,31 +220,31 @@ TEST_F(ScanQuery, scanBenchmark) {
             // return standardDeviationAggregation();
         });
         std::cout << "Created Execution Trace.\n";
-        timer->snapshot(snapshotNames.at(0));
+        timer->snapshot(CONF->snapshotNames.at(0));
 
         // Create SSA from trace.
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        timer->snapshot(snapshotNames.at(1));
+        timer->snapshot(CONF->snapshotNames.at(1));
 
         // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
 
-        timer->snapshot(snapshotNames.at(2));
+        timer->snapshot(CONF->snapshotNames.at(2));
 
         // Create MLIR
         mlir::MLIRContext context;
         auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context, timer);
-        timer->snapshot(snapshotNames.at(3));
+        timer->snapshot(CONF->snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
-        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, OPT_LEVEL, PERFORM_INLINING);
+        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
         auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
-        timer->snapshot(snapshotNames.at(5));
+        timer->snapshot(CONF->snapshotNames.at(5));
 
         // Execute function
         int64_t scanMapResult = 0;
         function(buffer.getNumberOfTuples(), outBuffer.getBuffer(), buffer.getBuffer()); // Wrong order on purpose.
-        timer->snapshot(snapshotNames.at(6));
+        timer->snapshot(CONF->snapshotNames.at(6));
 
         // Print aggregation result to force execution.
         std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[buffer.getNumberOfTuples()-1] << '\n';
@@ -265,12 +253,12 @@ TEST_F(ScanQuery, scanBenchmark) {
         timer->pause();
         NES_DEBUG("Overall time: " << timer->getPrintTime());
         auto snapshots = timer->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
 }
 
 

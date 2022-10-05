@@ -15,12 +15,21 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TESTUTILITY_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TESTUTILITY_HPP_
 
+#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 class TestUtility {
     public:
+    struct TestParameterConfig {
+        const NES::Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel OPT_LEVEL;
+        const bool PERFORM_INLINING;
+        const int NUM_ITERATIONS;
+        const int NUM_SNAPSHOTS; // 7 -> 8
+        const std::string RESULTS_FILE_NAME;
+        const std::vector<std::string> snapshotNames;
+    };
     TestUtility() = default;
     ~TestUtility() = default;
 
@@ -30,6 +39,7 @@ class TestUtility {
                         std::vector<std::string> snapshotNames, const std::string &resultsFileName, 
                         bool writeRawData = true);
     std::vector<std::string> loadStringsFromLineitemTable();
+    const std::unique_ptr<TestParameterConfig> getTestParamaterConfig(const std::string &resultsFileName);
 };
 }
 #endif //NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TESTUTILITY_HPP_

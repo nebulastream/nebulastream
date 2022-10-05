@@ -130,30 +130,16 @@ class Query6Test : public testing::Test, public ::testing::WithParamInterface<st
 
 TEST_P(Query6Test, tpchQ6) {
     NES_INFO("Running TPC-H Query 6");
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 10; //
-    const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME = "tpch-q6.csv";
-    const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ",
-        "SSA Phase                    ",
-        "IR Created                   ",
-        "MLIR Created                 ",
-        "MLIR Lowered And Optimized   ",
-        "LLVM JIT Compilation         ",
-        "Executed                     ",
-        "Overall Time                 "
-    };
-    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto CONF = testUtility->getTestParamaterConfig("tpch-q6.csv");
+    std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
 
     auto bm = std::make_shared<Runtime::BufferManager>(100);
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto buffer = lineitemBuffer.second.getBuffer();
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         Scan scan = Scan(lineitemBuffer.first, {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"});
         /*
         *   l_shipdate >= date '1994-01-01'
@@ -225,12 +211,12 @@ TEST_P(Query6Test, tpchQ6) {
         auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
 
         auto snapshots = timer->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
 
     // ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }

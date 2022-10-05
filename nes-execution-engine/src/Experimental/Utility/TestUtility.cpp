@@ -4,10 +4,35 @@
 #include <Experimental/Utility/TestUtility.hpp>
 #include <fstream>
 #include <ios>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <type_traits>
 
+namespace NES::ExecutionEngine::Experimental {
+
+const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestParamaterConfig(const std::string &resultsFileName) {
+    // Create standard test paramater config and return.
+    return std::make_unique<TestUtility::TestParameterConfig>(
+        TestUtility::TestParameterConfig {
+            NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
+            false,
+            10,
+            8,
+            resultsFileName,
+            std::vector<std::string> {
+                "Symbolic Execution Trace     ",
+                "SSA Phase                    ",
+                "IR Created                   ",
+                "MLIR Created                 ",
+                "MLIR Lowered And Optimized   ",
+                "MLIR Compiled to Function Ptr",
+                "Executed                     ",
+                "Overall Time                 "
+            }
+        }
+    );
+}
 
 std::pair<std::shared_ptr<NES::Runtime::MemoryLayouts::RowLayout>, NES::Runtime::MemoryLayouts::DynamicTupleBuffer> 
         NES::ExecutionEngine::Experimental::TestUtility::loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
@@ -209,3 +234,4 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
         fs.write(result.str().c_str(), result.str().size());
     }
 }
+}//namespace NES::ExecutionEngine::Experimental

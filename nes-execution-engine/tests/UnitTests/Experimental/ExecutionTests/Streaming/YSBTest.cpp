@@ -236,23 +236,11 @@ TEST_P(YSBTest, DISABLED_ysbSelectionCampain) {
 }
 
 TEST_P(YSBTest, ysbTumblingWindow) {
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 2; //todo change
-    const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME = "ysb.csv";
-    const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ",
-        "SSA Phase                    ",
-        "IR Created                   ",
-        "MLIR Created                 ",
-        "MLIR Lowered And Optimized   ",
-        "LLVM JIT Compilation         ",
-        "Executed                     ",
-        "Overall Time                 "
-    };
-    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+    NES_INFO("Running YSB Query");
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto CONF = testUtility->getTestParamaterConfig("ysb.csv");
+    std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
+    
     uint64_t tumblingWindowSize = 1000;
     auto bm = std::make_shared<Runtime::BufferManager>();
 
@@ -262,7 +250,7 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         Scan scan = Scan(memoryLayout, {"current_ms", "campaign_id", "event_type"});
         /*
         *   campaing_id = 0
@@ -324,12 +312,12 @@ TEST_P(YSBTest, ysbTumblingWindow) {
         //produce results
         auto snapshots = timer->getSnapshots();
         std::cout << "num snapshots: " << snapshots.size() << '\n';
-        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testYSB,

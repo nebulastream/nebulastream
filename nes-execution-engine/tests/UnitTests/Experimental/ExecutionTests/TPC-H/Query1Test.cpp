@@ -129,30 +129,17 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
 };
 
 TEST_P(Query1Test, tpchQ1) {
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 10; //
-    const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME = "tpch-q1.csv";
-    const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ",
-        "SSA Phase                    ",
-        "IR Created                   ",
-        "MLIR Created                 ",
-        "MLIR Lowered And Optimized   ",
-        "LLVM JIT Compilation         ",
-        "Executed                     ",
-        "Overall Time                 "
-    };
-    std::vector<std::vector<double>> runningSnapshotVectors(NUM_SNAPSHOTS);
+    NES_INFO("Running TPC-H Query 1");
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto CONF = testUtility->getTestParamaterConfig("tpch-q1.csv");
+    std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
 
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     auto buffer = lineitemBuffer.second.getBuffer();
 
-    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         Scan scan = Scan(lineitemBuffer.first);
 
         /*
@@ -280,12 +267,12 @@ TEST_P(Query1Test, tpchQ1) {
         //ASSERT_EQ(entries[0].ag2, 5656804138090);
         auto snapshots = timer->getSnapshots();
         std::cout << "num snapshots: " << snapshots.size() << '\n';
-        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectors.at(NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,

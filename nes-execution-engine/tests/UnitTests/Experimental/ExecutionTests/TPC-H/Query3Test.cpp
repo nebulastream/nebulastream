@@ -129,34 +129,21 @@ class Query3Test : public testing::Test, public ::testing::WithParamInterface<st
 };
 
 TEST_P(Query3Test, tpchQ3) {
-    const auto OPT_LEVEL = Backends::MLIR::LLVMIROptimizer::O3;
-    const bool PERFORM_INLINING = false;
-    const int NUM_ITERATIONS = 10; //
-    const int NUM_SNAPSHOTS = 8; // 7 -> 8
-    const std::string RESULTS_FILE_NAME_P1 = "tpch-q3-p1.csv";
-    const std::string RESULTS_FILE_NAME_P2 = "tpch-q3-p2.csv";
-    const std::string RESULTS_FILE_NAME_P3 = "tpch-q3-p3.csv";
-    const std::vector<std::string> snapshotNames {
-        "Symbolic Execution Trace     ",
-        "SSA Phase                    ",
-        "IR Created                   ",
-        "MLIR Created                 ",
-        "MLIR Lowered And Optimized   ",
-        "LLVM JIT Compilation         ",
-        "Executed                     ",
-        "Overall Time                 "
-    };
-    std::vector<std::vector<double>> runningSnapshotVectorsP1(NUM_SNAPSHOTS);
-    std::vector<std::vector<double>> runningSnapshotVectorsP2(NUM_SNAPSHOTS);
-    std::vector<std::vector<double>> runningSnapshotVectorsP3(NUM_SNAPSHOTS);
+    NES_INFO("Running TPC-H Query 3");
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto CONF1 = testUtility->getTestParamaterConfig("tpch-q3-p1.csv");
+    auto CONF2 = testUtility->getTestParamaterConfig("tpch-q3-p2.csv");
+    auto CONF3 = testUtility->getTestParamaterConfig("tpch-q3-p3.csv");
+    std::vector<std::vector<double>> runningSnapshotVectorsP1(CONF1->NUM_SNAPSHOTS);
+    std::vector<std::vector<double>> runningSnapshotVectorsP2(CONF2->NUM_SNAPSHOTS);
+    std::vector<std::vector<double>> runningSnapshotVectorsP3(CONF3->NUM_SNAPSHOTS);
 
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto customersBuffer = TPCHUtil::getCustomers("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
-    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < CONF1->NUM_ITERATIONS; ++i) {
         /**
         * Pipeline 1 with scan customers -> selection -> JoinBuild
         */
@@ -355,18 +342,18 @@ TEST_P(Query3Test, tpchQ3) {
         auto snapshotsP1 = timerP1->getSnapshots();
         auto snapshotsP2 = timerP2->getSnapshots();
         auto snapshotsP3 = timerP3->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < NUM_SNAPSHOTS-1; ++snapShotIndex) {
+        for(int snapShotIndex = 0; snapShotIndex < CONF1->NUM_SNAPSHOTS-1; ++snapShotIndex) {
             runningSnapshotVectorsP1.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
             runningSnapshotVectorsP2.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
             runningSnapshotVectorsP3.at(snapShotIndex).emplace_back(snapshotsP3[snapShotIndex].getPrintTime());
         }
-        runningSnapshotVectorsP1.at(NUM_SNAPSHOTS-1).emplace_back(timerP1->getPrintTime());
-        runningSnapshotVectorsP2.at(NUM_SNAPSHOTS-1).emplace_back(timerP2->getPrintTime());
-        runningSnapshotVectorsP3.at(NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
+        runningSnapshotVectorsP1.at(CONF1->NUM_SNAPSHOTS-1).emplace_back(timerP1->getPrintTime());
+        runningSnapshotVectorsP2.at(CONF2->NUM_SNAPSHOTS-1).emplace_back(timerP2->getPrintTime());
+        runningSnapshotVectorsP3.at(CONF3->NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectorsP1, snapshotNames, RESULTS_FILE_NAME_P1);
-    testUtility->produceResults(runningSnapshotVectorsP2, snapshotNames, RESULTS_FILE_NAME_P2);
-    testUtility->produceResults(runningSnapshotVectorsP3, snapshotNames, RESULTS_FILE_NAME_P3);
+    testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, CONF1->RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectorsP2, CONF2->snapshotNames, CONF2->RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectorsP3, CONF3->snapshotNames, CONF3->RESULTS_FILE_NAME);
 }
 
 #ifdef USE_BABELFISH
