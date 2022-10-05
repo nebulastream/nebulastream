@@ -20,22 +20,21 @@ limitations under the License.
 #include <cstring>
 
 namespace NES::Benchmark::DataProviding {
-    std::shared_ptr<DataProvider>
-    NES::DataProviding::DataProvider::createProvider(uint64_t id,
-                                                     NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,
+    DataProviderPtr DataProvider::createProvider(uint64_t providerId,
+                                                     NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
                                                      std::vector<Runtime::TupleBuffer> buffers) {
         DataProviderMode dataProviderMode;
-        if (e2EBenchmarkConfig.getConfigOverAllRuns().dataProviderMode->getValue() == "ZeroCopy") {
+        if (configOverAllRuns.dataProviderMode->getValue() == "ZeroCopy") {
             dataProviderMode = DataProviderMode::ZERO_COPY;
-        } else if (e2EBenchmarkConfig.getConfigOverAllRuns().dataProviderMode->getValue() == "MemCopy") {
+        } else if (configOverAllRuns.dataProviderMode->getValue() == "MemCopy") {
             dataProviderMode = DataProviderMode::MEM_COPY;
         } else {
             NES_THROW_RUNTIME_ERROR("Could not parse dataProviderMode = "
-                                    << e2EBenchmarkConfig.getConfigOverAllRuns().dataProviderMode->getValue() << "!");
+                                    << configOverAllRuns.dataProviderMode->getValue() << "!");
         }
 
         // Later on we might have a second data provider. For now all data providers are of type InternalProvider
-        return std::make_shared<InternalProvider>(id, dataProviderMode, buffers);
+        return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
     }
 
     DataProvider::DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode) : id(id), providerMode(providerMode){}

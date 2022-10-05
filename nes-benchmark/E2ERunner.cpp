@@ -14,23 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Components/NesCoordinator.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <DataGeneration/DataGenerator.hpp>
-#include <DataProvider/DataProvider.hpp>
+
 #include <E2E/E2EBenchmarkConfig.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Measurements.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Version/version.hpp>
 
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Sources/LambdaSource.hpp>
+#include <E2E/E2ESingleRun.hpp>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -106,19 +95,27 @@ int main(int argc, const char* argv[]) {
     }
 
 
-    std::stringstream outputCsvStream;
-    outputCsvStream << "BM_NAME,NES_VERSION,SchemaSizeInB";
-    outputCsvStream << ",Time,ProcessedTasks,ProcessedBuffers,ProcessedTuples,LatencySum,QueueSizeSum";
-    outputCsvStream << ",ThroughputInTupsPerSec,ThroughputInTasksPerSec,ThroughputInBuffersPerSec,ThroughputInMiBPerSec";
-    outputCsvStream << ",WorkerThreads,SourceCnt,BufferSizeInB,InputType,DataProviderMode,Query";
-    outputCsvStream << "\n";
+    // Writing the csv header to the output file
+    std::ofstream ofs;
+    ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::trunc);
+    ofs << "BM_NAME,NES_VERSION,SchemaSizeInB"
+        << ",Time,ProcessedTasks,ProcessedBuffers,ProcessedTuples,LatencySum,QueueSizeSum"
+        << ",ThroughputInTuplesPerSec,ThroughputInTasksPerSec,ThroughputInBuffersPerSec,ThroughputInMiBPerSec"
+        << ",WorkerThreads,SourceCnt,BufferSizeInB,InputType,DataProviderMode,Query"
+        << "\n";
+    ofs.close();
+
 
     int portOffset = 0;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
+        portOffset += 23;
+        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+                                               portOffset);
 
+        singleRun.run();
 
-
+        NES_INFO("Done with single experiment run!");
     }
 
 }
