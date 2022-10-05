@@ -60,6 +60,7 @@ std::string demangleToBaseName(const std::string &functionName) {
     return std::string(Result);
 }
 
+//FIXME string payloads get removed.
 int main(int argc, char **argv) {
     InitLLVM X(argc, argv);
     bool Recursive = true;
@@ -86,19 +87,26 @@ int main(int argc, char **argv) {
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
     std::vector<std::string> ExtractFuncs{
-        "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy", 
+        "getMurMurHash",
+        "getCRC32Hash",
+        "stringToUpperCase",
+        "standardDeviationGetMean",
+        "standardDeviationGetVariance",
+        "standardDeviationGetStdDev",
+        // "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
         "NES__Runtime__TupleBuffer__getNumberOfTuples",
         "NES__Runtime__TupleBuffer__setNumberOfTuples",
         "NES__Runtime__TupleBuffer__getBuffer",
-        // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
         "NES__Runtime__TupleBuffer__getBufferSize",
         "NES__Runtime__TupleBuffer__getWatermark",
         "NES__Runtime__TupleBuffer__setWatermark",
         "NES__Runtime__TupleBuffer__getCreationTimestamp",
         "NES__Runtime__TupleBuffer__setSequenceNumber",
         "NES__Runtime__TupleBuffer__getSequenceNumber",
-        "NES__Runtime__TupleBuffer__setCreationTimestamp"};
-        
+        "NES__Runtime__TupleBuffer__setCreationTimestamp"
+        // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
+    };
+
     for (size_t i = 0; i != ExtractFuncs.size(); ++i) {
         GlobalValue *GV = LLVMModule->getFunction(ExtractFuncs[i]);
         if (!GV) {
@@ -171,8 +179,8 @@ int main(int argc, char **argv) {
     Passes.add(createPrintModulePass(Out.os(), "", false));
     Passes.run(*LLVMModule.get());
 
-    // Below call can lead to errors.
-    // system("/home/rudi/CLionProjects/GenerateProxyFunctionsIR/cmake-build-debug/mlir-translate --import-llvm ./llvm-ir/nes-runtime_opt/proxiesReduced.ll -o ./llvm-ir/nes-runtime_opt/proxiesFinal.mlir");
+    // The following can be used to generate MLIR from LLVM (can lead to errors!)
+    // mlir-translate --import-llvm ./llvm-ir/nes-runtime_opt/proxiesReduced.ll -o ./llvm-ir/nes-runtime_opt/proxiesFinal.mlir"
 
     // Declare success.
     Out.keep();

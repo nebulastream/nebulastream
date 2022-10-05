@@ -16,7 +16,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
     return std::make_unique<TestUtility::TestParameterConfig>(
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
-            false,
+            true,
             10,
             9,
             resultsFileName,

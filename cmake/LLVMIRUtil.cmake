@@ -132,7 +132,7 @@ function(llvmir_attach_bc_target)
     debug("@llvmir_attach_bc_target ${DEPENDS_TRGT} compile flags: \
     ${CURRENT_COMPILE_FLAGS}")
 
-    set(CMD_ARGS "-emit-llvm" ${IN_STANDARD_FLAGS} ${IN_LANG_FLAGS}
+    set(CMD_ARGS "-emit-llvm" "-O3" ${IN_STANDARD_FLAGS} ${IN_LANG_FLAGS}
       ${IN_COMPILE_OPTIONS} ${CURRENT_COMPILE_FLAGS} ${CURRENT_DEFS}
       ${IN_INCLUDES})
     set(CMAKE_VERBOSE_MAKEFILE on)
