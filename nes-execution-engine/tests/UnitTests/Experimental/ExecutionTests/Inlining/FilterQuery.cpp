@@ -167,7 +167,7 @@ void filter(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
     for (Value<Int64> i = 0l; i < size; i = i + 1l) {
         auto inAddress = inputPtr + i * 8l;
         Value<Int64> value = inAddress.as<MemRef>().load<Int64>();
-        if(value > 30l) {
+        if(value < 10l) {
             outputPtr.as<MemRef>().store<Int64>(value);
             outputPtr = outputPtr + 8l;
         }
@@ -222,20 +222,20 @@ TEST_F(FilterQuery, filterBenchmark) {
         // Create MLIR
         mlir::MLIRContext context;
         auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context);
-        // timer->snapshot(CONF->snapshotNames.at(3));
+        timer->snapshot(CONF->snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
         auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING, timer);
         auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
-        timer->snapshot(CONF->snapshotNames.at(6));
+        timer->snapshot(CONF->snapshotNames.at(6)); // LLVM Compilation
 
         // Execute function
         int64_t scanMapResult = 0;
         function(buffer.getNumberOfTuples(), outBuffer.getBuffer(), buffer.getBuffer()); // Wrong order on purpose.
-        timer->snapshot(CONF->snapshotNames.at(7));
+        timer->snapshot(CONF->snapshotNames.at(7)); // Execute Query
 
         // Print aggregation result to force execution.
-        std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[0] << '\n';
+        std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[buffer.getNumberOfTuples()-1] << '\n';
 
         // Wrap up timing
         timer->pause();

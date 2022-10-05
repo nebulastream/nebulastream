@@ -39,7 +39,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     timer->snapshot("MLIR Generation");
 
     // 2. Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {}, timer)) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
     // timer->snapshot("MLIR Lowering and Optimization"); // Snapshots taken in 2 parts in MLIRPassManager

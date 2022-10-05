@@ -128,7 +128,6 @@ MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::Modu
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
-    // Todo enable toggling inlining
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(optLevel, inlining);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.

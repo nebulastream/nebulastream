@@ -24,7 +24,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
                 "Symbolic Execution Trace     ",
                 "SSA Phase                    ",
                 "IR Created                   ",
-                "MLIR Created                 ",
+                "MLIR Generation              ",
                 "MLIR Optimization            ",
                 "MLIR Lowering                ",
                 "LLVM JIT Compilation         ",
