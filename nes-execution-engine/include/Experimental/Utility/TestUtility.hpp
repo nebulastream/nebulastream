@@ -37,7 +37,7 @@ class TestUtility {
         loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm);
     void produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                         std::vector<std::string> snapshotNames, const std::string &resultsFileName, 
-                        bool writeRawData = true);
+                        bool writeRawData = true, const int NUM_ITERATIONS=101);
     std::vector<std::string> loadStringsFromLineitemTable();
     const std::unique_ptr<TestParameterConfig> getTestParamaterConfig(const std::string &resultsFileName);
 };

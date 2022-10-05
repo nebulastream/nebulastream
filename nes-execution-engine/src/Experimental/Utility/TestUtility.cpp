@@ -16,8 +16,8 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
     return std::make_unique<TestUtility::TestParameterConfig>(
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
-            false,
-            10,
+            true,
+            101,
             9,
             resultsFileName,
             std::vector<std::string> {
@@ -143,16 +143,34 @@ std::vector<std::string> NES::ExecutionEngine::Experimental::TestUtility::loadSt
 
 void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                                                     std::vector<std::string> snapshotNames, 
-                                                    const std::string &resultsFileName, bool writeRawData) {
+                                                    const std::string &resultsFileName, bool writeRawData,
+                                                    const int NUM_ITERATIONS) {
     std::ifstream inlineFS("llvmLambda.csv");
 
     if(inlineFS.is_open()) {
-        std::cout << "Adding Inlining Informatinon\n";
         std::string line;
         std::vector<double> llvmParsingTimes;
         std::vector<double> llvmIRLinkingTimes;
         std::vector<double> llvmIROptimizationTimes;
+
+        int numProcessedLines = 0;
         while(std::getline(inlineFS, line)) {
+            if(resultsFileName == "tpch-q3-p1.csv" && numProcessedLines >= NUM_ITERATIONS) { 
+                break;
+            }
+            if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines < NUM_ITERATIONS) { 
+                ++numProcessedLines; 
+                continue; 
+            }
+            if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines >= (2 * NUM_ITERATIONS)) {
+                break;
+            }
+            if(resultsFileName == "tpch-q3-p3.csv" && numProcessedLines < (2 * NUM_ITERATIONS)) { 
+                ++numProcessedLines; 
+                continue; 
+            }
+            ++numProcessedLines; 
+
             size_t start;
             size_t end = 0;
 
@@ -177,7 +195,9 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
         snapshotNames.emplace_back("LLVM IR Linking       ");
         snapshotNames.emplace_back("LLVM IR Optimization  ");
         // std::remove((RESULTS_PATH_BASE + "inlining/proxyFunctionsSize/inlining.csv").c_str());
-        std::remove("llvmLambda.csv");
+        if(resultsFileName != "tpch-q3-p1.csv" && resultsFileName != "tpch-q3-p2.csv") {
+            std::remove("llvmLambda.csv"); // Todo must be commented out for TPC-H-Q3
+        }
     }
 
     std::ofstream fs("/home/alepping/results/" + resultsFileName, std::ios::out);
