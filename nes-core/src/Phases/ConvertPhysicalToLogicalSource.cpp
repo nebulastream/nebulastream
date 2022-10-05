@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
@@ -28,6 +29,7 @@
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
@@ -135,6 +137,13 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             const SourceDescriptorPtr monitoringSourceDescriptor =
                 MonitoringSourceDescriptor::create(monitoringSource->getWaitTime(), monitoringSource->getCollectorType());
             return monitoringSourceDescriptor;
+        }
+        case TCP_SOURCE: {
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating TCP source");
+            const TCPSourcePtr tcpSource = std::dynamic_pointer_cast<TCPSource>(dataSource);
+            const SourceDescriptorPtr tcpSourceDescriptor =
+                TCPSourceDescriptor::create(tcpSource->getSchema(), tcpSource->getSourceConfig());
+            return tcpSourceDescriptor;
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);

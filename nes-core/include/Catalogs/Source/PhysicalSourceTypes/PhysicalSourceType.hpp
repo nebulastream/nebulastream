@@ -50,6 +50,7 @@ enum SourceType {
 static std::map<std::string, SourceType> stringToSourceType{
     {Configurations::SENSE_SOURCE_CONFIG, SENSE_SOURCE},
     {Configurations::CSV_SOURCE_CONFIG, CSV_SOURCE},
+    {Configurations::TCP_SOURCE_CONFIG, TCP_SOURCE},
     {Configurations::BINARY_SOURCE_CONFIG, BINARY_SOURCE},
     {Configurations::MQTT_SOURCE_CONFIG, MQTT_SOURCE},
     {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
@@ -63,6 +64,7 @@ static std::map<std::string, SourceType> stringToSourceType{
 static std::map<SourceType, std::string> sourceTypeToString{
     {SENSE_SOURCE, Configurations::SENSE_SOURCE_CONFIG},
     {CSV_SOURCE, Configurations::CSV_SOURCE_CONFIG},
+    {TCP_SOURCE, Configurations::TCP_SOURCE_CONFIG},
     {BINARY_SOURCE, Configurations::BINARY_SOURCE_CONFIG},
     {MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
     {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
