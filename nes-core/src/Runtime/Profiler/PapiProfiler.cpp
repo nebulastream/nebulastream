@@ -32,13 +32,13 @@
 #ifdef ENABLE_PAPI_PROFILER
 
 namespace NES::Runtime::Profiler {
-// Have to comment these functions as these are not used
-//static constexpr size_t to_kb(const size_t x) { return x << 10L; }
-//static constexpr size_t to_mb(const size_t x) { return x << 20L; }
-//static constexpr size_t to_gb(const size_t x) { return x << 30L; }
-//static constexpr size_t to_ki(const size_t x) { return x * 1000UL; }
-//static constexpr size_t to_mi(const size_t x) { return x * 1000000UL; }
-//static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
+
+static constexpr size_t to_kb(const size_t x) { return x << 10L; }
+static constexpr size_t to_mb(const size_t x) { return x << 20L; }
+static constexpr size_t to_gb(const size_t x) { return x << 30L; }
+static constexpr size_t to_ki(const size_t x) { return x * 1000UL; }
+static constexpr size_t to_mi(const size_t x) { return x * 1000000UL; }
+static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
 
 namespace detail {
 
