@@ -213,7 +213,7 @@ TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
     auto result = response.as_object();
     auto message = response.at("message").as_string();
     NES_DEBUG("Response: " << response.serialize());
-    EXPECT_EQ(message, "Logical source(s) [default_logical] are found to have no physical source(s) defined.");
+    EXPECT_EQ(message, "SourceCatalog: Logical source(s) [default_logical] are found to have no physical source(s) defined. ");
     EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
 }
 

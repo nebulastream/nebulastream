@@ -301,7 +301,7 @@ std::string SourceCatalog::getPhysicalSourceAndSchemaAsString() {
 std::vector<SourceCatalogEntryPtr> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) {
     if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()){
         NES_ERROR("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
-        throw MapEntryNotFoundException("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
+        throw MapEntryNotFoundException("SourceCatalog: Logical source(s) ["+  logicalSourceName + "] are found to have no physical source(s) defined. ");
     }
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
