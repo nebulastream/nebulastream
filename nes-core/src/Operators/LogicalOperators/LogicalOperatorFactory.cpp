@@ -73,7 +73,7 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std
                                                                              std::vector<ExpressionItemPtr> outputFieldsPtr,
                                                                              OperatorId id) {
 
-    return std::make_shared<InferModelLogicalOperatorNode>(model, inputFieldsPtr, outputFieldsPtr, id);
+    return std::make_shared<NES::InferModel::InferModelLogicalOperatorNode>(model, inputFieldsPtr, outputFieldsPtr, id);
 }
 #endif
 

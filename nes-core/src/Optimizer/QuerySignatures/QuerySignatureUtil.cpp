@@ -106,11 +106,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
             NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
-        } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
             #ifdef TFDEF
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
-            auto imOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+            auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
+            #else
+            NES_THROW_RUNTIME_ERROR("Trying to use InferModelLogicalOperatorNode but TFDEF not defined!");
             #endif // TFDEF
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
@@ -210,7 +212,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
 
 #ifdef TFDEF
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3::ContextPtr& context,
-                                                                 const InferModelLogicalOperatorNodePtr& inferModelOperator) {
+                                                                 const NES::InferModel::InferModelLogicalOperatorNodePtr& inferModelOperator) {
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = inferModelOperator->getChildren();
     NES_ASSERT(children.size() == 1, "InferModel operator should only have one non null children.");

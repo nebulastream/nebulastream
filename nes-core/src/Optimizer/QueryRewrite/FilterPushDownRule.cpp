@@ -75,7 +75,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
         nodesToProcess.pop_front();
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<ProjectionLogicalOperatorNode>()
-            || node->instanceOf<JoinLogicalOperatorNode>() || node->instanceOf<InferModelLogicalOperatorNode>()) {
+            || node->instanceOf<JoinLogicalOperatorNode>() || node->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
 
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {

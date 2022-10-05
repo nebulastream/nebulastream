@@ -19,7 +19,7 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
-namespace NES {
+namespace NES::InferModel {
 
 /**
  * @brief Infer model operator

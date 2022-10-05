@@ -213,16 +213,25 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
             }
         }
 
-        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
-                           ->addField(createField("SepalLengthCm", FLOAT32))
-                           ->addField(createField("SepalWidthCm", FLOAT32))
-                           ->addField(createField("PetalLengthCm", FLOAT32))
-                           ->addField(createField("PetalWidthCm", FLOAT32))
-                           ->addField(createField("SpeciesCode", UINT64));)";
+//        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
+//                           ->addField(createField("SepalLengthCm", FLOAT32))
+//                           ->addField(createField("SepalWidthCm", FLOAT32))
+//                           ->addField(createField("PetalLengthCm", FLOAT32))
+//                           ->addField(createField("PetalWidthCm", FLOAT32))
+//                           ->addField(createField("SpeciesCode", UINT64));)";
+
         const std::string streamName = "iris";
+        SchemaPtr irisSchema = Schema::create()
+            ->addField(createField("id", UINT64))
+            ->addField(createField("SepalLengthCm", FLOAT32))
+            ->addField(createField("SepalWidthCm", FLOAT32))
+            ->addField(createField("PetalLengthCm", FLOAT32))
+            ->addField(createField("PetalWidthCm", FLOAT32))
+            ->addField(createField("SpeciesCode", UINT64))
+            ->addField(createField("CreationTime", UINT64));
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-        sourceCatalog->addLogicalSource(streamName, schema);
+        sourceCatalog->addLogicalSource(streamName, irisSchema);
         auto logicalSource = sourceCatalog->getLogicalSource(streamName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
