@@ -42,7 +42,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
-    timer->snapshot("MLIR Lowering and Optimization");
+    // timer->snapshot("MLIR Lowering and Optimization"); // Snapshots taken in 2 parts in MLIRPassManager
 
     // 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline. //Todo adapt v flag for benchmarks
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(MLIR::LLVMIROptimizer::O3, /*inlining*/ false);

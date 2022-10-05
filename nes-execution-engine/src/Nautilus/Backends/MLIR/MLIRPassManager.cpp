@@ -61,7 +61,8 @@ std::unique_ptr<mlir::Pass> getMLIROptimizationPass(MLIRPassManager::Optimizatio
 //Todo: might require new context? -> mlir::MLIRContext *context
 int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module, 
                                                 std::vector<LoweringPass> loweringPasses, 
-                                                std::vector<OptimizationPass> optimizationPasses) {
+                                                std::vector<OptimizationPass> optimizationPasses,
+                                                std::shared_ptr<Timer<>> timer) {
     mlir::PassManager passManager(module->getContext());
     applyPassManagerCLOptions(passManager);
 
@@ -85,30 +86,36 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
         // passManager.addPass(mlir::createSCFForLoopCanonicalizationPass());
         // passManager.addPass(mlir::createForLoopSpecializationPass());
     }
-    // Apply lowering passes.
+    // Run Optimization passes.
+    if (mlir::failed(passManager.run(*module))) {
+        llvm::errs() << "MLIRPassManager::lowerAndOptimizeMLIRModule: Failed to apply passes to generated MLIR" << '\n';
+        return 1;
+    }
+    if(timer) {timer->snapshot("MLIR Optimization");}
+    passManager.clear();
+
+    // Set up lowering passes.
     if(!loweringPasses.empty()) {
         for(auto loweringPass : loweringPasses) {
             passManager.addPass(getMLIRLoweringPass(loweringPass));
         }
     } else {
-    //     passManager.addPass(mlir::createLowerToCFGPass());
-        passManager.addPass(mlir::createLowerToLLVMPass());
         // passManager.addPass(mlir::createLowerAffinePass());
-        passManager.addPass(mlir::createLowerToCFGPass());//SCF
+        passManager.addPass(mlir::createLowerToCFGPass()); //SCF
         // passManager.addPass(mlir::createConvertVectorToLLVMPass());
         // mlir::LowerToLLVMOptions llvmLoweringOptions(module->getContext()); 
-        // mlir::LowerToLLVMOptions llvmLoweringOptions(&context);
         // llvmLoweringOptions.emitCWrappers = true;
         // passManager.addPass(mlir::createLowerToLLVMPass(llvmLoweringOptions));
+        passManager.addPass(mlir::createLowerToLLVMPass());
         // passManager.addPass(mlir::createMemRefToLLVMPass()); //Needs to be second to last for unrealized pass to work
         // passManager.addPass(mlir::createReconcileUnrealizedCastsPass());
     }
-
-    // Run passes.
+    // Run Lowering passes.
     if (mlir::failed(passManager.run(*module))) {
         llvm::errs() << "MLIRPassManager::lowerAndOptimizeMLIRModule: Failed to apply passes to generated MLIR" << '\n';
         return 1;
     }
+    if(timer) {timer->snapshot("MLIR Lowering");}
     return 0;
 }
 }// namespace NES::Nautilus::Backends::MLIR

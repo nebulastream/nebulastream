@@ -100,8 +100,7 @@ MLIRUtility::loadMLIRModuleFromFilePath(const std::string &mlirFilePath, mlir::M
 }
 
 mlir::OwningOpRef<mlir::ModuleOp>
-MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context, 
-                                     std::shared_ptr<Timer<>> parentTimer) {
+MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context) {
     // mlir::MLIRContext context;
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
@@ -113,17 +112,18 @@ MLIRUtility::loadMLIRModuleFromNESIR(std::shared_ptr<NES::Nautilus::IR::IRGraph>
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto module = loweringProvider->generateModuleFromNESIR(ir);
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if(parentTimer) { parentTimer->snapshot("MLIR Generation"); }
-    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
-        NES_FATAL_ERROR("Could not lower and optimize MLIR");
-    }
+    // if(parentTimer) { parentTimer->snapshot("MLIR Generation"); }
+    // if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {}, parentTimer)) {
+    //     NES_FATAL_ERROR("Could not lower and optimize MLIR");
+    // }
     return module;
 }
 
 std::unique_ptr<mlir::ExecutionEngine> 
-MLIRUtility::compileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
-                                            MLIR::LLVMIROptimizer::OptimizationLevel optLevel, bool inlining) {
-    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::ModuleOp> &module, 
+                                            MLIR::LLVMIROptimizer::OptimizationLevel optLevel, bool inlining,
+                                            std::shared_ptr<Timer<>> parentTimer) {
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {}, parentTimer)) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 

@@ -18,15 +18,16 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
             false,
             10,
-            8,
+            9,
             resultsFileName,
             std::vector<std::string> {
                 "Symbolic Execution Trace     ",
                 "SSA Phase                    ",
                 "IR Created                   ",
                 "MLIR Created                 ",
-                "MLIR Lowered And Optimized   ",
-                "MLIR Compiled to Function Ptr",
+                "MLIR Optimization            ",
+                "MLIR Lowering                ",
+                "LLVM JIT Compilation         ",
                 "Executed                     ",
                 "Overall Time                 "
             }
@@ -190,6 +191,7 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
         for(size_t i = 0; i < runningSnapshotVectors.size(); ++i) {
             // Calculate Mean, Min, and Max of runtime measurements.
             auto currentSnapshotVector = runningSnapshotVectors.at(i);
+            currentSnapshotVector.erase(currentSnapshotVector.begin()); // Remove first 'outlier' measurement
             // rawDataResultStream << snapshotNames.at(i) << "\n";
             // snapshotNamesAsString += "  " + snapshotNames.at(i) + '\n';
             for(auto rawValue : currentSnapshotVector) {

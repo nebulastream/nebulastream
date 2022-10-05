@@ -15,6 +15,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPASSMANAGER_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPASSMANAGER_HPP_
 
+#include <Util/Timer.hpp>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
 #include <vector>
@@ -33,7 +34,8 @@ class MLIRPassManager {
 
     static int lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module, 
                                           std::vector<LoweringPass> loweringPasses, 
-                                          std::vector<OptimizationPass> optimizationPasses);
+                                          std::vector<OptimizationPass> optimizationPasses,
+                                          std::shared_ptr<Timer<>> timer = nullptr);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_MLIRPASSMANAGER_HPP_

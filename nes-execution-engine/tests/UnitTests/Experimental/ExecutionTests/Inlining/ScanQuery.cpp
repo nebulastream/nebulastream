@@ -228,23 +228,22 @@ TEST_F(ScanQuery, scanBenchmark) {
 
         // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
-
         timer->snapshot(CONF->snapshotNames.at(2));
 
         // Create MLIR
         mlir::MLIRContext context;
-        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context, timer);
+        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context);
         timer->snapshot(CONF->snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
-        auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
+        auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING, timer);
         auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
-        timer->snapshot(CONF->snapshotNames.at(5));
+        timer->snapshot(CONF->snapshotNames.at(6)); // LLVM Compilation
 
         // Execute function
         int64_t scanMapResult = 0;
         function(buffer.getNumberOfTuples(), outBuffer.getBuffer(), buffer.getBuffer()); // Wrong order on purpose.
-        timer->snapshot(CONF->snapshotNames.at(6));
+        timer->snapshot(CONF->snapshotNames.at(7)); // Execute
 
         // Print aggregation result to force execution.
         std::cout << "Output Buffer at n-1: " << outBuffer.getBuffer<int64_t>()[buffer.getNumberOfTuples()-1] << '\n';
