@@ -23,7 +23,6 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
@@ -56,10 +55,9 @@ TCPSource::TCPSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(executableSuccessors)),
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), circularBuffer(2048) {
-    NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 
     //init physical types
-    std::vector<std::string> schemaKeys;
+    /*std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -81,6 +79,8 @@ TCPSource::TCPSource(SchemaPtr schema,
             inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
     }
+
+    NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");*/
 }
 
 TCPSource::~TCPSource() {
@@ -131,6 +131,7 @@ void TCPSource::open() {
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
     auto tupleBuffer = allocateBuffer();
+    NES_DEBUG("TCPSource buffer allocated ");
     try {
         fillBuffer(tupleBuffer);
     } catch (std::exception e) {
@@ -314,5 +315,8 @@ void TCPSource::close() {
 }
 
 SourceType TCPSource::getType() const { return TCP_SOURCE; }
+
+const TCPSourceTypePtr& TCPSource::getSourceConfig() const { return sourceConfig; }
+
 
 }// namespace NES

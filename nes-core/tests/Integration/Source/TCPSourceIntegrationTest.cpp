@@ -26,6 +26,12 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
+#include <Sources/DataSource.hpp>
+#include <Sources/TCPSource.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+
 #include <Util/TestUtils.hpp>
 #include <thread>
 
@@ -33,9 +39,6 @@ namespace NES {
 
 class TCPSourceIntegrationTest : public Testing::NESBaseTest {
   public:
-    static int sockfd;
-    static sockaddr_in sockaddr;
-
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
@@ -44,6 +47,12 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         startServer();
+        auto workerConfigurations = WorkerConfiguration::create();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                               .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                               .build();
+        this->operatorId = 1;
+        this->numSourceLocalBuffersDefault = 12;
     }
 
     void TearDown() override {
@@ -51,6 +60,8 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         NES_INFO("Tear down TCPSourceIntegrationTest class.");
         stopServer();
     }
+
+    std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferBlocking(); }
 
     void startServer() {
         // Create a socket (IPv4, TCP)
@@ -94,11 +105,59 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         for (int i = 0; i < repeatSending; ++i) {
             NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message << " iter=" << i);
             send(connection, message.c_str(), message.size(), 0);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
         // Close the connections
         close(connection);
     }
+
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
+    static int sockfd;
+    static sockaddr_in sockaddr;
+    uint64_t operatorId, numSourceLocalBuffersDefault;
+};
+
+class TCPSourceProxy : public TCPSource {
+  public:
+    TCPSourceProxy(SchemaPtr schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   TCPSourceTypePtr sourceConfig,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : TCPSource(schema,
+                    bufferManager,
+                    queryManager,
+                    sourceConfig,
+                    operatorId,
+                    0,
+                    numSourceLocalBuffers,
+                    GatheringMode::INTERVAL_MODE,
+                    successors){};
+
+  private:
+};
+
+class CSVSourceProxy : public CSVSource {
+  public:
+    CSVSourceProxy(SchemaPtr schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   CSVSourceTypePtr sourceConfig,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : CSVSource(schema,
+                    bufferManager,
+                    queryManager,
+                    sourceConfig,
+                    operatorId,
+                    0,
+                    numSourceLocalBuffers,
+                    GatheringMode::INTERVAL_MODE,
+                    successors) {}
 };
 
 int TCPSourceIntegrationTest::sockfd = 0;
@@ -114,29 +173,15 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    auto sourceCatalog = crd->getSourceCatalog();
-
-    struct Record {
-        uint32_t id;
-        float value;
-        char name[8];
-    };
-    static_assert(sizeof(Record) == 16);
-
     auto tcpSchema = Schema::create()
                          ->addField("id", UINT32)
                          ->addField("value", FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(8));
+    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
 
-    ASSERT_EQ(tcpSchema->getSchemaSizeInBytes(), sizeof(Record));
-
-    sourceCatalog->addLogicalSource("tcpStream", tcpSchema);
-
-    NES_INFO("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->coordinatorPort = port;
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
     sourceConfig->setSocketPort(9999);
@@ -149,15 +194,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     sourceConfig->setTupleSeparator('\n');
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    wrkConf->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    workerConfig1->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    // local fs
-    std::string filePath = "tcpSourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "contTestOut.csv";
     remove(filePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     std::string queryString =
@@ -168,42 +215,80 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
+    struct Record {
+        uint32_t id;
+        float value;
+        char name[8];
+    };
+    static_assert(sizeof(Record) == 16);
+
+    ASSERT_EQ(tcpSchema->getSchemaSizeInBytes(), sizeof(Record));
+
     std::string message = "42, 5.893, hello\n";
     int repeatSending = 5;
     std::thread serverThread(sendMessage, message, repeatSending);
-    serverThread.join();
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 5));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    std::ifstream ifs(filePath.c_str());
-    ASSERT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    //    NES_INFO("MemorySourceIntegrationTest: content=" << content);
-    ASSERT_TRUE(!content.empty());
-
-    std::ifstream infile(filePath.c_str());
-    std::string line;
-    std::size_t lineCnt = 0;
-    while (std::getline(infile, line)) {
-        if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            ASSERT_EQ(line, expectedString);
-        }
-        lineCnt++;
-    }
-
-    ASSERT_EQ(5, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
+}
+
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithSeparatorToken1) {
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    sourceConfig->setSocketPort(9000);
+    sourceConfig->setSocketHost("127.0.0.1");
+    sourceConfig->setSocketDomainViaString("AF_INET");
+    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
+    sourceConfig->setFlushIntervalMS(100);
+    sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
+    sourceConfig->setDecideMessageSize(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR);
+    sourceConfig->setTupleSeparator('\n');
+
+    auto tcpSchema = Schema::create()
+                         ->addField("id", UINT32)
+                         ->addField("value", FLOAT32)
+                         ->addField("name", DataTypeFactory::createFixedChar(8));
+
+    TCPSourceProxy tcpDataSource(tcpSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    //auto buf = this->GetEmptyBuffer();
+
+    //tcpDataSource.receiveData();
+
+}
+
+TEST_F(TCPSourceIntegrationTest, DISABLED_CSVSourceReadCSVDataWithSeparatorToken1) {
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+
+    auto tcpSchema = Schema::create()
+                         ->addField("id", UINT32)
+                         ->addField("value", FLOAT32)
+                         ->addField("name", DataTypeFactory::createFixedChar(8));
+
+    CSVSourceProxy csvDataSource(tcpSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfig,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    //auto buf = this->GetEmptyBuffer();
+
+    csvDataSource.receiveData();
+
 }
 
 }// namespace NES
