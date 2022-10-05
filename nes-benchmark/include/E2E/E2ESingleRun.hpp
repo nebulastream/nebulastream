@@ -93,10 +93,6 @@ class E2ESingleRun {
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
 
-
-//    std::vector<Runtime::TupleBuffer> createdBuffers;
-//    NES::LogicalSourcePtr logicalSource;
-//    NES::PhysicalSourcePtr physicalSource;
     DataProviding::DataProviderPtr dataProvider;
     DataGeneration::DataGeneratorPtr dataGenerator;
     NES::Runtime::BufferManagerPtr bufferManager;

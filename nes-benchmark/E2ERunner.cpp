@@ -110,7 +110,8 @@ int main(int argc, const char* argv[]) {
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
         portOffset += 23;
-        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+        NES::Benchmark::E2ESingleRun singleRun(configPerRun,
+                                               e2EBenchmarkConfig.getConfigOverAllRuns(),
                                                portOffset);
 
         singleRun.run();

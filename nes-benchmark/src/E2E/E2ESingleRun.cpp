@@ -285,4 +285,5 @@ void E2ESingleRun::run() {
     stopQuery();
     writeMeasurementsToCsv();
 }
+
 }
