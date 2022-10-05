@@ -204,7 +204,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
                       "user request:"
                       << exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
-        } catch (nlohmann::json::exception e) {
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request:"
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        }catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Server Error");

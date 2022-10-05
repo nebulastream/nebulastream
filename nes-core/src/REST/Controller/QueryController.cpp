@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
@@ -172,6 +173,16 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     successMessageImpl(request, restResponse, web::http::status_codes::Created);
                     return;
                 } catch (const InvalidQueryException& exc) {
+                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                              "user request:"
+                              << exc.what());
+                    web::json::value errorResponse{};
+                    auto statusCode = web::http::status_codes::BadRequest;
+                    errorResponse["code"] = web::json::value(statusCode);
+                    errorResponse["message"] = web::json::value::string(exc.what());
+                    errorMessageImpl(request, errorResponse, statusCode);
+                    return;
+                } catch (const MapEntryNotFoundException& exc){
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                               "user request:"
                               << exc.what());
