@@ -17,10 +17,11 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES::InferModel {
+
+class InferModelOperatorHandler;
+using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 
 /**
  * @brief Operator handler for inferModel.
@@ -45,11 +46,11 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
     const std::string& getModel() const;
+
     const TensorflowAdapterPtr& getTensorflowAdapter() const;
 
   private:
     std::string model;
-
     TensorflowAdapterPtr tfAdapter;
 #endif // TFDEF
 };

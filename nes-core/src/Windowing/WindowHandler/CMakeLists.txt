@@ -16,5 +16,4 @@ add_source_files(nes-core
         WindowOperatorHandler.cpp
         JoinOperatorHandler.cpp
         BatchJoinOperatorHandler.cpp
-        InferModelOperatorHandler.cpp
 )

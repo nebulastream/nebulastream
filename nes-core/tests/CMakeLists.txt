@@ -404,9 +404,9 @@ add_nes_unit_test(syntactic-query-validation-test "UnitTests/Optimizer/QueryVali
 
 
 ### Semantic Query Validation Test ###
-add_executable(semantic-query-validation-test "UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp")
-target_link_libraries(semantic-query-validation-test nes-tests)
-add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-test)
+add_nes_unit_test(semantic-query-validation-test "UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp")
+#target_link_libraries(semantic-query-validation-test nes-tests)
+#add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-test)
 
 ### Operator To FOL Util Test ###
 add_nes_unit_test(query-signature-util-tests "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp")

@@ -72,7 +72,7 @@ TEST_F(SourceCatalogTest, testAddGetLogSource) {
 
     map<std::string, SchemaPtr> allLogicalSource = sourceCatalog->getAllLogicalSource();
     string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(allLogicalSource.size(), 4U);
+    EXPECT_EQ(allLogicalSource.size(), 3U);
 
     SchemaPtr testSchema = allLogicalSource["test_stream"];
     EXPECT_EQ("", testSchema->toString());
@@ -156,7 +156,7 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
 TEST_F(SourceCatalogTest, testGetAllLogicalSource) {
 
     const map<std::string, std::string>& allLogicalSource = sourceCatalog->getAllLogicalSourceAsString();
-    EXPECT_EQ(allLogicalSource.size(), 3U);
+    EXPECT_EQ(allLogicalSource.size(), 2U);
     for (auto const& [key, value] : allLogicalSource) {
         bool cmp = key != defaultLogicalSourceName && key != "exdra" && key != "iris";
         EXPECT_EQ(cmp, false);
@@ -166,7 +166,7 @@ TEST_F(SourceCatalogTest, testGetAllLogicalSource) {
 TEST_F(SourceCatalogTest, testAddLogicalSourceFromString) {
     sourceCatalog->addLogicalSource("test", testSchema);
     const map<std::string, std::string>& allLogicalSource = sourceCatalog->getAllLogicalSourceAsString();
-    EXPECT_EQ(allLogicalSource.size(), 4U);
+    EXPECT_EQ(allLogicalSource.size(), 3U);
 }
 
 TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
