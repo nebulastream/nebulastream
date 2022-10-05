@@ -117,6 +117,7 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
 }
 
 TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
+    NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: " << this);
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
