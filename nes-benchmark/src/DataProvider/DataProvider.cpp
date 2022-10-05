@@ -19,7 +19,7 @@ limitations under the License.
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstring>
 
-namespace NES::DataProviding {
+namespace NES::Benchmark::DataProviding {
     std::shared_ptr<DataProvider>
     NES::DataProviding::DataProvider::createProvider(uint64_t id,
                                                      NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,

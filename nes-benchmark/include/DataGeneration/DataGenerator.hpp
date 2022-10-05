@@ -21,6 +21,10 @@ limitations under the License.
 #include <Runtime/BufferManager.hpp>
 
 namespace NES::DataGeneration {
+
+    class DataGenerator;
+    using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
+
     class DataGenerator {
       public:
         DataGenerator(Runtime::BufferManagerPtr bufferManager);

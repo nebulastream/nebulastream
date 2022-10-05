@@ -21,7 +21,7 @@ limitations under the License.
 #include <Runtime/TupleBuffer.hpp>
 #include <API/Schema.hpp>
 
-namespace NES::DataGeneration {
+namespace NES::Benchmark::DataGeneration {
 
     DataGenerator::DataGenerator(NES::Runtime::BufferManagerPtr bufferManager)
         : bufferManager(std::move(bufferManager)) {}
@@ -42,7 +42,7 @@ namespace NES::DataGeneration {
         return bufferManager->getBufferBlocking();
     }
 
-    std::shared_ptr<DataGenerator> DataGenerator::createGeneratorByName(std::string name,
+    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,
                                                                         Runtime::BufferManagerPtr bufferManager) {
 
 

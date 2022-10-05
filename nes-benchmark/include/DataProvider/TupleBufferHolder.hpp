@@ -19,7 +19,7 @@ limitations under the License.
 
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::DataProviding {
+namespace NES::Benchmark::DataProviding {
     class TupleBufferHolder {
       public:
         /**

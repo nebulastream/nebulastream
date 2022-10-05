@@ -16,7 +16,8 @@ limitations under the License.
 
 #include <Measurements.hpp>
 #include <sstream>
-namespace NES::Measurements {
+
+namespace NES::Benchmark::Measurements {
 
 std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB) {
     std::vector<std::string> vecCsvStrings;

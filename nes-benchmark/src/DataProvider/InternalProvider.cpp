@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <DataProvider/InternalProvider.hpp>
 
-namespace NES::DataProviding {
+namespace NES::Benchmark::DataProviding {
 
 InternalProvider::InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
