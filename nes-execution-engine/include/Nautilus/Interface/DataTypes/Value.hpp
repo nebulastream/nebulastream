@@ -253,47 +253,8 @@ Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
 template<class T>
-    requires(std::is_same_v<T, const bool> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value = Value<Boolean>(std::make_unique<Boolean>(t));
-    TraceConstOperation(value.value, value.ref);
-    return value;
-}
-
-template<class T>
-    requires(std::is_same_v<T, const float> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Float>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const std::int64_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int64>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const std::uint64_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<UInt64>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const std::int32_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int32>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const std::int8_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<Int8>(t);
-}
-
-template<class T>
-    requires(std::is_same_v<T, const std::uint8_t> == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value<UInt8>(t);
+    return Value<>(std::forward<T>(t));
 }
 
 template<IsNotValueType LHS, IsValueType RHS>
