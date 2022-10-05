@@ -51,8 +51,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
 
     // 4. JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, 
-        loweringProvider->getJitProxyFunctionSymbols(), loweringProvider->getJitProxyTargetAddresses());
-
+        loweringProvider->getJitProxyFunctionSymbols(), loweringProvider->getJitProxyTargetAddresses(), inlining);
     // 5. Get execution function from engine. Create and return execution context.
     auto function = (void (*)(void*, void*)) engine->lookup("execute").get();
     auto exec = std::make_shared<MLIRExecutablePipeline>(executionContext, physicalOperatorPipeline, std::move(engine));

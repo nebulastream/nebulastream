@@ -124,7 +124,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
                     timer->snapshot("Proxy Module Linked");
 
-                    std::cout << "OPT LEVEL 2\n";
                     auto optPipeline = mlir::makeOptimizingTransformer(2, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
                     timer->snapshot("Linked Module Optimized");
@@ -162,7 +161,6 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
                     timer->snapshot("Proxy Module Linked");
 
-                    std::cout << "OPT LEVEL 3\n";
                     auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
                     timer->snapshot("Linked Module Optimized");

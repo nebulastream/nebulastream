@@ -35,31 +35,69 @@ namespace NES::Nautilus::Backends::MLIR {
 std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     mlir::OwningOpRef<mlir::ModuleOp> &module, llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline, 
     const std::vector<std::string> &jitProxyFunctionSymbols, 
-    const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses) {
+    const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses,
+    bool inlining) {
 
     // Initialize information about the local machine in LLVM.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     // Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
     auto maybeEngine =
         mlir::ExecutionEngine::create(*module, nullptr, optPipeline, llvm::CodeGenOpt::Level::Aggressive);
-
     assert(maybeEngine && "failed to construct an execution engine");
     auto& engine = maybeEngine.get();
 
-    auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
-        auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
-            symbolMap[interner(jitProxyFunctionSymbols.at(i))] =
-                llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
+    if(!inlining) {
+        auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+            auto symbolMap = llvm::orc::SymbolMap();
+            for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
+                symbolMap[interner(jitProxyFunctionSymbols.at(i))] =
+                    llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
+            }
+            return symbolMap;
+        };
+        engine->registerSymbols(runtimeSymbolMap);
+    } else {
+        std::unordered_set<std::string> ExtractFuncs{
+            "getMurMurHash",
+            "getCRC32Hash",
+            "stringToUpperCase",
+            "standardDeviationGetMean",
+            "standardDeviationGetVariance",
+            "standardDeviationGetStdDev",
+            "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
+            "NES__Runtime__TupleBuffer__getNumberOfTuples",
+            "NES__Runtime__TupleBuffer__setNumberOfTuples",
+            "NES__Runtime__TupleBuffer__getBuffer",
+            "NES__Runtime__TupleBuffer__getBufferSize",
+            "NES__Runtime__TupleBuffer__getWatermark",
+            "NES__Runtime__TupleBuffer__setWatermark",
+            "NES__Runtime__TupleBuffer__getCreationTimestamp",
+            "NES__Runtime__TupleBuffer__setSequenceNumber",
+            "NES__Runtime__TupleBuffer__getSequenceNumber",
+            "NES__Runtime__TupleBuffer__setCreationTimestamp"
+            // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
+        };
+
+        if(!jitProxyFunctionSymbols.empty()) {
+            auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+                auto symbolMap = llvm::orc::SymbolMap();
+                for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
+                    if(!ExtractFuncs.contains(jitProxyFunctionSymbols.at(i))) {
+                        symbolMap[interner(jitProxyFunctionSymbols.at(i))] =
+                            llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
+                    }
+                }
+                return symbolMap;
+            };
+            engine->registerSymbols(runtimeSymbolMap);
         }
-        return symbolMap;
-    };
-    engine->registerSymbols(runtimeSymbolMap);
+    }
 
     return std::move(engine);
     

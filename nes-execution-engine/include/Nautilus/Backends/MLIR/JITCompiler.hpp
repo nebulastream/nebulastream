@@ -37,7 +37,8 @@ class JITCompiler {
     static std::unique_ptr<mlir::ExecutionEngine> jitCompileModule(
         mlir::OwningOpRef<mlir::ModuleOp> &module, llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline, 
         const std::vector<std::string> &jitProxyFunctionSymbols, 
-        const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses);
+        const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses,
+        bool inlining = false);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_

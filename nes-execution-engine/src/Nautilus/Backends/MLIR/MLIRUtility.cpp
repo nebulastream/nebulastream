@@ -161,7 +161,7 @@ MLIRUtility::jitCompileNESIR( std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, ml
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
-                                                loweringProvider->getJitProxyTargetAddresses());
+                                                loweringProvider->getJitProxyTargetAddresses(), inlining);
 }
 
 }// namespace NES::Nautilus::Backends::MLIR
