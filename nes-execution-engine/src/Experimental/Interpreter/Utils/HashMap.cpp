@@ -13,7 +13,7 @@
 */
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-using namespace NES::Nautilus;
+
 namespace NES::Nautilus {
 
 HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
@@ -75,7 +75,7 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
     auto keyPtr = entry.getKeyPtr();
     for (auto i = 0ul; i < keys.size(); i++) {
         keyPtr.store(keys[i]);
-        keyPtr = keyPtr + 8ul;
+        keyPtr = keyPtr + (uint64_t) 8;
     }
     return entry;
 }
