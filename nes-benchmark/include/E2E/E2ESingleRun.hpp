@@ -28,6 +28,10 @@ limitations under the License.
 #include <Catalogs/Source/PhysicalSource.hpp>
 
 namespace NES::Benchmark{
+
+/*
+ * @brief this class encapsulates a single benchmark run
+ */
 class E2ESingleRun {
 
   public:
