@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
@@ -45,7 +45,7 @@ Value<> HashMap::compareKeys(std::vector<Value<>> keyValues, Value<MemRef> ref) 
     Value<Boolean> equals = true;
     for (auto& keyValue : keyValues) {
         equals = equals && keyValue == ref.load<Int64>();
-        ref = ref + 8ul;
+        ref = ref + (uint64_t) 8;
     }
     return equals;
 }

@@ -668,17 +668,14 @@ void nestedLoopIf() {
 }
 
 TEST_F(SymbolicTracingTest, nestedLoopIf) {
-    for (auto i = 0; i < 1000; i++) {
-
-        auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
-            nestedLoopIf();
-        });
-        //std::cout << execution << std::endl;
-        //execution = ssaCreationPhase.apply(std::move(execution));
-        //auto basicBlocks = execution->getBlocks();
-        //std::cout << *execution.get() << std::endl;
-        //ASSERT_EQ(basicBlocks.size(), 10);
-    }
+    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+        nestedLoopIf();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 10);
 }
 
 }// namespace NES::Nautilus::Tracing
