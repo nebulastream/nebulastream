@@ -17,7 +17,7 @@ limitations under the License.
 #ifndef NES_INTERNALPROVIDER_HPP
 #define NES_INTERNALPROVIDER_HPP
 
-#include <DataProvider.hpp>
+#include <DataProvider/DataProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
 

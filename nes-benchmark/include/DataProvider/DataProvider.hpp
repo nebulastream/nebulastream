@@ -68,7 +68,7 @@ namespace NES::Benchmark::DataProviding {
          * @return
          */
         static std::shared_ptr<DataProvider> createProvider(uint64_t id,
-                                                            NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig,
+                                                            NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
                                                             std::vector<Runtime::TupleBuffer> buffers);
 
         /**

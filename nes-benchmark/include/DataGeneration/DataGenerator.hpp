@@ -20,7 +20,7 @@ limitations under the License.
 
 #include <Runtime/BufferManager.hpp>
 
-namespace NES::DataGeneration {
+namespace NES::Benchmark::DataGeneration {
 
     class DataGenerator;
     using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
