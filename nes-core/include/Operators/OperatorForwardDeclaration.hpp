@@ -64,5 +64,11 @@ using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssigne
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
+namespace InferModel {
+    class InferModelOperatorHandler;
+    using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
+}// namespace NES::InferModel
+
+
 }// namespace NES
 #endif// NES_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

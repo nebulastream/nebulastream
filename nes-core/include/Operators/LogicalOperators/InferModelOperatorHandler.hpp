@@ -14,13 +14,12 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/Reconfigurable.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
-// todo create NES::InferModel namespace
 namespace NES::InferModel {
 
 /**
