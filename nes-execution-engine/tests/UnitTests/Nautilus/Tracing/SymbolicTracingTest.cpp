@@ -66,6 +66,8 @@ TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
 }
 
 void arithmeticExpression() {
+    const unsigned long x = 5;
+    auto val = toValue<>(x);
     Value iw = Value(1);
     Value iw2 = Value(2);
     Value iw3 = Value(3);
@@ -235,7 +237,7 @@ void ifCondition(bool flag) {
     if (boolFlag) {
         iw = iw - 1;
     }
-    iw + 42;
+   auto x = iw + 42;
 }
 
 TEST_F(SymbolicTracingTest, ifConditionTest) {

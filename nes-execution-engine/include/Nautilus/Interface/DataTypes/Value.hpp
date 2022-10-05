@@ -26,8 +26,8 @@
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <memory>
 #include <cstdint>
+#include <memory>
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
@@ -65,42 +65,42 @@ class Value : BaseValue {
     /*
      * Creates a Value<Int8> object from an std::int8_t.
      */
-    Value(std::int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<Int16> object from an std::int16_t.
-     */
-    Value(std::int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<Int32> object from an std::int32_t.
-     */
-    Value(std::int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
-
-    /*
-     * Creates a Value<Int64> object from an std::int64_t.
-     */
-    Value(std::int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<UInt8> object from an std::uint8_t.
      */
-    Value(std::uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Int16> object from an std::int16_t.
      */
-    Value(std::uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int16> object from an std::int16_t.
+     */
+    Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Int32> object from an std::int32_t.
      */
-    Value(std::uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int32> object from an std::int32_t.
+     */
+    Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Int64> object from an std::int64_t.
      */
-    Value(std::uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    /*
+     * Creates a Value<Int64> object from an std::int64_t.
+     */
+    Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Float> object from a float.
@@ -252,7 +252,8 @@ Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
-template<class T>
+template<typename T,
+         typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
 inline auto toValue(T&& t) -> Value<> {
     return Value<>(std::forward<T>(t));
 }
