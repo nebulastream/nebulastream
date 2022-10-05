@@ -136,4 +136,32 @@ MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(mlir::OwningOpRef<mlir::Modu
                                                 loweringProvider->getJitProxyTargetAddresses());
 }
 
+std::unique_ptr<mlir::ExecutionEngine>
+MLIRUtility::jitCompileNESIR( std::shared_ptr<NES::Nautilus::IR::IRGraph> ir, mlir::MLIRContext &context,
+                                MLIR::LLVMIROptimizer::OptimizationLevel optLevel, bool inlining,
+                                std::shared_ptr<Timer<>> parentTimer) {
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+    context.loadDialect<mlir::math::MathDialect>();
+    context.loadDialect<mlir::AffineDialect>();
+    context.loadDialect<mlir::vector::VectorDialect>();
+    context.loadDialect<mlir::memref::MemRefDialect>();
+    auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
+    auto module = loweringProvider->generateModuleFromNESIR(ir);
+
+    parentTimer->snapshot("MLIR Generation");
+    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {}, parentTimer)) {
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
+    }
+    // Two snapshots created in lowerAndOptimizeMLIRModule
+
+    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(optLevel, inlining);
+
+    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
+                                                loweringProvider->getJitProxyTargetAddresses());
+}
+
 }// namespace NES::Nautilus::Backends::MLIR

@@ -209,7 +209,7 @@ TEST_P(Query1Test, tpchQ1) {
         pipeline->setRootOperator(&scan);
 
         auto timer = std::make_shared<Timer<>>("TPC-H-Q1");
-        auto executablePipeline = executionEngine->compile(pipeline, timer);
+        auto executablePipeline = executionEngine->compile(pipeline, timer, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
 
         executablePipeline->setup();
 

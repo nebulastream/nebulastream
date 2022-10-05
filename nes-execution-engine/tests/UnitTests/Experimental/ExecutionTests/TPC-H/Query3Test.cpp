@@ -169,7 +169,7 @@ TEST_P(Query3Test, tpchQ3) {
         pipeline1->setRootOperator(&customersScan);
 
         auto timerP1 = std::make_shared<Timer<>>("TPC-H-Q3-P1");
-        auto executablePipeline1 = executionEngine->compile(pipeline1, timerP1);
+        auto executablePipeline1 = executionEngine->compile(pipeline1, timerP1, CONF1->OPT_LEVEL, CONF1->PERFORM_INLINING);
         timerP1->pause();
         std::cout << "First Pipeline Compiled\n";
 
@@ -217,7 +217,7 @@ TEST_P(Query3Test, tpchQ3) {
         pipeline2->setRootOperator(&orderScan);
 
         auto timerP2 = std::make_shared<Timer<>>("TPC-H-Q3-P2");
-        auto executablePipeline2 = executionEngine->compile(pipeline2, timerP2);
+        auto executablePipeline2 = executionEngine->compile(pipeline2, timerP2, CONF2->OPT_LEVEL, CONF2->PERFORM_INLINING);
         timerP2->pause();
         std::cout << "Second Pipeline Compiled\n";
 
@@ -268,7 +268,7 @@ TEST_P(Query3Test, tpchQ3) {
 
         //todo use timerP3
         auto timerP3 = std::make_shared<Timer<>>("TPC-H-Q3-P3");
-        auto executablePipeline3 = executionEngine->compile(pipeline3, timerP3);
+        auto executablePipeline3 = executionEngine->compile(pipeline3, timerP3, CONF3->OPT_LEVEL, CONF3->PERFORM_INLINING);
         timerP3->pause();
         std::cout << "Third Pipeline Compiled\n";
 

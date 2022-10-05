@@ -182,7 +182,7 @@ TEST_P(Query6Test, tpchQ6) {
 
         // Todo pass timer?
         auto timer = std::make_shared<Timer<>>("TPC-H-Q6");
-        auto executablePipeline = executionEngine->compile(pipeline, timer);
+        auto executablePipeline = executionEngine->compile(pipeline, timer, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
         // timer->start();
 
         executablePipeline->setup();

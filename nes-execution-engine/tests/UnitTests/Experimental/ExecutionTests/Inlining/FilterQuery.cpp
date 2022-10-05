@@ -221,11 +221,12 @@ TEST_F(FilterQuery, filterBenchmark) {
 
         // Create MLIR
         mlir::MLIRContext context;
-        auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context);
-        timer->snapshot(CONF->snapshotNames.at(3));
+        auto engine = Backends::MLIR::MLIRUtility::jitCompileNESIR(ir, context, CONF->OPT_LEVEL, CONF->PERFORM_INLINING, timer);
+        // auto module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromNESIR(ir, context);
+        // timer->snapshot(CONF->snapshotNames.at(3));
 
         // Compile MLIR -> return function pointer
-        auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING, timer);
+        // auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, CONF->OPT_LEVEL, CONF->PERFORM_INLINING, timer);
         auto function = (void(*)(int, void*, void*)) engine->lookup("execute").get();
         timer->snapshot(CONF->snapshotNames.at(6)); // LLVM Compilation
 

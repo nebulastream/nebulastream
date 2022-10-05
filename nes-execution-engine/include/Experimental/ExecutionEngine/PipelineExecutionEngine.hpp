@@ -13,8 +13,10 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_EXECUTIONENGINE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_EXECUTIONENGINE_HPP_
-#include "Util/Timer.hpp"
+#include <Util/Timer.hpp>
 #include <memory>
+#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
+
 namespace NES::ExecutionEngine::Experimental {
 
 class ExecutablePipeline;
@@ -30,8 +32,10 @@ class PipelineExecutionEngine {
      * @param physicalOperatorPipeline
      * @return ExecutablePipeline
      */
-    virtual std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, 
-                                                        std::shared_ptr<Timer<>> timer = nullptr) = 0;
+    virtual std::shared_ptr<ExecutablePipeline> 
+    compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer = nullptr,
+            Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel optLevel = Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel::O3, 
+            bool inlining = false) = 0;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

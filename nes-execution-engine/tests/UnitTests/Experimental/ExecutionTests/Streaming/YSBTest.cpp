@@ -277,7 +277,7 @@ TEST_P(YSBTest, ysbTumblingWindow) {
         pipeline->setRootOperator(&scan);
 
         auto timer = std::make_shared<Timer<>>("YSB");
-        auto executablePipeline = executionEngine->compile(pipeline, timer);
+        auto executablePipeline = executionEngine->compile(pipeline, timer, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
 
         executablePipeline->setup();
 

@@ -33,7 +33,8 @@ namespace NES::ExecutionEngine::Experimental {
 CompilationBasedPipelineExecutionEngine::CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend): PipelineExecutionEngine(), backend(backend) {}
 
 std::shared_ptr<ExecutablePipeline>
-CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer) {
+CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer, 
+    Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel optLevel, bool inlining) {
     if(!timer) {
         timer = std::make_shared<Timer<>>("CompilationBasedPipelineExecutionEngine");
     }
@@ -71,7 +72,7 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     // std::cout <<timer << std::endl;
     //ir = loopInferencePhase.apply(ir);
 
-    return backend->compile(pipelineContext, physicalOperatorPipeline, ir, timer);
+    return backend->compile(pipelineContext, physicalOperatorPipeline, ir, timer, optLevel, inlining);
 }
 
 }// namespace NES::ExecutionEngine::Experimental

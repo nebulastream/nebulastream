@@ -19,6 +19,7 @@
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <memory>
+#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 
 namespace NES::Nautilus::IR {
 class IRGraph;
@@ -32,7 +33,9 @@ class PipelineCompilerBackend {
     compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
             std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
             std::shared_ptr<Nautilus::IR::IRGraph> ir,
-            std::shared_ptr<Timer<>> timer) = 0;
+            std::shared_ptr<Timer<>> timer,
+            Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel optLevel = Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel::O3, 
+            bool inlining = false) = 0;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

@@ -34,8 +34,12 @@ namespace NES::ExecutionEngine::Experimental {
 InterpretationBasedPipelineExecutionEngine::InterpretationBasedPipelineExecutionEngine() : PipelineExecutionEngine() {}
 
 std::shared_ptr<ExecutablePipeline>
-InterpretationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, std::shared_ptr<Timer<>> timer) {
-    if(timer) {
+InterpretationBasedPipelineExecutionEngine::compile(
+    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+    std::shared_ptr<Timer<>> timer,
+    Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel optLevel, 
+    bool inlining) {
+    if(timer && optLevel && inlining) {
         auto pipelineContext = std::make_shared<Runtime::Execution::RuntimePipelineContext>();
         return std::make_shared<InterpretationBasedExecutablePipeline>(pipelineContext, physicalOperatorPipeline);
     } else {

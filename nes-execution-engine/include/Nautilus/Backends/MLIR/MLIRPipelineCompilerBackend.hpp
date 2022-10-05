@@ -22,7 +22,9 @@ class MLIRPipelineCompilerBackend : public PipelineCompilerBackend {
     std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                                 std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
                                                 std::shared_ptr<IR::IRGraph> ir,
-                                                std::shared_ptr<Timer<>> timer) override;
+                                                std::shared_ptr<Timer<>> timer,
+                                                Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel optLevel, 
+                                                bool inlining) override;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

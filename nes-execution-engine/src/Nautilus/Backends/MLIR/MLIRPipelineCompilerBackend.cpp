@@ -29,7 +29,9 @@ std::shared_ptr<ExecutablePipeline>
 MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                      std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
                                      std::shared_ptr<IR::IRGraph> ir,
-                                     std::shared_ptr<Timer<>> timer) {
+                                     std::shared_ptr<Timer<>> timer,
+                                     MLIR::LLVMIROptimizer::OptimizationLevel optLevel, 
+                                     bool inlining) {
     // 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an MLIR module.
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
@@ -45,7 +47,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     // timer->snapshot("MLIR Lowering and Optimization"); // Snapshots taken in 2 parts in MLIRPassManager
 
     // 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline. //Todo adapt v flag for benchmarks
-    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(MLIR::LLVMIROptimizer::O3, /*inlining*/ false);
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(optLevel, /*inlining*/ inlining);
 
     // 4. JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, 
