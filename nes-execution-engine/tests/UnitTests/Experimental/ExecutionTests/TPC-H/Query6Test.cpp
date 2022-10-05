@@ -223,7 +223,7 @@ TEST_P(Query6Test, tpchQ6) {
 
 TEST_P(Query6Test, DISABLED_tpchQ6and) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+    auto lineitemBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     Scan scan = Scan(lineitemBuffer.first);

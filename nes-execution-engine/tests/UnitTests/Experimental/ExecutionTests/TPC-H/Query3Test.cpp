@@ -176,7 +176,7 @@ TEST_P(Query3Test, tpchQ3) {
         /**
         * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
         */
-        auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+        auto ordersBuffer = TPCHUtil::getOrders("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
         Scan orderScan = Scan(ordersBuffer.first);
 
         //  o_orderdate < date '1995-03-15'
@@ -224,7 +224,7 @@ TEST_P(Query3Test, tpchQ3) {
         /**
         * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
         */
-        auto lineitemsBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+        auto lineitemsBuffer = TPCHUtil::getLineitems("/home/alepping/tpch/dbgen/", bm, std::get<1>(this->GetParam()), true);
         Scan lineitemsScan = Scan(lineitemsBuffer.first);
         //   date '1995-03-15' < l_shipdate
         auto readL_shipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
