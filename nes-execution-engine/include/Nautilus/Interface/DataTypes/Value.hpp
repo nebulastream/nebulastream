@@ -27,6 +27,7 @@
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
+#include <type_traits>
 #include <memory>
 namespace NES::Nautilus {
 
@@ -254,7 +255,7 @@ Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
 template<typename T,
          typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
-inline auto toValue(T&& t) -> Value<> {
+inline auto toValue(T&& t) {
     return Value<>(std::forward<T>(t));
 }
 

@@ -244,6 +244,7 @@ TEST_F(SymbolicTracingTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         ifCondition(true);
     });
+
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
