@@ -24,7 +24,11 @@ limitations under the License.
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <cstdint>
 
-namespace NES::DataProviding {
+namespace NES::Benchmark::DataProviding {
+
+    class DataProvider;
+    using DataProviderPtr = std::shared_ptr<DataProvider>;
+
     class DataProvider {
       public:
         enum DataProviderMode {

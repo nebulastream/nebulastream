@@ -17,11 +17,11 @@ limitations under the License.
 #ifndef NES_INTERNALPROVIDER_HPP
 #define NES_INTERNALPROVIDER_HPP
 
-#include "DataProvider.hpp"
+#include <DataProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
 
-namespace NES::DataProviding {
+namespace NES::Benchmark::DataProviding {
     class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
 
       public:

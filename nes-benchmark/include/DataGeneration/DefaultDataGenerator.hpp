@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::DataGeneration {
+namespace NES::Benchmark::DataGeneration {
     class DefaultDataGenerator : public DataGenerator {
       public:
         /**

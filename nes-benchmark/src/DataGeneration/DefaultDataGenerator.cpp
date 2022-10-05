@@ -17,7 +17,7 @@ limitations under the License.
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::DataGeneration {
+namespace NES::Benchmark::DataGeneration {
     DefaultDataGenerator::DefaultDataGenerator(Runtime::BufferManagerPtr bufferManager,
                                                uint64_t minValue,
                                                uint64_t maxValue)  : DataGenerator(std::move(bufferManager)),

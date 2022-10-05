@@ -21,7 +21,7 @@ limitations under the License.
 #include <cstdint>
 #include <vector>
 
-namespace NES::Measurements {
+namespace NES::Benchmark::Measurements {
 /**
  * @brief stores all measurements and provides some helper functions
  */
