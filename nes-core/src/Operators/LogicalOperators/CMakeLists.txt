@@ -26,6 +26,7 @@ add_source_files(nes-core
         RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
+        InferModelOperatorHandler.cpp
 )
 
 add_subdirectory(CEP)

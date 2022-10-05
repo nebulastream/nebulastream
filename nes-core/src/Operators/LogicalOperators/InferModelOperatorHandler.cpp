@@ -17,10 +17,7 @@
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
+#include <State/StateManager.hpp>
 
 
 namespace NES::InferModel {
@@ -42,9 +39,8 @@ void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionConte
     NES_DEBUG("localStateVaribaleId: " << localStateVariableId);
 }
 
-void InferModelOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
+void InferModelOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {}
 
-}
 void InferModelOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Runtime::Execution::OperatorHandler::reconfigure(task, context);
 }
@@ -52,7 +48,9 @@ void InferModelOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& tas
 void InferModelOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     Runtime::Execution::OperatorHandler::postReconfigurationCallback(task);
 }
+
 const std::string& InferModelOperatorHandler::getModel() const { return model; }
+
 const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() const { return tfAdapter; }
 
 }// namespace NES::InferModel

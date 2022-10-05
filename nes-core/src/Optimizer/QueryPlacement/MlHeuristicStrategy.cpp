@@ -165,7 +165,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
 }
 
 bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const OperatorNodePtr& operatorNode) {
-    auto infModl = operatorNode->as<InferModelLogicalOperatorNode>();
+    auto infModl = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
     float f0 = infModl->getInputSchema()->getSize();
 
     auto ancestors = operatorNode->getAndFlattenAllAncestors();
@@ -250,7 +250,7 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
         bool shouldPushUp = false;
         bool canBePlacedHere = true;
 
-        bool tf_not_installed = operatorNode->instanceOf<InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
+        bool tf_not_installed = operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tf_not_installed) {
             canBePlacedHere = false;
         }
@@ -262,7 +262,7 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
             }
         }
 
-        if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        if(operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
 
             bool ENABLE_CPU_SAVER_MODE = DEFAULT_ENABLE_CPU_SAVER_MODE;
             int MIN_RESOURCE_LIMIT = DEFAULT_MIN_RESOURCE_LIMIT;

@@ -13,7 +13,6 @@
 */
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -27,10 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
-
-#include <fstream>
-#include <iterator>
-#include <vector>
 
 namespace NES {
 

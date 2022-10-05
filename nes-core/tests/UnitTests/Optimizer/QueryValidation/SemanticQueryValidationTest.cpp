@@ -230,20 +230,4 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), MapEntryNotFoundException);
 }
 
-#ifdef TFDEF
-TEST_F(SemanticQueryValidationTest, validInferModelTest) {
-    NES_INFO("Valid inferModel test");
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
-
-    auto query = Query::from("default_logical")
-        .inferModel("models/iris.tflite",
-                    {Attribute("value"), Attribute("id")},
-                    {Attribute("prediction")})
-        .filter(Attribute("prediction") > 42)
-        .sink(FileSinkDescriptor::create(""));
-}
-#endif // TFDEF
-
 }// namespace NES

@@ -21,14 +21,14 @@ namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
     #ifdef TFDEF
-        builder.declations << "#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>\n"
-                              "#include <tensorflow/lite/c/c_api.h>\n"
+        builder.declations << "#include <tensorflow/lite/c/c_api.h>\n"
                               "#include <tensorflow/lite/c/c_api_experimental.h>\n"
                               "#include <tensorflow/lite/c/common.h>\n";
 
     #endif
     builder.declations
                        << "#include <API/Schema.hpp>\n"
+                          "#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>\n"
                           "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>\n"
@@ -50,7 +50,6 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
                           "#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>\n"
                           "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>\n"
-                          "#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>\n"
@@ -84,9 +83,6 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
-                          "#include <tensorflow/lite/c/c_api.h>\n"
-                          "#include <tensorflow/lite/c/c_api_experimental.h>\n"
-                          "#include <tensorflow/lite/c/common.h>\n"
                           "using namespace NES::QueryCompilation;"
                        << std::endl;
 

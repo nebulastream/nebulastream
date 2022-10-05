@@ -58,7 +58,9 @@
 #include <utility>
 
 #include <API/Expressions/Expressions.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -74,9 +76,6 @@
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-
 using std::cout;
 using std::endl;
 using namespace NES::Runtime;
@@ -961,13 +960,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
         ->addField("text", DataTypeFactory::createFixedChar(12));
 
     auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat"));
-    auto i0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
-    auto i1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
-    auto i2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
+    auto input0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
+    auto input1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
+    auto input2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
     auto op = LogicalOperatorFactory::createInferModelOperator(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                                      {valF, valF, valF, valF},
-                                                     {i0, i1, i2});
-    auto imop = op->as<InferModelLogicalOperatorNode>();
+                                                     {input0, input1, input2});
+    auto imop = op->as<InferModel::InferModelLogicalOperatorNode>();
+
+
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
     codeGenerator->generateInferModelSetup(context, inferModelOperatorHandler);

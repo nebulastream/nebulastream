@@ -149,12 +149,12 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator.mutable_details()->PackFrom(mapDetails);
-    } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
         #ifdef TFDEF
         // serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperatorNode");
         auto inferModelDetails = SerializableOperator_InferModelDetails();
-        auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+        auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
 
         for (auto& exp : inferModelOperator->getInputFieldsAsPtr()) {
             auto* mutableInputFields = inferModelDetails.mutable_inputfields()->Add();
@@ -168,14 +168,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         inferModelDetails.set_mlfilename(inferModelOperator->getDeployedModelPath());
         std::ifstream input(inferModelOperator->getModel(), std::ios::binary);
 
-        std::string bytes(
-            (std::istreambuf_iterator<char>(input)),
-            (std::istreambuf_iterator<char>()));
-
+        std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         input.close();
-
         inferModelDetails.set_mlfilecontent(bytes);
-
         serializedOperator.mutable_details()->PackFrom(inferModelDetails);
         #endif // TFDEF
     }

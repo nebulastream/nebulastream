@@ -163,7 +163,7 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
             return rootOperator;
         }
         for (const auto& child : rootOperator->getChildren()) {
-            NES_DEBUG("QueryPlan: Searching for  " << operatorId << " in the children");
+            NES_TRACE("QueryPlan: Searching for  " << operatorId << " in the children");
             NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
             if (found) {
                 return found->as<OperatorNode>();

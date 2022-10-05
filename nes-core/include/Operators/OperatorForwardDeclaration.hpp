@@ -52,19 +52,21 @@ using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperat
 class MapLogicalOperatorNode;
 using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
 
-class InferModelLogicalOperatorNode;
-using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
-
 class WindowLogicalOperatorNode;
+
 using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
-
 class WatermarkAssignerLogicalOperatorNode;
-using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 class SourceLogicalOperatorNode;
+
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 namespace InferModel {
+    class InferModelLogicalOperatorNode;
+    using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
+
+
     class InferModelOperatorHandler;
     using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 }// namespace NES::InferModel

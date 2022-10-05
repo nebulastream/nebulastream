@@ -23,7 +23,7 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
     selectivity = 1.0;
 }
 
-    FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& predicate, float selectivity, uint64_t id)
+FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& predicate, float selectivity, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate), selectivity(selectivity) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
