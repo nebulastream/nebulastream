@@ -266,7 +266,7 @@ TEST_P(Query3Test, tpchQ3) {
 #ifdef USE_BABELFISH
 
     uint64_t warmup = 10000;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         Timer timer("QueryExecutionTime");
         timer.start();
         auto buffer1 = customersBuffer.second.getBuffer();

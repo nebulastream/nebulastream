@@ -209,7 +209,7 @@ TEST_P(Query1Test, tpchQ1) {
 
 #ifdef USE_BABELFISH
     uint64_t warmup = 1000;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         executablePipeline->execute(*runtimeWorkerContext, buffer);
     }
     {

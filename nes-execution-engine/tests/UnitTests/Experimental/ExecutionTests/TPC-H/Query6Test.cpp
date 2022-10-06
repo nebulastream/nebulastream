@@ -178,7 +178,7 @@ TEST_P(Query6Test, tpchQ6) {
     auto buffer = lineitemBuffer.second.getBuffer();
 #ifdef USE_BABELFISH
     uint64_t warmup = 100;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         executablePipeline->execute(*runtimeWorkerContext, buffer);
     }
     {
@@ -254,7 +254,7 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
     auto buffer = lineitemBuffer.second.getBuffer();
 #ifdef USE_BABELFISH
     uint64_t warmup = 100;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         executablePipeline->execute(*runtimeWorkerContext, buffer);
     }
     {

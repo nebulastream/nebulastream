@@ -15,14 +15,14 @@
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
 namespace NES::Nautilus {
 
 class EmitState : public OperatorState {
   public:
     EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
-    Value<UInt64> outputIndex = 0ul;
+    Value<UInt64> outputIndex = (uint64_t) 0;
     RecordBuffer resultBuffer;
 };
 
@@ -38,9 +38,9 @@ void Emit::execute(RuntimeExecutionContext& ctx, Record& recordBuffer) const {
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
     resultBuffer.write(resultMemoryLayout, outputIndex, recordBuffer);
-    emitState->outputIndex = outputIndex + 1ul;
+    emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
-   /* if (outputIndex >= maxRecordsPerBuffer) {
+    /* if (outputIndex >= maxRecordsPerBuffer) {
         resultBuffer.setNumRecords(emitState->outputIndex);
         ctx.getPipelineContext().emitBuffer(ctx.getWorkerContext(), resultBuffer);
         auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
