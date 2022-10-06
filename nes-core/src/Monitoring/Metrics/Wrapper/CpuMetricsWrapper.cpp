@@ -137,14 +137,6 @@ void CpuMetricsWrapper::setCores(std::list<uint64_t> coresList) {
         }
         cpuMetrics = std::move(arrayNew);
     }
-//    std::list<uint64_t> list {0, 9};
-//    for (auto i : list) {
-//        if (i < cpuMetrics.size()) {
-//            arrayNew.push_back(cpuMetrics[i]);
-//        }
-//    }
-
-//    cpuMetrics = std::move(arrayNew);
 }
 
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
