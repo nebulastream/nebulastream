@@ -210,7 +210,7 @@ TEST_P(YSBTest, ysbSelectionCampain) {
 
 #ifdef USE_BABELFISH
     uint64_t warmup = 100;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
         }
@@ -275,7 +275,7 @@ TEST_P(YSBTest, ysbTumblingWindow) {
 
 #ifdef USE_BABELFISH
     uint64_t warmup = 1000;
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
         }

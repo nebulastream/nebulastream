@@ -56,7 +56,7 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
 void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::FunctionOperation> functionOperation) {
     FlounderFrame rootFrame;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
-    for (auto i = 0ul; i < functionBasicBlock->getArguments().size(); i++) {
+    for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
         auto argument = functionBasicBlock->getArguments()[i];
         auto* arg = program.vreg(argument->getIdentifier());
         rootFrame.setValue(argument->getIdentifier(), arg);

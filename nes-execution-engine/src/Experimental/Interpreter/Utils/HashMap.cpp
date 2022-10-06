@@ -73,7 +73,7 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
     auto entryRef = FunctionCall<>("createEntryProxy", createEntryProxy, hashTableRef, hash);
     auto entry = Entry(entryRef, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize + valueOffset);
     auto keyPtr = entry.getKeyPtr();
-    for (auto i = 0ul; i < keys.size(); i++) {
+    for (auto i = 0ull; i < keys.size(); i++) {
         keyPtr.store(keys[i]);
         keyPtr = keyPtr + (uint64_t) 8;
     }
