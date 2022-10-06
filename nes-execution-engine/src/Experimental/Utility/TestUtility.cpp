@@ -292,6 +292,8 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
             // performanceMetrics << resultsFileName << "\n-------------\nQueries/s:\n";
             performanceMetrics << ((1000/overallTimeSum) * numIterations) << '\n';
             performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
+            performanceMetrics << "CompPart: " << (compilationTimeSum / overallTimeSum) << '\n';
+            performanceMetrics << "CompPart: " << (executionTimeSum / overallTimeSum) << '\n';
             // }
             fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
         }
