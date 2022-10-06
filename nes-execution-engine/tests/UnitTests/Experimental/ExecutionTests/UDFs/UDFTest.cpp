@@ -210,7 +210,7 @@ TEST_P(UDFTest, distanceUDF) {
     executablePipeline->setup();
 
 #ifdef USE_BABELFISH
-    for (auto i = 0ul; i < warmup; i++) {
+    for (auto i = 0ull; i < warmup; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
         }
@@ -219,7 +219,7 @@ TEST_P(UDFTest, distanceUDF) {
 
     Timer timer("QueryExecutionTime");
     timer.start();
-    for (auto i = 0ul; i < iterations; i++) {
+    for (auto i = 0ull; i < iterations; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
         }
@@ -268,7 +268,7 @@ TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
     auto executablePipeline = executionEngine.compile(pipeline);
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (auto i = 0ul; i < dynamicBuffer.getCapacity() - 1; i++) {
+    for (auto i = 0ull; i < dynamicBuffer.getCapacity() - 1; i++) {
         dynamicBuffer[i]["f1"].write((int64_t) 1);
     }
     dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
@@ -321,7 +321,7 @@ TEST_P(UDFTest, crimeIndexUDF) {
 
     Timer timer("QueryExecutionTime");
     timer.start();
-    for (auto i = 0ul; i < iterations; i++) {
+    for (auto i = 0ull; i < iterations; i++) {
         for (auto& buffer : data) {
             executablePipeline->execute(*runtimeWorkerContext, buffer);
         }

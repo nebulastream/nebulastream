@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Nautilus {
 
@@ -62,7 +62,7 @@ void JoinProbe::execute(RuntimeExecutionContext& ctx, Record& record) const {
             Value<> leftValue = valuePtr.load<Int64>();
             auto fieldName = resultFields[joinResult.numberOfFields()];
             joinResult.write(fieldName, leftValue);
-            valuePtr = valuePtr + 8ul;
+            valuePtr = valuePtr + (uint64_t) 8;
         }
 
         // add right values to the result

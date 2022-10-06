@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Nautilus {
 
@@ -55,7 +55,7 @@ void JoinBuild::execute(RuntimeExecutionContext& executionCtx, Record& record) c
     for (auto& valueExpression : valueExpressions) {
         auto value = valueExpression->execute(record);
         valuePtr.store(value);
-        valuePtr = valuePtr + 8ul;
+        valuePtr = valuePtr + (uint8_t) 8;
     }
 }
 
