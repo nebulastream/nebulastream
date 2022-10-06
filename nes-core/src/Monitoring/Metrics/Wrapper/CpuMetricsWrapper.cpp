@@ -22,21 +22,59 @@
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {
-CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
+CpuMetricsWrapper::CpuMetricsWrapper() : schema(CpuMetrics::getDefaultSchema("")) {}
+
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId), schema(CpuMetrics::getDefaultSchema("")) {}
 
 CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     if (!arr.empty()) {
         cpuMetrics = std::move(arr);
+        schema = CpuMetrics::getDefaultSchema("");
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
     NES_TRACE("CpuMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
 }
 
-CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const { return cpuMetrics.at(cpuCore); }
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId, SchemaPtr schema) : nodeId(nodeId), schema(std::move(schema)) {
+    NES_DEBUG("CpuMetricsWrapper: Constructor: Allocating a CpuMetricsWrapper!");
+    for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+        cpuMetrics[i].setSchema(schema);
+    }
+}
+
+CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr, SchemaPtr schemaNew) {
+    if (!arr.empty()) {
+        cpuMetrics = std::move(arr);
+        for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+            cpuMetrics[i].setSchema(schemaNew);
+        }
+        schema = std::move(schemaNew);
+    } else {
+        NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
+    }
+    NES_TRACE("CpuMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+}
+
+CpuMetricsWrapper::CpuMetricsWrapper(SchemaPtr schema) : schema(std::move(schema)) {}
+
+CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const {
+    CpuMetrics cpuMetric = cpuMetrics.at(cpuCore);
+    cpuMetric.setSchema(this->schema);
+    return cpuMetric;
+}
+
+void CpuMetricsWrapper::setSchema(SchemaPtr newSchema) {
+    for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
+        cpuMetrics[i].setSchema(newSchema);
+    }
+    this->schema = std::move(newSchema);
+}
+
+SchemaPtr CpuMetricsWrapper::getSchema() const { return this->schema; }
 
 void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto schema = CpuMetrics::getSchema("");
+    auto schema = this->schema;
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
@@ -45,18 +83,20 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
     for (unsigned int i = 0; i < size(); i++) {
         CpuMetrics metrics = getValue(i);
         metrics.nodeId = nodeId;
+        metrics.setSchema(schema);
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
 
 void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    auto schema = CpuMetrics::getSchema("");
+    auto schema = this->schema;
     auto cpuList = std::vector<CpuMetrics>();
     NES_TRACE("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         CpuMetrics metrics{};
+        metrics.setSchema(this->schema);
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         cpuList.emplace_back(metrics);
     }
@@ -71,7 +111,7 @@ CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
 web::json::value CpuMetricsWrapper::toJson() const {
     web::json::value metricsJsonWrapper{};
     metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
-
+    SchemaPtr schemaTemp = this->schema;
     web::json::value metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
         if (i == 0) {
@@ -83,7 +123,6 @@ web::json::value CpuMetricsWrapper::toJson() const {
     metricsJsonWrapper["values"] = metricsJson;
     return metricsJson;
 }
-
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {
         NES_ERROR("CpuMetricsWrapper: Sizes are not equal " << cpuMetrics.size() << "!=" << rhs.size());

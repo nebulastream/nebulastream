@@ -17,6 +17,7 @@
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include "list"
 
 namespace NES::Monitoring {
 
@@ -82,8 +83,25 @@ class MetricUtils {
      * @return the collector as type
      */
     static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
-};
 
+    /**
+     * @brief Creates one string out of a given list of strings seperated by a given separator.
+     * @param separator
+     * @param list list of strings
+     * @return string
+     */
+    static std::string listToString(const std::string& separator, const std::list<std::string>& list);
+
+    /**
+     * @brief Creates a tuple of a vector and a list. Vector has all attributes of a metric that a not configured.
+     * The list consists of a given number of random attributes. Is just used for tests.
+     * @param metric the metric we want to create the tuple for
+     * @param numberOfAttributes number of attributes we want in the list
+     * @return tuple
+     */
+    static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric,
+                                                                                         int numberOfAttributes);
+};
 }// namespace NES::Monitoring
 
 #endif// NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

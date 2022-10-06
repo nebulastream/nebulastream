@@ -24,6 +24,8 @@ class MemoryCollector : public MetricCollector {
   public:
     explicit MemoryCollector();
 
+    explicit MemoryCollector(SchemaPtr schema);
+
     /**
      * @brief Returns the type of metric collector
      * @return the metric collector type

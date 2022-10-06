@@ -25,9 +25,13 @@ namespace NES::Monitoring {
 
 MemoryMetrics::MemoryMetrics()
     : nodeId(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0), TOTAL_HIGH(0),
-      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0) {}
+      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0), schema(getDefaultSchema("")) {}
 
-SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
+MemoryMetrics::MemoryMetrics(SchemaPtr schema)
+    : nodeId(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0), TOTAL_HIGH(0),
+      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0), schema(std::move(schema)) {}
+
+SchemaPtr MemoryMetrics::getDefaultSchema(const std::string& prefix) {
     auto schema = Schema::create(Schema::ROW_LAYOUT)
                       ->addField(prefix + "node_id", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
@@ -46,56 +50,193 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
+SchemaPtr MemoryMetrics::createSchema(const std::string& prefix, const std::list<std::string>& configuredMetrics) {
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64);
+
+    for (const auto& metric : configuredMetrics) {
+        if (metric == "TOTAL_RAM") {
+            schema->addField(prefix + "TOTAL_RAM", BasicType::UINT64);
+        } else if (metric == "TOTAL_SWAP") {
+            schema->addField(prefix + "TOTAL_SWAP", BasicType::UINT64);
+        } else if (metric == "FREE_RAM") {
+            schema->addField(prefix + "FREE_RAM", BasicType::UINT64);
+        } else if (metric == "SHARED_RAM") {
+            schema->addField(prefix + "SHARED_RAM", BasicType::UINT64);
+        } else if (metric == "BUFFER_RAM") {
+            schema->addField(prefix + "BUFFER_RAM", BasicType::UINT64);
+        } else if (metric == "FREE_SWAP") {
+            schema->addField(prefix + "FREE_SWAP", BasicType::UINT64);
+        } else if (metric == "TOTAL_HIGH") {
+            schema->addField(prefix + "TOTAL_HIGH", BasicType::UINT64);
+        } else if (metric == "FREE_HIGH") {
+            schema->addField(prefix + "FREE_HIGH", BasicType::UINT64);
+        } else if (metric == "PROCS") {
+            schema->addField(prefix + "PROCS", BasicType::UINT64);
+        } else if (metric == "MEM_UNIT") {
+            schema->addField(prefix + "MEM_UNIT", BasicType::UINT64);
+        } else if (metric == "LOADS_1MIN") {
+            schema->addField(prefix + "LOADS_1MIN", BasicType::UINT64);
+        } else if (metric == "LOADS_5MIN") {
+            schema->addField(prefix + "LOADS_5MIN", BasicType::UINT64);
+        } else if (metric == "LOADS_15MIN") {
+            schema->addField(prefix + "LOADS_15MIN", BasicType::UINT64);
+        } else {
+            NES_INFO("DiskMetrics: Metric unknown: " << metric);
+        }
+    }
+    return schema;
+}
+
+void MemoryMetrics::setSchema(SchemaPtr newSchema) { this->schema = std::move(newSchema); }
+
+SchemaPtr MemoryMetrics::getSchema() const { return this->schema; }
+
+std::vector<std::string> MemoryMetrics::getAttributesVector() {
+    std::vector<std::string> attributesVector { "TOTAL_RAM", "TOTAL_SWAP", "FREE_RAM", "SHARED_RAM", "BUFFER_RAM", "FREE_SWAP",
+                                              "TOTAL_HIGH", "FREE_HIGH", "PROCS", "MEM_UNIT", "LOADS_1MIN", "LOADS_5MIN",
+                                              "LOADS_15MIN"};
+    return attributesVector;
+}
+
+uint64_t MemoryMetrics::getValue(const std::string& metricName) const {
+    if (metricName == "TOTAL_RAM") {
+        return TOTAL_RAM;
+    } else if (metricName == "TOTAL_SWAP") {
+        return TOTAL_SWAP;
+    } else if (metricName == "FREE_RAM") {
+        return FREE_RAM;
+    } else if (metricName == "SHARED_RAM") {
+        return SHARED_RAM;
+    } else if (metricName == "BUFFER_RAM") {
+        return BUFFER_RAM;
+    } else if (metricName == "FREE_SWAP") {
+        return FREE_SWAP;
+    } else if (metricName == "TOTAL_HIGH") {
+        return TOTAL_HIGH;
+    } else if (metricName == "FREE_HIGH") {
+        return FREE_HIGH;
+    } else if (metricName == "PROCS") {
+        return PROCS;
+    } else if (metricName == "MEM_UNIT") {
+        return MEM_UNIT;
+    } else if (metricName == "LOADS_1MIN") {
+        return LOADS_1MIN;
+    } else if (metricName == "LOADS_5MIN") {
+        return LOADS_5MIN;
+    } else if (metricName == "LOADS_15MIN") {
+        return LOADS_15MIN;
+    } else if (metricName == "nodeId") {
+        return nodeId;
+    }else {
+        NES_DEBUG("Unknown Metricname: " << metricName);
+        //todo: find right exception
+        throw std::exception();
+    }
+}
+
 void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(this->schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-    auto totalSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
+    auto totalSize = this->schema->getSchemaSizeInBytes();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "MemoryMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
-    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_RAM);
-    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_SWAP);
-    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_RAM);
-    buffer[tupleIndex][cnt++].write<uint64_t>(SHARED_RAM);
-    buffer[tupleIndex][cnt++].write<uint64_t>(BUFFER_RAM);
-    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_SWAP);
-    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_HIGH);
-    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_HIGH);
-    buffer[tupleIndex][cnt++].write<uint64_t>(PROCS);
-    buffer[tupleIndex][cnt++].write<uint64_t>(MEM_UNIT);
-    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_1MIN);
-    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_5MIN);
-    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_15MIN);
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);//NodeId has always to be filled
+    if (schema->contains("TOTAL_RAM")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_RAM);
+    }
+    if (schema->contains("TOTAL_SWAP")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_SWAP);
+    }
+    if (schema->contains("FREE_RAM")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(FREE_RAM);
+    }
+    if (schema->contains("SHARED_RAM")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(SHARED_RAM);
+    }
+    if (schema->contains("BUFFER_RAM")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(BUFFER_RAM);
+    }
+    if (schema->contains("FREE_SWAP")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(FREE_SWAP);
+    }
+    if (schema->contains("TOTAL_HIGH")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_HIGH);
+    }
+    if (schema->contains("FREE_HIGH")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(FREE_HIGH);
+    }
+    if (schema->contains("PROCS")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(PROCS);
+    }
+    if (schema->contains("MEM_UNIT")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(MEM_UNIT);
+    }
+    if (schema->contains("LOADS_1MIN")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_1MIN);
+    }
+    if (schema->contains("LOADS_5MIN")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_5MIN);
+    }
+    if (schema->contains("LOADS_15MIN")) {
+        buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_15MIN);
+    }
 
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
 void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(this->schema, buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
     uint64_t cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
-    TOTAL_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
-    TOTAL_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
-    FREE_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
-    SHARED_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
-    BUFFER_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
-    FREE_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
-    TOTAL_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
-    FREE_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
-    PROCS = buffer[tupleIndex][cnt++].read<uint64_t>();
-    MEM_UNIT = buffer[tupleIndex][cnt++].read<uint64_t>();
-    LOADS_1MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
-    LOADS_5MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
-    LOADS_15MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    if (schema->contains("TOTAL_RAM")) {
+        TOTAL_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("TOTAL_SWAP")) {
+        TOTAL_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("FREE_RAM")) {
+        FREE_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("SHARED_RAM")) {
+        SHARED_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("BUFFER_RAM")) {
+        BUFFER_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("FREE_SWAP")) {
+        FREE_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("TOTAL_HIGH")) {
+        TOTAL_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("FREE_HIGH")) {
+        FREE_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("PROCS")) {
+        PROCS = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("MEM_UNIT")) {
+        MEM_UNIT = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("LOADS_1MIN")) {
+        LOADS_1MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("LOADS_5MIN")) {
+        LOADS_5MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
+    if (schema->contains("LOADS_15MIN")) {
+        LOADS_15MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    }
 }
 
-SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
+//SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
 
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
     return nodeId == rhs.nodeId && TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
@@ -109,19 +250,46 @@ bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs ==
 web::json::value MemoryMetrics::toJson() const {
     web::json::value metricsJson{};
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
-    metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
-    metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
-    metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
-    metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
-    metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
-    metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
-    metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
-    metricsJson["PROCS"] = web::json::value::number(PROCS);
-    metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
-    metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
-    metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
-    metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+    if (schema->contains("TOTAL_RAM")) {
+        metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
+    }
+    if (schema->contains("TOTAL_SWAP")) {
+        metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
+    }
+    if (schema->contains("FREE_RAM")) {
+        metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
+    }
+    if (schema->contains("SHARED_RAM")) {
+        metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
+    }
+    if (schema->contains("BUFFER_RAM")) {
+        metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
+    }
+    if (schema->contains("FREE_SWAP")) {
+        metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
+    }
+    if (schema->contains("TOTAL_HIGH")) {
+        metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
+    }
+    if (schema->contains("FREE_HIGH")) {
+        metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
+    }
+    if (schema->contains("PROCS")) {
+        metricsJson["PROCS"] = web::json::value::number(PROCS);
+    }
+    if (schema->contains("MEM_UNIT")) {
+        metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
+    }
+    if (schema->contains("LOADS_1MIN")) {
+        metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
+    }
+    if (schema->contains("LOADS_5MIN")) {
+        metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
+    }
+    if (schema->contains("LOADS_15MIN")) {
+        metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+    }
+
     return metricsJson;
 }
 

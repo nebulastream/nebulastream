@@ -25,8 +25,11 @@
 #include <cstring>
 
 namespace NES::Monitoring {
+NetworkMetricsWrapper::NetworkMetricsWrapper() : schema(NetworkMetrics::getDefaultSchema("")) {}
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
+NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId), schema(NetworkMetrics::getDefaultSchema("")) {}
+
+NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId, SchemaPtr schema) : nodeId(nodeId), schema(schema) {}
 
 NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) {
     if (!arr.empty()) {
@@ -37,8 +40,36 @@ NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) 
     NES_TRACE("NetworkMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
 }
 
+NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr, SchemaPtr schemaNew) {
+    if (!arr.empty()) {
+        networkMetrics = std::move(arr);
+        for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+            networkMetrics[i].setSchema(schemaNew);
+        }
+        schema = std::move(schemaNew);
+    } else {
+        NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
+    }
+    NES_TRACE("NetworkMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+}
+
+NetworkMetricsWrapper::NetworkMetricsWrapper(SchemaPtr schema) : schema(std::move(schema)) {
+    for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+        networkMetrics[i].setSchema(schema);
+    }
+}
+
+void NetworkMetricsWrapper::setSchema(SchemaPtr newSchema) {
+    for (auto i = 0; i < (int) networkMetrics.size(); i++) {
+        networkMetrics[i].setSchema(newSchema);
+    }
+    this->schema = std::move(newSchema);
+}
+
+SchemaPtr NetworkMetricsWrapper::getSchema() const { return this->schema; }
+
 void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto schema = NetworkMetrics::getSchema("");
+    auto schema = this->schema;
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "NetworkMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
@@ -47,18 +78,20 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
     for (unsigned int i = 0; i < size(); i++) {
         NetworkMetrics metrics = getNetworkValue(i);
         metrics.nodeId = nodeId;
+        metrics.setSchema(schema);
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
 
 void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    auto schema = NetworkMetrics::getSchema("");
+    auto schema = this->schema;
     auto interfaceList = std::vector<NetworkMetrics>();
     NES_TRACE("NetworkMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         NetworkMetrics metrics{};
+        metrics.setSchema(schema);
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         interfaceList.emplace_back(metrics);
     }
@@ -71,7 +104,9 @@ NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) cons
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: ArrayType index out of bound " + std::to_string(interfaceNo)
                                 + ">=" + std::to_string(size()));
     }
-    return networkMetrics.at(interfaceNo);
+    NetworkMetrics networkMetric = networkMetrics.at(interfaceNo);
+    networkMetric.setSchema(this->schema);
+    return networkMetric;
 }
 
 void NetworkMetricsWrapper::addNetworkMetrics(NetworkMetrics&& nwValue) {
