@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.3.3](https://github.com/nebulastream/nebulastream/tree/v0.3.3) (2022-10-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.2...v0.3.3)
+
+#### Query Compiler
+
+- Feature-Next-JIT: Refactor MLIR Code [\#3003](https://github.com/nebulastream/nebulastream/issues/3003)
+
+#### REST API 
+
+- Make SourceCatalogController an oatpp endpoint \(Move to oatapp REST server\)  [\#2841](https://github.com/nebulastream/nebulastream/issues/2841)
+
+### Miscellaneous Issues ✌️
+
+- Move MQO Benchmark code from nebulastream to nebulastream-benchmark repo [\#2272](https://github.com/nebulastream/nebulastream/issues/2272)
+
 ## [v0.3.2](https://github.com/nebulastream/nebulastream/tree/v0.3.2) (2022-09-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.1...v0.3.2)
