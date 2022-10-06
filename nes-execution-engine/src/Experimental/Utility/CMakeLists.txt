@@ -16,4 +16,5 @@ add_source_files(nes-execution-engine
         NESIRDumpHandler.cpp
         PluginRegistry.cpp
         TPCHUtil.cpp
+        IRGrpahvizSerialization.cpp
         )
