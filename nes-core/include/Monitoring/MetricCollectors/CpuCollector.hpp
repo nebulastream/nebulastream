@@ -27,6 +27,8 @@ class CpuCollector : public MetricCollector {
   public:
     explicit CpuCollector();
 
+    explicit CpuCollector(const SchemaPtr& schema);
+
     /**
      * @brief Fill a buffer with a given metric.
      * @param tupleBuffer The tuple buffer

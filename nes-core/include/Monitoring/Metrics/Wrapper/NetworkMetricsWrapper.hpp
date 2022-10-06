@@ -28,9 +28,18 @@ namespace NES::Monitoring {
  */
 class NetworkMetricsWrapper {
   public:
-    NetworkMetricsWrapper() = default;
+    NetworkMetricsWrapper();
     NetworkMetricsWrapper(uint64_t nodeId);
+    NetworkMetricsWrapper(uint64_t nodeId, SchemaPtr schema);
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
+    NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr, SchemaPtr schemaNew);
+    NetworkMetricsWrapper(SchemaPtr schema);
+
+    //TODO: beschreibung Funktion
+    [[nodiscard]] SchemaPtr getSchema() const;
+
+    //TODO: Beschreibung Funktion
+    void setSchema(SchemaPtr newSchema);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
@@ -74,6 +83,7 @@ class NetworkMetricsWrapper {
   private:
     std::vector<NetworkMetrics> networkMetrics;
     uint64_t nodeId;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**

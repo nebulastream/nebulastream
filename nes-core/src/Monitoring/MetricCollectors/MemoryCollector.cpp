@@ -25,7 +25,13 @@
 namespace NES::Monitoring {
 MemoryCollector::MemoryCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
-      schema(MemoryMetrics::getSchema("")) {
+      schema(MemoryMetrics::getDefaultSchema("")) {
+    NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
+}
+
+MemoryCollector::MemoryCollector(SchemaPtr schema)
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(schema) {
     NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
 }
 
@@ -34,6 +40,7 @@ MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }
 bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         MemoryMetrics measuredVal = resourceReader->readMemoryStats();
+        measuredVal.setSchema(this->schema);
         measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
@@ -42,11 +49,11 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     }
     return true;
 }
-
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
 const MetricPtr MemoryCollector::readMetric() const {
     MemoryMetrics metrics = resourceReader->readMemoryStats();
+    metrics.setSchema(this->schema);
     metrics.nodeId = getNodeId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }

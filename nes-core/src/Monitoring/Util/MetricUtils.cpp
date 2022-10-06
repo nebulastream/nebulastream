@@ -106,10 +106,10 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
 
 SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
-        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchema("");
-        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
-        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
+        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getDefaultSchema("");
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getDefaultSchema("");
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getDefaultSchema("");
+        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getDefaultSchema("");
         default: {
             NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
         }
@@ -130,6 +130,45 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
             return MetricCollectorType::INVALID;
         }
     }
+}
+
+std::string MetricUtils::listToString(const std::string& separator, const std::list<std::string>& list) {
+    std::string string;
+    auto lengthSeperator = separator.size();
+    for (const std::string& listItem : list) {
+        string += listItem + separator;
+    }
+    string = string.substr(0, string.size()-lengthSeperator);
+
+    return string;
+}
+
+std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::randomAttributes(std::string metric, int numberOfAttributes) {
+    std::vector<std::string> attributesVector;
+
+    if (metric == "CpuMetric") {
+        attributesVector = CpuMetrics::getAttributesVector();
+    } else if (metric == "DiskMetric") {
+        attributesVector = DiskMetrics::getAttributesVector();
+    } else if (metric == "MemoryMetric") {
+        attributesVector = MemoryMetrics::getAttributesVector();
+    } else if (metric == "NetworkMetric") {
+        attributesVector = NetworkMetrics::getAttributesVector();
+    } else {
+        // TODO through exception
+    }
+
+    std::list<std::string> configuredAttributes;
+
+    int random;
+    for (int i = 0; i < numberOfAttributes; i++) {
+        random = std::rand() % attributesVector.size();
+        configuredAttributes.push_back(attributesVector[random]);
+        attributesVector.erase(attributesVector.begin()+random);
+    }
+
+    std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
+    return returnTuple;
 }
 
 }// namespace NES::Monitoring
