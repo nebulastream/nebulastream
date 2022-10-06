@@ -16,7 +16,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
     return std::make_unique<TestUtility::TestParameterConfig>(
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
-            true,
+            true, //inlining
             15,
             9,
             resultsFileName,
@@ -272,8 +272,9 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
             assert(executionTimes.size() == overallTimes.size() && "Number of execution times and overall times not equal!");
             int numIterations = executionTimes.size();
             std::stringstream performanceMetrics;
-            performanceMetrics << "Num Iterations: " << numIterations << " - ";
-            performanceMetrics << "Sum Compilation, Sum Execution, Sum Overall: \n--------------\n";
+            performanceMetrics << "\n--------------\n" << resultsFileName << ": Num Iterations: " << numIterations << " - ";
+            performanceMetrics << "Q/s with comp., Q/s without comp.: \n--------------\n";
+            // performanceMetrics << "Sum Compilation, Sum Execution, Sum Overall: \n--------------\n";
 
             double executionTimeSum = 0.0;
             double compilationTimeSum = 0.0;
@@ -285,10 +286,12 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
                 executionTimeSum += executionTimes.at(i);
                 overallTimeSum += overallTimes.at(i);
             }
-            performanceMetrics << compilationTimeSum << '\n';
-            performanceMetrics << executionTimeSum << '\n';
-            performanceMetrics << overallTimeSum << "\n-------------\n Queries/s: \n";
-            performanceMetrics << ((overallTimeSum * 1000) / numIterations) << '\n';
+            // performanceMetrics << compilationTimeSum << '\n';
+            // performanceMetrics << executionTimeSum << '\n';
+            // performanceMetrics << overallTimeSum << "\n-------------\nQueries/s:\n";
+            // performanceMetrics << resultsFileName << "\n-------------\nQueries/s:\n";
+            performanceMetrics << ((1000/overallTimeSum) * numIterations) << '\n';
+            performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
             // }
             fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
         }
