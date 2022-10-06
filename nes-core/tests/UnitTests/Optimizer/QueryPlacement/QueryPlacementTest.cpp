@@ -59,7 +59,21 @@
 #include <z3++.h>
 
 
-using namespace NES;
+If some tests fail then declare iris schema in them
+
+
+        Questions:
+    - The FilterOperator with the selectivity is used by Seungmi. I can try to fix it by deleting it and then see what I can do
+    - remove the public interface and just set it by a default of 1
+
+
+    - Talk about: "nes-core/tests/UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp" Line 239 - 242
+                   - Create a new class in QueryPlacement UnitTests
+                   - if this takes longer than couple of minutes then create new issue
+
+
+
+                   using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
