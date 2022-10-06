@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -20,6 +19,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>

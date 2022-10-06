@@ -25,6 +25,6 @@ class MapEntryNotFoundException : public std::runtime_error {
   public:
     explicit MapEntryNotFoundException(const std::string& message);
 };
-} // namespace NES
+}// namespace NES
 
 #endif//NES_MAPENTRYNOTFOUNDEXCEPTION_HPP

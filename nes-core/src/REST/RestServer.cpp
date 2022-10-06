@@ -17,9 +17,9 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
-#include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/QueryController.hpp>
+#include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>

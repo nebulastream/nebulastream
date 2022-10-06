@@ -12,16 +12,15 @@
     limitations under the License.
 */
 
-
-#include <SerializableOperator.pb.h>
+#include <API/AttributeField.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <NesBaseTest.hpp>
-#include <API/AttributeField.hpp>
 #include <REST/ServerTypes.hpp>
+#include <SerializableOperator.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -37,7 +36,6 @@ using namespace Configurations;
 
 class SourceCatalogControllerTest : public Testing::NESBaseTest {
   public:
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
@@ -52,7 +50,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
      * restPort = restPort specified in NESBaseTest
      * restServerType = Oatpp
      */
-    void startCoordinator(){
+    void startCoordinator() {
         NES_INFO("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -67,7 +65,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
      * Use when configurations mentioned in startCoordinator() dont suit needs
      * @param coordinatorConfig
      */
-    void startCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration){
+    void startCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration) {
         NES_INFO("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = coordinatorConfiguration;
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -84,16 +82,16 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
 
-    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allLogicalSource"});
+    cpr::AsyncResponse future =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allLogicalSource"});
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
     nlohmann::json response = nlohmann::json::parse(r.text);
     NES_DEBUG(r.text);
     bool found = false;
-    for (auto& el : response.items())
-    {
-        if(el.value().contains("test_stream")) {
+    for (auto& el : response.items()) {
+        if (el.value().contains("test_stream")) {
             found = true;
             break;
         }
@@ -118,8 +116,9 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SourceCatalogControllerTest: Worker1 started successfully");
     NES_INFO(coordinator->getSourceCatalog()->getPhysicalSourceAndSchemaAsString());
-    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allPhysicalSource"},
-                               cpr::Parameters{{"logicalSourceName", "default_logical"}});
+    cpr::AsyncResponse future =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allPhysicalSource"},
+                      cpr::Parameters{{"logicalSourceName", "default_logical"}});
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
@@ -139,7 +138,7 @@ TEST_F(SourceCatalogControllerTest, testGetSchema) {
     coordinator->getSourceCatalog()->addLogicalSource("test_stream", schema);
     // submitting a GET request for the above defined schema
     cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/schema"},
-                                         cpr::Parameters{{"logicalSourceName", "test_stream"}});
+                                              cpr::Parameters{{"logicalSourceName", "test_stream"}});
     future.wait();
     cpr::Response r = future.get();
     // returns 200 OK
@@ -155,16 +154,17 @@ TEST_F(SourceCatalogControllerTest, testGetSchema) {
 TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        coordinator->getSourceCatalog();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     ASSERT_FALSE(sourceCatalog->containsLogicalSource("car"));
     std::string schema = "Schema::create()->addField(\"$ID\", BasicType::UINT64)";
     const std::string sourceName = "car";
     nlohmann::json request;
     request["logicalSourceName"] = sourceName;
     request["schema"] = schema;
-    cpr::AsyncResponse future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource"},
-                                cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()});
+    cpr::AsyncResponse future =
+        cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource"},
+                       cpr::Header{{"Content-Type", "application/json"}},
+                       cpr::Body{request.dump()});
     future.wait();
     cpr::Response response = future.get();
     EXPECT_EQ(response.status_code, 200l);
@@ -179,8 +179,7 @@ TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
 TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-       coordinator->getSourceCatalog();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     std::string schema = "Schema::create()->addField(\"ID\", BasicType::UINT64)";
     const std::string sourceName = "car";
     sourceCatalog->addLogicalSource(sourceName, schema);
@@ -190,8 +189,10 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
                                 "->addField(\"$timestamp\", DataTypeFactory::createUInt64());";
     request["logicalSourceName"] = sourceName;
     request["schema"] = updatedSchema;
-    cpr::AsyncResponse future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/updateLogicalSource"},
-                       cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{request.dump()});
+    cpr::AsyncResponse future =
+        cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/updateLogicalSource"},
+                       cpr::Header{{"Content-Type", "application/json"}},
+                       cpr::Body{request.dump()});
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
@@ -202,8 +203,6 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     ASSERT_TRUE(coordinatorSchema->hasFieldName("ID") != nullptr);
     ASSERT_TRUE(coordinatorSchema->hasFieldName("value") != nullptr);
     ASSERT_TRUE(coordinatorSchema->hasFieldName("timestamp") != nullptr);
-
-
 }
 
 TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
@@ -211,11 +210,11 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     SchemaPtr schema = Schema::create();
     schema->addField("ID", UINT64);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        coordinator->getSourceCatalog();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     sourceCatalog->addLogicalSource("test_stream", schema);
-    cpr::AsyncResponse future = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/deleteLogicalSource"},
-                               cpr::Parameters{{"logicalSourceName", "test_stream"}});
+    cpr::AsyncResponse future =
+        cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/deleteLogicalSource"},
+                         cpr::Parameters{{"logicalSourceName", "test_stream"}});
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
@@ -224,4 +223,4 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     ASSERT_FALSE(sourceCatalog->containsLogicalSource("test_stream"));
 }
 
-} // NES
+}// namespace NES

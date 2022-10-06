@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Exceptions/MapEntryNotFoundException.hpp>
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -21,6 +20,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
