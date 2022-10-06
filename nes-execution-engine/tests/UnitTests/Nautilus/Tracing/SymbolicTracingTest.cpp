@@ -66,8 +66,6 @@ TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
 }
 
 void arithmeticExpression() {
-    const unsigned long x = 5;
-    auto val = toValue<>(x);
     Value iw = Value(1);
     Value iw2 = Value(2);
     Value iw3 = Value(3);
@@ -237,7 +235,7 @@ void ifCondition(bool flag) {
     if (boolFlag) {
         iw = iw - 1;
     }
-   auto x = iw + 42;
+    auto x = iw + 42;
 }
 
 TEST_F(SymbolicTracingTest, ifConditionTest) {
@@ -355,6 +353,7 @@ TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
         nestedIfThenElseCondition();
     });
     std::cout << *executionTrace << std::endl;
+
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace << std::endl;
     auto basicBlocks = executionTrace->getBlocks();
@@ -680,5 +679,29 @@ TEST_F(SymbolicTracingTest, nestedLoopIf) {
     std::cout << *execution.get() << std::endl;
     ASSERT_EQ(basicBlocks.size(), 10);
 }
+
+Value<> f2(Value<> x) {
+    if (x > 10)
+        return x;
+    else
+        return x + 1;
+}
+
+void f1() {
+    Value agg = Value(0);
+    agg = f2(agg) + 42;
+}
+
+TEST_F(SymbolicTracingTest, nestedFunctionCall) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+        f1();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 4);
+}
+
 
 }// namespace NES::Nautilus::Tracing

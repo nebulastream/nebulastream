@@ -61,9 +61,9 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
     switch (terminatorOp->getOperationType()) {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-            if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
+            //if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
                 dumpHelper(branchOp->getNextBlockInvocation().getBlock());
-            }
+            //}
             break;
         }
         case Operations::Operation::OperationType::LoopOp: {

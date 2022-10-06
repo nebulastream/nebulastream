@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -26,7 +26,7 @@ namespace NES::Nautilus::Tracing {
 
 static TraceContext* threadLocalTraceContext;
 void initThreadLocalTraceContext() { threadLocalTraceContext = new TraceContext(); }
-void disableThreadLocalTraceContext() {  }
+void disableThreadLocalTraceContext() {}
 TraceContext* getThreadLocalTraceContext() { return threadLocalTraceContext; }
 
 TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
@@ -43,7 +43,9 @@ void TraceContext::reset() {
     executionTrace->localTagMap.clear();
 };
 
-ValueRef TraceContext::createNextRef(NES::Nautilus::IR::Types::StampPtr type) { return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type); }
+ValueRef TraceContext::createNextRef(NES::Nautilus::IR::Types::StampPtr type) {
+    return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type);
+}
 
 std::shared_ptr<ExecutionTrace> TraceContext::getExecutionTrace() { return executionTrace; }
 
@@ -51,7 +53,7 @@ uint64_t TraceContext::createStartAddress() {
     void* buffer[20];
     // First add the RIP pointers
     int size = backtrace(buffer, 20);
-   /* char** backtrace_functions = backtrace_symbols(buffer, size);
+    /* char** backtrace_functions = backtrace_symbols(buffer, size);
     int i;
     bool found = false;
     for (i = 0; i < size; i++) {
@@ -124,24 +126,26 @@ void TraceContext::trace(TraceOperation& operation) {
     // std::cout << *executionTrace.get() << std::endl;
     if (!isExpectedOperation(operation.op)) {
         auto tag = Tag::createTag(startAddress);
-        if (auto ref = executionTrace->isKnownOperation(tag)) {
-            if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
-                // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
-                // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
-                //           << ")-----------" << std::endl;
-                //std::cout << *executionTrace.get() << std::endl;
-               // if(executionTrace->localTagMap.contains(tag)){
-               //     std::cout << "----------- Found local repeating node ------------" << std::endl;
-                //    std::cout << "This is a loop head " << ref->blockId << std::endl;
-               // }
-                auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
-                auto mergeOperation = mergeBlock.operations.front();
-                currentOperationCounter = 1;
-                return;
-            } else {
-               // std::cout << "----------- Ignore CONTROL_FLOW_MERGE as it is in the same block------------" << std::endl;
+        std::cout << magic_enum::enum_name<OpCode>(operation.op) << " tag: " << tag << std::endl;
+        if (operation.op != ASSIGN)
+            if (auto ref = executionTrace->isKnownOperation(tag)) {
+                if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
+                    // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
+                    // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
+                    //           << ")-----------" << std::endl;
+                    //std::cout << *executionTrace.get() << std::endl;
+                    // if(executionTrace->localTagMap.contains(tag)){
+                    //     std::cout << "----------- Found local repeating node ------------" << std::endl;
+                    //    std::cout << "This is a loop head " << ref->blockId << std::endl;
+                    // }
+                    auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
+                    auto mergeOperation = mergeBlock.operations.front();
+                    currentOperationCounter = 1;
+                    return;
+                } else {
+                    // std::cout << "----------- Ignore CONTROL_FLOW_MERGE as it is in the same block------------" << std::endl;
+                }
             }
-        }
         executionTrace->addOperation(operation);
         executionTrace->localTagMap.emplace(std::make_pair(tag, operation.operationRef));
     }
@@ -149,11 +153,7 @@ void TraceContext::trace(TraceOperation& operation) {
     incrementOperationCounter();
 }
 
-void TraceContext::addTraceArgument(const ValueRef& value) {
-    executionTrace->addArgument(value);
-}
-void TraceContext::incrementOperationCounter() {
-    currentOperationCounter++;
-}
+void TraceContext::addTraceArgument(const ValueRef& value) { executionTrace->addArgument(value); }
+void TraceContext::incrementOperationCounter() { currentOperationCounter++; }
 
 }// namespace NES::Nautilus::Tracing

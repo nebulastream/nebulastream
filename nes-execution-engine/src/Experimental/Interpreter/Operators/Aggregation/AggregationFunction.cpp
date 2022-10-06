@@ -138,7 +138,7 @@ uint64_t SumFunction::getStateSize() const { return 8; }
 
 std::unique_ptr<AggregationState> CountFunction::createGlobalState() { return std::make_unique<GlobalCountState>(); }
 
-std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0l)); }
+std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0L)); }
 
 CountFunction::CountFunction() {}
 

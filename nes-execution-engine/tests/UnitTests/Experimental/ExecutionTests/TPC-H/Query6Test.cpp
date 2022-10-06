@@ -296,7 +296,7 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
 #else
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         Query6Test,
-                        ::testing::Combine(::testing::Values("MLIR"),
+                        ::testing::Combine(::testing::Values("INTERPRETER"),
                                            // ::testing::Combine(::testing::Values("INTERPRETER", "MLIR", "FLOUNDER"),
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                         //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
