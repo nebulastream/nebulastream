@@ -115,29 +115,32 @@ add_nes_unit_test(query-controller-test "UnitTests/REST/Controller/QueryControll
 ### NES Topology Controller Tests ###
 add_nes_unit_test(topology-controller-tests "UnitTests/REST/Controller/TopologyControllerTest.cpp")
 
+### NES Location Controller Tests ###
+add_nes_unit_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
+
 ### NES Connectivity Controller Tests ###
-add_nes_integration_test(connectivity-controller-tests "Integration/REST/Controller/ConnectivityControllerTest.cpp")
+add_nes_integration_test(connectivity-controller-integration-tests "Integration/REST/Controller/ConnectivityControllerTest.cpp")
 
 ### NES Query Catalog Controller Test ###
-add_nes_integration_test(query-catalog-controller-tests "Integration/REST/Controller/QueryCatalogControllerTest.cpp")
+add_nes_integration_test(query-catalog-controller-integration-tests "Integration/REST/Controller/QueryCatalogControllerTest.cpp")
 
 ### NES Topology Controller Test ###
 add_nes_integration_test(topology-controller-integration-tests "Integration/REST/Controller/TopologyControllerTest.cpp")
 
 ### NES Udf Catalog Controller Test ###
-add_nes_integration_test(udf-catalog-controller-tests "Integration/REST/Controller/UdfCatalogControllerTest.cpp")
+add_nes_integration_test(udf-catalog-controller-integration-tests "Integration/REST/Controller/UdfCatalogControllerTest.cpp")
 
 ### NES Query Controller Test ###
 add_nes_integration_test(query-controller-integration-tests "Integration/REST/Controller/QueryControllerTest.cpp")
 
 ### NES Source Catalog Controller Test ###
-add_nes_integration_test(source-catalog-controller-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
+add_nes_integration_test(source-catalog-controller-integration-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
 
 ### NES Maintenance Controller Tests ###
 add_nes_integration_test(maintenance-controller-integration-test "Integration/REST/Controller/MaintenanceControllerTest.cpp")
 
 ### NES Location Controller Tests ###
-add_nes_integration_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
+add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerTest.cpp")
 
 ### NES TopologyProperty Tests ###
 add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
