@@ -16,7 +16,7 @@
 
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <memory>
 
 namespace web::json {
@@ -52,7 +52,7 @@ class LocationService {
             ]
         }
      */
-    web::json::value requestNodeLocationDataAsJson(uint64_t nodeId);
+    nlohmann::json requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
      * @brief get a list of all mobile nodes in the system and their current positions
@@ -67,7 +67,7 @@ class LocationService {
             }
         ]
      */
-    web::json::value requestLocationDataFromAllMobileNodesAsJson();
+    nlohmann::json requestLocationDataFromAllMobileNodesAsJson();
 
     /**
      * @brief get information about a mobile workers predicted trajectory the last update position of the devices local
@@ -100,7 +100,7 @@ class LocationService {
         ]
         }
      */
-    web::json::value requestReconnectScheduleAsJson(uint64_t nodeId);
+    nlohmann::json requestReconnectScheduleAsJson(uint64_t nodeId);
 
     /**
      * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
@@ -122,7 +122,7 @@ class LocationService {
      *   <longitude>,
      * ]
      */
-    static web::json::value convertLocationToJson(Location location);
+    static nlohmann::json convertLocationToJson(Location location);
 
     /**
      * Use a node id and a Location to construct a Json representation containing these values.
@@ -137,7 +137,7 @@ class LocationService {
             ]
         }
      */
-    static web::json::value convertNodeLocationInfoToJson(uint64_t id, Location loc);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, Location loc);
 
     LocationIndexPtr locationIndex;
     TopologyPtr topology;
