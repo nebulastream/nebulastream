@@ -172,7 +172,7 @@ TEST_F(MonitoringQueriesTest, testDiskMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing disk metrics query");
     uint64_t workerCnt = 3;
     Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::DISK_COLLECTOR;
-    SchemaPtr schema = Monitoring::DiskMetrics::getSchema("");
+    SchemaPtr schema = Monitoring::DiskMetrics::getDefaultSchema("");
     Monitoring::MetricType expectedType = Monitoring::MetricType::DiskMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -181,7 +181,7 @@ TEST_F(MonitoringQueriesTest, testCpuMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing cpu metrics query");
     uint64_t workerCnt = 3;
     Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::CPU_COLLECTOR;
-    SchemaPtr schema = Monitoring::CpuMetrics::getSchema("");
+    SchemaPtr schema = Monitoring::CpuMetrics::getDefaultSchema("");
     Monitoring::MetricType expectedType = Monitoring::MetricType::WrappedCpuMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -190,7 +190,7 @@ TEST_F(MonitoringQueriesTest, testMemoryMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing memory metrics query");
     uint64_t workerCnt = 3;
     Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::MEMORY_COLLECTOR;
-    SchemaPtr schema = Monitoring::MemoryMetrics::getSchema("");
+    SchemaPtr schema = Monitoring::MemoryMetrics::getDefaultSchema("");
     Monitoring::MetricType expectedType = Monitoring::MetricType::MemoryMetric;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }
@@ -199,7 +199,7 @@ TEST_F(MonitoringQueriesTest, testNetworkMetricsQueryWithStorage) {
     NES_INFO("MonitoringQueryTest: Testing network metrics query");
     uint64_t workerCnt = 3;
     Monitoring::MetricCollectorType collectorType = Monitoring::MetricCollectorType::NETWORK_COLLECTOR;
-    SchemaPtr schema = Monitoring::NetworkMetrics::getSchema("");
+    SchemaPtr schema = Monitoring::NetworkMetrics::getDefaultSchema("");
     Monitoring::MetricType expectedType = Monitoring::MetricType::WrappedNetworkMetrics;
     runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
 }

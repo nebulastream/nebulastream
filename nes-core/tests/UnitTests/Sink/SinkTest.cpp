@@ -585,7 +585,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
     Monitoring::DiskMetrics typedMetric = diskMetric->getValue<Monitoring::DiskMetrics>();
     ASSERT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
-    auto bufferSize = Monitoring::DiskMetrics::getSchema("")->getSchemaSizeInBytes();
+    auto bufferSize = Monitoring::DiskMetrics::getDefaultSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -596,19 +596,19 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
     Monitoring::CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
     ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
-    auto bufferSizeCpu = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
+    auto bufferSizeCpu = Monitoring::CpuMetrics::getDefaultSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
     auto tupleBufferCpu = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSizeCpu).value();
     writeToBuffer(typedMetricCpu, tupleBufferCpu, 0);
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
     const DataSinkPtr monitoringSink =
-        createMonitoringSink(metricStore, diskCollector.getType(), Monitoring::DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, diskCollector.getType(), Monitoring::DiskMetrics::getDefaultSchema(""), nodeEngine, 1, 0, 0);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
     const DataSinkPtr monitoringSinkCpu =
-        createMonitoringSink(metricStore, cpuCollector.getType(), Monitoring::CpuMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+        createMonitoringSink(metricStore, cpuCollector.getType(), Monitoring::CpuMetrics::getDefaultSchema(""), nodeEngine, 1, 0, 0);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
