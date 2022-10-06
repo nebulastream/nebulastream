@@ -87,12 +87,12 @@ int main(int argc, char **argv) {
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
     std::vector<std::string> ExtractFuncs{
-        "getMurMurHash",
-        "getCRC32Hash",
-        "stringToUpperCase",
-        "standardDeviationGetMean",
-        "standardDeviationGetVariance",
-        "standardDeviationGetStdDev",
+        // "getMurMurHash",
+        // "getCRC32Hash",
+        // "stringToUpperCase",
+        // "standardDeviationGetMean",
+        // "standardDeviationGetVariance",
+        // "standardDeviationGetStdDev",
         // "NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
         "NES__Runtime__TupleBuffer__getNumberOfTuples",
         "NES__Runtime__TupleBuffer__setNumberOfTuples",

@@ -17,7 +17,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
             true,
-            10,
+            11,
             9,
             resultsFileName,
             std::vector<std::string> {

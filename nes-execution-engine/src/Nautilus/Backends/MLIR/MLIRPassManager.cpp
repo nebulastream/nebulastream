@@ -72,11 +72,11 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
             passManager.addPass(getMLIROptimizationPass(optimizationPass));    
         }
     } else {
-        // passManager.addPass(mlir::createInlinerPass());
-        // passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
-        // passManager.addPass(mlir::createCSEPass());
-        // passManager.addPass(mlir::createControlFlowSinkPass());
-        // passManager.addPass(mlir::createCanonicalizerPass());
+        passManager.addPass(mlir::createInlinerPass());
+        passManager.addPass(mlir::createLoopInvariantCodeMotionPass());
+        passManager.addPass(mlir::createCSEPass());
+        passManager.addPass(mlir::createControlFlowSinkPass());
+        passManager.addPass(mlir::createCanonicalizerPass());
         // passManager.addPass(mlir::createAffineParallelizePass()); //Either below or this
         // passManager.addPass(mlir::createSuperVectorizePass(8));
         // passManager.addPass(mlir::createLoopUnrollPass());
