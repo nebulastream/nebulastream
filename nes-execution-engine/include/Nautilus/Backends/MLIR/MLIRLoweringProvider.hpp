@@ -58,18 +58,18 @@ class MLIRLoweringProvider {
     using ValueFrame = Frame<std::string, mlir::Value>;
 
     /**
-     * @brief Allows to lower NESIR to MLIR.
+     * @brief Allows to lower Nautilus IR to MLIR.
      * @param MLIRContext: Used by MLIR to manage MLIR module creation.
      */
     MLIRLoweringProvider(mlir::MLIRContext& context);
 
     ~MLIRLoweringProvider() = default;
     /**
-     * @brief Root MLIR generation function. Takes NESIR as an IRGraph, and recursively lowers its operations to MLIR.
-     * @param nesIR: NESIR represented as an IRGraph.
-     * @return mlir::mlir::OwningOpRef<mlir::ModuleOp> that is equivalent to the NESIR module, and can be lowered to LLVM IR in one step.
+     * @brief Root MLIR generation function. Takes  as an IRGraph, and recursively lowers its operations to MLIR.
+     * @param :  represented as an IRGraph.
+     * @return mlir::mlir::OwningOpRef<mlir::ModuleOp> that is equivalent to the  module, and can be lowered to LLVM IR in one step.
      */
-    mlir::OwningOpRef<mlir::ModuleOp> generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR);
+    mlir::OwningOpRef<mlir::ModuleOp> generateModuleFromIR(std::shared_ptr<IR::IRGraph>);
 
     /**
      * @return std::vector<std::string>: All proxy function symbols used in the module.
@@ -98,16 +98,16 @@ class MLIRLoweringProvider {
     std::unordered_map<std::string, mlir::Block*> blockMapping;//Keeps track of already created basic blocks.
 
     /**
-     * @brief Generates MLIR from a NESIR basic block. Iterates over basic block operations and calls generate.
+     * @brief Generates MLIR from a  basic block. Iterates over basic block operations and calls generate.
      * 
-     * @param basicBlock: The NESIR basic block that MLIR code is generated for.
+     * @param basicBlock: The  basic block that MLIR code is generated for.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      */
     void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
-     * @param Operation: NESIR operation that the MLIRLoweringProvider generates MLIR code for.
+     * @param Operation:  operation that the MLIRLoweringProvider generates MLIR code for.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      */
     void generateMLIR(const IR::Operations::OperationPtr& operation, ValueFrame& frame);
@@ -135,7 +135,7 @@ class MLIRLoweringProvider {
 
     /**
      * @brief Generates a basic block inside of the current MLIR module. Used for control flow (if,loop).
-     * @param blockInvocation: NESIR basic block that is invocated.
+     * @param blockInvocation:  basic block that is invocated.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      * @return mlir::Block*: Returns a pointer to an MLIR basic block.
      */
@@ -162,15 +162,15 @@ class MLIRLoweringProvider {
     mlir::Location getNameLoc(const std::string& name);
 
     /**
-     * @brief Get MLIR Type from a basic NESIR type.
-     * @param type: NESIR basic type.
+     * @brief Get MLIR Type from a basic  type.
+     * @param type:  basic type.
      * @return mlir::Type: MLIR Type.
      */
     mlir::Type getMLIRType(IR::Types::StampPtr type);
 
     /**
-     * @brief Get a vector of MLIR Types from a vector of NESIR types.
-     * @param types: Vector of basic NESIR types.
+     * @brief Get a vector of MLIR Types from a vector of  types.
+     * @param types: Vector of basic  types.
      * @return mlir::Type: Vector of MLIR types.
      */
     std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::OperationPtr> types);

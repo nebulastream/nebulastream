@@ -63,7 +63,7 @@ mlir::Type MLIRLoweringProvider::getMLIRType(IR::Types::StampPtr type) {
 
 std::vector<mlir::Type> MLIRLoweringProvider::getMLIRType(std::vector<IR::Operations::OperationPtr> types) {
     std::vector<mlir::Type> resultTypes;
-    for (auto type : types) {
+    for (auto& type : types) {
         resultTypes.push_back(getMLIRType(type->getStamp()));
     }
     return resultTypes;
@@ -74,14 +74,13 @@ mlir::Value MLIRLoweringProvider::getConstInt(const std::string& location, IR::T
     return builder->create<mlir::arith::ConstantOp>(getNameLoc(location), type, builder->getIntegerAttr(type, value));
 }
 
-
 mlir::Value MLIRLoweringProvider::getConstBool(const std::string& location, bool value) {
     return builder->create<mlir::LLVM::ConstantOp>(getNameLoc(location),
                                                    builder->getI1Type(),
                                                    builder->getIntegerAttr(builder->getIndexType(), value));
 }
 
-// Todo Issue #3004: Currently, we are simply adding 'Query_1' as the FileLineLoc name. Moreover,  
+// Todo Issue #3004: Currently, we are simply adding 'Query_1' as the FileLineLoc name. Moreover,
 //      the provided 'name' often is not meaningful either.
 mlir::Location MLIRLoweringProvider::getNameLoc(const std::string& name) {
     auto baseLocation = mlir::FileLineColLoc::get(builder->getStringAttr("Query_1"), 0, 0);
@@ -118,10 +117,10 @@ mlir::arith::CmpFPredicate convertToFloatMLIRComparison(IR::Operations::CompareO
 }
 
 mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(const std::string& name,
-                                                              void* functionPtr,
-                                                              mlir::Type resultType,
-                                                              std::vector<mlir::Type> argTypes,
-                                                              bool varArgs) {
+                                                                     void* functionPtr,
+                                                                     mlir::Type resultType,
+                                                                     std::vector<mlir::Type> argTypes,
+                                                                     bool varArgs) {
     // Create function arg & result types (currently only int for result).
     mlir::LLVM::LLVMFunctionType llvmFnType = mlir::LLVM::LLVMFunctionType::get(resultType, argTypes, varArgs);
 
@@ -139,15 +138,11 @@ mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(const std::
     return mlir::SymbolRefAttr::get(context, name);
 }
 
-
 //==---------------------------------==//
 //==-- MAIN WORK - Generating MLIR --==//
 //==---------------------------------==//
 MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context(&context) {
     // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
-    // context->loadDialect<mlir::StandardOpsDialect>();
-    // context->loadDialect<mlir::LLVM::LLVMDialect>();
-    // context->loadDialect<mlir::scf::SCFDialect>();
     builder = std::make_unique<mlir::OpBuilder>(&context);
     builder->getContext()->loadDialect<mlir::StandardOpsDialect>();
     builder->getContext()->loadDialect<mlir::LLVM::LLVMDialect>();
@@ -157,11 +152,11 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromNESIR(std::shared_ptr<IR::IRGraph> nesIR) {
+mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph>) {
     ValueFrame firstFrame;
     generateMLIR(nesIR->getRootOperation(), firstFrame);
     theModule->dump();
-    
+
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -308,7 +303,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoopOper
     builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
 }
 
-
 //==--------------------------==//
 //==-- MEMORY (LOAD, STORE) --==//
 //==--------------------------==//
@@ -339,7 +333,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressO
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame) {
-    if(loadOp->getStamp()->isBoolean()){
+    if (loadOp->getStamp()->isBoolean()) {
         NES_THROW_RUNTIME_ERROR("Cant load a boolean");
     }
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
@@ -485,10 +479,10 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
         functionRef = mlir::SymbolRefAttr::get(context, proxyCallOp->getFunctionSymbol());
     } else {
         functionRef = insertExternalFunction(proxyCallOp->getFunctionSymbol(),
-                                                proxyCallOp->getFunctionPtr(),
-                                                getMLIRType(proxyCallOp->getStamp()),
-                                                getMLIRType(proxyCallOp->getInputArguments()),
-                                                true);
+                                             proxyCallOp->getFunctionPtr(),
+                                             getMLIRType(proxyCallOp->getStamp()),
+                                             getMLIRType(proxyCallOp->getInputArguments()),
+                                             true);
     }
     std::vector<mlir::Value> functionArgs;
     for (auto arg : proxyCallOp->getInputArguments()) {
@@ -496,15 +490,14 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
     }
     if (!proxyCallOp->getStamp()->isVoid()) {
         auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
-                                                        getMLIRType(proxyCallOp->getStamp()),
-                                                        functionRef,
-                                                        functionArgs);
+                                                       getMLIRType(proxyCallOp->getStamp()),
+                                                       functionRef,
+                                                       functionArgs);
         frame.setValue(proxyCallOp->getIdentifier(), res.getResult(0));
     } else {
         builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, functionArgs);
     }
 }
-
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame) {
     if (compareOp->getComparator() == IR::Operations::CompareOperation::IEQ && compareOp->getLeftInput()->getStamp()->isAddress()
@@ -552,8 +545,11 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
 
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
     builder->create<mlir::CondBranchOp>(getNameLoc("branch"),
-                                        frame.getValue(ifOp->getValue()->getIdentifier()), 
-                                        trueBlock, trueBlockArgs, elseBlock, elseBlockArgs);
+                                        frame.getValue(ifOp->getValue()->getIdentifier()),
+                                        trueBlock,
+                                        trueBlockArgs,
+                                        elseBlock,
+                                        elseBlockArgs);
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
@@ -597,8 +593,9 @@ mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlock
     return mlirBasicBlock;
 }
 
-MLIRLoweringProvider::ValueFrame MLIRLoweringProvider::createFrameFromParentBlock(MLIRLoweringProvider::ValueFrame& frame,
-                                                                    IR::Operations::BasicBlockInvocation& invocation) {
+MLIRLoweringProvider::ValueFrame
+MLIRLoweringProvider::createFrameFromParentBlock(MLIRLoweringProvider::ValueFrame& frame,
+                                                 IR::Operations::BasicBlockInvocation& invocation) {
     auto invocationArguments = invocation.getArguments();
     auto childBlockArguments = invocation.getBlock()->getArguments();
     NES_ASSERT(invocationArguments.size() == childBlockArguments.size(),
@@ -614,7 +611,8 @@ MLIRLoweringProvider::ValueFrame MLIRLoweringProvider::createFrameFromParentBloc
     return childFrame;
 }
 
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, MLIRLoweringProvider::ValueFrame& frame) {
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation,
+                                        MLIRLoweringProvider::ValueFrame& frame) {
     auto inputStamp = castOperation->getInput()->getStamp();
     auto outputStamp = castOperation->getStamp();
 
@@ -639,7 +637,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOper
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp,
-                                 MLIRLoweringProvider::ValueFrame& frame) {
+                                        MLIRLoweringProvider::ValueFrame& frame) {
     auto constOp =
         builder->create<mlir::arith::ConstantOp>(getNameLoc("location"),
                                                  builder->getI1Type(),
@@ -648,5 +646,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBoo
 }
 
 std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols() { return std::move(jitProxyFunctionSymbols); }
-std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses() { return std::move(jitProxyFunctionTargetAddresses); }
+std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses() {
+    return std::move(jitProxyFunctionTargetAddresses);
+}
 }// namespace NES::Nautilus::Backends::MLIR

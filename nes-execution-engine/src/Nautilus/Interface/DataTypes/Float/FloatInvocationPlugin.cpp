@@ -56,7 +56,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().sub(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().sub(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }
@@ -69,7 +69,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().mul(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().mul(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }
@@ -82,7 +82,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().div(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().div(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }
@@ -95,7 +95,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().equals(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().equals(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }
@@ -108,7 +108,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().lessThan(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().lessThan(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }
@@ -121,7 +121,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
             if (isa<Float>(left) && isa<Float>(right)) {
                 auto result = left.staticCast<Float>().greaterThan(right.staticCast<Float>());
                 return Value<>(std::move(result));
-            } else if (isa<Float>(left) && isa<Float>(right)) {
+            } else if (isa<Double>(left) && isa<Double>(right)) {
                 auto result = left.staticCast<Double>().greaterThan(right.staticCast<Double>());
                 return Value<>(std::move(result));
             }

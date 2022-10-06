@@ -91,7 +91,7 @@ ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref, 
     return ref;
 }
 
-std::shared_ptr<OperationRef> ExecutionTrace::isKnownOperation(Tag& tag) {
+std::shared_ptr<OperationRef> ExecutionTrace::findKnownOperation(Tag& tag) {
     if (tagMap.contains(tag)) {
         return tagMap.find(tag)->second;
     } else if (localTagMap.contains(tag)) {
@@ -109,55 +109,18 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // move operation to new block
     auto& oldBlock = getBlock(blockIndex);
     // copy everything between opId and end;
-
     for (uint32_t opIndex = operationIndex; opIndex < oldBlock.operations.size(); opIndex++) {
         auto sourceOperation = oldBlock.operations[opIndex];
         if (sourceOperation.operationRef == nullptr) {
             sourceOperation.operationRef = std::make_shared<OperationRef>(0, 0);
         }
-        // if(sourceOperation.operationRef != nullptr){
-
         sourceOperation.operationRef->blockId = mergedBlockId;
         sourceOperation.operationRef->operationId = mergeBlock.operations.size();
-        //}
         mergeBlock.operations.emplace_back(sourceOperation);
     }
 
     auto oldBlockRef = BlockRef(mergedBlockId);
 
-    // rename vars in new block
-    // todo reduce complexity
-    /*
-    for (uint32_t opIndex = 0; opIndex < mergeBlock.operations.size(); opIndex++) {
-        auto& operation = mergeBlock.operations[opIndex];
-        if (auto* valRef = std::get_if<ValueRef>(&operation.result)) {
-            for (uint32_t remainingIndex = opIndex; remainingIndex < mergeBlock.operations.size(); remainingIndex++) {
-                auto& subOperation = mergeBlock.operations[remainingIndex];
-                for (auto& input : subOperation.input) {
-                    if (auto* inputRef = std::get_if<ValueRef>(&input)) {
-                        if (inputRef->operator==(*valRef)) {
-                            inputRef->blockId = mergedBlockId;
-                        }
-                    }
-                }
-            }
-            valRef->blockId = mergedBlockId;
-        }
-    }
-
-
-    for (uint32_t opIndex = 0; opIndex < mergeBlock.operations.size(); opIndex++) {
-        auto& operation = mergeBlock.operations[opIndex];
-        for (auto& input : operation.input) {
-            if (auto* inputRef = std::get_if<ValueRef>(&input)) {
-                if (inputRef->blockId != mergedBlockId) {
-                    mergeBlock.arguments.emplace_back(*inputRef);
-                    oldBlockRef.arguments.emplace_back(*inputRef);
-                }
-            }
-        }
-    }
-*/
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(

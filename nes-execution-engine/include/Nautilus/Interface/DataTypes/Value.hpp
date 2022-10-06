@@ -79,7 +79,7 @@ class Value : BaseValue {
     Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int16> object from an std::int16_t.
+     * Creates a Value<UInt16> object from an std::uint16_t.
      */
     Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
 
@@ -89,7 +89,7 @@ class Value : BaseValue {
     Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int32> object from an std::int32_t.
+     * Creates a Value<UInt32> object from an std::uint32_t.
      */
     Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
 
@@ -99,7 +99,7 @@ class Value : BaseValue {
     Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
 
     /*
-     * Creates a Value<Int64> object from an std::int64_t.
+     * Creates a Value<UInt64> object from an std::uint64_t.
      */
     Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
 
@@ -187,7 +187,7 @@ class Value : BaseValue {
     auto load() {
         std::shared_ptr<ResultType> result;
         if (Nautilus::Tracing::isInSymbolicExecution()) {
-            result = std::make_shared<ResultType>(0l);
+            result = std::make_shared<ResultType>((int64_t)0);
         } else {
             result = ((MemRef*) this->value.get())->load<ResultType>();
         }

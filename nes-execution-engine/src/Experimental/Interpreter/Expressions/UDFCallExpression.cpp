@@ -36,7 +36,7 @@ UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments,
         //================== prepare loading of Java VM ============================
         JavaVMInitArgs vm_args;                     // Initialization arguments
         JavaVMOption* options = new JavaVMOption[2];// JVM invocation options
-        options[0].optionString = (char*) "-Djava.class.path=/home/pgrulich/projects/nes/nautilusbf/launcher/target/launcher.jar";
+        options[0].optionString = (char*) "-Djava.class.path=/launcher.jar";
         options[1].optionString = (char*) "-verbose:class";// where to find java .class
         vm_args.version = JNI_VERSION_1_2;                 // minimum Java version
         vm_args.nOptions = 2;                              // number of options

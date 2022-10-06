@@ -49,7 +49,6 @@ class TraceContext {
     void incrementOperationCounter();
 
   private:
-    uint64_t createStartAddress();
     TraceOperation& getLastOperation();
     std::shared_ptr<ExecutionTrace> executionTrace;
     uint64_t currentOperationCounter = 0;

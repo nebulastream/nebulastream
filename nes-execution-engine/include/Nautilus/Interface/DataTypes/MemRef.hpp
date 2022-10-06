@@ -29,8 +29,8 @@ class MemRef : public TraceableType {
     MemRef(MemRef& a) : MemRef(a.value) {}
     std::shared_ptr<Any> copy() override { return std::make_unique<MemRef>(this->value); }
 
-    std::shared_ptr<MemRef> add(Int8&) const {
-        auto val1 = value + (int64_t) 45;
+    std::shared_ptr<MemRef> add(Int8& otherValue) const {
+        auto val1 = value + otherValue.getValue();
         return std::make_unique<MemRef>(val1);
     };
     ~MemRef() {}

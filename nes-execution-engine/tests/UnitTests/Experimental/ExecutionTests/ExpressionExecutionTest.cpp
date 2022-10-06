@@ -113,7 +113,7 @@ Value<> int64AddExpression(Value<Int64> x) {
 }
 
 TEST_F(ExpressionExecutionTest, addI64Test) {
-    Value<Int64> tempx = 0l;
+    Value<Int64> tempx = (int64_t)0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int64AddExpression(tempx);

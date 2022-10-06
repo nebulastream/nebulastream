@@ -138,13 +138,13 @@ uint64_t SumFunction::getStateSize() const { return 8; }
 
 std::unique_ptr<AggregationState> CountFunction::createGlobalState() { return std::make_unique<GlobalCountState>(); }
 
-std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0L)); }
+std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>((int64_t) 0)); }
 
 CountFunction::CountFunction() {}
 
 void CountFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record&) {
     auto countState = (CountState*) state.get();
-    countState->count = countState->count + 1l;
+    countState->count = countState->count + (int64_t) 1;
 }
 
 Value<Any> CountFunction::lower(std::unique_ptr<AggregationState>& ctx) {
