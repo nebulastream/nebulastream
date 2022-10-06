@@ -214,7 +214,7 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right) {
 
 Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
-        auto result = plugin->LessThan(left, right);
+        auto result = plugin->GreaterThan(left, right);
         if (result.has_value()) {
             traceBinaryOperation(Nautilus::Tracing::OpCode::GREATER_THAN, result.value().ref, left.ref, right.ref);
         }

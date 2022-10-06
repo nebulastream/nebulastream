@@ -45,7 +45,7 @@ class ExecutionTrace {
     ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
 
-    std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
+    std::shared_ptr<OperationRef> findKnownOperation(Tag& tag);
 
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 

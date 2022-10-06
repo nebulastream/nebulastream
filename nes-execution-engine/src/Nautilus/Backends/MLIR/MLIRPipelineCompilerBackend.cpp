@@ -35,7 +35,7 @@ MLIRPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Runtime
     // 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an MLIR module.
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
-    auto module = loweringProvider->generateModuleFromNESIR(ir);
+    auto module = loweringProvider->generateModuleFromIR(ir);
 
     // 2. Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {

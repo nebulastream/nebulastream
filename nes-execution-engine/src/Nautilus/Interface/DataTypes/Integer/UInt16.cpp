@@ -47,7 +47,7 @@ const std::shared_ptr<Boolean> UInt16::lessThan(const Int& other) const {
 }
 const std::shared_ptr<Boolean> UInt16::greaterThan(const Int& other) const {
     auto& otherValue = other.staticCast<UInt16>();
-    return create<Boolean>(value < otherValue.value);
+    return create<Boolean>(value > otherValue.value);
 }
 
 uint16_t UInt16::getValue() const { return value; }

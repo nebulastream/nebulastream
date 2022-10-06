@@ -40,8 +40,8 @@ option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the highly experimental execution." OFF)
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the highly experimental execution engine based on mlir." OFF)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
@@ -575,7 +575,6 @@ add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
 add_definitions(-D '__STDC_CONSTANT_MACROS')
 add_definitions(-D '__STDC_LIMIT_MACROS')
 
-
 # $ORIGIN is to read the shared object from the installation directory
 if (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
@@ -621,10 +620,8 @@ add_subdirectory(nes-common)
 add_subdirectory(nes-compiler)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
-    # Add target for execution engines
-    add_subdirectory(nes-execution-engine)
-endif (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
+# Add target for execution engines
+add_subdirectory(nes-execution-engine)
 # Add target for client
 add_subdirectory(nes-client)
 

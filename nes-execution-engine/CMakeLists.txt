@@ -22,6 +22,10 @@ get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
 # Add Library
 add_library(nes-execution-engine SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
 target_compile_definitions(nes-execution-engine PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+# if musl we cant use can't use backtrace for tracing
+if (HOST_IS_MUSL)
+    target_compile_definitions(nes-execution-engine PRIVATE HOST_IS_MUSL)
+endif ()
 message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
 target_link_libraries(nes-execution-engine PUBLIC nes)
 target_include_directories(nes-execution-engine PUBLIC
@@ -146,7 +150,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
     target_link_libraries(nes-execution-engine PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
     target_link_libraries(nes-execution-engine PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
-
 endif ()
 
 if (NES_ENABLES_TESTS)

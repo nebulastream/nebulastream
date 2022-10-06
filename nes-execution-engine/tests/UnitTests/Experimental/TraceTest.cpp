@@ -15,8 +15,8 @@
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -52,7 +52,7 @@ void assignmentOperator() {
 
 TEST_F(TraceTest, assignmentOperatorTest) {
 
-    auto executionTrace =  Nautilus::Tracing::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         assignmentOperator();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -68,10 +68,10 @@ TEST_F(TraceTest, assignmentOperatorTest) {
 }
 
 void arithmeticExpression() {
-    Value iw = Value<Int64>(1l);
-    Value iw2 = Value<Int64>(2l);
-    Value iw3 = Value<Int64>(3l);
-    auto result = iw - iw3 + 2l * iw2 / iw;
+    Value iw = Value<Int64>((int64_t) 1);
+    Value iw2 = Value<Int64>((int64_t) 2);
+    Value iw3 = Value<Int64>((int64_t) 3);
+    auto result = iw - iw3 + (int64_t) 2 * iw2 / iw;
 }
 
 TEST_F(TraceTest, arithmeticExpressionTest) {

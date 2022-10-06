@@ -426,9 +426,9 @@ TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         auto c_mktsegmentString = strings[6];
         auto result = c_mktsegmentString.compare("BUILDING");
         if (result == 0) {
-            dynamicBuffer[index][6].write(1l);
+            dynamicBuffer[index][6].write((int64_t) 1);
         } else {
-            dynamicBuffer[index][6].write(0l);
+            dynamicBuffer[index][6].write((int64_t) 0);
         }
 
         // comment

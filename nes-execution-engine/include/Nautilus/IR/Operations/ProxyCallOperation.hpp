@@ -15,7 +15,7 @@
 #ifndef NES_PROXYCALLOPERATION_HPP
 #define NES_PROXYCALLOPERATION_HPP
 
-#include "Nautilus/IR/Operations/Operation.hpp"
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {

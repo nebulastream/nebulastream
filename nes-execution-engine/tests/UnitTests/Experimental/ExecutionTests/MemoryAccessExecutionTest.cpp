@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -26,7 +26,7 @@
 
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
-    
+
 class MemoryAccessExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -70,7 +70,7 @@ TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
 
 void storeFunction(Value<MemRef> ptr) {
     auto value = ptr.load<Int64>();
-    auto tmp = value + 1l;
+    auto tmp = value + (int64_t) 1;
     ptr.store(tmp);
 }
 
@@ -96,9 +96,9 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
 }
 
 Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
-    Value<Int64> sum = 0l;
-    for (auto i = Value(0l); i < size; i = i + 1l) {
-        auto address = ptr + i * 8l;
+    Value<Int64> sum = (int64_t) 0;
+    for (auto i = Value((int64_t) 0); i < size; i = i + (int64_t) 1) {
+        auto address = ptr + i * (int64_t) 8;
         auto value = address.as<MemRef>().load<Int64>();
         sum = sum + value;
     }
@@ -108,7 +108,7 @@ Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
 TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
     auto memPtr = Value<MemRef>(nullptr);
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto size = Value<Int64>(0l);
+    auto size = Value<Int64>((int64_t)0);
     size.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
         return memScan(memPtr, size);

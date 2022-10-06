@@ -13,23 +13,22 @@
 */
 #include <API/Schema.hpp>
 
-
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -74,7 +73,7 @@ Value<> addExpression(Value<Int64> x) {
 }
 
 TEST_F(FlounderExpressionExecutionTest, addI8Test) {
-    Value<Int64> tempx = 0l;
+    Value<Int64> tempx = (int64_t) 0;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return addExpression(tempx);
@@ -92,13 +91,13 @@ TEST_F(FlounderExpressionExecutionTest, addI8Test) {
 }
 
 Value<> addExpressionConst() {
-    Value<Int64> y = 58l;
-    Value<Int64> x = 42l;
+    Value<Int64> y = (int64_t) 58;
+    Value<Int64> x = (int64_t) 42;
     auto r = x + y;
-    if (r == 42l) {
-        r = r + 1l;
+    if (r == (int64_t) 42) {
+        r = r + (int64_t) 1;
     }
-    return r + 42l;
+    return r + (int64_t) 42;
 }
 
 int64_t test(int64_t) { return 10; };
@@ -106,12 +105,12 @@ int64_t test(int64_t) { return 10; };
 Value<> sumLoop(Value<MemRef> ptr) {
     auto agg = ptr.load<Int64>();
     //agg = FunctionCall<>("callUDFProxyFunction", test, agg);
-    for (Value start = 0l; start < 10l; start = start + 1l) {
+    for (Value start = (int64_t) 0; start < (int64_t) 10; start = start + (int64_t) 1) {
 
-        for (Value start2 = 0l; start2 < 10l; start2 = start2 + 1l) {
-            agg = agg + 10l;
+        for (Value start2 = (int64_t) 0; start2 < (int64_t) 10; start2 = start2 + (int64_t) 1) {
+            agg = agg + (int64_t) 10;
         }
-        agg = agg + 10l;
+        agg = agg + (int64_t) 10;
     }
     ptr.store(agg);
     return agg;
@@ -144,19 +143,19 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
 }
 
 Value<> longExpression(Value<Int64> i1) {
-    auto i2 = i1 + 1l;
-    auto i3 = i1 + 1l;
-    auto i4 = i1 + 1l;
-    auto i5 = i1 + 1l;
-    auto i6 = i1 + 1l;
-    auto i7 = i1 + 1l;
-    auto i8 = i1 + 1l;
-    auto i9 = i1 + 1l;
+    auto i2 = i1 + (int64_t) 1;
+    auto i3 = i1 + (int64_t) 1;
+    auto i4 = i1 + (int64_t) 1;
+    auto i5 = i1 + (int64_t) 1;
+    auto i6 = i1 + (int64_t) 1;
+    auto i7 = i1 + (int64_t) 1;
+    auto i8 = i1 + (int64_t) 1;
+    auto i9 = i1 + (int64_t) 1;
     return i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9;
 }
 
 TEST_F(FlounderExpressionExecutionTest, longExpressionTest) {
-    Value<Int64> tempx = 0l;
+    Value<Int64> tempx = (int64_t) 0;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return longExpression(tempx);
@@ -359,7 +358,7 @@ TEST_F(FlounderExpressionExecutionTest, loadFunctionTest) {
 
 void storeFunction(Value<MemRef> ptr) {
     auto value = ptr.load<Int64>();
-    auto tmp = value + 1l;
+    auto tmp = value + (int64_t) 1;
     ptr.store(tmp);
 }
 
@@ -392,8 +391,8 @@ TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
 int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
-    auto x = Value<Int64>(2l);
-    auto y = Value<Int64>(3l);
+    auto x = Value<Int64>((int64_t) 2);
+    auto y = Value<Int64>((int64_t) 3);
     Value<Int64> res = FunctionCall<>("add", addInt, x, y);
     return res;
 }

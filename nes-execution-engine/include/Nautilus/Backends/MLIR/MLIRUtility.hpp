@@ -36,6 +36,7 @@ class MLIRUtility {
     /**
      * @brief Writes an MLIR module to a file. A module that is loaded from file allows for step-through debugging.
      * @param mlirModule: The module to write.
+     * @param mlirFilepath: Target write path.
      */
     static void writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath);
 

@@ -61,7 +61,7 @@ std::unique_ptr<mlir::ExecutionEngine>
 MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir) {
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
-    auto module = loweringProvider->generateModuleFromNESIR(ir);
+    auto module = loweringProvider->generateModuleFromIR(ir);
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");

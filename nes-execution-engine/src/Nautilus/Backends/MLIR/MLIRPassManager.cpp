@@ -49,8 +49,7 @@ std::unique_ptr<mlir::Pass> getMLIROptimizationPass(MLIRPassManager::Optimizatio
     }
 }
 
-//Todo: might require new context? -> mlir::MLIRContext *context
-int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module, 
+int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module,
                                                 std::vector<LoweringPass> loweringPasses, 
                                                 std::vector<OptimizationPass> optimizationPasses) {
     mlir::PassManager passManager(module->getContext());

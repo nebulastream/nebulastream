@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -45,13 +45,9 @@ class CustomType : public Any {
     static const inline auto type = TypeIdentifier::create<CustomType>();
     CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
 
-    auto add(const CustomType& other) const {
-        return create<CustomType>(x + other.x, y + other.y);
-    }
+    auto add(const CustomType& other) const { return create<CustomType>(x + other.x, y + other.y); }
 
-    auto power(const CustomType& other) const {
-        return create<Int64>(x * other.x - y);
-    }
+    auto power(const CustomType& other) const { return create<Int64>(x * other.x - y); }
 
     Value<> x;
     Value<> y;
@@ -74,8 +70,8 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 [[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
 
 TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
-    Value<Int64> x = 32l;
-    Value<Int64> y = 32l;
+    Value<Int64> x = (int64_t) 32;
+    Value<Int64> y = (int64_t) 32;
 
     auto c1 = Value<CustomType>(CustomType(x, y));
     auto c2 = Value<CustomType>(CustomType(x, y));

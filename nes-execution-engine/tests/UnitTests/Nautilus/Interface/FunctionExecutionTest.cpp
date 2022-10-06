@@ -16,17 +16,16 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Nautilus {
-    
+
 class FunctionExecutionTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
@@ -47,13 +46,11 @@ class FunctionExecutionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-int64_t addInt(int64_t x, int64_t y){
-    return x + y;
-};
+int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
-    auto x = Value<Int64>(2l);
-    auto y = Value<Int64>(3l);
+    auto x = Value<Int64>((int64_t) 2);
+    auto y = Value<Int64>((int64_t) 3);
     Value<Int64> res = FunctionCall<>("add", addInt, x, y);
     return res;
 }
@@ -75,13 +72,9 @@ TEST_F(FunctionExecutionTest, addIntFunctionTest) {
     ASSERT_EQ(function(), 5);
 }
 
-int64_t returnConst(){
-    return 42;
-};
+int64_t returnConst() { return 42; };
 
-Value<> returnConstFunction() {
-    return FunctionCall<>("returnConst", returnConst);
-}
+Value<> returnConstFunction() { return FunctionCall<>("returnConst", returnConst); }
 
 TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
 
@@ -100,14 +93,9 @@ TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
     ASSERT_EQ(function(), 42);
 }
 
-void voidException(){
-    NES_THROW_RUNTIME_ERROR("An expected exception");
-};
+void voidException() { NES_THROW_RUNTIME_ERROR("An expected exception"); };
 
-
-void voidExceptionFunction() {
-    FunctionCall<>("voidException", voidException);
-}
+void voidExceptionFunction() { FunctionCall<>("voidException", voidException); }
 
 TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
 
@@ -126,9 +114,7 @@ TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
     ASSERT_ANY_THROW(function());
 }
 
-int64_t multiplyArgument(int64_t x){
-    return x * 10;
-};
+int64_t multiplyArgument(int64_t x) { return x * 10; };
 
 Value<> multiplyArgumentFunction(Value<Int64> x) {
     Value<Int64> res = FunctionCall<>("multiplyArgument", multiplyArgument, x);
@@ -136,7 +122,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 }
 
 TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
-    Value<Int64> tempPara = Value<Int64>(0l);
+    Value<Int64> tempPara = Value<Int64>((int64_t) 0);
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
@@ -153,8 +139,5 @@ TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }
-
-
-
 
 }// namespace NES::Nautilus

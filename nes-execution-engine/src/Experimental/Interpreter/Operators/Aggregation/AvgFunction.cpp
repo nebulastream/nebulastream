@@ -23,41 +23,41 @@ std::unique_ptr<AggregationState> AvgFunction::createState() {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
                 case Nautilus::IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<AvgState>(Value<>((uint8_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((uint8_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<AvgState>(Value<>((uint16_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((uint16_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<AvgState>(Value<>((uint32_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((uint32_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<AvgState>(Value<>((uint64_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((uint64_t) 0), Value<>((int64_t) 0));
                 };
             }
         } else {
             switch (integerStamp->getBitWidth()) {
                 case Nautilus::IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<AvgState>(Value<>((int8_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((int8_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<AvgState>(Value<>((int16_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((int16_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<AvgState>(Value<>((int32_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((int32_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<AvgState>(Value<>((int64_t) 0), Value<>(0l));
+                    return std::make_unique<AvgState>(Value<>((int64_t) 0), Value<>((int64_t) 0));
                 };
             }
         }
     } else if (auto floatStamp = cast_if<Nautilus::IR::Types::FloatStamp>(stamp.get())) {
         switch (floatStamp->getBitWidth()) {
             case Nautilus::IR::Types::FloatStamp::F32: {
-                return std::make_unique<AvgState>(Value<>(0.0f), Value<>(0l));
+                return std::make_unique<AvgState>(Value<>(0.0f), Value<>((int64_t) 0));
             };
             case Nautilus::IR::Types::FloatStamp::F64: {
-                return std::make_unique<AvgState>(Value<>(0.0), Value<>(0l));
+                return std::make_unique<AvgState>(Value<>(0.0), Value<>((int64_t) 0));
             };
         }
     }
@@ -70,7 +70,7 @@ void AvgFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& 
     auto sumState = (AvgState*) state.get();
     auto value = expression->execute(record);
     sumState->sum = sumState->sum + value;
-    sumState->count = sumState->count + 1l;
+    sumState->count = sumState->count + (int64_t) 1;
 }
 
 void AvgFunction::combine(std::unique_ptr<AggregationState>& leftState, std::unique_ptr<AggregationState>& rightState) {
@@ -86,7 +86,7 @@ Value<Any> AvgFunction::lower(std::unique_ptr<AggregationState>& state) {
 }
 std::unique_ptr<AggregationState> AvgFunction::loadState(Value<MemRef>& ref) {
     auto counter = ref.load<Int64>();
-    auto valueRef = (ref + 8ul).as<MemRef>();
+    auto valueRef = (ref + (uint64_t) 8).as<MemRef>();
     if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
@@ -134,7 +134,7 @@ std::unique_ptr<AggregationState> AvgFunction::loadState(Value<MemRef>& ref) {
 void AvgFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) {
     auto sumState = (AvgState*) state.get();
     ref.store(sumState->count);
-    auto valueRef = (ref + 8ul).as<MemRef>();
+    auto valueRef = (ref + (uint64_t) 8).as<MemRef>();
     valueRef.store(sumState->sum);
 }
 uint64_t AvgFunction::getStateSize() const { return 16; }
