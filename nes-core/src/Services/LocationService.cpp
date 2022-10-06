@@ -13,45 +13,43 @@
 */
 
 #include <Services/LocationService.hpp>
-#include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Spatial::Index::Experimental {
 LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology){};
 
-web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
+nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
     if (!nodePtr) {
-        return web::json::value::null();
+        return nullptr;
     }
     return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
 }
 
-web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
+nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
     if (!nodePtr || nodePtr->getSpatialNodeType() != NodeType::MOBILE_NODE) {
-        return web::json::value::null();
+        return nullptr;
     }
     auto schedule = nodePtr->getReconnectSchedule();
-    web::json::value scheduleJson;
+    nlohmann::json scheduleJson;
     scheduleJson["pathStart"] = convertLocationToJson(*schedule->getPathStart());
     scheduleJson["pathEnd"] = convertLocationToJson(*schedule->getPathEnd());
     scheduleJson["indexUpdatePosition"] = convertLocationToJson(*schedule->getLastIndexUpdatePosition());
 
-    auto reconnectArray = web::json::value::array();
+    auto reconnectArray = nlohmann::json::array();
     int i = 0;
     auto reconnectVectorPtr = schedule->getReconnectVector();
     if (reconnectVectorPtr) {
         auto reconnectVector = *reconnectVectorPtr;
         for (auto elem : reconnectVector) {
-            web::json::value elemJson;
+            nlohmann::json elemJson;
             elemJson["id"] = elem->reconnectPrediction.expectedNewParentId;
             elemJson["reconnectPoint"] = convertLocationToJson(elem->predictedReconnectLocation);
             elemJson["time"] = elem->reconnectPrediction.expectedTime;
@@ -63,34 +61,32 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     return scheduleJson;
 }
 
-web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
+nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
     auto nodeVector = locationIndex->getAllMobileNodeLocations();
-    web::json::value locMapJson = web::json::value::array();
+    auto locMapJson = nlohmann::json::array();
     size_t count = 0;
     for (const auto& [nodeId, location] : nodeVector) {
-        web::json::value nodeInfo = convertNodeLocationInfoToJson(nodeId, *location);
-        locMapJson[count] = web::json::value(nodeInfo);
+        nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, *location);
+        locMapJson[count] = nodeInfo;
         ++count;
     }
     return locMapJson;
 }
 
-web::json::value LocationService::convertLocationToJson(Location location) {
-    web::json::value locJson;
+nlohmann::json LocationService::convertLocationToJson(Location location) {
+    nlohmann::json locJson;
     if (location.isValid()) {
         locJson[0] = location.getLatitude();
         locJson[1] = location.getLongitude();
-    } else {
-        locJson = web::json::value::null();
     }
     return locJson;
 }
 
-web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Location loc) {
-    web::json::value nodeInfo;
-    nodeInfo["id"] = web::json::value(id);
-    web::json::value locJson = convertLocationToJson(loc);
-    nodeInfo["location"] = web::json::value(locJson);
+nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id, Location loc) {
+   nlohmann::json nodeInfo;
+    nodeInfo["id"] = id;
+    nlohmann::json locJson = convertLocationToJson(loc);
+    nodeInfo["location"] = locJson;
     return nodeInfo;
 }
 bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction) {

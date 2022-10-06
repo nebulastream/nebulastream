@@ -143,6 +143,7 @@ class RestServer {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
     Experimental::MaintenanceServicePtr maintenanceService;
 
     std::condition_variable cvar;

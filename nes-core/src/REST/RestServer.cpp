@@ -23,6 +23,7 @@
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
+#include <REST/OatppController/LocationController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -66,7 +67,9 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
       globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
-      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), maintenanceService(maintenanceService) {}
+      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), locationService(locationService),
+      maintenanceService(maintenanceService) {}
+
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
@@ -176,6 +179,8 @@ void RestServer::run() {
         REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalog, errorHandler, "/sourceCatalog");
     auto maintenanceController =
         REST::Controller::MaintenanceController::create(objectMapper, maintenanceService, errorHandler, "/maintenance");
+    auto locationController =
+        REST::Controller::LocationController::create(objectMapper, locationService, "/location", errorHandler);
 
     router->addController(connectivityController);
     router->addController(queryCatalogController);
@@ -184,6 +189,7 @@ void RestServer::run() {
     router->addController(sourceCatalogController);
     router->addController(udfCatalogController);
     router->addController(maintenanceController);
+    router->addController(locationController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);

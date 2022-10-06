@@ -38,7 +38,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             return;
         }
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeIdOpt.value());
-        if (nodeLocationJson == web::json::value::null()) {
+        if (nodeLocationJson == nullptr) {
             NES_ERROR("node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
             web::json::value errorResponse{};
             auto statusCode = web::http::status_codes::NotFound;
@@ -47,7 +47,8 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             errorMessageImpl(message, errorResponse, statusCode);
             return;
         }
-        successMessageImpl(message, nodeLocationJson);
+        web::json::value responseMessage = web::json::value::parse(nodeLocationJson.dump());
+        successMessageImpl(message, responseMessage);
         return;
     }
 
@@ -56,7 +57,8 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
         if (path[1] == allMobileLocationsRequestString) {
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
-            successMessageImpl(message, locationsJson);
+            web::json::value responseMessage = web::json::value::parse(locationsJson.dump());
+            successMessageImpl(message, responseMessage);
             return;
         }
         if (path[1] == singleNodeReconnectInfoRequestString) {
@@ -65,7 +67,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
                 return;
             }
             auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeIdOpt.value());
-            if (reconnectScheduleJson == web::json::value::null()) {
+            if (reconnectScheduleJson == nullptr) {
                 NES_ERROR("mobile node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
                 web::json::value errorResponse{};
                 auto statusCode = web::http::status_codes::NotFound;
@@ -74,7 +76,8 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
                 errorMessageImpl(message, errorResponse, statusCode);
                 return;
             }
-            successMessageImpl(message, reconnectScheduleJson);
+            web::json::value responseMessage = web::json::value::parse(reconnectScheduleJson.dump());
+            successMessageImpl(message, responseMessage);
             return;
         }
     }
