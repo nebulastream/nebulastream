@@ -98,7 +98,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
             result["Physical Sources"] = allSource;
             return createResponse(Status::CODE_200, result.dump());
-        } catch (MapEntryNotFoundException e) {
+        } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404,
                                              "Resource Not Found: Logical source " + logicalSourceName
                                                  + " has no physical source defined.");
@@ -116,7 +116,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
             SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
             return createResponse(Status::CODE_200, serializableSchema->SerializeAsString());
-        } catch (MapEntryNotFoundException e) {
+        } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
         } catch (const std::exception& exc) {
             NES_ERROR("SourceCatalogController: get schema: Exception occurred while retrieving the schema for a logical source"
