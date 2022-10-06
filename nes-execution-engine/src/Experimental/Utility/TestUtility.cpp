@@ -290,10 +290,14 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
             // performanceMetrics << executionTimeSum << '\n';
             // performanceMetrics << overallTimeSum << "\n-------------\nQueries/s:\n";
             // performanceMetrics << resultsFileName << "\n-------------\nQueries/s:\n";
-            performanceMetrics << ((1000/overallTimeSum) * numIterations) << '\n';
+            double queriesPsWithCompilation = (1000/overallTimeSum) * numIterations;
+            performanceMetrics << queriesPsWithCompilation << '\n';
             performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
-            performanceMetrics << "CompPart: " << (compilationTimeSum / overallTimeSum) << '\n';
-            performanceMetrics << "CompPart: " << (executionTimeSum / overallTimeSum) << '\n';
+            performanceMetrics << "CompPart %: " << (compilationTimeSum / overallTimeSum) << '\n';
+            performanceMetrics << "ExecutionPart %: " << (executionTimeSum / overallTimeSum) << '\n';
+            performanceMetrics << "CompPart: " << (queriesPsWithCompilation * (compilationTimeSum / overallTimeSum)) << '\n';
+            performanceMetrics << "ExecutionPart: " << (queriesPsWithCompilation * (executionTimeSum / overallTimeSum)) << '\n';
+            // Todo include overallTime * compilationTimeSum / overallTimeSum and overallTime * executionTimeSum / overallTimeSum
             // }
             fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
         }

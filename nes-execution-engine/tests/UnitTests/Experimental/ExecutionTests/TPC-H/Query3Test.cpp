@@ -353,9 +353,21 @@ TEST_P(Query3Test, tpchQ3) {
             runningSnapshotVectorsP3.at(CONF3->NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
         }
     }
-    testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, CONF1->RESULTS_FILE_NAME, CONF1->IS_PERFORMANCE_BENCHMARK, true, CONF1->NUM_ITERATIONS);
-    testUtility->produceResults(runningSnapshotVectorsP2, CONF2->snapshotNames, CONF2->RESULTS_FILE_NAME, CONF2->IS_PERFORMANCE_BENCHMARK, true, CONF2->NUM_ITERATIONS);
-    testUtility->produceResults(runningSnapshotVectorsP3, CONF3->snapshotNames, CONF3->RESULTS_FILE_NAME, CONF3->IS_PERFORMANCE_BENCHMARK, true, CONF3->NUM_ITERATIONS);
+    if(!CONF1->IS_PERFORMANCE_BENCHMARK) {
+        testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, CONF1->RESULTS_FILE_NAME, CONF1->IS_PERFORMANCE_BENCHMARK, true, CONF1->NUM_ITERATIONS);
+        testUtility->produceResults(runningSnapshotVectorsP2, CONF2->snapshotNames, CONF2->RESULTS_FILE_NAME, CONF2->IS_PERFORMANCE_BENCHMARK, true, CONF2->NUM_ITERATIONS);
+        testUtility->produceResults(runningSnapshotVectorsP3, CONF3->snapshotNames, CONF3->RESULTS_FILE_NAME, CONF3->IS_PERFORMANCE_BENCHMARK, true, CONF3->NUM_ITERATIONS);
+    } else {
+        std::cout << "First execute val before: " << runningSnapshotVectorsP1.at(7).at(0) << '\n';
+        std::cout << "First execute val P2: " << runningSnapshotVectorsP2.at(7).at(0) << '\n';
+        std::cout << "First execute val P3: " << runningSnapshotVectorsP3.at(7).at(0) << '\n';
+        for(size_t i = 0; i < runningSnapshotVectorsP1.at(7).size(); ++i) {
+            runningSnapshotVectorsP1.at(7).at(i) += runningSnapshotVectorsP2.at(7).at(i) + runningSnapshotVectorsP3.at(7).at(i);
+            runningSnapshotVectorsP1.at(8).at(i) += runningSnapshotVectorsP2.at(8).at(i) + runningSnapshotVectorsP3.at(8).at(i);
+        }
+        std::cout << "First execute val after: " << runningSnapshotVectorsP1.at(7).at(0) << '\n';
+        testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, "tpch-q3.csv", CONF1->IS_PERFORMANCE_BENCHMARK, true, CONF1->NUM_ITERATIONS);
+    }
 }
 
 
