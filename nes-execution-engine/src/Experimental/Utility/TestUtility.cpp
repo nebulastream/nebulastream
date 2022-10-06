@@ -17,7 +17,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
             true,
-            11,
+            15,
             9,
             resultsFileName,
             std::vector<std::string> {
@@ -30,7 +30,14 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
                 "LLVM JIT Compilation         ",
                 "Executed                     ",
                 "Overall Time                 "
-            }
+            },
+            // x0.01 -> 1.7119 million rec/s | overallTime - executedTime: 33.06 - 1.76 = (31.31 vs 1.76)
+            TestUtility::YsbScaleConfig{46848, 1},       // x0.01
+            // TestUtility::YsbScaleConfig{156032, 3},   // x0.1
+            // TestUtility::YsbScaleConfig{936000, 5},   // x1
+            // TestUtility::YsbScaleConfig{3120000, 15}, // x10
+            // TestUtility::YsbScaleConfig{18720000, 25},// x100
+            true // IS_PERFORMANCE_BENCHMARK
         }
     );
 }
@@ -143,117 +150,148 @@ std::vector<std::string> NES::ExecutionEngine::Experimental::TestUtility::loadSt
 
 void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                                                     std::vector<std::string> snapshotNames, 
-                                                    const std::string &resultsFileName, bool writeRawData,
+                                                    const std::string &resultsFileName,
+                                                    const bool performanceBenchmark, 
+                                                    bool writeRawData,
                                                     const int NUM_ITERATIONS) {
     std::ifstream inlineFS("llvmLambda.csv");
+    if(!performanceBenchmark) {
+        if(inlineFS.is_open()) {
+            std::string line;
+            std::vector<double> llvmParsingTimes;
+            std::vector<double> llvmIRLinkingTimes;
+            std::vector<double> llvmIROptimizationTimes;
 
-    if(inlineFS.is_open()) {
-        std::string line;
-        std::vector<double> llvmParsingTimes;
-        std::vector<double> llvmIRLinkingTimes;
-        std::vector<double> llvmIROptimizationTimes;
-
-        int numProcessedLines = 0;
-        while(std::getline(inlineFS, line)) {
-            if(resultsFileName == "tpch-q3-p1.csv" && numProcessedLines >= NUM_ITERATIONS) { 
-                break;
-            }
-            if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines < NUM_ITERATIONS) { 
-                ++numProcessedLines; 
-                continue; 
-            }
-            if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines >= (2 * NUM_ITERATIONS)) {
-                break;
-            }
-            if(resultsFileName == "tpch-q3-p3.csv" && numProcessedLines < (2 * NUM_ITERATIONS)) { 
-                ++numProcessedLines; 
-                continue; 
-            }
-            ++numProcessedLines; 
-
-            size_t start;
-            size_t end = 0;
-
-            int inlineSnapshotIndex = 0;
-            while ((start = line.find_first_not_of(',', end)) != std::string::npos)
-            {
-                end = line.find(',', start);
-                if(inlineSnapshotIndex == 0) {
-                    llvmParsingTimes.emplace_back(std::stod(line.substr(start, end - start)));
-                } else if(inlineSnapshotIndex == 1) {
-                    llvmIRLinkingTimes.emplace_back(std::stod(line.substr(start, end - start)));
-                } else {
-                    llvmIROptimizationTimes.emplace_back(std::stod(line.substr(start, end - start)));
+            int numProcessedLines = 0;
+            while(std::getline(inlineFS, line)) {
+                if(resultsFileName == "tpch-q3-p1.csv" && numProcessedLines >= NUM_ITERATIONS) { 
+                    break;
                 }
-                ++inlineSnapshotIndex;
+                if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines < NUM_ITERATIONS) { 
+                    ++numProcessedLines; 
+                    continue; 
+                }
+                if(resultsFileName == "tpch-q3-p2.csv" && numProcessedLines >= (2 * NUM_ITERATIONS)) {
+                    break;
+                }
+                if(resultsFileName == "tpch-q3-p3.csv" && numProcessedLines < (2 * NUM_ITERATIONS)) { 
+                    ++numProcessedLines; 
+                    continue; 
+                }
+                ++numProcessedLines; 
+
+                size_t start;
+                size_t end = 0;
+
+                int inlineSnapshotIndex = 0;
+                while ((start = line.find_first_not_of(',', end)) != std::string::npos)
+                {
+                    end = line.find(',', start);
+                    if(inlineSnapshotIndex == 0) {
+                        llvmParsingTimes.emplace_back(std::stod(line.substr(start, end - start)));
+                    } else if(inlineSnapshotIndex == 1) {
+                        llvmIRLinkingTimes.emplace_back(std::stod(line.substr(start, end - start)));
+                    } else {
+                        llvmIROptimizationTimes.emplace_back(std::stod(line.substr(start, end - start)));
+                    }
+                    ++inlineSnapshotIndex;
+                }
+            }
+            runningSnapshotVectors.emplace_back(llvmParsingTimes);
+            runningSnapshotVectors.emplace_back(llvmIRLinkingTimes);
+            runningSnapshotVectors.emplace_back(llvmIROptimizationTimes);
+            snapshotNames.emplace_back("\nLLVM IR Parsing       ");
+            snapshotNames.emplace_back("LLVM IR Linking       ");
+            snapshotNames.emplace_back("LLVM IR Optimization  ");
+            // std::remove((RESULTS_PATH_BASE + "inlining/proxyFunctionsSize/inlining.csv").c_str());
+            if(resultsFileName != "tpch-q3-p1.csv" && resultsFileName != "tpch-q3-p2.csv") {
+                std::remove("llvmLambda.csv"); // Todo must be commented out for TPC-H-Q3
             }
         }
-        runningSnapshotVectors.emplace_back(llvmParsingTimes);
-        runningSnapshotVectors.emplace_back(llvmIRLinkingTimes);
-        runningSnapshotVectors.emplace_back(llvmIROptimizationTimes);
-        snapshotNames.emplace_back("\nLLVM IR Parsing       ");
-        snapshotNames.emplace_back("LLVM IR Linking       ");
-        snapshotNames.emplace_back("LLVM IR Optimization  ");
-        // std::remove((RESULTS_PATH_BASE + "inlining/proxyFunctionsSize/inlining.csv").c_str());
-        if(resultsFileName != "tpch-q3-p1.csv" && resultsFileName != "tpch-q3-p2.csv") {
-            std::remove("llvmLambda.csv"); // Todo must be commented out for TPC-H-Q3
-        }
-    }
 
-    std::ofstream fs("/home/alepping/results/" + resultsFileName, std::ios::out);
-    if(fs.is_open()) {
-        std::stringstream result;
-        result << "                             ; Mean; Max; Min; Median; Q1; Q3; STD-DEV\n";
-        std::stringstream rawDataResultStream;
-        // std::string snapshotNamesAsString = "\n\nThe below raw data lines correspond to: \n";
-        rawDataResultStream << "\n\nRaw Data: \n---------\n";
-        
-        for(size_t i = 0; i < runningSnapshotVectors.size(); ++i) {
-            // Calculate Mean, Min, and Max of runtime measurements.
-            auto currentSnapshotVector = runningSnapshotVectors.at(i);
-            currentSnapshotVector.erase(currentSnapshotVector.begin()); // Remove first 'outlier' measurement
-            // rawDataResultStream << snapshotNames.at(i) << "\n";
-            // snapshotNamesAsString += "  " + snapshotNames.at(i) + '\n';
-            for(auto rawValue : currentSnapshotVector) {
-                rawDataResultStream << rawValue << ", ";
-            }
-            rawDataResultStream.seekp(-2, std::ios_base::end);
-            rawDataResultStream<<"\0\0";
-            auto snapshotMin = *std::min_element(currentSnapshotVector.begin(), currentSnapshotVector.end());
-            auto snapshotMax = *std::max_element(currentSnapshotVector.begin(), currentSnapshotVector.end());
-            auto snapshotMean = std::accumulate(currentSnapshotVector.begin(), currentSnapshotVector.end(), 0.0) / currentSnapshotVector.size();
-
-            // Calculate std deviation of runtime measurements.
-            std::vector<double> diff(currentSnapshotVector.size());
-            std::transform(currentSnapshotVector.begin(), currentSnapshotVector.end(), diff.begin(), [snapshotMean](double x) { return x - snapshotMean; });
-            double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-            double snapshotStdDev = std::sqrt(sq_sum / currentSnapshotVector.size());
-
-            // Calculate median & Q1, Q2
-            size_t n = currentSnapshotVector.size() / 2;
-            std::sort(currentSnapshotVector.begin(), currentSnapshotVector  .end());
-            auto median = currentSnapshotVector.at(n);
-            auto q1 = currentSnapshotVector.at(n/2);
-            auto q2 = currentSnapshotVector.at(currentSnapshotVector.size() - 1 - n/2);
+        std::ofstream fs("/home/alepping/results/" + resultsFileName, std::ios::out);
+        if(fs.is_open()) {
+            std::stringstream result;
+            result << "                             ; Mean; Max; Min; Median; Q1; Q3; STD-DEV\n";
+            std::stringstream rawDataResultStream;
+            // std::string snapshotNamesAsString = "\n\nThe below raw data lines correspond to: \n";
+            rawDataResultStream << "\n\nRaw Data: \n---------\n";
             
+            for(size_t i = 0; i < runningSnapshotVectors.size(); ++i) {
+                // Calculate Mean, Min, and Max of runtime measurements.
+                auto currentSnapshotVector = runningSnapshotVectors.at(i);
+                currentSnapshotVector.erase(currentSnapshotVector.begin()); // Remove first 'outlier' measurement
+                // rawDataResultStream << snapshotNames.at(i) << "\n";
+                // snapshotNamesAsString += "  " + snapshotNames.at(i) + '\n';
+                for(auto rawValue : currentSnapshotVector) {
+                    rawDataResultStream << rawValue << ", ";
+                }
+                rawDataResultStream.seekp(-2, std::ios_base::end);
+                rawDataResultStream<<"\0\0";
+                auto snapshotMin = *std::min_element(currentSnapshotVector.begin(), currentSnapshotVector.end());
+                auto snapshotMax = *std::max_element(currentSnapshotVector.begin(), currentSnapshotVector.end());
+                auto snapshotMean = std::accumulate(currentSnapshotVector.begin(), currentSnapshotVector.end(), 0.0) / currentSnapshotVector.size();
 
-            // Create output string, log to console, write to file.
-            std:: string currentSnapshotResult = snapshotNames.at(i) + "; " 
-                + std::to_string(snapshotMean) + "; "
-                + std::to_string(snapshotMax) + "; "
-                + std::to_string(snapshotMin) + "; "
-                + std::to_string(median) + "; "
-                + std::to_string(q1) + "; "
-                + std::to_string(q2) + "; "
-                + std::to_string(snapshotStdDev) + '\n';
-            NES_DEBUG(currentSnapshotResult);
-            result << currentSnapshotResult;
-            rawDataResultStream << "\n";
+                // Calculate std deviation of runtime measurements.
+                std::vector<double> diff(currentSnapshotVector.size());
+                std::transform(currentSnapshotVector.begin(), currentSnapshotVector.end(), diff.begin(), [snapshotMean](double x) { return x - snapshotMean; });
+                double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+                double snapshotStdDev = std::sqrt(sq_sum / currentSnapshotVector.size());
+
+                // Calculate median & Q1, Q2
+                size_t n = currentSnapshotVector.size() / 2;
+                std::sort(currentSnapshotVector.begin(), currentSnapshotVector  .end());
+                auto median = currentSnapshotVector.at(n);
+                auto q1 = currentSnapshotVector.at(n/2);
+                auto q2 = currentSnapshotVector.at(currentSnapshotVector.size() - 1 - n/2);
+                
+
+                // Create output string, log to console, write to file.
+                std:: string currentSnapshotResult = snapshotNames.at(i) + "; " 
+                    + std::to_string(snapshotMean) + "; "
+                    + std::to_string(snapshotMax) + "; "
+                    + std::to_string(snapshotMin) + "; "
+                    + std::to_string(median) + "; "
+                    + std::to_string(q1) + "; "
+                    + std::to_string(q2) + "; "
+                    + std::to_string(snapshotStdDev) + '\n';
+                NES_DEBUG(currentSnapshotResult);
+                result << currentSnapshotResult;
+                rawDataResultStream << "\n";
+            }
+            // snapshotNamesAsString.pop_back();
+            // if(writeRawData) { result << snapshotNamesAsString << rawDataResultStream.str(); };
+            if(writeRawData) { result << rawDataResultStream.str(); };
+            fs.write(result.str().c_str(), result.str().size());
         }
-        // snapshotNamesAsString.pop_back();
-        // if(writeRawData) { result << snapshotNamesAsString << rawDataResultStream.str(); };
-        if(writeRawData) { result << rawDataResultStream.str(); };
-        fs.write(result.str().c_str(), result.str().size());
+    } else {
+        std::ofstream fs("/home/alepping/results/" + resultsFileName, std::ios::out);
+        if(fs.is_open()) {
+            auto executionTimes = runningSnapshotVectors.at(7);
+            auto overallTimes = runningSnapshotVectors.at(8);
+            assert(executionTimes.size() == overallTimes.size() && "Number of execution times and overall times not equal!");
+            int numIterations = executionTimes.size();
+            std::stringstream performanceMetrics;
+            performanceMetrics << "Num Iterations: " << numIterations << " - ";
+            performanceMetrics << "Sum Compilation, Sum Execution, Sum Overall: \n--------------\n";
+
+            double executionTimeSum = 0.0;
+            double compilationTimeSum = 0.0;
+            double overallTimeSum = 0.0;
+            for(size_t i = 0; i < executionTimes.size(); ++i) {
+                // std::cout << "exec time: " << executionTimes.at(i) << '\n';
+                // std::cout << "comp time: " << compilationTimes.at(i) << '\n';
+                compilationTimeSum += (overallTimes.at(i) - executionTimes.at(i));
+                executionTimeSum += executionTimes.at(i);
+                overallTimeSum += overallTimes.at(i);
+            }
+            performanceMetrics << compilationTimeSum << '\n';
+            performanceMetrics << executionTimeSum << '\n';
+            performanceMetrics << overallTimeSum << "\n-------------\n Queries/s: \n";
+            performanceMetrics << ((overallTimeSum * 1000) / numIterations) << '\n';
+            // }
+            fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
+        }
     }
 }
 }//namespace NES::ExecutionEngine::Experimental

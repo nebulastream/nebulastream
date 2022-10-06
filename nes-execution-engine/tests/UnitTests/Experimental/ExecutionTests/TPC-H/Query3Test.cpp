@@ -336,25 +336,30 @@ TEST_P(Query3Test, tpchQ3) {
             // EXPECT_EQ(currentSize, (int64_t) 11620);
         }
 
-        NES_INFO("QueryCompilationTime: " << timerP1);
-        NES_INFO("QueryCompilationTime: " << timerP2);
-        NES_INFO("QueryCompilationTime: " << timerP3);
-        auto snapshotsP1 = timerP1->getSnapshots();
-        auto snapshotsP2 = timerP2->getSnapshots();
-        auto snapshotsP3 = timerP3->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < CONF1->NUM_SNAPSHOTS-1; ++snapShotIndex) {
-            runningSnapshotVectorsP1.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
-            runningSnapshotVectorsP2.at(snapShotIndex).emplace_back(snapshotsP2[snapShotIndex].getPrintTime());
-            runningSnapshotVectorsP3.at(snapShotIndex).emplace_back(snapshotsP3[snapShotIndex].getPrintTime());
+        // NES_INFO("QueryCompilationTime: " << timerP1);
+        // NES_INFO("QueryCompilationTime: " << timerP2);
+        // NES_INFO("QueryCompilationTime: " << timerP3);
+        if(!CONF1->IS_PERFORMANCE_BENCHMARK || i >= (CONF1->NUM_ITERATIONS / 3)) {
+            auto snapshotsP1 = timerP1->getSnapshots();
+            auto snapshotsP2 = timerP2->getSnapshots();
+            auto snapshotsP3 = timerP3->getSnapshots();
+            for(int snapShotIndex = 0; snapShotIndex < CONF1->NUM_SNAPSHOTS-1; ++snapShotIndex) {
+                runningSnapshotVectorsP1.at(snapShotIndex).emplace_back(snapshotsP1[snapShotIndex].getPrintTime());
+                runningSnapshotVectorsP2.at(snapShotIndex).emplace_back(snapshotsP2[snapShotIndex].getPrintTime());
+                runningSnapshotVectorsP3.at(snapShotIndex).emplace_back(snapshotsP3[snapShotIndex].getPrintTime());
+            }
+            runningSnapshotVectorsP1.at(CONF1->NUM_SNAPSHOTS-1).emplace_back(timerP1->getPrintTime());
+            runningSnapshotVectorsP2.at(CONF2->NUM_SNAPSHOTS-1).emplace_back(timerP2->getPrintTime());
+            runningSnapshotVectorsP3.at(CONF3->NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
         }
-        runningSnapshotVectorsP1.at(CONF1->NUM_SNAPSHOTS-1).emplace_back(timerP1->getPrintTime());
-        runningSnapshotVectorsP2.at(CONF2->NUM_SNAPSHOTS-1).emplace_back(timerP2->getPrintTime());
-        runningSnapshotVectorsP3.at(CONF3->NUM_SNAPSHOTS-1).emplace_back(timerP3->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, CONF1->RESULTS_FILE_NAME, true, CONF1->NUM_ITERATIONS);
-    testUtility->produceResults(runningSnapshotVectorsP2, CONF2->snapshotNames, CONF2->RESULTS_FILE_NAME, true, CONF2->NUM_ITERATIONS);
-    testUtility->produceResults(runningSnapshotVectorsP3, CONF3->snapshotNames, CONF3->RESULTS_FILE_NAME, true, CONF3->NUM_ITERATIONS);
+    testUtility->produceResults(runningSnapshotVectorsP1, CONF1->snapshotNames, CONF1->RESULTS_FILE_NAME, CONF1->IS_PERFORMANCE_BENCHMARK, true, CONF1->NUM_ITERATIONS);
+    testUtility->produceResults(runningSnapshotVectorsP2, CONF2->snapshotNames, CONF2->RESULTS_FILE_NAME, CONF2->IS_PERFORMANCE_BENCHMARK, true, CONF2->NUM_ITERATIONS);
+    testUtility->produceResults(runningSnapshotVectorsP3, CONF3->snapshotNames, CONF3->RESULTS_FILE_NAME, CONF3->IS_PERFORMANCE_BENCHMARK, true, CONF3->NUM_ITERATIONS);
 }
+
+
+
 
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ3,

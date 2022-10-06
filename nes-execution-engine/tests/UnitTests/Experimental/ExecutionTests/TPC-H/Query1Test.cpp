@@ -139,7 +139,7 @@ TEST_P(Query1Test, tpchQ1) {
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     auto buffer = lineitemBuffer.second.getBuffer();
 
-    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
+    
         Scan scan = Scan(lineitemBuffer.first);
 
         /*
@@ -207,7 +207,8 @@ TEST_P(Query1Test, tpchQ1) {
 
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(&scan);
-
+        
+    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         auto timer = std::make_shared<Timer<>>("TPC-H-Q1");
         auto executablePipeline = executionEngine->compile(pipeline, timer, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
 
@@ -265,14 +266,16 @@ TEST_P(Query1Test, tpchQ1) {
 
         //ASSERT_EQ(entries[0].ag1, 37719753);
         //ASSERT_EQ(entries[0].ag2, 5656804138090);
-        auto snapshots = timer->getSnapshots();
-        std::cout << "num snapshots: " << snapshots.size() << '\n';
-        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
-            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        if(!CONF->IS_PERFORMANCE_BENCHMARK || i >= (CONF->NUM_ITERATIONS / 3)) {
+            auto snapshots = timer->getSnapshots();
+            std::cout << "num snapshots: " << snapshots.size() << '\n';
+            for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
+                runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+            }
+            runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
         }
-        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME, CONF->IS_PERFORMANCE_BENCHMARK);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ1,

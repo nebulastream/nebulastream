@@ -241,13 +241,16 @@ TEST_F(FilterQuery, filterBenchmark) {
         // Wrap up timing
         timer->pause();
         NES_DEBUG("Overall time: " << timer->getPrintTime());
-        auto snapshots = timer->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
-            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        if(!CONF->IS_PERFORMANCE_BENCHMARK || i >= (CONF->NUM_ITERATIONS / 3)) {
+            auto snapshots = timer->getSnapshots();
+            std::cout << "num snapshots: " << snapshots.size() << '\n';
+            for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
+                runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+            }
+            runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
         }
-        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME, CONF->IS_PERFORMANCE_BENCHMARK);
 }
 
 

@@ -22,6 +22,10 @@
 namespace NES::ExecutionEngine::Experimental {
 class TestUtility {
     public:
+    struct YsbScaleConfig {
+        const int BUFFER_SIZE;
+        const int NUMBER_OF_BUFFERS;
+    };
     struct TestParameterConfig {
         const NES::Nautilus::Backends::MLIR::LLVMIROptimizer::OptimizationLevel OPT_LEVEL;
         const bool PERFORM_INLINING;
@@ -29,6 +33,8 @@ class TestUtility {
         const int NUM_SNAPSHOTS; // 7 -> 8
         const std::string RESULTS_FILE_NAME;
         const std::vector<std::string> snapshotNames;
+        const YsbScaleConfig ysbConfig;
+        const bool IS_PERFORMANCE_BENCHMARK;
     };
     TestUtility() = default;
     ~TestUtility() = default;
@@ -37,7 +43,7 @@ class TestUtility {
         loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm);
     void produceResults(std::vector<std::vector<double>> runningSnapshotVectors, 
                         std::vector<std::string> snapshotNames, const std::string &resultsFileName, 
-                        bool writeRawData = true, const int NUM_ITERATIONS=101);
+                        const bool performanceBenchmark = false, bool writeRawData = true, const int NUM_ITERATIONS=101);
     std::vector<std::string> loadStringsFromLineitemTable();
     const std::unique_ptr<TestParameterConfig> getTestParamaterConfig(const std::string &resultsFileName);
 };

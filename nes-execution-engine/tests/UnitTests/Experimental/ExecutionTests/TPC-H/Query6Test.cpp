@@ -139,48 +139,48 @@ TEST_P(Query6Test, tpchQ6) {
     auto buffer = lineitemBuffer.second.getBuffer();
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
+    Scan scan = Scan(lineitemBuffer.first, {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"});
+    /*
+    *   l_shipdate >= date '1994-01-01'
+    *   and l_shipdate < date '1995-01-01'
+    */
+    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
+    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
+    auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
+    auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
+    auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
+    auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+
+    // l_discount between 0.06 - 0.01 and 0.06 + 0.01
+    auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
+    auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
+    auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
+    auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
+    auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
+    auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
+
+    // l_quantity < 24
+    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
+    auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
+    auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
+    auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
+    auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
+
+    auto selection = std::make_shared<Selection>(andExpression4);
+    scan.setChild(selection);
+
+    // sum(l_extendedprice)
+    auto aggField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+    auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
+    std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
+    auto aggregation = std::make_shared<Aggregation>(functions);
+    selection->setChild(aggregation);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(&scan);
+
+        
     for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
-        Scan scan = Scan(lineitemBuffer.first, {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"});
-        /*
-        *   l_shipdate >= date '1994-01-01'
-        *   and l_shipdate < date '1995-01-01'
-        */
-        auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-        auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
-        auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-        auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
-        auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-        auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
-
-        // l_discount between 0.06 - 0.01 and 0.06 + 0.01
-        auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
-        auto const_0_05 = std::make_shared<ConstantIntegerExpression>(4);
-        auto const_0_07 = std::make_shared<ConstantIntegerExpression>(8);
-        auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-        auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-        auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
-
-        // l_quantity < 24
-        auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
-        auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
-        auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-        auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
-        auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
-
-        auto selection = std::make_shared<Selection>(andExpression4);
-        scan.setChild(selection);
-
-        // sum(l_extendedprice)
-        auto aggField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-        auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
-        std::vector<std::shared_ptr<AggregationFunction>> functions = {sumAggFunction};
-        auto aggregation = std::make_shared<Aggregation>(functions);
-        selection->setChild(aggregation);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(&scan);
-
-        // Todo pass timer?
         auto timer = std::make_shared<Timer<>>("TPC-H-Q6");
         auto executablePipeline = executionEngine->compile(pipeline, timer, CONF->OPT_LEVEL, CONF->PERFORM_INLINING);
         // timer->start();
@@ -210,13 +210,16 @@ TEST_P(Query6Test, tpchQ6) {
         auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
         auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
 
-        auto snapshots = timer->getSnapshots();
-        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
-            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        if(!CONF->IS_PERFORMANCE_BENCHMARK || i >= (CONF->NUM_ITERATIONS / 3)) {
+            auto snapshots = timer->getSnapshots();
+            std::cout << "num snapshots: " << snapshots.size() << '\n';
+            for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
+                runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+            }
+            runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
         }
-        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
+    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME, CONF->IS_PERFORMANCE_BENCHMARK);
 
     // ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
 }

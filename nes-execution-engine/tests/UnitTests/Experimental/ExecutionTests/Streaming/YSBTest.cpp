@@ -149,9 +149,15 @@ std::vector<Runtime::TupleBuffer>
 createData(uint64_t numberOfBuffers, Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Runtime::BufferManagerPtr bm) {
 
     std::vector<Runtime::TupleBuffer> buffers;
+    int numRecs = 0;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = bm->getUnpooledBuffer(memoryLayout->getBufferSize()).value();
+        std::cout << "before dynamic buffer\n";
+        std::cout << "Mem layout buf size:" << memoryLayout->getBufferSize() << "\n";
+        std::cout << "Buffer buf size:" << buffer.getBufferSize() << "\n";
+        // memoryLayout->getBufferSize() == buffer.getBufferSize()
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        std::cout << "after dynamic buffer\n";
         for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
             auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
                           std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -169,10 +175,12 @@ createData(uint64_t numberOfBuffers, Runtime::MemoryLayouts::MemoryLayoutPtr mem
             dynamicBuffer[currentRecord]["d2"].write<int64_t>(1);
             dynamicBuffer[currentRecord]["d3"].write<int32_t>(1);
             dynamicBuffer[currentRecord]["d4"].write<int16_t>(1);
+            ++numRecs;
         }
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
+    std::cout << "num recs: " << numRecs << '\n';
     return buffers;
 }
 
@@ -244,9 +252,22 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     uint64_t tumblingWindowSize = 1000;
     auto bm = std::make_shared<Runtime::BufferManager>();
 
-    uint64_t bufferSize = 1000000;
+    uint64_t bufferSize = CONF->ysbConfig.BUFFER_SIZE; //default 936000
+    //6.410.000
+    //64.102.500 -> bufferSize = 10000000
+    // tuples per buffer: 12820
+    //uint64_t capacity = tupleBuffer.getBufferSize() / recordSize; //78
+    // 6.000.000 = 5 * (x / 78)
+    // 6M = 5x / 78
+    // 6M*78 = 5x
+    // (6M*78)/5 = x
+    // scale 0.1x: 
+    // scale 10x  : bufferSize = 3120000, numBuffers = 15
+    // scale 1x  : bufferSize = 936000, numBuffers = 5
+    // scale 0.1x: bufferSize = 156000, numBuffers = 3
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(getSchema(), bufferSize);
-    auto data = createData(10, memoryLayout, bm);
+    const uint64_t numBuffers = CONF->ysbConfig.NUMBER_OF_BUFFERS; // default:5
+    auto data = createData(numBuffers, memoryLayout, bm);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
 
