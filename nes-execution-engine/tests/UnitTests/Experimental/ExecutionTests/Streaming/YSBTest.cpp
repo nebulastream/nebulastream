@@ -248,6 +248,7 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
     auto CONF = testUtility->getTestParamaterConfig("ysb.csv");
     std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
+    std::vector<double> throughputValues;
     
     uint64_t tumblingWindowSize = 1000;
     auto bm = std::make_shared<Runtime::BufferManager>();
@@ -331,14 +332,25 @@ TEST_P(YSBTest, ysbTumblingWindow) {
         // ASSERT_EQ(sliceStore->getSlices().front()->getState().numberOfEntries(), 100);
 
         //produce results
-        auto snapshots = timer->getSnapshots();
-        std::cout << "num snapshots: " << snapshots.size() << '\n';
-        for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
-            runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+        if(!CONF->IS_PERFORMANCE_BENCHMARK) {
+            auto snapshots = timer->getSnapshots();
+            std::cout << "num snapshots: " << snapshots.size() << '\n';
+            for(int snapShotIndex = 0; snapShotIndex < CONF->NUM_SNAPSHOTS-1; ++snapShotIndex) {
+                runningSnapshotVectors.at(snapShotIndex).emplace_back(snapshots[snapShotIndex].getPrintTime());
+            }
+            runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
+        } else {
+            if(i >= (CONF->NUM_ITERATIONS / 3)) {
+                throughputValues.emplace_back(recordsPerMs * 1000);
+            }
         }
-        runningSnapshotVectors.at(CONF->NUM_SNAPSHOTS-1).emplace_back(timer->getPrintTime());
     }
-    testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME);
+    //Todo handle ysb case
+    if(!CONF->IS_PERFORMANCE_BENCHMARK) {
+        testUtility->produceResults(runningSnapshotVectors, CONF->snapshotNames, CONF->RESULTS_FILE_NAME, CONF->IS_PERFORMANCE_BENCHMARK);
+    } else {
+        testUtility->produceResults({throughputValues}, CONF->snapshotNames, CONF->RESULTS_FILE_NAME, CONF->IS_PERFORMANCE_BENCHMARK);
+    }
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testYSB,

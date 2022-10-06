@@ -17,7 +17,7 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
         TestUtility::TestParameterConfig {
             NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
             true, //inlining
-            15,
+            15, // number of iterations
             9,
             resultsFileName,
             std::vector<std::string> {
@@ -267,39 +267,50 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
     } else {
         std::ofstream fs("/home/alepping/results/" + resultsFileName, std::ios::out);
         if(fs.is_open()) {
-            auto executionTimes = runningSnapshotVectors.at(7);
-            auto overallTimes = runningSnapshotVectors.at(8);
-            assert(executionTimes.size() == overallTimes.size() && "Number of execution times and overall times not equal!");
-            int numIterations = executionTimes.size();
-            std::stringstream performanceMetrics;
-            performanceMetrics << "\n--------------\n" << resultsFileName << ": Num Iterations: " << numIterations << " - ";
-            performanceMetrics << "Q/s with comp., Q/s without comp.: \n--------------\n";
-            // performanceMetrics << "Sum Compilation, Sum Execution, Sum Overall: \n--------------\n";
+            if(resultsFileName != "ysb.csv") {
+                auto executionTimes = runningSnapshotVectors.at(7);
+                auto overallTimes = runningSnapshotVectors.at(8);
+                assert(executionTimes.size() == overallTimes.size() && "Number of execution times and overall times not equal!");
+                int numIterations = executionTimes.size();
+                std::stringstream performanceMetrics;
+                performanceMetrics << "\n--------------\n" << resultsFileName << ": Num Iterations: " << numIterations << " - ";
+                performanceMetrics << "Q/s with comp., Q/s without comp.: \n--------------\n";
+                // performanceMetrics << "Sum Compilation, Sum Execution, Sum Overall: \n--------------\n";
 
-            double executionTimeSum = 0.0;
-            double compilationTimeSum = 0.0;
-            double overallTimeSum = 0.0;
-            for(size_t i = 0; i < executionTimes.size(); ++i) {
-                // std::cout << "exec time: " << executionTimes.at(i) << '\n';
-                // std::cout << "comp time: " << compilationTimes.at(i) << '\n';
-                compilationTimeSum += (overallTimes.at(i) - executionTimes.at(i));
-                executionTimeSum += executionTimes.at(i);
-                overallTimeSum += overallTimes.at(i);
+                double executionTimeSum = 0.0;
+                double compilationTimeSum = 0.0;
+                double overallTimeSum = 0.0;
+                for(size_t i = 0; i < executionTimes.size(); ++i) {
+                    // std::cout << "exec time: " << executionTimes.at(i) << '\n';
+                    // std::cout << "comp time: " << compilationTimes.at(i) << '\n';
+                    compilationTimeSum += (overallTimes.at(i) - executionTimes.at(i));
+                    executionTimeSum += executionTimes.at(i);
+                    overallTimeSum += overallTimes.at(i);
+                }
+                // performanceMetrics << compilationTimeSum << '\n';
+                // performanceMetrics << executionTimeSum << '\n';
+                // performanceMetrics << overallTimeSum << "\n-------------\nQueries/s:\n";
+                // performanceMetrics << resultsFileName << "\n-------------\nQueries/s:\n";
+                double queriesPsWithCompilation = (1000/overallTimeSum) * numIterations;
+                performanceMetrics << queriesPsWithCompilation << '\n';
+                performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
+                performanceMetrics << "CompPart %: " << (compilationTimeSum / overallTimeSum) << '\n';
+                performanceMetrics << "ExecutionPart %: " << (executionTimeSum / overallTimeSum) << '\n';
+                performanceMetrics << "CompPart: " << (queriesPsWithCompilation * (compilationTimeSum / overallTimeSum)) << '\n';
+                performanceMetrics << "ExecutionPart: " << (queriesPsWithCompilation * (executionTimeSum / overallTimeSum)) << '\n';
+                // Todo include overallTime * compilationTimeSum / overallTimeSum and overallTime * executionTimeSum / overallTimeSum
+                // }
+                fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
+            } else {
+                double throughputSum = 0.0;
+                for(auto throughputValue : runningSnapshotVectors.at(0)) {
+                    throughputSum += throughputValue;
+                }
+                std::stringstream throughputResultStream;
+                std::cout << "Num throughput values: " << runningSnapshotVectors.at(0).size() << '\n';
+                throughputResultStream << "YSB Throughput: " << throughputSum / runningSnapshotVectors.at(0).size() << '\n';
+                fs.write(throughputResultStream.str().c_str(), throughputResultStream.str().size());
             }
-            // performanceMetrics << compilationTimeSum << '\n';
-            // performanceMetrics << executionTimeSum << '\n';
-            // performanceMetrics << overallTimeSum << "\n-------------\nQueries/s:\n";
-            // performanceMetrics << resultsFileName << "\n-------------\nQueries/s:\n";
-            double queriesPsWithCompilation = (1000/overallTimeSum) * numIterations;
-            performanceMetrics << queriesPsWithCompilation << '\n';
-            performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
-            performanceMetrics << "CompPart %: " << (compilationTimeSum / overallTimeSum) << '\n';
-            performanceMetrics << "ExecutionPart %: " << (executionTimeSum / overallTimeSum) << '\n';
-            performanceMetrics << "CompPart: " << (queriesPsWithCompilation * (compilationTimeSum / overallTimeSum)) << '\n';
-            performanceMetrics << "ExecutionPart: " << (queriesPsWithCompilation * (executionTimeSum / overallTimeSum)) << '\n';
-            // Todo include overallTime * compilationTimeSum / overallTimeSum and overallTime * executionTimeSum / overallTimeSum
-            // }
-            fs.write(performanceMetrics.str().c_str(), performanceMetrics.str().size());
         }
     }
 }
