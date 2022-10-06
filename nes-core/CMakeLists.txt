@@ -69,7 +69,6 @@ target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 
 if(NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
-    add_compile_definitions(TFDEF)
     target_link_libraries(nes PUBLIC libtensorflowlite_c.so)
 endif()
 
