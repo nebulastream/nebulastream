@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -182,7 +182,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     errorResponse["message"] = web::json::value::string(exc.what());
                     errorMessageImpl(request, errorResponse, statusCode);
                     return;
-                } catch (const MapEntryNotFoundException& exc){
+                } catch (const MapEntryNotFoundException& exc) {
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                               "user request:"
                               << exc.what());

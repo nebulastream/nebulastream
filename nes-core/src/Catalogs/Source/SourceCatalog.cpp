@@ -225,7 +225,7 @@ bool SourceCatalog::removePhysicalSourceByHashId(uint64_t hashId) {
 
 SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
-    if(logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()){
+    if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
         throw MapEntryNotFoundException("SourceCatalog: No schema found for logical source " + logicalSourceName);
     }
     return logicalSourceNameToSchemaMapping[logicalSourceName];
@@ -299,9 +299,10 @@ std::string SourceCatalog::getPhysicalSourceAndSchemaAsString() {
 }
 
 std::vector<SourceCatalogEntryPtr> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) {
-    if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()){
+    if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()) {
         NES_ERROR("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
-        throw MapEntryNotFoundException("SourceCatalog: Logical source(s) ["+  logicalSourceName + "] are found to have no physical source(s) defined. ");
+        throw MapEntryNotFoundException("SourceCatalog: Logical source(s) [" + logicalSourceName
+                                        + "] are found to have no physical source(s) defined. ");
     }
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
