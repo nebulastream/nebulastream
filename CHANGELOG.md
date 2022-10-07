@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.6](https://github.com/nebulastream/nebulastream/tree/v0.3.6) (2022-10-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.5...v0.3.6)
+
+### Query Optimizer 🔧
+
+- Benchmark incremental placement of shared query plans [\#2944](https://github.com/nebulastream/nebulastream/issues/2944)
+
+## [v0.3.5](https://github.com/nebulastream/nebulastream/tree/v0.3.5) (2022-10-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.4...v0.3.5)
+
 ## [v0.3.4](https://github.com/nebulastream/nebulastream/tree/v0.3.4) (2022-10-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.3...v0.3.4)
