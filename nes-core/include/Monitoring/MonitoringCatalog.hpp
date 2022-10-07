@@ -42,6 +42,8 @@ class MonitoringCatalog {
     //TODO: Beschreibung
     static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
 
+    //TODO: Beschreibung
+    [[nodiscard]] bool hasMetric(MetricType metric) const;
 
     /**
      * Creates a MonitoringCatalog with a pre-initialized map that contains basic MetricTypes and their collectors.
