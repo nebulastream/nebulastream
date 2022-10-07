@@ -446,57 +446,6 @@ TEST_F(SinkTest, testTextZMQSink) {
     buffer.release();
 }
 
-/*
-TEST_F(SinkTest, testNetworkSinkBuffering) {
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createNetworkSink(test_schema, 0, 0, 0, NodeLocation() nodeEngine, 1, "localhost", zmqPort);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    //cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      "localhost",
-                                      zmqPort,
-                                      1,
-                                      0,
-                                      12,
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    //std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receiving the data.
-    bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-      zmq_source->open();
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-
-      std::string bufferContent = Util::printTupleBufferAsText(bufData);
-      //cout << "Buffer Content received= " << bufferContent << endl;
-      auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-      auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, buffer);
-      std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
-      EXPECT_EQ(bufferContent, bufferContentActual);
-      receiving_finished = true;
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
- */
-
 TEST_F(SinkTest, testBinaryZMQSink) {
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
