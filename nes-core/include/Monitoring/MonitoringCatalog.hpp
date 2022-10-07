@@ -42,6 +42,8 @@ class MonitoringCatalog {
     //TODO: Beschreibung
     static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
 
+    //TODO: Beschreibung
+    [[nodiscard]] bool hasMetric(MetricType metric) const;
 
     /**
      * @brief Creates a monitoring catalog for a given monitoring plan

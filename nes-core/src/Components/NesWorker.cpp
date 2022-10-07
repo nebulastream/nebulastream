@@ -24,8 +24,10 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -41,6 +43,7 @@
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <cpprest/json.h>
 #include <csignal>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>

@@ -2124,7 +2124,538 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennart) {
+    std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
+    std::map <Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> metrics;
+    SchemaPtr schema;
+    std::vector<std::string> attributesNetwork;
+    std::vector<std::string> attributesMem;
+    std::vector<std::string> attributesCPU;
+    std::vector<std::string> attributesDisk;
+    std::list<std::string> configNetwork;
+    std::list<std::string> configMem;
+    std::list<std::string> configCPU;
+    std::list<std::string> configDisk;
+    uint64_t sampleRate = 0;
+    std::pair<Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
 
+    for (auto metricType : metricTypeListString){
+        std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+            Monitoring::MetricUtils::randomAttributes(metricType, 4);
+        std::vector<std::string>  attributesList = get<0>(randomTuple);
+        std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+        std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
+        NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+        if (metricType == "DiskMetric") {
+            attributesDisk = attributesList;
+            configDisk = configuredMetrics;
+            schema = Monitoring::DiskMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::DiskMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "NetworkMetric") {
+            attributesNetwork = attributesList;
+            configNetwork = configuredMetrics;
+            schema = Monitoring::NetworkMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::NetworkMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "CpuMetric") {
+            attributesCPU = attributesList;
+            configCPU = configuredMetrics;
+            schema = Monitoring::CpuMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::CpuMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "MemoryMetric") {
+            attributesMem = attributesList;
+            configMem = configuredMetrics;
+            schema = Monitoring::MemoryMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::MemoryMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        }
+    }
+
+    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(plan);
+
+    std::list<Monitoring::MetricType> metricTypeList {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric,
+                                                     Monitoring::NetworkMetric, Monitoring::WrappedNetworkMetrics,
+                                                     Monitoring::WrappedCpuMetrics};
+    std::list<Monitoring::MetricCollectorPtr> listCollector;
+    for(auto metricType : metricTypeList) {
+        if (monitoringCatalog->hasMetric(metricType)) {
+            listCollector.push_front(monitoringCatalog->getMetricCollector(metricType));
+        }
+    }
+
+    uint64_t numBuffers = 2;
+    for (auto testCollector : listCollector) {
+
+        MonitoringSourceProxy monitoringDataSource(testCollector,
+                                                   MonitoringSource::DEFAULT_WAIT_TIME,
+                                                   this->nodeEngine->getBufferManager(),
+                                                   this->nodeEngine->getQueryManager(),
+                                                   this->operatorId,
+                                                   this->numSourceLocalBuffersDefault,
+                                                   {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+        // open starts the bufferManager, otherwise receiveData will fail
+        monitoringDataSource.open();
+        Monitoring::MetricPtr typedMetric = testCollector->readMetric();
+        auto buf = monitoringDataSource.receiveData();
+        ASSERT_TRUE(buf.has_value());
+        //        ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+        //        ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+        ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+        if (testCollector->getType() == Monitoring::NETWORK_COLLECTOR) {
+            Monitoring::NetworkMetricsWrapper parsedValuesNetwork{testCollector->getSchema()};
+            parsedValuesNetwork.readFromBuffer(buf.value(), 0);
+            Monitoring::NetworkMetricsWrapper networkMetric = typedMetric->getValue<Monitoring::NetworkMetricsWrapper>();
+            for (unsigned int i = 0; i < parsedValuesNetwork.size(); i++) {
+                //                for (const std::string& metricName : configNetwork) {
+                //                    ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), networkMetric.getNetworkValue(i).getValue(metricName));
+                //                }
+                for (const std::string& metricName : attributesNetwork) {
+                    ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), 0);
+                }
+            }
+            ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesNetwork));
+        } else if (testCollector->getType() == Monitoring::CPU_COLLECTOR) {
+            Monitoring::CpuMetricsWrapper parsedValuesCPU{testCollector->getSchema()};
+            parsedValuesCPU.readFromBuffer(buf.value(), 0);
+            Monitoring::CpuMetricsWrapper cpuMetric = typedMetric->getValue<Monitoring::CpuMetricsWrapper>();
+            for (unsigned int i = 0; i < parsedValuesCPU.size(); i++) {
+                //                for (const std::string& metricName : configCPU) {
+                //                    ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), cpuMetric.getValue(i).getValue(metricName));
+                //                }
+                for (const std::string& metricName : attributesCPU) {
+                    ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), 0);
+                }
+            }
+            //            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesCPU));
+        } else if (testCollector->getType() == Monitoring::DISK_COLLECTOR) {
+            Monitoring::DiskMetrics parsedValuesDisk{testCollector->getSchema()};
+            parsedValuesDisk.readFromBuffer(buf.value(), 0);
+            Monitoring::DiskMetrics diskMetric = typedMetric->getValue<Monitoring::DiskMetrics>();
+            //            for(const std::string& metricName : configDisk) {
+            //                ASSERT_EQ(parsedValuesDisk.getValue(metricName), diskMetric.getValue(metricName));
+            //            }
+            for(const std::string& metricName : attributesDisk) {
+                ASSERT_EQ(parsedValuesDisk.getValue(metricName), 0);
+            }
+            ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesDisk));
+        } else if (testCollector->getType() == Monitoring::MEMORY_COLLECTOR) {
+            Monitoring::MemoryMetrics parsedValuesMem{testCollector->getSchema()};
+            parsedValuesMem.readFromBuffer(buf.value(), 0);
+            Monitoring::MemoryMetrics memoryMetric = typedMetric->getValue<Monitoring::MemoryMetrics>();
+            //            for(const std::string& metricName : configMem) {
+            //                ASSERT_EQ(parsedValuesMem.getValue(metricName), memoryMetric.getValue(metricName));
+            //            }
+            for(const std::string& metricName : attributesMem) {
+                ASSERT_EQ(parsedValuesMem.getValue(metricName), 0);
+            }
+            //            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesMem));
+        } else {
+            NES_DEBUG("CollectorType unknown!")
+        }
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+    }
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennart) {
+    std::list<std::string> metricTypeListString {"DiskMetric", "NetworkMetric", "CpuMetric", "MemoryMetric"};
+    std::map <Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> metrics;
+    SchemaPtr schema;
+    std::vector<std::string> attributesNetwork;
+    std::vector<std::string> attributesMem;
+    std::vector<std::string> attributesCPU;
+    std::vector<std::string> attributesDisk;
+    uint64_t sampleRate = 0;
+    std::pair<Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+
+    for (const auto& metricType : metricTypeListString){
+        std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
+            Monitoring::MetricUtils::randomAttributes(metricType, 4);
+        std::vector<std::string>  attributesList = get<0>(randomTuple);
+        std::list<std::string>  configuredMetrics = get<1>(randomTuple);
+        std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
+        NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+
+        if (metricType == "DiskMetric") {
+            attributesDisk = attributesList;
+            schema = Monitoring::DiskMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::DiskMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "NetworkMetric") {
+            attributesNetwork = attributesList;
+            schema = Monitoring::NetworkMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::NetworkMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "CpuMetric") {
+            attributesCPU = attributesList;
+            schema = Monitoring::CpuMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::CpuMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        } else if (metricType == "MemoryMetric") {
+            attributesMem = attributesList;
+            schema = Monitoring::MemoryMetrics::createSchema("", configuredMetrics);
+            tempPair = std::make_pair(Monitoring::MemoryMetric, std::make_pair(schema, sampleRate));
+            metrics.insert(tempPair);
+        }
+    }
+
+    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(plan);
+
+    std::list<Monitoring::MetricType> metricTypeList {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric,
+                                                     Monitoring::NetworkMetric, Monitoring::WrappedNetworkMetrics,
+                                                     Monitoring::WrappedCpuMetrics};
+    std::list<Monitoring::MetricCollectorPtr> listCollector;
+    for(auto metricType : metricTypeList) {
+        if (monitoringCatalog->hasMetric(metricType)) {
+            listCollector.push_front(monitoringCatalog->getMetricCollector(metricType));
+        }
+    }
+
+    for (const auto& testCollector : listCollector) {
+        uint64_t numBuffers = 2;
+        MonitoringSourceProxy monitoringDataSource(testCollector,
+                                                   MonitoringSource::DEFAULT_WAIT_TIME,
+                                                   this->nodeEngine->getBufferManager(),
+                                                   this->nodeEngine->getQueryManager(),
+                                                   this->operatorId,
+                                                   this->numSourceLocalBuffersDefault,
+                                                   {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+        // open starts the bufferManager, otherwise receiveData will fail
+        monitoringDataSource.open();
+        while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+            auto optBuf = monitoringDataSource.receiveData();
+            if (testCollector->getType() == Monitoring::NETWORK_COLLECTOR) {
+                Monitoring::NetworkMetricsWrapper parsedValuesNetwork{testCollector->getSchema()};
+                parsedValuesNetwork.readFromBuffer(optBuf.value(), 0);
+                for (unsigned int i = 0; i < parsedValuesNetwork.size(); i++) {
+                    for (const std::string& metricName : attributesNetwork) {
+                        ASSERT_EQ(parsedValuesNetwork.getNetworkValue(i).getValue(metricName), 0);
+                    }
+                }
+                ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesNetwork));
+            } else if (testCollector->getType() == Monitoring::CPU_COLLECTOR) {
+                Monitoring::CpuMetricsWrapper parsedValuesCPU{testCollector->getSchema()};
+                parsedValuesCPU.readFromBuffer(optBuf.value(), 0);
+                for (unsigned int i = 0; i < parsedValuesCPU.size(); i++) {
+                    for (const std::string& metricName : attributesCPU) {
+                        ASSERT_EQ(parsedValuesCPU.getValue(i).getValue(metricName), 0);
+                    }
+                }
+                //                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesCPU));
+            } else if (testCollector->getType() == Monitoring::DISK_COLLECTOR) {
+                Monitoring::DiskMetrics parsedValuesDisk{testCollector->getSchema()};
+                parsedValuesDisk.readFromBuffer(optBuf.value(), 0);
+                for(const std::string& metricName : attributesDisk) {
+                    ASSERT_EQ(parsedValuesDisk.getValue(metricName), 0);
+                }
+                ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesDisk));
+            } else if (testCollector->getType() == Monitoring::MEMORY_COLLECTOR) {
+                Monitoring::MemoryMetrics parsedValuesMem{testCollector->getSchema()};
+                parsedValuesMem.readFromBuffer(optBuf.value(), 0);
+                for(const std::string& metricName : attributesMem) {
+                    ASSERT_EQ(parsedValuesMem.getValue(metricName), 0);
+                }
+                //                ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValuesMem));
+            } else {
+                NES_DEBUG("CollectorType unknown!")
+            }
+        }
+        EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+        //        EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+    }
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartDisk) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"F_BSIZE", "F_BLOCKS", "F_BAVAIL"};
+    std::list<std::string> notConfiguredAttributes {"F_FRSIZE", "F_BFREE"};
+    SchemaPtr schema = Monitoring::DiskMetrics::createSchema("", configuredAttributes);
+    std::pair<Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+    uint64_t sampleRate = 0;
+    std::map <Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
+    tempPair = std::make_pair(Monitoring::DiskMetric, std::make_pair(schema, sampleRate));
+    monitoringPlan.insert (tempPair);
+    auto plan = Monitoring::MonitoringPlan::create(monitoringPlan);
+    auto testCollector = std::make_shared<Monitoring::DiskCollector>(Monitoring::DiskCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+    Monitoring::DiskMetrics parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(parsedValues.getValue("F_BSIZE"), 4096);
+    ASSERT_EQ(parsedValues.getValue("nodeId"), nodeId);
+    testCollector->setNodeId(nodeId);
+    for(const std::string& metricName : notConfiguredAttributes) {
+        ASSERT_EQ(parsedValues.getValue(metricName), 0);
+    }
+    ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartDisk) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"F_BSIZE", "F_BLOCKS", "F_BAVAIL"};
+    SchemaPtr schema = Monitoring::DiskMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::DiskCollector>(Monitoring::DiskCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        Monitoring::DiskMetrics parsedValues{testCollector->getSchema()};
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartMemory) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"TOTAL_SWAP", "SHARED_RAM", "TOTAL_HIGH", "BUFFER_RAM", "MEM_UNIT"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = Monitoring::MemoryMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = Monitoring::MemoryMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::MemoryCollector>(Monitoring::MemoryCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+    Monitoring::MemoryMetrics parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(parsedValues.getValue("MEM_UNIT"), 1);
+    ASSERT_EQ(parsedValues.getValue("nodeId"), nodeId);
+    for(const std::string& metricName : notConfiguredAttributes) {
+        ASSERT_EQ(parsedValues.getValue(metricName), 0);
+    }
+    //    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartMemory) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"TOTAL_SWAP", "SHARED_RAM", "TOTAL_HIGH", "BUFFER_RAM", "MEM_UNIT"};
+    SchemaPtr schema = Monitoring::MemoryMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::MemoryCollector>(Monitoring::MemoryCollector(schema));
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        Monitoring::MemoryMetrics parsedValues{testCollector->getSchema()};
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartNetwork) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"rBytes", "rPackets", "tBytes", "tPackets", "interfaceName"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = Monitoring::NetworkMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::NetworkCollector>(Monitoring::NetworkCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+
+    Monitoring::NetworkMetricsWrapper parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(buf->getNumberOfTuples(), parsedValues.size());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
+    for (unsigned int i = 0; i < parsedValues.size(); i++) {
+        for (const std::string& metricName : notConfiguredAttributes) {
+            ASSERT_EQ(parsedValues.getNetworkValue(i).getValue(metricName), 0);
+        }
+        ASSERT_EQ(parsedValues.getNetworkValue(i).getValue("nodeId"), nodeId);
+        ASSERT_EQ(parsedValues.getNetworkValue(i).getValue("interfaceName"), i);
+    }
+
+    //    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartNetwork) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"rBytes", "rPackets", "tBytes", "tPackets", "interfaceName"};
+    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::NetworkCollector>(Monitoring::NetworkCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    Monitoring::NetworkMetricsWrapper parsedValues{testCollector->getSchema()};
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), (2 * parsedValues.size()));
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceLennartCPU) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"coreNum", "idle", "system", "iowait"};
+    std::list<std::string> notConfiguredAttributes;
+    std::vector<std::string> allAttributes = Monitoring::CpuMetrics::getAttributesVector();
+    for (auto attribute : allAttributes) {
+        if(!(std::find(std::begin(configuredAttributes), std::end(configuredAttributes), attribute) != std::end(configuredAttributes))) {
+            notConfiguredAttributes.push_front(attribute);
+        }
+    }
+    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+    testCollector->setNodeId(nodeId);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
+
+
+    Monitoring::CpuMetricsWrapper parsedValues{testCollector->getSchema()};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_EQ(buf->getNumberOfTuples(), parsedValues.size());
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), parsedValues.size());
+    for (unsigned int i = 0; i < parsedValues.size(); i++) {
+        for (const std::string& metricName : notConfiguredAttributes) {
+            ASSERT_EQ(parsedValues.getValue(i).getValue(metricName), 0);
+        }
+        ASSERT_EQ(parsedValues.getValue(i).getValue("coreNum"), i);
+        ASSERT_EQ(parsedValues.getValue(i).getValue("nodeId"), nodeId);
+    }
+
+    //    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+}
+
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimesLennartCPU) {
+    // create metrics and plan for MonitoringSource
+    std::list<std::string> configuredAttributes {"coreNum", "idle", "system", "iowait"};
+    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredAttributes);
+    auto testCollector = std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    Monitoring::CpuMetricsWrapper parsedValues{testCollector->getSchema()};
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        //        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    }
+
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), (2 * parsedValues.size()));
+}
 TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
     // create metrics and plan for MonitoringSource
     auto testCollector = std::make_shared<Monitoring::CpuCollector>();
