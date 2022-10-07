@@ -131,9 +131,18 @@ class WorkerContext {
       */
     void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
 
-    std::optional<NES::Runtime::TupleBuffer> getTopBufferFromStorage(Network::NesPartition nesPartition);
+    /**
+     * @brief get the oldest buffered tuple for the specified partition
+     * @param nesPartition partition
+     * @return an optional containing the tuple or nullopt if the storage is empty
+     */
+    std::optional<NES::Runtime::TupleBuffer> getTopTupleFromStorage(Network::NesPartition nesPartition);
 
-    void removeTopBufferFromStorage(Network::NesPartition nesPartition);
+    /**
+     * @brief if the storage is not empty remove the oldest buffered tuple for the specified partition
+     * @param nesPartition partition
+     */
+    void removeTopTupleFromStorage(Network::NesPartition nesPartition);
 
     /**
      * @brief removes a registered network channel with a termination type

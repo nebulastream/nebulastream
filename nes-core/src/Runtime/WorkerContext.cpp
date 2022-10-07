@@ -79,8 +79,7 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t tim
     }
 }
 
-//todo: optional does not work as expected here
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopBufferFromStorage(Network::NesPartition nesPartition) {
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         return this->storage[nesPartition]->getTopElementFromQueue();
@@ -88,7 +87,7 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopBufferFromStorage(
     return {};
 }
 
-void WorkerContext::removeTopBufferFromStorage(Network::NesPartition nesPartition) {
+void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->removeTopElementFromQueue();

@@ -60,11 +60,13 @@ class BufferStorage : public AbstractBufferStorage {
 
     /**
      * @brief Return top element of the queue
-     * @param nesPartition destination
      * @return buffer storage unit
      */
     std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
 
+    /**
+     * @brief Remove the top element from the queue
+     */
     void removeTopElementFromQueue();
 
   private:
