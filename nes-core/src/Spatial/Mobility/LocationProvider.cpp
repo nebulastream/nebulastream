@@ -48,7 +48,6 @@ Index::Experimental::LocationPtr LocationProvider::getLocation() {
 
 std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
 LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
-    //todo: should we actually always check this?
     if (!coordinatorRpcClient) {
         NES_WARNING("worker has no coordinator rpc client, cannot download node index");
         return {};
