@@ -143,6 +143,7 @@ class RestServer {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Experimental::MaintenanceServicePtr maintenanceService;
 
     std::condition_variable cvar;
     std::mutex mutex;
