@@ -1158,7 +1158,6 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithBufferingIsOrdered) {
 }
 
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
-    //NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_TRACE);
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
 
