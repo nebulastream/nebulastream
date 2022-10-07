@@ -242,6 +242,10 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
+    //TODO: Beschreibung erstellen
+    StringOption monitoringConfiguration = {MONITORING_CONFIG, "", "The configured monitoring settings"};
+
+
     /* Network specific settings */
 
     IntOption senderHighwatermark = {SENDER_HIGH_WATERMARK,
@@ -279,7 +283,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
-                &configPath};
+                &configPath,
+                &monitoringConfiguration};
     }
 };
 }// namespace Configurations

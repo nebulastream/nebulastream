@@ -40,6 +40,9 @@ class MonitoringPlan {
     //TODO: Beschreiben
     uint64_t getSampleRate(MetricType metric);
 
+    //TODO: Beschreiben
+    static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
+
     /**
      * @brief Returns the default collectors of the plan.
      * @return A set of collectors.
