@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 
 namespace NES {
 class LocationControllerTest : public Testing::NESBaseTest {
@@ -154,4 +155,116 @@ TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided
     EXPECT_TRUE(res["location"].is_null());
 }
 
+
+TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes){
+    uint64_t rpcPortWrk1 = 6000;
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = coordinator->getTopology()->getLocationIndex();
+
+    std::string latitude = "13.4";
+    std::string longitude = "-23.0";
+    std::string coordinateString = latitude + "," + longitude;
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort = *rpcCoordinatorPort;
+    wrkConf1->rpcPort.setValue(rpcPortWrk1);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(coordinateString));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
+
+    //no mobile nodes added yet, response should be null
+
+    //test request of node location
+    nlohmann::json request;
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location/allMobile"});
+    future.wait();
+    auto response = future.get();
+    EXPECT_EQ(response.status_code, 200l);
+    auto res = nlohmann::json::parse(response.text);
+    EXPECT_TRUE(res.empty());
+}
+
+#ifdef S2DEF
+TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
+    uint64_t rpcPortWrk1 = 6000;
+    uint64_t rpcPortWrk2 = 6001;
+    uint64_t rpcPortWrk3 = 6002;
+    startRestServer();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = coordinator->getTopology()->getLocationIndex();
+
+    std::string latitude = "13.4";
+    std::string longitude = "-23.0";
+    std::string coordinateString = latitude + "," + longitude;
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort = *rpcCoordinatorPort;
+    wrkConf1->rpcPort.setValue(rpcPortWrk1);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(coordinateString));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    //create mobile worker nodes
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort = *rpcCoordinatorPort;
+    wrkConf2->rpcPort.setValue(rpcPortWrk2);
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf2->mobilityConfiguration.locationProviderType.setValue(
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf2->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    wrkConf2->mobilityConfiguration.pushDeviceLocationUpdates.setValue(false);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+    wrkConf3->coordinatorPort = *rpcCoordinatorPort;
+    wrkConf3->rpcPort.setValue(rpcPortWrk3);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf3->mobilityConfiguration.locationProviderType.setValue(
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+
+    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
+    uint64_t workerNodeId2 = wrk2->getTopologyNodeId();
+    uint64_t workerNodeId3 = wrk3->getTopologyNodeId();
+
+    TopologyNodePtr node1 = coordinator->getTopology()->findNodeWithId(workerNodeId1);
+    locIndex->initializeFieldNodeCoordinates(node1, (node1->getCoordinates()));
+    TopologyNodePtr node2 = coordinator->getTopology()->findNodeWithId(workerNodeId2);
+    locIndex->addMobileNode(node2);
+    TopologyNodePtr node3 = coordinator->getTopology()->findNodeWithId(workerNodeId3);
+    locIndex->addMobileNode(node3);
+
+    nlohmann::json request;
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location/allMobile"});
+    future.wait();
+    auto response = future.get();
+    EXPECT_EQ(response.status_code, 200l);
+    auto res = nlohmann::json::parse(response.text);
+    NES_DEBUG(res);
+    ASSERT_TRUE(res.is_array());
+    EXPECT_TRUE(res.size() == 2);
+    nlohmann::json::array_t locationData;
+    for(auto entry : res){
+        if (entry["id"] == workerNodeId2) {
+            locationData[0] = 52.55227464714949;
+            locationData[1] = 13.351743136322877;
+        }
+        if (entry["id"] == workerNodeId3) {
+            locationData[0] = 53.55227464714949;
+            locationData[1] = -13.351743136322877;
+        }
+        EXPECT_TRUE(entry.contains("location"));
+        EXPECT_EQ(entry["location"], locationData);
+    }
+}
+#endif
 } // namespace NES
