@@ -967,7 +967,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithoutBuffering) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
@@ -1094,7 +1094,7 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithBufferingIsOrdered) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
@@ -1221,7 +1221,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
@@ -1349,7 +1349,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
@@ -1478,7 +1478,7 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
@@ -1739,7 +1739,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
+    ss << R"());","placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
