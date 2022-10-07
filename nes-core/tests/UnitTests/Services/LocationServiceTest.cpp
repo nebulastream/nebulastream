@@ -41,17 +41,17 @@ class LocationServiceTest : public Testing::NESBaseTest {
     }
     static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
 
-    web::json::value convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::Index::Experimental::LocationPtr loc) {
-        web::json::value nodeInfo;
-        nodeInfo["id"] = web::json::value(id);
-        web::json::value locJson;
+    nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::Index::Experimental::LocationPtr loc) {
+        nlohmann::json nodeInfo;
+        nodeInfo["id"] = id;
+        nlohmann::json::array_t locJson;
         if (loc) {
-            locJson[0] = loc->getLatitude();
-            locJson[1] = loc->getLongitude();
-        } else {
-            locJson = web::json::value::null();
+            locJson.push_back(loc->getLatitude());
+            locJson.push_back((loc->getLongitude()));
         }
-        nodeInfo["location"] = web::json::value(locJson);
+
+        nodeInfo["location"] = locJson;
+        NES_DEBUG(nodeInfo.dump());
         return nodeInfo;
     }
 
@@ -66,8 +66,8 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
 
-    web::json::value cmpJson;
-    web::json::value cmpLoc;
+    nlohmann::json cmpJson;
+    nlohmann::json cmpLoc;
     TopologyPtr topology = Topology::create();
     service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
 
@@ -103,18 +103,18 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
 #endif
 
     // test querying for node which does not exist in the system
-    EXPECT_EQ(service->requestNodeLocationDataAsJson(1234), web::json::value::null());
+    EXPECT_EQ(service->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
     cmpJson = service->requestNodeLocationDataAsJson(1);
     EXPECT_EQ(cmpJson["id"], 1);
-    EXPECT_EQ(cmpJson["location"], web::json::value::null());
+    EXPECT_TRUE(cmpJson["location"].empty());
 
     //test getting location of field node
     cmpJson = service->requestNodeLocationDataAsJson(2);
     EXPECT_EQ(cmpJson["id"], 2);
     EXPECT_EQ(cmpJson["location"][0], 13.4);
-    EXPECT_EQ(cmpJson["location"][1].as_integer(), -23);
+    EXPECT_EQ(cmpJson["location"][1], -23);
 
     //test getting location of a mobile node
 #ifdef S2DEF
@@ -134,7 +134,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
     uint64_t rpcPortWrk4 = 6003;
-    web::json::value cmpLoc;
+    nlohmann::json cmpLoc;
     TopologyPtr topology = Topology::create();
     service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
@@ -241,14 +241,14 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
 
     auto invalidLoc = std::make_shared<NES::Spatial::Index::Experimental::Location>();
     auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
-    NES_DEBUG("Invalid location json: " << invalidLocJson.serialize())
+    NES_DEBUG("Invalid location json: " << invalidLocJson.dump())
     EXPECT_EQ(invalidLocJson["id"], 2);
-    EXPECT_TRUE(std::isnan(invalidLocJson["location"][0].as_double()));
-    EXPECT_TRUE(std::isnan(invalidLocJson["location"][1].as_double()));
+    EXPECT_TRUE(std::isnan(invalidLocJson["location"][0].get<double>()));
+    EXPECT_TRUE(std::isnan(invalidLocJson["location"][1].get<double>()));
 
     std::shared_ptr<NES::Spatial::Index::Experimental::Location> locNullPtr;
     auto nullLocJson = convertNodeLocationInfoToJson(3, locNullPtr);
     EXPECT_EQ(nullLocJson["id"], 3);
-    EXPECT_EQ(nullLocJson["location"], web::json::value::null());
+    EXPECT_TRUE(nullLocJson["location"].empty());
 }
 }// namespace NES
