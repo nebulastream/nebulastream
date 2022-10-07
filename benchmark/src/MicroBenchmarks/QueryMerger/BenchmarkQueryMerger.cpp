@@ -18,7 +18,6 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -27,6 +26,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -277,7 +277,7 @@ int main(int argc, const char* argv[]) {
             NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
             numThreads = 1;
         }
-        std::cout << "Using "<< numThreads << " of threads for parallel parsing." << std::endl;
+        std::cout << "Using " << numThreads << " of threads for parallel parsing." << std::endl;
 
         uint64_t queryNum = 0;
         //Work till all queries are not parsed
@@ -295,13 +295,14 @@ int main(int argc, const char* argv[]) {
                 std::promise<QueryPtr> promise;
                 //Store the future, schedule the thread, and increment the query count
                 futures.emplace_back(promise.get_future());
-                threadPool.emplace_back(std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
+                threadPool.emplace_back(
+                    std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
                 queryNum++;
             }
 
             //Wait for all unfinished threads
             for (auto& item : threadPool) {
-                if(item.joinable()){ // if thread is not finished yet
+                if (item.joinable()) {// if thread is not finished yet
                     item.join();
                 }
             }
