@@ -171,4 +171,42 @@ std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::random
     return returnTuple;
 }
 
+MetricType MetricUtils::metricTypeFromSourceName(std::string sourceName) {
+    MetricType metricType;
+    if (sourceName.substr(0, 4) == "disk"){
+        metricType = DiskMetric;
+    } else if (sourceName.substr(0, 6) == "memory") {
+        metricType = MemoryMetric;
+    } else if (sourceName.substr(0, 11) == "wrapped_cpu") {
+        metricType = WrappedCpuMetrics;
+    } else if (sourceName.substr(0, 15) == "wrapped_network") {
+        metricType = WrappedNetworkMetrics;
+    } else {
+        //TODO: other source names
+        NES_ERROR("MetricUtils: metricTypeFromSourceName: MetricType cannot be defined from sourceName")
+        metricType = UnknownMetric;
+    }
+
+    return metricType;
+}
+
+SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
+    SchemaPtr defaultSchema;
+    if (metricType == CpuMetric || metricType == WrappedCpuMetrics) {
+        defaultSchema = CpuMetrics::getDefaultSchema("");
+    } else if (metricType == NetworkMetric || metricType == WrappedNetworkMetrics) {
+        defaultSchema = NetworkMetrics::getDefaultSchema("");
+    } else if (metricType == DiskMetric) {
+        defaultSchema = DiskMetrics::getDefaultSchema("");
+    } else if (metricType == MemoryMetric) {
+        defaultSchema = MemoryMetrics::getDefaultSchema("");
+    }
+
+    return defaultSchema;
+}
+
+std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
+    std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_" + schema->toStringForLogicalSourceName();
+    return logicalSourceName;
+}
 }// namespace NES::Monitoring

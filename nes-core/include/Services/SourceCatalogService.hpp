@@ -38,6 +38,9 @@ class SourceCatalogService {
   public:
     SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
+    //TODO: Beschreibung
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
+
     /**
      * @brief method to register a physical source
      * @param topologyNode : the topology node

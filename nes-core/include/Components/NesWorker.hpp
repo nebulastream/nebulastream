@@ -265,6 +265,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& prom);
 
+    //TODO: Beschreibung
+    void registerLogicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
+    //TODO: Beschreibung
+    void registerMonitoringPlan();
+
     /**
      * @brief helper method to ensure client is connected before calling rpc functions
      * @return

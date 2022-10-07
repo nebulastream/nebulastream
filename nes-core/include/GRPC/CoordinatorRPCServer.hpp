@@ -72,6 +72,21 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService,
                                   NES::Spatial::Index::Experimental::LocationServicePtr locationService);
+
+    //TODO: Beschreibung
+    Status RegisterMonitoringPlan(ServerContext* context, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) override;
+
+    //TODO: Beschreibung
+    Status LogicalSourceLookUp(ServerContext* context, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) override;
+
+    //TODO: Beschreibung
+    Status RegisterLogicalSourceName(ServerContext* context, const RegisterLogicalSourceNameRequest* request,
+                                     RegisterLogicalSourceNameReply* reply) override;
+
+    //TODO: Beschreibung
+    Status RegisterLogicalSourceNEW(ServerContext* context, const RegisterLogicalSourceNEWRequest* request,
+                                    RegisterLogicalSourceNEWReply* reply) override;
+
     /**
      * @brief RPC Call to register a node
      * @param context: the server context

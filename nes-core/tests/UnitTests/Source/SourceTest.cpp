@@ -2281,7 +2281,7 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
         {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
-    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto plan = Monitoring::MonitoringPlan::defaultPlan();
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
@@ -2299,7 +2299,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
         {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
-    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto plan = Monitoring::MonitoringPlan::defaultPlan();
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
@@ -2328,7 +2328,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
         {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
-    auto plan = Monitoring::MonitoringPlan::create(metrics);
+    auto plan = Monitoring::MonitoringPlan::defaultPlan();
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;

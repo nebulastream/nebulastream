@@ -101,23 +101,23 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
-                                               const MonitoringRegistrationRequest* request,
-                                               MonitoringRegistrationReply*) {
-    try {
-        NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
-        std::set<Monitoring::MetricType> types;
-        for (auto type : request->metrictypes()) {
-            types.insert((Monitoring::MetricType) type);
-        }
-        Monitoring::MonitoringPlanPtr plan = Monitoring::MonitoringPlan::create(types);
-        monitoringAgent->setMonitoringPlan(plan);
-        return Status::OK;
-    } catch (std::exception& ex) {
-        NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
-    }
-    return Status::CANCELLED;
-}
+//Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
+//                                               const MonitoringRegistrationRequest* request,
+//                                               MonitoringRegistrationReply*) {
+//    try {
+//        NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
+//        std::set<Monitoring::MetricType> types;
+//        for (auto type : request->metrictypes()) {
+//            types.insert((Monitoring::MetricType) type);
+//        }
+//        Monitoring::MonitoringPlanPtr plan = Monitoring::MonitoringPlan::create(types);
+//        monitoringAgent->setMonitoringPlan(plan);
+//        return Status::OK;
+//    } catch (std::exception& ex) {
+//        NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
+//    }
+//    return Status::CANCELLED;
+//}
 
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {

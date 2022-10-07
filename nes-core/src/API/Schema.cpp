@@ -23,6 +23,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <list>
 
 namespace NES {
 
@@ -33,6 +34,55 @@ SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<
 uint64_t Schema::getSize() const { return fields.size(); }
 
 Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType) { copyFields(schema); }
+
+std::string Schema::toStringForLogicalSourceName() const {
+    std::stringstream ss;
+    std::string delimiter = ":";
+    for (const auto& f : fields) {
+        std::string tempString = f->toString();
+        std::string fieldString = tempString.substr(0,tempString.find(delimiter));
+        ss << fieldString << " ";
+    }
+    std::string finalString = ss.str();
+    finalString.pop_back();
+    return finalString;
+}
+
+SchemaPtr Schema::parse(std::string schemaString) {
+    std::string prefix = "";
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT);
+
+    char delim = ' ';
+    std::stringstream ss(schemaString);
+
+    std::list<std::string> tokenList;
+
+    std::string temp;
+    while (std::getline(ss, temp, delim)) {
+        tokenList.push_back(temp);
+    }
+
+    size_t pos = 0;
+    std::list<std::string>::iterator i;
+
+    std::string attribute;
+    std::string basicTypeString;
+    BasicType basicType;
+
+    std::string delimiter = ":";
+    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
+        pos = i->find(delimiter);
+        attribute = i->substr(0, pos);
+        basicTypeString = i->substr().erase(0, pos + delimiter.length());
+        if (basicTypeString == "INTEGER") {
+            basicType = UINT64;
+        } else if (basicTypeString == "Boolean") {
+            basicType = BOOLEAN;
+        } // TODO: look other basicType strings
+        schema->addField(prefix + attribute, basicType);
+    }
+    return schema;
+}
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
@@ -121,10 +171,14 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         return true;
     }
     for (auto&& fieldAttribute : fields) {
-        auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
-        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
+        std::string field = fieldAttribute->getName();
+        if (!(schema->contains(field))) {
             return false;
         }
+//        auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
+//        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
+//            return false;
+//        }
     }
     return true;
 }
@@ -182,7 +236,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() {
 
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+//        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
         if (field->getName() == fieldName) {
             return true;
         }
