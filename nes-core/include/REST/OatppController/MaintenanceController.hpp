@@ -50,8 +50,8 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
   */
     static std::shared_ptr<MaintenanceController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                          Experimental::MaintenanceServicePtr maintenanceService,
-                                                         std::string routerPrefixAddition,
-                                                         ErrorHandlerPtr errorHandler) {
+                                                         ErrorHandlerPtr errorHandler,
+                                                         std::string routerPrefixAddition) {
                 oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
                 return std::make_shared<MaintenanceController>(objectMapper, maintenanceService,completeRouterPrefix, errorHandler);
     }
@@ -71,12 +71,18 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
         }
         uint64_t id = requestJson["id"];
         Experimental::MigrationType::Value migrationType = Experimental::MigrationType::getFromString(requestJson["migrationType"]);
-        maintenanceService->submitMaintenanceRequest(id, migrationType);
-        nlohmann::json result{};
-        result["Info"] = "Successfully submitted Maintenance Request";
-        result["Node Id"] = id;
-        result["Migration Type"] = Experimental::MigrationType::toString(migrationType);
-        return createResponse(Status::CODE_200, result.dump());
+        auto info = maintenanceService->submitMaintenanceRequest(id, migrationType);
+        if(info.first == true) {
+            nlohmann::json result{};
+            result["Info"] = "Successfully submitted Maintenance Request";
+            result["Node Id"] = id;
+            result["Migration Type"] = Experimental::MigrationType::toString(migrationType);
+            return createResponse(Status::CODE_200, result.dump());
+        }
+        else {
+            std::string errorMessage = info.second;
+            return errorHandler->handleError(Status::CODE_404, errorMessage);
+        }
 
     }
 

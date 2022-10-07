@@ -163,7 +163,8 @@ void RestServer::run() {
                                                                                    globalQueryPlan,
                                                                                    "/queryCatalog",
                                                                                    errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController =
+        REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,
@@ -173,7 +174,9 @@ void RestServer::run() {
     auto udfCatalogController =
         REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController =
-        REST::Controller::SourceCatalogController::createShared(objectMapper, sourceCatalog, errorHandler, "/sourceCatalog");
+        REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalog, errorHandler, "/sourceCatalog");
+    auto maintenanceController =
+        REST::Controller::MaintenanceController::create(objectMapper, maintenanceService, errorHandler, "/maintenance");
 
     router->addController(connectivityController);
     router->addController(queryCatalogController);
@@ -181,6 +184,7 @@ void RestServer::run() {
     router->addController(topologyController);
     router->addController(sourceCatalogController);
     router->addController(udfCatalogController);
+    router->addController(maintenanceController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
