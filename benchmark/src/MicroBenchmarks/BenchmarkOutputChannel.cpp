@@ -21,6 +21,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Utils/BenchmarkUtils.hpp>
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -29,7 +30,6 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <Utils/BenchmarkUtils.hpp>
 
 namespace NES::Benchmarking {
 
