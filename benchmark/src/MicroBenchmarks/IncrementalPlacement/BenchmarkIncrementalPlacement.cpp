@@ -39,6 +39,8 @@
 #include <Utils/BenchmarkUtils.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
+#include <iostream>
+#include <thread>
 #include <z3++.h>
 
 using namespace NES;
@@ -145,10 +147,19 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    topologyManagerService->registerNode("1", 0, 0, UINT16_MAX, false, NES::Spatial::Index::Experimental::Location());
+    topologyManagerService->registerNode("1",
+                                         0,
+                                         0,
+                                         UINT16_MAX,
+                                         NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                         NES::Spatial::Index::Experimental::Location());
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService
-            ->registerNode(std::to_string(i), 0, 0, UINT16_MAX, false, NES::Spatial::Index::Experimental::Location());
+        topologyManagerService->registerNode(std::to_string(i),
+                                             0,
+                                             0,
+                                             UINT16_MAX,
+                                             NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                             NES::Spatial::Index::Experimental::Location());
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
@@ -233,6 +244,15 @@ Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
     NES_THROW_RUNTIME_ERROR("Unable to find benchmark run configuration.");
 }
 
+void compileQuery(const std::string& stringQuery,
+                  uint64_t id,
+                  const std::shared_ptr<QueryParsingService>& queryParsingService,
+                  std::promise<QueryPtr>& promise) {
+    auto query = queryParsingService->createQueryFromCodeString(stringQuery);
+    query->getQueryPlan()->setQueryId(id);
+    promise.set_value(query);
+}
+
 /**
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
@@ -295,12 +315,37 @@ int main(int argc, const char* argv[]) {
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     queryParsingService = QueryParsingService::create(jitCompiler);
-#pragma omp parallel for
-    for (uint64_t i = 0; i < numOfQueries; i++) {
-        auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
-        queryObj->getQueryPlan()->setQueryId(i + 1);
-        queryObjects[i] = queryObj;
+
+    //If no available thread then set number of threads to 1
+    uint64_t numThreads = std::thread::hardware_concurrency();
+    if (numThreads == 0) {
+        NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
+        numThreads = 1;
     }
+
+    uint64_t queryNum = 0;
+    while (queryNum < numOfQueries) {
+        std::vector<std::future<QueryPtr>> futures;
+        uint64_t threadNum;
+        for (threadNum = 0; threadNum < numThreads; threadNum++) {
+            if (queryNum >= numOfQueries) {
+                break;
+            }
+            std::promise<QueryPtr> promise;
+            std::thread thr(compileQuery, queries[queryNum], queryNum + 1, std::move(queryParsingService), std::ref(promise));
+            thr.join();
+            futures.emplace_back(promise.get_future());
+            queryNum++;
+        }
+
+        for(uint64_t futureNum = 0; futureNum < threadNum; futureNum++){
+            auto query = futures[futureNum].get();
+            auto queryID = query->getQueryPlan()->getQueryId();
+            queryObjects[queryID - 1] = query;
+        }
+    }
+
+    std::cout << "Parsed all queries." << std::endl;
 
     //Set optimizer configuration
     OptimizerConfiguration optimizerConfiguration;
