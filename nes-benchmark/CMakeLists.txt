@@ -12,39 +12,8 @@
 
 message("---Building benchmarks...")
 
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
-# CPR
-find_package(cpr REQUIRED)
-if (cpr_FOUND)
-    find_package(CURL REQUIRED)
-    message(STATUS "Found CURL : ${CURL_LIBRARIES}")
-    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
-endif ()
-
-if (APPLE)
-    find_library(SSL_LIB libssl.a REQUIRED)
-    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
-    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif ()
-if (UNIX AND NOT APPLE)
-    find_package(OpenSSL REQUIRED)
-    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
-endif ()
-
-# C++ REST SDK
-find_package(cpprestsdk CONFIG REQUIRED)
-# Library containing rest dependencies
-set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
-
 # include dirs
 include_directories("include/")
-
 
 # add src
 add_subdirectory(src)

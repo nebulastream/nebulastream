@@ -177,9 +177,8 @@ void E2ESingleRun::stopQuery() {
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
     NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
-    auto timeoutInSec = std::chrono::seconds(30);
     auto start_timestamp = std::chrono::system_clock::now();
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
         if (queryCatalog->getEntryForQuery(queryId)->getQueryStatus() == NES::QueryStatus::Stopped) {
             NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
@@ -188,7 +187,7 @@ void E2ESingleRun::stopQuery() {
         NES_DEBUG("checkStoppedOrTimeout: status not reached for " << queryId
                                                                    << " as status is="
                                                                    << queryCatalog->getEntryForQuery(queryId)->getQueryStatusAsString());
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(stopQuerySleep);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
 
@@ -260,7 +259,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     ofs << outputCsvStream.str();
     ofs.close();
 
-    NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
+    NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
 }
 
 E2ESingleRun::E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
