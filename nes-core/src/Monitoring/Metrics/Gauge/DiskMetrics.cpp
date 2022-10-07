@@ -143,15 +143,25 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
     }
 }
 
-//TODO: anpassen
 web::json::value DiskMetrics::toJson() const {
     web::json::value metricsJson{};
+    NES_DEBUG("DiskMetrics: create Json Object from DiskMetric!");
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
-    metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
-    metricsJson["F_BLOCKS"] = web::json::value::number(fBlocks);
-    metricsJson["F_BFREE"] = web::json::value::number(fBfree);
-    metricsJson["F_BAVAIL"] = web::json::value::number(fBavail);
+    if (schema->contains("F_BSIZE")) {
+        metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
+    }
+    if (schema->contains("F_FRSIZE")) {
+        metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
+    }
+    if (schema->contains("F_BLOCKS")) {
+        metricsJson["F_BLOCKS"] = web::json::value::number(fBlocks);
+    }
+    if (schema->contains("F_BFREE")) {
+        metricsJson["F_BFREE"] = web::json::value::number(fBfree);
+    }
+    if (schema->contains("F_BAVAIL")) {
+        metricsJson["F_BAVAIL"] = web::json::value::number(fBavail);
+    }
     return metricsJson;
 }
 
