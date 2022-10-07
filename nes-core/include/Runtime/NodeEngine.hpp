@@ -163,7 +163,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool bufferAllData();
 
     /**
-     * @brief unbuffer all tuples that were buffered since tuples and write all buffered tuples to the respective sinks
+     * @brief unbuffer all tuples that were buffered since bufferAllData was called and write them to the respective sinks
      * and stop buffering new incoming tuples. This might change the order in which tuples are sent over the network channel if
      * new tuples are coming in while unbuffering is in process
      * @return bool indicating success

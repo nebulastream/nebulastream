@@ -150,7 +150,6 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
         NES_WARNING("there is already a prediction thread running, cannot start another one")
         return;
     }
-    //if (!locationProvider->get)
 
     //set this boolean to tell the locationUpdate thread to keep looping after it started
     //the thread will only terminate when this is set to false
@@ -183,10 +182,8 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
     //if this workers current parent could not be found among the data, reconnect planning is not possible
     if (iterator.done()) {
         NES_DEBUG("parent id does not match any field node in the coverage area. Changing parent now")
-        //todo: something is not quite right with setting the right parent here
         reconnectToClosestNode(locationProvider->getCurrentLocation());
         NES_DEBUG("set parent to " << parentId);
-        //return;
     }
 
     //start reconnect planner thread
