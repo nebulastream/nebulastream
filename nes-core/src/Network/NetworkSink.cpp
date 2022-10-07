@@ -62,7 +62,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    //if a mobile node is i nthe process of reconnecting, do not attempt to send data but buffer it instead
+    //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context " << workerContext.getId() << " writing data");
     if (reconnectBuffering) {
         NES_TRACE("context " << workerContext.getId() << " buffering data");
@@ -149,7 +149,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::StartBuffering: {
-            //todo: what to do here?
             if (reconnectBuffering) {
                 NES_DEBUG("Requested sink to buffer but it is already buffering")
             } else {
@@ -158,36 +157,28 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::StopBuffering: {
-            //todo: maybe we need a "draining" boolean to avaid problems when worker keeps writing while we drain?
-            /*
-            if (!reconnectBuffering) {
-                NES_WARNING("Requested sink to stop buffering but it is not buffering")
-            } else {
-             */
-                //todo: move setting this to false to the post reconfig callback?
-                reconnectBuffering = false;
-                //todo: do we have to look for threadsafety here?
-                //todo: extract to function
-                NES_INFO("stop buffering data for context " << workerContext.getId());
-                //this->reconnectBuffering = false;
-                auto topBuffer = workerContext.getTopBufferFromStorage(nesPartition);
-                NES_INFO("sending buffered data")
-                //todo: how to thread this
-                while (topBuffer) {
-                    //todo: this will only work if guarantees are not set to at least once
-                    if (!topBuffer.value().getBuffer()) {
-                        NES_WARNING("buffer does not exist");
-                        break;
-                    }
-                    if (!writeData(topBuffer.value(), workerContext)) {
-                        NES_WARNING("could not send all data from buffer")
-                        break;
-                    }
-                    NES_TRACE("buffer sent")
-                    workerContext.removeTopBufferFromStorage(nesPartition);
-                    topBuffer = workerContext.getTopBufferFromStorage(nesPartition);
+            /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
+            unbuffer*/
+            reconnectBuffering = false;
+            NES_INFO("stop buffering data for context " << workerContext.getId());
+            auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
+            NES_INFO("sending buffered data")
+            //todo: how to thread this
+            while (topBuffer) {
+                /*this will only work if guarantees are not set to at least once,
+                otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
+                if (!topBuffer.value().getBuffer()) {
+                    NES_WARNING("buffer does not exist");
+                    break;
                 }
-            //}
+                if (!writeData(topBuffer.value(), workerContext)) {
+                    NES_WARNING("could not send all data from buffer")
+                    break;
+                }
+                NES_TRACE("buffer sent")
+                workerContext.removeTopTupleFromStorage(nesPartition);
+                topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
+            }
             break;
         }
         default: {
