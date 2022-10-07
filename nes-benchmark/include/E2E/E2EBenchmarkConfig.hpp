@@ -20,7 +20,6 @@
 #include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2E/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
-
 #include <vector>
 
 namespace NES::Benchmark {

@@ -82,7 +82,6 @@ class AbstractBufferProvider {
      * @return a new buffer
      */
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
-
 };
 
 class AbstractPoolProvider {

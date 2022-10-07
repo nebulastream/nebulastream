@@ -264,9 +264,9 @@ std::vector<std::vector<T>> partition(const std::vector<T>& vec, size_t n) {
 /**
  * @brief appends newValue until the vector contains a minimum of newSize elements
  * @tparam T
- * @param vector
- * @param newSize
- * @param newValue
+ * @param vector the vector
+ * @param newSize the size of the padded vector
+ * @param newValue the value that should be added
  */
 template<typename T>
 void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {

@@ -53,9 +53,10 @@ class Measurements {
     /**
      * @brief returns the measurements and calculates the deltas of the measurements and then
      * returns them as comma separated values
-     * @return
+     * @param schemaSizeInByte
+     * @return comma separated values
      */
-    std::vector<std::string> getMeasurementsAsCSV(size_t schemaSizeInB);
+    std::vector<std::string> getMeasurementsAsCSV(size_t schemaSizeInByte);
 
   private:
     /**
@@ -118,8 +119,5 @@ class Measurements {
     std::vector<size_t> allAvailFixedBufferSum;
 
 };
-
 }
-
-
 #endif//NES_MEASUREMENTS_HPP

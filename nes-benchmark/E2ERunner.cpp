@@ -67,6 +67,7 @@ int main(int argc, const char* argv[]) {
         std::cerr << "Error: Only --configPath= is allowed as a command line argument!\nExiting now..." << std::endl;
         return -1;
     }
+
     auto configPathArg = std::string(argv[1]);
     if (configPathArg.find("--configPath") == std::string::npos) {
         std::cerr << "Error: --configPath could not been found in " << configPathArg << "!" << std::endl;
@@ -93,7 +94,6 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
-
     // Writing the csv header to the output file
     std::ofstream ofs;
     ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::trunc);
@@ -103,7 +103,6 @@ int main(int argc, const char* argv[]) {
         << ",WorkerThreads,SourceCnt,BufferSizeInB,InputType,DataProviderMode,Query"
         << "\n";
     ofs.close();
-
 
     int portOffset = 0;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();

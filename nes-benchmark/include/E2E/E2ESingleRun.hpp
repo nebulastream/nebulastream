@@ -32,6 +32,9 @@ namespace NES::Benchmark{
  */
 class E2ESingleRun {
 
+    static constexpr auto stopQuerySleep = std::chrono::milliseconds(250);
+    static constexpr auto stopQueryTimeoutInSec = std::chrono::seconds(30);
+
   public:
     /**
      * @brief generates a E2ESingleRun object

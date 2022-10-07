@@ -17,7 +17,7 @@
 
 namespace NES::Benchmark::Measurements {
 
-std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB) {
+std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte) {
     std::vector<std::string> vecCsvStrings;
     for (size_t measurementIdx = 0; measurementIdx < allTimeStamps.size() - 1; ++measurementIdx) {
         std::stringstream measurementsCsv;
@@ -29,16 +29,13 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         measurementsCsv << "," << allQueueSizeSums[measurementIdx];
 
         double timeDeltaSeconds = (allTimeStamps[measurementIdx+1] - allTimeStamps[measurementIdx]) / 1000;
-
         double tuplesPerSecond = (allProcessedTuples[measurementIdx+1] - allProcessedTuples[measurementIdx]) /
                                  (timeDeltaSeconds);
         double tasksPerSecond =  (allProcessedTuples[measurementIdx+1] - allProcessedTuples[measurementIdx]) /
                                  (timeDeltaSeconds);
         double bufferPerSecond = (allProcessedBuffers[measurementIdx+1] - allProcessedBuffers[measurementIdx]) /
                                  (timeDeltaSeconds);
-
-        double mebiBPerSecond =  (tuplesPerSecond * schemaSizeInB) / (1024 * 1024);
-
+        double mebiBPerSecond =  (tuplesPerSecond * schemaSizeInByte) / (1024 * 1024);
 
         measurementsCsv << "," << tuplesPerSecond << "," << tasksPerSecond;
         measurementsCsv << "," << bufferPerSecond << "," << mebiBPerSecond;

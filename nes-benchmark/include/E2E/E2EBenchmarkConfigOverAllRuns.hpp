@@ -49,7 +49,6 @@ namespace NES::Benchmark {
         Configurations::IntConfigOption startupSleepIntervalInSeconds;
         Configurations::IntConfigOption numMeasurementsToCollect;
         Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
-
         Configurations::StringConfigOption outputFile;
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;

@@ -13,7 +13,6 @@
 */
 
 #include <E2E/E2EBenchmarkConfig.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 NES::LogLevel NES::Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfigFile,
@@ -21,8 +20,12 @@ NES::LogLevel NES::Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string&
 
     NES::LogLevel retLogLevel = defaultLogLevel;
     try {
-        Yaml::Node configFile = *(new Yaml::Node());
+        Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
+        if (configFile.IsNone()) {
+            std::cerr << "Error while reading the log level. Setting the loglevel to" << NES::getLogName(defaultLogLevel) << std::endl;
+            return defaultLogLevel;
+        }
 
         auto logLevelString = configFile["logLevel"].As<std::string>();
         auto logLevelMagicEnum = magic_enum::enum_cast<NES::LogLevel>(logLevelString);
@@ -43,7 +46,7 @@ NES::Benchmark::E2EBenchmarkConfig NES::Benchmark::E2EBenchmarkConfig::createBen
     E2EBenchmarkConfig e2EBenchmarkConfig;
 
     try {
-        Yaml::Node configFile = *(new Yaml::Node());
+        Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
 
         NES_INFO("Generating configOverAllRuns...");

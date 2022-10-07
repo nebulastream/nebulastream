@@ -13,7 +13,6 @@
 */
 
 #include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
-
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
