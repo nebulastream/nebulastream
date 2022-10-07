@@ -372,6 +372,7 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
+//FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
 double ILPStrategy::getDefaultOperatorOutput(OperatorNodePtr operatorNode) {
 
     double dmf = 1;
@@ -388,6 +389,7 @@ double ILPStrategy::getDefaultOperatorOutput(OperatorNodePtr operatorNode) {
     return dmf * input;
 }
 
+//FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
 int ILPStrategy::getDefaultOperatorCost(OperatorNodePtr operatorNode) {
 
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
