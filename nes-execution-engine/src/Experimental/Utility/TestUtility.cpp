@@ -32,9 +32,12 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
                 "Overall Time                 "
             },
             // x0.01 -> 1.7119 million rec/s | overallTime - executedTime: 33.06 - 1.76 = (31.31 vs 1.76)
-            TestUtility::YsbScaleConfig{46848, 1},       // x0.01
+            // TestUtility::YsbScaleConfig{46848, 1},       // x0.01
             // TestUtility::YsbScaleConfig{156032, 3},   // x0.1
             // TestUtility::YsbScaleConfig{936000, 5},   // x1
+            // TestUtility::YsbScaleConfig{2340032, 10},   // x5
+            // TestUtility::YsbScaleConfig{1170048, 8},   // x2
+            TestUtility::YsbScaleConfig{1170048, 12},   // x3
             // TestUtility::YsbScaleConfig{3120000, 15}, // x10
             // TestUtility::YsbScaleConfig{18720000, 25},// x100
             true // IS_PERFORMANCE_BENCHMARK
@@ -294,6 +297,7 @@ void NES::ExecutionEngine::Experimental::TestUtility::produceResults(std::vector
                 double queriesPsWithCompilation = (1000/overallTimeSum) * numIterations;
                 performanceMetrics << queriesPsWithCompilation << '\n';
                 performanceMetrics << ((1000/executionTimeSum) * numIterations) << '\n';
+                performanceMetrics << "Average Execution Time: " << (executionTimeSum / numIterations) << '\n';
                 performanceMetrics << "CompPart %: " << (compilationTimeSum / overallTimeSum) << '\n';
                 performanceMetrics << "ExecutionPart %: " << (executionTimeSum / overallTimeSum) << '\n';
                 performanceMetrics << "CompPart: " << (queriesPsWithCompilation * (compilationTimeSum / overallTimeSum)) << '\n';

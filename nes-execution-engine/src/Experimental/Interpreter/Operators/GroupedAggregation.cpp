@@ -21,7 +21,7 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-extern "C" void* getHashMapState(void* state) {
+extern "C" void* __attribute__((always_inline)) getHashMapState(void* state) {
     auto groupedAggregationState = (GroupedAggregationState*) state;
     return groupedAggregationState->threadLocalAggregationSlots[0].get();
 }

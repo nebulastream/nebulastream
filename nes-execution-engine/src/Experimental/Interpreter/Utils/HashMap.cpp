@@ -6,7 +6,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 HashMap::Entry::Entry(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset)
     : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
 
-extern "C" void* getNextEntry(void* entryPtr) {
+extern "C" __attribute__((always_inline)) void* getNextEntry(void* entryPtr) {
     auto entry = (NES::Experimental::Hashmap::Entry*) entryPtr;
     return entry->next;
 }
@@ -18,12 +18,12 @@ Value<MemRef> HashMap::Entry::getKeyPtr() { return (ref + keyOffset).as<MemRef>(
 Value<MemRef> HashMap::Entry::getValuePtr() { return (ref + valueOffset).as<MemRef>(); }
 Value<Any> HashMap::Entry::isNull() { return ref == 0; }
 
-extern "C" void* getHashEntry(void* state, uint64_t hash) {
+extern "C" __attribute__((always_inline)) void* getHashEntry(void* state, uint64_t hash) {
     auto hashMap = (NES::Experimental::Hashmap*) state;
     auto entry = hashMap->find_chain(hash);
     return entry;
 }
-extern "C" void* createEntryProxy(void* state, uint64_t hash) {
+extern "C" __attribute__((always_inline)) void* createEntryProxy(void* state, uint64_t hash) {
     auto hashMap = (NES::Experimental::Hashmap*) state;
     return hashMap->insertEntry(hash);
 }
@@ -42,7 +42,7 @@ HashMap::Entry HashMap::getEntryFromHashTable(Value<UInt64> hash) const {
     return Entry(entry, NES::Experimental::Hashmap::headerSize, NES::Experimental::Hashmap::headerSize + valueOffset);
 }
 
-extern "C" uint64_t calculateHashProxy(int64_t value, uint64_t hash) {
+extern "C" __attribute__((always_inline)) uint64_t calculateHashProxy(int64_t value, uint64_t hash) {
     const NES::Experimental::Hash<NES::Experimental::MurMurHash3> hasher =
         NES::Experimental::Hash<NES::Experimental::MurMurHash3>();
     return hasher(value, hash);

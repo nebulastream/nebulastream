@@ -18,6 +18,7 @@
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 #include <assert.h>
+#include <cstring>
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 

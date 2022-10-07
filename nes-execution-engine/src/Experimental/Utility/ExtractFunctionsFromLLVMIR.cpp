@@ -103,7 +103,11 @@ int main(int argc, char **argv) {
         "NES__Runtime__TupleBuffer__getCreationTimestamp",
         "NES__Runtime__TupleBuffer__setSequenceNumber",
         "NES__Runtime__TupleBuffer__getSequenceNumber",
-        "NES__Runtime__TupleBuffer__setCreationTimestamp"
+        "NES__Runtime__TupleBuffer__setCreationTimestamp",
+        "calculateHashProxy",
+        "getHashEntry",
+        "createEntryProxy",
+        "getHashMapState"
         // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
     };
 

@@ -33,6 +33,7 @@ function(llvmir_attach_bc_target)
   if(NOT TRGT AND NOT DEPENDS_TRGT)
     set(TRGT ${ARGV0})
     set(DEPENDS_TRGT ${ARGV1})
+    
 
     if(${ARGC} GREATER 3)
       message(FATAL_ERROR "llvmir_attach_bc_target: \
@@ -947,6 +948,7 @@ function(llvmir_attach_library)
   # target properties, so for an exact propagation it is required to search for
   # elements that are only in the INTERFACE properties and set them as such
   # correctly with the target_link_libraries command
+  target_link_libraries(${TRGT} PUBLIC ${DEPENDS_TRGT})
   if(INTERFACE_LINK_LIBRARIES)
     target_link_libraries(${TRGT} PUBLIC ${INTERFACE_LINK_LIBRARIES})
   endif()

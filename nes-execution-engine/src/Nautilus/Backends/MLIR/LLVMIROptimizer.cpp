@@ -197,7 +197,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     timer->snapshot("Dummy: Proxy Module Parsed");
                     timer->snapshot("Dummy: Proxy Module Linked");
                     
-                    auto optPipeline = mlir::makeOptimizingTransformer(0, 3, nullptr);
+                    auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
                     timer->snapshot("Module Optimized");
                     timer->pause();
@@ -271,8 +271,9 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     timer->start();
                     timer->snapshot("Dummy: Proxy Module Parsed");
                     timer->snapshot("Dummy: Proxy Module Linked");
-
-                    auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
+                    
+                    std::cout << "O3 Optimization\n";
+                    auto optPipeline = mlir::makeOptimizingTransformer(3, 0, nullptr);
                     auto optimizedModule = optPipeline(llvmIRModule);
                     timer->snapshot("Module Optimized");
                     timer->pause();
@@ -286,7 +287,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     if(fs.is_open()) { 
                         fs.write(timerString.c_str(), timerString.size());
                     }
-                    // llvmIRModule->print(llvm::outs(), nullptr);
+                    llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
