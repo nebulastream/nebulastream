@@ -46,7 +46,6 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 class ReplicationService;
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 
-namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 

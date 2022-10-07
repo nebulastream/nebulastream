@@ -150,7 +150,6 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     return true;
 }
 
-
 nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     nlohmann::json metricsJson;
     if (!enableMonitoring) {

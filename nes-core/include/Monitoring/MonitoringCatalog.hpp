@@ -39,6 +39,10 @@ class MonitoringCatalog {
      */
     static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors);
 
+    //TODO: Beschreibung
+    static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
+
+
     /**
      * @brief Creates a monitoring catalog for a given monitoring plan
      * @param monitoringPlan

@@ -19,22 +19,12 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cpprest/json.h>
-#include <list>
 
 namespace NES::Monitoring {
-//MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
-//    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
-//}
-
 MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores)
     : monitoringPlan(metrics), cpuCores(cores) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
-
-//MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
-//    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
-//}
 
 MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& monitoringPlan) {
     std::list<uint64_t> emptyList {};
@@ -134,14 +124,6 @@ std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
     return std::set<MetricCollectorType>{CPU_COLLECTOR, DISK_COLLECTOR, MEMORY_COLLECTOR, NETWORK_COLLECTOR};
 }
 
-//bool MonitoringPlan::addMetric(MetricType metric) {
-//    if (hasMetric(metric)) {
-//        return false;
-//    }
-//    metricTypes.insert(metric);
-//    return true;
-//}
-
 bool MonitoringPlan::hasMetric(MetricType metric) const {
     return monitoringPlan.contains(metric);
 //    std::string metricStr = NES::Monitoring::toString(metric);
@@ -153,6 +135,8 @@ bool MonitoringPlan::hasMetric(MetricType metric) const {
 //    }
 //    return false;
 }
+
+bool MonitoringPlan::hasMetric(MetricType metric) const { return metricTypes.contains(metric); }
 
 std::string MonitoringPlan::toString() const {
     std::stringstream output;

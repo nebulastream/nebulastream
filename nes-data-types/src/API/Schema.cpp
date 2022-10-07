@@ -19,6 +19,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <utility>

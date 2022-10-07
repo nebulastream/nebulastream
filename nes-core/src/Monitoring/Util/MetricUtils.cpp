@@ -299,55 +299,55 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
         vectorAttributes.clear();
     }
 
-    return monitoringConfigurationJson;
-}
+    std::list<std::string> configuredAttributes;
 
-std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttributes) {
-    std::list<std::string> attributesList;
-    int i;
-    auto arrayLength = jsonAttributes.size();
-    for (i = 0; i < static_cast<int>(arrayLength); i++) {
-        attributesList.push_front(jsonAttributes[i].as_string());
+    int random;
+    for (int i = 0; i < numberOfAttributes; i++) {
+        random = std::rand() % attributesVector.size();
+        configuredAttributes.push_back(attributesVector[random]);
+        attributesVector.erase(attributesVector.begin()+random);
     }
 
-    return attributesList;
+    std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
+    return returnTuple;
 }
 
-std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(web::json::value jsonAttributes) {
-    std::list<uint64_t> coresList;
-    int i;
-    auto arrayLength = jsonAttributes.size();
-    for (i = 0; i < static_cast<int>(arrayLength); i++) {
-        coresList.push_front(jsonAttributes[i].as_integer());
+MetricType MetricUtils::metricTypeFromSourceName(std::string sourceName) {
+    MetricType metricType;
+    if (sourceName.substr(0, 4) == "disk"){
+        metricType = DiskMetric;
+    } else if (sourceName.substr(0, 6) == "memory") {
+        metricType = MemoryMetric;
+    } else if (sourceName.substr(0, 11) == "wrapped_cpu") {
+        metricType = WrappedCpuMetrics;
+    } else if (sourceName.substr(0, 15) == "wrapped_network") {
+        metricType = WrappedNetworkMetrics;
+    } else {
+        //TODO: other source names
+        NES_ERROR("MetricUtils: metricTypeFromSourceName: MetricType cannot be defined from sourceName")
+        metricType = UnknownMetric;
     }
 
-    return coresList;
+    return metricType;
 }
 
-MetricType MetricUtils::getMetricTypeFromCollectorType(MetricCollectorType type) {
-    switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return MetricType::WrappedCpuMetrics;
-        case MetricCollectorType::DISK_COLLECTOR: return MetricType::DiskMetric;
-        case MetricCollectorType::MEMORY_COLLECTOR: return MetricType::MemoryMetric;
-        case MetricCollectorType::NETWORK_COLLECTOR: return MetricType::WrappedNetworkMetrics;
-        default: {
-            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
-        }
+SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
+    SchemaPtr defaultSchema;
+    if (metricType == CpuMetric || metricType == WrappedCpuMetrics) {
+        defaultSchema = CpuMetrics::getDefaultSchema("");
+    } else if (metricType == NetworkMetric || metricType == WrappedNetworkMetrics) {
+        defaultSchema = NetworkMetrics::getDefaultSchema("");
+    } else if (metricType == DiskMetric) {
+        defaultSchema = DiskMetrics::getDefaultSchema("");
+    } else if (metricType == MemoryMetric) {
+        defaultSchema = MemoryMetrics::getDefaultSchema("");
     }
-    return UnknownMetric;
+
+    return defaultSchema;
 }
 
-MetricPtr MetricUtils::createMetricFromCollectorTypeAndSchema(MetricCollectorType type, SchemaPtr schema) {
-    switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(Monitoring::CpuMetricsWrapper(schema), WrappedCpuMetrics);
-        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(Monitoring::DiskMetrics(schema), DiskMetric);
-        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(Monitoring::MemoryMetrics(schema), MemoryMetric);
-        case MetricCollectorType::NETWORK_COLLECTOR:
-            return std::make_shared<Metric>(Monitoring::NetworkMetricsWrapper(schema), WrappedNetworkMetrics);
-        default: {
-            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
-        }
-    }
-    return nullptr;
+std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
+    std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_" + schema->toStringForLogicalSourceName();
+    return logicalSourceName;
 }
 }// namespace NES::Monitoring

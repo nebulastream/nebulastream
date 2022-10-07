@@ -61,6 +61,18 @@ class CoordinatorRPCClient {
                                   uint32_t rpcRetryAttemps = 10,
                                   std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
 
+    //TODO: Beschreibung
+    bool registerMonitoringPlan(const Monitoring::MonitoringPlanPtr& monitoringPlan);
+
+    //TODO: Beschreibung
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
+
+    //TODO: Beschreibung
+    bool registerLogicalSourceName(const std::string& logicalSourceName);
+
+    //TODO: Beschreibung
+    bool registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
+
     /**
      * @brief Register the monitoring plan at the monitoring manager
      * @param monitoringPlan

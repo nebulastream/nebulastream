@@ -41,6 +41,9 @@ class SourceCatalogService {
   public:
     SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
+    //TODO: Beschreibung
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
+
     /**
      * @brief Checks of a logical source name exist at the catalog
      * @param logicalSourceName
