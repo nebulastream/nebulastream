@@ -22,8 +22,10 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -36,6 +38,7 @@
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <cpprest/json.h>
 #include <csignal>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
@@ -43,9 +46,6 @@
 #include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/MonitoringCatalog.hpp>
-
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -140,32 +140,32 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
 
-//        if ((workerConfig->monitoringConfiguration.getValue().empty())) {
-//            MonitoringPlanPtr monitoringPlan = MonitoringPlan::defaultPlan();
-//            MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
-//            monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-//                                                      workerConfig->enableMonitoring);
-//            //         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
-//            NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
-//        } else {
-//            web::json::value configurationMonitoringJson =
-//                MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
-//
-//            MonitoringPlanPtr monitoringPlan = MonitoringPlan::setSchemaJson(configurationMonitoringJson);
-//            MonitoringCatalogPtr monitoringCatalog = MonitoringCatalog::createCatalog(monitoringPlan);
-//            std::vector<uint64_t> nodeIdVector {topologyNodeId};
-//
-//            monitoringAgent = MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-//                                                      workerConfig->enableMonitoring);
-//            NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
-//        }
-//        //      std::vector<uint64_t> nodeIdVector {topologyNodeId};
+        if ((workerConfig->monitoringConfiguration.getValue().empty())) {
+            Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
+            Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
+            monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
+                                                      workerConfig->enableMonitoring);
+            //         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
+            NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
+        } else {
+            web::json::value configurationMonitoringJson =
+                Monitoring::MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
+
+            Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::setSchemaJson(configurationMonitoringJson);
+            Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
+            std::vector<uint64_t> nodeIdVector {topologyNodeId};
+
+            monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
+                                                      workerConfig->enableMonitoring);
+            NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
+        }
+        //      std::vector<uint64_t> nodeIdVector {topologyNodeId};
 //        monitoringAgent->addMonitoringStreams(workerConfig);
-        Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
-        Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
-        monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-                                                  workerConfig->enableMonitoring);
-        NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
+//        Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
+//        Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
+//        monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
+//                                                  workerConfig->enableMonitoring);
+//        NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
 
 //        monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring);
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring.getValue());
