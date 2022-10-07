@@ -51,6 +51,9 @@ class MonitoringPlan {
     */
     uint64_t getSampleRate(MetricType metric);
 
+    //TODO: Beschreiben
+    static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
+
     /**
      * @brief Creates a monitoring plan for a given configuration of the monitoring
      * @param configuredMetrics: configuration of the monitoring

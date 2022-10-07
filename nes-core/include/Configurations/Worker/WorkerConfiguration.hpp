@@ -293,6 +293,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
+                &monitoringConfiguration};
 #ifdef TFDEF
                 &isTensorflowSupported
 #endif
