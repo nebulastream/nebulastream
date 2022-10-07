@@ -941,7 +941,6 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithoutBuffering) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //todo: maybe remove these 2
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
     wrkConf1->numWorkerThreads.setValue(4);
@@ -950,12 +949,11 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithoutBuffering) {
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
-    //stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long_test.csv");
     stype->setNumberOfBuffersToProduce(9999);
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(1);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -987,8 +985,6 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithoutBuffering) {
         sleep(1);
     }
 
-    //wrk1->getNodeEngine()->bufferAllData();
-
     sleep(1);
     std::ifstream inFile(testFile);
     auto last_recv = std::count(std::istreambuf_iterator<char>(inFile),
@@ -1015,7 +1011,6 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithoutBuffering) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     string expectedContent = compareString;
-    //todo: this fails sporadically, why?
     EXPECT_TRUE(TestUtils::checkOrderedOutputOrTimeout(expectedContent, testFile));
 
     int response = remove(testFile.c_str());
@@ -1031,7 +1026,6 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithoutBuffering) {
 }
 
 TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithBufferingIsOrdered) {
-    //NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_TRACE);
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
 
@@ -1082,8 +1076,8 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithBufferingIsOrdered) {
     stype->setNumberOfBuffersToProduce(9999);
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(1);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1197,7 +1191,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //todo: maybe remove these 2
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
 
@@ -1208,8 +1201,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     stype->setNumberOfBuffersToProduce(9999);
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(1);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1323,7 +1316,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //todo: maybe remove these 2
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
 
@@ -1332,12 +1324,11 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
-    //stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long_test.csv");
     stype->setNumberOfBuffersToProduce(9999);
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(1);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1451,13 +1442,6 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    /*
-    //todo: maybe remove these 2
-    wrkConf1->dataPort.setValue(0);
-    wrkConf1->rpcPort.setValue(0);
-     */
-
-    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
@@ -1465,8 +1449,8 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(10000);
     stype->setGatheringMode(GatheringMode::INTERVAL_MODE);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1551,7 +1535,6 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //todo: maybe remove these 2
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
 
@@ -1577,8 +1560,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
 
 TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO(" start coordinator");
-    //NES::Logger::getInstance()->setLogLevel(NES::LogLevel::LOG_TRACE);
-    std::string testFile = getTestResourceFolder() / "exdra_out.csv";
+    std::string testFile = getTestResourceFolder() / "sequence_with_reconnecting_out.csv";
 
     std::stringstream fileInStream;
     std::ifstream checkFile(std::string(TEST_DATA_DIRECTORY) + std::string("sequence_middle_check.csv"));
@@ -1671,7 +1653,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
         {52.4010561708298, 13.426889487526187}
     };
 
-    //size_t idCount = 10000;
     for (auto elem : locVec) {
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -1680,8 +1661,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
         EXPECT_TRUE(retStart);
-
-        //idCount++;
     }
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 60));
     string singleLocStart = "52.55227464714949, 13.351743136322877";
@@ -1696,12 +1675,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    //todo: maybe remove these 2
-    /*
-    wrkConf1->dataPort.setValue(0);
-    wrkConf1->rpcPort.setValue(0);
-     */
-
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create();
@@ -1709,10 +1682,9 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     stype->setNumberOfBuffersToProduce(9999);
     stype->setNumberOfTuplesToProducePerBuffer(1);
     stype->setGatheringInterval(1);
-    auto sourceExdra = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sourceExdra);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
 
-    //error starts after adding this block
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->parentId.setValue(10006);
     wrkConf1->parentId.setValue(startParentId);
@@ -1726,7 +1698,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
-    //wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1750,8 +1721,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    //todo: check if buffering really happens, make more finegrained test, to see if buffering really works properly
-    //std::system(std::string("/snap/bin/chromium file:///home/x/visualizeNes/mapNodesWithReconnects.html?restPort=" +std::to_string(*restPort)).c_str());
     size_t recv_tuples = 0;
     while (recv_tuples < 10000) {
         std::ifstream inFile(testFile);

@@ -172,7 +172,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_INFO("stop buffering data for context " << workerContext.getId());
             auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
             NES_INFO("sending buffered data")
-            //todo: how to thread this
             while (topBuffer) {
                 /*this will only work if guarantees are not set to at least once,
                 otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
