@@ -50,7 +50,6 @@ using std::filesystem::directory_iterator;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
-QueryParsingServicePtr queryParsingService;
 TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
@@ -76,7 +75,7 @@ class ErrorHandler : public Exceptions::ErrorListener {
 void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //Create source catalog service
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(nullptr);
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     //register logical stream with different schema
@@ -110,20 +109,27 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
                                  ->addField("time1", NES::UINT64)
                                  ->addField("time2", NES::UINT64);
 
+    NES::SchemaPtr schema4 = NES::Schema::create()
+                                 ->addField("s", NES::UINT64)
+                                 ->addField("t", NES::UINT64)
+                                 ->addField("u", NES::UINT64)
+                                 ->addField("v", NES::UINT64)
+                                 ->addField("w", NES::UINT64)
+                                 ->addField("x", NES::UINT64)
+                                 ->addField("time1", NES::UINT64)
+                                 ->addField("time2", NES::UINT64);
+
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
     for (uint64_t j = 0; j < noOfLogicalSource; j++) {
-        //We increment the counter till 3 and then reset it to 0
-        //When the counter is 1 we add the logical stream with schema type 1
-        //When the counter is 2 we add the logical stream with schema type 2
-        //When the counter is 3 we add the logical stream with schema type 3
-
         if (counter == 1) {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema1);
         } else if (counter == 2) {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema2);
         } else if (counter == 3) {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema3);
+        } else if (counter == 4) {
+            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema4);
             counter = 0;
         }
         counter++;
@@ -247,7 +253,7 @@ Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
 void compileQuery(const std::string& stringQuery,
                   uint64_t id,
                   const std::shared_ptr<QueryParsingService>& queryParsingService,
-                  std::promise<QueryPtr>& promise) {
+                  std::promise<QueryPtr> promise) {
     auto query = queryParsingService->createQueryFromCodeString(stringQuery);
     query->getQueryPlan()->setQueryId(id);
     promise.set_value(query);
@@ -308,13 +314,13 @@ int main(int argc, const char* argv[]) {
         NES_THROW_RUNTIME_ERROR("Unable to find any query");
     }
 
-    //using Open MP to parallelize the compilation of string queries and string them in an array of query objects
+    //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
     const uint32_t numOfQueries = queries.size();
     QueryPtr queryObjects[numOfQueries];
 
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    queryParsingService = QueryParsingService::create(jitCompiler);
+    auto queryParsingService = QueryParsingService::create(jitCompiler);
 
     //If no available thread then set number of threads to 1
     uint64_t numThreads = std::thread::hardware_concurrency();
@@ -322,26 +328,40 @@ int main(int argc, const char* argv[]) {
         NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
         numThreads = 1;
     }
+    std::cout << "Using "<< numThreads << " of threads for parallel parsing." << std::endl;
 
     uint64_t queryNum = 0;
+    //Work till all queries are not parsed
     while (queryNum < numOfQueries) {
         std::vector<std::future<QueryPtr>> futures;
+        std::vector<std::thread> threadPool(numThreads);
         uint64_t threadNum;
+        //Schedule queries to be parsed with #numThreads parallelism
         for (threadNum = 0; threadNum < numThreads; threadNum++) {
+            //If no more query to parse
             if (queryNum >= numOfQueries) {
                 break;
             }
+            //Schedule thread for execution and pass a promise
             std::promise<QueryPtr> promise;
-            std::thread thr(compileQuery, queries[queryNum], queryNum + 1, std::move(queryParsingService), std::ref(promise));
-            thr.join();
+            //Store the future, schedule the thread, and increment the query count
             futures.emplace_back(promise.get_future());
+            threadPool.emplace_back(std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
             queryNum++;
         }
 
-        for(uint64_t futureNum = 0; futureNum < threadNum; futureNum++){
+        //Wait for all unfinished threads
+        for (auto& item : threadPool) {
+            if(item.joinable()){ // if thread is not finished yet
+                item.join();
+            }
+        }
+
+        //Fetch the parsed query from all threads
+        for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
             auto query = futures[futureNum].get();
             auto queryID = query->getQueryPlan()->getQueryId();
-            queryObjects[queryID - 1] = query;
+            queryObjects[queryID - 1] = query;//Add the parsed query to the (queryID - 1)th index
         }
     }
 
@@ -363,7 +383,7 @@ int main(int argc, const char* argv[]) {
             sleep(startupSleepInterval);
 
             //Setup topology and source catalog
-            setUp(3, 1);
+            setUp(26, 1);
 
             z3::config cfg;
             cfg.set("timeout", 1000);
