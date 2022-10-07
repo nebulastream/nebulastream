@@ -22,6 +22,7 @@
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
+#include <REST/OatppController/MaintenanceController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -65,7 +66,7 @@ RestServer::RestServer(std::string host,
                                               locationService)),
       host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
       globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
-      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog) {}
+      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), maintenanceService(maintenanceService) {}
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
