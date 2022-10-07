@@ -101,6 +101,16 @@ class MetricUtils {
      */
     static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric,
                                                                                          int numberOfAttributes);
+
+    //TODO: Beschreibung
+    static MetricType metricTypeFromSourceName(std::string sourceName);
+
+    //TODO: Beschreibung
+    static SchemaPtr defaultSchema(MetricType metricType);
+
+    //TODO: Beschreibung
+    static std::string createLogicalSourceName(MetricType metricType, SchemaPtr schema);
+
 };
 }// namespace NES::Monitoring
 

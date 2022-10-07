@@ -103,13 +103,19 @@ class MonitoringManager {
     //  -- dtor --
     ~MonitoringManager();
 
+    //TODO: Beschreibung
+    bool registerMonitoringPlans(const uint64_t& nodeId, const MonitoringPlanPtr& monitoringPlan);
+
+    //TODO: Beschreibung
+    bool insertLogicalSource (std::string logicalSourceName);
+
     /**
      * @brief Register a monitoring plan for given nodes.
      * @param nodeId
      * @param monitoringPlan
      * @return True, if successful, else false
     */
-    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
+//    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.
@@ -153,7 +159,7 @@ class MonitoringManager {
      * @brief Registers the logical monitoring streams at the coordinator.
      * @return true if monitoring is disabled or if the streams have been registered successfully, else false
      */
-    bool registerLogicalMonitoringStreams(const NES::Configurations::CoordinatorConfigurationPtr config);
+    bool registerLogicalMonitoringStreamsDefault(const NES::Configurations::CoordinatorConfigurationPtr config);
 
     /**
      * @brief Starts or redeploys monitoring queries at the coordinator

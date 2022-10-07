@@ -80,7 +80,7 @@ MonitoringManager::~MonitoringManager() {
     topology.reset();
 }
 
-bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
+bool MonitoringManager::registerMonitoringPlans(const uint64_t& nodeId, const MonitoringPlanPtr& monitoringPlan) {
     if (!enableMonitoring) {
         NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
         return false;
@@ -89,36 +89,64 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
         NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
         return false;
     }
-    if (nodeIds.empty()) {
+    if (!nodeId) {
         NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
         return false;
     }
 
-    for (auto nodeId : nodeIds) {
-        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
-        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+    NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered MonitoringPlan successfully.");
+    monitoringPlanMap[nodeId] = monitoringPlan;
 
-        if (node) {
-            auto nodeIp = node->getIpAddress();
-            auto nodeGrpcPort = node->getGrpcPort();
-            std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-
-            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
-
-            if (success) {
-                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
-                monitoringPlanMap[nodeId] = monitoringPlan;
-            } else {
-                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
-                return false;
-            }
-        } else {
-            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
-            return false;
-        }
-    }
     return true;
 }
+
+bool MonitoringManager::insertLogicalSource(std::string logicalSourceName) {
+    if (!logicalMonitoringSources.contains(logicalSourceName)) {
+        logicalMonitoringSources.insert(logicalSourceName);
+        return true;
+    }
+    return false;
+}
+
+//bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
+//    if (!enableMonitoring) {
+//        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+//        return false;
+//    }
+//    if (!monitoringPlan) {
+//        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+//        return false;
+//    }
+//    if (nodeIds.empty()) {
+//        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+//        return false;
+//    }
+//
+//    for (auto nodeId : nodeIds) {
+//        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
+//        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+//
+//        if (node) {
+//            auto nodeIp = node->getIpAddress();
+//            auto nodeGrpcPort = node->getGrpcPort();
+//            std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+//
+//            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
+//
+//            if (success) {
+//                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
+//                monitoringPlanMap[nodeId] = monitoringPlan;
+//            } else {
+//                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
+//                return false;
+//            }
+//        } else {
+//            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
+//            return false;
+//        }
+//    }
+//    return true;
+//}
 
 web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     web::json::value metricsJson;
@@ -181,17 +209,17 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configurations::CoordinatorConfigurationPtr config) {
+bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
     if (enableMonitoring) {
-        for (auto collectorType : monitoringCollectors) {
+        for (auto collectorType : monitoringCollectors) {   //Collectoren erzeugen die Logicalstreams;
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string logicalSourceName = NES::Monitoring::toString(metricType);
+            std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_default";
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
-            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
-        }
+            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));             //hier wird der Logicalstream erzeugt
+        }                                                                                                                //feste Schema, jeder MetricCollector hat ein festes Schema
         return true;
     }
     NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");

@@ -121,7 +121,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     monitoringService =
         std::make_shared<MonitoringService>(workerRpcClient, topology, queryService, queryCatalogService, enableMonitoring);
-    monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
+    monitoringService->getMonitoringManager()->registerLogicalMonitoringStreamsDefault(this->coordinatorConfiguration);
 }
 
 NesCoordinator::~NesCoordinator() {

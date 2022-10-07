@@ -41,6 +41,12 @@ class Schema {
     Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);
 
+    //TODO: Beschreibung
+    static SchemaPtr parse(std::string schemaString);
+
+    //TODO: Beschreibung
+    [[nodiscard]] std::string toStringForLogicalSourceName() const;
+
     /**
      * @brief Schema qualifier separator
      */

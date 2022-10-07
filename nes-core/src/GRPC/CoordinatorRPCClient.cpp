@@ -163,6 +163,85 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
     workerId = SIZE_MAX;
 }
 
+bool CoordinatorRPCClient::registerMonitoringPlan(const Monitoring::MonitoringPlanPtr& monitoringPlan) {
+    NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan workerId=" << workerId);
+
+    RegisterMonitoringPlanRequest request;
+    request.set_id(workerId);
+
+    for (const auto& metricType : monitoringPlan->getMetricTypes()) {
+        MonitoringPlanPartDefinition* monitoringPlanMetricType = request.add_monitoringplanpart();
+        monitoringPlanMetricType->set_metrictype(toString(metricType));
+        monitoringPlanMetricType->set_schema(monitoringPlan->getSchema(metricType)->toString());
+        monitoringPlanMetricType->set_samplerate(monitoringPlan->getSampleRate(metricType));
+    }
+
+    NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RegisterMonitoringPlanRequest, RegisterMonitoringPlanReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterMonitoringPlanRequest& request, RegisterMonitoringPlanReply* reply) {
+            return coordinatorStub->RegisterMonitoringPlan(context, request, reply);
+        });
+}
+
+bool CoordinatorRPCClient::logicalSourceLookUp(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: logicalSourceLookUp: " << logicalSourceName);
+
+    LogicalSourceLookUpRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+
+    NES_DEBUG("CoordinatorRPCClient::logicalSourceLookUp request=" << request.DebugString());
+
+    class LogicalSourceLookUpListener : public detail::RpcExecutionListener<bool, LogicalSourceLookUpRequest, LogicalSourceLookUpReply> {
+      public:
+        std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
+
+        explicit LogicalSourceLookUpListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+            : coordinatorStub(coordinatorStub) {}
+
+        Status rpcCall(const LogicalSourceLookUpRequest& request, LogicalSourceLookUpReply* reply) override {
+            ClientContext context;
+
+            return coordinatorStub->LogicalSourceLookUp(&context, request, reply);
+        }
+        bool onSuccess(const LogicalSourceLookUpReply& reply) override {
+            NES_DEBUG("CoordinatorRPCClient::logicalSourceLookUp: status ok return success=" << reply.success());
+            return reply.success();
+        }
+        bool onPartialFailure(const Status& status) override {
+            NES_DEBUG(" CoordinatorRPCClient::logicalSourceLookUp error=" << status.error_code() << ": " << status.error_message());
+            return false;
+        }
+        bool onFailure() override { return false; }
+    };
+
+    auto listener = LogicalSourceLookUpListener{coordinatorStub};
+
+    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+}
+
+bool CoordinatorRPCClient::registerLogicalSourceName(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceName workerId=" << workerId);
+
+    RegisterLogicalSourceNameRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceName request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RegisterLogicalSourceNameRequest, RegisterLogicalSourceNameReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterLogicalSourceNameRequest& request, RegisterLogicalSourceNameReply* reply) {
+            return coordinatorStub->RegisterLogicalSourceName(context, request, reply);
+        });
+}
+
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got "
               << physicalSources.size() << " physical sources to register for worker with id " << workerId);
@@ -214,6 +293,27 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
         rpcBackoff,
         [this](ClientContext* context, const RegisterLogicalSourceRequest& request, RegisterLogicalSourceReply* reply) {
             return coordinatorStub->RegisterLogicalSource(context, request, reply);
+        });
+}
+
+bool CoordinatorRPCClient::registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema) {
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW workerId=" << workerId);
+
+    std::string logicalSourceSchemaString = logicalSourceSchema->toString();
+
+    RegisterLogicalSourceNEWRequest request;
+    request.set_id(workerId);
+    request.set_logicalsourcename(logicalSourceName);
+    request.set_logicalsourceschema(logicalSourceSchemaString);
+
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RegisterLogicalSourceNEWRequest, RegisterLogicalSourceNEWReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RegisterLogicalSourceNEWRequest& request, RegisterLogicalSourceNEWReply* reply) {
+            return coordinatorStub->RegisterLogicalSourceNEW(context, request, reply);
         });
 }
 

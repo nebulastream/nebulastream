@@ -53,7 +53,7 @@ class MonitoringService {
      * @param monitoringPlan
      * @return json to indicate if it was successfully
      */
-    web::json::value registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan);
+//    web::json::value registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

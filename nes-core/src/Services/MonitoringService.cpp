@@ -43,20 +43,20 @@ MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
         std::make_shared<Monitoring::MonitoringManager>(workerClient, topology, queryService, catalogService, enableMonitoring);
 }
 
-web::json::value MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {
-    web::json::value metricsJson{};
-    auto root = topology->getRoot();
-
-    std::vector<uint64_t> nodeIds;
-    auto nodes = root->getAndFlattenAllChildren(false);
-    for (const auto& node : root->getAndFlattenAllChildren(false)) {
-        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
-        nodeIds.emplace_back(tNode->getId());
-    }
-    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
-    metricsJson["success"] = success;
-    return metricsJson;
-}
+//web::json::value MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {
+//    web::json::value metricsJson{};
+//    auto root = topology->getRoot();
+//
+//    std::vector<uint64_t> nodeIds;
+//    auto nodes = root->getAndFlattenAllChildren(false);
+//    for (const auto& node : root->getAndFlattenAllChildren(false)) {
+//        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
+//        nodeIds.emplace_back(tNode->getId());
+//    }
+//    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
+//    metricsJson["success"] = success;
+//    return metricsJson;
+//}
 
 web::json::value MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId) {
     NES_DEBUG("MonitoringService: Requesting monitoring data from worker id=" + std::to_string(nodeId));

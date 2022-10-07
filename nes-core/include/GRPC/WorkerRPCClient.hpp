@@ -156,7 +156,7 @@ class WorkerRPCClient {
      * @param the monitoring plan
      * @return bool if successful
      */
-    static bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
+//    static bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

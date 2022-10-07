@@ -15,41 +15,84 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
 
 namespace NES::Monitoring {
-MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
+//MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
+//    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
+//}
+
+MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, uint64_t>>& metrics) : monitoringPlan(metrics) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
-MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
-    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
+//MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
+//    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
+//}
+
+MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& monitoringPlan) {
+    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan));
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
-    std::set<MetricType> metricTypes{WrappedCpuMetrics, DiskMetric, MemoryMetric, WrappedNetworkMetrics};
-    return MonitoringPlan::create(metricTypes);
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
+    uint64_t sampleRate = 1000;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+
+    tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(DiskMetric, std::make_pair(DiskMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(MemoryMetric, std::make_pair(MemoryMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+    tempPair = std::make_pair(WrappedNetworkMetrics, std::make_pair(NetworkMetrics::getDefaultSchema(""), sampleRate));
+    configuredMonitoringPlan.insert(tempPair);
+
+    return MonitoringPlan::create(configuredMonitoringPlan);
+}
+
+SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
+    // TODO: auffangen, falls MetricType nicht in MonitoringPlan vorhanden
+    return monitoringPlan.find(metric)->second.first;
+}
+
+uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
+    return monitoringPlan.find(metric)->second.second;
 }
 
 std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
     return std::set<MetricCollectorType>{CPU_COLLECTOR, DISK_COLLECTOR, MEMORY_COLLECTOR, NETWORK_COLLECTOR};
 }
 
-bool MonitoringPlan::addMetric(MetricType metric) {
-    if (hasMetric(metric)) {
-        return false;
-    }
-    metricTypes.insert(metric);
-    return true;
-}
+//bool MonitoringPlan::addMetric(MetricType metric) {
+//    if (hasMetric(metric)) {
+//        return false;
+//    }
+//    metricTypes.insert(metric);
+//    return true;
+//}
 
-bool MonitoringPlan::hasMetric(MetricType metric) const { return metricTypes.contains(metric); }
+bool MonitoringPlan::hasMetric(MetricType metric) const {
+    return monitoringPlan.contains(metric);
+//    std::string metricStr = NES::Monitoring::toString(metric);
+//    for (auto metricType : monitoringPlan) {
+//        std::string metricTypeStr = NES::Monitoring::toString(metricType.first);
+//        if (metricTypeStr ==  metricStr) {
+//            return true;
+//        }
+//    }
+//    return false;
+}
 
 std::string MonitoringPlan::toString() const {
     std::stringstream output;
     output << "MonitoringPlan:";
 
-    for (auto metric : metricTypes) {
-        switch (metric) {
+    for (auto metric : monitoringPlan) {
+        switch (metric.first) {
             case MetricType::CpuMetric: {
                 output << "cpu(True);";
             };
@@ -77,7 +120,15 @@ std::string MonitoringPlan::toString() const {
 
 std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) { return strm << plan.toString(); }
 
-const std::set<MetricType>& MonitoringPlan::getMetricTypes() const { return metricTypes; }
+const std::set<MetricType> MonitoringPlan::getMetricTypes() const {
+
+    std::set<MetricType> allMetricTypes;
+    for (auto metric : monitoringPlan) {
+        NES_DEBUG("MonitoringPlan: getMetricTypes: config is set:" + NES::Monitoring::toString(metric.first));
+        allMetricTypes.insert(metric.first);
+    }
+    return allMetricTypes;
+}
 
 const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {
     std::set<MetricCollectorType> output;

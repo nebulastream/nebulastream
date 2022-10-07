@@ -18,6 +18,8 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <memory>
 #include <unordered_map>
+#include <Monitoring/MonitoringPlan.hpp>
+
 
 namespace NES::Monitoring {
 class MetricCollector;
@@ -36,6 +38,10 @@ class MonitoringCatalog {
      * @return the catalog
      */
     static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors);
+
+    //TODO: Beschreibung
+    static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
+
 
     /**
      * Creates a MonitoringCatalog with a pre-initialized map that contains basic MetricTypes and their collectors.

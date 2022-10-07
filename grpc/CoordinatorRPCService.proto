@@ -18,6 +18,19 @@ import "WorkerLocation.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
+  // Sends MonitoringPlan from worker to MonitoringManager to register
+  rpc RegisterMonitoringPlan (RegisterMonitoringPlanRequest) returns (RegisterMonitoringPlanReply) {}
+
+  // Checks if LogicalSource already exist at SourceCatalog
+  rpc LogicalSourceLookUp (LogicalSourceLookUpRequest) returns (LogicalSourceLookUpReply) {}
+
+  // Registers logicalSourceName at MonitoringManager
+  rpc RegisterLogicalSourceName (RegisterLogicalSourceNameRequest)
+      returns (RegisterLogicalSourceNameReply) {}
+
+  // Register logicalSource at SourceCatalog
+  rpc RegisterLogicalSourceNEW (RegisterLogicalSourceNEWRequest) returns (RegisterLogicalSourceNEWReply) {}
+
   // Sends a registration request for new worker to the coordinator
   rpc RegisterNode (RegisterNodeRequest) returns (RegisterNodeReply) {}
 
@@ -67,6 +80,49 @@ service CoordinatorRPCService {
   rpc notifySourceStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
+}
+
+message RegisterMonitoringPlanRequest {
+  uint64 id = 1;
+  repeated MonitoringPlanPartDefinition monitoringPlanPart = 2;
+}
+
+message MonitoringPlanPartDefinition {
+  string metricType = 1;
+  string schema = 2;
+  uint64 sampleRate = 3;
+}
+
+message RegisterMonitoringPlanReply {
+  bool success = 1;
+}
+
+message LogicalSourceLookUpRequest {
+  uint64 id = 1;
+  string logicalSourceName = 2;
+}
+
+message LogicalSourceLookUpReply {
+  bool success = 1;
+}
+
+message RegisterLogicalSourceNameRequest {
+  uint64 id = 1;
+  string logicalSourceName = 2;
+}
+
+message RegisterLogicalSourceNameReply {
+  bool success = 1;
+}
+
+message RegisterLogicalSourceNEWRequest {
+  uint64 id = 1;
+  string logicalSourceName = 2;
+  string logicalSourceSchema = 3;
+}
+
+message RegisterLogicalSourceNEWReply {
+  bool success = 1;
 }
 
 message RegisterNodeRequest {

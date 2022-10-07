@@ -99,4 +99,27 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     EXPECT_TRUE(tokens == test);
 }
 
+//TEST(UtilFunctionTest, schemaParseString) {
+//    SchemaPtr schemaRegistration = Monitoring::RegistrationMetrics::getSchema("");
+//    std::string schemaRegistrationString = schemaRegistration->toString();
+//    SchemaPtr parsedRegistrationSchema = Schema::parse(schemaRegistrationString);
+//    SchemaPtr schemaCpu = CpuMetrics::getDefaultSchema("");
+//    std::string schemaCpuString = schemaCpu->toString();
+//    SchemaPtr parsedCpuSchema = Schema::parse(schemaCpuString);
+//    SchemaPtr schemaDisk = DiskMetrics::getDefaultSchema("");
+//    std::string schemaDiskString = schemaDisk->toString();
+//    SchemaPtr parsedDiskSchema = Schema::parse(schemaDiskString);
+//    SchemaPtr schemaMemory = MemoryMetrics::getDefaultSchema("");
+//    std::string schemaMemoryString = schemaMemory->toString();
+//    SchemaPtr parsedMemorySchema = Schema::parse(schemaMemoryString);
+//    SchemaPtr schemaNetwork = NetworkMetrics::getDefaultSchema("");
+//    std::string schemaNetworkString = schemaNetwork->toString();
+//    SchemaPtr parsedNetworkSchema = Schema::parse(schemaNetworkString);
+//
+//    ASSERT_TRUE(parsedRegistrationSchema->equals(schemaRegistration, false));
+//    ASSERT_TRUE(parsedCpuSchema->equals(schemaCpu, false));
+//    ASSERT_TRUE(parsedDiskSchema->equals(schemaDisk, false));
+//    ASSERT_TRUE(parsedMemorySchema->equals(schemaMemory, false));
+//    ASSERT_TRUE(parsedNetworkSchema->equals(schemaNetwork, false));
+//}
 }// namespace NES

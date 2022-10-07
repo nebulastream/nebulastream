@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <map>
 
 namespace NES::Monitoring {
 
@@ -29,8 +30,15 @@ namespace NES::Monitoring {
 */
 class MonitoringPlan {
   public:
-    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+//    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
     static MonitoringPlanPtr defaultPlan();
+
+    //TODO: Beschreiben
+    SchemaPtr getSchema(MetricType metric);
+
+    //TODO: Beschreiben
+    uint64_t getSampleRate(MetricType metric);
 
     /**
      * @brief Returns the default collectors of the plan.
@@ -42,7 +50,7 @@ class MonitoringPlan {
      * @brief Add a specific metric to the plan
      * @param metric
     */
-    bool addMetric(MetricType metric);
+//    bool addMetric(MetricType metric);
 
     /**
      * @brief Checks if a metric is part of the MonitoringPlan
@@ -61,7 +69,7 @@ class MonitoringPlan {
      * @brief Returns the MetricType objects that represent the plan.
      * @return A set of metric type objects.
     */
-    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
+    [[nodiscard]] const std::set<MetricType> getMetricTypes() const;
 
     /**
      * @brief Returns the MetricType objects that represent the plan.
@@ -72,10 +80,12 @@ class MonitoringPlan {
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
   private:
-    explicit MonitoringPlan(const std::set<MetricType>& metrics);
+//    explicit MonitoringPlan(const std::set<MetricType>& metrics);
+    explicit MonitoringPlan(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
 
     //enum defined in SerializableDataType.proto
-    std::set<MetricType> metricTypes;
+//    std::set<MetricType> metricTypes;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
 };
 
 }// namespace NES::Monitoring
