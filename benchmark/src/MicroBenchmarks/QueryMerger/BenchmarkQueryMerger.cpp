@@ -208,6 +208,15 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
     NES_WARNING("Keeping default values for Worker Config.");
 }
 
+void compileQuery(const std::string& stringQuery,
+                  uint64_t id,
+                  const std::shared_ptr<QueryParsingService>& queryParsingService,
+                  std::promise<QueryPtr> promise) {
+    auto query = queryParsingService->createQueryFromCodeString(stringQuery);
+    query->getQueryPlan()->setQueryId(id);
+    promise.set_value(query);
+}
+
 /**
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
@@ -254,18 +263,58 @@ int main(int argc, const char* argv[]) {
             queries.emplace_back(line);
         }
 
-        uint64_t noOfQueries = queries.size();
-        QueryPtr queryObjects[noOfQueries];
+        //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
+        const uint32_t numOfQueries = queries.size();
+        QueryPtr queryObjects[numOfQueries];
 
-        //using Open MP to parallelize the compilation of string queries and string them in an array of query objects
-#pragma omp parallel for
-        for (uint64_t i = 0; i < queries.size(); i++) {
-            auto cppCompiler = Compiler::CPPCompiler::create();
-            auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-            auto queryParsingService = QueryParsingService::create(jitCompiler);
-            auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
-            queryObjects[i] = queryObj;
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+
+        //If no available thread then set number of threads to 1
+        uint64_t numThreads = std::thread::hardware_concurrency();
+        if (numThreads == 0) {
+            NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
+            numThreads = 1;
         }
+        std::cout << "Using "<< numThreads << " of threads for parallel parsing." << std::endl;
+
+        uint64_t queryNum = 0;
+        //Work till all queries are not parsed
+        while (queryNum < numOfQueries) {
+            std::vector<std::future<QueryPtr>> futures;
+            std::vector<std::thread> threadPool(numThreads);
+            uint64_t threadNum;
+            //Schedule queries to be parsed with #numThreads parallelism
+            for (threadNum = 0; threadNum < numThreads; threadNum++) {
+                //If no more query to parse
+                if (queryNum >= numOfQueries) {
+                    break;
+                }
+                //Schedule thread for execution and pass a promise
+                std::promise<QueryPtr> promise;
+                //Store the future, schedule the thread, and increment the query count
+                futures.emplace_back(promise.get_future());
+                threadPool.emplace_back(std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
+                queryNum++;
+            }
+
+            //Wait for all unfinished threads
+            for (auto& item : threadPool) {
+                if(item.joinable()){ // if thread is not finished yet
+                    item.join();
+                }
+            }
+
+            //Fetch the parsed query from all threads
+            for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
+                auto query = futures[futureNum].get();
+                auto queryID = query->getQueryPlan()->getQueryId();
+                queryObjects[queryID - 1] = query;//Add the parsed query to the (queryID - 1)th index
+            }
+        }
+
+        std::cout << "Parsed all queries." << std::endl;
 
         //Compute total number of operators in the query set
         uint64_t totalOperators = 0;
@@ -290,14 +339,14 @@ int main(int argc, const char* argv[]) {
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
                 //Send queries to nebula stream for processing
-                for (uint64_t i = 1; i <= noOfQueries; i++) {
+                for (uint64_t i = 1; i <= numOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
                     queryPlan->setQueryId(i);
                     queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
                 }
 
                 //Fetch the last query for the query catalog
-                auto lastQuery = queryCatalogService->getEntryForQuery(noOfQueries);
+                auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries);
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryStatus() != QueryStatus::Running) {
                     //Sleep for 100 milliseconds
@@ -321,7 +370,7 @@ int main(int argc, const char* argv[]) {
 
                 //Add the information in the log
                 benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
-                                << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
+                                << noOfPhysicalSources[configNum] << "," << numOfQueries << ","
                                 << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
                                 << mergedOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
                                 << "," << endTime << "," << endTime - startTime << std::endl;
