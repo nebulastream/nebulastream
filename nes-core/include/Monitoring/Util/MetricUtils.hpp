@@ -111,6 +111,12 @@ class MetricUtils {
     //TODO: Beschreibung
     static std::string createLogicalSourceName(MetricType metricType, SchemaPtr schema);
 
+    //TODO: Beschreibung
+    static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
+
+    //TODO:Beschreibung
+    static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
+
 };
 }// namespace NES::Monitoring
 

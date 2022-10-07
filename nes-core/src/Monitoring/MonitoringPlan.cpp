@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include <cpprest/json.h>
+#include <list>
 
 namespace NES::Monitoring {
 //MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
@@ -61,6 +63,53 @@ SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
 
 uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
     return monitoringPlan.find(metric)->second.second;
+}
+
+MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
+    SchemaPtr schema;
+    web::json::value attributesArray;
+    std::list<std::string> attributesList;
+    uint64_t sampleRate = 1000;
+    std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+    if (configuredMetrics["cpu"].is_object()) {
+        if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
+            sampleRate = configuredMetrics["cpu"]["sampleRate"].as_integer();
+        }
+        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["cpu"]["attributes"]);
+        tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
+    } if (configuredMetrics["disk"].is_object()) {
+        if (configuredMetrics["disk"]["sampleRate"].is_number()) {
+            sampleRate = configuredMetrics["disk"]["sampleRate"].as_integer();
+        } else {
+            sampleRate = 1000;
+        }
+        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["disk"]["attributes"]);
+        tempPair = std::make_pair(DiskMetric, std::make_pair(DiskMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
+    } if (configuredMetrics["memory"].is_object()) {
+        if (configuredMetrics["memory"]["sampleRate"].is_number()) {
+            sampleRate = configuredMetrics["memory"]["sampleRate"].as_integer();
+        } else {
+            sampleRate = 1000;
+        }
+        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["memory"]["attributes"]);
+        tempPair = std::make_pair(MemoryMetric, std::make_pair(MemoryMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
+    } if (configuredMetrics["network"].is_object()) {
+        if (configuredMetrics["network"]["sampleRate"].is_number()) {
+            sampleRate = configuredMetrics["network"]["sampleRate"].as_integer();
+
+        } else {
+            sampleRate = 1000;
+        }
+        attributesList = MetricUtils::jsonArrayToList(configuredMetrics["network"]["attributes"]);
+        tempPair = std::make_pair(WrappedNetworkMetrics, std::make_pair(NetworkMetrics::createSchema("", attributesList), sampleRate));
+        configuredMonitoringPlan.insert(tempPair);
+    }
+
+    return MonitoringPlan::create(configuredMonitoringPlan);
 }
 
 std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
