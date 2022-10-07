@@ -15,8 +15,8 @@ const std::unique_ptr<TestUtility::TestParameterConfig> TestUtility::getTestPara
     // Create standard test paramater config and return.
     return std::make_unique<TestUtility::TestParameterConfig>(
         TestUtility::TestParameterConfig {
-            NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O3,
-            true, //inlining
+            NES::Nautilus::Backends::MLIR::LLVMIROptimizer::O0,
+            false, //inlining
             15, // number of iterations
             9,
             resultsFileName,

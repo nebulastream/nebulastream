@@ -1,108 +1,107 @@
-// /*
-//     Licensed under the Apache License, Version 2.0 (the "License");
-//     you may not use this file except in compliance with the License.
-//     You may obtain a copy of the License at
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-//         https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-//     Unless required by applicable law or agreed to in writing, software
-//     distributed under the License is distributed on an "AS IS" BASIS,
-//     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//     See the License for the specific language governing permissions and
-//     limitations under the License.
-// */
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
-// #include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
-// #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
-// #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
-// #include "Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp"
-// #include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
-// #include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
-// #include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
-// #include "Experimental/Utility/TestUtility.hpp"
-// #include "Util/Timer.hpp"
-// #include "Util/UtilityFunctions.hpp"
-// #include <API/Schema.hpp>
-// #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
-// #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
-// #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-// #include <Experimental/Utility/TPCHUtil.hpp>
-// #include <Experimental/IR/Phases/LoopInferencePhase.hpp>
+#include "Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp"
+#include "Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp"
+#include "Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp"
+#include "Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp"
+#include "Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp"
+#include "Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp"
+#include "Experimental/Interpreter/Operators/GroupedAggregation.hpp"
+#include "Experimental/Utility/TestUtility.hpp"
+#include "Nautilus/Backends/MLIR/LLVMIROptimizer.hpp"
+#include "Util/Timer.hpp"
+#include "Util/UtilityFunctions.hpp"
+#include <API/Schema.hpp>
+#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
+#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
+#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
+#include <Experimental/Utility/TPCHUtil.hpp>
+#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 
-// #include <Experimental/Interpreter/ExecutionContext.hpp>
-// #include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
-// #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
-// #include <Nautilus/Interface/FunctionCall.hpp>
-// #include <Experimental/Interpreter/Operators/Aggregation.hpp>
-// #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
-// #include <Experimental/Interpreter/Operators/Emit.hpp>
-// #include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
-// #include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
-// #include <Experimental/Interpreter/Operators/Map.hpp>
-// #include <Experimental/Interpreter/Operators/Scan.hpp>
-// #include <Experimental/Interpreter/Operators/Selection.hpp>
-// #include <Experimental/Interpreter/RecordBuffer.hpp>
-// #include <Nautilus/Interface/DataTypes/MemRef.hpp>
-// #include <Nautilus/Interface/DataTypes/Value.hpp>
-// #include <mlir/IR/MLIRContext.h>
-// #ifdef USE_MLIR
-// #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
-// #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-// #endif
-// #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
-// #include <Experimental/Runtime/RuntimePipelineContext.hpp>
-// #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-// #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-// #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
-// #include <Nautilus/Tracing/TraceContext.hpp>
-// #include <Runtime/BufferManager.hpp>
-// #include <Runtime/Execution/PipelineExecutionContext.hpp>
-// #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-// #include <Runtime/MemoryLayout/RowLayout.hpp>
-// #include <Runtime/TupleBuffer.hpp>
-// #include <Runtime/WorkerContext.hpp>
-// #include <Util/Logger/Logger.hpp>
-// #include <algorithm>
-// #include <execinfo.h>
-// #include <fstream>
-// #include <gtest/gtest.h>
-// #include <memory>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Experimental/Interpreter/Expressions/ConstantIntegerExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/LessThanExpression.hpp>
+#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/Expressions/UDFCallExpression.hpp>
+#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Emit.hpp>
+#include <Experimental/Interpreter/Operators/Join/JoinBuild.hpp>
+#include <Experimental/Interpreter/Operators/Join/JoinProbe.hpp>
+#include <Experimental/Interpreter/Operators/Map.hpp>
+#include <Experimental/Interpreter/Operators/Scan.hpp>
+#include <Experimental/Interpreter/Operators/Selection.hpp>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <mlir/IR/MLIRContext.h>
+#ifdef USE_MLIR
+#include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
+#endif
+#include <Experimental/Runtime/RuntimeExecutionContext.hpp>
+#include <Experimental/Runtime/RuntimePipelineContext.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <algorithm>
+#include <execinfo.h>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <memory>
 
-// // #include <Experimental/Utility/TestUtility.hpp>
-// #include <Experimental/Interpreter/ProxyFunctions.hpp>
-// #include <numeric>
-// // #include <string>
-
-
-// using namespace NES::Nautilus;
-// namespace NES::ExecutionEngine::Experimental::Interpreter {
-// class Benchmarks : public testing::Test {
-//   public:
-//     Tracing::SSACreationPhase ssaCreationPhase;
-//     Tracing::TraceToIRConversionPhase irCreationPhase;
-//     Nautilus::IR::LoopInferencePhase loopInferencePhase;
-//     /* Will be called before any test in this class are executed. */
-//     static void SetUpTestCase() {
-//         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-//         std::cout << "Setup TraceTest test class." << std::endl;
-//     }
-
-//     /* Will be called before a test is executed. */
-//     void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-//     /* Will be called before a test is executed. */
-//     void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
-//     /* Will be called after all tests in this class are finished. */
-//     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+// #include <Experimental/Utility/TestUtility.hpp>
+#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <numeric>
+// #include <string>
 
 
-// };
+using namespace NES::Nautilus;
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+class Benchmarks : public testing::Test {
+  public:
+    Tracing::SSACreationPhase ssaCreationPhase;
+    Tracing::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::IR::LoopInferencePhase loopInferencePhase;
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup TraceTest test class." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+};
 
 // //Todo allow loading specific column via TestUtility
 // auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm) {
@@ -400,46 +399,122 @@
 //     }
 //     testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 // }
+// // Struct to convert TupleBufferPtrs to Memrefs in MLIR. 'N' is the dimension of the Memref.
+template<typename T, size_t N>
+struct MemRefDescriptor {
+    T *allocated;
+    T *aligned;
+    intptr_t offset;
+    intptr_t sizes[N];
+    intptr_t strides[N];
+};
+TEST_F(Benchmarks, mlirLoadAddStoreOptimized) {
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = testUtility->loadLineItemTable(bm);
+    auto buffer = lineitemBuffer.second.getBuffer();
+    auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
 
-// TEST_F(Benchmarks, DISABLED_mlirLoadAddStoreOptimized) {
-//     // auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
-//     auto bm = std::make_shared<Runtime::BufferManager>(100);
-//     auto lineitemBuffer = loadLineItemTable(bm);
-//     auto buffer = lineitemBuffer.second.getBuffer();
-//     auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
+    std::string modulePath ="/home/alepping/MLIRCode/hotFile.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/stdDevMemrefUnoptimized.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/stdDevMemrefVectorized.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/loadAddStore.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/loadAddStoreOptimized.mlir"; //6.9231
+    // std::string modulePath ="/home/alepping/MLIRCode/autoVecUnrollScan.mlir"; //10.2724
+    mlir::MLIRContext context;
+    mlir::OwningOpRef<mlir::ModuleOp> module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromFilePath(modulePath, context);
 
-//     std::string modulePath ="/home/alepping/MLIRCode/loadAddStoreOptimized.mlir";
-//     mlir::MLIRContext context;
-//     mlir::OwningOpRef<mlir::ModuleOp> module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromFilePath(modulePath, context);
+    //  Compile MLIR -> return function pointer
+    auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, Nautilus::Backends::MLIR::LLVMIROptimizer::None);
+    // auto function = (void(*)(int64_t, MemRefDescriptor<long, 1> *, MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    // auto function = (double(*)(int64_t, void*)) engine->lookup("_mlir_ciface_execute").get();
+    // auto function = (double(*)(int64_t, NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    auto function = (double(*)(int64_t, int64_t, MemRefDescriptor<long, 1> *, MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
 
-//     //  Compile MLIR -> return function pointer
-//     auto engine = Backends::MLIR::MLIRUtility::compileMLIRModuleToMachineCode(module);
-//     auto function = (void(*)(int64_t, NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *, NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    const int NUM_ITERATIONS = 1000; //Todo
 
-//     const int NUM_ITERATIONS = 10; //Todo
-
-//     // //Populate MemrefDescriptor
-//     auto int64BufferPtr = buffer.getBuffer<int64_t>();
-//     auto int64OutBufferPtr = outBuffer.getBuffer<int64_t>();
-//     //x1 Num Tuples: 6001215, x1 Sum: 153078795 -- x001 Num Tuples: 60175, x001 Sum:
-//     auto bufferMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
-//     auto outputMemref = new MemRefDescriptor<int64_t, 1>{int64OutBufferPtr, int64OutBufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
+    // //Populate MemrefDescriptor
+    auto int64BufferPtr = buffer.getBuffer<int64_t>();
+    auto int64OutBufferPtr = outBuffer.getBuffer<int64_t>();
+    //x1 Num Tuples: 6001215, x1 Sum: 153078795 -- x001 Num Tuples: 60175, x001 Sum:
+    auto bufferMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
+    auto outputMemref = new MemRefDescriptor<int64_t, 1>{int64OutBufferPtr, int64OutBufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
 
 
-//     // Execute function
-//     double executionTimeSum = 0.0;
-//     for(int i = 0; i < NUM_ITERATIONS; ++i) {
-//         Timer timer("Hash Result Aggregation Timer Nr." + std::to_string(i));
-//         timer.start();
-//         function(buffer.getNumberOfTuples(), bufferMemref, outputMemref);
-//         timer.pause();
-//         // Print aggregation result to force execution.
-//         executionTimeSum += timer.getPrintTime();
-//     }
-//     std::cout << "Standard Deviation Result: " << (int64_t) int64OutBufferPtr[buffer.getNumberOfTuples()-1] << '\n';
-//     std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
-//     // 6.03946
-// }
+    // Execute function
+    double executionTimeSum = 0.0;
+    double resultSum = 0.0;
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("MLIR Benchmark Timer." + std::to_string(i));
+        timer.start();
+        double result = function(buffer.getNumberOfTuples(), outBuffer.getNumberOfTuples(), bufferMemref, outputMemref);
+        // double result = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        // function(buffer.getNumberOfTuples(), bufferMemref, outputMemref);
+        timer.pause();
+        // Print aggregation result to force execution.
+        executionTimeSum += timer.getPrintTime();
+        resultSum += result;
+    }
+    std::cout << "Standard Deviation Result: " << resultSum << '\n';
+    // std::cout << "Standard Deviation Result: " << (int64_t) int64OutBufferPtr[buffer.getNumberOfTuples()-1] << '\n';
+    std::cout << "Total Time Sum: " << executionTimeSum << '\n';
+    std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
+    // 6.03946
+}
+
+TEST_F(Benchmarks, mlirDoubleColumnAggregation) {
+    auto testUtility = std::make_unique<NES::ExecutionEngine::Experimental::TestUtility>();
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+    auto lineitemBuffer = testUtility->loadLineItemTable(bm);
+    auto buffer = lineitemBuffer.second.getBuffer();
+    auto outBuffer = bm->getUnpooledBuffer(buffer.getBufferSize()).value();
+
+    std::string modulePath ="/home/alepping/MLIRCode/hotFile.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/stdDevMemrefUnoptimized.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/stdDevMemrefVectorized.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/loadAddStore.mlir";
+    // std::string modulePath ="/home/alepping/MLIRCode/loadAddStoreOptimized.mlir"; //6.9231
+    // std::string modulePath ="/home/alepping/MLIRCode/autoVecUnrollScan.mlir"; //10.2724
+    mlir::MLIRContext context;
+    mlir::OwningOpRef<mlir::ModuleOp> module = Backends::MLIR::MLIRUtility::loadMLIRModuleFromFilePath(modulePath, context);
+
+    //  Compile MLIR -> return function pointer
+    auto engine = Backends::MLIR::MLIRUtility::lowerAndCompileMLIRModuleToMachineCode(module, Nautilus::Backends::MLIR::LLVMIROptimizer::None);
+    // auto function = (void(*)(int64_t, MemRefDescriptor<long, 1> *, MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    // auto function = (double(*)(int64_t, void*)) engine->lookup("_mlir_ciface_execute").get();
+    // auto function = (double(*)(int64_t, NES::ExecutionEngine::Experimental::Interpreter::MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+    auto function = (double(*)(int64_t, int64_t, MemRefDescriptor<long, 1> *, MemRefDescriptor<long, 1> *)) engine->lookup("_mlir_ciface_execute").get();
+
+    const int NUM_ITERATIONS = 1000; //Todo
+
+    // //Populate MemrefDescriptor
+    auto int64BufferPtr = buffer.getBuffer<int64_t>();
+    auto int64OutBufferPtr = outBuffer.getBuffer<int64_t>();
+    //x1 Num Tuples: 6001215, x1 Sum: 153078795 -- x001 Num Tuples: 60175, x001 Sum:
+    auto bufferMemref = new MemRefDescriptor<int64_t, 1>{int64BufferPtr, int64BufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
+    auto outputMemref = new MemRefDescriptor<int64_t, 1>{int64OutBufferPtr, int64OutBufferPtr, 0, {static_cast<intptr_t>(buffer.getNumberOfTuples())}, {1}};
+
+
+    // Execute function
+    double executionTimeSum = 0.0;
+    double resultSum = 0.0;
+    for(int i = 0; i < NUM_ITERATIONS; ++i) {
+        Timer timer("MLIR Benchmark Timer." + std::to_string(i));
+        timer.start();
+        double result = function(buffer.getNumberOfTuples(), outBuffer.getNumberOfTuples(), bufferMemref, outputMemref);
+        // double result = function(buffer.getNumberOfTuples(), buffer.getBuffer());
+        // function(buffer.getNumberOfTuples(), bufferMemref, outputMemref);
+        timer.pause();
+        // Print aggregation result to force execution.
+        executionTimeSum += timer.getPrintTime();
+        resultSum += result;
+    }
+    std::cout << "Standard Deviation Result: " << resultSum << '\n';
+    // std::cout << "Standard Deviation Result: " << (int64_t) int64OutBufferPtr[buffer.getNumberOfTuples()-1] << '\n';
+    std::cout << "Total Time Sum: " << executionTimeSum << '\n';
+    std::cout << "Memref Execution Time Average: " << executionTimeSum / (double)NUM_ITERATIONS << '\n';
+    // 6.03946
+}
 
 // TEST_F(Benchmarks, DISABLED_mlirLoadAddStore) {
 //     // Todo: Establish phases for Scan + Map Query
@@ -895,7 +970,7 @@
 //     testUtility->produceResults(runningSnapshotVectors, snapshotNames, RESULTS_FILE_NAME);
 // }
 
-// }// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 // /*
 // BUGS:

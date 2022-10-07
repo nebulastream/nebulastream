@@ -174,14 +174,14 @@ void scan(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
 }
 
 // Struct to convert TupleBufferPtrs to Memrefs in MLIR. 'N' is the dimension of the Memref.
-template<typename T, size_t N>
-struct MemRefDescriptor {
-    T *allocated;
-    T *aligned;
-    intptr_t offset;
-    intptr_t sizes[N];
-    intptr_t strides[N];
-};
+// template<typename T, size_t N>
+// struct MemRefDescriptor {
+//     T *allocated;
+//     T *aligned;
+//     intptr_t offset;
+//     intptr_t sizes[N];
+//     intptr_t strides[N];
+// };
 
 //==-------------------------------------------------------------==//
 //==-------------- MLIR OPTIMIZATION BENCHMARKS ---------------==//

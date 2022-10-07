@@ -28,7 +28,7 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class LLVMIROptimizer {
   public:
-    enum OptimizationLevel{O0 = 0, O1 = 1, O2 = 2, O3 = 3};
+    enum OptimizationLevel{None = -1, O0 = 0, O1 = 1, O2 = 2, O3 = 3};
     LLVMIROptimizer();  // Disable default constructor
     ~LLVMIROptimizer(); // Disable default destructor
 
