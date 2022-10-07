@@ -133,8 +133,12 @@ add_nes_integration_test(query-controller-integration-tests "Integration/REST/Co
 ### NES Source Catalog Controller Test ###
 add_nes_integration_test(source-catalog-controller-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
 
+### NES Maintenance Controller Tests ###
+add_nes_integration_test(maintenance-controller-integration-test "Integration/REST/Controller/MaintenanceControllerTest.cpp")
+
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
+
 
 ### NES TopologyProperty Tests ###
 add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
