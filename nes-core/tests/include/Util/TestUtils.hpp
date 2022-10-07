@@ -156,6 +156,10 @@ template<typename T>
 
 [[nodiscard]] std::string enableMonitoring(bool prefix = false) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
 
+[[nodiscard]] std::string monitoringConfiguration(std::string config) {
+    return "--monitoringConfiguration=" + config;
+}
+
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
     return "--optimizer.performDistributedWindowOptimization=false";
