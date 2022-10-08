@@ -379,13 +379,16 @@ add_nes_unit_test(syntax-based-partial-query-merger-rule-test "UnitTests/Optimiz
 ### Query Placement Tests ###
 add_nes_unit_test(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
 
-
 add_nes_unit_test(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp")
 
+if(NES_USE_TF)
+    add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
+endif()
 
-add_executable(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
-target_link_libraries(nemo-placement-test nes-tests)
-add_test(NAME nemo-placement-test COMMAND nemo-placement-test)
+add_nes_unit_test(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
+#add_executable(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
+#target_link_libraries(nemo-placement-test nes-tests)
+#add_test(NAME nemo-placement-test COMMAND nemo-placement-test)
 
 ### Thread Naming Test ###
 add_nes_unit_test(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
