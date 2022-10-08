@@ -22,6 +22,7 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <fstream>
+#include <algorithm>
 
 namespace NES::Benchmark {
 
@@ -247,7 +248,13 @@ void E2ESingleRun::stopQuery() {
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
 
+
+
+
     auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
+    std::string queryString = configOverAllRuns.query->getValue();
+    std::replace(queryString.begin(), queryString.end(), ',', ' ');
+
     std::stringstream outputCsvStream;
     for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB)) {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
@@ -258,7 +265,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
-        outputCsvStream << "," << configOverAllRuns.query->getValue();
+        outputCsvStream << "," << "\"" << queryString << "\"";
         outputCsvStream << "\n";
     }
 
