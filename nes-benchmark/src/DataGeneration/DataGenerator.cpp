@@ -40,10 +40,7 @@ namespace NES::Benchmark::DataGeneration {
         return bufferManager->getBufferBlocking();
     }
 
-    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,
-                                                                        Runtime::BufferManagerPtr bufferManager) {
-
-
+    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,Runtime::BufferManagerPtr bufferManager) {
         if (name == "Default") {
             return std::make_shared<DefaultDataGenerator>(bufferManager, /* minValue */ 0, /* maxValue */ 1000);
         } else {
