@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.7](https://github.com/nebulastream/nebulastream/tree/v0.3.7) (2022-10-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.6...v0.3.7)
+
+**Implemented enhancements:**
+
+- \[Feature\] Benchmarkin Rework First Step [\#2999](https://github.com/nebulastream/nebulastream/issues/2999)
+
 ## [v0.3.6](https://github.com/nebulastream/nebulastream/tree/v0.3.6) (2022-10-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.5...v0.3.6)
