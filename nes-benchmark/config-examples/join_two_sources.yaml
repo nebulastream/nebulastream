@@ -1,6 +1,6 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1, 2, 4, 1, 2, 4, 1, 2, 4
-bufferSizeInBytes: 512, 512, 512, 1024, 1024, 1024, 2048, 2048, 2048
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 512, 1024, 2048
 numberOfBuffersToProduce: 10000000
 
 
@@ -8,11 +8,12 @@ numberOfBuffersToProduce: 10000000
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 3
+numberOfMeasurementsToCollect: 5
 
 numberOfSources: 2
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
 outputFile: JoinTwoSources.csv
 benchmarkName: JoinTwoSources
-query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("value")).equalsTo(Attribute("value")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("value")).equalsTo(Attribute("value")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(30))).sink(FileSinkDescriptor::create("result.csv", "CSV_FORMAT", "APPEND"));'
+#query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("value")).equalsTo(Attribute("value")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(30))).sink(NullOutputSinkDescriptor::create());'

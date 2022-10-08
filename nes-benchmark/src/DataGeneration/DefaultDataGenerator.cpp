@@ -31,7 +31,7 @@ namespace NES::Benchmark::DataGeneration {
         NES_INFO("Default source mode");
 
 
-        uint64_t noTuplesInOnePercent = (numberOfBuffers) / 100;
+        uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
             Runtime::TupleBuffer bufferRef = allocateBuffer();
@@ -44,7 +44,7 @@ namespace NES::Benchmark::DataGeneration {
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                     auto value = (curRecord % (maxValue - minValue)) + minValue;
                     rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord,
-                                                                                                          value * 0,
+                                                                                                          value,
                                                                                                           curRecord,
                                                                                                           curRecord));
                 }
@@ -53,13 +53,13 @@ namespace NES::Benchmark::DataGeneration {
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                     auto value = (curRecord % (maxValue - minValue)) + minValue;
                     dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
+                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value * 0);
                     dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
                     dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
                 }
             }
 
-            if (curBuffer % noTuplesInOnePercent == 0) {
+            if (curBuffer % noTuplesInFivePercent == 0) {
                 NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
             }
 
