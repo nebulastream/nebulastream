@@ -23,9 +23,6 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
     selectivity = 1.0;
 }
 
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& predicate, float selectivity, uint64_t id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate), selectivity(selectivity) {}
-
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
@@ -58,7 +55,7 @@ bool FilterLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
 }
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, selectivity, id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
