@@ -463,12 +463,6 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     return *this;
 }
 
-Query& Query::filter(const ExpressionNodePtr& filterExpression, float selectivity) {
-    NES_DEBUG("Query: add filter operator to query");
-    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression, selectivity);
-    queryPlan->appendOperatorAsNewRoot(op);
-    return *this;
-}
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");

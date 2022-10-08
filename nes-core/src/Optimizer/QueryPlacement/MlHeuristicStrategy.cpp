@@ -250,8 +250,8 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
         bool shouldPushUp = false;
         bool canBePlacedHere = true;
 
-        bool tf_not_installed = operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
-        if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tf_not_installed) {
+        bool tfNotInstalled = operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
+        if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tfNotInstalled) {
             canBePlacedHere = false;
         }
 

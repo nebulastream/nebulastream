@@ -40,8 +40,6 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr createFilterOperator(ExpressionNodePtr const& predicate,
                                                             OperatorId id = Util::getNextOperatorId());
-    static LogicalUnaryOperatorNodePtr createFilterOperator(ExpressionNodePtr const& predicate, float selectivity,
-                                                            OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new source rename operator.
