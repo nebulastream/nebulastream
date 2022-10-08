@@ -66,10 +66,10 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Setup QueryPlacementTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Setup MlHeuristicPlacementTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down MlHeuristicPlacementTest test class." << std::endl; }
 
 
     void topologyGenerator() {
@@ -103,22 +103,22 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
             }
         }
 
-        //        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
-        //                           ->addField(createField("SepalLengthCm", FLOAT32))
-        //                           ->addField(createField("SepalWidthCm", FLOAT32))
-        //                           ->addField(createField("PetalLengthCm", FLOAT32))
-        //                           ->addField(createField("PetalWidthCm", FLOAT32))
-        //                           ->addField(createField("SpeciesCode", UINT64));)";
+        std::string irisSchema = R"(Schema::create()->addField(createField("id", UINT64))
+                           ->addField(createField("SepalLengthCm", FLOAT32))
+                           ->addField(createField("SepalWidthCm", FLOAT32))
+                           ->addField(createField("PetalLengthCm", FLOAT32))
+                           ->addField(createField("PetalWidthCm", FLOAT32))
+                           ->addField(createField("SpeciesCode", UINT64));)";
 
         const std::string streamName = "iris";
-        SchemaPtr irisSchema = Schema::create()
-                                   ->addField(createField("id", UINT64))
-                                   ->addField(createField("SepalLengthCm", FLOAT32))
-                                   ->addField(createField("SepalWidthCm", FLOAT32))
-                                   ->addField(createField("PetalLengthCm", FLOAT32))
-                                   ->addField(createField("PetalWidthCm", FLOAT32))
-                                   ->addField(createField("SpeciesCode", UINT64))
-                                   ->addField(createField("CreationTime", UINT64));
+//        SchemaPtr irisSchema = Schema::create()
+//                                   ->addField(createField("id", UINT64))
+//                                   ->addField(createField("SepalLengthCm", FLOAT32))
+//                                   ->addField(createField("SepalWidthCm", FLOAT32))
+//                                   ->addField(createField("PetalLengthCm", FLOAT32))
+//                                   ->addField(createField("PetalWidthCm", FLOAT32))
+//                                   ->addField(createField("SpeciesCode", UINT64))
+//                                   ->addField(createField("CreationTime", UINT64));
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, irisSchema);
@@ -137,7 +137,6 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
-
 };
 
 /* Test query placement with Ml heuristic strategy  */
@@ -145,10 +144,10 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     topologyGenerator();
     Query query = Query::from("iris")
-                      .inferModel("../../../test_data/iris_95acc.tflite",
+                      .inferModel("../../../test_data/iris.tflite",
                                   {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
                                   {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
-                      .filter(Attribute("iris0") < 3.0, 1)
+                      .filter(Attribute("iris0") < 3.0)
                       .project(Attribute("iris1"), Attribute("iris2"))
                       .sink(PrintSinkDescriptor::create());
 
@@ -169,5 +168,9 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::MlHeuristic, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    NES_DEBUG("MlHeuristicPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("MlHeuristicPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG("MlHeuristicPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
 }
