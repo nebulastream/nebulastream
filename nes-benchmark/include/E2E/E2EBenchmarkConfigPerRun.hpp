@@ -47,7 +47,6 @@ namespace NES::Benchmark {
 
       public:
         Configurations::IntConfigOption numWorkerThreads;
-        Configurations::IntConfigOption numSources;
         Configurations::IntConfigOption numBuffersToProduce;
         Configurations::IntConfigOption bufferSizeInBytes;
     };

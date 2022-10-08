@@ -50,39 +50,45 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
 void E2ESingleRun::createSources() {
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                  configPerRun.numBuffersToProduce->getValue());
-    dataGenerator = DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
-    auto createdBuffers = dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(),
-                                                    configPerRun.bufferSizeInBytes->getValue());
+    for (size_t cntSource = 0; cntSource < configOverAllRuns.numSources->getValue(); ++cntSource) {
+        auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+                                                                           configPerRun.numBuffersToProduce->getValue());
+        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+        auto createdBuffers =
+            dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
 
-    dataProvider = DataProviding::DataProvider::createProvider(/* sourceIndex */ 0,
-                                                               configOverAllRuns,
-                                                               createdBuffers);
+        auto dataProvider = DataProviding::DataProvider::createProvider(/* sourceIndex */ cntSource,
+                                                                        configOverAllRuns, createdBuffers);
+        // Adding necessary items to the corresponding vectors
+        allDataProviders.emplace_back(dataProvider);
+        allDataGenerators.emplace_back(dataGenerator);
+        allBufferManagers.emplace_back(bufferManager);
 
-    size_t generatorQueueIndex = 0;
-    auto dataProvidingFunc = [this, generatorQueueIndex](NES::Runtime::TupleBuffer& buffer, uint64_t) {
-        dataProvider->provideNextBuffer(buffer, generatorQueueIndex);
-    };
+        size_t generatorQueueIndex = 0;
+        auto dataProvidingFunc = [this, cntSource, generatorQueueIndex](NES::Runtime::TupleBuffer& buffer, uint64_t) {
+            allDataProviders[cntSource]->provideNextBuffer(buffer, generatorQueueIndex);
+        };
 
-    size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
-    size_t taskQueueId = 0;
-    NES::LambdaSourceTypePtr sourceConfig = NES::LambdaSourceType::create(dataProvidingFunc,
-                                                                          configPerRun.numBuffersToProduce->getValue(),
-                                                                          /* gatheringValue */ 0,
-                                                                          NES::GatheringMode::INTERVAL_MODE,
-                                                                          sourceAffinity,
-                                                                          taskQueueId);
-    auto schema = dataGenerator->getSchema();
-    auto logicalStreamName = "input";
-    auto physicalStreamName = "input1";
-    auto logicalSource = NES::LogicalSource::create(logicalStreamName, schema);
-    auto physicalSource = NES::PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
+        size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
+        size_t taskQueueId = cntSource;
+        NES::LambdaSourceTypePtr sourceConfig = NES::LambdaSourceType::create(dataProvidingFunc,
+                                                                              configPerRun.numBuffersToProduce->getValue(),
+                                                                              /* gatheringValue */ 0,
+                                                                              NES::GatheringMode::INTERVAL_MODE,
+                                                                              sourceAffinity,
+                                                                              taskQueueId);
+        auto schema = dataGenerator->getSchema();
+        auto logicalStreamName = "input" + std::to_string(cntSource + 1);
+        auto physicalStreamName = "physical_input" + std::to_string(cntSource);
+        auto logicalSource = NES::LogicalSource::create(logicalStreamName, schema);
+        auto physicalSource = NES::PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
 
-    // Adding the physical and logical source to the coordinator
-    coordinatorConf->logicalSources.add(logicalSource);
-    coordinatorConf->worker.physicalSources.add(physicalSource);
 
+
+        // Adding the physical and logical source to the coordinator
+        coordinatorConf->logicalSources.add(logicalSource);
+        coordinatorConf->worker.physicalSources.add(physicalSource);
+    }
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
@@ -103,7 +109,9 @@ void E2ESingleRun::runQuery() {
     NES_INFO("Started query with id=" << queryId);
 
     NES_DEBUG("Starting the data provider...");
-    dataProvider->start();
+    for (auto& dataProvider : allDataProviders) {
+        dataProvider->start();
+    }
     NES_DEBUG("Started the data provider!");
 
     // Wait for the system to come to a steady state
@@ -193,7 +201,9 @@ void E2ESingleRun::stopQuery() {
 
 
     NES_DEBUG("Stopping data provider...");
-    dataProvider->stop();
+    for (auto& dataProvider : allDataProviders) {
+        dataProvider->stop();
+    }
     NES_DEBUG("Stopped data provider!");
 
     // Starting a new thread that waits
@@ -237,14 +247,14 @@ void E2ESingleRun::stopQuery() {
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
 
-    auto schemaSizeInB = dataGenerator->getSchema()->getSchemaSizeInBytes();
+    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
     std::stringstream outputCsvStream;
     for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB)) {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numWorkerThreads->getValue();
-        outputCsvStream << "," << configPerRun.numSources->getValue();
+        outputCsvStream << "," << configOverAllRuns.numSources->getValue();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
@@ -270,9 +280,22 @@ E2ESingleRun::E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
 E2ESingleRun::~E2ESingleRun() {
     coordinatorConf.reset();
     coordinator.reset();
-    dataProvider.reset();
-    dataGenerator.reset();
-    bufferManager.reset();
+
+    for (auto& dataProvider : allDataProviders) {
+        dataProvider.reset();
+    }
+    allDataProviders.clear();
+
+    for (auto& dataGenerator : allDataGenerators) {
+        dataGenerator.reset();
+    }
+    allDataGenerators.clear();
+
+    for (auto& bufferManager : allBufferManagers) {
+        bufferManager.reset();
+    }
+    allBufferManagers.clear();
+
 }
 
 void E2ESingleRun::run() {
