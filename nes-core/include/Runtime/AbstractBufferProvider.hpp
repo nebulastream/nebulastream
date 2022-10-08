@@ -15,10 +15,10 @@
 #define NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <vector>
 #include <chrono>
 #include <cstddef>
 #include <optional>
+#include <vector>
 
 /**
  * This enum reflects the different types of buffer managers in the system

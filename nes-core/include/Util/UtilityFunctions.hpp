@@ -275,7 +275,6 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
     }
 }
 
-
 };// namespace Util
 }// namespace NES
 
