@@ -24,6 +24,7 @@
 #include <E2E/E2EBenchmarkConfigPerRun.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <vector>
 
 namespace NES::Benchmark{
 
@@ -72,7 +73,7 @@ class E2ESingleRun {
 
 
     /**
-     * @brief starts all everything necessary for running the query and measures for
+     * @brief starts all everything necessary for running the query and measures for a single query
      */
     void runQuery();
 
@@ -94,14 +95,11 @@ class E2ESingleRun {
     E2EBenchmarkConfigPerRun configPerRun;
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     int portOffSet;
-
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
-
-    DataProviding::DataProviderPtr dataProvider;
-    DataGeneration::DataGeneratorPtr dataGenerator;
-    NES::Runtime::BufferManagerPtr bufferManager;
-
+    std::vector<DataProviding::DataProviderPtr> allDataProviders;
+    std::vector<DataGeneration::DataGeneratorPtr> allDataGenerators;
+    std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
     QueryId queryId;
     Measurements::Measurements measurements;
 

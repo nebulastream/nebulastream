@@ -96,7 +96,7 @@ int main(int argc, const char* argv[]) {
 
     // Writing the csv header to the output file
     std::ofstream ofs;
-    ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::trunc);
+    ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::app);
     ofs << "BM_NAME,NES_VERSION,SchemaSizeInB"
         << ",Time,ProcessedTasks,ProcessedBuffers,ProcessedTuples,LatencySum,QueueSizeSum"
         << ",ThroughputInTuplesPerSec,ThroughputInTasksPerSec,ThroughputInBuffersPerSec,ThroughputInMiBPerSec"

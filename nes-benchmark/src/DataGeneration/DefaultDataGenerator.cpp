@@ -44,7 +44,7 @@ namespace NES::Benchmark::DataGeneration {
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                     auto value = (curRecord % (maxValue - minValue)) + minValue;
                     rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord,
-                                                                                                          value,
+                                                                                                          value * 0,
                                                                                                           curRecord,
                                                                                                           curRecord));
                 }
