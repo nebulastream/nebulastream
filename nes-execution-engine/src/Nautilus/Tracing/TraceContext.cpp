@@ -100,7 +100,7 @@ void TraceContext::trace(TraceOperation& operation) {
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(operation.op)) {
         auto tag = Tag::createTag(startAddress);
-        std::cout << magic_enum::enum_name<OpCode>(operation.op) << " tag: " << tag << std::endl;
+        NES_TRACE(magic_enum::enum_name<OpCode>(operation.op) << " tag: " << tag);
         if (operation.op != ASSIGN)
             if (auto ref = executionTrace->findKnownOperation(tag)) {
                 if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
