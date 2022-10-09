@@ -58,30 +58,7 @@ Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
 
 TagAddress Tag::createCurrentAddress() {
 #pragma GCC diagnostic ignored "-Wframe-address"
-
-    auto st = (uint64_t) (__builtin_frame_address(4));
-    std::cout << "frame start " << st << std::endl;
-
-    st = (uint64_t) (__builtin_return_address(0));
-    printf("The return address is %p\n",  __builtin_return_address(0) );
-    printf("The return address is %p\n",  __builtin_return_address(1) );
-    printf("The return address is %p\n",  __builtin_return_address(2) );
-    printf("The return address is %p\n",  __builtin_return_address(3) );
-
-    void* bt[1024];
-    int bt_size;
-    char** bt_syms;
-    int i;
-
-    bt_size = backtrace(bt, 1024);
-    bt_syms = backtrace_symbols(bt, bt_size);
-    for (i = 1; i < bt_size; i++) {
-        std::cout << bt_syms[i] << std::endl;
-    }
-    free(bt_syms);
-
-    NES_THROW_RUNTIME_ERROR("test");
-    return st;
+    return (uint64_t) (__builtin_frame_address(3));
 }
 
 std::size_t Tag::TagHasher::operator()(const Tag& k) const {
