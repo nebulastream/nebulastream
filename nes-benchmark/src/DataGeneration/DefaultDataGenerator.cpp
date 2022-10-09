@@ -13,9 +13,10 @@
 */
 
 #include <DataGeneration/DefaultDataGenerator.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <random>
 
 namespace NES::Benchmark::DataGeneration {
     DefaultDataGenerator::DefaultDataGenerator(Runtime::BufferManagerPtr bufferManager,
@@ -37,12 +38,17 @@ namespace NES::Benchmark::DataGeneration {
             Runtime::TupleBuffer bufferRef = allocateBuffer();
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
+            std::random_device randDev;
+            std::mt19937 generator(randDev());
+            std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
+
+
             if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
                 auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    auto value = (curRecord % (maxValue - minValue)) + minValue;
+                    auto value = uniformIntDistribution(generator);
                     rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord,
                                                                                                           value,
                                                                                                           curRecord,
@@ -51,9 +57,9 @@ namespace NES::Benchmark::DataGeneration {
 
             } else {
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    auto value = (curRecord % (maxValue - minValue)) + minValue;
+                    auto value = uniformIntDistribution(generator);
                     dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value * 0);
+                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
                     dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
                     dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
                 }
