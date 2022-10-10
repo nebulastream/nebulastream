@@ -34,8 +34,13 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               const SchemaPtr& schema) {
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount: " << tupleCount);
     std::vector<std::string> helperToken;
-    // extract values as strings from MQTT message - should be improved with JSON library
-    auto parsedJSONObject = web::json::value::parse(jsonTuple);
+    // extract values as strings from JSON message - should be improved with JSON library
+    web::json::value parsedJSONObject;
+    try {
+        parsedJSONObject = web::json::value::parse(jsonTuple);
+    } catch (std::exception e) {
+        NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
+    }
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
     for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {

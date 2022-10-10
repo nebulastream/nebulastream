@@ -57,7 +57,7 @@ TCPSource::TCPSource(SchemaPtr schema,
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), circularBuffer(2048) {
 
     //init physical types
-    /*std::vector<std::string> schemaKeys;
+    std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -80,7 +80,7 @@ TCPSource::TCPSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");*/
+    NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 }
 
 TCPSource::~TCPSource() {
@@ -97,6 +97,7 @@ std::string TCPSource::toString() const {
 }
 
 void TCPSource::open() {
+    DataSource::open();
     NES_TRACE("TCPSource::connected: Trying to create socket.");
     if (sockfd < 0) {
         sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
@@ -168,7 +169,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
         if (!circularBuffer.full()) {
             //create new buffer with size equal to free space in circular buffer
             messageBuffer = new char[circularBuffer.capacity() - circularBuffer.size()];
-            NES_TRACE("TCPSOURCE::fillBuffer: size to fill: " << circularBuffer.capacity() - circularBuffer.size() << ".");
+            //NES_TRACE("TCPSOURCE::fillBuffer: size to fill: " << circularBuffer.capacity() - circularBuffer.size() << ".");
             //fill created buffer with data from socket. Socket returns the number of bytes it actually sent.
             //might send more than one tuple at a time, hence we need to extract one tuple below in switch case.
             //user needs to specify how to find out tuple size when creating TCPSource
@@ -209,7 +210,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 case Configurations::USER_SPECIFIED_BUFFER_SIZE:
                     //set tupleSize to user specified tuple size
                     tupleSize = sourceConfig->getSocketBufferSize()->getValue();
-                    //allocate buffer witz tupleSize
+                    //allocate buffer with tupleSize
                     messageBuffer = new char[tupleSize];
                     NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << tupleSize
                                                                                                                  << "'");
@@ -252,14 +253,14 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared tuples? '" << popped << "'");
             //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
             if (tupleSize != 0 && popped) {
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << messageBuffer << "'");
+                std::string buf(messageBuffer, tupleSize);
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
-                    std::string buf(messageBuffer);
-                    buf = (buf).substr(0, buf.rfind("}") + 1);
+                    //buf = (buf).substr(0, buf.rfind("}") + 1);
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
                     inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
                 } else {
-                    inputParser->writeInputTupleToTupleBuffer(messageBuffer, tupleCount, tupleBuffer, schema);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
                 }
                 tupleCount++;
             }
@@ -308,6 +309,7 @@ bool TCPSource::popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTex
 }
 
 void TCPSource::close() {
+    DataSource::close();
     if (connection == 0) {
         ::close(connection);
         ::close(sockfd);

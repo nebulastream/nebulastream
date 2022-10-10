@@ -115,7 +115,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 if (!value) {
                     if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
                         NES_FATAL_ERROR(
-                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non boolean value for BOOLEAN field: "
+                            "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: "
                             << inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a boolean");
                     }
