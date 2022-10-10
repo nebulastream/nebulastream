@@ -93,14 +93,12 @@ HashMapFactory::HashMapFactory(std::shared_ptr<Runtime::AbstractBufferProvider> 
     : bufferManager(bufferManager), keySize(keySize), valueSize(valueSize), nrEntries(nrEntries) {}
 
 Hashmap HashMapFactory::create() { return Hashmap(bufferManager, keySize, valueSize, nrEntries); }
-std::unique_ptr<Hashmap> HashMapFactory::createPtr() { return std::make_unique<Hashmap>(bufferManager, keySize, valueSize, nrEntries); }
-
-size_t HashMapFactory::getKeySize() {
-    return keySize;
+std::unique_ptr<Hashmap> HashMapFactory::createPtr() {
+    return std::make_unique<Hashmap>(bufferManager, keySize, valueSize, nrEntries);
 }
 
-size_t HashMapFactory::getValueSize() {
-    return valueSize;
-}
+size_t HashMapFactory::getKeySize() { return keySize; }
+
+size_t HashMapFactory::getValueSize() { return valueSize; }
 
 }// namespace NES::Experimental

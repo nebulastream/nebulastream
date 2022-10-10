@@ -183,9 +183,7 @@ class Hashmap {
 
     Entry** entries;
 
-    uint64_t numberOfEntries(){
-        return currentSize;
-    }
+    uint64_t numberOfEntries() { return currentSize; }
 
   private:
     using ptr_t = uint64_t;
@@ -230,8 +228,6 @@ void inline Hashmap::insert(Entry* entry, hash_t hash) {
     entries[pos] = entry;
     this->currentSize++;
 }
-
-
 
 inline Hashmap::Entry* Hashmap::find_chain_tagged(hash_t hash) {
     //static_assert(sizeof(hash_t) == 8, "Hashtype not supported");
