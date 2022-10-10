@@ -48,11 +48,12 @@ namespace NES::Benchmark::DataGeneration {
                 auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    auto value = uniformIntDistribution(generator);
-                    rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord,
-                                                                                                          value,
-                                                                                                          curRecord,
-                                                                                                          curRecord));
+                    uint64_t value = uniformIntDistribution(generator);
+                    rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(
+                        curRecord,
+                        value,
+                        curRecord,
+                        curRecord));
                 }
 
             } else {
