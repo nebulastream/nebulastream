@@ -1766,44 +1766,6 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
 }
-/**
- * @brief Tests csv schema with given buffer size. The tests requires an external TCPServer. We used a simple Python TCP
- * Server that sends "42,0.5,hello\n" five times via socket
- */
-TEST_F(SourceTest, DISABLED_TCPSourceReadCSVDataWithSeparatorToken) {
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9000);
-    sourceConfig->setSocketHost("127.0.0.1");
-    sourceConfig->setSocketDomainViaString("AF_INET");
-    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
-    sourceConfig->setFlushIntervalMS(100);
-    sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
-    sourceConfig->setDecideMessageSize(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR);
-    sourceConfig->setTupleSeparator('\n');
-
-    auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
-                         ->addField("name", DataTypeFactory::createFixedChar(8));
-
-    TCPSourceProxy tcpDataSource(tcpSchema,
-                                 this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(),
-                                 sourceConfig,
-                                 this->operatorId,
-                                 this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    auto buf = this->GetEmptyBuffer();
-    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 0u);
-    ASSERT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 0u);
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
-        Runtime::MemoryLayouts::RowLayout::create(tcpSchema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    tcpDataSource.open();
-    tcpDataSource.fillBuffer(buffer);
-    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedTuples(), 5u);
-    EXPECT_EQ(tcpDataSource.getNumberOfGeneratedBuffers(), 1u);
-}
 
 /**
  * @brief Tests csv schema with given buffer size. The tests requires an external TCPServer. We used a simple Python TCP
