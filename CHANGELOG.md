@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.8](https://github.com/nebulastream/nebulastream/tree/v0.3.8) (2022-10-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.7...v0.3.8)
+
+#### Query Compiler
+
+- \[Feature\] Refactor and merge jit-next branch [\#3006](https://github.com/nebulastream/nebulastream/issues/3006)
+
+### Miscellaneous Issues ✌️
+
+- JIT Inlining of NES IR Proxy Function Calls [\#2904](https://github.com/nebulastream/nebulastream/issues/2904)
+
 ## [v0.3.7](https://github.com/nebulastream/nebulastream/tree/v0.3.7) (2022-10-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.6...v0.3.7)
