@@ -173,4 +173,14 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
     NES_DEBUG("MlHeuristicPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
 
+    ASSERT_EQ(executionNodes.size(), 13U);
+    // Index represents the id of the execution node
+    std::vector<uint64_t> querySubPlanSizeCompare = {1, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1};
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        auto querySubPlan = querySubPlans[0];
+        ASSERT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId()]);
+        std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+        ASSERT_EQ(actualRootOperators.size(), 1U);
+    }
 }
