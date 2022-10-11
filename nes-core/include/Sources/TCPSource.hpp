@@ -57,8 +57,6 @@ class TCPSource : public DataSource {
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
-    ~TCPSource() override;
-
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
@@ -115,8 +113,6 @@ class TCPSource : public DataSource {
     void close() override;
 
   private:
-    TCPSource() = delete;
-
     std::vector<PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
     int connection = -1;

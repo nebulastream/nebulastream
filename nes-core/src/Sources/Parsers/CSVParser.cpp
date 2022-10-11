@@ -34,7 +34,12 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              const SchemaPtr& schema) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
 
-    std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
+    std::vector<std::string> values;
+    try {
+        values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
+    } catch (std::exception e) {
+        NES_ERROR("CSVParser::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
+    }
 
     if (values.size() != schema->getSize()) {
         throw Exceptions::RuntimeException("CSVParser: The input line does not contain the right number of delited fiels."s

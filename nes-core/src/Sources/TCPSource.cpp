@@ -83,11 +83,6 @@ TCPSource::TCPSource(SchemaPtr schema,
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 }
 
-TCPSource::~TCPSource() {
-    NES_DEBUG("TCPSource::~TCPSource() with connection: " << connection);
-    NES_DEBUG("TCPSource::~TCPSource  " << this << ": Destroy TCP Source");
-}
-
 std::string TCPSource::toString() const {
     std::stringstream ss;
     ss << "TCPSOURCE(";
@@ -125,7 +120,6 @@ void TCPSource::open() {
         connection = -1;
         NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
     }
-
     NES_TRACE("TCPSource::connected: Connected to server.");
 }
 
@@ -165,6 +159,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     int64_t bufferSizeReceived = 0;
     //receive data until tupleBuffer capacity reached or flushIntervalPassed
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
+        NES_TRACE("TCPSource::fillBuffer: Current tuple count: " << tupleCount);
         //if circular buffer is not full obtain data from socket
         if (!circularBuffer.full()) {
             //create new buffer with size equal to free space in circular buffer
@@ -225,7 +220,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     //we loose the transmitted size and obtain bytes from the tuple that weren't meant to transmit the size.
                     //This might happen if the size of the tuple was sent and popped, but we only received half of the tuple
                     //then we won't overwrite the tupleSize but try again to pop the next message.
-                    if (popped == true) {
+                    if (popped) {
                         NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
                         //create buffer to save buffer size from socket in aka the number of bytes indicating the size of the next tuple
                         messageBuffer = new char[sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue()];
@@ -256,7 +251,6 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 std::string buf(messageBuffer, tupleSize);
                 NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
-                    //buf = (buf).substr(0, buf.rfind("}") + 1);
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
                     inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
                 } else {
@@ -269,7 +263,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((sourceConfig->getFlushIntervalMS()->getValue() > 0 && tupleCount > 0
+        if ((sourceConfig->getFlushIntervalMS()->getValue() > 0
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= sourceConfig->getFlushIntervalMS()->getValue())) {
@@ -309,10 +303,12 @@ bool TCPSource::popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTex
 }
 
 void TCPSource::close() {
+    NES_TRACE("TCPSource::close: trying to close connection.");
     DataSource::close();
-    if (connection == 0) {
+    if (connection >= 0) {
         ::close(connection);
         ::close(sockfd);
+        NES_TRACE("TCPSource::close: connection closed.");
     }
 }
 
