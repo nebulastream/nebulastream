@@ -39,7 +39,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
         }
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeIdOpt.value());
         if (nodeLocationJson == nullptr) {
-            NES_ERROR("node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
+            NES_INFO("node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
             web::json::value errorResponse{};
             auto statusCode = web::http::status_codes::NotFound;
             errorResponse["code"] = web::json::value(statusCode);
@@ -68,7 +68,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             }
             auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeIdOpt.value());
             if (reconnectScheduleJson == nullptr) {
-                NES_ERROR("mobile node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
+                NES_INFO("mobile node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
                 web::json::value errorResponse{};
                 auto statusCode = web::http::status_codes::NotFound;
                 errorResponse["code"] = web::json::value(statusCode);

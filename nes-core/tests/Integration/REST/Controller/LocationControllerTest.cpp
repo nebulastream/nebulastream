@@ -37,7 +37,7 @@ class LocationControllerTest : public Testing::NESBaseTest {
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationControllerTest test class."); }
 
-    void startRestServer() {
+    void startCoordinator() {
         NES_INFO("LocationControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -56,7 +56,7 @@ class LocationControllerTest : public Testing::NESBaseTest {
 };
 
 TEST_F(LocationControllerTest, testGetLocationMissingQueryParameters) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     //test request without nodeId parameter
@@ -71,11 +71,12 @@ TEST_F(LocationControllerTest, testGetLocationMissingQueryParameters) {
 }
 
 TEST_F(LocationControllerTest, testGetLocationNoSuchNodeId) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     //test request without nodeId parameter
     nlohmann::json request;
+    // node id that doesn't exist
     uint64_t nodeId = 0;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
                                 cpr::Parameters{{"nodeId", std::to_string(nodeId)}});
@@ -88,11 +89,12 @@ TEST_F(LocationControllerTest, testGetLocationNoSuchNodeId) {
 }
 
 TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     //test request without nodeId parameter
     nlohmann::json request;
+    // provide node id that isn't an integer
     std::string nodeId = "abc";
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
                                 cpr::Parameters{{"nodeId", nodeId}});
@@ -105,7 +107,7 @@ TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
 }
 
 TEST_F(LocationControllerTest, testGetSingleLocation){
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     std::string latitude = "13.4";
     std::string longitude = "-23.0";
@@ -134,7 +136,7 @@ TEST_F(LocationControllerTest, testGetSingleLocation){
 }
 
 TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided){
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = *rpcCoordinatorPort;
@@ -158,7 +160,7 @@ TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided
 
 TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes){
     uint64_t rpcPortWrk1 = 6000;
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = coordinator->getTopology()->getLocationIndex();
 
@@ -173,7 +175,6 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes){
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
 
     //no mobile nodes added yet, response should be null
 
@@ -192,7 +193,7 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = coordinator->getTopology()->getLocationIndex();
 
