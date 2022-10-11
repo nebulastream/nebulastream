@@ -89,7 +89,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
         FAIL() << "Rest server failed to start";
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
-    EXPECT_EQ(r.status_code, 404);
+    EXPECT_EQ(r.status_code, 500);
 }
 
 TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
