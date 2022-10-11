@@ -40,8 +40,9 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
                           Experimental::MaintenanceServicePtr maintenanceService,
                           oatpp::String completeRouterPrefix,
                           ErrorHandlerPtr errorHandler)
-                : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-                maintenanceService(maintenanceService), errorHandler(errorHandler){}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), maintenanceService(maintenanceService),
+          errorHandler(errorHandler) {}
+
   /**
   * Create a shared object of the API controller
   * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
@@ -52,8 +53,8 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
                                                          Experimental::MaintenanceServicePtr maintenanceService,
                                                          ErrorHandlerPtr errorHandler,
                                                          std::string routerPrefixAddition) {
-                oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-                return std::make_shared<MaintenanceController>(objectMapper, maintenanceService,completeRouterPrefix, errorHandler);
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<MaintenanceController>(objectMapper, maintenanceService, completeRouterPrefix, errorHandler);
     }
 
     ENDPOINT("POST", "/scheduleMaintenance", scheduleNodeForMaintenance, BODY_STRING(String, request)){
@@ -89,8 +90,6 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
   private:
     Experimental::MaintenanceServicePtr maintenanceService;
     ErrorHandlerPtr errorHandler;
-
-
 };
 }//namespace Controller
 }// namespace REST

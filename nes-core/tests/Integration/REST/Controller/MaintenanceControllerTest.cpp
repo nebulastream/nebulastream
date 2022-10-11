@@ -32,7 +32,7 @@ class MaintenanceControllerTest : public Testing::NESBaseTest {
 
     static void TearDownTestCase() { NES_INFO("Tear down MaintenanceControllerTest test class."); }
 
-    void startRestServer() {
+    void startCoordinator() {
         NES_INFO("QueryControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -47,10 +47,10 @@ class MaintenanceControllerTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
 };
 
+// test behavior of POST request when required node Id isnt provided
 TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    uint64_t nodeId = coordinator->getNesWorker()->getTopologyNodeId();
 
     nlohmann::json request;
     request["someField"] = "someData";
@@ -65,13 +65,15 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
     EXPECT_EQ(res["message"], "Field 'id' must be provided");
 }
 
+// test behavior of POST request when request body doesn't contain 'migrationType'
 TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     uint64_t nodeId = coordinator->getNesWorker()->getTopologyNodeId();
 
     nlohmann::json request;
     request["id"] = nodeId;
+    //arbitrary field
     request["someField"] = "Is mayonnaise an instrument?";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -83,13 +85,15 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType
     EXPECT_EQ(res["message"], "Field 'migrationType' must be provided");
 }
 
+// test behavior of POST request when supplied 'migrationType' isn't supported/doesn't exist
 TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     uint64_t nodeId = coordinator->getNesWorker()->getTopologyNodeId();
 
     nlohmann::json request;
     request["id"] = nodeId;
+    //non-existent migration type
     request["migrationType"] = "Noodles";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -104,12 +108,13 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     EXPECT_EQ(res["message"], message);
 }
 
+// test behavior of POST request when supplied 'nodeId' doesn't exist
 TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    uint64_t nodeId = coordinator->getNesWorker()->getTopologyNodeId();
 
     nlohmann::json request;
+    //non-existent id
     request["id"] = 69;
     request["migrationType"] = Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING);
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
@@ -122,9 +127,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     EXPECT_EQ(res["message"], "No Topology Node with ID " + std::to_string(69));
 }
 
-
+// test behavior of POST request when all required fields are provided and are valid
 TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     uint64_t nodeId = coordinator->getNesWorker()->getTopologyNodeId();
 
@@ -142,5 +147,4 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     EXPECT_EQ(res["Node Id"], nodeId);
     EXPECT_EQ(res["Migration Type"], Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
 }
-
 } // namespace NES

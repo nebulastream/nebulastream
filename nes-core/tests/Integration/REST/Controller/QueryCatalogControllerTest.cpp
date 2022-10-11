@@ -35,7 +35,7 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class."); }
 
-    void startRestServer() {
+    void startCoordinator() {
         NES_INFO("QueryCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -52,7 +52,7 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
 
 // Test that allRegisteredQueries first returns an empty json when no queries are registered and then a non-empty one after a query has been registered
 TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     cpr::AsyncResponse future1 =
@@ -85,7 +85,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
 
 // Test queries endpoint: 400 if no status provided, otherwise 200. Depending on if a query is registered or not either an empty json body or non-empty
 TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // When making a request for a query without specifying a specific status
@@ -135,7 +135,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
 
 //Test status endpoint correctly returns status of a query
 TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // when sending a request to the status endpoint without specifying a 'queryId' query parameter
@@ -180,7 +180,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQueryParameter) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // when sending a getNumberOfProducedBuffers request without specifying query parameter 'queryId'
@@ -194,7 +194,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQ
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // when sending a getNumberOfProducedBuffers request with 'queryId' specified but no such query can be found
@@ -211,7 +211,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStatistics) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // create a query and register with coordinator

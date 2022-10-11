@@ -35,7 +35,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 
-    void startRestServer() {
+    void startCoordinator() {
         NES_INFO("QueryControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -52,7 +52,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
 
 //Check if submitting a POST request without defining 'userQuery' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request;
@@ -71,7 +71,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
 
 //Check if submitting a POST request without defining 'placement' returns 400
 TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
@@ -91,7 +91,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
 
 //Check if submitting a POST request with an unsupported 'placement' strategy returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
@@ -111,7 +111,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
 
 //Check if submitting a POST request with an unsupported 'faultTolerance' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
@@ -132,7 +132,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
 
 //Check if submitting a POST request with an unsupported 'lineage' type returns 400
 TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
-    startRestServer();
+    startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
