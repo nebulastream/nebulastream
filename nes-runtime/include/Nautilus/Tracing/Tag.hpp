@@ -34,6 +34,11 @@ class Tag {
   public:
     static constexpr uint64_t MAX_TAG_SIZE = 20;
     /**
+     * @brief Constructor to create a new tag.
+     * @param addresses
+     */
+    Tag(std::vector<TagAddress> addresses);
+    /**
      * @brief The hasher enables to leverage the tag in a std::map
      */
     class TagHasher {
@@ -57,11 +62,6 @@ class Tag {
     friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
 
   private:
-    /**
-     * @brief Constructor to create a new tag.
-     * @param addresses
-     */
-    Tag(std::vector<TagAddress> addresses);
     std::vector<TagAddress> addresses;
     friend TagHasher;
 };
