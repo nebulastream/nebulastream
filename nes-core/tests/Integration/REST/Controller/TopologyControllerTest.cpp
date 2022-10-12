@@ -154,7 +154,6 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
-
     nlohmann::json request{};
     request["parentId"] = 7;
     request["childId"] = 7;
