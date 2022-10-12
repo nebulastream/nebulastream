@@ -98,7 +98,6 @@ class ReconnectConfigurator {
      * @param newParent : the mobile workers new parent
      * @return true if the parents were successfully exchanged
      */
-    //TODO #2864: buffer data until reconnect is finished
     bool reconnect(uint64_t oldParent, uint64_t newParent);
 
   private:
