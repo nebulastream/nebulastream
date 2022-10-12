@@ -35,5 +35,6 @@ class ErrorHandler : public oatpp::web::server::handler::ErrorHandler {
     std::shared_ptr<OutgoingResponse>
     handleError(const Status& status, const oatpp::String& message, const Headers& headers = {}) override;
 };
+using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 }// namespace NES
 #endif//NES_ERRORHANDLER_HPP

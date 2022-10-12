@@ -15,12 +15,13 @@
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_MAINTENANCECONTROLLER_HPP_
 
 #include <Phases/MigrationType.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Services/MaintenanceService.hpp>
+#include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -31,10 +32,10 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
 
   public:
     /**
-  * Constructor with object mapper.
-  * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-  * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
-  */
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
+     */
     MaintenanceController(const std::shared_ptr<ObjectMapper>& objectMapper,
                           Experimental::MaintenanceServicePtr maintenanceService,
                           oatpp::String completeRouterPrefix,
@@ -43,11 +44,11 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
           errorHandler(errorHandler) {}
 
     /**
-  * Create a shared object of the API controller
-  * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-  * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
-  * @return
-  */
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @return
+     */
     static std::shared_ptr<MaintenanceController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                          Experimental::MaintenanceServicePtr maintenanceService,
                                                          ErrorHandlerPtr errorHandler,
