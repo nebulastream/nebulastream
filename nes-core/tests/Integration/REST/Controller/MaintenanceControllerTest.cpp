@@ -13,6 +13,7 @@
 */
 
 #include <NesBaseTest.hpp>
+#include <Phases/MigrationType.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -20,7 +21,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Phases/MigrationType.hpp>
 
 namespace NES {
 class MaintenanceControllerTest : public Testing::NESBaseTest {
@@ -102,9 +102,10 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
     auto res = nlohmann::json::parse(response.text);
-    std::string message = "MigrationType: 0"
-         " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
-          "Buffering)";
+    std::string message =
+        "MigrationType: 0"
+        " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
+        "Buffering)";
     EXPECT_EQ(res["message"], message);
 }
 
@@ -145,6 +146,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     auto res = nlohmann::json::parse(response.text);
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
     EXPECT_EQ(res["Node Id"], nodeId);
-    EXPECT_EQ(res["Migration Type"], Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
+    EXPECT_EQ(res["Migration Type"],
+              Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
 }
-} // namespace NES
+}// namespace NES

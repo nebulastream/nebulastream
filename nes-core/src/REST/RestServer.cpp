@@ -17,12 +17,12 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
+#include <REST/OatppController/MaintenanceController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/QueryController.hpp>
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
-#include <REST/OatppController/MaintenanceController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -163,8 +163,7 @@ void RestServer::run() {
                                                                                    globalQueryPlan,
                                                                                    "/queryCatalog",
                                                                                    errorHandler);
-    auto topologyController =
-        REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,

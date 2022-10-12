@@ -60,9 +60,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<SourceCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                                 ErrorHandlerPtr errorHandler,
-                                                                 std::string routerPrefixAddition) {
+                                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                           ErrorHandlerPtr errorHandler,
+                                                           std::string routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog, errorHandler, completeRouterPrefix);
     }
