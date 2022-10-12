@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.3.9](https://github.com/nebulastream/nebulastream/tree/v0.3.9) (2022-10-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.8...v0.3.9)
+
+#### Build Management
+
+- Load march and mtune automatically based on architecture [\#2147](https://github.com/nebulastream/nebulastream/issues/2147)
+
+#### State Management 
+
+- Investigate State Allocation Overhead [\#1391](https://github.com/nebulastream/nebulastream/issues/1391)
+
+### Miscellaneous Issues ✌️
+
+- Make MaintenanceController an oatpp endpoint \(Move to oatapp REST server\) [\#2837](https://github.com/nebulastream/nebulastream/issues/2837)
+- Fix the wrong types in debugger using clang [\#1607](https://github.com/nebulastream/nebulastream/issues/1607)
+- Flatten the pipeline left/right selection [\#1447](https://github.com/nebulastream/nebulastream/issues/1447)
+- Cleanup test dir [\#1256](https://github.com/nebulastream/nebulastream/issues/1256)
+- Increasing degree of parallelism in tests [\#1201](https://github.com/nebulastream/nebulastream/issues/1201)
+
 ## [v0.3.8](https://github.com/nebulastream/nebulastream/tree/v0.3.8) (2022-10-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.7...v0.3.8)
