@@ -17,6 +17,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -29,6 +30,7 @@
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 using std::cout;
 using std::endl;
@@ -70,8 +72,10 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
-    //TODO: #2960 compare content of response to expected values. To be added once json library found #2950
+    //TODO: check content of r
 }
+
+// TODO: Test for get stop request is missing
 
 TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotEnabled) {
     NES_INFO("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
@@ -92,6 +96,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
 
 TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     NES_INFO("Tests for Oatpp Monitoring Controller - testRequestAllMetrics: Start coordinator");
+    uint64_t noWorkers = 2; // TODO
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -106,7 +111,21 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
     EXPECT_EQ(r.status_code, 200);
-    //TODO: #2960 also check if content of r contains valid information (right fields and valid queryIds). To be added once json library found #2950
+    //compare content of response to expected values
+    nlohmann::json jsonsOfResponse = nlohmann::json::parse(r.text);
+    NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsOfResponse["monitoredData"]);
+
+    //TODO: check if content of r contains valid information (right fields and valid queryIds).
+    auto jsons = jsonsOfResponse.dump();
+//    ASSERT_EQ(jsons.size(), noWorkers + 1);
+    // TODO its not working
+    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        auto json = jsons[i];
+        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
+    }
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
@@ -126,7 +145,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
                                cpr::Parameters{{"nodeId", std::to_string(1)}});
     EXPECT_EQ(r.status_code, 200);
-    // TODO: #2960 also check if content of r contains valid information (right fields and valid queryIds). To be added once json library found #2950
+    //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
@@ -143,9 +162,15 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
+    MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
+    auto expected = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
     EXPECT_EQ(r.status_code, 200);
-    //TODO: #2960 compare content of response to expected values. To be added once json library found #2950
+    //compare content of response to expected values
+    nlohmann::json jsons = nlohmann::json::parse(r.text);
+    NES_INFO("MonitoringControllerTest - Received Data from Get-Storage request: " << jsons["monitoredStreamsInMetricStore"]);
+    EXPECT_EQ(expected.to_string(), jsons["monitoredStreamsInMetricStore"].dump());
+    //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
@@ -166,7 +191,11 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     auto expected = monitoringService->startMonitoringStreams();
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
     EXPECT_EQ(r.status_code, 200);
-    //TODO: #2960 compare content of response to expected values. To be added once json library found #2950
+    //compare content of response to expected values
+    nlohmann::json jsons = nlohmann::json::parse(r.text);
+    NES_INFO("MonitoringControllerTest - Received Data from Get-Stream request: " << jsons["monitoredStreams"]);
+    EXPECT_EQ(expected.to_string(), jsons["monitoredStreams"].dump());
+    //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
 
 }//namespace NES
