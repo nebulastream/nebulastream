@@ -16,13 +16,27 @@
 #define NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 
 namespace NES {
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
+
+class DumpHandler;
+using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
+
+class DumpContext;
+using DumpContextPtr = std::shared_ptr<DumpContext>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace QueryCompilation {
+class PipelineQueryPlan;
+using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
+}// namespace QueryCompilation
+
 
 /**
  * @brief Implemented by classes that provide an visualization of passed nodes. The format and client required to consume the visualizations

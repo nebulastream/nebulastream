@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
-#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "Monitoring/Util/MetricUtils.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Monitoring/MetricCollectors/CpuCollector.hpp"
+#include "Monitoring/MetricCollectors/DiskCollector.hpp"
+#include "Monitoring/MetricCollectors/MemoryCollector.hpp"
+#include "Monitoring/MetricCollectors/NetworkCollector.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
+#include "Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/UtilityFunctions.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {

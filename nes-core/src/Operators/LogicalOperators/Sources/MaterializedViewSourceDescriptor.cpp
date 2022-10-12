@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
+#include <API/Schema.hpp>
 #include <utility>
 
 namespace NES::Experimental::MaterializedView {

@@ -14,12 +14,17 @@
 
 #ifndef NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_
 #define NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_
+
+#include <API/Schema.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <cstdint>
 
 namespace NES::Join::Experimental {
 
+class LogicalBatchJoinDefinition;
+using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental
@@ -101,7 +106,5 @@ class LogicalBatchJoinDefinition {// todo jm its dumb that this is in the window
     uint64_t numberOfInputEdgesBuild;
     uint64_t numberOfInputEdgesProbe;
 };
-
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
 }// namespace NES::Join::Experimental
 #endif// NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_

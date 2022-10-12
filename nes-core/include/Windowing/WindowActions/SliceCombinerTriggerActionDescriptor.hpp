@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_SLICECOMBINERTRIGGERACTIONDESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_SLICECOMBINERTRIGGERACTIONDESCRIPTOR_HPP_
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include "BaseWindowActionDescriptor.hpp"
 
 namespace NES::Windowing {
 

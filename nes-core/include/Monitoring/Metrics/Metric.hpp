@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include "MetricType.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {

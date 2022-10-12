@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
 
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
+#include "MetricCollector.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
 
 namespace NES::Monitoring {
 

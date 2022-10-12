@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
+#include "Monitoring/MetricCollectors/CpuCollector.hpp"
+#include "API/Schema.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
+#include "Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp"
+#include "Monitoring/Util/MetricUtils.hpp"
 
-#include <Util/Logger/Logger.hpp>
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Monitoring {
 CpuCollector::CpuCollector()

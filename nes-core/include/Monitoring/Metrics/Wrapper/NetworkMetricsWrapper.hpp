@@ -15,9 +15,9 @@
 #ifndef NES_NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP
 #define NES_NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP
 
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
 
 #include <vector>
 

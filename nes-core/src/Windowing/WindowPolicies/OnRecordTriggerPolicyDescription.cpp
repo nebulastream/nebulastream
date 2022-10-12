@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include "Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp"
 
 namespace NES::Windowing {
 

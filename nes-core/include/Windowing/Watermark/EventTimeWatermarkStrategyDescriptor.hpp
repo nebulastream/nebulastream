@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 
-#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowMeasures/TimeUnit.hpp>
+#include "WatermarkStrategyDescriptor.hpp"
+#include "Windowing/WindowMeasures/TimeMeasure.hpp"
+#include "Windowing/WindowMeasures/TimeUnit.hpp"
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;

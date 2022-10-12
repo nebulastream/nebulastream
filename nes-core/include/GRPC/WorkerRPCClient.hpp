@@ -16,10 +16,9 @@
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include "WorkerRPCService.grpc.pb.h"
+#include "WorkerRPCService.pb.h"
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <WorkerRPCService.grpc.pb.h>
-#include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
 #include <thread>
@@ -79,8 +78,6 @@ class WorkerRPCClient {
     };
 
     WorkerRPCClient() = default;
-
-    void AsyncCompleteRpc();
 
     /**
         * @brief register a query

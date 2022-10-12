@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
+#include "Monitoring/MetricCollectors/NetworkCollector.hpp"
+#include "API/Schema.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
+#include "Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp"
+#include "Monitoring/Util/MetricUtils.hpp"
 
-#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Monitoring {
 NetworkCollector::NetworkCollector()

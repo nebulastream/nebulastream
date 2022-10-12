@@ -14,8 +14,10 @@
 
 #ifndef NES_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
 #define NES_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+
+#include <API/Windowing.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <cstdint>
 
 namespace NES::Join {

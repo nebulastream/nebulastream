@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Monitoring/MonitoringCatalog.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/MonitoringCatalog.hpp"
+#include "Util/Logger/Logger.hpp"
 
-#include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
-#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include "Monitoring/MetricCollectors/CpuCollector.hpp"
+#include "Monitoring/MetricCollectors/DiskCollector.hpp"
+#include "Monitoring/MetricCollectors/MemoryCollector.hpp"
+#include "Monitoring/MetricCollectors/NetworkCollector.hpp"
 
 namespace NES::Monitoring {
 

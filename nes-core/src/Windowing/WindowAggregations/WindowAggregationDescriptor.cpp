@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include "Windowing/WindowAggregations/WindowAggregationDescriptor.hpp"
+#include "API/Expressions/Expressions.hpp"
+#include "Nodes/Expressions/FieldAccessExpressionNode.hpp"
 
 namespace NES::Windowing {
 

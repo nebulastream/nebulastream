@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/MonitoringPlan.hpp"
+#include "Monitoring/Util/MetricUtils.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Monitoring {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {

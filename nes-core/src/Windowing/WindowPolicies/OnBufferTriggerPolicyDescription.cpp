@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include "Windowing/WindowPolicies/OnBufferTriggerPolicyDescription.hpp"
 
 namespace NES::Windowing {
 

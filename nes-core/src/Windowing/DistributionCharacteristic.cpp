@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
+#include "Windowing/DistributionCharacteristic.hpp"
+#include "API/AttributeField.hpp"
 
 namespace NES::Windowing {
 

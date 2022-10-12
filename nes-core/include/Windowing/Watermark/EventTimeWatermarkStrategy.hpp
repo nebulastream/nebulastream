@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKSTRATEGY_HPP_
 #define NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKSTRATEGY_HPP_
 
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include "WatermarkStrategy.hpp"
 
 namespace NES::Windowing {
 

@@ -15,10 +15,10 @@
 #ifndef NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Topology/TopologyNodeId.hpp>
+#include "MetricCollectorType.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
+#include "Topology/TopologyNodeId.hpp"
 #include <memory>
 
 namespace NES::Monitoring {

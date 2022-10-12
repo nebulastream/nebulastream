@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
 
-#include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "API/Schema.hpp"
+#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
+#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
+#include "Util/UtilityFunctions.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {

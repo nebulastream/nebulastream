@@ -14,7 +14,6 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Sources/MonitoringSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 

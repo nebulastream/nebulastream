@@ -19,11 +19,9 @@ add_source_files(nes-core
         LogicalBatchJoinDefinition.cpp
 )
 add_subdirectory(Watermark)
-add_subdirectory(Runtime)
 add_subdirectory(WindowAggregations)
 add_subdirectory(WindowActions)
 add_subdirectory(WindowMeasures)
 add_subdirectory(WindowPolicies)
-add_subdirectory(WindowTypes)
+add_subdirectory(../../../nes-runtime/src/Windowing/WindowTypes)
 add_subdirectory(WindowHandler)
-add_subdirectory(Experimental)

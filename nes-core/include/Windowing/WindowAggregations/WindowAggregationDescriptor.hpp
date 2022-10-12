@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include "Common/DataTypes/DataType.hpp"
+#include "Windowing/WindowingForwardRefs.hpp"
 
 namespace NES::Optimizer {
 class TypeInferencePhaseContext;

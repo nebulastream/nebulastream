@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include "Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp"
+#include "Optimizer/Phases/TypeInferencePhase.hpp"
 #include <string>
 
 namespace NES::Windowing {

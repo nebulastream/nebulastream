@@ -15,8 +15,8 @@
 #ifndef NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 #define NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Monitoring/Storage/MetricStoreType.hpp>
+#include "MetricStoreType.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
 #include <cstdint>
 #include <unordered_map>
 #include <vector>

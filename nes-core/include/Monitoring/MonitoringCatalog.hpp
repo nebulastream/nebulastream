@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 
-#include <Monitoring/Metrics/MetricType.hpp>
+#include "Monitoring/Metrics/MetricType.hpp"
 #include <memory>
 #include <unordered_map>
 

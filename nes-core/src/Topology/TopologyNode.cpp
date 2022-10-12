@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

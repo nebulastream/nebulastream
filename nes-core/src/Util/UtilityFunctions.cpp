@@ -71,44 +71,6 @@ std::string Util::trim(std::string str, char trimFor) {
     return str;
 }
 
-std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
-    std::stringstream ss;
-    for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-        ss << buffer.getBuffer<char>()[i];
-    }
-    return ss.str();
-}
-
-/**
- * @brief create CSV lines from the tuples
- * @param tbuffer the tuple buffer
- * @param schema how to read the tuples from the buffer
- * @return a full string stream as string
- */
-std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
-    std::stringstream ss;
-    auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto* buffer = tbuffer.getBuffer<char>();
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t i = 0; i < numberOfTuples; i++) {
-        uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++) {
-            auto field = schema->get(j);
-            auto ptr = field->getDataType();
-            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
-            auto fieldSize = physicalType->size();
-            auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
-            ss << str.c_str();
-            if (j < schema->getSize() - 1) {
-                ss << ",";
-            }
-            offset += fieldSize;
-        }
-        ss << std::endl;
-    }
-    return ss.str();
-}
-
 void Util::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);

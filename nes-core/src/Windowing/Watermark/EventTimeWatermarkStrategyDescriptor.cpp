@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include "Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Expressions/Expressions.hpp"
+#include "API/Schema.hpp"
+#include "Exceptions/InvalidFieldException.hpp"
+#include "Nodes/Expressions/FieldAccessExpressionNode.hpp"
+#include "Windowing/TimeCharacteristic.hpp"
 #include <utility>
 
 namespace NES::Windowing {

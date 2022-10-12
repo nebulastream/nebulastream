@@ -12,22 +12,22 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
-#include <Components/NesWorker.hpp>
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Monitoring/MonitoringAgent.hpp>
-#include <Monitoring/MonitoringCatalog.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/MonitoringAgent.hpp"
+#include "API/Schema.hpp"
+#include "Catalogs/Source/PhysicalSource.hpp"
+#include "Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp"
+#include "Components/NesWorker.hpp"
+#include "Monitoring/MetricCollectors/MetricCollector.hpp"
+#include "Monitoring/Metrics/Gauge/RegistrationMetrics.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Monitoring/Metrics/MetricType.hpp"
+#include "Monitoring/MonitoringCatalog.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
+#include "Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp"
+#include "Monitoring/Util/MetricUtils.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {

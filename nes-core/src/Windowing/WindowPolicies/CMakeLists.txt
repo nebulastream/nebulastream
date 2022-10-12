@@ -17,6 +17,4 @@ add_source_files(nes-core
         OnWatermarkChangeTriggerPolicyDescription.cpp
         OnBufferTriggerPolicyDescription.cpp
         OnRecordTriggerPolicyDescription.cpp
-        ExecutableOnTimeTriggerPolicy.cpp
-        ExecutableOnWatermarkChangeTriggerPolicy.cpp
 )

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowActions/SliceCombinerTriggerActionDescriptor.hpp>
+#include "Windowing/WindowActions/SliceCombinerTriggerActionDescriptor.hpp"
 
 namespace NES::Windowing {
 

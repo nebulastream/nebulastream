@@ -66,7 +66,7 @@ endif ()
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 
-set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+
 include(cmake/ImportDependencies.cmake)
 project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
@@ -617,6 +617,7 @@ add_subdirectory(nes-common)
 add_subdirectory(nes-compiler)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
+add_subdirectory(nes-runtime)
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
     # Add target for execution engines
     add_subdirectory(nes-execution-engine)

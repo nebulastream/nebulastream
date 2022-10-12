@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_UTIL_SYSTEM_RESOURCES_READER_HPP_
 #define NES_INCLUDE_MONITORING_UTIL_SYSTEM_RESOURCES_READER_HPP_
 
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include "AbstractSystemResourcesReader.hpp"
 
 namespace NES::Monitoring {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Monitoring/Storage/MetricStoreType.hpp>
+#include "Monitoring/Storage/MetricStoreType.hpp"
 
 namespace NES::Monitoring {
 

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
+#include "MetricCollector.hpp"
+#include "Monitoring/MonitoringForwardRefs.hpp"
 
 namespace NES::Monitoring {
 

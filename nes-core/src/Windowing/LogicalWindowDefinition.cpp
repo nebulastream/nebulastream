@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include "Windowing/LogicalWindowDefinition.hpp"
+#include "API/Expressions/Expressions.hpp"
+#include "Nodes/Expressions/FieldAccessExpressionNode.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Windowing/DistributionCharacteristic.hpp"
+#include "Windowing/WindowActions/BaseWindowActionDescriptor.hpp"
+#include "Windowing/WindowAggregations/WindowAggregationDescriptor.hpp"
+#include "Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp"
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 

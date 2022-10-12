@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONRECORDTRIGGERPOLICYDESCRIPTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONRECORDTRIGGERPOLICYDESCRIPTION_HPP_
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include "BaseWindowTriggerPolicyDescriptor.hpp"
 
 namespace NES::Windowing {
 

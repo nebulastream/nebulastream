@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Storage/AllEntriesMetricStore.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/Storage/AllEntriesMetricStore.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <chrono>
 
 namespace NES::Monitoring {

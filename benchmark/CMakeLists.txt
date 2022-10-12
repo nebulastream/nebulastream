@@ -13,6 +13,7 @@
 # Google Benchmark Framework ----------------------------------------------------
 
 if (NES_BUILD_BENCHMARKS)
+    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
     message("---Building benchmarks...")
     include(ExternalProject)
     ExternalProject_Add(

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include "Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp"
 
 namespace NES::Windowing {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include "Windowing/Watermark/WatermarkStrategyDescriptor.hpp"
 
 namespace NES::Windowing {
 

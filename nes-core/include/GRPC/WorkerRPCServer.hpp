@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
+#include "CoordinatorRPCService.grpc.pb.h"
+#include "WorkerRPCService.grpc.pb.h"
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 

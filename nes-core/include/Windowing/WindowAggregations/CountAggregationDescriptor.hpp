@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_
 
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include "WindowAggregationDescriptor.hpp"
 namespace NES::Windowing {
 
 /**

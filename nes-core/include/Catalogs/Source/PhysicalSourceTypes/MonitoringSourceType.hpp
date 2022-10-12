@@ -28,13 +28,15 @@ using MonitoringSourceTypePtr = std::shared_ptr<MonitoringSourceType>;
  */
 class MonitoringSourceType : public PhysicalSourceType {
   public:
+    static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
+  public:
     ~MonitoringSourceType() noexcept override = default;
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(uint64_t metricCollectorType, std::chrono::milliseconds waitTimeInMs);
+    static MonitoringSourceTypePtr create(uint64_t metricCollectorType, std::chrono::milliseconds waitTimeInMs = DEFAULT_WAIT_TIME);
 
     /**
      * @brief create a MonitoringSourceTypePtr object

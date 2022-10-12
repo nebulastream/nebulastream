@@ -12,33 +12,33 @@
     limitations under the License.
 */
 
-#include <Monitoring/MonitoringManager.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/MonitoringManager.hpp"
+#include "Util/Logger/Logger.hpp"
 
-#include <Components/NesCoordinator.hpp>
+#include "Components/NesCoordinator.hpp"
 
-#include <API/Schema.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include "API/Schema.hpp"
+#include "Catalogs/Source/LogicalSource.hpp"
+#include "Configurations/Coordinator/CoordinatorConfiguration.hpp"
+#include "GRPC/WorkerRPCClient.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Metric.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
+#include "Monitoring/Storage/LatestEntriesMetricStore.hpp"
+#include "Monitoring/Util/MetricUtils.hpp"
+#include "Runtime/NodeEngine.hpp"
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Services/QueryService.hpp>
+#include "Catalogs/Query/QueryCatalogEntry.hpp"
+#include "Services/QueryCatalogService.hpp"
+#include "Services/QueryService.hpp"
 
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/QueryStatus.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "Topology/Topology.hpp"
+#include "Topology/TopologyNode.hpp"
+#include "Util/QueryStatus.hpp"
+#include "Util/UtilityFunctions.hpp"
 #include <regex>
 #include <utility>
 

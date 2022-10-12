@@ -18,8 +18,5 @@
 
 namespace NES::CEP {
 
-class CEPOperatorHandler;
-using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEPOperatorHandler>;
-
 }// namespace NES::CEP
 #endif// NES_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_

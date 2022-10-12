@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
 #define NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
 
-#include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include "AbstractMetricStore.hpp"
 
 namespace NES::Monitoring {
 

@@ -13,8 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
-#include <utility>
+#include <API/Schema.hpp>
 
 namespace NES::Experimental {
 

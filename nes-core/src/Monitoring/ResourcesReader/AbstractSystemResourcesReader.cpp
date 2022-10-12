@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RegistrationMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RuntimeMetrics.hpp"
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
+#include "Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp"
 
 namespace NES::Monitoring {
 AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(AbstractReader) {}

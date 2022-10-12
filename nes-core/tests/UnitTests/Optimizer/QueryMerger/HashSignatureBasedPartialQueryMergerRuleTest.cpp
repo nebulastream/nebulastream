@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 // clang-format on
+#include "Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp"
+#include "Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
@@ -32,8 +34,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
 

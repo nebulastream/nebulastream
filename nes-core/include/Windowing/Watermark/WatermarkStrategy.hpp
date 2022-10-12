@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGY_HPP_
 #define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGY_HPP_
 
-#include <Windowing/WindowingForwardRefs.hpp>
+#include "Windowing/WindowingForwardRefs.hpp"
 
 namespace NES::Windowing {
 

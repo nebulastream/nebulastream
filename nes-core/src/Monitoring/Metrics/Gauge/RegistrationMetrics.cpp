@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include "Monitoring/Metrics/Gauge/RegistrationMetrics.hpp"
 
-#include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
-#include <CoordinatorRPCService.pb.h>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "API/Schema.hpp"
+#include "Common/DataTypes/FixedChar.hpp"
+#include "CoordinatorRPCService.pb.h"
+#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/UtilityFunctions.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {

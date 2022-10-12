@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Monitoring/MetricCollectors/MetricCollectorType.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Monitoring {
 

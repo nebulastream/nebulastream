@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
 #define NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
 
-#include <API/Windowing.hpp>
-#include <Windowing/WindowMeasures/TimeUnit.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include "API/Windowing.hpp"
+#include "Windowing/WindowMeasures/TimeUnit.hpp"
+#include "Windowing/WindowingForwardRefs.hpp"
 namespace NES::Windowing {
 
 /**

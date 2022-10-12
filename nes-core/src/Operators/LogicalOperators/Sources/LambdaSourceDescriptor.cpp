@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <utility>
 

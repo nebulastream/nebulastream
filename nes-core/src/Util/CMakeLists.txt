@@ -14,13 +14,11 @@
 add_source_files(nes-core
         UtilityFunctions.cpp
         TimeMeasurement.cpp
-        BufferSequenceNumber.cpp
         FaultToleranceType.cpp
         LineageType.cpp
         PlacementStrategy.cpp
         GatheringMode.cpp
         SourceMode.cpp
-        KalmanFilter.cpp
         QueryStatus.cpp
         RequestType.cpp
         SharedQueryPlanStatus.cpp
@@ -28,7 +26,6 @@ add_source_files(nes-core
         )
 if (NES_USE_MQTT)
     add_source_files(nes-core
-            MQTTClientWrapper.cpp
             )
 endif ()
 add_subdirectory(Experimental)

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
+#include "Windowing/WindowActions/BaseJoinActionDescriptor.hpp"
 
 namespace NES::Join {
 

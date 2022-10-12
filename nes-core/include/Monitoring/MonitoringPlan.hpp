@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
+#include "Monitoring/MetricCollectors/MetricCollectorType.hpp"
+#include "Monitoring/Metrics/MetricType.hpp"
+#include "MonitoringForwardRefs.hpp"
 #include <memory>
 #include <set>
 #include <string>

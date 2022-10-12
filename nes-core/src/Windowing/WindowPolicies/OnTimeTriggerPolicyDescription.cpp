@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include "Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp"
 #include <sstream>
 namespace NES::Windowing {
 

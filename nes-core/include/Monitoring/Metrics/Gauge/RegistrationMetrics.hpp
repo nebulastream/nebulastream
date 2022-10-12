@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_
 
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
 
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;

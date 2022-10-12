@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONWATERMARKCHANGETRIGGERPOLICYDESCRIPTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONWATERMARKCHANGETRIGGERPOLICYDESCRIPTION_HPP_
 
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include "BaseWindowTriggerPolicyDescriptor.hpp"
 
 namespace NES::Windowing {
 

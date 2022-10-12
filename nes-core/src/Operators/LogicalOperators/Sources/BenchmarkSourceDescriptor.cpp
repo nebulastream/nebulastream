@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
 #include <utility>
 
 namespace NES {

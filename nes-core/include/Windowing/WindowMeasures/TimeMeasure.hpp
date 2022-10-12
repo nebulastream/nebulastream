@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_
-#include <Windowing/WindowMeasures/WindowMeasure.hpp>
+#include "WindowMeasure.hpp"
 #include <cstdint>
 namespace NES::Windowing {
 

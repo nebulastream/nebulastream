@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include "Windowing/Watermark/EventTimeWatermarkStrategy.hpp"
+#include "Windowing/WindowingForwardRefs.hpp"
 #include <utility>
 
 namespace NES::Windowing {

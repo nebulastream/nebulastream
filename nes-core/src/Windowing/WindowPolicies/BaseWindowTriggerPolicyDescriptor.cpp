@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include "Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp"
 
 namespace NES::Windowing {
 

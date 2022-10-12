@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include "Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp"
 
 namespace NES::Windowing {
 

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/UtilityFunctions.hpp"
 
 #include <cpprest/json.h>
 

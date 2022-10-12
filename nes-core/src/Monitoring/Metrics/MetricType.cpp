@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/MetricType.hpp>
+#include "Monitoring/Metrics/MetricType.hpp"
 
 namespace NES::Monitoring {
 

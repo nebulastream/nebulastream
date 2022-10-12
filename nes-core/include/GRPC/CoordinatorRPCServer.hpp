@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 #define NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
+#include "CoordinatorRPCService.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 

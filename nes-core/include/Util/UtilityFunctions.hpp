@@ -15,16 +15,15 @@
 #ifndef NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 #define NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <algorithm>
 #include <any>
 #include <functional>
 #include <map>
 #include <set>
 #include <string>
-
 /**
  * @brief a collection of shared utility functions
  */
@@ -170,19 +169,6 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
 
     return elems;
 }
-
-/**
-* @brief Outputs a tuple buffer in text format
-* @param buffer the tuple buffer
-* @return string of tuple buffer
-*/
-std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
-
-/**
-* @brief this method creates a string from the content of a tuple buffer
-* @return string of the buffer content
-*/
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
 * @brief this method checks if the object is null

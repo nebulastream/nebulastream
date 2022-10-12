@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include "../../../../nes-runtime/include/Util/Experimental/HashMap.hpp"
+#include "../../../../nes-runtime/include/Util/Experimental/Hash.hpp"
 #include <NesBaseTest.hpp>
-#include <Util/Experimental/Hash.hpp>
-#include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cstring>

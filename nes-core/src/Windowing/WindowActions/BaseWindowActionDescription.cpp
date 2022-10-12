@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include "Windowing/WindowActions/BaseWindowActionDescriptor.hpp"
 
 namespace NES::Windowing {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include "Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp"
 
 namespace NES::Join {
 

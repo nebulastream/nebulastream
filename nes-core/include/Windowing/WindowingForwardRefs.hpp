@@ -40,18 +40,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace NES::Windowing {
 
-class WindowOperatorHandler;
-using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
-
-class BaseExecutableWindowTriggerPolicy;
-using BaseExecutableWindowTriggerPolicyPtr = std::shared_ptr<BaseExecutableWindowTriggerPolicy>;
-
-class ExecutableOnTimeTriggerPolicy;
-using ExecutableOnTimeTriggerPtr = std::shared_ptr<ExecutableOnTimeTriggerPolicy>;
-
-class ExecutableOnWatermarkChangeTriggerPolicy;
-using ExecutableOnWatermarkChangeTriggerPolicyPtr = std::shared_ptr<ExecutableOnWatermarkChangeTriggerPolicy>;
-
 class BaseWindowTriggerPolicyDescriptor;
 using WindowTriggerPolicyPtr = std::shared_ptr<BaseWindowTriggerPolicyDescriptor>;
 
@@ -61,44 +49,11 @@ using WindowActionDescriptorPtr = std::shared_ptr<BaseWindowActionDescriptor>;
 class AbstractWindowHandler;
 using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class BaseExecutableWindowAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using BaseExecutableWindowActionPtr =
-    std::shared_ptr<BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
-
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class ExecutableCompleteAggregationTriggerAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using ExecutableCompleteAggregationTriggerActionPtr =
-    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
-
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class ExecutableSliceAggregationTriggerAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using ExecutableSliceAggregationTriggerActionPtr =
-    std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
-
 class LogicalWindowDefinition;
 using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 
 class WindowAggregationDescriptor;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
-template<typename InputType, typename PartialAggregateType, typename FinalAggregateName>
-class ExecutableWindowAggregation;
-//typedef std::shared_ptr<ExecutableWindowAggregation> ExecutableWindowAggregationPtr;
-
-class WindowManager;
-using WindowManagerPtr = std::shared_ptr<WindowManager>;
-
-template<class PartialAggregateType>
-class WindowSliceStore;
-
-template<class ValueType>
-class WindowedJoinSliceListStore;
-
-class SliceMetaData;
 
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
@@ -117,12 +72,8 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 class DistributionCharacteristic;
 using DistributionCharacteristicPtr = std::shared_ptr<DistributionCharacteristic>;
 
-inline uint64_t getTsFromClock() { return time(nullptr) * 1000; }
-
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
-class WindowState;
 
 class WatermarkStrategy;
 using WatermarkStrategyPtr = std::shared_ptr<WatermarkStrategy>;

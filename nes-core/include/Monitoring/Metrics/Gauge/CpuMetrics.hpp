@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
 #include <string>
 #include <vector>
 

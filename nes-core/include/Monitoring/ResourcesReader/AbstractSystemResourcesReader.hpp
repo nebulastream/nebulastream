@@ -15,7 +15,7 @@
 #ifndef NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 #define NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 
-#include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
+#include "SystemResourcesReaderType.hpp"
 #include <memory>
 #include <string>
 #include <unordered_map>

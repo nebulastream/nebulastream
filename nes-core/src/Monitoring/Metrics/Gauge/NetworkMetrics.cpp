@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Common/DataTypes/FixedChar.hpp"
+#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Util/UtilityFunctions.hpp"
 #include <cpprest/json.h>
 
 namespace NES::Monitoring {
