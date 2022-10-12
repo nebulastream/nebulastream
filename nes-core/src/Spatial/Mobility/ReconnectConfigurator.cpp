@@ -78,8 +78,8 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
 
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint64_t oldParent, uint64_t newParent) {
     worker.getNodeEngine()->bufferAllData();
-    //todo: wait until all upstream operators have received data which has not been buffered
-    //todo: trigger replacement and migration of operators
+    //todo #3027: wait until all upstream operators have received data which has not been buffered
+    //todo #3027: trigger replacement and migration of operators
     bool success = worker.replaceParent(oldParent, newParent);
     worker.getNodeEngine()->stopBufferingAllData();
     return success;
