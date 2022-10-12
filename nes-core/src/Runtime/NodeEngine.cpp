@@ -589,15 +589,19 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
 bool NodeEngine::bufferAllData() {
     NES_DEBUG("NodeEngine of Node " << nodeId << " received request to buffer all outgoing data");
     std::unique_lock lock(engineMutex);
+    //iterate over all sinks at this node by first iterating over qeps and then for every qep iterate over its sinks
     for (auto& [qepId, qepPtr] : deployedQEPs) {
         auto sinks = qepPtr->getSinks();
         for (auto& sink : sinks) {
+            //check if sink is a network sink
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            //whenever we encounter a network sink, send a reconfig message telling it to start buffering
             if (networkSink) {
                 NES_DEBUG("Starting to buffer on Network Sink" << networkSink->getUniqueNetworkSinkDescriptorId())
                 ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::StartBuffering, networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             } else {
+                //if the sink is not a network sink, do nothing
                 NES_DEBUG("Sink is not a network sink")
             }
         }
@@ -608,10 +612,13 @@ bool NodeEngine::bufferAllData() {
 bool NodeEngine::stopBufferingAllData() {
     NES_DEBUG("NodeEngine of Node " << nodeId << " received request to stop buffering data");
     std::unique_lock lock(engineMutex);
+    //iterate over all sinks at this node by first iterating over qeps and then for every qep iterate over its sinks
     for (auto& [qepId, qepPtr] : deployedQEPs) {
         auto sinks = qepPtr->getSinks();
         for (auto& sink : sinks) {
+            //check if sink is a network sink
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            //whenever we encounter a network sink, send a reconfig message telling it to stop buffering
             if (networkSink) {
                 ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::StopBuffering, networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);

@@ -398,6 +398,10 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     ASSERT_EQ(static_cast<std::size_t>(bf), numSendingThreads * totalNumBuffer);
 }
 
+/**
+ * @brief this test triggers buffering and turns it of again while tuples are ingested into a network source.
+ * It verifies if all buffered tuples are unbuffered properly and arrive at the receiving side
+ */
 TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
