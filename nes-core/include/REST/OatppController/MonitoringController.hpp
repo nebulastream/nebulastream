@@ -34,6 +34,7 @@
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -120,10 +121,11 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 Status::CODE_500,
                 "Error: Monitoring ist not enabled.");
         }
-        auto responseMsg = MonitoringControllerStringResponse::createShared();
-        responseMsg->monitoringData = monitoringService->getMonitoringStreams().to_string();
-        if (responseMsg->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, responseMsg);
+        nlohmann::json response;
+        auto monitoredStreams = monitoringService->getMonitoringStreams().to_string();
+        response["monitoredStreams"] = nlohmann::json::parse(monitoredStreams);
+        if(!response.empty()){
+            return createResponse(Status::CODE_200, response.dump());
         }
         return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
     }
@@ -134,10 +136,11 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 Status::CODE_500,
                 "Error: Monitoring ist not enabled.");
         }
-        auto responseMsg = MonitoringControllerStringResponse::createShared();
-        responseMsg->monitoringData = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
-        if (responseMsg->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, responseMsg);
+        nlohmann::json response;
+        auto contentOfMetricStore = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson().to_string();
+        response["monitoredStreamsInMetricStore"] = nlohmann::json::parse(contentOfMetricStore);
+        if(!response.empty()){
+            return createResponse(Status::CODE_200, response.dump());
         }
         return errorHandler->handleError(
             Status::CODE_500,
@@ -150,10 +153,11 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 Status::CODE_500,
                 "Error: Monitoring ist not enabled.");
         }
-        auto responseMsg = MonitoringControllerStringResponse::createShared();
-        responseMsg->monitoringData = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
-        if (responseMsg->monitoringData != "null") {
-            return createDtoResponse(Status::CODE_200, responseMsg);
+        nlohmann::json response;
+        auto monitoredDataFromAllNodes = monitoringService->requestMonitoringDataFromAllNodesAsJson().to_string();
+        response["monitoredData"] = nlohmann::json::parse(monitoredDataFromAllNodes);
+        if(!response.empty()){
+            return createResponse(Status::CODE_200, response.dump());
         }
         return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
     }
@@ -166,8 +170,12 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         auto responseMsg = MonitoringControllerStringResponse::createShared();
         try {
-            responseMsg->monitoringData = monitoringService->requestMonitoringDataAsJson(nodeId).to_string();
-            return createDtoResponse(Status::CODE_200, responseMsg);
+            nlohmann::json response;
+            auto monitoredDataFromGivenNode = monitoringService->requestMonitoringDataAsJson(nodeId).to_string();
+            response["monitoredDataOfOneNode"] = nlohmann::json::parse(monitoredDataFromGivenNode);
+            if(!response.empty()){
+                return createResponse(Status::CODE_200, response.dump());
+            }
         } catch (std::runtime_error& ex) {
             std::string errorMsg = ex.what();
             return errorHandler->handleError(Status::CODE_500, errorMsg);
