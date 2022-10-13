@@ -29,6 +29,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <nlohmann/json.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
@@ -108,48 +109,49 @@ bool MonitoringManager::insertLogicalSource(std::string logicalSourceName) {
     return false;
 }
 
-//bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
-//    if (!enableMonitoring) {
-//        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
-//        return false;
-//    }
-//    if (!monitoringPlan) {
-//        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
-//        return false;
-//    }
-//    if (nodeIds.empty()) {
-//        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
-//        return false;
-//    }
-//
-//    for (auto nodeId : nodeIds) {
-//        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
-//        TopologyNodePtr node = topology->findNodeWithId(nodeId);
-//
-//        if (node) {
-//            auto nodeIp = node->getIpAddress();
-//            auto nodeGrpcPort = node->getGrpcPort();
-//            std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-//
-//            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
-//
-//            if (success) {
-//                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
-//                monitoringPlanMap[nodeId] = monitoringPlan;
-//            } else {
-//                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
-//                return false;
-//            }
-//        } else {
-//            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
-//            return false;
-//        }
-//    }
-//    return true;
-//}
+bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+        return false;
+    }
+    if (!monitoringPlan) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+        return false;
+    }
+    if (nodeIds.empty()) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+        return false;
+    }
 
-web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
-    web::json::value metricsJson;
+    for (auto nodeId : nodeIds) {
+        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
+        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+
+        if (node) {
+            auto nodeIp = node->getIpAddress();
+            auto nodeGrpcPort = node->getGrpcPort();
+            std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+
+            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
+
+            if (success) {
+                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
+                monitoringPlanMap[nodeId] = monitoringPlan;
+            } else {
+                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
+                return false;
+            }
+        } else {
+            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
+            return false;
+        }
+    }
+    return true;
+}
+
+
+nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
+    nlohmann::json metricsJson;
     if (!enableMonitoring) {
         NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
                                                                             << " failed. Monitoring is disabled, "
@@ -209,7 +211,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
+bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
     if (enableMonitoring) {
         for (auto collectorType : monitoringCollectors) {   //Collectoren erzeugen die Logicalstreams;
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
