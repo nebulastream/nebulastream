@@ -23,6 +23,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <unordered_map>
 
@@ -119,7 +120,7 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return the grouped metric values
     */
-    web::json::value requestRemoteMonitoringData(uint64_t nodeId);
+    nlohmann::json requestRemoteMonitoringData(uint64_t nodeId);
 
     /**
      * @brief Requests monitoring data from metric store.
