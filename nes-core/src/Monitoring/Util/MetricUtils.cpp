@@ -104,10 +104,10 @@ nlohmann::json MetricUtils::toLohmannJson(StoredNodeMetricsPtr metrics) {
         nlohmann::json arr{};
         int i = 0;
         for (const auto& metric : *metricTypeEntry.second.get()) {
-            web::json::value jsonMetricVal{};
+            nlohmann::json jsonMetricVal{};
             uint64_t timestamp = metric->first;
             MetricPtr metricVal = metric->second;
-            web::json::value jMetric = asJson(metricVal);
+            nlohmann::json jMetric = asJson(metricVal);
             jsonMetricVal["timestamp"] = timestamp;
             jsonMetricVal["value"] = jMetric;
             arr[i++] = jsonMetricVal;
