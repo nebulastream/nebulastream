@@ -13,11 +13,16 @@
 */
 #ifndef NES_LOCATIONCONTROLLER_HPP
 #define NES_LOCATIONCONTROLLER_HPP
+
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <Services/LocationService.hpp>
+#include <nlohmann/json.hpp>
+#include <REST/DTOs/ErrorResponse.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+
 #include OATPP_CODEGEN_BEGIN(ApiController)
 namespace NES {
 namespace REST {
