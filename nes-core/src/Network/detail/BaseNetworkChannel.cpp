@@ -32,6 +32,12 @@ void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType t
     if (isClosed) {
         return;
     }
+    if (terminationType == Runtime::QueryTerminationType::Redirect) {
+        zmqSocket.close();
+        NES_DEBUG("Socket(" << socketAddr << ") closed for " << channelId << (isEventOnly ? " Event" : " Data"));
+        isClosed = true;
+        return;
+    }
     if (isEventOnly) {
         sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::EventOnlyChannel, terminationType);
     } else {

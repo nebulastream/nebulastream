@@ -23,11 +23,28 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Topology/Topology.hpp>
 #include <cstdint>
 
 namespace NES {
 
 ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)) {}
+
+bool ReplicationService::redirectSinkOutput(uint64_t upstreamNodeId, uint64_t newNodeId, QueryId queryId) const {
+    auto oldNode = this->coordinatorPtr->getTopology()->findNodeWithId(upstreamNodeId);
+    auto newNode = this->coordinatorPtr->getTopology()->findNodeWithId(newNodeId);
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+    auto ipAddress = oldNode->getIpAddress();
+    auto grpcPort = oldNode->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    auto querySubplans = this->coordinatorPtr->getExecutionNode(upstreamNodeId)->getQuerySubPlans(queryId);
+    for (auto querySubplan : querySubplans) {
+        auto success = workerRpcClient->updateNetworkSink(ipAddress, newNodeId, newNode->getIpAddress(), newNode->getDataPort(), querySubplan->getQuerySubPlanId());
+        NES_ASSERT(success, false);
+        NES_DEBUG("ReplicationService: success=" << success);
+    }
+    return true;
+}
 
 int ReplicationService::getCurrentEpochBarrier(uint64_t queryId) const {
     std::unique_lock lock(replicationServiceMutex);

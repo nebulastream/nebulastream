@@ -1357,6 +1357,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSinkDescriptor->getWaitTime());
         serializedSinkDescriptor.set_waittime(s.count());
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
+        serializedSinkDescriptor.set_isleaf(networkSinkDescriptor->leafLocated());
         //set unique network sink partition id. Take care to ue this value during deserialization as well!
         serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueNetworkSinkDescriptorId());
         //pack to output
@@ -1480,6 +1481,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                                       nesPartition,
                                                       waitTime,
                                                       serializedSinkDescriptor.retrytimes(),
+                                                      serializedSinkDescriptor.isleaf(),
                                                       FaultToleranceType(deserializedFaultTolerance),
                                                       deserializedNumberOfOrigins,
                                                       serializedSinkDescriptor.uniquenetworksinkdescriptorid());

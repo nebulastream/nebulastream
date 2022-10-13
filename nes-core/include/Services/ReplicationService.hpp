@@ -47,6 +47,14 @@ class ReplicationService {
      */
     EpochId getCurrentEpochBarrier(uint64_t queryId) const;
 
+    /**
+     * @brief method to initiate recovery process
+     * @param upstreamNodeId id of the predecessor
+     * @param newNodeId new node id
+     * @return success
+     */
+    bool redirectSinkOutput(uint64_t upstreamNodeId, uint64_t newNodeId, QueryId queryId) const;
+
   private:
     /**
      * @brief saves current epoch barrier for a given query id and epoch

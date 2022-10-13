@@ -269,7 +269,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1,
-                              uint8_t retryTimes = 5);
+                              uint8_t retryTimes = 5,
+                              bool isLeaf = false);
 
 namespace Experimental::MaterializedView {
 
