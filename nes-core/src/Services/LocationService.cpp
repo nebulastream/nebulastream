@@ -83,7 +83,7 @@ nlohmann::json LocationService::convertLocationToJson(Location location) {
 }
 
 nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id, Location loc) {
-   nlohmann::json nodeInfo;
+    nlohmann::json nodeInfo;
     nodeInfo["id"] = id;
     nlohmann::json locJson = convertLocationToJson(loc);
     nodeInfo["location"] = locJson;

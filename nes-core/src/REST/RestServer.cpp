@@ -17,13 +17,13 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/ConnectivityController.hpp>
+#include <REST/OatppController/LocationController.hpp>
 #include <REST/OatppController/MaintenanceController.hpp>
 #include <REST/OatppController/QueryCatalogController.hpp>
 #include <REST/OatppController/QueryController.hpp>
 #include <REST/OatppController/SourceCatalogController.hpp>
 #include <REST/OatppController/TopologyController.hpp>
 #include <REST/OatppController/UdfCatalogController.hpp>
-#include <REST/OatppController/LocationController.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
@@ -69,7 +69,6 @@ RestServer::RestServer(std::string host,
       globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
       sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), locationService(locationService),
       maintenanceService(maintenanceService) {}
-
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
