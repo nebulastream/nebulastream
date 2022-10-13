@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.11](https://github.com/nebulastream/nebulastream/tree/v0.3.11) (2022-10-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.10...v0.3.11)
+
+### Miscellaneous Issues ✌️
+
+- Make LocationController an oatpp endpoint \(Move to oatapp REST server\) [\#2917](https://github.com/nebulastream/nebulastream/issues/2917)
+
+## [v0.3.10](https://github.com/nebulastream/nebulastream/tree/v0.3.10) (2022-10-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.9...v0.3.10)
+
 ## [v0.3.9](https://github.com/nebulastream/nebulastream/tree/v0.3.9) (2022-10-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.8...v0.3.9)
