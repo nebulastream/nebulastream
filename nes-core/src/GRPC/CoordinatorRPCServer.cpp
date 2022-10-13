@@ -195,6 +195,20 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
     return Status::CANCELLED;
 }
 
+Status CoordinatorRPCServer::redirectSinkOutput(ServerContext*, const RedirectSinkRequest* request, RedirectSinkReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::redirectSinkOutput: request =" << request);
+
+    bool success = replicationService->redirectSinkOutput(request->oldnodeid(), request->newnodeid(), request->queryid());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::redirectSinkOutput success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::redirectSinkOutput failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request =" << request);
 

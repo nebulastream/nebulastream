@@ -103,7 +103,15 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
 //        storageFile.flush();
     }
 }
-    
+
+std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> WorkerContext::resendBuffers(Network::NesPartition nesPartitionId) {
+    auto it = this->storage.find(nesPartitionId);
+    if (it != this->storage.end()) {
+        return it->second;
+    }
+    return std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
+}
+
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
@@ -137,6 +145,14 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     NES_TRACE("WorkerContext: retrieving channel for operator " << ownerId << " for context " << workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
+}
+
+void WorkerContext::updateNetworkChannel(Network::OperatorId ownerId, NES::NetworkChannelPtr&& channel) {
+    releaseNetworkChannel(ownerId, QueryTerminationType::Graceful);
+    auto it = dataChannels.find(ownerId);
+    if (it != dataChannels.end()) {
+        it->second = std::move(channel);
+    }
 }
 
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {

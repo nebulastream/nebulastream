@@ -267,6 +267,25 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
         });
 }
 
+
+bool CoordinatorRPCClient::redirectSinkOutput(uint64_t oldNodeId, uint64_t newNodeId, uint64_t queryId) {
+    NES_DEBUG("CoordinatorRPCClient: redirectNetworkSink oldNodeId=" << oldNodeId << " newNodeId=" << newNodeId);
+
+    RedirectSinkRequest request;
+    request.set_oldnodeid(oldNodeId);
+    request.set_newnodeid(newNodeId);
+    request.set_queryid(queryId);
+    NES_DEBUG("CoordinatorRPCClient::RedirectSinkRequest request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, RedirectSinkRequest, RedirectSinkReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const RedirectSinkRequest& request, RedirectSinkReply* reply) {
+            return coordinatorStub->redirectOutputNetworkSink(context, request, reply);
+        });
+}
+
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId
                                                                  << " workerId=" << workerId);

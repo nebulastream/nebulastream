@@ -38,6 +38,9 @@ service CoordinatorRPCService {
   // Sends an add new parent request for to the coordinator
   rpc AddParent (AddParentRequest) returns (AddParentReply) {}
 
+  // Sends an add new parent request for to the coordinator
+  rpc redirectOutputNetworkSink (RedirectSinkRequest) returns (RedirectSinkReply) {}
+
   // Sends a remove parent request to the coordinator
   rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
 
@@ -142,6 +145,16 @@ message AddParentRequest {
 }
 
 message AddParentReply {
+  bool success = 1;
+}
+
+message RedirectSinkRequest {
+  uint64 oldNodeId = 1;
+  uint64 newNodeId = 2;
+  uint64 queryId = 3;
+}
+
+message RedirectSinkReply {
   bool success = 1;
 }
 

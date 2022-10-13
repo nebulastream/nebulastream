@@ -298,7 +298,8 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
                                                                  uint64_t sourceOperatorId,
-                                                                 const TopologyNodePtr& sourceTopologyNode) {
+                                                                 const TopologyNodePtr& sourceTopologyNode,
+                                                                 bool isRoot) {
 
     NES_TRACE("BasePlacementStrategy: create Network Sink operator");
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
@@ -306,7 +307,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
     return LogicalOperatorFactory::createSinkOperator(
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES));
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, isRoot));
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
@@ -436,7 +437,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                       "query plan with child "
                                       "operator.");
                             OperatorNodePtr networkSink =
-                                createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                                createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1], true);
                             targetUpStreamOperator->addParent(networkSink);
                             querySubPlan->removeAsRootOperator(targetUpStreamOperator);
                             querySubPlan->addRootOperator(networkSink);

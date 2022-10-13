@@ -144,6 +144,15 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status AddParent(ServerContext* context, const AddParentRequest* request, AddParentReply* reply) override;
 
     /**
+     * @brief RPC Call to call network sink reconfiguration
+     * @param context: the server context
+     * @param request: redirect request
+     * @param reply: redirect reply
+     * @return success
+     */
+    Status redirectSinkOutput(ServerContext* context, const RedirectSinkRequest* request, RedirectSinkReply* reply);
+
+    /**
      * @brief RPC Call to replace parent
      * @param context: the server context
      * @param request: replace parent request

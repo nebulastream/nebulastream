@@ -178,6 +178,13 @@ class WorkerContext {
     void trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp);
 
     /**
+     * @brief This method returns all buffers that belong to the same destination
+     * @param nesPartitionId partition id
+     * @return queue of buffers
+     */
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> resendBuffers(Network::NesPartition nesPartitionId);
+
+    /**
      * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
      * @param type the termination type
@@ -204,6 +211,13 @@ class WorkerContext {
      * @return an output channel
      */
     Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
+
+    /**
+     * @brief retrieve a registered output channel
+     * @param ownerId id of the operator that we want to store the output channel
+     * @param channel pointer to a new channel
+     */
+    void updateNetworkChannel(Network::OperatorId ownerId, Network::NetworkChannelPtr&& channel);
 
     /**
      * @brief retrieve a registered output channel

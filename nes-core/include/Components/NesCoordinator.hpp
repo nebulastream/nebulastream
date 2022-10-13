@@ -18,6 +18,10 @@
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -146,6 +150,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @return sourceCatalog
      */
     Catalogs::Source::SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
+
+    ExecutionNodePtr getExecutionNode(uint64_t nodeId) { return globalExecutionPlan->getExecutionNodeByNodeId(nodeId); }
 
     /**
      * @brief getter of replication service

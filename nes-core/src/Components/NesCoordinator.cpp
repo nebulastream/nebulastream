@@ -22,7 +22,6 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
@@ -165,7 +164,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
-        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
+        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer:f end listening");
     }));
     promRPC->get_future().get();
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");

@@ -43,7 +43,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
     currentTimestamp = 0;
     isWaiting = false;
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
         notifyEpochCallback = [this](uint64_t timestamp) {
             notifyEpochTermination(timestamp);
         };

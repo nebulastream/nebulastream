@@ -21,16 +21,18 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
+                                             bool isLeaf,
                                              FaultToleranceType::Value faultToleranceType,
                                              uint64_t uniqueNetworkSinkDescriptorId,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
+      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), isLeaf(isLeaf) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
+                                                bool isLeaf,
                                                 FaultToleranceType::Value faultToleranceType,
                                                 uint64_t numberOfOrigins,
                                                 uint64_t uniqueNetworkSinkOperatorId) {
@@ -38,6 +40,7 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
+                                                                         isLeaf,
                                                                          faultToleranceType,
                                                                          numberOfOrigins,
                                                                          uniqueNetworkSinkOperatorId));
@@ -61,6 +64,8 @@ NodeLocation NetworkSinkDescriptor::getNodeLocation() const { return nodeLocatio
 NesPartition NetworkSinkDescriptor::getNesPartition() const { return nesPartition; }
 
 std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return waitTime; }
+
+bool NetworkSinkDescriptor::leafLocated() const { return isLeaf; }
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 

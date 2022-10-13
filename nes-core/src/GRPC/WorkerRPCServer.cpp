@@ -165,12 +165,11 @@ Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
     uint64_t querySubPlanId = request->querysubplanid();
-    uint64_t uniqueNetworkSinkDescriptorId = request->uniquenetworksinkdescriptorid();
     uint64_t newNodeId = request->newnodeid();
     std::string newHostname = request->newhostname();
     uint32_t newPort = request->newport();
 
-    bool success = nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, querySubPlanId, uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, querySubPlanId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);

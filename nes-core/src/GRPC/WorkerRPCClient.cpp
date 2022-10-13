@@ -401,14 +401,12 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
                                         uint64_t newNodeId,
                                         const std::string& newHostname,
                                         uint32_t newPort,
-                                        uint64_t querySubPlanId,
-                                        uint64_t uniqueNetworkSinDescriptorId) {
+                                        uint64_t querySubPlanId) {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
     request.set_newport(newPort);
     request.set_querysubplanid(querySubPlanId);
-    request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
 
     UpdateNetworkSinkReply reply;
     ClientContext context;

@@ -44,6 +44,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
+                                    bool isLeaf = false,
                                     FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1,
                                     uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
@@ -86,6 +87,12 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint8_t getRetryTimes() const;
 
     /**
+     * @brief check if the sink is located on a leaf node
+     * @return true if it is solcated there
+     */
+    bool leafLocated() const;
+
+    /**
      * @brief getter for unique network sink descriptor id
      * @return id
      */
@@ -108,6 +115,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
+                                   bool isLeaf,
                                    FaultToleranceType::Value faultToleranceType,
                                    uint64_t numberOfOrigins,
                                    uint64_t uniqueNetworkSinkDescriptorId);
@@ -117,6 +125,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
     uint64_t uniqueNetworkSinkDescriptorId;
+    bool isLeaf;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

@@ -53,7 +53,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
-                         uint64_t numberOfOrigins = 0);
+                         uint64_t numberOfOrigins = 0,
+                         bool isLeaf = false);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -132,15 +133,18 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
-    const NodeLocation receiverLocation;
+    NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;
     uint64_t bufferCount;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext&)> insertIntoStorageCallback;
     std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
+    std::function<void(uint64_t)> trimmingCallback;
+
+    bool resendData(Runtime::WorkerContext& workerContext);
     std::atomic<bool> reconnectBuffering;
 };
 

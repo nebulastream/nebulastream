@@ -100,6 +100,15 @@ class CoordinatorRPCClient {
     bool addParent(uint64_t parentId);
 
     /**
+     * @brief method to redirect output from old node to a new one
+     * @param oldNodeId id of the old node
+     * @param newNodeId id of the new node
+     * @param queryId query id
+     * @return bool indicating success
+     */
+    bool redirectSinkOutput(uint64_t oldNodeId, uint64_t newNodeId, uint64_t queryId);
+
+    /**
      * @brief method to replace old with new parent
      * @param oldParentId id of the old parent
      * @param newParentId id of the new parent

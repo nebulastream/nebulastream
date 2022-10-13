@@ -121,7 +121,6 @@ message UpdateNetworkSinkRequest{
   string newHostname = 2;
   uint32 newPort = 3;
   uint64 querySubPlanId = 4;
-  uint64 uniqueNetworkSinkDescriptorId = 5;
 }
 
 message UpdateNetworkSinkReply {

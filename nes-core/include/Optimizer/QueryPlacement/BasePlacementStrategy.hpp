@@ -216,7 +216,7 @@ class BasePlacementStrategy {
      * @return the instance of network sink operator
      */
     static OperatorNodePtr
-    createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
+    createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode, bool isRoot = false);
 
     /**
      * @brief create a new network source operator

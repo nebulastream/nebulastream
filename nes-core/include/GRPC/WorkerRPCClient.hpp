@@ -191,8 +191,7 @@ class WorkerRPCClient {
                                   uint64_t newNodeId,
                                   const std::string& newHostname,
                                   uint32_t newPort,
-                                  uint64_t querySubPlanId,
-                                  uint64_t uniqueNetworkSinDescriptorId);
+                                  uint64_t querySubPlanId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

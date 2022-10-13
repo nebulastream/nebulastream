@@ -180,8 +180,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool updateNetworkSink(uint64_t newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           QuerySubPlanId querySubPlanId,
-                           uint64_t uniqueNetworkSinkDescriptorId);
+                           QuerySubPlanId querySubPlanId);
 
     /**
      * @brief release all resource of the node engine
