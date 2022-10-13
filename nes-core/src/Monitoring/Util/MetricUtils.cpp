@@ -42,16 +42,8 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
     return hasName && hasLastField;
 }
 
-web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {
-    web::json::value metricsJson{};
-    for (const auto& metric : metrics) {
-        auto jMetric = asJson(metric);
-        metricsJson[toString(metric->getMetricType())] = jMetric;
-    }
-    return metricsJson;
-}
 
-nlohmann::json MetricUtils::toLohmannJson(std::vector<MetricPtr> metrics) {
+nlohmann::json MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     nlohmann::json metricsJson{};
     for (const auto& metric : metrics) {
         auto jMetric = asJson(metric);
@@ -60,15 +52,8 @@ nlohmann::json MetricUtils::toLohmannJson(std::vector<MetricPtr> metrics) {
     return metricsJson;
 }
 
-web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
-    web::json::value metricsJson{};
-    for (const auto& metric : metrics) {
-        web::json::value jMetric = asJson(metric.second);
-        metricsJson[toString(metric.second->getMetricType())] = jMetric;
-    }
-    return metricsJson;
-}
-nlohmann::json MetricUtils::toLohmannJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
+
+nlohmann::json MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
     nlohmann::json metricsJson{};
     for (const auto& metric : metrics) {
         nlohmann::json jMetric = asJson(metric.second);
@@ -77,27 +62,7 @@ nlohmann::json MetricUtils::toLohmannJson(std::unordered_map<MetricType, std::sh
     return metricsJson;
 }
 
-web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
-    web::json::value metricsJson{};
-    for (auto metricTypeEntry : *metrics.get()) {
-        std::shared_ptr<std::vector<TimestampMetricPtr>> metricVec = metricTypeEntry.second;
-        web::json::value arr{};
-        int i = 0;
-        for (const auto& metric : *metricTypeEntry.second.get()) {
-            web::json::value jsonMetricVal{};
-            uint64_t timestamp = metric->first;
-            MetricPtr metricVal = metric->second;
-            web::json::value jMetric = asJson(metricVal);
-            jsonMetricVal["timestamp"] = web::json::value::number(timestamp);
-            jsonMetricVal["value"] = jMetric;
-            arr[i++] = jsonMetricVal;
-        }
-        metricsJson[toString(metricTypeEntry.first)] = arr;
-    }
-    return metricsJson;
-}
-
-nlohmann::json MetricUtils::toLohmannJson(StoredNodeMetricsPtr metrics) {
+nlohmann::json MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
     nlohmann::json metricsJson{};
     for (auto metricTypeEntry : *metrics.get()) {
         std::shared_ptr<std::vector<TimestampMetricPtr>> metricVec = metricTypeEntry.second;
