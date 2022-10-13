@@ -40,23 +40,21 @@ class MetricUtils {
      * @param metrics
      * @return json of metrics
      */
-    static web::json::value toJson(std::vector<MetricPtr> metrics);
-    static nlohmann::json toLohmannJson(std::vector<MetricPtr> metrics);
+    static nlohmann::json toJson(std::vector<MetricPtr> metrics);
+
         /**
      * Converts a map of metric types to metrics into json.
      * @param metrics
      * @return json of metrics
      */
-    static web::json::value toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics);
-    static nlohmann::json toLohmannJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics);
+    static nlohmann::json toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics);
 
     /**
      * Converts a map of metric types to metrics into json.
      * @param metrics
      * @return json of metrics
      */
-    static web::json::value toJson(StoredNodeMetricsPtr metrics);
-    static nlohmann::json toLohmannJson(StoredNodeMetricsPtr metrics);
+    static nlohmann::json toJson(StoredNodeMetricsPtr metrics);
 
     /**
      * Creates a metric collector from the corresponding type.
