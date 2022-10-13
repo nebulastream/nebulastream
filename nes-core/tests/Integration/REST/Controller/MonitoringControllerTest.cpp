@@ -124,9 +124,9 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     //ASSERT_EQ(jsons.size(), noWorkers + 1);
     // TODO its not working
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[i];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        NES_DEBUG("MonitoringControllerTest: JSON for node " << i << ":\n" << json);
         ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
         ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
     }
