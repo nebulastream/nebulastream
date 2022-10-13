@@ -34,29 +34,34 @@ void MonitoringController::handleGet(const std::vector<utility::string_t>& path,
     NES_INFO("MonitoringController: Processing GET request");
     if (path[1] == "start") {
         NES_DEBUG("MonitoringController: GET start monitoring streams");
-        auto metricsJson = monitoringService->startMonitoringStreams();
+        auto metricsJsonLohmann = monitoringService->startMonitoringStreams();
+        web::json::value metricsJson = web::json::value::parse(metricsJsonLohmann.dump());
         successMessageImpl(message, metricsJson);
         return;
     } else if (path[1] == "stop") {
         NES_DEBUG("MonitoringController: GET stop monitoring streams");
-        auto metricsJson = monitoringService->stopMonitoringStreams();
-        successMessageImpl(message, metricsJson);
+        auto metricsJsonLohmann = monitoringService->stopMonitoringStreams();
+        web::json::value response = web::json::value::parse(metricsJsonLohmann.dump());
+        successMessageImpl(message, response);
         return;
     } else if (path[1] == "streams") {
         NES_DEBUG("MonitoringController: GET monitoring streams");
-        auto metricsJson = monitoringService->getMonitoringStreams();
+        auto metricsJsonLohmann = monitoringService->getMonitoringStreams();
+        web::json::value metricsJson = web::json::value::parse(metricsJsonLohmann.dump());
         successMessageImpl(message, metricsJson);
         return;
     } else if (path[1] == "storage") {
         NES_DEBUG("MonitoringController: GET content of metric store");
-        auto metricsJson = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
+        auto metricsJsonLohmann = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
+        web::json::value metricsJson = web::json::value::parse(metricsJsonLohmann.dump());
         successMessageImpl(message, metricsJson);
         return;
     } else if (path.size() > 1 && path.size() < 4 && path[1] == "metrics") {
         NES_DEBUG("MonitoringController: GET metrics with path size " + std::to_string(path.size()));
         if (path.size() == 2) {
             NES_DEBUG("MonitoringController: GET metrics for all nodes");
-            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesAsJson();
+            auto metricsJsonLohmann = monitoringService->requestMonitoringDataFromAllNodesAsJson();
+            web::json::value metricsJson = web::json::value::parse(metricsJsonLohmann.dump());
             successMessageImpl(message, metricsJson);
             return;
         }
@@ -68,8 +73,9 @@ void MonitoringController::handleGet(const std::vector<utility::string_t>& path,
                 //if the arg is a valid number and node id
                 uint64_t nodeId = std::stoi(path[2]);
                 try {
-                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId);
-                    successMessageImpl(message, metricJson);
+                    auto metricsJsonLohmann = monitoringService->requestMonitoringDataAsJson(nodeId);
+                    web::json::value metricsJson = web::json::value::parse(metricsJsonLohmann.dump());
+                    successMessageImpl(message, metricsJson);
                 } catch (std::runtime_error& ex) {
                     std::string errorMsg = ex.what();
                     NES_ERROR("MonitoringController: GET metrics error: " + errorMsg);
