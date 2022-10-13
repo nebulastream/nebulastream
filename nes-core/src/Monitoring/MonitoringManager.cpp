@@ -29,6 +29,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <nlohmann/json.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
@@ -120,8 +121,8 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     return true;
 }
 
-web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
-    web::json::value metricsJson;
+nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
+    nlohmann::json metricsJson;
     if (!enableMonitoring) {
         NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
                                                                             << " failed. Monitoring is disabled, "

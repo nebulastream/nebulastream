@@ -90,7 +90,9 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
+    auto future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
+    future.wait();
+    auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
 }
 
@@ -109,7 +111,9 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
+    auto future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"});
+    future.wait();
+    auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsonsOfResponse = nlohmann::json::parse(r.text);
@@ -117,7 +121,7 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
 
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
     auto jsons = jsonsOfResponse.dump();
-//    ASSERT_EQ(jsons.size(), noWorkers + 1);
+    //ASSERT_EQ(jsons.size(), noWorkers + 1);
     // TODO its not working
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
@@ -142,8 +146,10 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
+    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
                                cpr::Parameters{{"nodeId", std::to_string(1)}});
+    future.wait();
+    auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
@@ -164,7 +170,9 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    future.wait();
+    auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);
@@ -189,7 +197,9 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->startMonitoringStreams();
-    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    future.wait();
+    auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);

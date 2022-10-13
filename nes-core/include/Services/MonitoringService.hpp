@@ -18,6 +18,7 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 
@@ -53,43 +54,43 @@ class MonitoringService {
      * @param monitoringPlan
      * @return json to indicate if it was successfully
      */
-    web::json::value registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan);
+    nlohmann::json registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
-    web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
+    nlohmann::json requestMonitoringDataAsJson(uint64_t nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
-    web::json::value requestMonitoringDataFromAllNodesAsJson();
+    nlohmann::json requestMonitoringDataFromAllNodesAsJson();
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
      * @return a json with all metrics indicated by the registered MonitoringPlan.
     */
-    web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
+    nlohmann::json requestNewestMonitoringDataFromMetricStoreAsJson();
 
     /**
      * @brief Starts the monitoring streams for monitoring data.
      * @return true if initiated
     */
-    web::json::value startMonitoringStreams();
+    nlohmann::json startMonitoringStreams();
 
     /**
      * @brief Starts the monitoring streams for monitoring data.
      * @return true if initiated
     */
-    web::json::value stopMonitoringStreams();
+    nlohmann::json stopMonitoringStreams();
 
     /**
      * @brief Gets the monitoring streams for monitoring data.
      * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
     */
-    web::json::value getMonitoringStreams();
+    nlohmann::json getMonitoringStreams();
 
     /**
      * @brief Getter for MonitoringManager
