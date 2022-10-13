@@ -14,14 +14,14 @@
 #ifndef NES_LOCATIONCONTROLLER_HPP
 #define NES_LOCATIONCONTROLLER_HPP
 
+#include <REST/DTOs/ErrorResponse.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
+#include <Services/LocationService.hpp>
+#include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <Services/LocationService.hpp>
-#include <nlohmann/json.hpp>
-#include <REST/DTOs/ErrorResponse.hpp>
-#include <REST/Handlers/ErrorHandler.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 namespace NES {
@@ -39,8 +39,8 @@ class LocationController : public oatpp::web::server::api::ApiController {
                        oatpp::String completeRouterPrefix,
                        const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
                        ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          locationService(locationService), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -48,10 +48,11 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
-    static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
-                                                      std::string routerPrefixAddition,
-                                                      ErrorHandlerPtr errorHandler) {
+    static std::shared_ptr<LocationController>
+    create(const std::shared_ptr<ObjectMapper>& objectMapper,
+           const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
+           std::string routerPrefixAddition,
+           ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, locationService, errorHandler);
     }
@@ -60,30 +61,28 @@ class LocationController : public oatpp::web::server::api::ApiController {
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
             NES_ERROR("node with id " << nodeId << " does not exist");
-            return errorHandler->handleError(Status::CODE_400,"No node with Id: " + std::to_string(nodeId));
+            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, nodeLocationJson.dump());
     }
 
-    ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes){
+    ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
         auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
-        return createResponse(Status::CODE_200,locationsJson.dump());
+        return createResponse(Status::CODE_200, locationsJson.dump());
     }
 
-    ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")){
+    ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
         auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeId);
         if (reconnectScheduleJson == nullptr) {
             NES_ERROR("node with id " << nodeId << " does not exist");
-            return errorHandler->handleError(Status::CODE_400,"No node with Id: " + std::to_string(nodeId));
+            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, reconnectScheduleJson.dump());
     }
 
   private:
-
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
     ErrorHandlerPtr errorHandler;
-
 };
 }//namespace Controller
 }// namespace REST

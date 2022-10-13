@@ -19,13 +19,13 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
 
 namespace NES {
 class LocationControllerTest : public Testing::NESBaseTest {
@@ -96,8 +96,8 @@ TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
     nlohmann::json request;
     // provide node id that isn't an integer
     std::string nodeId = "abc";
-    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
-                                cpr::Parameters{{"nodeId", nodeId}});
+    auto future =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"}, cpr::Parameters{{"nodeId", nodeId}});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
@@ -106,7 +106,7 @@ TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
     EXPECT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
 }
 
-TEST_F(LocationControllerTest, testGetSingleLocation){
+TEST_F(LocationControllerTest, testGetSingleLocation) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     std::string latitude = "13.4";
@@ -135,7 +135,7 @@ TEST_F(LocationControllerTest, testGetSingleLocation){
     EXPECT_EQ(locationData[1].dump(), longitude);
 }
 
-TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided){
+TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -157,8 +157,7 @@ TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided
     EXPECT_TRUE(res["location"].is_null());
 }
 
-
-TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes){
+TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes) {
     uint64_t rpcPortWrk1 = 6000;
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
@@ -254,7 +253,7 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     ASSERT_TRUE(res.is_array());
     EXPECT_TRUE(res.size() == 2);
     nlohmann::json::array_t locationData;
-    for(auto entry : res){
+    for (auto entry : res) {
         if (entry["id"] == workerNodeId2) {
             locationData[0] = 52.55227464714949;
             locationData[1] = 13.351743136322877;
@@ -268,4 +267,4 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     }
 }
 #endif
-} // namespace NES
+}// namespace NES

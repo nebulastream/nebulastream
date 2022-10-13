@@ -16,8 +16,8 @@
 
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <nlohmann/json.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace web::json {
 class value;
