@@ -24,7 +24,8 @@
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <cpprest/http_client.h>
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
 
@@ -65,41 +66,27 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     context["faultTolerance"] = faultToleranceType;
 
     std::string message = request.SerializeAsString();
-    auto restMethod = web::http::methods::POST;
     auto path = "query/execute-query-ex";
 
-    web::json::value resultJson;
-    web::http::status_code resultStatusCode;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    nlohmann::json resultJson;
+    auto future = cpr::PostAsync(cpr::Url{getHostName() + path},
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{message}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([&resultStatusCode](const web::http::http_response& response) {
-            resultStatusCode = response.status_code();
-            return response.extract_json();
-        })
-        .then([&resultJson](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                resultJson = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
 
-    if (resultStatusCode == web::http::status_codes::Created) {
-        if (resultJson.has_field("queryId")) {
-            return resultJson.at("queryId").as_integer();
+    if (response.status_code == cpr::status::HTTP_CREATED) {
+        if (result.contains("queryId")) {
+            return result["queryId"].get<uint64_t>();
         } else {
-            throw ClientException("Invalid response format queryId is not contained in: " + resultJson.to_string());
+            throw ClientException("Invalid response format queryId is not contained in: " + result.dump());
         }
     } else {
-        NES_ERROR("Received response with error code: " << resultStatusCode);
-        if (resultJson.has_field("message")) {
-            throw ClientException(resultJson.at("message").as_string());
+        NES_ERROR("Received response with error code: " << response.status_code);
+        if (result.contains("message")) {
+            throw ClientException(result["message"]);
         } else {
             throw ClientException("Invalid response format for error message");
         }
@@ -107,212 +94,120 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
 }
 
 bool RemoteClient::testConnection() {
-    auto restMethod = web::http::methods::GET;
     auto path = "connectivity/check";
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                  cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    if (jsonReturn.has_field("success")) {
-        return jsonReturn.at("success").as_bool();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
+
+    if (result.contains("success")) {
+        return result["success"].get<bool>();
     }
     throw ClientException("Invalid response format");
 }
 
 std::string RemoteClient::getQueryPlan(uint64_t queryId) {
-    auto restMethod = web::http::methods::GET;
     auto path = "query/query-plan?queryId=" + std::to_string(queryId);
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+
+    return result.dump();
 }
 
 std::string RemoteClient::getQueryExecutionPlan(uint64_t queryId) {
-    auto restMethod = web::http::methods::GET;
     auto path = "query/execution-plan?queryId=" + std::to_string(queryId);
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+
+    return result.dump();
 }
 
 std::string RemoteClient::getQueryStatus(uint64_t queryId) {
-    auto restMethod = web::http::methods::GET;
     auto path = "query/query-status?queryId=" + std::to_string(queryId);
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.at("status").as_string();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    if(response.status_code == cpr::status::HTTP_OK && result.contains("status")){
+        return result["status"].get<std::string>();
+    }
+    else if (result.contains("message")) {
+        throw ClientException(result["message"]);
+    } else {
+        throw ClientException("Invalid response format for error message");
+    }
 }
 
 RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
-    auto restMethod = web::http::methods::DEL;
     auto path = "query/stop-query?queryId="s + std::to_string(queryId);
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
-    NES_DEBUG("RemoteClient::stopQuery: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
+    auto future = cpr::DeleteAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
+    NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
     QueryStopResult r;
-    auto withError = !jsonReturn.has_field("success");
+    auto withError = !result.contains("success");
     if (withError) {
         r.errorMessage =
-            (jsonReturn.has_field("detail")) ? jsonReturn.at("detail").as_string() : jsonReturn.at("message").as_string();
+            (result.contains("detail")) ? result["detail"].get<std::string>() : result["message"].get<std::string>();
     }
     r.withError = withError;
     return r;
 }
 
 std::string RemoteClient::getTopology() {
-    auto restMethod = web::http::methods::GET;
     auto path = "topology";
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    return result.dump();
 }
 
 std::string RemoteClient::getQueries() {
-    auto restMethod = web::http::methods::GET;
     auto path = "queryCatalogService/allRegisteredQueries";
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    nlohmann::json jsonReturn;
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    return result.dump();
 }
 
-std::string RemoteClient::getQueries(QueryStatus::Value status) {
+//TODO: remove completely. The endpoint "queryIdAndCatalogEntryMapping" isn't supported anymore
+/*std::string RemoteClient::getQueries(QueryStatus::Value status) {
     std::string queryStatus = QueryStatus::toString(status);
 
     auto restMethod = web::http::methods::POST;
     auto path = "queryIdAndCatalogEntryMapping?status=" + queryStatus;
     auto message = "";
 
-    web::json::value jsonReturn;
+    nlohmann::json jsonReturn;
     web::http::client::http_client_config cfg;
     cfg.set_timeout(requestTimeout);
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
@@ -333,37 +228,23 @@ std::string RemoteClient::getQueries(QueryStatus::Value status) {
         .wait();
     return jsonReturn.serialize();
 }
+ */
 
 std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
-    auto restMethod = web::http::methods::GET;
     NES_ASSERT2_FMT(!logicalSourceName.empty(), "Empty logicalSourceName");
     auto path = "sourceCatalog/allPhysicalSource?logicalSourceName=" + logicalSourceName;
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    nlohmann::json jsonReturn;
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    return result.dump();
 }
 
 bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& sourceName) {
-    auto restMethod = web::http::methods::POST;
     auto path = "sourceCatalog/addLogicalSource-ex";
 
     auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
@@ -373,53 +254,35 @@ bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& s
     std::string msg = request.SerializeAsString();
     request.release_schema();
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    nlohmann::json resultJson;
+    auto future = cpr::PostAsync(cpr::Url{getHostName() + path},
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{msg}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, msg)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.at("Success").as_bool();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    if(response.status_code == cpr::status::HTTP_OK && result.contains("success")){
+        return result["success"].get<bool>();
+    }
+    else if (result.contains("message")) {
+        throw ClientException(result["message"]);
+    } else {
+        throw ClientException("Invalid response format for error message");
+    }
 }
 
 std::string RemoteClient::getLogicalSources() {
-    auto restMethod = web::http::methods::GET;
     auto path = "sourceCatalog/allLogicalSource";
-    auto message = "";
 
-    web::json::value jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
+    nlohmann::json jsonReturn;
+    auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
+                                cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    return result.dump();
 }
 
 std::string RemoteClient::getHostName() {

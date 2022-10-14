@@ -168,6 +168,56 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("POST", "/addLogicalSource-ex", addLogicalSourceEx, BODY_STRING(String, request)) {
+
+        NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            }
+            std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+
+            if (!protobufMessage->ParseFromArray(req.data(), req.size())) {
+                NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: invalid Protobuf message");
+                nlohmann::json errorResponse{};
+                errorResponse["detail"] = "Invalid Protobuf message";
+                return errorHandler->handleError(Status::CODE_400, errorResponse.dump());
+            }
+
+            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
+            // decode protobuf message into c++ obj repr
+            SerializableSchema* schema = protobufMessage->mutable_schema();
+            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+            std::string sourceName = protobufMessage->sourcename();
+
+            // try to add the user supplied source
+            bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
+            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
+                      << added);
+
+            if (!added) {
+                nlohmann::json errorResponse{};
+                errorResponse["detail"] =
+                   "Logical Source name: " + sourceName + " already exists!";
+                return errorHandler->handleError(Status::CODE_400, errorResponse.dump());
+            }
+
+            //forward return value to client
+            nlohmann::json result{};
+            result["success"] = added;
+            return createResponse(Status::CODE_200, result.dump());
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: addLogicalSource-ex: Exception occurred while trying to add new "
+                      "logical source"
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
+        }
+    }
+
     ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource, BODY_STRING(String, request)) {
 
         NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
@@ -209,6 +259,54 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
         }
     }
+
+    ENDPOINT("POST", "/updateLogicalSource-ex", updateLogicalSourceEx, BODY_STRING(String, request)) {
+
+        NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            }
+            std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+
+            if (!protobufMessage->ParseFromArray(req.data(), req.size())) {
+                NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource-ex: invalid Protobuf message");
+                nlohmann::json errorResponse{};
+                errorResponse["detail"] = "Invalid Protobuf message";
+                return errorHandler->handleError(Status::CODE_400, errorResponse.dump());
+            }
+
+            NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
+            // decode protobuf message into c++ obj repr
+            SerializableSchema* schema = protobufMessage->mutable_schema();
+            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+            std::string sourceName = protobufMessage->sourcename();
+
+            // try to add the user supplied source
+            bool updated = sourceCatalog->updatedLogicalSource(sourceName, deserializedSchema);
+
+            if (updated) {
+                //Prepare the response
+                nlohmann::json result{};
+                result["success"] = updated;
+                return createResponse(Status::CODE_200, result.dump());
+            } else {
+                nlohmann::json errorResponse{};
+                errorResponse["detail"] = "Unable to update logical source " + sourceName;
+                return errorHandler->handleError(Status::CODE_400, errorResponse.dump());
+            }
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: updateLogicalSource: Exception occurred while updating "
+                      "Logical Source."
+                      << exc.what());
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
+        }
+    }
+
 
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");

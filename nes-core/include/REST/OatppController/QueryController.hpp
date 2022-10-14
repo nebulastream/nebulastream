@@ -24,7 +24,6 @@
 #include <Runtime/QueryStatistics.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Services/QueryService.hpp>
-#include <cpprest/json.h>
 #include <exception>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -329,7 +328,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
-    validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage, const utility::string_t& body) {
+    validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage, const std::string& body) {
         if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
             return errorHandler->handleError(Status::CODE_400, "Invalid Protobuf Message");
         }
