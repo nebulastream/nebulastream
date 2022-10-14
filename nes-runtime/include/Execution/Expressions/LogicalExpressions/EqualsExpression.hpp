@@ -21,11 +21,11 @@ namespace NES::Runtime::Execution::Expressions {
 class EqualsExpression : public Expression {
   public:
     EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
 
   private:
-    ExpressionPtr leftSubExpression;
-    ExpressionPtr rightSubExpression;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
 }// namespace NES::Nautilus

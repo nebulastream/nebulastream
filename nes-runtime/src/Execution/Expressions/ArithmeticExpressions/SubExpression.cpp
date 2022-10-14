@@ -15,7 +15,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-Value<> SubExpression::execute(Record& record) {
+Value<> SubExpression::execute(Record& record) const {
     Value leftValue = leftSubExpression->execute(record);
     Value rightValue = rightSubExpression->execute(record);
     return leftValue - rightValue;
@@ -23,4 +23,4 @@ Value<> SubExpression::execute(Record& record) {
 SubExpression::SubExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

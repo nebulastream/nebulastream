@@ -13,8 +13,8 @@
 */
 #ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_
 #define NES_RUNTIME_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -25,11 +25,12 @@ namespace NES::Runtime::Execution::Expressions {
 class ConstantIntegerExpression : public Expression {
   public:
     ConstantIntegerExpression(int64_t integerValue);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
+
   private:
     const int64_t integerValue;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_

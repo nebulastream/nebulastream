@@ -14,21 +14,20 @@
 
 #ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_OREXPRESSION_HPP_
 #define NES_RUNTIME_EXECUTION_EXPRESSIONS_OREXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 class OrExpression : public Expression {
   public:
     OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
 
   private:
-    ExpressionPtr leftSubExpression;
-    ExpressionPtr rightSubExpression;
-
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_OREXPRESSION_HPP_

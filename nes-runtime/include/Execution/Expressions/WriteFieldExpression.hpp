@@ -23,11 +23,11 @@ namespace NES::Runtime::Execution::Expressions {
 class WriteFieldExpression : public Expression {
   public:
     WriteFieldExpression(Nautilus::Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
 
   private:
-    Nautilus::Record::RecordFieldIdentifier field;
-    ExpressionPtr subExpression;
+    const Nautilus::Record::RecordFieldIdentifier field;
+    const ExpressionPtr subExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 

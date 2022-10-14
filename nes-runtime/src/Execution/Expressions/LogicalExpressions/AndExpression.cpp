@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Expressions {
 AndExpression::AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
 
-Value<> AndExpression::execute(Record& record) {
+Value<> AndExpression::execute(Record& record) const {
     Value<> leftValue = leftSubExpression->execute(record);
     Value<> rightValue = rightSubExpression->execute(record);
     return leftValue && rightValue;
