@@ -13,10 +13,11 @@
 
 include(ExternalProject)
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_TESTS)
-    add_subdirectory(UnitTests/Experimental)
-endif ()
-add_subdirectory(UnitTests/Nautilus)
+add_library(nes-runtime-tests INTERFACE)
+target_include_directories(nes-runtime-tests INTERFACE "./include/")
+target_link_libraries(nes-runtime-tests INTERFACE nes-runtime)
+
+add_subdirectory(UnitTests)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

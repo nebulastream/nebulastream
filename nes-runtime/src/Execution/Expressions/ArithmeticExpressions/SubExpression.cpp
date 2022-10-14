@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ArithmeticalExpression/SubExpression.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
 
