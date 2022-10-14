@@ -620,7 +620,7 @@ add_subdirectory(nes-compiler)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for execution engines
-add_subdirectory(nes-execution-engine)
+add_subdirectory(nes-runtime)
 # Add target for client
 add_subdirectory(nes-client)
 
