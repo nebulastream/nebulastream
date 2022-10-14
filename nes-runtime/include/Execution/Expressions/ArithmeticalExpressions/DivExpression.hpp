@@ -12,22 +12,22 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_SUBEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_SUBEXPRESSION_HPP_
+#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_
+#define NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
-class SubExpression : public Expression {
+class DivExpression : public Expression {
+  public:
+    DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+    Value<> execute(Record& record) override;
+
   private:
     ExpressionPtr leftSubExpression;
     ExpressionPtr rightSubExpression;
-
-  public:
-    SubExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) override;
 };
 
 }// namespace NES
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_SUBEXPRESSION_HPP_
+#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_

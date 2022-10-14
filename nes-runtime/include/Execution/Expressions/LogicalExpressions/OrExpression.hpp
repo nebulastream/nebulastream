@@ -19,13 +19,14 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class OrExpression : public Expression {
+  public:
+    OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+    Value<> execute(Record& record) override;
+
   private:
     ExpressionPtr leftSubExpression;
     ExpressionPtr rightSubExpression;
 
-  public:
-    OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) override;
 };
 
 }// namespace NES::Nautilus

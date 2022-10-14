@@ -19,13 +19,13 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class GreaterThanExpression : public Expression {
-  private:
-    ExpressionPtr leftSubExpression;
-    ExpressionPtr rightSubExpression;
-
   public:
     GreaterThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) override;
+
+  private:
+    ExpressionPtr leftSubExpression;
+    ExpressionPtr rightSubExpression;
 };
 
 }// namespace NES::Nautilus

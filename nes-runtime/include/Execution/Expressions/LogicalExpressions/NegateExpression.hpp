@@ -19,12 +19,12 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class NegateExpression : public Expression {
-  private:
-    ExpressionPtr subExpression;
-
   public:
     NegateExpression(ExpressionPtr subExpression);
     Value<> execute(Record& record) override;
+
+  private:
+    ExpressionPtr subExpression;
 };
 }// namespace NES::Nautilus
 

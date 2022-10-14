@@ -19,13 +19,13 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class EqualsExpression : public Expression {
-  private:
-    ExpressionPtr leftSubExpression;
-    ExpressionPtr rightSubExpression;
-
   public:
     EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) override;
+
+  private:
+    ExpressionPtr leftSubExpression;
+    ExpressionPtr rightSubExpression;
 };
 
 }// namespace NES::Nautilus
