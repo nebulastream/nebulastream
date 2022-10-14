@@ -15,7 +15,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-Value<> MulExpression::execute(Record& record) {
+Value<> MulExpression::execute(Record& record) const {
     Value leftValue = leftSubExpression->execute(record);
     Value rightValue = rightSubExpression->execute(record);
     return leftValue * rightValue;

@@ -14,10 +14,8 @@
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
-ConstantIntegerExpression::ConstantIntegerExpression(int64_t integerValue): integerValue(integerValue) {}
+ConstantIntegerExpression::ConstantIntegerExpression(int64_t integerValue) : integerValue(integerValue) {}
 
-Value<> ConstantIntegerExpression::execute(Record&) {
-    return Value<>(integerValue);
-}
+Value<> ConstantIntegerExpression::execute(Record&) const { return Value<>(integerValue); }
 
-}
+}// namespace NES::Runtime::Execution::Expressions

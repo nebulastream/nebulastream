@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class ReadFieldExpression : public Expression {
   public:
     ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
   private:
     const Nautilus::Record::RecordFieldIdentifier field;
 };

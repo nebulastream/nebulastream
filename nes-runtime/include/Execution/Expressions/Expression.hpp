@@ -27,9 +27,17 @@ class Any;
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
 
+/**
+ * @brief Base class for all expressions.
+ */
 class Expression {
   public:
-    virtual Value<> execute(Record& record) = 0;
+    /**
+     * @brief Evaluates the expressions on a record.
+     * @param record
+     * @return Value<>
+     */
+    virtual Value<> execute(Record& record) const = 0;
     virtual ~Expression() = default;
 };
 

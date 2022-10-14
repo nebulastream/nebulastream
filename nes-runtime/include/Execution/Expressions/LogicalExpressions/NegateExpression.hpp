@@ -14,18 +14,18 @@
 
 #ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_NEGATEEXPRESSION_HPP_
 #define NES_RUNTIME_EXECUTION_EXPRESSIONS_NEGATEEXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 class NegateExpression : public Expression {
   public:
     NegateExpression(ExpressionPtr subExpression);
-    Value<> execute(Record& record) override;
+    Value<> execute(Record& record) const override;
 
   private:
-    ExpressionPtr subExpression;
+    const ExpressionPtr subExpression;
 };
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_NEGATEEXPRESSION_HPP_
