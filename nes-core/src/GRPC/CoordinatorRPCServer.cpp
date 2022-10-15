@@ -50,14 +50,17 @@ Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const Regist
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     SchemaPtr schema;
     Monitoring::MetricType metricType;
+    std::list<uint64_t> coreList;
     for (const auto& monitoringPlanPart : request->monitoringplanpart()) {
         metricType = Monitoring::parse(monitoringPlanPart.metrictype());
         schema = Schema::parse(monitoringPlanPart.schema());
         pairTemp = std::make_pair(schema, monitoringPlanPart.samplerate());
         monitoringPlanMap[metricType] = pairTemp;
     }
-
-    Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::create(monitoringPlanMap);
+    for (const auto& coreNum : request->coreslist()) {
+        coreList.push_back(coreNum.corenum());
+    }
+    Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::create(monitoringPlanMap, coreList);
     bool success = monitoringManager->registerMonitoringPlans(request->id(), monitoringPlan);
     if (!success) {
         NES_ERROR("CoordinatorRPCServer::RegisterMonitoringPlan failed");

@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include <list>
 
 namespace NES::Monitoring {
 
@@ -31,7 +32,9 @@ namespace NES::Monitoring {
 class MonitoringPlan {
   public:
 //    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+
     static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores);
     static MonitoringPlanPtr defaultPlan();
 
     //TODO: Beschreiben
@@ -43,6 +46,8 @@ class MonitoringPlan {
     //TODO: Beschreiben
     static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
 
+    //TODO: Beschreiben
+    std::list<uint64_t> getCores();
     /**
      * @brief Returns the default collectors of the plan.
      * @return A set of collectors.
@@ -84,11 +89,12 @@ class MonitoringPlan {
 
   private:
 //    explicit MonitoringPlan(const std::set<MetricType>& metrics);
-    explicit MonitoringPlan(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
+    explicit MonitoringPlan(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores);
 
     //enum defined in SerializableDataType.proto
 //    std::set<MetricType> metricTypes;
     std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
+    std::list<uint64_t> cpuCores;
 };
 
 }// namespace NES::Monitoring

@@ -26,12 +26,23 @@ namespace NES::Monitoring {
 CpuCollector::CpuCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(CpuMetrics::getDefaultSchema("")) {
+    std::list<uint64_t> emptyList {};
+    coresList = emptyList;
     NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
 }
 
 CpuCollector::CpuCollector(const SchemaPtr& schema)
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(schema) {
+    std::list<uint64_t> emptyList {};
+    coresList = emptyList;
+    NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+}
+
+
+CpuCollector::CpuCollector(const SchemaPtr& schema, std::list<uint64_t> cores)
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(schema), coresList(cores) {
     NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
 }
 
@@ -40,6 +51,7 @@ MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
 bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
+        measuredVal.setCores(this->coresList);
         measuredVal.setSchema(this->schema);
         measuredVal.setNodeId(getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
@@ -56,6 +68,7 @@ SchemaPtr CpuCollector::getSchema() { return schema; }
 const MetricPtr CpuCollector::readMetric() const {
     CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
     NES_DEBUG("CpuCollector: readMetric: The collector has the schema: " + this->schema->toString());
+    wrapper.setCores(this->coresList);
     wrapper.setSchema(this->schema);
     wrapper.setNodeId(getNodeId());
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);

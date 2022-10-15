@@ -17,6 +17,7 @@
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <list>
 
 namespace NES::Monitoring {
 
@@ -28,6 +29,8 @@ class CpuCollector : public MetricCollector {
     explicit CpuCollector();
 
     explicit CpuCollector(const SchemaPtr& schema);
+
+    explicit CpuCollector(const SchemaPtr& schema, std::list<uint64_t> cores);
 
     /**
      * @brief Fill a buffer with a given metric.
@@ -57,6 +60,7 @@ class CpuCollector : public MetricCollector {
   private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;
+    std::list<uint64_t> coresList;
 };
 
 using CpuCollectorPtr = std::shared_ptr<CpuCollector>;

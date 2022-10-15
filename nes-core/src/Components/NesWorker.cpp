@@ -159,15 +159,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                       workerConfig->enableMonitoring);
             NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring configuration=" << workerConfig->monitoringConfiguration.getValue());
         }
-        //      std::vector<uint64_t> nodeIdVector {topologyNodeId};
-//        monitoringAgent->addMonitoringStreams(workerConfig);
-//        Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
-//        Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
-//        monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
-//                                                  workerConfig->enableMonitoring);
-//        NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
-
-//        monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring);
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =

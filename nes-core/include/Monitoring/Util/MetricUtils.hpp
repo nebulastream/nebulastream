@@ -117,6 +117,10 @@ class MetricUtils {
     //TODO:Beschreibung
     static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
 
+    //TODO: Beschreibung
+    static std::list<uint64_t> jsonArrayToIntegerList(web::json::value jsonAttributes);
+
+
 };
 }// namespace NES::Monitoring
 

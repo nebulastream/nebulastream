@@ -37,7 +37,8 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     std::unordered_map<MetricType, MetricCollectorPtr> metrics;
     if(monitoringPlan->hasMetric(WrappedCpuMetrics)) {
         metrics.insert({MetricType::WrappedCpuMetrics,
-                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics)))});
+                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics),
+                                                                          monitoringPlan->getCores()))});
     }
     if (monitoringPlan->hasMetric(DiskMetric)) {
         metrics.insert({MetricType::DiskMetric,

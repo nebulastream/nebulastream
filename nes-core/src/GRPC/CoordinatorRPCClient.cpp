@@ -176,6 +176,11 @@ bool CoordinatorRPCClient::registerMonitoringPlan(const Monitoring::MonitoringPl
         monitoringPlanMetricType->set_samplerate(monitoringPlan->getSampleRate(metricType));
     }
 
+    for (auto coreNum : monitoringPlan->getCores()){
+        CoresListDefinition* coreList = request.add_coreslist();
+        coreList->set_corenum(coreNum);
+    }
+
     NES_DEBUG("CoordinatorRPCClient::registerMonitoringPlan request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterMonitoringPlanRequest, RegisterMonitoringPlanReply>(
