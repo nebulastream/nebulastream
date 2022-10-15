@@ -21,10 +21,20 @@ MonitoringSourceDescriptor::MonitoringSourceDescriptor(std::chrono::milliseconds
                                                        Monitoring::MetricCollectorType metricCollectorType)
     : SourceDescriptor(Schema::create()), waitTime(waitTime), metricCollectorType(metricCollectorType) {}
 
+MonitoringSourceDescriptor::MonitoringSourceDescriptor(SchemaPtr schema,
+                                                       std::chrono::milliseconds waitTime,
+                                                       Monitoring::MetricCollectorType metricCollectorType)
+    : SourceDescriptor(schema), waitTime(waitTime), metricCollectorType(metricCollectorType) {}
+
 SourceDescriptorPtr MonitoringSourceDescriptor::create(std::chrono::milliseconds waitTime,
                                                        Monitoring::MetricCollectorType metricCollectorType) {
     return std::make_shared<MonitoringSourceDescriptor>(MonitoringSourceDescriptor(waitTime, metricCollectorType));
 }
+
+SourceDescriptorPtr MonitoringSourceDescriptor::create(SchemaPtr schema, std::chrono::milliseconds waitTime,
+                                                               Monitoring::MetricCollectorType metricCollectorType) {
+            return std::make_shared<MonitoringSourceDescriptor>(MonitoringSourceDescriptor(schema, waitTime, metricCollectorType));
+        }
 
 bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<MonitoringSourceDescriptor>()) {

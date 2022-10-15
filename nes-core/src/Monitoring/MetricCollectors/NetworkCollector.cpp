@@ -54,6 +54,10 @@ bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr NetworkCollector::getSchema() { return schema; }
 
+void NetworkCollector::setSchema(NES::SchemaPtr schemaNew) {
+    schema = schemaNew;
+}
+
 const MetricPtr NetworkCollector::readMetric() const {
     NetworkMetricsWrapper wrapper = resourceReader->readNetworkStats();
     wrapper.setSchema(this->schema);

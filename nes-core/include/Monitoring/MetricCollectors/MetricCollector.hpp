@@ -62,6 +62,9 @@ class MetricCollector {
     */
     virtual SchemaPtr getSchema() = 0;
 
+    virtual void setSchema(SchemaPtr schema) = 0;
+
+
     /**
      * @brief Fill a buffer with a given metric.
      * @param tupleBuffer The tuple buffer

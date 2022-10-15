@@ -51,6 +51,10 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 }
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
+void MemoryCollector::setSchema(NES::SchemaPtr schemaNew) {
+    schema = schemaNew;
+}
+
 const MetricPtr MemoryCollector::readMetric() const {
     MemoryMetrics metrics = resourceReader->readMemoryStats();
     metrics.setSchema(this->schema);

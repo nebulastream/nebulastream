@@ -90,6 +90,17 @@ MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollector
     return nullptr;
 }
 
+MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollectorType type, SchemaPtr schema) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+        case MetricCollectorType::NETWORK_COLLECTOR: return std::make_shared<Monitoring::CpuCollector>(Monitoring::CpuCollector(schema));
+        default: NES_FATAL_ERROR("MetricUtils: Not supported collector type " << toString(type));
+    }
+    return nullptr;
+}
+
 MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     switch (type) {
         case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{}, WrappedCpuMetrics);

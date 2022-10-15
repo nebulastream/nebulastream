@@ -48,6 +48,9 @@ class DiskCollector : public MetricCollector {
      */
     SchemaPtr getSchema() override;
 
+    //TODO: Beschreibung
+    void setSchema(SchemaPtr schema) override;
+
     /**
      * @brief Read the disk metrics based on the underlying utility systems reader and return the metrics.
      * @return The metrics object

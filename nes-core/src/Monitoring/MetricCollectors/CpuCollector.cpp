@@ -65,6 +65,10 @@ bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr CpuCollector::getSchema() { return schema; }
 
+void CpuCollector::setSchema(NES::SchemaPtr schemaNew) {
+    schema = schemaNew;
+}
+
 const MetricPtr CpuCollector::readMetric() const {
     CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
     NES_DEBUG("CpuCollector: readMetric: The collector has the schema: " + this->schema->toString());

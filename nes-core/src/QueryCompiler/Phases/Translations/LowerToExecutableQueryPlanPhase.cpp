@@ -338,7 +338,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case MONITORING_SOURCE: {
             auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
+            NES_DEBUG("LowerToExecutableQueryPlanPhase::createSourceDescriptor: schema is: " + schema->toString());
             return MonitoringSourceDescriptor::create(
+                schema,
                 monitoringSourceType->getWaitTime(),
                 Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
         }

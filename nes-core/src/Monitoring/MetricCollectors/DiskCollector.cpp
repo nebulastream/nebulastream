@@ -53,6 +53,10 @@ bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr DiskCollector::getSchema() { return schema; }
 
+void DiskCollector::setSchema(NES::SchemaPtr schemaNew) {
+    schema = schemaNew;
+}
+
 const MetricPtr DiskCollector::readMetric() const {
     DiskMetrics metrics = resourceReader->readDiskStats();
     metrics.setSchema(this->schema);

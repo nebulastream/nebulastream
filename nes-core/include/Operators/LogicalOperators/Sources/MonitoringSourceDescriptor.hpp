@@ -30,11 +30,19 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
 
+    static SourceDescriptorPtr create(SchemaPtr schema, std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
+
     /**
      * @brief Return the wait time between sampling periods.
      * @return the wait time
      */
     std::chrono::milliseconds getWaitTime();
+
+//    /**
+//     * @brief Set schema of the source
+//     * @param schema the schema
+//     */
+//    void setSchema(const SchemaPtr& schema);
 
     /**
      * @brief Return the type of metric collector used for the monitoring source
@@ -48,6 +56,8 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit MonitoringSourceDescriptor(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
+    explicit MonitoringSourceDescriptor(SchemaPtr schema, std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
+
     std::chrono::milliseconds waitTime;
     Monitoring::MetricCollectorType metricCollectorType;
 };

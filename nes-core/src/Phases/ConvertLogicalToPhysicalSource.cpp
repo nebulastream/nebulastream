@@ -35,6 +35,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include "Monitoring/MetricCollectors/CpuCollector.hpp"
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -205,8 +206,16 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
+
+//        if (monitoringSourceDescriptor->getMetricCollectorType() == Monitoring::CPU_COLLECTOR) {
+//            Monitoring::CpuCollectorPtr metricCollector = std::make_shared<Monitoring::CpuCollector(sourceDescriptor->getSchema())>();
+//        }
+
         auto metricCollector =
-            Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
+            Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType(),
+                                                                      sourceDescriptor->getSchema());
+        NES_DEBUG("ConverLogicalToPhyiscalSource::create: create Collector with schema: " + sourceDescriptor->getSchema()->toString())
+//        metricCollector->setSchema(sourceDescriptor->getSchema());
         metricCollector->setNodeId(nodeEngine->getNodeId());
         return createMonitoringSource(metricCollector,
                                       monitoringSourceDescriptor->getWaitTime(),
