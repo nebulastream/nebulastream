@@ -18,6 +18,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression multiplies the leftSubExpression with the rightSubExpression.
+ */
 class MulExpression : public Expression {
   public:
     MulExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);

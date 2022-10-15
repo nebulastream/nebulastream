@@ -54,6 +54,7 @@ class Int8 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     int8_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
 
   private:
     int8_t value;
@@ -77,6 +78,7 @@ class Int16 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     int16_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
 
   private:
     int16_t value;
@@ -100,6 +102,7 @@ class Int32 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     int32_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
 
   private:
     int32_t value;
@@ -123,6 +126,7 @@ class Int64 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     int64_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
 
   private:
     int64_t value;
@@ -146,6 +150,7 @@ class UInt8 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     uint8_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
 
   private:
     uint8_t value;
@@ -169,6 +174,7 @@ class UInt16 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     uint16_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
   private:
     uint16_t value;
 };
@@ -191,6 +197,7 @@ class UInt32 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     uint32_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
   private:
     uint32_t value;
 };
@@ -213,6 +220,7 @@ class UInt64 : public Int {
     const std::shared_ptr<Boolean> greaterThan(const Int& other) const override;
     uint64_t getValue() const;
     int64_t getRawInt() const override;
+    std::string toString() override;
   private:
     uint64_t value;
 };

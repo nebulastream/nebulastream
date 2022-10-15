@@ -17,6 +17,7 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Util/CastUtils.hpp>
 #include <memory>
+#include <ostream>
 
 namespace NES::Nautilus {
 
@@ -41,6 +42,7 @@ class Any : public Typed {
     const Type& staticCast() const {
         return static_cast<const Type&>(*this);
     }
+    virtual std::string toString();
 
     virtual Nautilus::IR::Types::StampPtr getType() const;
 };

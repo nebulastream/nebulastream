@@ -18,6 +18,9 @@
 #include <Execution/Expressions/Expression.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression returns true if leftSubExpression is equal to the (==) rightSubExpression.
+ */
 class EqualsExpression : public Expression {
   public:
     EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);

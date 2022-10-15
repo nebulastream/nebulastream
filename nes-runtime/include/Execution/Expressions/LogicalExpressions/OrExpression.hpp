@@ -18,6 +18,10 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expressions returns a Boolean values that is true if
+ * ether the leftSubExpression or rightSubExpression returns true.
+ */
 class OrExpression : public Expression {
   public:
     OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);

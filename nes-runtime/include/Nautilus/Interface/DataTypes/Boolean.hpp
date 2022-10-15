@@ -34,6 +34,7 @@ class Boolean : public TraceableType {
 
     ~Boolean() {}
     Nautilus::IR::Types::StampPtr getType() const override;
+    std::string toString() override;
 
   private:
     const bool value;

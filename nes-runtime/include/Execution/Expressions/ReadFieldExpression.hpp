@@ -25,6 +25,10 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class ReadFieldExpression : public Expression {
   public:
+    /**
+     * @brief Creates a new ReadFieldExpression.
+     * @param field the field name that is read from the record.
+     */
     ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
     Value<> execute(Record& record) const override;
   private:

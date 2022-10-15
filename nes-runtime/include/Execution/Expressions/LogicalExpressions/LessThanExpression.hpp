@@ -18,6 +18,9 @@
 #include <Execution/Expressions/Expression.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression returns true if leftSubExpression is less then rightSubExpression.
+ */
 class LessThanExpression : public Expression {
   public:
     LessThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);

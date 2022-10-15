@@ -36,9 +36,12 @@ class Float : public TraceableType {
     std::shared_ptr<Boolean> lessThan(const Float& otherValue) const;
     std::shared_ptr<Boolean> greaterThan(const Float& otherValue) const;
     float getValue() const;
+    std::string toString() override;
+
   private:
     const float value;
 };
+
 }// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_FLOAT_HPP_

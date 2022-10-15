@@ -27,8 +27,8 @@
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
-#include <type_traits>
 #include <memory>
+#include <type_traits>
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
@@ -187,7 +187,7 @@ class Value : BaseValue {
     auto load() {
         std::shared_ptr<ResultType> result;
         if (Nautilus::Tracing::isInSymbolicExecution()) {
-            result = std::make_shared<ResultType>((int64_t)0);
+            result = std::make_shared<ResultType>((int64_t) 0);
         } else {
             result = ((MemRef*) this->value.get())->load<ResultType>();
         }
@@ -253,8 +253,7 @@ Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 
-template<typename T,
-         typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
+template<typename T, typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
 inline auto toValue(T&& t) {
     return Value<>(std::forward<T>(t));
 }
@@ -475,6 +474,10 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator||(const LHS& left, const RHS& right) {
     return OrOp(left, right);
 };
+
+std::ostream& operator<<(std::ostream& out, Value<>& value);
+
+void PrintTo(const Value<Any>& value, std::ostream* os);
 
 }// namespace NES::Nautilus
 

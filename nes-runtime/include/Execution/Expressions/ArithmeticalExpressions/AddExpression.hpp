@@ -16,8 +16,12 @@
 #define NES_RUNTIME_EXECUTION_EXPRESSIONS_ADDEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression adds the leftSubExpression with the rightSubExpression.
+ */
 class AddExpression : public Expression {
   public:
     AddExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);

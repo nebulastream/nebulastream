@@ -20,7 +20,8 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression reads a specific field from the input record and returns its value.
+ * @brief This expression returns a specific constant integer value.
+ * TODO #3062 add support for constant of different integer ranges.
  */
 class ConstantIntegerExpression : public Expression {
   public:

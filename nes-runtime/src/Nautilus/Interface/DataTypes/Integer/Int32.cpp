@@ -52,4 +52,5 @@ const std::shared_ptr<Boolean> Int32::greaterThan(const Int& other) const {
 
 int32_t Int32::getValue() const { return value; }
 int64_t Int32::getRawInt() const { return value; }
+std::string Int32::toString() { return std::to_string(value); }
 }// namespace NES::Nautilus
