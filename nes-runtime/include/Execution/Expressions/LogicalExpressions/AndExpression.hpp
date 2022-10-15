@@ -18,6 +18,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression returns true if both leftSubExpression and rightSubExpression return true.
+ */
 class AndExpression : public Expression {
   public:
     AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);

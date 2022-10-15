@@ -20,8 +20,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression writes a particular Value to a specific field of an record.
+ */
 class WriteFieldExpression : public Expression {
   public:
+    /**
+     * @brief Creates a new WriteFieldExpression.
+     * @param field identifier of a record field.
+     * @param subExpression the input expression that generates a value that is written to the field.
+     */
     WriteFieldExpression(Nautilus::Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 

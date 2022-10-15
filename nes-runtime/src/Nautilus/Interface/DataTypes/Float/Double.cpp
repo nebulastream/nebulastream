@@ -26,5 +26,6 @@ std::shared_ptr<Boolean> Double::equals(const Double& otherValue) const { return
 std::shared_ptr<Boolean> Double::lessThan(const Double& otherValue) const { return create<Boolean>(value < otherValue.value); }
 std::shared_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
 double Double::getValue() const { return value; }
+std::string Double::toString() { return std::to_string(value); }
 
 }// namespace NES::Nautilus

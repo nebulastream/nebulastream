@@ -18,6 +18,9 @@
 #include <Execution/Expressions/Expression.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression divides the leftSubExpression by the rightSubExpression.
+ */
 class DivExpression : public Expression {
   public:
     DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);

@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Nautilus {
 
@@ -70,7 +70,9 @@ void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
     }
 }
 
-void traceUnaryOperation(const Nautilus::Tracing::OpCode& op, const Nautilus::Tracing::ValueRef& resultRef, const Nautilus::Tracing::ValueRef& inputRef) {
+void traceUnaryOperation(const Nautilus::Tracing::OpCode& op,
+                         const Nautilus::Tracing::ValueRef& resultRef,
+                         const Nautilus::Tracing::ValueRef& inputRef) {
     auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
     if (ctx != nullptr) {
         if (ctx->isExpectedOperation(op)) {
@@ -90,7 +92,9 @@ void TraceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::Valu
             ctx->incrementOperationCounter();
             return;
         }
-        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CONST, valueReference, {Nautilus::Tracing::ConstantValue(constValue)});
+        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CONST,
+                                                           valueReference,
+                                                           {Nautilus::Tracing::ConstantValue(constValue)});
         ctx->trace(operation);
     }
 };
@@ -253,5 +257,9 @@ Value<> NegateOp(const Value<>& input) {
     };
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
+
+std::ostream& operator<<(std::ostream& out, Value<>& value) { return out << value.getValue().toString(); }
+
+void PrintTo(const Value<Any>& value, std::ostream* os) { *os << value.getValue().toString(); }
 
 }// namespace NES::Nautilus

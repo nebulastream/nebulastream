@@ -36,6 +36,7 @@ class Double : public TraceableType {
     std::shared_ptr<Boolean> lessThan(const Double& otherValue) const;
     std::shared_ptr<Boolean> greaterThan(const Double& otherValue) const;
     double getValue() const;
+    std::string toString() override;
 
   private:
     const double value;

@@ -18,6 +18,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expression subtracts the rightSubExpression from the leftSubExpression.
+ */
 class SubExpression : public Expression {
   public:
     SubExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);

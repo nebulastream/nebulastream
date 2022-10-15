@@ -18,6 +18,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
+/**
+ * @brief This expressions returns a Boolean values that is the negation of subExpression.
+ */
 class NegateExpression : public Expression {
   public:
     NegateExpression(ExpressionPtr subExpression);

@@ -24,5 +24,5 @@ Boolean::operator bool() const { return value; }
 bool Boolean::getValue() { return value; }
 
 Nautilus::IR::Types::StampPtr Boolean::getType() const { return Nautilus::IR::Types::StampFactory::createBooleanStamp(); }
-
+std::string Boolean::toString() { return std::to_string(value); }
 }// namespace NES::Nautilus

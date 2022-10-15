@@ -20,6 +20,21 @@
 namespace NES::Runtime::Execution::Expressions {
 
 template<typename ExpressionType>
+class UnaryExpressionWrapper {
+  public:
+    UnaryExpressionWrapper() {
+        auto input = std::make_shared<ReadFieldExpression>("value");
+        expression = std::make_shared<ExpressionType>(input);
+    }
+    Nautilus::Value<> eval(Nautilus::Value<> value){
+        auto record = Record({{"value", value}});
+        return expression->execute(record);
+    }
+
+    std::shared_ptr<ExpressionType> expression;
+};
+
+template<typename ExpressionType>
 class BinaryExpressionWrapper {
   public:
     BinaryExpressionWrapper() {
