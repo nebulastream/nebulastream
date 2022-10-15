@@ -27,7 +27,8 @@ namespace NES::Monitoring {
 //    NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 //}
 
-MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, uint64_t>>& metrics) : monitoringPlan(metrics) {
+MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores)
+    : monitoringPlan(metrics), cpuCores(cores) {
     NES_DEBUG("MonitoringPlan: Init with metrics of size " << metrics.size());
 }
 
@@ -36,13 +37,20 @@ MonitoringPlan::MonitoringPlan(const std::map<MetricType, std::pair<SchemaPtr, u
 //}
 
 MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& monitoringPlan) {
-    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan));
+    std::list<uint64_t> emptyList {};
+
+    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan, emptyList));
+}
+
+MonitoringPlanPtr MonitoringPlan::create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& monitoringPlan, std::list<uint64_t> cores) {
+    return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(monitoringPlan, cores));
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
     std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
     uint64_t sampleRate = 1000;
     std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
+    std::list<uint64_t> cores {};
 
     tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::getDefaultSchema(""), sampleRate));
     configuredMonitoringPlan.insert(tempPair);
@@ -53,7 +61,7 @@ MonitoringPlanPtr MonitoringPlan::defaultPlan() {
     tempPair = std::make_pair(WrappedNetworkMetrics, std::make_pair(NetworkMetrics::getDefaultSchema(""), sampleRate));
     configuredMonitoringPlan.insert(tempPair);
 
-    return MonitoringPlan::create(configuredMonitoringPlan);
+    return MonitoringPlan::create(configuredMonitoringPlan, cores);
 }
 
 SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
@@ -65,16 +73,24 @@ uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
     return monitoringPlan.find(metric)->second.second;
 }
 
+std::list<uint64_t> MonitoringPlan::getCores() { return cpuCores; }
+
 MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
     std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
     SchemaPtr schema;
     web::json::value attributesArray;
     std::list<std::string> attributesList;
     uint64_t sampleRate = 1000;
+    std::list<uint64_t> cores {};
     std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
     if (configuredMetrics["cpu"].is_object()) {
         if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
             sampleRate = configuredMetrics["cpu"]["sampleRate"].as_integer();
+        } else {
+            sampleRate = 1000;
+        }
+        if (configuredMetrics["cpu"]["cores"].is_array()) {
+            cores = MetricUtils::jsonArrayToIntegerList(configuredMetrics["cpu"]["cores"]);
         }
         attributesList = MetricUtils::jsonArrayToList(configuredMetrics["cpu"]["attributes"]);
         tempPair = std::make_pair(WrappedCpuMetrics, std::make_pair(CpuMetrics::createSchema("", attributesList), sampleRate));
@@ -109,7 +125,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
         configuredMonitoringPlan.insert(tempPair);
     }
 
-    return MonitoringPlan::create(configuredMonitoringPlan);
+    return MonitoringPlan::create(configuredMonitoringPlan, cores);
 }
 
 std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {

@@ -85,12 +85,17 @@ service CoordinatorRPCService {
 message RegisterMonitoringPlanRequest {
   uint64 id = 1;
   repeated MonitoringPlanPartDefinition monitoringPlanPart = 2;
+  repeated CoresListDefinition coresList = 3;
 }
 
 message MonitoringPlanPartDefinition {
   string metricType = 1;
   string schema = 2;
   uint64 sampleRate = 3;
+}
+
+message CoresListDefinition {
+  uint64 coreNum = 1;
 }
 
 message RegisterMonitoringPlanReply {

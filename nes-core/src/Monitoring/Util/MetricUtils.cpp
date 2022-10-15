@@ -232,7 +232,7 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
     i = tokenList.begin();
 
     // split rawString into n different strings;
-    // each string will represent the configuration of one metric
+    // each string will represent the configuration of one metric type
     while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
         token = rawConfigString.substr(0, pos);
         rawConfigString.erase(0, pos + delimiter.length());
@@ -245,6 +245,8 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
     std::string attributes;
     std::vector<web::json::value> vectorAttributes;
     std::string sampleRate;
+    std::string cores;
+    std::vector<web::json::value> vectorCores;
     std::list<std::string>::iterator j;
     // split the metric configuration strings and parse them to json
     for (i = tokenList.begin(); i != tokenList.end(); ++i) {
@@ -261,22 +263,53 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
         attributes = i->substr(0, pos);
         i->erase(0, pos + delimiter.length());
 
-        delimiter= "sampleRate: ";
-        i->erase(0, delimiter.length());
+        if (metricType == "cpu" && (i->find("cores") != std::string::npos)){
+            delimiter = "cores: \"";
+            i->erase(0, delimiter.length());
 
-        delimiter = " ";
-        pos = i->find(delimiter);
-        sampleRate = i->substr(0, pos);
+            delimiter = "\" ";
+            pos = i->find(delimiter);
+            cores = i->substr(0, pos);
+            i->erase(0, pos + delimiter.length());
 
-        monitoringConfigurationJson[metricType]["sampleRate"] = web::json::value::number(std::stoi(sampleRate));
+            delimiter = ", ";
+            if (!(i->find(delimiter) != std::string::npos)) {
+                while ((pos = cores.find(delimiter)) != std::string::npos) {
+                    token = cores.substr(0, pos);
+                    cores.erase(0, pos + delimiter.length());
+                    vectorCores.push_back(web::json::value::number(std::stoi(token)));
+                }
+            } else {
+                vectorCores.push_back(web::json::value::number(std::stoi(cores)));
+            }
+            vectorCores.push_back(web::json::value::number(std::stoi(cores)));
+            monitoringConfigurationJson[metricType]["cores"] = web::json::value::array(vectorCores);
+            vectorCores.clear();
+        }
+
+        if (i->find("sampleRate") != std::string::npos) {
+            delimiter = "sampleRate: ";
+            i->erase(0, delimiter.length());
+
+            delimiter = " ";
+            pos = i->find(delimiter);
+            sampleRate = i->substr(0, pos);
+
+            monitoringConfigurationJson[metricType]["sampleRate"] = web::json::value::number(std::stoi(sampleRate));
+        } else {
+            monitoringConfigurationJson[metricType]["sampleRate"] = web::json::value::number(1000);
+        }
 
         // parse attribute string to list of strings
         delimiter = ", ";
-        while ((pos = attributes.find(delimiter)) != std::string::npos) {
-            token = attributes.substr(0, pos);
-            attributes.erase(0, pos + delimiter.length());
-            vectorAttributes.push_back(web::json::value::string(token));
-
+        if (!(i->find(delimiter) != std::string::npos)) {
+            while ((pos = attributes.find(delimiter)) != std::string::npos) {
+                token = attributes.substr(0, pos);
+                attributes.erase(0, pos + delimiter.length());
+                vectorAttributes.push_back(web::json::value::string(token));
+            }
+        } else {
+            vectorAttributes.push_back(web::json::value::string(attributes));
         }
         vectorAttributes.push_back(web::json::value::string(attributes));
         monitoringConfigurationJson[metricType]["attributes"] = web::json::value::array(vectorAttributes);
@@ -295,5 +328,16 @@ std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttrib
     }
 
     return attributesList;
+}
+
+std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(web::json::value jsonAttributes) {
+    std::list<uint64_t> coresList;
+    int i;
+    auto arrayLength = jsonAttributes.size();
+    for (i = 0; i < static_cast<int>(arrayLength); i++) {
+        coresList.push_front(jsonAttributes[i].as_integer());
+    }
+
+    return coresList;
 }
 }// namespace NES::Monitoring

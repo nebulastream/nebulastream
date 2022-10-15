@@ -83,6 +83,9 @@ class CpuMetricsWrapper {
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
 
+    //TODO: Beschreiben
+    void setCores(std::list<uint64_t> coresList);
+
   private:
     std::vector<CpuMetrics> cpuMetrics;
     uint64_t nodeId;

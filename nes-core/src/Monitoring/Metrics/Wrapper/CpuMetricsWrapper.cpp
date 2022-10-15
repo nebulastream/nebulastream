@@ -86,6 +86,13 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
         metrics.setSchema(schema);
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
+//    std::list<unsigned int> list = {0, 1, 5, 8};
+//    for (auto i : list) {
+//        CpuMetrics metrics = getValue(i);
+//        metrics.nodeId = nodeId;
+//        metrics.setSchema(schema);
+//        metrics.writeToBuffer(buf, tupleIndex + i);
+//    }
 }
 
 void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
@@ -93,6 +100,8 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     auto cpuList = std::vector<CpuMetrics>();
     NES_TRACE("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
+
+    std::list<int> list = {1, 5, 8};
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         CpuMetrics metrics{};
@@ -100,6 +109,13 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         cpuList.emplace_back(metrics);
     }
+//    for (auto i : list) {
+//        //for each core parse the according CpuMetrics
+//        CpuMetrics metrics{};
+//        metrics.setSchema(this->schema);
+//        NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
+//        cpuList.emplace_back(metrics);
+//    }
     cpuMetrics = std::move(cpuList);
     nodeId = cpuMetrics[0].nodeId;
 }
@@ -123,6 +139,27 @@ web::json::value CpuMetricsWrapper::toJson() const {
     metricsJsonWrapper["values"] = metricsJson;
     return metricsJson;
 }
+
+void CpuMetricsWrapper::setCores(std::list<uint64_t> coresList) {
+    std::vector<CpuMetrics> arrayNew;
+    if (!(coresList.empty())){
+        for (auto i : coresList) {
+            if (i < cpuMetrics.size()) {
+                arrayNew.push_back(cpuMetrics[i]);
+            }
+        }
+        cpuMetrics = std::move(arrayNew);
+    }
+//    std::list<uint64_t> list {0, 9};
+//    for (auto i : list) {
+//        if (i < cpuMetrics.size()) {
+//            arrayNew.push_back(cpuMetrics[i]);
+//        }
+//    }
+
+//    cpuMetrics = std::move(arrayNew);
+}
+
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {
         NES_ERROR("CpuMetricsWrapper: Sizes are not equal " << cpuMetrics.size() << "!=" << rhs.size());
