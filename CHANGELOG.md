@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.12](https://github.com/nebulastream/nebulastream/tree/v0.3.12) (2022-10-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.11...v0.3.12)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Docker Alpine Linux TensorFlow Lite Support [\#3024](https://github.com/nebulastream/nebulastream/issues/3024)
+
 ## [v0.3.11](https://github.com/nebulastream/nebulastream/tree/v0.3.11) (2022-10-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.10...v0.3.11)
