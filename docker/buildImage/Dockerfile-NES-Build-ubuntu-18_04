@@ -1,6 +1,5 @@
 FROM ubuntu:18.04
 
-
 RUN apt-get update  -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq software-properties-common && add-apt-repository ppa:ubuntu-toolchain-r/test  && \
      apt-get update  -qq && \
      DEBIAN_FRONTEND="noninteractive" apt-get install gcc-9 g++-9 -qq && \
@@ -29,8 +28,6 @@ RUN apt-get update  -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq 
     libbsd-dev \
     software-properties-common \
     && apt-get clean -qq
-
-
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' \
@@ -66,5 +63,5 @@ ENV ACTUAL_TRIPLE='cat /debian-triple'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
-
 ENTRYPOINT ["/entrypoint.sh"]
+
