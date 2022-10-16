@@ -271,15 +271,23 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
+          fetch-depth: 0
+      - name: Get changed files using defaults
+        id: changed-files
+        uses: tj-actions/changed-files@v32.1.2
+      - name: Get changed files using a comma separator
+        id: changed-files-comma-separate
+        uses: tj-actions/changed-files@v32.1.2
+        with:
+          separator: ","
+      - name: Docker Build Image
+        if:
+        run: |
+          echo "Changed the files"
       - name: "Set up QEMU"
         uses: docker/setup-qemu-action@v1
       - name: "Set up Docker Buildx"
         uses: docker/setup-buildx-action@v1
-      - name: "Monitor File Changes"
-        if: github.event_name != 'workflow_dispatch'
-        uses: trilom/file-changes-action@v1.2.4
       - name: "Get NebulaStream Version"
         run: |
           echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
@@ -291,39 +299,29 @@ jobs:
             fi
           fi
       - name: "Build and Release NES Build Image"
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' && contains(steps.changed-files.outputs.modified_files, 'docker/buildImage/')
         run: |
-          echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to buildImage"
-              cd docker/buildImage
-              #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
-              #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
-              echo "Pushed the build image"
-              docker buildx build . -f Dockerfile-NES-Build-alpine-3.15 -t nebulastream/nes-build-image:alpine --platform=linux/amd64,linux/arm64 --push
-              echo "Pushed the alpine image"
-              docker logout
-          else
-              echo "No changes done in buildImage. Skipping the build and release phase."
-          fi
+          echo "Found changes done to buildImage"
+          cd docker/buildImage
+          #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
+          #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
+          echo "Pushed the build image"
+          docker buildx build . -f Dockerfile-NES-Build-alpine-3.15 -t nebulastream/nes-build-image:alpine --platform=linux/amd64,linux/arm64 --push
+          echo "Pushed the alpine image"
+          docker logout
       - name: "Build and Release NES Dev Image"
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' && (contains(steps.changed-files.outputs.modified_files, 'docker/buildImage/') || contains(steps.changed-files.outputs.modified_files, 'docker/devImage/'))
         run: |
-          echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to devImage"
-              cd docker/devImage/
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
-              echo "Pushed the dev image"
-              docker buildx build . -f Dockerfile-NES-Dev-alpine-3.15 -t nebulastream/nes-dev-image:alpine --platform=linux/amd64,linux/arm64 --push
-              echo "Pushed the alpine image"
-              docker logout
-          else
-              echo "No changes done to devImage. Skipping the build and release phase."
-          fi
+          echo "Found changes done to devImage"
+          cd docker/devImage/
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
+          echo "Pushed the dev image"
+          docker buildx build . -f Dockerfile-NES-Dev-alpine-3.15 -t nebulastream/nes-dev-image:alpine --platform=linux/amd64,linux/arm64 --push
+          echo "Pushed the alpine image"
+          docker logout
       - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
