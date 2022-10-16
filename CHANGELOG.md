@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.13](https://github.com/nebulastream/nebulastream/tree/v0.3.13) (2022-10-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.12...v0.3.13)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Refactor Runtime folder in own module [\#3012](https://github.com/nebulastream/nebulastream/issues/3012)
+
 ## [v0.3.12](https://github.com/nebulastream/nebulastream/tree/v0.3.12) (2022-10-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.11...v0.3.12)
