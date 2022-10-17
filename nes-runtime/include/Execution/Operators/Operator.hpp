@@ -1,0 +1,69 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#ifndef NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
+#define NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
+#include <Nautilus/Interface/Record.hpp>
+#include <memory>
+
+namespace NES::Nautilus {
+class RecordBuffer;
+}
+
+namespace NES::Runtime::Execution::Operators {
+using namespace Nautilus;
+class ExecutableOperator;
+class RuntimeExecutionContext;
+using ExecuteOperatorPtr = std::unique_ptr<const ExecutableOperator>;
+
+/**
+ * @brief Base operator for all specific operators.
+ * Each operator can implement setup, open, and close.
+ */
+class Operator {
+  public:
+    /**
+     * @brief Setup initializes this operator for execution.
+     * Operators can implement this class to initialize some state that exists over the whole life time of this operator.
+     * @param executionCtx the RuntimeExecutionContext
+     */
+    virtual void setup(RuntimeExecutionContext& executionCtx) const;
+    /**
+     * @brief Open is called for each record buffer and is used to initializes execution local state.
+     * @param recordBuffer
+     */
+    virtual void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    /**
+     * @brief Close is called
+     * @param executionCtx
+     * @param recordBuffer
+     */
+    virtual void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    /**
+     * @brief Terminates the operator and fries all operator state.
+     * @param executionCtx the RuntimeExecutionContext
+     */
+    virtual void terminate(RuntimeExecutionContext& executionCtx) const;
+
+    bool hasChild() const;
+    bool setChild(ExecuteOperatorPtr child);
+    virtual ~Operator();
+
+  protected:
+    mutable ExecuteOperatorPtr child;
+};
+
+}// namespace NES::Runtime::Execution::Operators
+
+#endif//NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_

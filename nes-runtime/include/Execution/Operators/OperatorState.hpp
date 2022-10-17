@@ -12,16 +12,12 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Nautilus/Interface/Record.hpp>
-namespace NES::Nautilus {
-
-void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {
-    // evaluate expression and call child operator if expression is valid
-    if (expression->execute(record)) {
-        if (child != nullptr)
-            child->execute(ctx, record);
-    }
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
+namespace NES::Runtime::Execution::Operators {
+class OperatorState {
+  public:
+    virtual ~OperatorState() = default;
+};
 }
-
-}// namespace NES::Nautilus
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_

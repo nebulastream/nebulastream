@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Scan.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::Nautilus {
+namespace NES::Runtime::Execution::Operators {
 
 Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Record::RecordFieldIdentifier> projections)
     : memoryLayout(memoryLayout), projections(projections) {}
@@ -32,4 +32,4 @@ void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const 
     }
 }
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
