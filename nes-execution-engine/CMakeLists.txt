@@ -157,12 +157,12 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
     add_library(binaryen SHARED IMPORTED)
     set_target_properties(binaryen PROPERTIES IMPORTED_LOCATION /home/victor/binaryen/lib/libbinaryen.so)
     set_target_properties(binaryen PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/victor/binaryen/lib/)
-    target_link_libraries(nes-execution-engine PUBLIC binaryen)
     target_include_directories(nes-execution-engine PUBLIC
-            $<BUILD_INTERFACE:/home/victor/binaryen/>
-            $<INSTALL_INTERFACE:/home/victor/binaryen/>)
+            $<BUILD_INTERFACE:/home/victor/binaryen/src/>
+            $<INSTALL_INTERFACE:/home/victor/binaryen/src/>)
+    target_link_libraries(nes-execution-engine PUBLIC binaryen)
 
-    #Wasmtime
+    # Wasmtime
     target_include_directories(nes-execution-engine PUBLIC /home/victor/wasmtime/target/release/)
     target_link_libraries(nes-execution-engine PUBLIC /home/victor/wasmtime/target/release/libwasmtime.so)
 endif()
