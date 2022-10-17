@@ -12,12 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        Expression.cpp
-        ReadFieldExpression.cpp
-        WriteFieldExpression.cpp
-        ConstantIntegerExpression.cpp
+        ModExpression.cpp
         )
-
-add_subdirectory(ArithmeticExpressions)
-add_subdirectory(LogicalExpressions)
-add_subdirectory(Functions)
