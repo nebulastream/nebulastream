@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.14](https://github.com/nebulastream/nebulastream/tree/v0.3.14) (2022-10-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.13...v0.3.14)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NES build image not releasing [\#3063](https://github.com/nebulastream/nebulastream/issues/3063)
+
 ## [v0.3.13](https://github.com/nebulastream/nebulastream/tree/v0.3.13) (2022-10-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.12...v0.3.13)
