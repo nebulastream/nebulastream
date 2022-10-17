@@ -8,15 +8,13 @@ ModExpression::ModExpression(const NES::Runtime::Execution::Expressions::Express
                              const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
-double calculateMod(double x, double y){
-    return std::fmod(x,y);
-}
-
+double calculateModOnDouble(double x, double y) { return std::fmod(x, y); }
 
 Value<> ModExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = leftSubExpression->execute(record);
     Value rightValue = rightSubExpression->execute(record);
-    Value<> result = FunctionCall<>("calculateMod", calculateMod, leftValue.as<Double>(), rightValue.as<Double>());
+    Value<> result =
+        FunctionCall<>("calculateModOnDouble", calculateModOnDouble, leftValue.as<Float>(), rightValue.as<Float>());
     return result;
 }
 
