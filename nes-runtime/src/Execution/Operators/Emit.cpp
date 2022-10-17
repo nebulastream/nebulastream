@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::Nautilus {
-
+namespace NES::Runtime::Execution::Operators {
 class EmitState : public OperatorState {
   public:
     EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
@@ -60,4 +59,4 @@ void Emit::close(RuntimeExecutionContext& ctx, RecordBuffer&) const {
 Emit::Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout)
     : maxRecordsPerBuffer(resultMemoryLayout->getCapacity()), resultMemoryLayout(resultMemoryLayout) {}
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators

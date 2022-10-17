@@ -14,9 +14,9 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SELECTION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SELECTION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Runtime::Execution::Operators {
 
 class Selection : public ExecutableOperator {
   public:
@@ -27,5 +27,5 @@ class Selection : public ExecutableOperator {
     const Runtime::Execution::Expressions::ExpressionPtr expression;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SELECTION_HPP_

@@ -26,10 +26,7 @@ class WorkerContext;
 namespace NES::Nautilus {
 class Operator;
 class RecordBuffer;
-class OperatorState {
-  public:
-    virtual ~OperatorState() = default;
-};
+
 class RuntimeExecutionContext {
   public:
     RuntimeExecutionContext(Value<MemRef> executionContext);
