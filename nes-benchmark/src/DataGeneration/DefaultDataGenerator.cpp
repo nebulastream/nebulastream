@@ -42,7 +42,8 @@ namespace NES::Benchmark::DataGeneration {
             std::mt19937 generator(randDev());
             std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
-
+            /* This branch is solely for performance reasons.
+             It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
             if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
                 auto rowLayoutBuffer = rowLayout->bind(bufferRef);
