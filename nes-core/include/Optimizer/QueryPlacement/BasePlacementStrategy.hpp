@@ -153,6 +153,9 @@ class BasePlacementStrategy {
                                                       GlobalExecutionPlanPtr globalExecutionPlan,
                                                       ExecutionNodePtr executionNode,
                                                       QueryId queryId);
+    static FaultToleranceType bestApproach(std::vector<float> activeStandbyCosts,
+                      std::vector<float> checkpointingCosts,
+                      std::vector<float> upstreamBackupCosts);
 
 
   protected:
@@ -276,7 +279,6 @@ class BasePlacementStrategy {
      * @return true if operators connected otherwise false
      */
     bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
-
 
 };
 }// namespace NES::Optimizer

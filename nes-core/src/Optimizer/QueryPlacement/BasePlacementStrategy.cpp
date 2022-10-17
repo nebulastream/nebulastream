@@ -32,6 +32,7 @@
 #include <log4cxx/helpers/exception.h>
 #include <stack>
 #include <utility>
+#include <numeric>
 
 namespace NES::Optimizer {
 
@@ -1072,7 +1073,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
     }
 
 
-    if(downstreamNodes.size() < static_cast<size_t>(replicas) && ){
+    if(downstreamNodes.size() < static_cast<size_t>(replicas)){
         return {-1,-1,-1};
     }
 
@@ -1186,7 +1187,8 @@ std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyP
 
     float networkCost = (calcLinkWeight(topology,executionNode,secondary) / interval);
 
-    float memoryCost = (topPrimary->getAvailableBuffers() / interval);
+    //float memoryCost = (topPrimary->getAvailableBuffers() / interval);
+    float memoryCost = topPrimary->getAvailableBuffers();
 
     return {procCost, networkCost, memoryCost};
 
@@ -1214,6 +1216,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
         return {-1,-1,-1};
     }
 
+    //TODO check if this really gets max and min
     auto max = std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
                                 [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
                                 {
@@ -1239,6 +1242,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
 
     //TODO get interval
     float interval = (rand() % 3 + 0.8);
+    /*
     //TODO determine which node to use as primary and which one to use as secondary
     networkCost += calcLinkWeight(topology, executionNode, primary) / interval;
     networkCost += calcLinkWeight(topology, executionNode, secondary) / interval;
@@ -1247,12 +1251,109 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
     }
     for(auto& upstreamNode : getDownstreamTree(topSecondary, false)){
         networkCost += calcDownstreamLinkWeights(topology, globalExecutionPlan, executionNode, queryId) / interval;
-    }
+    }*/
+
+    networkCost += (2 * (calcLinkWeight(topology, executionNode, primary) / interval));
 
     float memoryCost = calcOutputQueue(topology, executionNode);
 
 
     return {procCost,networkCost,memoryCost};
+
+}
+
+FaultToleranceType BasePlacementStrategy::bestApproach(std::vector<float> activeStandbyCosts, std::vector<float> checkpointingCosts, std::vector<float> upstreamBackupCosts){
+
+    //TODO since for all three scores lower is better, reverse all previous variables. maxProcessingCost (or maybe bestProcessingCost?) should be the min_element, not max_element
+
+    std::vector<float> allProcessingCosts = {activeStandbyCosts[0], checkpointingCosts[0], upstreamBackupCosts[0]};
+    std::vector<float> allNetworkingCosts = {activeStandbyCosts[1], checkpointingCosts[1], upstreamBackupCosts[1]};
+    std::vector<float> allMemoryCosts = {activeStandbyCosts[2], checkpointingCosts[2], upstreamBackupCosts[2]};
+
+    bool activeStandbyPossible = (std::reduce(activeStandbyCosts.begin(), activeStandbyCosts.end()) != -3);
+    bool checkpointingPossible = (std::reduce(checkpointingCosts.begin(), checkpointingCosts.end()) != -3);
+    bool upstreamBackupPossible = (std::reduce(upstreamBackupCosts.begin(), upstreamBackupCosts.end()) != -3);
+
+    if(!activeStandbyPossible && !checkpointingPossible && !upstreamBackupPossible){
+        return FaultToleranceType::NONE;
+    }
+
+    if(!activeStandbyPossible){
+        allProcessingCosts.erase(allProcessingCosts.begin() + 0);
+        allNetworkingCosts.erase(allNetworkingCosts.begin() + 0);
+        allMemoryCosts.erase(allMemoryCosts.begin() + 0);
+    }
+    if(!checkpointingPossible){
+        allProcessingCosts.erase(allProcessingCosts.begin() + 1);
+        allNetworkingCosts.erase(allNetworkingCosts.begin() + 1);
+        allMemoryCosts.erase(allMemoryCosts.begin() + 1);
+    }
+    if(!upstreamBackupPossible){
+        allProcessingCosts.erase(allProcessingCosts.begin() + 2);
+        allNetworkingCosts.erase(allNetworkingCosts.begin() + 2);
+        allMemoryCosts.erase(allMemoryCosts.begin() + 2);
+    }
+
+    float maxProcessingCost = *max_element(std::begin(allProcessingCosts), std::end(allProcessingCosts));
+    float maxNetworkingCost = *max_element(std::begin(allNetworkingCosts), std::end(allNetworkingCosts));
+    float maxMemoryCost = *max_element(std::begin(allMemoryCosts), std::end(allMemoryCosts));
+
+    float minProcessingCost = *min_element(std::begin(allProcessingCosts), std::end(allProcessingCosts));
+    float minNetworkingCost = *min_element(std::begin(allNetworkingCosts), std::end(allNetworkingCosts));
+    float minMemoryCost = *min_element(std::begin(allMemoryCosts), std::end(allMemoryCosts));
+
+    std::map<FaultToleranceType,float> faultToleranceScores;
+
+    if(activeStandbyPossible){
+        float activeStandbyScore = ((activeStandbyCosts[0] - minProcessingCost) / (maxProcessingCost - minProcessingCost))
+            + ((activeStandbyCosts[1] - minNetworkingCost) / (maxNetworkingCost - minNetworkingCost))
+            + ((activeStandbyCosts[2] - minMemoryCost) / (maxMemoryCost - minMemoryCost));
+
+        faultToleranceScores.insert({FaultToleranceType::ACTIVE_STANDBY, activeStandbyScore});
+    }
+    if(checkpointingPossible){
+        float checkpointingScore = ((checkpointingCosts[0] - minProcessingCost) / (maxProcessingCost - minProcessingCost))
+            + ((checkpointingCosts[1] - minNetworkingCost) / (maxNetworkingCost - minNetworkingCost))
+            + ((checkpointingCosts[2] - minMemoryCost) / (maxMemoryCost - minMemoryCost));
+
+        faultToleranceScores.insert({FaultToleranceType::CHECKPOINTING, checkpointingScore});
+    }
+    if(upstreamBackupPossible){
+        float upstreamBackupScore = ((upstreamBackupCosts[0] - minProcessingCost) / (maxProcessingCost - minProcessingCost))
+            + ((upstreamBackupCosts[1] - minNetworkingCost) / (maxNetworkingCost - minNetworkingCost))
+            + ((upstreamBackupCosts[2] - minMemoryCost) / (maxMemoryCost - minMemoryCost));
+
+        faultToleranceScores.insert({FaultToleranceType::UPSTREAM_BACKUP, upstreamBackupScore});
+    }
+
+
+    //Changed it so that the lowest value is selected
+    auto x = std::max_element(faultToleranceScores.begin(), faultToleranceScores.end(),
+                                  [](const std::pair<FaultToleranceType, float>& p1, const std::pair<FaultToleranceType, float>& p2) {
+                                      return p1.second > p2.second; });
+
+        return x->first;
+    
+
+
+
+    //float faultToleranceScores[3] = {activeStandbyScore, checkpointingScore, upstreamBackupScore};
+    /*const int N = sizeof(faultToleranceScores) / sizeof(int);
+    int indexOfBestScore = std::distance(faultToleranceScores, std::max_element(faultToleranceScores, faultToleranceScores + N));
+
+    switch(indexOfBestScore) {
+        case 0:
+            NES_INFO("FT TO CHOSE: ACTIVE STANDBY");
+            return FaultToleranceType::ACTIVE_STANDBY;
+        case 1:
+            NES_INFO("FT TO CHOSE: CHECKPOINTING");
+            return FaultToleranceType::CHECKPOINTING;
+        case 2:
+            NES_INFO("FT TO CHOSE: UPSTREAM BACKUP");
+            return FaultToleranceType::UPSTREAM_BACKUP;
+        default:
+            return FaultToleranceType::NONE;
+    }*/
 
 }
 

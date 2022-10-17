@@ -441,6 +441,178 @@ TEST_F(QueryPlacementTest, getDepthTest){
     EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(16),0),4);
 }
 
+TEST_F(QueryPlacementTest, bestApproachTest){
+    topology = Topology::create();
+
+    TopologyNodePtr node1 = TopologyNode::create(1, "localhost", 123, 124, 20);
+    topology->setAsRoot(node1);
+
+    TopologyNodePtr node2 = TopologyNode::create(2, "localhost", 125, 126, 15);
+    TopologyNodePtr node3 = TopologyNode::create(3, "localhost", 125, 126, 16);
+    TopologyNodePtr node4 = TopologyNode::create(4, "localhost", 125, 126, 11);
+    TopologyNodePtr node5 = TopologyNode::create(5, "localhost", 125, 126, 12);
+    TopologyNodePtr node6 = TopologyNode::create(6, "localhost", 125, 126, 10);
+    TopologyNodePtr node7 = TopologyNode::create(7, "localhost", 125, 126, 13);
+    TopologyNodePtr node8 = TopologyNode::create(8, "localhost", 125, 126, 7);
+    TopologyNodePtr node9 = TopologyNode::create(9, "localhost", 125, 126, 6);
+    TopologyNodePtr node10 = TopologyNode::create(10, "localhost", 125, 126, 9);
+    TopologyNodePtr node11 = TopologyNode::create(11, "localhost", 125, 126, 6);
+    TopologyNodePtr node12 = TopologyNode::create(12, "localhost", 125, 126, 5);
+    TopologyNodePtr node13 = TopologyNode::create(13, "localhost", 125, 126, 7);
+    TopologyNodePtr node14 = TopologyNode::create(14, "localhost", 125, 126, 4);
+    TopologyNodePtr node15 = TopologyNode::create(15, "localhost", 125, 126, 4);
+    TopologyNodePtr node16 = TopologyNode::create(16, "localhost", 125, 126, 2);
+
+
+    topology->addNewTopologyNodeAsChild(node1, node2);
+    topology->addNewTopologyNodeAsChild(node1, node3);
+
+    topology->addNewTopologyNodeAsChild(node2, node4);
+    topology->addNewTopologyNodeAsChild(node2, node5);
+
+    topology->addNewTopologyNodeAsChild(node3, node6);
+    topology->addNewTopologyNodeAsChild(node3, node7);
+    topology->addNewTopologyNodeAsChild(node3, node10);
+
+    topology->addNewTopologyNodeAsChild(node4, node8);
+    topology->addNewTopologyNodeAsChild(node4, node9);
+    topology->addNewTopologyNodeAsChild(node4, node10);
+
+    topology->addNewTopologyNodeAsChild(node5, node9);
+    topology->addNewTopologyNodeAsChild(node5, node10);
+
+    topology->addNewTopologyNodeAsChild(node7, node11);
+    topology->addNewTopologyNodeAsChild(node7, node12);
+    topology->addNewTopologyNodeAsChild(node7, node13);
+
+    topology->addNewTopologyNodeAsChild(node10, node14);
+    topology->addNewTopologyNodeAsChild(node10, node15);
+
+    topology->addNewTopologyNodeAsChild(node14, node16);
+
+    topology->addNewTopologyNodeAsChild(node7, node15);
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64)"
+                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";;
+    const std::string sourceName = "car";
+
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(0);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType2->setGatheringInterval(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(sourceName, "test1", csvSourceType);
+
+    SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node8);
+    SourceCatalogEntryPtr sourceCatalogEntry2 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node9);
+    SourceCatalogEntryPtr sourceCatalogEntry3 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node16);
+    SourceCatalogEntryPtr sourceCatalogEntry4 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node15);
+    SourceCatalogEntryPtr sourceCatalogEntry5 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node6);
+    SourceCatalogEntryPtr sourceCatalogEntry6 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node11);
+    SourceCatalogEntryPtr sourceCatalogEntry7 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node12);
+    SourceCatalogEntryPtr sourceCatalogEntry8 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node13);
+
+    SourceCatalogEntryPtr sourceCatalogEntry10 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node5);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry4);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry5);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry6);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry7);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry8);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry10);
+
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45)
+                      .filter(Attribute("id") < 40)
+                      .project(Attribute("id").as("id_new"), Attribute("value"))
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .as("carRename")
+                      .sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    Query subQuery1 = Query::from("car");
+
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    NES_INFO("\n"+globalExecutionPlan->getAsString())
+
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
+    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+
+    /**STEPS:
+     * 1. Get std::vector<int,std::vector<float,float,float>,std::vector<float,float,float>,std::vector<float,float,float>> vector of node id, AS, CHK and UB costs
+     * 2. std::transform vector from 1. into <int, FaultToleranceType> of node id and best HA approach
+     */
+
+    std::vector<std::vector<float>> nodeResults;
+
+    int replicas = 5;
+    for(auto& node : executionNodes){
+
+        //auto node = globalExecutionPlan->getExecutionNodeByNodeId(1);
+
+        std::tuple<float,float,float> activeStandbyResult =
+            Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId);
+
+        std::tuple<float,float,float> checkpointingResult =
+            Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId);
+
+        std::tuple<float,float,float> upstreamBackupResult =
+            Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId);
+
+        FaultToleranceType bestApproach = Optimizer::BasePlacementStrategy::bestApproach(
+            {std::get<0>(activeStandbyResult), std::get<1>(activeStandbyResult), std::get<2>(activeStandbyResult)},
+            {std::get<0>(checkpointingResult), std::get<1>(checkpointingResult), std::get<2>(checkpointingResult)},
+            {std::get<0>(upstreamBackupResult), std::get<1>(upstreamBackupResult), std::get<2>(upstreamBackupResult)}
+            );
+
+        NES_INFO("\nACTIVE STANDBY COSTS ON NODE#" + std::to_string(node->getId()) + ": [" + std::to_string(std::get<0>(activeStandbyResult)) + "," +
+                 std::to_string(std::get<1>(activeStandbyResult)) + "," + std::to_string(std::get<2>(activeStandbyResult)) + "]");
+        NES_INFO("\nCHECKPOINTING COSTS ON NODE#" + std::to_string(node->getId()) + ": [" + std::to_string(std::get<0>(checkpointingResult)) + "," +
+             std::to_string(std::get<1>(checkpointingResult)) + "," + std::to_string(std::get<2>(checkpointingResult)) + "]");
+        NES_INFO("\nUPSTREAM BACKUP COSTS ON NODE#" + std::to_string(node->getId()) + ": [" + std::to_string(std::get<0>(upstreamBackupResult)) + "," +
+                 std::to_string(std::get<1>(upstreamBackupResult)) + "," + std::to_string(std::get<2>(upstreamBackupResult)) + "]");
+
+        NES_INFO("\nBESTEST APPROACH ON NODE#" + std::to_string(node->getId()) + ": " + toString(bestApproach));
+    }
+}
+
 TEST_F(QueryPlacementTest, getNeighborsTest){
     setupLargeTopologyAndSourceCatalog({4,4,4});
 
@@ -611,6 +783,179 @@ TEST_F(QueryPlacementTest, calcActiveStandbyTest){
                      ", " + std::to_string(memoryCost) + "]");
         }
     }
+
+
+}
+
+TEST_F(QueryPlacementTest, iteratorTest){
+
+    std::map<int,int> testMap = {{1,81},{2,65},{3,3},{4,5},{5,18},{6,78},{7,13},{8,3},{9,2},{10,11}};
+
+    auto x = std::max_element(testMap.begin(), testMap.end(),
+                              [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) {
+                                  return p1.second < p2.second; });
+
+    ASSERT_TRUE(x->second == 81);
+
+    auto y = std::max_element(testMap.begin(), testMap.end(),
+                              [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) {
+                                  return p1.second > p2.second; });
+
+    ASSERT_TRUE(y->second == 2);
+}
+
+TEST_F(QueryPlacementTest, sandboxTests){
+    topology = Topology::create();
+
+    TopologyNodePtr node1 = TopologyNode::create(1, "localhost", 123, 124, 20);
+    topology->setAsRoot(node1);
+
+    TopologyNodePtr node2 = TopologyNode::create(2, "localhost", 125, 126, 15);
+    TopologyNodePtr node3 = TopologyNode::create(3, "localhost", 125, 126, 16);
+    TopologyNodePtr node4 = TopologyNode::create(4, "localhost", 125, 126, 11);
+    TopologyNodePtr node5 = TopologyNode::create(5, "localhost", 125, 126, 12);
+    TopologyNodePtr node6 = TopologyNode::create(6, "localhost", 125, 126, 10);
+    TopologyNodePtr node7 = TopologyNode::create(7, "localhost", 125, 126, 13);
+    TopologyNodePtr node8 = TopologyNode::create(8, "localhost", 125, 126, 7);
+    TopologyNodePtr node9 = TopologyNode::create(9, "localhost", 125, 126, 6);
+    TopologyNodePtr node10 = TopologyNode::create(10, "localhost", 125, 126, 9);
+    TopologyNodePtr node11 = TopologyNode::create(11, "localhost", 125, 126, 6);
+    TopologyNodePtr node12 = TopologyNode::create(12, "localhost", 125, 126, 5);
+    TopologyNodePtr node13 = TopologyNode::create(13, "localhost", 125, 126, 7);
+    TopologyNodePtr node14 = TopologyNode::create(14, "localhost", 125, 126, 4);
+    TopologyNodePtr node15 = TopologyNode::create(15, "localhost", 125, 126, 4);
+    TopologyNodePtr node16 = TopologyNode::create(16, "localhost", 125, 126, 2);
+
+
+    topology->addNewTopologyNodeAsChild(node1, node2);
+    topology->addNewTopologyNodeAsChild(node1, node3);
+
+    topology->addNewTopologyNodeAsChild(node2, node4);
+    topology->addNewTopologyNodeAsChild(node2, node5);
+
+    topology->addNewTopologyNodeAsChild(node3, node6);
+    topology->addNewTopologyNodeAsChild(node3, node7);
+    topology->addNewTopologyNodeAsChild(node3, node10);
+
+    topology->addNewTopologyNodeAsChild(node4, node8);
+    topology->addNewTopologyNodeAsChild(node4, node9);
+    topology->addNewTopologyNodeAsChild(node4, node10);
+
+    topology->addNewTopologyNodeAsChild(node5, node9);
+    topology->addNewTopologyNodeAsChild(node5, node10);
+
+    topology->addNewTopologyNodeAsChild(node7, node11);
+    topology->addNewTopologyNodeAsChild(node7, node12);
+    topology->addNewTopologyNodeAsChild(node7, node13);
+
+    topology->addNewTopologyNodeAsChild(node10, node14);
+    topology->addNewTopologyNodeAsChild(node10, node15);
+
+    topology->addNewTopologyNodeAsChild(node14, node16);
+
+    topology->addNewTopologyNodeAsChild(node7, node15);
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64)"
+                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";;
+    const std::string sourceName = "car";
+
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(0);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType2->setGatheringInterval(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(sourceName, "test1", csvSourceType);
+
+    SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node8);
+    SourceCatalogEntryPtr sourceCatalogEntry2 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node9);
+    SourceCatalogEntryPtr sourceCatalogEntry3 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node16);
+    SourceCatalogEntryPtr sourceCatalogEntry4 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node15);
+    SourceCatalogEntryPtr sourceCatalogEntry5 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node6);
+    SourceCatalogEntryPtr sourceCatalogEntry6 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node11);
+    SourceCatalogEntryPtr sourceCatalogEntry7 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node12);
+    SourceCatalogEntryPtr sourceCatalogEntry8 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node13);
+
+    SourceCatalogEntryPtr sourceCatalogEntry10 =
+        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node5);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry4);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry5);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry6);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry7);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry8);
+
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry10);
+
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45)
+                      .filter(Attribute("id") < 40)
+                      .project(Attribute("id").as("id_new"), Attribute("value"))
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .as("carRename")
+                      .sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    Query subQuery1 = Query::from("car");
+
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    NES_INFO("\n"+globalExecutionPlan->getAsString())
+
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
+    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+
+    int replicas = 5;
+
+    ExecutionNodePtr node = globalExecutionPlan->getExecutionNodeByNodeId(16);
+
+        std::tuple<float,float,float> activeStandbyResult =
+            Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId);
+
+        float procCost = std::get<0>(activeStandbyResult);
+        float networkingCost = std::get<1>(activeStandbyResult);
+        float memoryCost = std::get<2>(activeStandbyResult);
+
+        NES_INFO("\nRESULTSS: [" + std::to_string(procCost) + "," + std::to_string(networkingCost) + "," + std::to_string(memoryCost) + "]");
+        /*if((procCost + networkingCost + memoryCost) != -3){
+            NES_INFO("\nACTIVE STANDBY COST OF NODE#" + std::to_string(node->getId()) + ": [" +
+                     std::to_string(procCost) + ", " + std::to_string(networkingCost) +
+                     ", " + std::to_string(memoryCost) + "]");
+        }*/
+
 
 
 }
