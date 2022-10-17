@@ -14,9 +14,9 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Runtime::Execution::Operators {
 
 class Map : public ExecutableOperator {
   public:
@@ -27,5 +27,5 @@ class Map : public ExecutableOperator {
     const Runtime::Execution::Expressions::ExpressionPtr mapExpression;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_

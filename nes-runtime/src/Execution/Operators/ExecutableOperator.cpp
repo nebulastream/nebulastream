@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-namespace NES::Nautilus {
+#include <Execution/Operators/ExecutableOperator.hpp>
+namespace NES::Runtime::Execution::Operators {
 
-}
+}// namespace NES::Runtime::Execution::Operators

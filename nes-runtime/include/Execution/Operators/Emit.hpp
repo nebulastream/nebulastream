@@ -13,10 +13,10 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Runtime::Execution::Operators {
 
 class Emit : public ExecutableOperator {
   public:
@@ -24,10 +24,11 @@ class Emit : public ExecutableOperator {
     void open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
     void close(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
   private:
     const uint64_t maxRecordsPerBuffer = 10;
     const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
