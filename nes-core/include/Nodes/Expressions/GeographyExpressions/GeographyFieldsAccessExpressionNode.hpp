@@ -67,7 +67,8 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode, public Geogra
     ExpressionNodePtr copy() override;
 
   protected:
-    explicit GeographyFieldsAccessExpressionNode(const FieldAccessExpressionNodePtr& latitude, const FieldAccessExpressionNodePtr& longitude);
+    explicit GeographyFieldsAccessExpressionNode(const FieldAccessExpressionNodePtr& latitude,
+                                                 const FieldAccessExpressionNodePtr& longitude);
     explicit GeographyFieldsAccessExpressionNode(GeographyFieldsAccessExpressionNode* other);
 };
 
