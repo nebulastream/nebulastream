@@ -53,6 +53,12 @@ TEST_F(ModExpressionTest, evaluateModExpressionInteger) {
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // Int64
+    {
+        auto resultValue = expression.eval(Value<Int64>((int64_t) 17), Value<Int64>((int64_t) 4));
+        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
 
 TEST_F(ModExpressionTest, evaluateModExpressionFloat) {
@@ -63,19 +69,18 @@ TEST_F(ModExpressionTest, evaluateModExpressionFloat) {
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 17), Value<Float>((float) 4));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 17), Value<Double>((double) 4));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 4), Value<Double>((double) 4));
