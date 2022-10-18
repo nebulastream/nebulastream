@@ -439,7 +439,7 @@ class Query {
      * @return the query
      */
     Query& filter(ExpressionNodePtr const& filterExpression);
-    Query& filter(ExpressionNodePtr const& filterExpression, float selectivity);
+
 
     /**
      * @brief: Create watermark assihner operator.
