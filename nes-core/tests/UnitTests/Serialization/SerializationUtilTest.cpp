@@ -627,6 +627,30 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
+TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
+    auto filter1 = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    auto filter2 = LogicalOperatorFactory::createFilterOperator(Attribute("f2") == 20);
+    auto filter3 = LogicalOperatorFactory::createFilterOperator(Attribute("f3") == 30);
+    auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+
+    filter1->addChild(source);
+    filter2->addChild(filter1);
+    filter3->addChild(filter2);
+    sink->addChild(filter3);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink});
+
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+    
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+}
+
+
 TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
