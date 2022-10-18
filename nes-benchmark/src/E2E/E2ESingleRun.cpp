@@ -51,14 +51,14 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
 void E2ESingleRun::createSources() {
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (size_t cntSource = 0; cntSource < configOverAllRuns.numSources->getValue(); ++cntSource) {
+    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                            configPerRun.numBuffersToProduce->getValue());
         auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
         auto createdBuffers =
             dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
 
-        auto dataProvider = DataProviding::DataProvider::createProvider(/* sourceIndex */ cntSource,
+        auto dataProvider = DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt,
                                                                         configOverAllRuns, createdBuffers);
         // Adding necessary items to the corresponding vectors
         allDataProviders.emplace_back(dataProvider);
@@ -66,12 +66,12 @@ void E2ESingleRun::createSources() {
         allBufferManagers.emplace_back(bufferManager);
 
         size_t generatorQueueIndex = 0;
-        auto dataProvidingFunc = [this, cntSource, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
-            allDataProviders[cntSource]->provideNextBuffer(buffer, generatorQueueIndex);
+        auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
+            allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
         };
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
-        size_t taskQueueId = cntSource;
+        size_t taskQueueId = sourceCnt;
         LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
                                                                               configPerRun.numBuffersToProduce->getValue(),
                                                                               /* gatheringValue */ 0,
@@ -79,8 +79,8 @@ void E2ESingleRun::createSources() {
                                                                               sourceAffinity,
                                                                               taskQueueId);
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = "input" + std::to_string(cntSource + 1);
-        auto physicalStreamName = "physical_input" + std::to_string(cntSource);
+        auto logicalStreamName = "input" + std::to_string(sourceCnt + 1);
+        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
         auto logicalSource = LogicalSource::create(logicalStreamName, schema);
         auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
 
