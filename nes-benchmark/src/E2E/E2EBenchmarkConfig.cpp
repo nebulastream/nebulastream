@@ -15,33 +15,36 @@
 #include <E2E/E2EBenchmarkConfig.hpp>
 #include <Util/yaml/Yaml.hpp>
 
-NES::LogLevel NES::Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfigFile,
-                                                              NES::LogLevel defaultLogLevel) {
+namespace NES::Benchmark {
 
-    NES::LogLevel retLogLevel = defaultLogLevel;
+LogLevel Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfigFile, LogLevel defaultLogLevel) {
+
+    LogLevel retLogLevel = defaultLogLevel;
     try {
         Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
         if (configFile.IsNone()) {
-            std::cerr << "Error while reading the log level. Setting the loglevel to" << NES::getLogName(defaultLogLevel) << std::endl;
+            std::cerr << "Error while reading the log level. Setting the loglevel to" << getLogName(defaultLogLevel)
+                      << std::endl;
             return defaultLogLevel;
         }
 
         auto logLevelString = configFile["logLevel"].As<std::string>();
-        auto logLevelMagicEnum = magic_enum::enum_cast<NES::LogLevel>(logLevelString);
+        auto logLevelMagicEnum = magic_enum::enum_cast<LogLevel>(logLevelString);
         if (logLevelMagicEnum.has_value()) {
             retLogLevel = logLevelMagicEnum.value();
         }
     } catch (std::exception& e) {
-        std::cerr << "Error while reading the log level. Setting the loglevel to" << NES::getLogName(defaultLogLevel) << std::endl;
+        std::cerr << "Error while reading the log level. Setting the loglevel to" << getLogName(defaultLogLevel)
+                  << std::endl;
         retLogLevel = defaultLogLevel;
     }
 
-    std::cout << "Loglevel: " << NES::getLogName(retLogLevel) << std::endl;
+    std::cout << "Loglevel: " << getLogName(retLogLevel) << std::endl;
     return retLogLevel;
 }
 
-NES::Benchmark::E2EBenchmarkConfig NES::Benchmark::E2EBenchmarkConfig::createBenchmarks(const std::string& yamlConfigFile) {
+Benchmark::E2EBenchmarkConfig Benchmark::E2EBenchmarkConfig::createBenchmarks(const std::string& yamlConfigFile) {
 
     E2EBenchmarkConfig e2EBenchmarkConfig;
 
@@ -66,10 +69,11 @@ NES::Benchmark::E2EBenchmarkConfig NES::Benchmark::E2EBenchmarkConfig::createBen
     return e2EBenchmarkConfig;
 }
 
-std::string NES::Benchmark::E2EBenchmarkConfig::toString() {
+std::string Benchmark::E2EBenchmarkConfig::toString() {
     std::stringstream oss;
     oss << "\n###############################################\n"
-        << "Parameters over all Runs:\n" << configOverAllRuns.toString() << "\n";
+        << "Parameters over all Runs:\n"
+        << configOverAllRuns.toString() << "\n";
 
     for (size_t experiment = 0; experiment < allConfigPerRuns.size(); ++experiment) {
         oss << "Experiment " << experiment << ":" << std::endl;
@@ -78,4 +82,4 @@ std::string NES::Benchmark::E2EBenchmarkConfig::toString() {
 
     return oss.str();
 }
-
+}

@@ -28,7 +28,7 @@ namespace NES::Benchmark {
 
 void E2ESingleRun::setupCoordinatorConfig() {
     NES_INFO("Creating coordinator and worker configuration...");
-    coordinatorConf = NES::Configurations::CoordinatorConfiguration::create();
+    coordinatorConf = Configurations::CoordinatorConfiguration::create();
 
     // Coordinator configuration
     coordinatorConf->rpcPort = 5000 + portOffSet;
@@ -42,7 +42,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = NES::QueryCompilation::QueryCompilerOptions::DEFAULT;
+    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::DEFAULT;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -52,7 +52,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
     for (size_t cntSource = 0; cntSource < configOverAllRuns.numSources->getValue(); ++cntSource) {
-        auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+        auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                            configPerRun.numBuffersToProduce->getValue());
         auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
         auto createdBuffers =
@@ -66,23 +66,23 @@ void E2ESingleRun::createSources() {
         allBufferManagers.emplace_back(bufferManager);
 
         size_t generatorQueueIndex = 0;
-        auto dataProvidingFunc = [this, cntSource, generatorQueueIndex](NES::Runtime::TupleBuffer& buffer, uint64_t) {
+        auto dataProvidingFunc = [this, cntSource, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
             allDataProviders[cntSource]->provideNextBuffer(buffer, generatorQueueIndex);
         };
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         size_t taskQueueId = cntSource;
-        NES::LambdaSourceTypePtr sourceConfig = NES::LambdaSourceType::create(dataProvidingFunc,
+        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
                                                                               configPerRun.numBuffersToProduce->getValue(),
                                                                               /* gatheringValue */ 0,
-                                                                              NES::GatheringMode::INTERVAL_MODE,
+                                                                              GatheringMode::INTERVAL_MODE,
                                                                               sourceAffinity,
                                                                               taskQueueId);
         auto schema = dataGenerator->getSchema();
         auto logicalStreamName = "input" + std::to_string(cntSource + 1);
         auto physicalStreamName = "physical_input" + std::to_string(cntSource);
-        auto logicalSource = NES::LogicalSource::create(logicalStreamName, schema);
-        auto physicalSource = NES::PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
+        auto logicalSource = LogicalSource::create(logicalStreamName, schema);
+        auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
 
 
 
@@ -95,7 +95,7 @@ void E2ESingleRun::createSources() {
 
 void E2ESingleRun::runQuery() {
     NES_INFO("Starting nesCoordinator...");
-    coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConf);
+    coordinator = std::make_shared<NesCoordinator>(coordinatorConf);
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
     NES_INFO("Started nesCoordinator at " << rpcPort << "!");
 
@@ -103,7 +103,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = NES::Benchmark::Utils::waitForQueryToStart(queryId, queryCatalog);
+    bool queryResult = Benchmark::Utils::waitForQueryToStart(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }
@@ -189,7 +189,7 @@ void E2ESingleRun::stopQuery() {
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
-        if (queryCatalog->getEntryForQuery(queryId)->getQueryStatus() == NES::QueryStatus::Stopped) {
+        if (queryCatalog->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
             NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
             break;
         }
