@@ -48,7 +48,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      * @brief Set up test cases, starts a TCP server before all tests are run
      */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
         startServer();
     }
