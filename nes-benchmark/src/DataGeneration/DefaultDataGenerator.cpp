@@ -31,7 +31,7 @@ namespace NES::Benchmark::DataGeneration {
         auto memoryLayout = this->getMemoryLayout(bufferSize);
         NES_INFO("Default source mode");
 
-
+        // Prints every five percent the current progress
         uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
