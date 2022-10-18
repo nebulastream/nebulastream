@@ -17,10 +17,8 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Sources/Parsers/Parser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <arpa/inet.h>
@@ -80,7 +78,7 @@ TCPSource::TCPSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
+    NES_TRACE("TCPSource::TCPSource " << this << ": Init TCPSource.");
 }
 
 std::string TCPSource::toString() const {
@@ -159,12 +157,10 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     int64_t bufferSizeReceived = 0;
     //receive data until tupleBuffer capacity reached or flushIntervalPassed
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
-        NES_TRACE("TCPSource::fillBuffer: Current tuple count: " << tupleCount);
         //if circular buffer is not full obtain data from socket
         if (!circularBuffer.full()) {
             //create new buffer with size equal to free space in circular buffer
             messageBuffer = new char[circularBuffer.capacity() - circularBuffer.size()];
-            //NES_TRACE("TCPSOURCE::fillBuffer: size to fill: " << circularBuffer.capacity() - circularBuffer.size() << ".");
             //fill created buffer with data from socket. Socket returns the number of bytes it actually sent.
             //might send more than one tuple at a time, hence we need to extract one tuple below in switch case.
             //user needs to specify how to find out tuple size when creating TCPSource

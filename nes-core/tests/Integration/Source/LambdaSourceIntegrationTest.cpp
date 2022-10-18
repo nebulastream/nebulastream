@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
-#include "API/QueryAPI.hpp"
-#include "Catalogs/Source/PhysicalSource.hpp"
-#include "Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp"
-#include "Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp"
-#include "Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp"
-#include "Components/NesCoordinator.hpp"
-#include "Components/NesWorker.hpp"
-#include "NesBaseTest.hpp"
-#include "Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp"
-#include "Operators/OperatorNode.hpp"
-#include "Runtime/TupleBuffer.hpp"
-#include "Services/QueryCatalogService.hpp"
-#include "Services/QueryService.hpp"
-#include "Util/TestUtils.hpp"
+#include <API/QueryAPI.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <NesBaseTest.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/TestUtils.hpp>
 
 using std::string;
 namespace NES {

@@ -13,7 +13,6 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <cstdlib>// For exit() and EXIT_FAILURE
 #include <gtest/gtest.h>
 #include <iostream>    // For cout
 #include <netinet/in.h>// For sockaddr_in
@@ -37,13 +36,19 @@
 
 namespace NES {
 
+#ifndef TCPSOURCEINTEGRATIONTEST_SOCKFD
+#define TCPSOURCEINTEGRATIONTEST_SOCKFD
+
+#ifndef TCPSOURCEINTEGRATIONTEST_SOCKADDR
+#define TCPSOURCEINTEGRATIONTEST_SOCKADDR
+
 class TCPSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     /**
      * @brief Set up test cases, starts a TCP server before all tests are run
      */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
         startServer();
     }
@@ -72,6 +77,11 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         sockaddr.sin_addr.s_addr = INADDR_ANY;
         sockaddr.sin_port = htons(9999);// htons is necessary to convert a number to
                                         // network byte order
+        int opt = 1;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+            NES_ERROR("Failed to create socket. errno: " << errno);
+            exit(EXIT_FAILURE);
+        }
         if (bind(sockfd, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) < 0) {
             NES_ERROR("Failed to bind to port 9999. errno: " << errno);
             exit(EXIT_FAILURE);
@@ -89,148 +99,135 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      */
     static void stopServer() {
         // Close the connections
-        close(sockfd);
+        int successfullyClosed = close(sockfd);
+        ASSERT_EQ(successfullyClosed, 0);
     }
 
     /**
      * @brief sends multiple messages via TCP connection. Static because this is run in a thread inside the test cases
      * @param message message as string to be send
      * @param repeatSending how of the message should be send
-     * @param sleep sleep timer in seconds to simulate real time message transfer
      */
-    static void sendMessages(std::string message, int repeatSending, int sleep = 1) {
+    static int sendMessages(std::string message, int repeatSending) {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
 
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
             NES_ERROR("Failed to grab connection. errno: " << errno);
-            exit(EXIT_FAILURE);
+            return -1;
         }
 
         for (int i = 0; i < repeatSending; ++i) {
             NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message << " iter=" << i);
             send(connection, message.c_str(), message.size(), 0);
-            std::this_thread::sleep_for(std::chrono::seconds(sleep));
         }
 
         // Close the connections
-        close(connection);
+        return close(connection);
     }
 
     /**
      * @brief sending different comma seperated messages via TCP to test variable length read. Static because it is run in a
      * threat inside test cases
-     * @param sleep sleep timer in seconds to simulate real time message transfer
      */
-    static void sendMessageCSVVariableLength(int sleep = 1) {
+    static int sendMessageCSVVariableLength() {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
 
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
             NES_ERROR("Failed to grab connection. errno: " << errno);
-            exit(EXIT_FAILURE);
+            return -1;
         }
 
         std::string message = "100,4.986,sonne";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "192,4.96,sonne";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "130,4.9,stern";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "589,4.98621,sonne";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "39,4.198,malen";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "102,9.986,hello";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         // Close the connections
-        close(connection);
+        return close(connection);
     }
 
     /**
      * @brief sending different JSON messages via TCP to test variable length read. Static because it is run in a
      * threat inside test cases
-     * @param sleep sleep timer in seconds to simulate real time message transfer
      */
-    static void sendMessageJSONVariableLength(int sleep = 1) {
+    static int sendMessageJSONVariableLength() {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
 
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
             NES_ERROR("Failed to grab connection. errno: " << errno);
-            exit(EXIT_FAILURE);
+            return -1;
         }
 
         std::string message = "{\"id\":\"4\", \"value\":\"5.893\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "{\"id\":\"8\", \"value\":\"5.8939\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "{\"id\":\"432\", \"value\":\"5.83\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "{\"id\":\"99\", \"value\":\"0.893\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "{\"id\":\"911\", \"value\":\"5.8893\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         message = "{\"id\":\"4293\", \"value\":\"5.89311\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(sleep));
 
         // Close the connections
-        close(connection);
+        return close(connection);
     }
 
     static int sockfd;
     static sockaddr_in sockaddr;
 };
+#endif
+#endif
 
 int TCPSourceIntegrationTest::sockfd = 0;
 sockaddr_in TCPSourceIntegrationTest::sockaddr = {};
@@ -248,10 +245,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
-    auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
-                         ->addField("onTime", BOOLEAN);
+    auto tcpSchema = Schema::create()->addField("id", UINT32)->addField("value", FLOAT32)->addField("onTime", BOOLEAN);
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
@@ -285,18 +279,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "42,5.893,true\n";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("42,5.893,true\n", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -304,23 +297,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|1|\n"
-                             "|42|5.893000|1|\n"
-                             "|42|5.893000|1|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|1|\n"
-                             "|42|5.893000|1|\n"
-                             "|42|5.893000|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|1|\n"
+        "|42|5.893000|1|\n"
+        "|42|5.893000|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|1|\n"
+        "|42|5.893000|1|\n"
+        "|42|5.893000|1|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -383,18 +379,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}\n", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -402,23 +397,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -481,18 +479,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "1542,5.893,hello\n";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("1442,5.893,hello", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -500,23 +497,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -579,16 +579,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::thread serverThread(sendMessageCSVVariableLength, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessageCSVVariableLength();
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -596,23 +597,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|100|4.986000|sonne|\n"
-                             "|192|4.960000|sonne|\n"
-                             "|130|4.900000|stern|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|589|4.986210|sonne|\n"
-                             "|39|4.198000|malen|\n"
-                             "|102|9.986000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|100|4.986000|sonne|\n"
+        "|192|4.960000|sonne|\n"
+        "|130|4.900000|stern|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|589|4.986210|sonne|\n"
+        "|39|4.198000|malen|\n"
+        "|102|9.986000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -675,18 +679,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "44{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("44{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -694,23 +697,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -773,16 +779,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::thread serverThread(sendMessageJSONVariableLength, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessageJSONVariableLength();
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -790,23 +797,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|4|5.893000|hello|\n"
-                             "|8|5.893900|hello|\n"
-                             "|432|5.830000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|99|0.893000|hello|\n"
-                             "|911|5.889300|hello|\n"
-                             "|4293|5.893110|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|4|5.893000|hello|\n"
+        "|8|5.893900|hello|\n"
+        "|432|5.830000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|99|0.893000|hello|\n"
+        "|911|5.889300|hello|\n"
+        "|4293|5.893110|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -852,7 +862,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     sourceConfig->setFlushIntervalMS(5000);
     sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
     sourceConfig->setDecideMessageSize(Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE);
-    sourceConfig->setSocketBufferSize(15);
+    sourceConfig->setSocketBufferSize(14);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
     workerConfig1->physicalSources.add(physicalSource);
@@ -869,18 +879,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "42,5.893,hello\n";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("42,5.893,hello", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -888,23 +897,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
@@ -967,18 +979,17 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")"
-        + filePath + "\"));";
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    std::string message = "{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}";
-    int repeatSending = 6;
-    std::thread serverThread(sendMessages, message, repeatSending, 1);
+    int connection;
+    std::thread serverThread([&connection] {
+        connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6);
+    });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -986,23 +997,26 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    ASSERT_EQ(connection, 0);
+
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------++----------------------------------------------------+\n"
-                             "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-                             "+----------------------------------------------------+\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "|42|5.893000|hello|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
+        "+----------------------------------------------------+\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "|42|5.893000|hello|\n"
+        "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);

@@ -39,7 +39,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     try {
         parsedJSONObject = web::json::value::parse(jsonTuple);
     } catch (std::exception e) {
-        NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
+        NES_THROW_RUNTIME_ERROR("JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
     }
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
