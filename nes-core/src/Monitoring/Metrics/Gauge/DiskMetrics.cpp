@@ -19,7 +19,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -141,23 +141,23 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
     }
 }
 
-web::json::value DiskMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
+nlohmann::json DiskMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
     if (schema->contains("F_BSIZE")) {
-        metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
+        metricsJson["F_BSIZE"] = fBsize;
     }
     if (schema->contains("F_FRSIZE")) {
-        metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
+        metricsJson["F_FRSIZE"] = fFrsize;
     }
     if (schema->contains("F_BLOCKS")) {
-        metricsJson["F_BLOCKS"] = web::json::value::number(fBlocks);
+        metricsJson["F_BLOCKS"] = fBlocks;
     }
     if (schema->contains("F_BFREE")) {
-        metricsJson["F_BFREE"] = web::json::value::number(fBfree);
+        metricsJson["F_BFREE"] = fBfree;
     }
     if (schema->contains("F_BAVAIL")) {
-        metricsJson["F_BAVAIL"] = web::json::value::number(fBavail);
+        metricsJson["F_BAVAIL"] = fBavail;
     }
     return metricsJson;
 }
@@ -177,6 +177,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const DiskMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const DiskMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

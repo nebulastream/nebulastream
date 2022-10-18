@@ -18,7 +18,7 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -50,9 +50,9 @@ void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, 
  * @brief class specific asJson()
  * @return the value
  */
-web::json::value asJson(uint64_t intMetric);
-web::json::value asJson(std::string stringMetric);
-web::json::value asJson(std::shared_ptr<Metric> ptrMetric);
+nlohmann::json asJson(uint64_t intMetric);
+nlohmann::json asJson(std::string stringMetric);
+nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric);
 
 /**
 * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -107,7 +107,7 @@ class Metric {
      * @param metric
      * @return The metric represented as JSON.
     */
-    friend web::json::value asJson(const Metric& metric) { return metric.self->toJson(); };
+    friend nlohmann::json asJson(const Metric& metric) { return metric.self->toJson(); };
 
     /**
      * @brief This method returns the type of the stored metric. Note that the according function needs to be
@@ -141,7 +141,7 @@ class Metric {
         /**
          * @brief Returns the values of a metric as JSON.
          */
-        [[nodiscard]] virtual web::json::value toJson() const = 0;
+        [[nodiscard]] virtual nlohmann::json toJson() const = 0;
 
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
@@ -164,7 +164,7 @@ class Metric {
 
         [[nodiscard]] std::unique_ptr<ConceptT> copy() const override { return std::make_unique<Model>(*this); }
 
-        [[nodiscard]] web::json::value toJson() const override { return asJson(data); }
+        [[nodiscard]] nlohmann::json toJson() const override { return asJson(data); }
 
         void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
             writeToBuffer(data, buf, tupleIndex);

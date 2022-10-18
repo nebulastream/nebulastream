@@ -43,18 +43,18 @@ void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, 
     readFromBuffer(*metrics, buf, tupleIndex);
 }
 
-web::json::value asJson(uint64_t intMetric) {
-    web::json::value metricsJson{};
+nlohmann::json asJson(uint64_t intMetric) {
+    nlohmann::json metricsJson{};
     metricsJson["intMetric"] = intMetric;
     return metricsJson;
 }
 
-web::json::value asJson(std::string stringMetric) {
-    web::json::value metricsJson{};
-    metricsJson["stringMetric"] = web::json::value::string(stringMetric);
+nlohmann::json asJson(std::string stringMetric) {
+    nlohmann::json metricsJson{};
+    metricsJson["stringMetric"] = stringMetric;
     return metricsJson;
 }
 
-web::json::value asJson(std::shared_ptr<Metric> ptrMetric) { return asJson(*ptrMetric); }
+nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric) { return asJson(*ptrMetric); }
 
 }// namespace NES::Monitoring

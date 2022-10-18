@@ -19,7 +19,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -235,7 +235,7 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     }
 }
 
-//SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
+SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
 
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
     return nodeId == rhs.nodeId && TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
@@ -246,47 +246,47 @@ bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
 
 bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
-web::json::value MemoryMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
+nlohmann::json MemoryMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
     if (schema->contains("TOTAL_RAM")) {
-        metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
+        metricsJson["TOTAL_RAM"] = TOTAL_RAM;
     }
     if (schema->contains("TOTAL_SWAP")) {
-        metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
+        metricsJson["TOTAL_SWAP"] = TOTAL_SWAP;
     }
     if (schema->contains("FREE_RAM")) {
-        metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
+        metricsJson["FREE_RAM"] = FREE_RAM;
     }
     if (schema->contains("SHARED_RAM")) {
-        metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
+        metricsJson["SHARED_RAM"] = SHARED_RAM;
     }
     if (schema->contains("BUFFER_RAM")) {
-        metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
+        metricsJson["BUFFER_RAM"] = BUFFER_RAM;
     }
     if (schema->contains("FREE_SWAP")) {
-        metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
+        metricsJson["FREE_SWAP"] = FREE_SWAP;
     }
     if (schema->contains("TOTAL_HIGH")) {
-        metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
+        metricsJson["TOTAL_HIGH"] = TOTAL_HIGH;
     }
     if (schema->contains("FREE_HIGH")) {
-        metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
+        metricsJson["FREE_HIGH"] = FREE_HIGH;
     }
     if (schema->contains("PROCS")) {
-        metricsJson["PROCS"] = web::json::value::number(PROCS);
+        metricsJson["PROCS"] = PROCS;
     }
     if (schema->contains("MEM_UNIT")) {
-        metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
+        metricsJson["MEM_UNIT"] = MEM_UNIT;
     }
     if (schema->contains("LOADS_1MIN")) {
-        metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
+        metricsJson["LOADS_1MIN"] = LOADS_1MIN;
     }
     if (schema->contains("LOADS_5MIN")) {
-        metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
+        metricsJson["LOADS_5MIN"] = LOADS_5MIN;
     }
     if (schema->contains("LOADS_15MIN")) {
-        metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+        metricsJson["LOADS_15MIN"] = LOADS_15MIN;
     }
 
     return metricsJson;
@@ -300,6 +300,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

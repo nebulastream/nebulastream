@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -86,18 +86,18 @@ void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
     longCoord = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-web::json::value RuntimeMetrics::toJson() const {
-    web::json::value metricsJson{};
+nlohmann::json RuntimeMetrics::toJson() const {
+    nlohmann::json metricsJson{};
 
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["WallClockNs"] = web::json::value::number(wallTimeNs);
-    metricsJson["MemoryUsageInBytes"] = web::json::value::number(memoryUsageInBytes);
-    metricsJson["CpuLoadInJiffies"] = web::json::value::number(cpuLoadInJiffies);
-    metricsJson["BlkioBytesRead"] = web::json::value::number(blkioBytesRead);
-    metricsJson["BlkioBytesWritten"] = web::json::value::number(blkioBytesWritten);
-    metricsJson["BatteryStatus"] = web::json::value::number(batteryStatusInPercent);
-    metricsJson["LatCoord"] = web::json::value::number(latCoord);
-    metricsJson["LongCoord"] = web::json::value::number(longCoord);
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["WallClockNs"] = wallTimeNs;
+    metricsJson["MemoryUsageInBytes"] = memoryUsageInBytes;
+    metricsJson["CpuLoadInJiffies"] = cpuLoadInJiffies;
+    metricsJson["BlkioBytesRead"] = blkioBytesRead;
+    metricsJson["BlkioBytesWritten"] = blkioBytesWritten;
+    metricsJson["BatteryStatus"] = batteryStatusInPercent;
+    metricsJson["LatCoord"] = latCoord;
+    metricsJson["LongCoord"] = longCoord;
 
     return metricsJson;
 }
@@ -119,6 +119,6 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const RuntimeMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const RuntimeMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

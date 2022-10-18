@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 CpuMetricsWrapper::CpuMetricsWrapper() : schema(CpuMetrics::getDefaultSchema("")) {}
@@ -106,11 +106,11 @@ uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
 
 CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
 
-web::json::value CpuMetricsWrapper::toJson() const {
-    web::json::value metricsJsonWrapper{};
-    metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
+nlohmann::json CpuMetricsWrapper::toJson() const {
+    nlohmann::json metricsJsonWrapper{};
+    metricsJsonWrapper["NODE_ID"] = nodeId;
     SchemaPtr schemaTemp = this->schema;
-    web::json::value metricsJson{};
+    nlohmann::json metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
         auto coreNum = cpuMetrics[i].getValue("coreNum");
         NES_DEBUG("CpuMetricsWrapper: CORE_NUM is" + std::to_string(coreNum));
@@ -185,6 +185,6 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
     wrapper.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const CpuMetricsWrapper& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const CpuMetricsWrapper& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

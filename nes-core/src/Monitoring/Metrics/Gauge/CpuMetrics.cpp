@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <cstring>
 
 namespace NES::Monitoring {
@@ -211,7 +211,6 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
     }
 }
 
-
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
     os << "nodeId: " << values.nodeId << "coreNum: " << values.coreNum << "user: " << values.user << " nice: " << values.nice
        << " system: " << values.system << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq
@@ -220,40 +219,40 @@ std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
     return os;
 }
 
-web::json::value CpuMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
+nlohmann::json CpuMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["CORE_NUM"] = coreNum;
 
     if (schema->contains("user")) {
-        metricsJson["USER"] = web::json::value::number(user);
+        metricsJson["USER"] = user;
     }
     if (schema->contains("nice")) {
-        metricsJson["NICE"] = web::json::value::number(nice);
+        metricsJson["NICE"] = user;
     }
     if (schema->contains("system")) {
-        metricsJson["SYSTEM"] = web::json::value::number(system);
+        metricsJson["SYSTEM"] = system;
     }
     if (schema->contains("idle")) {
-        metricsJson["IDLE"] = web::json::value::number(idle);
+        metricsJson["IDLE"] = idle;
     }
     if (schema->contains("iowait")) {
-        metricsJson["IOWAIT"] = web::json::value::number(iowait);
+        metricsJson["IOWAIT"] = iowait;
     }
     if (schema->contains("irq")) {
-        metricsJson["IRQ"] = web::json::value::number(irq);
+        metricsJson["IRQ"] = irq;
     }
     if (schema->contains("softirq")) {
-        metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
+        metricsJson["SOFTIRQ"] = softirq;
     }
     if (schema->contains("steal")) {
-        metricsJson["STEAL"] = web::json::value::number(steal);
+        metricsJson["STEAL"] = steal;
     }
     if (schema->contains("guest")) {
-        metricsJson["GUEST"] = web::json::value::number(guest);
+        metricsJson["GUEST"] = guest;
     }
     if (schema->contains("guestnice")) {
-        metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
+        metricsJson["GUESTNICE"] = guestnice;
     }
 
     return metricsJson;
@@ -275,6 +274,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

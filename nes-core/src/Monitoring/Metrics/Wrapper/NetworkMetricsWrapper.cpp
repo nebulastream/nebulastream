@@ -21,7 +21,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <cstring>
 
 namespace NES::Monitoring {
@@ -125,11 +125,11 @@ std::vector<std::string> NetworkMetricsWrapper::getInterfaceNames() {
     return keys;
 }
 
-web::json::value NetworkMetricsWrapper::toJson() const {
-    web::json::value metricsJsonWrapper{};
-    metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
+nlohmann::json NetworkMetricsWrapper::toJson() const {
+    nlohmann::json metricsJsonWrapper{};
+    metricsJsonWrapper["NODE_ID"] = nodeId;
 
-    web::json::value metricsJson{};
+    nlohmann::json metricsJson{};
     for (auto networkVal : networkMetrics) {
         metricsJson[networkVal.interfaceName] = networkVal.toJson();
     }
@@ -176,6 +176,6 @@ void readFromBuffer(NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, u
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const NetworkMetricsWrapper& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const NetworkMetricsWrapper& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

@@ -17,7 +17,6 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <list>
 
 namespace NES::Monitoring {
 
@@ -95,7 +94,7 @@ class MemoryMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    [[nodiscard]] web::json::value toJson() const;
+    [[nodiscard]] nlohmann::json toJson() const;
 
     //equality operators
     bool operator==(const MemoryMetrics& rhs) const;
@@ -140,7 +139,7 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const MemoryMetrics& metrics);
+nlohmann::json asJson(const MemoryMetrics& metrics);
 
 }// namespace NES::Monitoring
 

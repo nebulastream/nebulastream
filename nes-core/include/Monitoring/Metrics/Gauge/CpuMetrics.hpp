@@ -19,6 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 #include <vector>
+#include <nlohmann/json_fwd.hpp>
 #include <list>
 
 namespace NES::Monitoring {
@@ -107,7 +108,7 @@ class CpuMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    [[nodiscard]] web::json::value toJson() const;
+    [[nodiscard]] nlohmann::json toJson() const;
 
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
@@ -149,7 +150,7 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const CpuMetrics& metrics);
+nlohmann::json asJson(const CpuMetrics& metrics);
 
 }// namespace NES::Monitoring
 

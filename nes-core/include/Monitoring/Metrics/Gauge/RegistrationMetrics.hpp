@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;
@@ -68,7 +69,7 @@ class RegistrationMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    [[nodiscard]] web::json::value toJson() const;
+    [[nodiscard]] nlohmann::json toJson() const;
 
     /**
      * @brief Converts the object into a grpc protobuf object that can be serialized.
@@ -116,7 +117,7 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const RegistrationMetrics& metrics);
+nlohmann::json asJson(const RegistrationMetrics& metrics);
 
 }// namespace NES::Monitoring
 

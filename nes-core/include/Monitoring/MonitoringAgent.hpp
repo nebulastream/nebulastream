@@ -20,6 +20,7 @@
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <unordered_map>
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Monitoring {
 
@@ -51,7 +52,7 @@ class MonitoringAgent {
      * @brief Returns all metrics defined by the plan as a unified JSON.
      * @return Metrics as JSON.
     */
-    web::json::value getMetricsAsJson();
+    nlohmann::json getMetricsAsJson();
 
     /**
      * @brief Checks if monitoring is enabled
