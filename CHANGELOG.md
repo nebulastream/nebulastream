@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.15](https://github.com/nebulastream/nebulastream/tree/v0.3.15) (2022-10-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.14...v0.3.15)
+
+#### Spatial Query Processing 🌇
+
+- \[Feature\] Add test cases for Shape and Geography Expression Nodes  [\#2978](https://github.com/nebulastream/nebulastream/issues/2978)
+
 ## [v0.3.14](https://github.com/nebulastream/nebulastream/tree/v0.3.14) (2022-10-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.13...v0.3.14)
