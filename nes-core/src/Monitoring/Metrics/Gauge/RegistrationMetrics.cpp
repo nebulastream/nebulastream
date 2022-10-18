@@ -22,7 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -100,18 +100,18 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
     hasBattery = buffer[tupleIndex][cnt++].read<bool>();
 }
 
-web::json::value RegistrationMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["TotalMemory"] = web::json::value::number(totalMemoryBytes);
+nlohmann::json RegistrationMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["TotalMemory"] = totalMemoryBytes;
 
-    metricsJson["CpuCoreNum"] = web::json::value::number(cpuCoreNum);
-    metricsJson["TotalCPUJiffies"] = web::json::value::number(totalCPUJiffies);
-    metricsJson["CpuPeriodUS"] = web::json::value::number(cpuPeriodUS);
-    metricsJson["CpuQuotaUS"] = web::json::value::number(cpuQuotaUS);
+    metricsJson["CpuCoreNum"] = cpuCoreNum;
+    metricsJson["TotalCPUJiffies"] = totalCPUJiffies;
+    metricsJson["CpuPeriodUS"] = cpuPeriodUS;
+    metricsJson["CpuQuotaUS"] = cpuQuotaUS;
 
-    metricsJson["IsMoving"] = web::json::value::number(isMoving);
-    metricsJson["HasBattery"] = web::json::value::number(hasBattery);
+    metricsJson["IsMoving"] = isMoving;
+    metricsJson["HasBattery"] = hasBattery;
 
     return metricsJson;
 }
@@ -144,6 +144,6 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const RegistrationMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const RegistrationMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

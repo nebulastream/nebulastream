@@ -26,7 +26,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cpprest/json.h>
 #include <memory>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -152,8 +151,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 "Error: Monitoring ist not enabled.");
         }
         nlohmann::json response;
-        auto monitoredDataFromAllNodes = monitoringService->requestMonitoringDataFromAllNodesAsJson();
-        response["monitoredData"] = nlohmann::json::parse(monitoredDataFromAllNodes);
+        response["monitoredData"] =  monitoringService->requestMonitoringDataFromAllNodesAsJson();
         if(!response.empty()){
             return createResponse(Status::CODE_200, response.dump());
         }

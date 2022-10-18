@@ -28,7 +28,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 using namespace Configurations;
@@ -73,8 +73,8 @@ MonitoringPlanPtr MonitoringAgent::getMonitoringPlan() const { return monitoring
 
 void MonitoringAgent::setMonitoringPlan(const MonitoringPlanPtr monitoringPlan) { this->monitoringPlan = monitoringPlan; }
 
-web::json::value MonitoringAgent::getMetricsAsJson() {
-    web::json::value metricsJson{};
+nlohmann::json MonitoringAgent::getMetricsAsJson() {
+    nlohmann::json metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
             NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));

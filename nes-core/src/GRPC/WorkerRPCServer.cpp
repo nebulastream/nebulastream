@@ -23,7 +23,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <utility>
 
 namespace NES {
@@ -122,7 +122,7 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
         NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");
-        auto metrics = monitoringAgent->getMetricsAsJson().serialize();
+        auto metrics = monitoringAgent->getMetricsAsJson().dump();
         NES_DEBUG("WorkerRPCServer: Transmitting monitoring data: " << metrics);
         reply->set_metricsasjson(metrics);
         return Status::OK;

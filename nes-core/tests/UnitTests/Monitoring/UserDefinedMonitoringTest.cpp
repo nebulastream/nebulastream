@@ -27,6 +27,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -62,7 +63,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
 };
 
 TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
-    web::json::value metricsJson{};
+    nlohmann::json metricsJson{};
     std::vector<Monitoring::Metric> metrics;
 
     uint64_t myInt = 12345;
@@ -80,7 +81,7 @@ TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
 TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
     auto monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
     auto monitoringCatalog = Monitoring::MonitoringCatalog::defaultCatalog();
-    web::json::value metricsJson{};
+    nlohmann::json metricsJson{};
 
     for (auto type : monitoringPlan->getMetricTypes()) {
         auto collector = monitoringCatalog->getMetricCollector(type);

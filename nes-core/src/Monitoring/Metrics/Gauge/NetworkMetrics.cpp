@@ -20,7 +20,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -115,27 +115,27 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
     tCompressed = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-web::json::value NetworkMetrics::toJson() const {
-    web::json::value metricsJson{};
+nlohmann::json NetworkMetrics::toJson() const {
+    nlohmann::json metricsJson{};
 
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["R_BYTES"] = web::json::value::number(rBytes);
-    metricsJson["R_PACKETS"] = web::json::value::number(rPackets);
-    metricsJson["R_ERRS"] = web::json::value::number(rErrs);
-    metricsJson["R_DROP"] = web::json::value::number(rDrop);
-    metricsJson["R_FIFO"] = web::json::value::number(rFifo);
-    metricsJson["R_FRAME"] = web::json::value::number(rFrame);
-    metricsJson["R_COMPRESSED"] = web::json::value::number(rCompressed);
-    metricsJson["R_MULTICAST"] = web::json::value::number(rMulticast);
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["R_BYTES"] = rBytes;
+    metricsJson["R_PACKETS"] = rPackets;
+    metricsJson["R_ERRS"] = rErrs;
+    metricsJson["R_DROP"] = rDrop;
+    metricsJson["R_FIFO"] = rFifo;
+    metricsJson["R_FRAME"] = rFrame;
+    metricsJson["R_COMPRESSED"] = rCompressed;
+    metricsJson["R_MULTICAST"] = rMulticast;
 
-    metricsJson["T_BYTES"] = web::json::value::number(tBytes);
-    metricsJson["T_PACKETS"] = web::json::value::number(tPackets);
-    metricsJson["T_ERRS"] = web::json::value::number(tErrs);
-    metricsJson["T_DROP"] = web::json::value::number(tDrop);
-    metricsJson["T_FIFO"] = web::json::value::number(tFifo);
-    metricsJson["T_COLLS"] = web::json::value::number(tColls);
-    metricsJson["T_CARRIER"] = web::json::value::number(tCarrier);
-    metricsJson["T_COMPRESSED"] = web::json::value::number(tCompressed);
+    metricsJson["T_BYTES"] = tBytes;
+    metricsJson["T_PACKETS"] = tPackets;
+    metricsJson["T_ERRS"] = tErrs;
+    metricsJson["T_DROP"] = tDrop;
+    metricsJson["T_FIFO"] = tFifo;
+    metricsJson["T_COLLS"] = tColls;
+    metricsJson["T_CARRIER"] = tCarrier;
+    metricsJson["T_COMPRESSED"] = tCompressed;
 
     return metricsJson;
 }
@@ -157,6 +157,6 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring
