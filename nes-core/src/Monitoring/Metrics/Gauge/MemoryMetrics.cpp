@@ -19,7 +19,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -106,22 +106,22 @@ bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
 
 bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
-web::json::value MemoryMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
-    metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
-    metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
-    metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
-    metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
-    metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
-    metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
-    metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
-    metricsJson["PROCS"] = web::json::value::number(PROCS);
-    metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
-    metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
-    metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
-    metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+nlohmann::json MemoryMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["TOTAL_RAM"] = TOTAL_RAM;
+    metricsJson["TOTAL_SWAP"] = TOTAL_SWAP;
+    metricsJson["FREE_RAM"] = FREE_RAM;
+    metricsJson["SHARED_RAM"] = SHARED_RAM;
+    metricsJson["BUFFER_RAM"] = BUFFER_RAM;
+    metricsJson["FREE_SWAP"] = FREE_SWAP;
+    metricsJson["TOTAL_HIGH"] = TOTAL_HIGH;
+    metricsJson["FREE_HIGH"] = FREE_HIGH;
+    metricsJson["PROCS"] = PROCS;
+    metricsJson["MEM_UNIT"] = MEM_UNIT;
+    metricsJson["LOADS_1MIN"] = LOADS_1MIN;
+    metricsJson["LOADS_5MIN"] = LOADS_5MIN;
+    metricsJson["LOADS_15MIN"] = LOADS_15MIN;
     return metricsJson;
 }
 
@@ -133,6 +133,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

@@ -19,7 +19,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
@@ -69,14 +69,14 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
     fBavail = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-web::json::value DiskMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
-    metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
-    metricsJson["F_BLOCKS"] = web::json::value::number(fBlocks);
-    metricsJson["F_BFREE"] = web::json::value::number(fBfree);
-    metricsJson["F_BAVAIL"] = web::json::value::number(fBavail);
+nlohmann::json DiskMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["F_BSIZE"] = fBsize;
+    metricsJson["F_FRSIZE"] = fFrsize;
+    metricsJson["F_BLOCKS"] = fBlocks;
+    metricsJson["F_BFREE"] = fBfree;
+    metricsJson["F_BAVAIL"] = fBavail;
     return metricsJson;
 }
 
@@ -95,6 +95,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const DiskMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const DiskMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring

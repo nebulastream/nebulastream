@@ -146,7 +146,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
+    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
                                cpr::Parameters{{"nodeId", std::to_string(1)}});
     future.wait();
     auto r = future.get();
@@ -170,14 +170,14 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
-    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);
     NES_INFO("MonitoringControllerTest - Received Data from Get-Storage request: " << jsons["monitoredStreamsInMetricStore"]);
-    EXPECT_EQ(expected.to_string(), jsons["monitoredStreamsInMetricStore"].dump());
+    EXPECT_EQ(expected.dump(), jsons["monitoredStreamsInMetricStore"].dump());
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
 
@@ -197,14 +197,14 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->startMonitoringStreams();
-    cpr::Response future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);
     NES_INFO("MonitoringControllerTest - Received Data from Get-Stream request: " << jsons["monitoredStreams"]);
-    EXPECT_EQ(expected.to_string(), jsons["monitoredStreams"].dump());
+    EXPECT_EQ(expected.dump(), jsons["monitoredStreams"].dump());
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
 }
 

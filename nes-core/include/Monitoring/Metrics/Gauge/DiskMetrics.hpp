@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Monitoring {
 
@@ -52,7 +53,7 @@ class DiskMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    [[nodiscard]] web::json::value toJson() const;
+    [[nodiscard]] nlohmann::json toJson() const;
 
     bool operator==(const DiskMetrics& rhs) const;
     bool operator!=(const DiskMetrics& rhs) const;
@@ -88,7 +89,7 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const DiskMetrics& metrics);
+nlohmann::json asJson(const DiskMetrics& metrics);
 
 }// namespace NES::Monitoring
 

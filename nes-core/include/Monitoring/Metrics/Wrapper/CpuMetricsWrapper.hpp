@@ -18,7 +18,7 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-
+#include <nlohmann/json_fwd.hpp>
 namespace NES::Monitoring {
 
 /**
@@ -70,7 +70,7 @@ class CpuMetricsWrapper {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
     */
-    web::json::value toJson() const;
+    nlohmann::json toJson() const;
 
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
@@ -101,7 +101,7 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const CpuMetricsWrapper& metrics);
+nlohmann::json asJson(const CpuMetricsWrapper& metrics);
 
 }// namespace NES::Monitoring
 

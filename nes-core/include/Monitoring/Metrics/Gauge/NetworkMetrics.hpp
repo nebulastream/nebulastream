@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Monitoring {
 
@@ -61,7 +62,7 @@ class NetworkMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    [[nodiscard]] web::json::value toJson() const;
+    [[nodiscard]] nlohmann::json toJson() const;
 
     bool operator==(const NetworkMetrics& rhs) const;
     bool operator!=(const NetworkMetrics& rhs) const;
@@ -109,7 +110,7 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  * @param metrics
  * @return the metrics as JSON
  */
-web::json::value asJson(const NetworkMetrics& metrics);
+nlohmann::json asJson(const NetworkMetrics& metrics);
 
 }// namespace NES::Monitoring
 

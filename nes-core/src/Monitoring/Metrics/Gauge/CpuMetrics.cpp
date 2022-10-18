@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <cstring>
 
 namespace NES::Monitoring {
@@ -100,20 +100,20 @@ std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
     return os;
 }
 
-web::json::value CpuMetrics::toJson() const {
-    web::json::value metricsJson{};
-    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
-    metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
-    metricsJson["USER"] = web::json::value::number(user);
-    metricsJson["NICE"] = web::json::value::number(nice);
-    metricsJson["SYSTEM"] = web::json::value::number(system);
-    metricsJson["IDLE"] = web::json::value::number(idle);
-    metricsJson["IOWAIT"] = web::json::value::number(iowait);
-    metricsJson["IRQ"] = web::json::value::number(irq);
-    metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
-    metricsJson["STEAL"] = web::json::value::number(steal);
-    metricsJson["GUEST"] = web::json::value::number(guest);
-    metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
+nlohmann::json CpuMetrics::toJson() const {
+    nlohmann::json metricsJson{};
+    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["CORE_NUM"] = coreNum;
+    metricsJson["USER"] = user;
+    metricsJson["NICE"] = nice;
+    metricsJson["SYSTEM"] = system;
+    metricsJson["IDLE"] = idle;
+    metricsJson["IOWAIT"] = iowait;
+    metricsJson["IRQ"] = irq;
+    metricsJson["SOFTIRQ"] = softirq;
+    metricsJson["STEAL"] = steal;
+    metricsJson["GUEST"] = guest;
+    metricsJson["GUESTNICE"] = guestnice;
 
     return metricsJson;
 }
@@ -134,6 +134,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES::Monitoring
