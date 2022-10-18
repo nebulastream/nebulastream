@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include "API/QueryAPI.hpp"
-#include "Catalogs/Source/PhysicalSource.hpp"
-#include "Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp"
-#include "Common/DataTypes/DataTypeFactory.hpp"
-#include "Components/NesCoordinator.hpp"
-#include "Components/NesWorker.hpp"
-#include "Configurations/Coordinator/CoordinatorConfiguration.hpp"
-#include "Configurations/Worker/WorkerConfiguration.hpp"
-#include "NesBaseTest.hpp"
-#include "Services/QueryService.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestUtils.hpp"
+#include <API/QueryAPI.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
