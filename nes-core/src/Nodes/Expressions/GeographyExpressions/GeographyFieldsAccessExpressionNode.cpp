@@ -54,9 +54,11 @@ bool GeographyFieldsAccessExpressionNode::equal(NodePtr const& rhs) const {
 }
 
 std::string GeographyFieldsAccessExpressionNode::toString() const {
-    if(children.size() != 2) {
+    if (children.size() != 2) {
         NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
-        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::toString(): children.size() = ", std::to_string(children.size()));
+        throw InvalidArgumentException(
+            "Invalid field access in GeographyFieldsAccessExpressionNode::toString(): children.size() = ",
+            std::to_string(children.size()));
     }
     std::stringstream ss;
     ss << "Geography(" << children[0]->toString() << ", " << children[1]->toString() << ")";
@@ -71,7 +73,9 @@ void GeographyFieldsAccessExpressionNode::setChildren(ExpressionNodePtr const& l
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
-        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::getLatitude(): children.size() = ", std::to_string(children.size()));
+        throw InvalidArgumentException(
+            "Invalid field access in GeographyFieldsAccessExpressionNode::getLatitude(): children.size() = ",
+            std::to_string(children.size()));
     }
     return children[0]->as<FieldAccessExpressionNode>();
 }
@@ -79,7 +83,9 @@ ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLongitude() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
-        throw InvalidArgumentException("Invalid field access in GeographyFieldsAccessExpressionNode::getLongitude(): children.size() = ", std::to_string(children.size()));
+        throw InvalidArgumentException(
+            "Invalid field access in GeographyFieldsAccessExpressionNode::getLongitude(): children.size() = ",
+            std::to_string(children.size()));
     }
     return children[1]->as<FieldAccessExpressionNode>();
 }
