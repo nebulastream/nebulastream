@@ -34,6 +34,7 @@ namespace NES::Benchmark {
         inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "How to read the input data");
         query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
+        dataGenerations = ConfigurationOption<std::string>::create("dataGenerations", "Default", "DataGenerator per Source as CSV");
     }
     std::string E2EBenchmarkConfigOverAllRuns::toString() {
         std::stringstream oss;
@@ -45,6 +46,7 @@ namespace NES::Benchmark {
             << "- inputType: " << inputType->getValue() << std::endl
             << "- query: " << query->getValue() << std::endl
             << "- numSources: " << numSources->getValueAsString() << std::endl
+            << "- dataGenerations: " << dataGenerations->getValue() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl;
 
         return oss.str();
@@ -60,7 +62,7 @@ namespace NES::Benchmark {
         configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
         configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
-
+        configOverAllRuns.dataGenerations->setValue(yamlConfig["dataGenerations"].As<std::string>());
 
         return configOverAllRuns;
     }
