@@ -118,7 +118,7 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsonsOfResponse = nlohmann::json::parse(r.text);
-    NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsOfResponse["monitoredData"]);
+    NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsOfResponse);
 
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
     auto jsons = jsonsOfResponse.dump();
