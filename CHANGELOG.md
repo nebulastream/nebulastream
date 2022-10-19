@@ -1,5 +1,26 @@
 # Changelog
 
+## [v0.3.16](https://github.com/nebulastream/nebulastream/tree/v0.3.16) (2022-10-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.15...v0.3.16)
+
+**Implemented enhancements:**
+
+- \[Feature\] Benchmarking Multiple Sources [\#3007](https://github.com/nebulastream/nebulastream/issues/3007)
+
+#### Runtime 
+
+- Design: Remove struct types in code generation [\#457](https://github.com/nebulastream/nebulastream/issues/457)
+
+#### Query Compiler
+
+- CodeGeneration: Split WindowOperators in SubOperators [\#1069](https://github.com/nebulastream/nebulastream/issues/1069)
+- Add Code generator for expressions. [\#1008](https://github.com/nebulastream/nebulastream/issues/1008)
+- Support Char encoding [\#802](https://github.com/nebulastream/nebulastream/issues/802)
+- Add documentation for declarations [\#761](https://github.com/nebulastream/nebulastream/issues/761)
+- Add documentation for statements [\#760](https://github.com/nebulastream/nebulastream/issues/760)
+- Use precompiled headers for runtimelib [\#392](https://github.com/nebulastream/nebulastream/issues/392)
+
 ## [v0.3.15](https://github.com/nebulastream/nebulastream/tree/v0.3.15) (2022-10-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.14...v0.3.15)
