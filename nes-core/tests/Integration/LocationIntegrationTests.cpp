@@ -25,8 +25,6 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
 #include <NesBaseTest.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
@@ -780,7 +778,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         if (currentPredictionAtCoordinator
             && (checkVectorForCoordinatorPrediction.empty()
                 || checkVectorForCoordinatorPrediction.back().expectedNewParentId
-                   != currentPredictionAtCoordinator.value().expectedNewParentId)) {
+                    != currentPredictionAtCoordinator.value().expectedNewParentId)) {
             NES_DEBUG("adding new prediction from coordinator")
             checkVectorForCoordinatorPrediction.push_back(currentPredictionAtCoordinator.value());
         }
@@ -978,8 +976,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     size_t recv_tuples = 0;
     while (recv_tuples < 5000) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-            std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv before buffering: " << recv_tuples)
         sleep(1);
     }
@@ -988,13 +985,11 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     sleep(1);
     std::ifstream inFile(testFile);
-    auto last_recv = std::count(std::istreambuf_iterator<char>(inFile),
-                             std::istreambuf_iterator<char>(), '\n');
+    auto last_recv = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
 
     for (int i = 0; i < 5; ++i) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv while buffering: " << recv_tuples)
         EXPECT_EQ(last_recv, recv_tuples);
         sleep(1);
@@ -1003,8 +998,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     while (recv_tuples < 10000) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv after buffering: " << recv_tuples)
         sleep(1);
     }
@@ -1104,8 +1098,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     size_t recv_tuples = 0;
     while (recv_tuples < 5000) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv before buffering: " << recv_tuples)
         sleep(1);
     }
@@ -1114,13 +1107,11 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     sleep(1);
     std::ifstream inFile(testFile);
-    auto last_recv = std::count(std::istreambuf_iterator<char>(inFile),
-                                std::istreambuf_iterator<char>(), '\n');
+    auto last_recv = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
 
     for (int i = 0; i < 5; ++i) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv while buffering: " << recv_tuples)
         EXPECT_EQ(last_recv, recv_tuples);
         sleep(1);
@@ -1129,8 +1120,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     while (recv_tuples < 10000) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv after buffering: " << recv_tuples)
         sleep(1);
     }
@@ -1226,8 +1216,7 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     size_t recv_tuples = 0;
     while (recv_tuples < 3) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv before buffering: " << recv_tuples)
         sleep(1);
     }
@@ -1235,8 +1224,7 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     wrk1->getNodeEngine()->bufferAllData();
 
     std::ifstream inFile(testFile);
-    recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                             std::istreambuf_iterator<char>(), '\n');
+    recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
     NES_DEBUG("recv while buffering: " << recv_tuples)
     sleep(1);
 
@@ -1244,8 +1232,7 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
 
     while (recv_tuples < 5) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv after buffering: " << recv_tuples)
         sleep(1);
     }
@@ -1341,67 +1328,36 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     TopologyNodePtr node = topology->getRoot();
     std::vector<NES::Spatial::Index::Experimental::Location> locVec = {
-        {52.53024925374664, 13.440408001670573},
-        {52.44959193751221, 12.994693532702838},
-        {52.58394737653231, 13.404557656002641},
-        {52.48534029037908, 12.984138457171484},
-        {52.37433823627218, 13.558651957244951},
-        {52.51533875315059, 13.241771507925069},
-        {52.55973107205912, 13.015653271890772},
-        {52.63119966549814, 13.441159505328082},
-        {52.52554704888443, 13.140415389311752},
-        {52.482596286130494, 13.292443465145574},
-        {52.54298642356826, 13.73191525503437},
-        {52.42678133005856, 13.253118169911525},
-        {52.49621174869779, 13.660943763979146},
-        {52.45590365225229, 13.683553731893118},
-        {52.62859441558, 13.135969230535936},
-        {52.49564618880393, 13.333672868668472},
-        {52.58790396655713, 13.283405589901832},
-        {52.43730546215479, 13.288472865017477},
-        {52.452625895558846, 13.609715377620118},
-        {52.604381034747234, 13.236153100778251},
-        {52.52406858008703, 13.202905224067974},
-        {52.48532771063918, 13.248322218507269},
-        {52.50023010173765, 13.35516100143647},
-        {52.5655774963026, 13.416236069617133},
-        {52.56839177666675, 13.311990021109548},
-        {52.42881523569258, 13.539510531504995},
-        {52.55745803205775, 13.521177091034348},
-        {52.378590211721814, 13.39387224077735},
-        {52.45968932886132, 13.466172426273232},
-        {52.60131778672673, 13.6759151640276},
-        {52.59382248148305, 13.17751716953493},
-        {52.51690603363213, 13.627430091500505},
-        {52.40035318355461, 13.386405495784041},
-        {52.49369404130713, 13.503477002208028},
-        {52.52102316662499, 13.231109595273479},
-        {52.6264057419334, 13.239482930461145},
-        {52.45997462557177, 13.038370380285766},
-        {52.405581430754694, 12.994506535621692},
-        {52.5165220102255, 13.287867202522792},
-        {52.61937748717004, 13.607622490869543},
-        {52.620153404197254, 13.236774758123099},
-        {52.53095039302521, 13.150218024942914},
-        {52.60042748492653, 13.591960614892749},
-        {52.44688258081577, 13.091132219453291},
-        {52.44810624782493, 13.189186365976528},
-        {52.631904019035325, 13.099599387131189},
-        {52.51607843891218, 13.361003233097668},
-        {52.63920358795863, 13.365640690678045},
-        {52.51050545031392, 13.687455299147123},
-        {52.42516226249599, 13.597154340475155},
-        {52.585620728658185, 13.177440252255762},
-        {52.54251642039891, 13.270687079693818},
-        {52.62589583837628, 13.58922212327232},
-        {52.63840628658707, 13.336777486335386},
-        {52.382935034604074, 13.54689828854007},
-        {52.46173261319607, 13.637993027984113},
-        {52.45558349451082, 13.774558360650097},
-        {52.50660545385822, 13.171564805090318},
-        {52.38586011054127, 13.772290920473052},
-        {52.4010561708298, 13.426889487526187}
-    };
+        {52.53024925374664, 13.440408001670573},  {52.44959193751221, 12.994693532702838},
+        {52.58394737653231, 13.404557656002641},  {52.48534029037908, 12.984138457171484},
+        {52.37433823627218, 13.558651957244951},  {52.51533875315059, 13.241771507925069},
+        {52.55973107205912, 13.015653271890772},  {52.63119966549814, 13.441159505328082},
+        {52.52554704888443, 13.140415389311752},  {52.482596286130494, 13.292443465145574},
+        {52.54298642356826, 13.73191525503437},   {52.42678133005856, 13.253118169911525},
+        {52.49621174869779, 13.660943763979146},  {52.45590365225229, 13.683553731893118},
+        {52.62859441558, 13.135969230535936},     {52.49564618880393, 13.333672868668472},
+        {52.58790396655713, 13.283405589901832},  {52.43730546215479, 13.288472865017477},
+        {52.452625895558846, 13.609715377620118}, {52.604381034747234, 13.236153100778251},
+        {52.52406858008703, 13.202905224067974},  {52.48532771063918, 13.248322218507269},
+        {52.50023010173765, 13.35516100143647},   {52.5655774963026, 13.416236069617133},
+        {52.56839177666675, 13.311990021109548},  {52.42881523569258, 13.539510531504995},
+        {52.55745803205775, 13.521177091034348},  {52.378590211721814, 13.39387224077735},
+        {52.45968932886132, 13.466172426273232},  {52.60131778672673, 13.6759151640276},
+        {52.59382248148305, 13.17751716953493},   {52.51690603363213, 13.627430091500505},
+        {52.40035318355461, 13.386405495784041},  {52.49369404130713, 13.503477002208028},
+        {52.52102316662499, 13.231109595273479},  {52.6264057419334, 13.239482930461145},
+        {52.45997462557177, 13.038370380285766},  {52.405581430754694, 12.994506535621692},
+        {52.5165220102255, 13.287867202522792},   {52.61937748717004, 13.607622490869543},
+        {52.620153404197254, 13.236774758123099}, {52.53095039302521, 13.150218024942914},
+        {52.60042748492653, 13.591960614892749},  {52.44688258081577, 13.091132219453291},
+        {52.44810624782493, 13.189186365976528},  {52.631904019035325, 13.099599387131189},
+        {52.51607843891218, 13.361003233097668},  {52.63920358795863, 13.365640690678045},
+        {52.51050545031392, 13.687455299147123},  {52.42516226249599, 13.597154340475155},
+        {52.585620728658185, 13.177440252255762}, {52.54251642039891, 13.270687079693818},
+        {52.62589583837628, 13.58922212327232},   {52.63840628658707, 13.336777486335386},
+        {52.382935034604074, 13.54689828854007},  {52.46173261319607, 13.637993027984113},
+        {52.45558349451082, 13.774558360650097},  {52.50660545385822, 13.171564805090318},
+        {52.38586011054127, 13.772290920473052},  {52.4010561708298, 13.426889487526187}};
 
     for (auto elem : locVec) {
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -1414,8 +1370,10 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     }
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 60));
     string singleLocStart = "52.55227464714949, 13.351743136322877";
-    auto startParentId =
-        topology->getLocationIndex()->getClosestNodeTo(NES::Spatial::Index::Experimental::Location::fromString(singleLocStart)).value()->getId();
+    auto startParentId = topology->getLocationIndex()
+                             ->getClosestNodeTo(NES::Spatial::Index::Experimental::Location::fromString(singleLocStart))
+                             .value()
+                             ->getId();
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
@@ -1474,8 +1432,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     size_t recv_tuples = 0;
     while (recv_tuples < 10000) {
         std::ifstream inFile(testFile);
-        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile),
-                                 std::istreambuf_iterator<char>(), '\n');
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("received: " << recv_tuples)
         sleep(1);
     }

@@ -37,8 +37,6 @@ std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const {
     return this->storage.top();
 }
 
-void BufferStorage::removeTopElementFromQueue() {
-    this->storage.pop();
-}
+void BufferStorage::removeTopElementFromQueue() { this->storage.pop(); }
 
 }// namespace NES::Runtime

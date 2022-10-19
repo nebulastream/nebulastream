@@ -14,12 +14,12 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <utility>
-#include <Runtime/NodeEngine.hpp>
 #ifdef S2DEF
 #include <s2/s1angle.h>
 #include <s2/s2earth.h>

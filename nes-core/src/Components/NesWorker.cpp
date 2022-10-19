@@ -213,7 +213,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
-    if (coordinatorRpcClient && locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+    if (coordinatorRpcClient && locationProvider
+        && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
         NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
         trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider,
                                                                                                           mobilityConfig,

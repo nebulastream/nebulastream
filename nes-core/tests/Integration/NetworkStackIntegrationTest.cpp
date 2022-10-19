@@ -480,43 +480,43 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
 
     try {
         std::thread receivingThread([&]() {
-          auto recvEngine = createMockedEngine<MockedNodeEngine>("127.0.0.1",
-                                                                 *dataPort1,
-                                                                 bufferSize,
-                                                                 buffersManaged,
-                                                                 completed,
-                                                                 nesPartition,
-                                                                 bufferCnt);
-          // register the incoming channel
-          auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
-          std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
-          auto source = std::make_shared<NetworkSource>(schema,
-                                                        recvEngine->getBufferManager(),
-                                                        recvEngine->getQueryManager(),
-                                                        recvEngine->getNetworkManager(),
-                                                        nesPartition,
-                                                        nodeLocationSink,
-                                                        64,
-                                                        NSOURCE_RETRY_WAIT,
-                                                        NSOURCE_RETRIES,
-                                                        std::move(succ));
-          auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
-                                                                     0,
-                                                                     {source},
-                                                                     {sink},
-                                                                     {},
-                                                                     recvEngine->getQueryManager(),
-                                                                     recvEngine->getBufferManager());
-          recvEngine->getQueryManager()->registerQuery(qep);
-          ASSERT_EQ(recvEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
-                    PartitionRegistrationStatus::Registered);
-          completed.get_future().get();
-          sinkShutdownBarrier->wait();
-          while (!(qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
-                   || qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Finished)) {
-              std::this_thread::sleep_for(std::chrono::milliseconds(500));
-          }
-          ASSERT_TRUE(recvEngine->stop());
+            auto recvEngine = createMockedEngine<MockedNodeEngine>("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   completed,
+                                                                   nesPartition,
+                                                                   bufferCnt);
+            // register the incoming channel
+            auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
+            auto source = std::make_shared<NetworkSource>(schema,
+                                                          recvEngine->getBufferManager(),
+                                                          recvEngine->getQueryManager(),
+                                                          recvEngine->getNetworkManager(),
+                                                          nesPartition,
+                                                          nodeLocationSink,
+                                                          64,
+                                                          NSOURCE_RETRY_WAIT,
+                                                          NSOURCE_RETRIES,
+                                                          std::move(succ));
+            auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
+                                                                       0,
+                                                                       {source},
+                                                                       {sink},
+                                                                       {},
+                                                                       recvEngine->getQueryManager(),
+                                                                       recvEngine->getBufferManager());
+            recvEngine->getQueryManager()->registerQuery(qep);
+            ASSERT_EQ(recvEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
+                      PartitionRegistrationStatus::Registered);
+            completed.get_future().get();
+            sinkShutdownBarrier->wait();
+            while (!(qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
+                     || qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Finished)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+            ASSERT_TRUE(recvEngine->stop());
         });
 
         auto defaultSourceType = DefaultSourceType::create();
@@ -534,24 +534,24 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
-              // register the incoming channel
-              Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-              auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
-              networkSink->reconfigure(rt, workerContext);
-              for (uint64_t i = 0; i < totalNumBuffer; ++i) {
-                  auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
-                  for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
-                      buffer.getBuffer<uint64_t>()[j] = j;
-                  }
-                  buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                  //make threads buffer here
-                  networkSink->writeData(buffer, workerContext);
-                  usleep(rand() % 10000 + 1000);
-              }
-              waitBeforeBufferBarrier->wait();
-              auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
-              networkSink->reconfigure(rt2, workerContext);
-              sinkShutdownBarrier->wait();
+                // register the incoming channel
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
+                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                networkSink->reconfigure(rt, workerContext);
+                for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                    auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
+                    for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                        buffer.getBuffer<uint64_t>()[j] = j;
+                    }
+                    buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+                    //make threads buffer here
+                    networkSink->writeData(buffer, workerContext);
+                    usleep(rand() % 10000 + 1000);
+                }
+                waitBeforeBufferBarrier->wait();
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                networkSink->reconfigure(rt2, workerContext);
+                sinkShutdownBarrier->wait();
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -563,7 +563,8 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                 NES_DEBUG("Count before buffer: " << prevCount);
             }
         }
-        auto bufferReconfigMsg = Runtime::ReconfigurationMessage(0, 0, Runtime::StartBuffering, networkSink, std::make_any<uint32_t>(1));
+        auto bufferReconfigMsg =
+            Runtime::ReconfigurationMessage(0, 0, Runtime::StartBuffering, networkSink, std::make_any<uint32_t>(1));
 
         sendEngine->bufferAllData();
         sleep(1);
