@@ -16,6 +16,7 @@
 #define NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
 
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include <mutex>
 
 namespace NES::Monitoring {
 

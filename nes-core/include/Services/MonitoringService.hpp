@@ -19,6 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES {
 
