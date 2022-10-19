@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.17](https://github.com/nebulastream/nebulastream/tree/v0.3.17) (2022-10-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.16...v0.3.17)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Buffer data during reconnect of mobile device [\#2864](https://github.com/nebulastream/nebulastream/issues/2864)
+- \[Feature\] Create design document for support of variable length data types [\#2761](https://github.com/nebulastream/nebulastream/issues/2761)
+
 ## [v0.3.16](https://github.com/nebulastream/nebulastream/tree/v0.3.16) (2022-10-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.15...v0.3.16)
