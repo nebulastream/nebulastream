@@ -228,7 +228,7 @@ TEST_F(SinExpressionTest, evaluateSinExpressionFloat) {
 
   */
 
-TEST_F(SinExpressionTest, evaluateModExpressionOnWrongType) {
+TEST_F(SinExpressionTest, evaluateSinExpressionOnWrongType) {
 
     auto expression = UnaryExpressionWrapper<SinExpression>();
 
