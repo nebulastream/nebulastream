@@ -70,6 +70,7 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->insertBuffer(buffer);
     }
+    NES_WARNING("No buffer storage found for partition " << nesPartition << ", buffer was dropped");
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
