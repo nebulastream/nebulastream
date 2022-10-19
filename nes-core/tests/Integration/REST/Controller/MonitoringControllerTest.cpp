@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 using std::cout;
 using std::endl;
@@ -121,12 +122,13 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
 
     //TODO: check if content of r contains valid information (right fields and valid queryIds).
     auto jsons = jsonsOfResponse.dump();
-    //ASSERT_EQ(jsons.size(), noWorkers + 1);
+    // ASSERT_EQ(jsons.size(), noWorkers + 1);
+
     // TODO its not working
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << i);
-        auto json = jsons[i];
-        NES_DEBUG("MonitoringControllerTest: JSON for node " << i << ":\n" << json);
+        NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(i));
+        auto json = jsonsOfResponse[std::to_string(i)];
+        //NES_DEBUG("MonitoringControllerTest: JSON for node " << std::to_string(i) << ":\n" << json);
         ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
         ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
     }

@@ -24,6 +24,7 @@
 #include <chrono>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <set>
 #include <unordered_map>
 

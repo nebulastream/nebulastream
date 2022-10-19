@@ -94,10 +94,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         nlohmann::json responseMsg;
         responseMsg["monitoringData"] = monitoringService->startMonitoringStreams();
-        if (!responseMsg.empty()) {
-            return createResponse(Status::CODE_200, responseMsg.dump());
+        if (responseMsg == nullptr) {
+            return errorHandler->handleError(Status::CODE_500, "Request was not successful.");
         }
-        return errorHandler->handleError(Status::CODE_500, "Request was not successful.");
+        return createResponse(Status::CODE_200, responseMsg.dump());
     }
 
     ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
@@ -122,10 +122,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         nlohmann::json response;
         response["monitoredStreams"] =monitoringService->getMonitoringStreams();
-        if(!response.empty()){
-            return createResponse(Status::CODE_200, response.dump());
+        if(response == nullptr){
+            return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
         }
-        return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
+        return createResponse(Status::CODE_200, response.dump());
     }
 
     ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
@@ -136,12 +136,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         nlohmann::json response;
         response["monitoredStreamsInMetricStore"] = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
-        if(!response.empty()){
-            return createResponse(Status::CODE_200, response.dump());
+        if (response == nullptr) {
+            return errorHandler->handleError(Status::CODE_500, "Getting newest monitoring data from metric store of monitoring service was not successful.");
         }
-        return errorHandler->handleError(
-            Status::CODE_500,
-            "Getting newest monitoring data from metric store of monitoring service was not successful.");
+        return createResponse(Status::CODE_200, response.dump());
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
@@ -152,10 +150,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         nlohmann::json response;
         response["monitoredData"] =  monitoringService->requestMonitoringDataFromAllNodesAsJson();
-        if(!response.empty()){
-            return createResponse(Status::CODE_200, response.dump());
+        if(response == nullptr){
+            return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
         }
-        return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
+        return createResponse(Status::CODE_200, response.dump());
     }
 
     ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode, QUERY(UInt64, nodeId, "nodeId")) {
@@ -167,7 +165,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         try {
             nlohmann::json response;
             response["monitoredDataOfOneNode"] = monitoringService->requestMonitoringDataAsJson(nodeId);
-            if(!response.empty()){
+            if(!(response == nullptr)){
                 return createResponse(Status::CODE_200, response.dump());
             }
         } catch (std::runtime_error& ex) {
