@@ -50,6 +50,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_TRACE("TCPSourceIntegrationTest: Start TCPServer.");
+        tcpServerPort = getAvailablePort();
         startServer();
     }
 
@@ -60,7 +61,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     }
 
     /**
-     * @brief starts a TCP server on port 9999
+     * @brief starts a TCP server on tcpServerPort
      */
     void startServer() {
         // Create a socket (IPv4, TCP)
@@ -70,10 +71,10 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             exit(EXIT_FAILURE);
         }
 
-        // Listen to port 9999 on any address
+        // Listen to port tcpServerPort on any address
         sockaddr.sin_family = AF_INET;
         sockaddr.sin_addr.s_addr = INADDR_ANY;
-        sockaddr.sin_port = htons(9999);// htons is necessary to convert a number to
+        sockaddr.sin_port = htons(*tcpServerPort);// htons is necessary to convert a number to
                                         // network byte order
         int opt = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
@@ -81,7 +82,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             exit(EXIT_FAILURE);
         }
         if (bind(sockfd, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to bind to port 9999. errno: " << errno);
+            NES_ERROR("TCPSourceIntegrationTest: Failed to bind to port " << tcpServerPort << ". errno: " << errno);
             exit(EXIT_FAILURE);
         }
 
@@ -94,7 +95,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     }
 
     /**
-     * @brief stopps the TCP server running on 9999
+     * @brief stopps the TCP server running on tcpServerPort
      */
     void stopServer() {
         // Close the connections
@@ -225,6 +226,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
 
     int sockfd = 0;
     sockaddr_in sockaddr = {};
+    Testing::BorrowedPortPtr tcpServerPort;
 };
 
 /**
@@ -250,7 +252,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -350,7 +352,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -450,7 +452,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -550,7 +552,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -650,7 +652,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -750,7 +752,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -850,7 +852,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
@@ -950,7 +952,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
     TCPSourceTypePtr sourceConfig = TCPSourceType::create();
-    sourceConfig->setSocketPort(9999);
+    sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
     sourceConfig->setSocketTypeViaString("SOCK_STREAM");
