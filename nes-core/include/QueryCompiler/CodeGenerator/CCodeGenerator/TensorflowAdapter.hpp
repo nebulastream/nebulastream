@@ -34,7 +34,19 @@ class TensorflowAdapter {
   public:
     static TensorflowAdapterPtr create();
     TensorflowAdapter();
+
+    /**
+     * @brief runs the tensorflow model of a single tuple
+     * @param n
+     * @param ...
+     */
     void infer(int n, ...);
+
+    /**
+     * @brief accesses the ith field of the output
+     * @param i
+     * @return
+     */
     float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
