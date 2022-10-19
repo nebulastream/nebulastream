@@ -77,7 +77,6 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
             insertIntoStorageCallback(inputBuffer, workerContext);
         }
         return success;
-        return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
