@@ -47,8 +47,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
   * @param x double
 
-  * @param y double
-
   * @return double
 
   */
