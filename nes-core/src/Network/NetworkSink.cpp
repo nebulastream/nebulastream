@@ -149,7 +149,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::StartBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
             if (reconnectBuffering) {
@@ -162,7 +163,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::StopBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
