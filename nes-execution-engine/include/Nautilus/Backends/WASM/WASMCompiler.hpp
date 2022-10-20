@@ -60,10 +60,10 @@ class WASMCompiler {
     void generateWASM(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AddOperation> addIntOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::SubOperation> subIntOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::AddOperation> addOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::SubOperation> subOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::DivOperation> divOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::LoadOperation> loadOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::AddressOperation> addressOp, BinaryenExpressions& module);
@@ -77,6 +77,7 @@ class WASMCompiler {
     void generateWASM(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
+    BinaryenType getReturnType(IR::Types::StampPtr stampPtr);
 };
 }// namespace NES::Nautilus::Backends::WASM
 

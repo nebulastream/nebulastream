@@ -16,7 +16,6 @@
 #include "Nautilus/IR/Types/IntegerStamp.hpp"
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/Util/Frame.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
@@ -39,23 +38,36 @@ BinaryenModuleRef WASMCompiler::compile(std::shared_ptr<IR::IRGraph> ir) {
 void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> functionOp) {
     std::cout << "Handling FunctionOp!" << std::endl;
     BinaryenExpressions bodyList;
-    std::vector<BinaryenType> params;
-    for (auto inputArg : functionOp->getFunctionBasicBlock()->getArguments()) {
-        //TODO: Type checking for parameter
-        params.push_back(BinaryenTypeInt32());
+    std::vector<BinaryenType> args;
+    int argIndex = 0;
+    for (const auto& inputArg : functionOp->getFunctionBasicBlock()->getArguments()) {
+        BinaryenExpressionRef argExpression;
+        if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(inputArg->getStamp().get())) {
+            if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
+                args.push_back(BinaryenTypeInt64());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt64());
+            } else {
+                args.push_back(BinaryenTypeInt32());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt32());
+            }
+        } else {
+            auto floatStamp = cast_if<IR::Types::FloatStamp>(inputArg->getStamp().get());
+            if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
+                args.push_back(BinaryenTypeFloat64());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt64());
+            } else {
+                args.push_back(BinaryenTypeFloat32());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt32());
+            }
+        }
+        bodyList.setValue(inputArg->getIdentifier(), argExpression);
+        consumed.emplace(inputArg->getIdentifier(), argExpression);
+        argIndex++;
     }
-    /*
-    if (!params.empty()) {
-        BinaryenType params2 = BinaryenTypeCreate(params.data(), params.size());
-        BinaryenAddFunction(expressions, functionOp->getName().c_str(), params2, BinaryenTypeInt32()
-                                                                                , nullptr, 0, nullptr);
-    } else {
-        BinaryenAddFunction(expressions, functionOp->getName().c_str(), 0, BinaryenTypeInt32()
-                                                                          , nullptr, 0, nullptr);
-    }
-    */
+
     generateWASM(functionOp->getFunctionBasicBlock(), bodyList);
 
+    //TODO: fix this
     BinaryenExpressionRef bodyArray[100];
     int i = 0;
     for (const auto& exp : bodyList.getContent()) {
@@ -65,14 +77,16 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperatio
         }
     }
 
-    BinaryenExpressionRef body =
-        BinaryenBlock(wasm,
-                      "body",
-                      bodyArray,
-                      i,
-                      BinaryenTypeAuto());
-
-    BinaryenAddFunction(wasm, functionOp->getName().c_str(), 0, BinaryenTypeInt32(), nullptr, 0, body);
+    //TODO: fix this
+    BinaryenType argsArray[10];
+    int j = 0;
+    for (const auto& x : args) {
+        argsArray[j] = x;
+        j++;
+    }
+    BinaryenType arguments = BinaryenTypeCreate(argsArray, j);
+    BinaryenExpressionRef body = BinaryenBlock(wasm, "body", bodyArray, i, BinaryenTypeAuto());
+    BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments, getReturnType(functionOp->getOutputArg()), nullptr, 0, body);
     BinaryenAddFunctionExport(wasm, functionOp->getName().c_str(), functionOp->getName().c_str());
 }
 
@@ -235,9 +249,24 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AddOperation> ad
     expressions.setValue(addOp->getIdentifier(), add);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::SubOperation> subIntOp, BinaryenExpressions& expressions) {
-    auto y = expressions.contains("");
-    auto x = subIntOp->toString();
+void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::SubOperation> subOp, BinaryenExpressions& expressions) {
+    std::cout << "Handling SubOp!" << std::endl;
+    auto left = expressions.getValue(subOp->getLeftInput()->getIdentifier());
+    auto right = expressions.getValue(subOp->getRightInput()->getIdentifier());
+    auto type = BinaryenExpressionGetType(left);
+    BinaryenExpressionRef sub;
+    if (type == BinaryenTypeInt32()) {
+        sub = BinaryenBinary(wasm, BinaryenSubInt32(), left, right);
+    } else if (type == BinaryenTypeInt64()) {
+        sub = BinaryenBinary(wasm, BinaryenSubInt64(), left, right);
+    } else if (type == BinaryenTypeFloat32()) {
+        sub = BinaryenBinary(wasm, BinaryenSubFloat32(), left, right);
+    } else {
+        sub = BinaryenBinary(wasm, BinaryenSubFloat64(), left, right);
+    }
+    consumed.emplace(subOp->getLeftInput()->getIdentifier(), left);
+    consumed.emplace(subOp->getRightInput()->getIdentifier(), right);
+    expressions.setValue(subOp->getIdentifier(), sub);
 }
 
 void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulOp, BinaryenExpressions& expressions) {
@@ -245,25 +274,25 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::MulOperation> mu
     auto left = expressions.getValue(mulOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(mulOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
-    BinaryenExpressionRef add;
+    BinaryenExpressionRef mul;
     if (type == BinaryenTypeInt32()) {
-        add = BinaryenBinary(wasm, BinaryenMulInt32(), left, right);
+        mul = BinaryenBinary(wasm, BinaryenMulInt32(), left, right);
     } else if (type == BinaryenTypeInt64()) {
-        add = BinaryenBinary(wasm, BinaryenMulInt64(), left, right);
+        mul = BinaryenBinary(wasm, BinaryenMulInt64(), left, right);
     } else if (type == BinaryenTypeFloat32()) {
-        add = BinaryenBinary(wasm, BinaryenMulFloat32(), left, right);
+        mul = BinaryenBinary(wasm, BinaryenMulFloat32(), left, right);
     } else {
-        add = BinaryenBinary(wasm, BinaryenMulFloat64(), left, right);
+        mul = BinaryenBinary(wasm, BinaryenMulFloat64(), left, right);
     }
 
     consumed.emplace(mulOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(mulOp->getRightInput()->getIdentifier(), right);
-    expressions.setValue(mulOp->getIdentifier(), add);
+    expressions.setValue(mulOp->getIdentifier(), mul);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::DivOperation> divIntOp, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::DivOperation> divOp, BinaryenExpressions& expressions) {
     auto y = expressions.contains("");
-    auto x = divIntOp->toString();
+    auto x = divOp->toString();
 }
 
 void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressions& expressions) {
@@ -309,6 +338,22 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOper
                                         BinaryenExpressions& expressions) {
     auto y = expressions.contains("");
     auto x = constBooleanOp->toString();
+}
+BinaryenType WASMCompiler::getReturnType(IR::Types::StampPtr stampPtr) {
+    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stampPtr.get())) {
+        if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
+            return BinaryenTypeInt64();
+        } else {
+            return BinaryenTypeInt32();
+        }
+    } else {
+        auto floatStamp = cast_if<IR::Types::FloatStamp>(stampPtr.get());
+        if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
+            return BinaryenTypeFloat64();
+        } else {
+            return BinaryenTypeFloat32();
+        }
+    }
 }
 
 }// namespace NES::Nautilus::Backends::WASM

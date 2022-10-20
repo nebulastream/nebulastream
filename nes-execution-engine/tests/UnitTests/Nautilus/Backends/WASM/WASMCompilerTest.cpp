@@ -63,15 +63,53 @@ TEST_F(WASMExpressionTest, addIntFunctionTest) {
     BinaryenModulePrint(wasm);
 }
 
+Value<> int32SubExpression() {
+    Value<Int32> x = (int32_t) 1;
+    Value<Int32> y = (int32_t) 2;
+    return x - y;
+}
+
+TEST_F(WASMExpressionTest, subIntFunctionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return int32SubExpression();
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
 Value<> int32MulExpression() {
     Value<Int32> x = (int32_t) 1;
     Value<Int32> y = (int32_t) 2;
     return x * y;
 }
 
-TEST_F(WASMExpressionTest, addMulFunctionTest) {
+TEST_F(WASMExpressionTest, mulIntFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return int32MulExpression();
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> int32DivExpression() {
+    Value<Int32> x = (int32_t) 1;
+    Value<Int32> y = (int32_t) 2;
+    return x / y;
+}
+
+TEST_F(WASMExpressionTest, divIntFunctionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return int32DivExpression();
     });
     //std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
