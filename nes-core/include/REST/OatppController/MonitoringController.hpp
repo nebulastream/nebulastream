@@ -93,7 +93,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 "Error: Monitoring ist not enabled.");
         }
         nlohmann::json responseMsg;
-        responseMsg["monitoringData"] = monitoringService->startMonitoringStreams();
+        responseMsg = monitoringService->startMonitoringStreams();
         if (responseMsg == nullptr) {
             return errorHandler->handleError(Status::CODE_500, "Request was not successful.");
         }
