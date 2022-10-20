@@ -55,9 +55,9 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
-        NES_TRACE("TCPSourceIntegrationTest: Stop TCPServer.");
         stopServer();
+        NES_TRACE("TCPSourceIntegrationTest: Stop TCPServer.");
+        Testing::NESBaseTest::TearDown();
     }
 
     /**
