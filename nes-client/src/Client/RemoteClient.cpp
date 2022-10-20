@@ -23,7 +23,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
