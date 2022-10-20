@@ -19,6 +19,7 @@
 #include <Util/TestUtils.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_client.h>
+#include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdio.h>
@@ -69,9 +70,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -104,10 +105,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -164,10 +165,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -222,10 +223,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -287,10 +288,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -411,10 +412,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -473,10 +474,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -538,10 +539,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -603,9 +604,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -640,9 +641,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -726,9 +727,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
