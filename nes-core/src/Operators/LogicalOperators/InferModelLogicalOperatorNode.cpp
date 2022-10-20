@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef TFDEF
+
 
 #include <filesystem>
 
@@ -24,6 +24,7 @@
 
 namespace NES::InferModel {
 
+#ifdef TFDEF
 InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id) {
     NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << model);
@@ -145,6 +146,8 @@ const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFie
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() {
     return outputFieldsPtr;
 }
-}// namespace NES
 
 #endif // TFDEF
+
+}// namespace NES
+
