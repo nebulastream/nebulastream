@@ -75,7 +75,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         sockaddr.sin_family = AF_INET;
         sockaddr.sin_addr.s_addr = INADDR_ANY;
         sockaddr.sin_port = htons(*tcpServerPort);// htons is necessary to convert a number to
-                                        // network byte order
+                                                  // network byte order
         int opt = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
             NES_ERROR("TCPSourceIntegrationTest: Failed to create socket. errno: " << errno);
@@ -99,7 +99,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      */
     void stopServer() {
         // Close the connections
-        while(close(sockfd)<0) {
+        while (close(sockfd) < 0) {
             NES_TRACE("TCPSourceIntegrationTest: Closing Server connection pls wait ...");
         };
     }
