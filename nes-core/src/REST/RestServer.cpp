@@ -72,6 +72,7 @@ RestServer::RestServer(std::string host,
 
 bool RestServer::start(bool useOatpp) {
     if (useOatpp == true) {
+        usingOatpp = true;
         return startWithOatpp();
     }
     return startWithRestSDK();
@@ -128,15 +129,22 @@ bool RestServer::startWithRestSDK() {
 }
 
 bool RestServer::stop() {
-    NES_DEBUG("RestServer::stop");
-    auto task = restEngine->shutdown();
-    task.wait();
-    {
+    if(!usingOatpp) {
+        NES_DEBUG("RestServer::stop");
+        auto task = restEngine->shutdown();
+        task.wait();
+        {
+            std::unique_lock lock(mutex);
+            stopRequested = true;
+            cvar.notify_all();
+        }
+        return shutdownPromise.get_future().get();
+    }
+    else {
         std::unique_lock lock(mutex);
         stopRequested = true;
-        cvar.notify_all();
+        return true;
     }
-    return shutdownPromise.get_future().get();
 }
 
 void RestServer::run() {
@@ -206,7 +214,18 @@ void RestServer::run() {
     NES_INFO("NebulaStream REST Server listening on port " << port);
 
     /* Run server */
-    server.run();
+    server.run([this]() -> bool {
+        bool run = true;
+        {
+            NES_DEBUG("checking if stop request has arrived for rest server");
+            std::unique_lock lock(mutex);
+            if(stopRequested){
+                run = false;
+            }
+        }
+        NES_DEBUG("Should server continue running: " << run);
+        return run;
+    });
 }
 
 }// namespace NES

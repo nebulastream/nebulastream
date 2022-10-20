@@ -207,10 +207,11 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     checkForQueryStart(queryId);
     int64_t nonExistingQueryId = queryId + 1;
     std::string response = client->getQueryPlan(nonExistingQueryId);
+    auto jsonResponse = nlohmann::json::parse(response);
 
-    std::string expect = "{\"code\":404,\"message\":\"Provided QueryId: " + to_string(nonExistingQueryId)
-        + " does not exist\",\"more_info\":\"https://docs.nebula.stream/docs/clients/rest-api/\"}";
-    EXPECT_EQ(response, expect);
+    std::string restSDKResponse = "Provided QueryId: " + to_string(nonExistingQueryId) + " does not exist";
+    std::string oatppResponse = "No query with given ID: " +  to_string(nonExistingQueryId);
+    EXPECT_TRUE(jsonResponse["message"] == restSDKResponse || jsonResponse["message"] == oatppResponse);
     ASSERT_TRUE(stopQuery(queryId));
 }
 
