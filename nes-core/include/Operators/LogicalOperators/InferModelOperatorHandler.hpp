@@ -27,7 +27,6 @@ using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
  * @brief Operator handler for inferModel.
  */
 class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
-//#ifdef TFDEF
   public:
     InferModelOperatorHandler(std::string model);
 
@@ -52,7 +51,6 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
   private:
     std::string model;
     TensorflowAdapterPtr tfAdapter;
-//#endif // TFDEF
 };
 }// namespace NES::InferModel
 
