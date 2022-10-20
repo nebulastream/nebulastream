@@ -154,8 +154,8 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
 
         NES_INFO("query string submit=" << ss.str());
 
-        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
-        QueryId queryId = json_return.at("queryId").as_integer();
+        nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+        QueryId queryId = json_return["queryId"].get<uint64_t>();
 
         NES_INFO("try to acc return");
         NES_INFO("Query ID: " << queryId);
