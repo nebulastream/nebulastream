@@ -121,7 +121,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 "Error: Monitoring ist not enabled.");
         }
         nlohmann::json response;
-        response["monitoredStreams"] =monitoringService->getMonitoringStreams();
+        response = monitoringService->getMonitoringStreams();
         if(response == nullptr){
             return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
         }
@@ -135,7 +135,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 "Error: Monitoring ist not enabled.");
         }
         nlohmann::json response;
-        response["monitoredStreamsInMetricStore"] = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
+        response = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
         if (response == nullptr) {
             return errorHandler->handleError(Status::CODE_500, "Getting newest monitoring data from metric store of monitoring service was not successful.");
         }
@@ -148,8 +148,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 Status::CODE_500,
                 "Error: Monitoring ist not enabled.");
         }
-        nlohmann::json response;
-        response["monitoredData"] =  monitoringService->requestMonitoringDataFromAllNodesAsJson();
+        //nlohmann::json response;
+        auto response = monitoringService->requestMonitoringDataFromAllNodesAsJson();
         if(response == nullptr){
             return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
         }
@@ -164,7 +164,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         try {
             nlohmann::json response;
-            response["monitoredDataOfOneNode"] = monitoringService->requestMonitoringDataAsJson(nodeId);
+            response = monitoringService->requestMonitoringDataAsJson(nodeId);
             if(!(response == nullptr)){
                 return createResponse(Status::CODE_200, response.dump());
             }
