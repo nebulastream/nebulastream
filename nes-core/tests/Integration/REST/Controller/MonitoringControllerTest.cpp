@@ -74,6 +74,11 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
     //TODO check content
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+
+    nlohmann::json jsonsStart = nlohmann::json::parse(r.text);
+    NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsStart.dump());
+    ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
 }
 
 TEST_F(MonitoringControllerTest, testSopMonitoring) {
