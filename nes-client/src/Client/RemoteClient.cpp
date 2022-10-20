@@ -77,7 +77,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
 
-    if (response.status_code == cpr::status::HTTP_CREATED) {
+    if (response.status_code == cpr::status::HTTP_ACCEPTED) {
         if (result.contains("queryId")) {
             return result["queryId"].get<uint64_t>();
         } else {
