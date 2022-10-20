@@ -143,12 +143,24 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/query-status", getQueryStatus, QUERY(UInt64, queryId, "queryId")) {
         //NOTE: QueryController has "query-status" endpoint. QueryCatalogController has "status" endpoint with same functionality.
-        //No sense in duplicating functionality, so "query-status" endpoint is not implemented.
-        return errorHandler->handleError(
-            Status::CODE_301,
-            "Requests for the status of a query are now served at /queryCatalogController/status?queryId="
-                + std::to_string(queryId));
+        //Functionality has been duplicated for compatibility.
+        try {
+            NES_DEBUG("Get current status of the query");
+            const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
+            nlohmann::json response;
+            response["queryId"] = queryId.getValue(0);
+            response["queryString"] = catalogEntry->getQueryString();
+            response["status"] = catalogEntry->getQueryStatusAsString();
+            response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
+            response["queryMetaData"] = catalogEntry->getMetaInformation();
+            return createResponse(Status::CODE_200, response.dump());
+        } catch (QueryNotFoundException e) {
+            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
     }
+
 
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
