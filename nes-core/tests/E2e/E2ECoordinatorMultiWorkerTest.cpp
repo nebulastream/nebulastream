@@ -15,9 +15,7 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
+#include <nlohmann/json.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -25,16 +23,6 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace utility;
-// Common utilities like string conversions
-using namespace web;
-// Common features like URIs.
-using namespace web::http;
-// Common HTTP functionality
-using namespace web::http::client;
-// HTTP client features
-using namespace concurrency::streams;
-
 namespace NES {
 
 uint16_t timeout = 5u;
@@ -113,8 +101,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO("The final topology:\n" << topology);
     //check edges
     for (uint64_t i = 0; i < topology.at("edges").size(); i++) {
-        EXPECT_EQ(topology["edges"][i]["target"].as_integer(), i + 1);
-        EXPECT_EQ(topology["edges"][i]["source"].as_integer(), i + 2);
+        EXPECT_EQ(topology["edges"][i]["target"].get<int>(), i + 1);
+        EXPECT_EQ(topology["edges"][i]["source"].get<int>(), i + 2);
     }
 }
 
@@ -169,8 +157,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    QueryId queryId = json_return.at("queryId").get<int>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
@@ -252,8 +240,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     NES_INFO("query string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    QueryId queryId = json_return.at("queryId").get<int>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
@@ -350,8 +338,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     NES_INFO("query string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").as_integer();
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    QueryId queryId = json_return.at("queryId").get<int>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
@@ -450,8 +438,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
            "  \"placement\": \"BottomUp\"\n"
            "}";
     NES_DEBUG("Query: " << query.str());
-    web::json::value json_result = TestUtils::startQueryViaRest(query.str(), std::to_string(*restPort));
-    QueryId queryId = json_result.at("queryId").as_integer();
+    nlohmann::json json_result = TestUtils::startQueryViaRest(query.str(), std::to_string(*restPort));
+    QueryId queryId = json_result["queryId"].get<int>();
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     NES_DEBUG("Read in output file: " << outputPath)
