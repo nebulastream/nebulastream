@@ -73,9 +73,27 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
+    //TODO check content
 }
 
-// TODO: Test for get stop request is missing
+TEST_F(MonitoringControllerTest, testSopMonitoring) {
+    NES_INFO("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    coordinatorConfig->enableMonitoring = true;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    // oatpp GET start call
+    cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
+    EXPECT_EQ(r.status_code, 200);
+}
 
 TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotEnabled) {
     NES_INFO("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
