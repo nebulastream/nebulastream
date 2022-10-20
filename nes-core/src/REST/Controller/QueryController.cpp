@@ -170,7 +170,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     //Prepare the response
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
-                    successMessageImpl(request, restResponse, web::http::status_codes::Created);
+                    successMessageImpl(request, restResponse, web::http::status_codes::Accepted);
                     return;
                 } catch (const InvalidQueryException& exc) {
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
@@ -241,7 +241,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
-                    successMessageImpl(request, restResponse, web::http::status_codes::Created);
+                    successMessageImpl(request, restResponse, web::http::status_codes::Accepted);
                     return;
                 } catch (const std::exception& exc) {
                     NES_ERROR(
@@ -282,7 +282,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             web::json::value result{};
             result["success"] = web::json::value::boolean(success);
             result["queryId"] = web::json::value::number(queryId);
-            successMessageImpl(request, result, web::http::status_codes::Created);
+            successMessageImpl(request, result, web::http::status_codes::Accepted);
             return;
         } catch (QueryNotFoundException const& exc) {
             NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while stoping the query " << exc.what());

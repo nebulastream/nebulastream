@@ -172,11 +172,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
         try {
-            std::string req = request.getValue("{}");
-            //check if json is valid
-            if (!nlohmann::json::accept(req)) {
-                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
-            }
+            std::string req = request.getValue("");
             std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
 
             if (!protobufMessage->ParseFromArray(req.data(), req.size())) {
