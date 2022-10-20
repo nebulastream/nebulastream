@@ -44,7 +44,7 @@ MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
 }
 
 nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {
-    nlohmann::json metricsJson{};
+    nlohmann::json metricsJson;
     auto root = topology->getRoot();
 
     std::vector<uint64_t> nodeIds;
@@ -84,7 +84,7 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
             Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.dump());
-
+    NES_DEBUG("in MonitoringService Method sieht das json so aus: " << metricsJson.dump())
     return metricsJson;
 }
 
@@ -112,7 +112,7 @@ const Monitoring::MonitoringManagerPtr MonitoringService::getMonitoringManager()
 bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
 
 nlohmann::json MonitoringService::startMonitoringStreams() {
-    nlohmann::json output{};
+    nlohmann::json output;
     auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(false);
 
     nlohmann::json elem{};
@@ -132,7 +132,7 @@ nlohmann::json MonitoringService::stopMonitoringStreams() {
 }
 
 nlohmann::json MonitoringService::getMonitoringStreams() {
-    nlohmann::json output{};
+    nlohmann::json output;
     auto queryIds = monitoringManager->getDeployedMonitoringQueries();
 
     nlohmann::json elem{};
