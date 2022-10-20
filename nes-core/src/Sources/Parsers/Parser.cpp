@@ -114,9 +114,8 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
                 if (!value) {
                     if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
-                        NES_FATAL_ERROR(
-                            "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: "
-                            << inputString.c_str());
+                        NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: "
+                                        << inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a boolean");
                     }
                 }

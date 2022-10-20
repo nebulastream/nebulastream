@@ -16,10 +16,10 @@
 #define NES_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
+#include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
 
 namespace NES {
