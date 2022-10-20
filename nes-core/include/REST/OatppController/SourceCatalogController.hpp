@@ -21,7 +21,6 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <SerializableOperator.pb.h>
-#include <cpprest/json.h>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
