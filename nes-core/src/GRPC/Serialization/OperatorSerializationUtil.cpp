@@ -349,7 +349,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
         operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(), Util::getNextOperatorId());
     } else if (details.Is<SerializableOperator_InferModelDetails>()) {
-
         // de-serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
         auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
@@ -373,7 +372,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         output.close();
 
         operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields, Util::getNextOperatorId());
-//        #endif // TFDEF
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
