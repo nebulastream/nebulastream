@@ -40,6 +40,8 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/Util/Frame.hpp>
+#include <map>
 
 namespace NES::Nautilus::Backends::WASM {
 
@@ -47,30 +49,34 @@ class WASMCompiler {
   public:
     WASMCompiler();
     BinaryenModuleRef compile(std::shared_ptr<IR::IRGraph> ir);
-    void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressionRef& module);
+
+    using BinaryenExpressions = Frame<std::string, BinaryenExpressionRef>;
   private:
-    void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, BinaryenModuleRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AddOperation> addIntOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::SubOperation> subIntOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::LoadOperation> loadOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AddressOperation> addressOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::CompareOperation> compareOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::BranchOperation> branchOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressionRef& module);
-    void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressionRef& module);
+    BinaryenModuleRef wasm;
+    std::map<std::string, BinaryenExpressionRef> consumed;
+    void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
+    void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> funcOp);
+    void generateWASM(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::AddOperation> addIntOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::SubOperation> subIntOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::LoadOperation> loadOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::AddressOperation> addressOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::CompareOperation> compareOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::BranchOperation> branchOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
+    void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
 };
 }// namespace NES::Nautilus::Backends::WASM
 

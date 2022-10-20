@@ -44,24 +44,62 @@ class WASMExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down WASMExpressionTest test class." << std::endl; }
 };
 
-Value<> int32AddExpression(Value<Int32> x) {
+Value<> int32AddExpression() {
+    Value<Int32> x = (int32_t) 1;
     Value<Int32> y = (int32_t) 2;
     return x + y;
 }
 
 TEST_F(WASMExpressionTest, addIntFunctionTest) {
-    Value<Int32> tempx = (int32_t) 1;
-    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
-        return int32AddExpression(tempx);
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return int32AddExpression();
     });
     //std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.generateWASM(ir);
-    //BinaryenModulePrint(wasm);
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> int32MulExpression() {
+    Value<Int32> x = (int32_t) 1;
+    Value<Int32> y = (int32_t) 2;
+    return x * y;
+}
+
+TEST_F(WASMExpressionTest, addMulFunctionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return int32MulExpression();
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> int32AddParamExpression(Value<Int32> x) {
+    Value<Int32> y = (int32_t) 2;
+    return x + y;
+}
+
+TEST_F(WASMExpressionTest, addIntParamFunctionTest) {
+    Value<Int32> tempx = (int32_t) 1;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return int32AddParamExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
 }
 
 
