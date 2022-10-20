@@ -312,5 +312,4 @@ SourceType TCPSource::getType() const { return TCP_SOURCE; }
 
 const TCPSourceTypePtr& TCPSource::getSourceConfig() const { return sourceConfig; }
 
-
 }// namespace NES
