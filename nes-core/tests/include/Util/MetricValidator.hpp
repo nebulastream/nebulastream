@@ -431,7 +431,7 @@ class MetricValidator {
 
     static bool checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto& [key, val] : json.items()) {
+        for (auto& [key, val] : json.items()){
             // This change lets you get the string straight up from "first"
             auto jsonMetric = json[key][0]["value"];
             if (!checkNodeIds(jsonMetric, nodeId)) {
