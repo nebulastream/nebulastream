@@ -56,6 +56,9 @@ class RecordBuffer {
                               Value<MemRef> bufferAddress,
                               Value<UInt64> recordIndex);
 
+    void writeRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
+    void writeColumnLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
+
     bool includeField(const std::vector<Record::RecordFieldIdentifier>& projections, Record::RecordFieldIdentifier fieldIndex);
 };
 

@@ -129,7 +129,6 @@ void BufferManager::initialize(uint32_t withAlignment) {
     size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
-    ;
     if (basePointer == nullptr) {
         NES_THROW_RUNTIME_ERROR("memory allocation failed");
     }
