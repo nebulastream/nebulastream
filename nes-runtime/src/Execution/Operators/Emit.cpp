@@ -13,8 +13,8 @@
 */
 
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators {
@@ -39,13 +39,13 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     resultBuffer.write(resultMemoryLayout, outputIndex, recordBuffer);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
-    /* if (outputIndex >= maxRecordsPerBuffer) {
+    if (emitState->outputIndex >= maxRecordsPerBuffer) {
         resultBuffer.setNumRecords(emitState->outputIndex);
-        ctx.getPipelineContext().emitBuffer(ctx.getWorkerContext(), resultBuffer);
-        auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
+        ctx.emitBuffer(resultBuffer);
+        auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->outputIndex = 0ul;
-    }*/
+    }
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
