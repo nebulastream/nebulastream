@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
+
+#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
+#define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
-#include <Nautilus/Interface/Record.hpp>
-
 namespace NES::Runtime::Execution::Operators {
-
-void Selection::execute(ExecutionContext& ctx, Record& record) const {
-    // evaluate expression and call child operator if expression is valid
-    if (expression->execute(record)) {
-        if (child != nullptr) {
-            child->execute(ctx, record);
-        }
-    }
-}
+class CollectOperator : public ExecutableOperator {
+  public:
+    CollectOperator() {}
+    void execute(ExecutionContext&, Record& record) const override { records.emplace_back(record); }
+    mutable std::vector<Record> records;
+};
 
 }// namespace NES::Runtime::Execution::Operators
+
+#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_

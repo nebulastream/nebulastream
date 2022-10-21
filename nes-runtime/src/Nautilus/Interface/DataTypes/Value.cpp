@@ -43,7 +43,7 @@ bool traceBoolOperation(const AnyPtr& value, const Nautilus::Tracing::ValueRef& 
             return boolValue->getValue();
         }
     }
-    NES_THROW_RUNTIME_ERROR("Can't evaluate bool on non Boolean value");
+    NES_THROW_RUNTIME_ERROR("Can't evaluate bool on non Boolean value: " << value->toString());
 }
 
 void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef) {

@@ -14,14 +14,14 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
 #include <Execution/Operators/Operator.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 class Scan : public Operator {
   public:
     Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
-    void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
     const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
