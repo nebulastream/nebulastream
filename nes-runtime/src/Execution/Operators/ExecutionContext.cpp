@@ -13,22 +13,73 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution {
 
 ExecutionContext::ExecutionContext(Value<NES::Nautilus::MemRef> workerContext, Value<NES::Nautilus::MemRef> pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext) {}
 
-Value<MemRef> ExecutionContext::allocateBuffer() { return nullptr; }
+void* allocateBufferProxy(void* workerContextPtr) {
+    if (workerContextPtr == nullptr) {
+        NES_THROW_RUNTIME_ERROR("worker context should not be null");
+    }
+    auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
+    // We allocate a new tuple buffer for the runtime.
+    // As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    // This increases the reference counter in the buffer.
+    // Thus, when the buffer is not required anymore operator code has to clean it up otherwise it will leak.
+    auto buffer = wkrCtx->allocateTupleBuffer();
+    auto* tb = new Runtime::TupleBuffer(buffer);
+    return tb;
+}
 
-void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer&) {}
+Value<MemRef> ExecutionContext::allocateBuffer() {
+    auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy", allocateBufferProxy, workerContext);
+    return bufferPtr;
+}
 
-Value<UInt64> ExecutionContext::getWorkerId() { return 0ul; }
+void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
+    auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
+    auto workerCtx = static_cast<WorkerContext*>(wc);
+    // check if buffer has values
+    if (tb->getNumberOfTuples() != 0) {
+        pipelineCtx->emitBuffer(*tb, *workerCtx);
+    }
+    // delete tuple buffer as it was allocated within the pipeline and is not required anymore
+    delete tb;
+}
 
-Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator*) { return nullptr; }
+void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer) {
+    FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.tupleBufferRef);
+}
 
-void ExecutionContext::setLocalOperatorState(const Operators::Operator* , std::unique_ptr<Operators::OperatorState>) {}
+uint64_t getWorkerIdProxy(void* workerContext) {
+    auto* wc = (Runtime::WorkerContext*) workerContext;
+    return wc->getId();
+}
 
-void ExecutionContext::setGlobalOperatorState(const Operators::Operator* , std::unique_ptr<Operators::OperatorState>) {}
+Value<UInt64> ExecutionContext::getWorkerId() { return FunctionCall("getWorkerIdProxy", getWorkerIdProxy, workerContext); }
+
+Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op) {
+    auto stateEntry = localStateMap.find(op);
+    if (stateEntry == localStateMap.end()) {
+        NES_THROW_RUNTIME_ERROR("No local state registered for operator: " << op);
+    }
+    return stateEntry->second.get();
+}
+
+void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state) {
+    if (localStateMap.contains(op)) {
+        NES_THROW_RUNTIME_ERROR("Operators state already registered for operator: " << op);
+    }
+    localStateMap.emplace(op, std::move(state));
+}
+
+void ExecutionContext::setGlobalOperatorState(const Operators::Operator*, std::unique_ptr<Operators::OperatorState>) {}
 
 }// namespace NES::Runtime::Execution

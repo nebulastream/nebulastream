@@ -133,6 +133,18 @@ Record RecordBuffer::readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr
 }
 
 void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& rec) {
+    // write all fields
+    if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+        writeRowLayout(memoryLayout, recordIndex, rec);
+        return;
+    } else if (memoryLayout->getSchema()->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        writeColumnLayout(memoryLayout, recordIndex, rec);
+        return;
+    }
+    NES_THROW_RUNTIME_ERROR("Layout not supported");
+}
+
+void RecordBuffer::writeRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<NES::Nautilus::UInt64> recordIndex, NES::Nautilus::Record& rec) {
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
     auto fieldSizes = rowLayout->getFieldSizes();
     auto tupleSize = rowLayout->getTupleSize();
@@ -142,7 +154,22 @@ void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLay
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
         auto fieldOffset = rowLayout->getFieldOffSets()[i];
         auto fieldAddress = recordOffset + fieldOffset;
-        auto value = rec.read(schema->fields[i]->getName()).as<Int64>();
+        auto value = rec.read(schema->fields[i]->getName());
+        auto memRef = fieldAddress.as<MemRef>();
+        memRef.store(value);
+    }
+}
+
+void RecordBuffer::writeColumnLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<NES::Nautilus::UInt64> recordIndex, NES::Nautilus::Record& rec) {
+    auto columnLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(memoryLayout);
+    auto fieldSizes = columnLayout->getFieldSizes();
+    auto bufferAddress = getBuffer();
+    auto schema = memoryLayout->getSchema();
+    auto& columnOffsets = columnLayout->getColumnOffsets();
+    for (uint64_t i = 0; i < fieldSizes.size(); i++) {
+        auto fieldOffset = (recordIndex * fieldSizes[i]) + columnOffsets[i];
+        auto fieldAddress = bufferAddress + fieldOffset;
+        auto value = rec.read(schema->fields[i]->getName());
         auto memRef = fieldAddress.as<MemRef>();
         memRef.store(value);
     }
