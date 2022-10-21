@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.19](https://github.com/nebulastream/nebulastream/tree/v0.3.19) (2022-10-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.18...v0.3.19)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add mod\(x,y\) expression [\#3061](https://github.com/nebulastream/nebulastream/issues/3061)
+
+## [v0.3.18](https://github.com/nebulastream/nebulastream/tree/v0.3.18) (2022-10-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.17...v0.3.18)
+
 ## [v0.3.17](https://github.com/nebulastream/nebulastream/tree/v0.3.17) (2022-10-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.16...v0.3.17)
