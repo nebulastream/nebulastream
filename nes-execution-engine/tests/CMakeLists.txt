@@ -13,9 +13,9 @@
 
 include(ExternalProject)
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_TESTS)
+# if (NES_ENABLE_EXPERIMENTAL_EXECUTION_TESTS)
     add_subdirectory(UnitTests/Experimental)
-endif ()
+# endif ()
 add_subdirectory(UnitTests/Nautilus)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)

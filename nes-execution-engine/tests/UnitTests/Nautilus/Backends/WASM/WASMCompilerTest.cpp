@@ -120,16 +120,16 @@ TEST_F(WASMExpressionTest, divIntFunctionTest) {
     BinaryenModulePrint(wasm);
 }
 
-Value<> int32AddParamExpression(Value<Int32> x) {
+Value<> int32AddArgsExpression(Value<Int32> x) {
     Value<Int32> y = (int32_t) 2;
     return x + y;
 }
 
-TEST_F(WASMExpressionTest, addIntParamFunctionTest) {
+TEST_F(WASMExpressionTest, addInt32ArgsFunctionTest) {
     Value<Int32> tempx = (int32_t) 1;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
-        return int32AddParamExpression(tempx);
+        return int32AddArgsExpression(tempx);
     });
     //std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -140,5 +140,83 @@ TEST_F(WASMExpressionTest, addIntParamFunctionTest) {
     BinaryenModulePrint(wasm);
 }
 
+Value<> int64AddArgsExpression(Value<Int64> x) {
+    Value<Int64> y = 7l;
+    return x + y;
+}
+
+TEST_F(WASMExpressionTest, addInt64ArgsFunctionTest) {
+    Value<Int64> tempx = (int64_t) 1;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return int64AddArgsExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> booleanOrExpression() {
+    Value<Boolean> x = true;
+    Value<Boolean> y = false;
+    return x || y;
+}
+
+TEST_F(WASMExpressionTest, orBooleanFunctionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return booleanOrExpression();
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> floatDivArgsExpression(Value<Float> x) {
+    Value<Float> y = 7.5f;
+    return x / y;
+}
+
+TEST_F(WASMExpressionTest, divFloatFunctionTest) {
+    Value<Float> tempx = 10.7f;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createFloatStamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return floatDivArgsExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> int32GTExpression(Value<Int32> x) {
+    Value<Int32> y = 7;
+    return x > y;
+}
+
+TEST_F(WASMExpressionTest, gtInt32FunctionTest) {
+    Value<Int32> tempx = 10;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return int32GTExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
 
 }// namespace NES::Nautilus

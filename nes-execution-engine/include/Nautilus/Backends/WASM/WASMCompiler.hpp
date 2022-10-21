@@ -77,7 +77,11 @@ class WASMCompiler {
     void generateWASM(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
-    BinaryenType getReturnType(IR::Types::StampPtr stampPtr);
+    BinaryenType getType(IR::Types::StampPtr stampPtr);
+    BinaryenOp convertToInt32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
 };
 }// namespace NES::Nautilus::Backends::WASM
 
