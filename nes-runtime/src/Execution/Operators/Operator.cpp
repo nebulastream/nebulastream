@@ -16,19 +16,19 @@
 #include <Execution/Operators/Operator.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-void Operator::setup(RuntimeExecutionContext& executionCtx) const {
+void Operator::setup(ExecutionContext& executionCtx) const {
     if (hasChild()) {
         child->setup(executionCtx);
     }
 }
 
-void Operator::open(RuntimeExecutionContext& executionCtx, RecordBuffer& rb) const {
+void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const {
     if (hasChild()) {
         child->open(executionCtx, rb);
     }
 }
 
-void Operator::close(RuntimeExecutionContext& executionCtx, RecordBuffer& rb) const {
+void Operator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const {
     if (hasChild()) {
         child->close(executionCtx, rb);
     }
@@ -36,14 +36,14 @@ void Operator::close(RuntimeExecutionContext& executionCtx, RecordBuffer& rb) co
 
 bool Operator::hasChild() const { return child != nullptr; }
 
-bool Operator::setChild(NES::Runtime::Execution::Operators::ExecuteOperatorPtr child) {
+void Operator::setChild(Operators::ExecuteOperatorPtr child) {
     if (hasChild()) {
         NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
     }
     this->child = std::move(child);
 }
 
-void Operator::terminate(NES::Runtime::Execution::Operators::RuntimeExecutionContext& executionCtx) const {
+void Operator::terminate(ExecutionContext& executionCtx) const {
     if (hasChild()) {
         child->terminate(executionCtx);
     }

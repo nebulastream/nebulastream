@@ -31,6 +31,8 @@ Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
 
 uint64_t Record::numberOfFields() { return fields.size(); }
 
-void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert(std::make_pair(fieldIndex, value)); }
+void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
+
+bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
 
 }// namespace NES::Nautilus

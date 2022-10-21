@@ -10,5 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-runtime
+        RecordBuffer.cpp
+        )
+
 add_subdirectory(Expressions)
 add_subdirectory(Operators)
+add_subdirectory(Pipelines)
