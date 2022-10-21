@@ -21,12 +21,12 @@ namespace NES::Runtime::Execution::Operators {
 class Emit : public ExecutableOperator {
   public:
     Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout);
-    void open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(RuntimeExecutionContext& ctx, Record& record) const override;
-    void close(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void execute(ExecutionContext& ctx, Record& record) const override;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
-    const uint64_t maxRecordsPerBuffer = 10;
+    const uint64_t maxRecordsPerBuffer;
     const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;
 };
 

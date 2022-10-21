@@ -16,15 +16,14 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <memory>
 
-namespace NES::Nautilus {
+namespace NES::Runtime::Execution {
+class ExecutionContext;
 class RecordBuffer;
 }
-
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
 class ExecutableOperator;
-class RuntimeExecutionContext;
-using ExecuteOperatorPtr = std::unique_ptr<const ExecutableOperator>;
+using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 
 /**
  * @brief Base operator for all specific operators.
@@ -37,27 +36,27 @@ class Operator {
      * Operators can implement this class to initialize some state that exists over the whole life time of this operator.
      * @param executionCtx the RuntimeExecutionContext
      */
-    virtual void setup(RuntimeExecutionContext& executionCtx) const;
+    virtual void setup(ExecutionContext& executionCtx) const;
     /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
      * @param recordBuffer
      */
-    virtual void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     /**
      * @brief Close is called
      * @param executionCtx
      * @param recordBuffer
      */
-    virtual void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
     /**
      * @brief Terminates the operator and fries all operator state.
      * @param executionCtx the RuntimeExecutionContext
      */
-    virtual void terminate(RuntimeExecutionContext& executionCtx) const;
+    virtual void terminate(ExecutionContext& executionCtx) const;
 
     bool hasChild() const;
-    bool setChild(ExecuteOperatorPtr child);
+    void setChild(ExecuteOperatorPtr child);
     virtual ~Operator();
 
   protected:

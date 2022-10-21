@@ -14,13 +14,14 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Record::RecordFieldIdentifier> projections)
     : memoryLayout(memoryLayout), projections(projections) {}
 
-void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer

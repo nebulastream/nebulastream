@@ -14,8 +14,8 @@
 add_source_files(nes-runtime
         MLIRUtility.cpp
         MLIRLoweringProvider.cpp
-        MLIRExecutablePipeline.cpp
-        MLIRPipelineCompilerBackend.cpp
+       # MLIRExecutablePipeline.cpp
+     #   MLIRPipelineCompilerBackend.cpp
         MLIRPassManager.cpp
         LLVMIROptimizer.cpp
         JITCompiler.cpp

@@ -13,7 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
-#include <Experimental/Interpreter/ExecutionContext.hpp>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <memory>
 #include <unordered_map>

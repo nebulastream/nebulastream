@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Operators {
 class Map : public ExecutableOperator {
   public:
     Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression) : mapExpression(mapExpression){};
-    void execute(RuntimeExecutionContext& ctx, Record& record) const override;
+    void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
     const Runtime::Execution::Expressions::ExpressionPtr mapExpression;

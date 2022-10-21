@@ -12,16 +12,13 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Relational/Map.hpp>
-#include <Nautilus/Interface/Record.hpp>
-namespace NES::Runtime::Execution::Operators {
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
+namespace NES::Runtime::Execution {
+Operators::Operator* PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
 
-void Map::execute(ExecutionContext& ctx, Record& record) const {
-    // assume that map expression performs a field write
-    mapExpression->execute(record);
-    // call next operator
-    child->execute(ctx, record);
+void PhysicalOperatorPipeline::setRootOperator(Operators::Operator* rootOperator) {
+    PhysicalOperatorPipeline::rootOperator = rootOperator;
 }
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution

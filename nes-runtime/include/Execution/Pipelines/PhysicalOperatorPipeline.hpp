@@ -13,18 +13,18 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PHYSICALOPERATORPIPELINE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PHYSICALOPERATORPIPELINE_HPP_
-#include <Experimental/Interpreter/Operators/Operator.hpp>
-namespace NES::ExecutionEngine::Experimental {
+#include <Execution/Operators/Operator.hpp>
+namespace NES::Runtime::Execution {
 
 class PhysicalOperatorPipeline {
   public:
-    Nautilus::Operator* getRootOperator() const { return rootOperator; }
-    void setRootOperator(Nautilus::Operator* rootOperator) { PhysicalOperatorPipeline::rootOperator = rootOperator; }
+    Operators::Operator* getRootOperator() const;
+    void setRootOperator(Operators::Operator* rootOperator);
 
   private:
-      Nautilus::Operator* rootOperator;
+    Operators::Operator* rootOperator;
 };
 
-}// namespace NES::ExecutionEngine::Experimental
+}// namespace NES::Runtime::Execution
 
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_PHYSICALOPERATORPIPELINE_HPP_

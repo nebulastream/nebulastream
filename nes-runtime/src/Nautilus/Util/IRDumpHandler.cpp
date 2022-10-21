@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Utility/NESIRDumpHandler.hpp>
+#include <Nautilus/Util/IRDumpHandler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Backends/MLIR/MLIRExecutablePipeline.hpp>
 using namespace NES::Nautilus;
 namespace NES::ExecutionEngine::Experimental {
@@ -27,8 +27,8 @@ void MLIRExecutablePipeline::setup() {
     auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
         std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
     runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, IR::Types::StampFactory::createAddressStamp());
-    auto ctx = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
-    physicalOperatorPipeline->getRootOperator()->setup(ctx);
+    //auto ctx = Ex(runtimeExecutionContextRef);
+    //physicalOperatorPipeline->getRootOperator()->setup(ctx);
 }
 void MLIRExecutablePipeline::execute(NES::Runtime::WorkerContext& workerContext, NES::Runtime::TupleBuffer& buffer) {
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(&workerContext, executionContext.get());

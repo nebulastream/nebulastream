@@ -18,7 +18,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class ExecutableOperator : public Operator {
   public:
-    virtual void execute(RuntimeExecutionContext& ctx, Record& record) const = 0;
+    virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~ExecutableOperator() = default;
 };
 
