@@ -126,7 +126,7 @@ if (NES_SELF_HOSTING)
     # when executing the PROJECT directive.
     # See: https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html
     set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang")
-    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
+    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/l:lvm/clang++")
 else ()
     message(STATUS "Use system compiler")
 endif ()
