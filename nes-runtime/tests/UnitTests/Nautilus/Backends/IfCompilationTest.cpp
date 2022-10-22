@@ -69,12 +69,6 @@ TEST_F(IfCompilationTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int16_t (*)()>("execute");
     ASSERT_EQ(function(), 43);
@@ -95,12 +89,6 @@ TEST_F(IfCompilationTest, ifThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenElseCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 85);
@@ -123,12 +111,6 @@ TEST_F(IfCompilationTest, nestedIFThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 5);
@@ -152,12 +134,6 @@ TEST_F(IfCompilationTest, nestedIFThenNoElse) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfNoElseCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 12);
@@ -179,11 +155,6 @@ TEST_F(IfCompilationTest, doubleIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return doubleIfCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 23);
@@ -204,12 +175,6 @@ TEST_F(IfCompilationTest, ifElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseIfCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 23);
@@ -234,15 +199,10 @@ Value<> deeplyNestedIfElseCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, DISABLED_deeplyNestedIfElseCondition) {
+TEST_F(IfCompilationTest, deeplyNestedIfElseCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 12);
@@ -268,11 +228,6 @@ TEST_F(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 12);
