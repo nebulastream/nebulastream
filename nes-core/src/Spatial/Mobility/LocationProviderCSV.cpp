@@ -34,7 +34,8 @@ LocationProviderCSV::LocationProviderCSV(const std::string& csvPath)
 void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& csvPath) {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
-    std::string locString;
+    std::string latitudeString;
+    std::string longitudeString;
     std::string timeString;
 
     NES_DEBUG("Started csv location source at " << startTime)
@@ -42,17 +43,19 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
         std::stringstream stringStream(csvLine);
-        getline(stringStream, locString, ';');
-        getline(stringStream, timeString, ';');
+        getline(stringStream, latitudeString, ',');
+        getline(stringStream, longitudeString, ',');
+        getline(stringStream, timeString, ',');
         Timestamp time = std::stoul(timeString);
-        NES_TRACE("Read from csv: " << locString << ", " << time);
+        NES_TRACE("Read from csv: " << latitudeString << ", " << longitudeString << ", " << time);
 
         //add startTime to the offset obtained from csv to get absolute timestamp
         time += startTime;
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)),
+        std::pair waypoint(std::make_shared<Index::Experimental::Location>(
+                               Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString))),
                            time);
         waypoints.push_back(waypoint);
     }
