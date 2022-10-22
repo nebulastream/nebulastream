@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Expressions)
-add_subdirectory(Operators)
-add_subdirectory(PipelineExecution)
+add_executable(runtime-pipeline-execution-test "PipelineExecutionTest.cpp")
+target_link_libraries(runtime-pipeline-execution-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-pipeline-execution-test COMMAND runtime-pipeline-execution-test)
 
 
 

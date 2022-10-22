@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
@@ -25,15 +27,15 @@
 
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
-    
-class IfExecutionTest : public testing::Test {
+
+class IfCompilationTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("IfExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup IfExecutionTest test class." << std::endl;
+        NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup IfCompilationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
@@ -45,9 +47,14 @@ class IfExecutionTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        std::cout << *executionTrace.get() << std::endl;
+        auto ir = irCreationPhase.apply(executionTrace);
+        std::cout << ir->toString() << std::endl;
+        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
+    }
 };
-
 
 Value<> ifThenCondition() {
     Value value = 1;
@@ -58,7 +65,7 @@ Value<> ifThenCondition() {
     return iw + 42;
 }
 
-TEST_F(IfExecutionTest, ifConditionTest) {
+TEST_F(IfCompilationTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
@@ -68,9 +75,8 @@ TEST_F(IfExecutionTest, ifConditionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int16_t (*)()>("execute");
     ASSERT_EQ(function(), 43);
 }
 
@@ -85,9 +91,9 @@ Value<> ifThenElseCondition() {
     return iw + 42;
 }
 
-TEST_F(IfExecutionTest, ifThenElseConditionTest) {
+TEST_F(IfCompilationTest, ifThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-       return ifThenElseCondition();
+        return ifThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -95,9 +101,8 @@ TEST_F(IfExecutionTest, ifThenElseConditionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 85);
 }
 
@@ -111,10 +116,10 @@ Value<> nestedIfThenElseCondition() {
             iw = iw + 2;
         }
     }
-   return iw = iw + 2;
+    return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
+TEST_F(IfCompilationTest, nestedIFThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
@@ -124,9 +129,8 @@ TEST_F(IfExecutionTest, nestedIFThenElseConditionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -141,10 +145,10 @@ Value<> nestedIfNoElseCondition() {
             iw + 14;
         }
     }
-   return iw = iw + 2;
+    return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, nestedIFThenNoElse) {
+TEST_F(IfCompilationTest, nestedIFThenNoElse) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfNoElseCondition();
     });
@@ -154,9 +158,8 @@ TEST_F(IfExecutionTest, nestedIFThenNoElse) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -168,11 +171,11 @@ Value<> doubleIfCondition() {
     }
     if (iw == 1) {
         iw = iw + 20;
-    } 
-   return iw = iw + 2;
+    }
+    return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, doubleIfCondition) {
+TEST_F(IfCompilationTest, doubleIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return doubleIfCondition();
     });
@@ -181,10 +184,8 @@ TEST_F(IfExecutionTest, doubleIfCondition) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -193,14 +194,13 @@ Value<> ifElseIfCondition() {
     Value iw = Value(1);
     if (iw == 8) {
         iw = iw + 14;
-    }
-    else if (iw == 1) {
+    } else if (iw == 1) {
         iw = iw + 20;
-    } 
-   return iw = iw + 2;
+    }
+    return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, ifElseIfCondition) {
+TEST_F(IfCompilationTest, ifElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseIfCondition();
     });
@@ -210,9 +210,8 @@ TEST_F(IfExecutionTest, ifElseIfCondition) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);;
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -227,16 +226,15 @@ Value<> deeplyNestedIfElseCondition() {
                 if (iw == 5) {
                     iw = iw + 5;
                 }
-            } 
+            }
         }
-    }
-    else {
+    } else {
         iw = iw + 20;
-    } 
-   return iw = iw + 2;
+    }
+    return iw = iw + 2;
 }
 
-TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseCondition) {
+TEST_F(IfCompilationTest, DISABLED_deeplyNestedIfElseCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseCondition();
     });
@@ -244,12 +242,9 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseCondition) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
-    // Todo print fails
-    // std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -257,20 +252,19 @@ Value<> deeplyNestedIfElseIfCondition() {
     Value value = Value(1);
     Value iw = Value(5);
     if (iw < 8) {
-            iw = iw + 10;
-    }
-    else {    
+        iw = iw + 10;
+    } else {
         if (iw == 5) {
             iw = iw + 5;
         } else if (iw == 4) {
             iw = iw + 4;
         }
-    } 
-   return iw = iw + 2;
+    }
+    return iw = iw + 2;
 }
 
 // Currently fails, because an empty block (Block 7) is created, during trace building.
-TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
+TEST_F(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
@@ -278,11 +272,9 @@ TEST_F(IfExecutionTest, DISABLED_deeplyNestedIfElseIfCondition) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
-    // Todo print fails
-    // std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
     ASSERT_EQ(function(), 12);
 }
 

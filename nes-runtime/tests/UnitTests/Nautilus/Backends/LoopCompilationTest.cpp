@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -26,8 +28,8 @@
 
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
-    
-class LoopExecutionTest : public testing::Test {
+
+class LoopCompilationTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -47,7 +49,13 @@ class LoopExecutionTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        std::cout << *executionTrace.get() << std::endl;
+        auto ir = irCreationPhase.apply(executionTrace);
+        std::cout << ir->toString() << std::endl;
+        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
+    }
 };
 
 Value<> sumLoop(int upperLimit) {
@@ -58,21 +66,13 @@ Value<> sumLoop(int upperLimit) {
     return agg;
 }
 
-
-
-TEST_F(LoopExecutionTest, sumLoopTestSCF) {
+TEST_F(LoopCompilationTest, sumLoopTestSCF) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop(10);
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 101);
 }
 
@@ -86,37 +86,23 @@ Value<> nestedSumLoop(int upperLimit) {
     return agg;
 }
 
-
-
-TEST_F(LoopExecutionTest, nestedLoopTest) {
+TEST_F(LoopCompilationTest, nestedLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedSumLoop(10);
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 1001);
 }
 
-TEST_F(LoopExecutionTest, sumLoopTestCF) {
+TEST_F(LoopCompilationTest, sumLoopTestCF) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop(10);
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 101);
 }
 
@@ -130,19 +116,13 @@ Value<> ifSumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, ifSumLoopTest) {
+TEST_F(LoopCompilationTest, ifSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifSumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 51);
 }
 
@@ -158,19 +138,13 @@ Value<> ifElseSumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, ifElseSumLoopTest) {
+TEST_F(LoopCompilationTest, ifElseSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseSumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 56);
 }
 
@@ -185,20 +159,13 @@ Value<> elseOnlySumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, elseOnlySumLoopTest) {
+TEST_F(LoopCompilationTest, elseOnlySumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return elseOnlySumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
 
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 1);
 }
 
@@ -216,19 +183,12 @@ Value<> nestedIfSumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, nestedIfSumLoopTest) {
+TEST_F(LoopCompilationTest, nestedIfSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfSumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 41);
 }
 
@@ -248,19 +208,12 @@ Value<> nestedIfElseSumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, nestedIfElseSumLoopTest) {
+TEST_F(LoopCompilationTest, nestedIfElseSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfElseSumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 146);
 }
 
@@ -279,19 +232,12 @@ Value<> nestedElseOnlySumLoop() {
     return agg;
 }
 
-TEST_F(LoopExecutionTest, nestedElseOnlySumLoop) {
+TEST_F(LoopCompilationTest, nestedElseOnlySumLoop) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedElseOnlySumLoop();
     });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
-    auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
-    ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(execution);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 1);
 }
 
