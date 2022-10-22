@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -27,29 +29,37 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class MemoryAccessExecutionTest : public testing::Test {
+class MemoryAccessCompilationTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("MemoryAccessExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MemoryAccessExecutionTest test class." << std::endl;
+        NES::Logger::setupLogging("MemoryAccessCompilationTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup MemoryAccessCompilationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup MemoryAccessExecutionTest test case." << std::endl; }
+    void SetUp() override { std::cout << "Setup MemoryAccessCompilationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down MemoryAccessExecutionTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down MemoryAccessCompilationTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down MemoryAccessExecutionTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down MemoryAccessCompilationTest test class." << std::endl; }
+
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+        std::cout << *executionTrace.get() << std::endl;
+        auto ir = irCreationPhase.apply(executionTrace);
+        std::cout << ir->toString() << std::endl;
+        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
+    }
 };
 
 Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Int64>(); }
 
-TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
+TEST_F(MemoryAccessCompilationTest, loadFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
@@ -57,14 +67,10 @@ TEST_F(MemoryAccessExecutionTest, loadFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return loadFunction(tempPara);
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
 
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+
     ASSERT_EQ(function(&valI), 42);
 }
 
@@ -74,7 +80,7 @@ void storeFunction(Value<MemRef> ptr) {
     ptr.store(tmp);
 }
 
-TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
+TEST_F(MemoryAccessCompilationTest, storeFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>((int8_t*) &valI);
     tempPara.load<Int64>();
@@ -83,14 +89,8 @@ TEST_F(MemoryAccessExecutionTest, storeFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([&tempPara]() {
         storeFunction(tempPara);
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)(void*)) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
     function(&valI);
     ASSERT_EQ(valI, 43);
 }
@@ -105,23 +105,16 @@ Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
     return sum;
 }
 
-TEST_F(MemoryAccessExecutionTest, memScanFunctionTest) {
+TEST_F(MemoryAccessCompilationTest, memScanFunctionTest) {
     auto memPtr = Value<MemRef>(nullptr);
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto size = Value<Int64>((int64_t)0);
+    auto size = Value<Int64>((int64_t) 0);
     size.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
         return memScan(memPtr, size);
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)(int, void*)) engine->lookup("execute").get();
-
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)(int, void*)>("execute");
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
     ASSERT_EQ(function(7, array), 28);
 }

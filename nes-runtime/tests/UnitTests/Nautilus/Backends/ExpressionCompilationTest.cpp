@@ -15,6 +15,8 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
+#include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -53,9 +55,7 @@ class ExpressionExecutionTest : public testing::Test {
         std::cout << *executionTrace.get() << std::endl;
         auto ir = irCreationPhase.apply(executionTrace);
         std::cout << ir->toString() << std::endl;
-
-        // create and print MLIR
-        return Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
+        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
     }
 };
 
@@ -71,7 +71,7 @@ TEST_F(ExpressionExecutionTest, addI8Test) {
         return int8AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int8_t(*)(int8_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int8_t(*)(int8_t)>("execute");
     ASSERT_EQ(function(1), 3.0);
 }
 
@@ -87,7 +87,8 @@ TEST_F(ExpressionExecutionTest, addI16Test) {
         return int16AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int16_t(*)(int16_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int16_t(*)(int16_t)>("execute");
+
     ASSERT_EQ(function(8), 13);
 }
 
@@ -103,7 +104,7 @@ TEST_F(ExpressionExecutionTest, addI32Test) {
         return int32AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int32_t(*)(int32_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int32_t(*)(int32_t)>("execute");
     ASSERT_EQ(function(8), 13);
 }
 
@@ -119,7 +120,7 @@ TEST_F(ExpressionExecutionTest, addI64Test) {
         return int64AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int64_t(*)(int64_t)>("execute");
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
     ASSERT_EQ(function(-14), -7);
@@ -137,7 +138,7 @@ TEST_F(ExpressionExecutionTest, addFloatTest) {
         return floatAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (float (*)(float)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<float(*)(float)>("execute");
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
     ASSERT_EQ(function(-14.0), -7.0);
@@ -155,7 +156,7 @@ TEST_F(ExpressionExecutionTest, addDobleTest) {
         return doubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (double (*)(double)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<double(*)(double)>("execute");
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
     ASSERT_EQ(function(-14.0), -7.0);
@@ -173,7 +174,7 @@ TEST_F(ExpressionExecutionTest, castFloatToDoubleTest) {
         return castFloatToDoubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (double (*)(float)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<double(*)(float)>("execute");
     ASSERT_EQ(function(7.0), 14.0);
     ASSERT_EQ(function(-7.0), 0.0);
     ASSERT_EQ(function(-14.0), -7.0);
@@ -191,7 +192,7 @@ TEST_F(ExpressionExecutionTest, castInt8ToInt64Test) {
         return castInt8ToInt64AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int64_t(*)(int8_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int8_t(*)(int8_t)>("execute");
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
     ASSERT_EQ(function(-14), -7);
@@ -209,7 +210,7 @@ TEST_F(ExpressionExecutionTest, castInt8ToInt64Test2) {
         return castInt8ToInt64AddExpression2(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = (int64_t(*)(int8_t)) engine->lookup("execute").get();
+    auto function = engine->getInvocableMember<int8_t(*)(int8_t)>("execute");
     ASSERT_EQ(function(8), 50);
     ASSERT_EQ(function(-2), 40);
 }
