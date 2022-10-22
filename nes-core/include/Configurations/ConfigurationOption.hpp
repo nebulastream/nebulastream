@@ -263,6 +263,7 @@ const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
 const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "sendLocationUpdateInterval";
 const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
+const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

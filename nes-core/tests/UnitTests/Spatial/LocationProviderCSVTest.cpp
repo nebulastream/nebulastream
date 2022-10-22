@@ -112,4 +112,168 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     }
 #endif
 }
+
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
+    Timestamp offset = 400000000;
+    auto currTime = getTimestamp();
+    Timestamp simulatedStartTime = currTime + offset;
+    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv", simulatedStartTime);
+    auto startTime = sourceCsv.getStarttime();
+    EXPECT_EQ(startTime, simulatedStartTime);
+    auto timefirstLoc = startTime;
+    auto timesecloc = startTime + 100000000;
+    auto timethirdloc = startTime + 200000000;
+    auto timefourthloc = startTime + 300000000;
+    auto loopTime = startTime + 400000000;
+
+    double pos1lat = 52.55227464714949;
+    double pos1lng = 13.351743136322877;
+
+    double pos2lat = 52.574709862890394;
+    double pos2lng = 13.419206057808077;
+
+    double pos3lat = 52.61756571840606;
+    double pos3lng = 13.505980882863446;
+
+    double pos4lat = 52.67219559419452;
+    double pos4lng = 13.591124924963108;
+
+    Timestamp beforeQuery = getTimestamp();
+    std::pair currentTuple = sourceCsv.getCurrentLocation();
+    Timestamp afterQuery = getTimestamp();
+
+#ifdef S2DEF
+    while (afterQuery < loopTime) {
+        if (afterQuery < timesecloc) {
+            NES_DEBUG("checking first loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos1lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos1lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos2lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos2lng);
+        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
+            NES_DEBUG("checking second loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos2lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos2lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos3lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos3lng);
+        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
+            NES_DEBUG("checking third loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos3lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos3lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos4lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos4lng);
+        } else if (beforeQuery > timefourthloc) {
+            NES_DEBUG("checking fourth loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        beforeQuery = getTimestamp();
+        currentTuple = sourceCsv.getCurrentLocation();
+        afterQuery = getTimestamp();
+    }
+
+#else
+    while (afterQuery < loopTime) {
+        if (afterQuery < timesecloc) {
+            NES_DEBUG("checking first loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
+        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
+            NES_DEBUG("checking second loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
+        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
+            NES_DEBUG("checking third loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
+        } else if (beforeQuery > timefourthloc) {
+            NES_DEBUG("checking fourth loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        beforeQuery = getTimestamp();
+        currentTuple = sourceCsv.getCurrentLocation();
+        afterQuery = getTimestamp();
+    }
+#endif
+}
+
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
+    Timestamp offset = -100000000;
+    auto currTime = getTimestamp();
+    Timestamp simulatedStartTime = currTime + offset;
+    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv", simulatedStartTime);
+    auto startTime = sourceCsv.getStarttime();
+    EXPECT_EQ(startTime, simulatedStartTime);
+    auto timefirstLoc = startTime;
+    auto timesecloc = startTime + 100000000;
+    auto timethirdloc = startTime + 200000000;
+    auto timefourthloc = startTime + 300000000;
+    auto loopTime = startTime + 400000000;
+
+    double pos1lat = 52.55227464714949;
+    double pos1lng = 13.351743136322877;
+
+    double pos2lat = 52.574709862890394;
+    double pos2lng = 13.419206057808077;
+
+    double pos3lat = 52.61756571840606;
+    double pos3lng = 13.505980882863446;
+
+    double pos4lat = 52.67219559419452;
+    double pos4lng = 13.591124924963108;
+
+    Timestamp beforeQuery = getTimestamp();
+    std::pair currentTuple = sourceCsv.getCurrentLocation();
+    Timestamp afterQuery = getTimestamp();
+
+#ifdef S2DEF
+    while (afterQuery < loopTime) {
+        if (afterQuery < timesecloc) {
+            NES_DEBUG("checking first loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos1lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos1lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos2lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos2lng);
+        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
+            NES_DEBUG("checking second loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos2lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos2lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos3lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos3lng);
+        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
+            NES_DEBUG("checking third loc")
+            EXPECT_GE(currentTuple.first->getLatitude(), pos3lat);
+            EXPECT_GE(currentTuple.first->getLongitude(), pos3lng);
+            EXPECT_LE(currentTuple.first->getLatitude(), pos4lat);
+            EXPECT_LE(currentTuple.first->getLongitude(), pos4lng);
+        } else if (beforeQuery > timefourthloc) {
+            NES_DEBUG("checking fourth loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        beforeQuery = getTimestamp();
+        currentTuple = sourceCsv.getCurrentLocation();
+        afterQuery = getTimestamp();
+    }
+
+#else
+    while (afterQuery < loopTime) {
+        if (afterQuery < timesecloc) {
+            NES_DEBUG("checking first loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
+        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
+            NES_DEBUG("checking second loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
+        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
+            NES_DEBUG("checking third loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
+        } else if (beforeQuery > timefourthloc) {
+            NES_DEBUG("checking fourth loc")
+            EXPECT_EQ(*(currentTuple.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        beforeQuery = getTimestamp();
+        currentTuple = sourceCsv.getCurrentLocation();
+        afterQuery = getTimestamp();
+    }
+#endif
+}
 }// namespace NES

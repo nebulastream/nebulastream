@@ -27,6 +27,8 @@ class LocationProviderCSV : public LocationProvider {
   public:
     explicit LocationProviderCSV(const std::string& csvPath);
 
+    explicit LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime);
+
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file

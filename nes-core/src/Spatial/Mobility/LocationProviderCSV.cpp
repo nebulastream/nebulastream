@@ -26,8 +26,15 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath)
+    : LocationProviderCSV(csvPath, 0) {}
+
+LocationProviderCSV::LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime)
     : LocationProvider(Index::Experimental::NodeType::MOBILE_NODE, {}) {
-    startTime = getTimestamp();
+    if (simulatedStartTime == 0) {
+        startTime = getTimestamp();
+    } else {
+        startTime = simulatedStartTime;
+    }
     readMovementSimulationDataFromCsv(csvPath);
 }
 
@@ -74,8 +81,15 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     while (nextWaypoint->second < requestTime && nextWaypoint != waypoints.end()) {
         nextWaypoint = std::next(nextWaypoint);
     }
+
+    //if the first waypoint is still in the future, simulate the device to be resting at that position until the specified timestamp
+    if (nextWaypoint == waypoints.begin()) {
+        return {nextWaypoint->first, requestTime};
+    }
+
     //find the last point behind us on the way
     auto prevWaypoint = std::prev(nextWaypoint);
+
 
 #ifdef S2DEF
     //if we already reached the last position in the file, we assume that the device stays in that location and does not move further
