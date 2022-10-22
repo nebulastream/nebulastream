@@ -224,6 +224,50 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     bool retStopWrk4 = wrk4->stop(false);
     EXPECT_TRUE(retStopWrk4);
 }
+
+TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
+    uint64_t rpcPortWrk1 = 6000;
+    uint64_t rpcPortWrk3 = 6002;
+    uint64_t rpcPortWrk4 = 6003;
+    nlohmann::json cmpLoc;
+    TopologyPtr topology = Topology::create();
+    service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
+    TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
+    //setting coordinates for field node which should not show up in the response when querying for mobile nodes
+    TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
+    node4->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    topology->setAsRoot(node1);
+
+    NES_INFO("start worker 3");
+    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+    wrkConf3->rpcPort = rpcPortWrk3;
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf3->mobilityConfiguration.locationProviderType.setValue(
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart3);
+    topology->addNewTopologyNodeAsChild(node1, node3);
+    locIndex->addMobileNode(node3);
+
+    auto response1 = service->requestReconnectScheduleAsJson(node3->getId());
+
+    auto entry = response1.get<std::map<std::string, nlohmann::json>>();
+    EXPECT_EQ(entry.size(), 4);
+    EXPECT_NE(entry.find("pathStart"), entry.end());
+    EXPECT_EQ(entry.at("pathStart"), nullptr);
+    EXPECT_NE(entry.find("pathEnd"), entry.end());
+    EXPECT_EQ(entry.at("pathEnd"), nullptr);
+    EXPECT_NE(entry.find("indexUpdatePosition"), entry.end());
+    EXPECT_EQ(entry.at("indexUpdatePosition"), nullptr);
+
+    bool retStopWrk3 = wrk3->stop(false);
+    EXPECT_TRUE(retStopWrk3);
+}
 #endif
 
 TEST_F(LocationServiceTest, testConvertingToJson) {

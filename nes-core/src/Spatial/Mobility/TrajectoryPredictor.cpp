@@ -97,7 +97,7 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
         indexUpdatePointer = std::make_shared<Index::Experimental::Location>(
             Spatial::Util::S2Utilities::s2pointToLocation(positionOfLastNodeIndexUpdate.value()));
     } else {
-        indexUpdatePointer = nullptr;
+        indexUpdatePointer = std::make_shared<Index::Experimental::Location>();
     }
     indexUpdatePosLock.unlock();
 
