@@ -252,7 +252,7 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     NES_DEBUG(res);
     ASSERT_TRUE(res.is_array());
     EXPECT_TRUE(res.size() == 2);
-    nlohmann::json::array_t locationData;
+    auto locationData = std::vector<double>(2, 0);
     for (auto entry : res) {
         if (entry["id"] == workerNodeId2) {
             locationData[0] = 52.55227464714949;
