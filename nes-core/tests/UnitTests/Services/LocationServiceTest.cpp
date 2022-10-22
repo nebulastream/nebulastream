@@ -155,8 +155,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto response0 = service->requestLocationDataFromAllMobileNodesAsJson();
 
     //no mobile nodes added yet. List should be empty
-    NES_DEBUG("Response: " << response0.serialize());
-    EXPECT_EQ(response0.as_array().size(), 0);
+    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
@@ -172,13 +171,12 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     locIndex->addMobileNode(node3);
 
     auto response1 = service->requestLocationDataFromAllMobileNodesAsJson();
-    auto getLocResp1 = response1.as_array();
-    NES_DEBUG("Response: " << response1.serialize());
+    auto getLocResp1 = response1.get<std::vector<nlohmann::json>>();
     EXPECT_TRUE(getLocResp1.size() == 1);
 
     cmpLoc[0] = 52.55227464714949;
     cmpLoc[1] = 13.351743136322877;
-    auto entry = getLocResp1[0].as_object();
+    auto entry = getLocResp1[0].get<std::map<std::string, nlohmann::json>>();
     EXPECT_TRUE(entry.size() == 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
     EXPECT_EQ(entry.at("id"), 3);
@@ -199,12 +197,11 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     locIndex->addMobileNode(node4);
 
     auto response2 = service->requestLocationDataFromAllMobileNodesAsJson();
-    auto getLocResp2 = response2.as_array();
-    NES_DEBUG("Response: " << response2.serialize());
+    auto getLocResp2 = response2.get<std::vector<nlohmann::json>>();
     EXPECT_TRUE(getLocResp2.size() == 2);
 
     for (auto e : getLocResp2) {
-        entry = e.as_object();
+        entry = e.get<std::map<std::string, nlohmann::json>>();
         EXPECT_TRUE(entry.size() == 2);
         EXPECT_TRUE(entry.find("id") != entry.end());
         NES_DEBUG("checking element with id " << entry.at("id"));
