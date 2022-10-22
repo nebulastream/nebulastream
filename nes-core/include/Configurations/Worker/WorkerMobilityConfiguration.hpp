@@ -145,6 +145,13 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      */
     StringOption locationProviderConfig = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
 
+    /**
+     * @brief if the locationprovider simulates device movement, setting this option to a non zero value will result in that
+     * value being used as the start time to which offsets will be added to obtain absolute timestamps
+     */
+    UIntOption locationProviderSimulatedStartTime = {LOCATION_SIMULATED_START_TIME_CONFIG, 0,
+                                                     "the start time to be simulated by if deice movement is simulated"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&pathPredictionUpdateInterval,
@@ -160,7 +167,8 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &pushDeviceLocationUpdates,
                 &sendLocationUpdateInterval,
                 &locationProviderType,
-                &locationProviderConfig};
+                &locationProviderConfig,
+                &locationProviderSimulatedStartTime};
     }
 };
 }// namespace Configurations::Spatial::Mobility::Experimental
