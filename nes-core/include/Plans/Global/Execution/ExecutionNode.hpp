@@ -116,12 +116,19 @@ class ExecutionNode : public Node {
 
     float getDownstreamRatio();
 
+    int getQueryDepth(QueryId queryId);
+
+    void setQueryDepth(QueryId queryId, int depth);
+
+    int getDelayToRoot(int delay);
+
     bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
 
     std::vector<std::string> toMultilineString() override;
 
+    std::map<QueryId,int> queryDepths;
 
 
   private:

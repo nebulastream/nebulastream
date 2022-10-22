@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
+#include "FaultTolerance/FaultToleranceConfiguration.hpp"
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -130,32 +131,35 @@ class BasePlacementStrategy {
      */
     static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix);
 
-    static int getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter);
-    static std::vector<ExecutionNodePtr> getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth);
-    static float calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcLinkWeight(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
-    static float getNetworkConnectivity(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode);
-    static float calcOutputQueue(TopologyPtr topology, ExecutionNodePtr executionNode);
-    static void calcEffectiveValues(TopologyPtr topology,
+    static int getDepth(const GlobalExecutionPlanPtr& globalExecutionPlan, const ExecutionNodePtr& executionNode, int counter);
+    static std::vector<ExecutionNodePtr> getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth);
+    //static float calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcLinkWeight(const TopologyPtr& topology, ExecutionNodePtr upstreamNode, const ExecutionNodePtr& downstreamNode);
+    static float getNetworkConnectivity(const TopologyPtr& topology, const ExecutionNodePtr& upstreamNode, ExecutionNodePtr downstreamNode);
+    static float calcOutputQueue(const TopologyPtr& topology, const ExecutionNodePtr& executionNode);
+    /*static void calcEffectiveValues(const TopologyPtr& topology,
                                     GlobalExecutionPlanPtr globalExecutionPlan,
                                     std::vector<TopologyNodePtr> topologyNodes,
-                                    QueryId queryId);
-    static std::vector<TopologyNodePtr> getDownstreamTree(TopologyNodePtr topNode, bool reversed);
-    static std::vector<TopologyNodePtr> getUpstreamTree(TopologyNodePtr topNode, bool reversed);
-    static void initAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
-    static void initNetworkConnectivities(TopologyPtr topology,
-                                   GlobalExecutionPlanPtr globalExecutionPlan,
+                                    QueryId queryId);*/
+    static std::vector<TopologyNodePtr> getDownstreamTree(const TopologyNodePtr& topNode, bool reversed);
+    static std::vector<TopologyNodePtr> getUpstreamTree(const TopologyNodePtr& topNode, bool reversed);
+    static void initAdjustedCosts(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
+    static void initNetworkConnectivities(const TopologyPtr& topology,
+                                   const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    QueryId queryId);
-    static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
-                                                             ExecutionNodePtr executionNode, int replicas, QueryId queryId);
-    static std::tuple<float,float,float> calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
+    static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                             const ExecutionNodePtr& executionNode, int replicas, QueryId queryId);
+    static std::tuple<float,float,float> calcUpstreamBackup(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId,
+                                                              FaultToleranceConfigurationPtr ftConfig);
     static std::tuple<float, float, float> calcCheckpointing(TopologyPtr topology,
-                                                      GlobalExecutionPlanPtr globalExecutionPlan,
+                                                      const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                       ExecutionNodePtr executionNode,
                                                       QueryId queryId);
     static FaultToleranceType bestApproach(std::vector<float> activeStandbyCosts,
                       std::vector<float> checkpointingCosts,
                       std::vector<float> upstreamBackupCosts);
+    static int getDelayToRoot(ExecutionNodePtr executionNode, TopologyPtr topology, int delay);
+
 
 
   protected:

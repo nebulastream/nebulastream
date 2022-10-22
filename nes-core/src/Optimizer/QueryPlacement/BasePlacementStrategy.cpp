@@ -33,6 +33,7 @@
 #include <stack>
 #include <utility>
 #include <numeric>
+#include <FaultTolerance/FaultToleranceConfiguration.hpp>
 
 namespace NES::Optimizer {
 
@@ -59,7 +60,7 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
         auto currentRow = matrix[i];
         for (uint64_t j = 0; j < operators.size(); j++) {
             if (currentRow[j]) {
-                // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
+                // if the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
                 operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
             }
         }
@@ -618,7 +619,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
     return candidateQueryPlan;
 }
 
-std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(ExecutionNodePtr executionNode, int levelsLower, int targetDepth){
+std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth){
 
     std::vector<ExecutionNodePtr> answer;
 
@@ -635,7 +636,7 @@ std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(ExecutionN
 
 }
 
-int BasePlacementStrategy::getDepth(GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, int counter){
+int BasePlacementStrategy::getDepth(const GlobalExecutionPlanPtr& globalExecutionPlan, const ExecutionNodePtr& executionNode, int counter){
 
     std::vector<ExecutionNodePtr> rootNodes = globalExecutionPlan->getRootNodes();
 
@@ -647,10 +648,10 @@ int BasePlacementStrategy::getDepth(GlobalExecutionPlanPtr globalExecutionPlan, 
         if(std::find(rootNodes.begin(), rootNodes.end(), exParent)!= rootNodes.end()){
             return counter;
         }else{
-            for(auto& parent : executionNode->getParents()){
+            for(auto& thisParent : executionNode->getParents()){
 
-                ExecutionNodePtr exParent = parent->as<ExecutionNode>();
-                return getDepth(globalExecutionPlan, exParent, counter);
+                ExecutionNodePtr thisExParent = thisParent->as<ExecutionNode>();
+                return getDepth(globalExecutionPlan, thisExParent, counter);
             }
         }
     }
@@ -658,7 +659,24 @@ int BasePlacementStrategy::getDepth(GlobalExecutionPlanPtr globalExecutionPlan, 
     return counter;
 }
 
-float BasePlacementStrategy::calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+/*void BasePlacementStrategy::initDepths(ExecutionNodePtr executionNode, QueryId queryId){
+
+    if(executionNode->getParents().empty()){
+        executionNode->setQueryDepth(queryId, 0);
+        return;
+    }
+    NodePtr *min = std::max_element( executionNode->getParents().begin(), executionNode->getParents().end(),
+                                [&queryId]( const NodePtr &a, const NodePtr &b)
+                                {
+                                    return a->as<ExecutionNode>()->getQueryDepth(queryId)
+                                        > b->as<ExecutionNode>()->getQueryDepth(queryId);
+                                } );
+
+    executionNode->setQueryDepth(queryId, min.);
+}*/
+
+
+/*float BasePlacementStrategy::calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
     float downstreamLinkWeights = 0;
@@ -672,9 +690,9 @@ float BasePlacementStrategy::calcDownstreamLinkWeights(TopologyPtr topology, Glo
     }
 
     return downstreamLinkWeights;
-}
+}*/
 
-float BasePlacementStrategy::calcLinkWeight(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+float BasePlacementStrategy::calcLinkWeight(const TopologyPtr& topology, ExecutionNodePtr upstreamNode, const ExecutionNodePtr& downstreamNode){
     TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
     TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
 
@@ -690,7 +708,7 @@ float BasePlacementStrategy::calcLinkWeight(TopologyPtr topology, ExecutionNodeP
 }
 
 
-float BasePlacementStrategy::calcOutputQueue(TopologyPtr topology, ExecutionNodePtr executionNode){
+float BasePlacementStrategy::calcOutputQueue(const TopologyPtr& topology, const ExecutionNodePtr& executionNode){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
     //TODO get queue-trimming / checkpointing interval
@@ -718,14 +736,14 @@ float BasePlacementStrategy::calcOutputQueue(TopologyPtr topology, ExecutionNode
     return queueSize;
 }
 
-float BasePlacementStrategy::getNetworkConnectivity(TopologyPtr topology, ExecutionNodePtr upstreamNode, ExecutionNodePtr downstreamNode){
+float BasePlacementStrategy::getNetworkConnectivity(const TopologyPtr& topology, const ExecutionNodePtr& upstreamNode, ExecutionNodePtr downstreamNode){
     TopologyNodePtr topUpstreamNode = topology->findNodeWithId(upstreamNode->getId());
     TopologyNodePtr topDownstreamNode = topology->findNodeWithId(downstreamNode->getId());
 
     return topUpstreamNode->connectivities.find(topDownstreamNode->getId())->second;
 }
 
-void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId){
+void BasePlacementStrategy::initNetworkConnectivities(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId){
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
 
@@ -736,7 +754,7 @@ void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, Glob
             TopologyNodePtr topNodeParent = topology->findNodeWithId(exNodeParent->as<TopologyNode>()->getId());
             if(globalExecutionPlan->checkIfExecutionNodeExists(topNodeParent->getId()) &&
                 globalExecutionPlan->getExecutionNodeByNodeId(topNodeParent->getId())->hasQuerySubPlans(queryId)){
-                TopologyNodePtr topNodeParent = exNodeParent->as<TopologyNode>();
+                TopologyNodePtr thisTopNodeParent = exNodeParent->as<TopologyNode>();
                 auto startIpAddress = topNode->getIpAddress();
                 auto startGrpcPort = topNode->getGrpcPort();
                 std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
@@ -747,7 +765,8 @@ void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, Glob
 
                 int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
 
-                //TODO remove randomness.
+                //TODO connection does not work correctly in this setup. should work in regular environments like with
+                //the setup in UpstreamBackupTest
                 if(conn == -1){
                     conn = (rand() % 100 + 10);
                 }
@@ -755,7 +774,7 @@ void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, Glob
                 NES_INFO("NODE#" + std::to_string(exNode->getId()) + " TO NODE#" + std::to_string(exNodeParent->as<TopologyNode>()->getId())
                          + " HAS CONN OF: " + std::to_string(conn));
 
-                topNode->addConnectivity(topNodeParent->getId(), conn);
+                topNode->addConnectivity(thisTopNodeParent->getId(), conn);
 
             }
         }
@@ -765,7 +784,34 @@ void BasePlacementStrategy::initNetworkConnectivities(TopologyPtr topology, Glob
     }
 }
 
-void BasePlacementStrategy::initAdjustedCosts(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId){
+int BasePlacementStrategy::getDelayToRoot(ExecutionNodePtr executionNode, TopologyPtr topology, int delay){
+
+    if(!executionNode->getParents().empty()){
+        TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
+        TopologyNodePtr topNodeParent = topology->findNodeWithId(executionNode->getParents()[0]->as<ExecutionNode>()->getId());
+        auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+        auto startIpAddress = topNode->getIpAddress();
+        auto startGrpcPort = topNode->getGrpcPort();
+        std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
+
+        auto destIpAddress = topNodeParent->getIpAddress();
+        auto destGrpcPort = topNodeParent->getGrpcPort();
+        std::string destRpcAddress = destIpAddress + ":" + std::to_string(destGrpcPort);
+
+        int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
+
+        if(conn == -1){
+            conn = (rand() % 100 + 10);
+        }
+
+        return delay + getDelayToRoot(executionNode->getParents()[0]->as<ExecutionNode>(), topology, conn);
+    }else{
+        return delay;
+    }
+}
+
+
+void BasePlacementStrategy::initAdjustedCosts(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId){
 
     rootNode->setAdjustedCosts(queryId, rootNode->getOccupiedResources(queryId));
 
@@ -803,7 +849,7 @@ void BasePlacementStrategy::initAdjustedCosts(TopologyPtr topology, GlobalExecut
 
 
 
-void BasePlacementStrategy::calcEffectiveValues(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, std::vector<TopologyNodePtr> topologyNodes, QueryId queryId){
+/*void BasePlacementStrategy::calcEffectiveValues(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, std::vector<TopologyNodePtr> topologyNodes, QueryId queryId){
 
 
 
@@ -844,8 +890,7 @@ void BasePlacementStrategy::calcEffectiveValues(TopologyPtr topology, GlobalExec
         auto grpcPort = node->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
 
-        //TODO implement latency restraints
-        int localAvailableBuffers = workerRpcClient->sayHi(queryId, rpcAddress);
+ int localAvailableBuffers = workerRpcClient->sayHi(queryId, rpcAddress);
 
         if(localAvailableBuffers != (-1)){
             node->setAvailableBuffers(localAvailableBuffers);
@@ -1009,9 +1054,9 @@ void BasePlacementStrategy::calcEffectiveValues(TopologyPtr topology, GlobalExec
 
 
 
-}
+}*/
 
-std::vector<TopologyNodePtr> BasePlacementStrategy::getDownstreamTree(TopologyNodePtr topNode, bool reversed){
+std::vector<TopologyNodePtr> BasePlacementStrategy::getDownstreamTree(const TopologyNodePtr& topNode, bool reversed){
 
     std::queue<TopologyNodePtr> q;
     std::vector<TopologyNodePtr> answer;
@@ -1034,7 +1079,7 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getDownstreamTree(TopologyNo
     return answer;
 }
 
-std::vector<TopologyNodePtr> BasePlacementStrategy::getUpstreamTree(TopologyNodePtr topNode, bool reversed){
+std::vector<TopologyNodePtr> BasePlacementStrategy::getUpstreamTree(const TopologyNodePtr& topNode, bool reversed){
 
     std::queue<TopologyNodePtr> q;
     std::vector<TopologyNodePtr> answer;
@@ -1062,8 +1107,8 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getUpstreamTree(TopologyNode
 
 //TODO solve all cases of random values
 
-std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                         ExecutionNodePtr executionNode, int replicas, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                         const ExecutionNodePtr& executionNode, int replicas, QueryId queryId){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
     std::vector<ExecutionNodePtr> downstreamNodes;
@@ -1120,8 +1165,6 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
         downstreamNodesToUse.push_back(globalExecutionPlan->getExecutionNodeByNodeId(ranks.find(linkWeights[i])->second));
     }
 
-
-    //TODO does replicas mean total number of downstream operator instances or is it 1 origin + k replicas?
     //Add up the adjustedCosts of placing the operator replicas onto every selected node
         for(auto& replicatedNode : downstreamNodesToUse){
             procCost += (replicatedNode->getDownstreamRatio() * downstreamCost);
@@ -1140,7 +1183,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
     return {procCost,networkCost,memoryCost};
 }
 
-std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
 
     std::vector<ExecutionNodePtr> downstreamNodes;
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
@@ -1169,7 +1212,8 @@ std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyP
     ExecutionNodePtr secondary = downstreamNodes[std::distance(downstreamNodes.begin(), min)];
     TopologyNodePtr topSecondary = topology->findNodeWithId(secondary->getId());
 
-    //TODO get "real" weight of operators if implemented?
+    /*
+    //TODO get correct operators
     int numOfOperatorsOnPrimary = 0;
     for(auto& subPlan : primary->getQuerySubPlans(queryId)){
         numOfOperatorsOnPrimary += subPlan->getRootOperators().size();
@@ -1188,13 +1232,18 @@ std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyP
     float networkCost = (calcLinkWeight(topology,executionNode,secondary) / interval);
 
     //float memoryCost = (topPrimary->getAvailableBuffers() / interval);
-    float memoryCost = topPrimary->getAvailableBuffers();
+    float memoryCost = topPrimary->getAvailableBuffers();*/
+
+    float procCost = -1;
+    float networkCost = -1;
+    float memoryCost = -1;
 
     return {procCost, networkCost, memoryCost};
 
 }
 
-std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId,
+                                                                          FaultToleranceConfigurationPtr ftConfig){
     TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
     //TODO get number of operators that are not sink or source
@@ -1202,9 +1251,10 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
     for(auto&subPlan : executionNode->getQuerySubPlans(queryId)){
         numOfOperators += subPlan->getRootOperators().size();
     }
+    /*
     float procCost = numOfOperators;
 
-    float networkCost = 0;
+    float networkCost = 0;*/
 
     std::vector<ExecutionNodePtr> downstreamNodes;
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
@@ -1216,14 +1266,13 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
         return {-1,-1,-1};
     }
 
-    //TODO check if this really gets max and min
     auto max = std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
                                 [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
                                 {
                                     return a->getOccupiedResources(queryId) < b->getOccupiedResources(queryId);
                                 } );
 
-    auto min = std::min_element( downstreamNodes.begin(), downstreamNodes.end(),
+    auto min = std::max_element( downstreamNodes.begin(), downstreamNodes.end(),
                                 [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
                                 {
                                     return a->getOccupiedResources(queryId) > b->getOccupiedResources(queryId);
@@ -1234,6 +1283,7 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
     ExecutionNodePtr secondary = downstreamNodes[std::distance(downstreamNodes.begin(), min)];
     TopologyNodePtr topSecondary = topology->findNodeWithId(secondary->getId());
 
+    /*
     //Get all nodes that are one level downstream. Has to be looped because the globalExecutionPlan may have multiple roots
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
         std::vector<ExecutionNodePtr> x = getNeighborNodes(rootNode,0, getDepth(globalExecutionPlan, executionNode, 0) - 1);
@@ -1242,8 +1292,8 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
 
     //TODO get interval
     float interval = (rand() % 3 + 0.8);
-    /*
-    //TODO determine which node to use as primary and which one to use as secondary
+
+
     networkCost += calcLinkWeight(topology, executionNode, primary) / interval;
     networkCost += calcLinkWeight(topology, executionNode, secondary) / interval;
     for(auto& upstreamNode : getDownstreamTree(topPrimary, false)){
@@ -1253,18 +1303,40 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(Topology
         networkCost += calcDownstreamLinkWeights(topology, globalExecutionPlan, executionNode, queryId) / interval;
     }*/
 
+    /**
+     * New processing formula
+     * (ingestion_rate[t/s] / ack_rate[t]) * stateful_operators[t] => [t/s]
+     */
+
+    /**
+     * New network formula
+     * (ingestion_rate[t/s] / ack_rate[t]) * ack_size[b] => [b/s]
+     */
+
+    /*
     networkCost += (2 * (calcLinkWeight(topology, executionNode, primary) / interval));
 
-    float memoryCost = calcOutputQueue(topology, executionNode);
+    float memoryCost = calcOutputQueue(topology, executionNode);*/
 
+    /**
+     * New memory formula
+     * n * tuple_size + ingestion_rate * delay_to_root * tuple_size
+     */
+
+    float ackInterval = static_cast<float>(ftConfig->getAckRate()) / static_cast<float>(ftConfig->getIngestionRate());
+    float acksSizePerSecond = ftConfig->getAckRate() * ftConfig->getAckSize();
+
+    float procCost = (static_cast<float>(ftConfig->getIngestionRate() * ftConfig->getTupleSize()) + static_cast<float>(acksSizePerSecond / ackInterval)) * executionNode->getDownstreamRatio();
+
+    float networkCost = static_cast<float>(ftConfig->getIngestionRate() / ftConfig->getAckRate()) * static_cast<float>(ftConfig->getAckSize());
+
+    float memoryCost = static_cast<float>(ftConfig->getIngestionRate() * getDelayToRoot(executionNode, topology, 0) * ftConfig->getTupleSize());
 
     return {procCost,networkCost,memoryCost};
 
 }
 
 FaultToleranceType BasePlacementStrategy::bestApproach(std::vector<float> activeStandbyCosts, std::vector<float> checkpointingCosts, std::vector<float> upstreamBackupCosts){
-
-    //TODO since for all three scores lower is better, reverse all previous variables. maxProcessingCost (or maybe bestProcessingCost?) should be the min_element, not max_element
 
     std::vector<float> allProcessingCosts = {activeStandbyCosts[0], checkpointingCosts[0], upstreamBackupCosts[0]};
     std::vector<float> allNetworkingCosts = {activeStandbyCosts[1], checkpointingCosts[1], upstreamBackupCosts[1]};
@@ -1326,7 +1398,6 @@ FaultToleranceType BasePlacementStrategy::bestApproach(std::vector<float> active
         faultToleranceScores.insert({FaultToleranceType::UPSTREAM_BACKUP, upstreamBackupScore});
     }
 
-
     //Changed it so that the lowest value is selected
     auto x = std::max_element(faultToleranceScores.begin(), faultToleranceScores.end(),
                                   [](const std::pair<FaultToleranceType, float>& p1, const std::pair<FaultToleranceType, float>& p2) {
@@ -1358,3 +1429,6 @@ FaultToleranceType BasePlacementStrategy::bestApproach(std::vector<float> active
 }
 
 }// namespace NES::Optimizer
+
+//TODO missing info: queue-trimming / checkpointing interval, how to obtain stateful operators, sometimes nodes have no available buffers
+

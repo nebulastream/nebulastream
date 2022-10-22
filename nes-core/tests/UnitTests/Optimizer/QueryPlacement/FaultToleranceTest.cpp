@@ -55,6 +55,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
+#include <FaultTolerance//FaultToleranceConfiguration.hpp>
+
 
 using namespace NES;
         using namespace z3;
@@ -72,6 +74,7 @@ using namespace NES;
             std::vector<ExecutionNodePtr> executionNodes;
             QueryId queryId;
             QueryId queryId2;
+            FaultToleranceConfigurationPtr ftConfig;
             /* Will be called before any test in this class are executed. */
             static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -84,6 +87,7 @@ using namespace NES;
                 auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
                 queryParsingService = QueryParsingService::create(jitCompiler);
                 udfCatalog = Catalogs::UdfCatalog::create();
+                ftConfig = FaultToleranceConfiguration::create();
             }
 
             /* Will be called before a test is executed. */
@@ -436,6 +440,7 @@ TEST_F(QueryPlacementTest, getDepthTest){
 
     setupSimpleQuery();
 
+    EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(1),0),0);
     EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(9),0),3);
     ASSERT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(10),0),2);
     EXPECT_EQ(Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan,globalExecutionPlan->getExecutionNodeByNodeId(16),0),4);
@@ -575,17 +580,10 @@ TEST_F(QueryPlacementTest, bestApproachTest){
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
     Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
-    /**STEPS:
-     * 1. Get std::vector<int,std::vector<float,float,float>,std::vector<float,float,float>,std::vector<float,float,float>> vector of node id, AS, CHK and UB costs
-     * 2. std::transform vector from 1. into <int, FaultToleranceType> of node id and best HA approach
-     */
-
     std::vector<std::vector<float>> nodeResults;
 
-    int replicas = 5;
+    int replicas = 3;
     for(auto& node : executionNodes){
-
-        //auto node = globalExecutionPlan->getExecutionNodeByNodeId(1);
 
         std::tuple<float,float,float> activeStandbyResult =
             Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId);
@@ -594,7 +592,7 @@ TEST_F(QueryPlacementTest, bestApproachTest){
             Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId);
 
         std::tuple<float,float,float> upstreamBackupResult =
-            Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId);
+            Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId, ftConfig);
 
         FaultToleranceType bestApproach = Optimizer::BasePlacementStrategy::bestApproach(
             {std::get<0>(activeStandbyResult), std::get<1>(activeStandbyResult), std::get<2>(activeStandbyResult)},
@@ -609,7 +607,7 @@ TEST_F(QueryPlacementTest, bestApproachTest){
         NES_INFO("\nUPSTREAM BACKUP COSTS ON NODE#" + std::to_string(node->getId()) + ": [" + std::to_string(std::get<0>(upstreamBackupResult)) + "," +
                  std::to_string(std::get<1>(upstreamBackupResult)) + "," + std::to_string(std::get<2>(upstreamBackupResult)) + "]");
 
-        NES_INFO("\nBESTEST APPROACH ON NODE#" + std::to_string(node->getId()) + ": " + toString(bestApproach));
+        NES_INFO("\nAPPROACH TO CHOOSE ON NODE#" + std::to_string(node->getId()) + ": " + toString(bestApproach));
     }
 }
 
@@ -763,6 +761,7 @@ TEST_F(QueryPlacementTest, calcActiveStandbyTest){
     setupLargeTopologyAndSourceCatalog({4,4,4});
     setupSimpleQuery();
 
+
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
     Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
@@ -805,55 +804,6 @@ TEST_F(QueryPlacementTest, iteratorTest){
 }
 
 TEST_F(QueryPlacementTest, sandboxTests){
-    topology = Topology::create();
-
-    TopologyNodePtr node1 = TopologyNode::create(1, "localhost", 123, 124, 20);
-    topology->setAsRoot(node1);
-
-    TopologyNodePtr node2 = TopologyNode::create(2, "localhost", 125, 126, 15);
-    TopologyNodePtr node3 = TopologyNode::create(3, "localhost", 125, 126, 16);
-    TopologyNodePtr node4 = TopologyNode::create(4, "localhost", 125, 126, 11);
-    TopologyNodePtr node5 = TopologyNode::create(5, "localhost", 125, 126, 12);
-    TopologyNodePtr node6 = TopologyNode::create(6, "localhost", 125, 126, 10);
-    TopologyNodePtr node7 = TopologyNode::create(7, "localhost", 125, 126, 13);
-    TopologyNodePtr node8 = TopologyNode::create(8, "localhost", 125, 126, 7);
-    TopologyNodePtr node9 = TopologyNode::create(9, "localhost", 125, 126, 6);
-    TopologyNodePtr node10 = TopologyNode::create(10, "localhost", 125, 126, 9);
-    TopologyNodePtr node11 = TopologyNode::create(11, "localhost", 125, 126, 6);
-    TopologyNodePtr node12 = TopologyNode::create(12, "localhost", 125, 126, 5);
-    TopologyNodePtr node13 = TopologyNode::create(13, "localhost", 125, 126, 7);
-    TopologyNodePtr node14 = TopologyNode::create(14, "localhost", 125, 126, 4);
-    TopologyNodePtr node15 = TopologyNode::create(15, "localhost", 125, 126, 4);
-    TopologyNodePtr node16 = TopologyNode::create(16, "localhost", 125, 126, 2);
-
-
-    topology->addNewTopologyNodeAsChild(node1, node2);
-    topology->addNewTopologyNodeAsChild(node1, node3);
-
-    topology->addNewTopologyNodeAsChild(node2, node4);
-    topology->addNewTopologyNodeAsChild(node2, node5);
-
-    topology->addNewTopologyNodeAsChild(node3, node6);
-    topology->addNewTopologyNodeAsChild(node3, node7);
-    topology->addNewTopologyNodeAsChild(node3, node10);
-
-    topology->addNewTopologyNodeAsChild(node4, node8);
-    topology->addNewTopologyNodeAsChild(node4, node9);
-    topology->addNewTopologyNodeAsChild(node4, node10);
-
-    topology->addNewTopologyNodeAsChild(node5, node9);
-    topology->addNewTopologyNodeAsChild(node5, node10);
-
-    topology->addNewTopologyNodeAsChild(node7, node11);
-    topology->addNewTopologyNodeAsChild(node7, node12);
-    topology->addNewTopologyNodeAsChild(node7, node13);
-
-    topology->addNewTopologyNodeAsChild(node10, node14);
-    topology->addNewTopologyNodeAsChild(node10, node15);
-
-    topology->addNewTopologyNodeAsChild(node14, node16);
-
-    topology->addNewTopologyNodeAsChild(node7, node15);
 
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64)"
@@ -864,99 +814,26 @@ TEST_F(QueryPlacementTest, sandboxTests){
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
-
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType->setGatheringInterval(0);
-    csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType2->setGatheringInterval(0);
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setGatheringInterval(25);
+    uint64_t epochRate = 18;
+    int ack_size = 8;
+
+    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
+    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
+    ftConfig->setAckRate(18);
+    ftConfig->setAckSize(8);
+
     auto physicalSource = PhysicalSource::create(sourceName, "test1", csvSourceType);
 
-    SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node8);
-    SourceCatalogEntryPtr sourceCatalogEntry2 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node9);
-    SourceCatalogEntryPtr sourceCatalogEntry3 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node16);
-    SourceCatalogEntryPtr sourceCatalogEntry4 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node15);
-    SourceCatalogEntryPtr sourceCatalogEntry5 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node6);
-    SourceCatalogEntryPtr sourceCatalogEntry6 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node11);
-    SourceCatalogEntryPtr sourceCatalogEntry7 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node12);
-    SourceCatalogEntryPtr sourceCatalogEntry8 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node13);
-
-    SourceCatalogEntryPtr sourceCatalogEntry10 =
-        std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node5);
-
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry3);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry4);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry5);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry6);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry7);
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry8);
-
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry10);
-
-    globalExecutionPlan = GlobalExecutionPlan::create();
-    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
-    Query query = Query::from("car").filter(Attribute("id") < 45)
-                      .filter(Attribute("id") < 40)
-                      .project(Attribute("id").as("id_new"), Attribute("value"))
-                      .map(Attribute("value") = Attribute("value") + 1)
-                      .as("carRename")
-                      .sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    Query subQuery1 = Query::from("car");
+    NES_INFO("\nTUPLE SIZE: " <<sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes() << " BYTE");
+    NES_INFO("\nINGESTION RATE: " <<csvSourceType->getGatheringInterval()->getValue());
+    NES_INFO("\nACK | CHK INTERVAL: EVERY " << epochRate << ". TUPLE");
+    NES_INFO("\nACKNOWLEDGEMENT TUPLE SIZE: " << ack_size << " BYTE");
 
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    queryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    NES_INFO("\n"+globalExecutionPlan->getAsString())
-
-    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
-
-    int replicas = 5;
-
-    ExecutionNodePtr node = globalExecutionPlan->getExecutionNodeByNodeId(16);
-
-        std::tuple<float,float,float> activeStandbyResult =
-            Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId);
-
-        float procCost = std::get<0>(activeStandbyResult);
-        float networkingCost = std::get<1>(activeStandbyResult);
-        float memoryCost = std::get<2>(activeStandbyResult);
-
-        NES_INFO("\nRESULTSS: [" + std::to_string(procCost) + "," + std::to_string(networkingCost) + "," + std::to_string(memoryCost) + "]");
-        /*if((procCost + networkingCost + memoryCost) != -3){
-            NES_INFO("\nACTIVE STANDBY COST OF NODE#" + std::to_string(node->getId()) + ": [" +
-                     std::to_string(procCost) + ", " + std::to_string(networkingCost) +
-                     ", " + std::to_string(memoryCost) + "]");
-        }*/
-
-
+    //sourceCatalog->getSchemaForLogicalSource("car").
 
 }
 
@@ -1021,6 +898,7 @@ TEST_F(QueryPlacementTest, calcUpstreamBackupTest){
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
 
+
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
@@ -1094,10 +972,19 @@ TEST_F(QueryPlacementTest, calcUpstreamBackupTest){
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
     Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
+    csvSourceType->setGatheringInterval(25);
+    uint64_t epochRate = 18;
+    int ack_size = 8;
+
+    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
+    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
+    ftConfig->setAckRate(18);
+    ftConfig->setAckSize(8);
+
     for(auto& node : executionNodes){
 
         std::tuple<float,float,float> activeStandbyResult =
-            Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId);
+            Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId, ftConfig);
 
         float procCost = std::get<0>(activeStandbyResult);
         float networkingCost = std::get<1>(activeStandbyResult);
@@ -1413,10 +1300,19 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[0]);
-    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[1]);
+
+    NES_INFO("GEP:: " + globalExecutionPlan->getAsString());
+    NES_INFO("SQMToDeploy size: " + std::to_string(updatedSharedQMToDeploy.size()));
+    NES_INFO("SQP 1: " + updatedSharedQMToDeploy[0]->getQueryPlan()->toString());
+    NES_INFO("SQP 2: " + updatedSharedQMToDeploy[1]->getQueryPlan()->toString());
+
+
+    /*updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
 
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[1]);
     updatedSharedQMToDeploy[1]->setStatus(SharedQueryPlanStatus::Deployed);
@@ -1443,7 +1339,7 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergedQuery){
                      std::to_string(procCost) + ", " + std::to_string(networkingCost) +
                      ", " + std::to_string(memoryCost) + "]");
         }
-    }
+    }*/
 
 }
 
@@ -1551,6 +1447,51 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergingTest){
     }
 }
 
+TEST_F(QueryPlacementTest, mergerTest){
+
+
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("truck").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //execute
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
+        }
+    }
+}
+
 /*TEST_F(QueryPlacementTest, calcUpstreamBackupTest){
     setupLargeTopologyAndSourceCatalog({4,4,4});
     setupSimpleQuery();
@@ -1575,3 +1516,4 @@ TEST_F(QueryPlacementTest, calcActiveStandbyMergingTest){
         }
     }
 }*/
+

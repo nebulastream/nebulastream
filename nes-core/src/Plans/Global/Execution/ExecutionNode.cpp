@@ -204,4 +204,17 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
     return lines;
 }
 
+int ExecutionNode::getQueryDepth(QueryId queryId) {
+    return this->queryDepths.find(queryId)->second;
+}
+
+void ExecutionNode::setQueryDepth(QueryId queryId, int depth){
+    if(this->queryDepths.contains(queryId)){
+        this->queryDepths.erase(queryId);
+    }
+
+    this->queryDepths.insert({queryId, depth});
+}
+
+
 }// namespace NES
