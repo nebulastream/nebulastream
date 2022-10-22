@@ -91,7 +91,8 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
                 exit(EXIT_FAILURE);
             }
             locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(
-                workerConfig->mobilityConfiguration.locationProviderConfig);
+                workerConfig->mobilityConfiguration.locationProviderConfig,
+                workerConfig->mobilityConfiguration.locationProviderSimulatedStartTime);
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::INVALID:
             NES_FATAL_ERROR("Trying to create location provider but provider type is invalid")
