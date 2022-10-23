@@ -582,6 +582,10 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 if(NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
     add_compile_definitions(TFDEF)
+    if (APPLE)
+        include_directories(SYSTEM /usr/local/include)
+        link_directories(/usr/local/lib)
+    endif()
 endif()
 
 # $ORIGIN is to read the shared object from the installation directory
