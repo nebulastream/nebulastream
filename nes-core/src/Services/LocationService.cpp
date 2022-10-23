@@ -40,22 +40,19 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) 
     auto schedule = nodePtr->getReconnectSchedule();
     nlohmann::json scheduleJson;
     auto startPtr = schedule->getPathStart();
+    scheduleJson["pathStart"];
     if (startPtr) {
         scheduleJson["pathStart"] = convertLocationToJson(*startPtr);
-    } else {
-        scheduleJson["pathStart"];
     }
     auto endPtr = schedule->getPathEnd();
+    scheduleJson["pathEnd"];
     if (endPtr) {
         scheduleJson["pathEnd"] = convertLocationToJson(*endPtr);
-    } else {
-        scheduleJson["pathEnd"];
     }
     auto updatePostion = schedule->getLastIndexUpdatePosition();
+    scheduleJson["indexUpdatePosition"];
     if (updatePostion) {
         scheduleJson["indexUpdatePosition"] = convertLocationToJson(*updatePostion);
-    } else {
-        scheduleJson["indexUpdatePosition"];
     }
 
     auto reconnectArray = nlohmann::json::array();
