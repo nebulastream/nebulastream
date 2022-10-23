@@ -256,6 +256,37 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
+#  build-arm64-macos:
+#    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+#    runs-on: [ self-hosted, macos, ARM64 ]
+#    needs: [ validateTrigger ]
+#    timeout-minutes: 120
+#    continue-on-error: true
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          ssh-key: ${{ secrets.CI_SECRET }}
+#          ssh-strict: 'false'
+#          fetch-depth: '0'
+#      - name: Cancel Previous Runs
+#        uses: styfle/cancel-workflow-action@0.9.1
+#        with:
+#          access_token: ${{ secrets.NES_CI_SECRET }}
+#      #TODO: 2268 remove the environment variable to allow test execution on arm server
+#      - name: Run build
+#        if: github.event_name != 'workflow_dispatch'
+#        run: |
+#          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
+#      - name: Notify Slack
+#        uses: 8398a7/action-slack@v2
+#        with:
+#          status: ${{ job.status }}
+#          author_name: ${{ github.actor }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        if: always()
+
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
