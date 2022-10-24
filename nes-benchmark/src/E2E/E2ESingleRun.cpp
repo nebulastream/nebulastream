@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
+#include <E2E/E2ESingleRun.hpp>
+
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <fstream>
-#include <algorithm>
 
 namespace NES::Benchmark {
 
@@ -54,7 +54,8 @@ void E2ESingleRun::createSources() {
     for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                            configPerRun.numBuffersToProduce->getValue());
-        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName("Default", bufferManager);
+        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerators[sourceCnt]->getValue(),
+                                                                                  bufferManager);
         auto createdBuffers =
             dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
 
@@ -103,7 +104,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = Benchmark::Utils::waitForQueryToStart(queryId, queryCatalog);
+    bool queryResult = Benchmark::Util::waitForQueryToStart(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }
