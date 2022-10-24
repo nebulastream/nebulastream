@@ -12,27 +12,18 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
-using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class MemoryAccessCompilationTest : public testing::Test {
+class MemoryAccessCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemoryAccessCompilationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -47,19 +38,11 @@ class MemoryAccessCompilationTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down MemoryAccessCompilationTest test class." << std::endl; }
-
-    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
-        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        std::cout << *executionTrace.get() << std::endl;
-        auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
-        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
-    }
 };
 
 Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Int64>(); }
 
-TEST_F(MemoryAccessCompilationTest, loadFunctionTest) {
+TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
@@ -80,7 +63,7 @@ void storeFunction(Value<MemRef> ptr) {
     ptr.store(tmp);
 }
 
-TEST_F(MemoryAccessCompilationTest, storeFunctionTest) {
+TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>((int8_t*) &valI);
     tempPara.load<Int64>();
@@ -105,7 +88,7 @@ Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
     return sum;
 }
 
-TEST_F(MemoryAccessCompilationTest, memScanFunctionTest) {
+TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
     auto memPtr = Value<MemRef>(nullptr);
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto size = Value<Int64>((int64_t) 0);
@@ -118,5 +101,15 @@ TEST_F(MemoryAccessCompilationTest, memScanFunctionTest) {
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
     ASSERT_EQ(function(7, array), 28);
 }
+
+// Tests all registered compilation backends.
+// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
+INSTANTIATE_TEST_CASE_P(testMemoryCompilation,
+                        MemoryAccessCompilationTest,
+                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        [](const testing::TestParamInfo<MemoryAccessCompilationTest::ParamType>& info) {
+                            return info.param;
+                        });
 
 }// namespace NES::Nautilus

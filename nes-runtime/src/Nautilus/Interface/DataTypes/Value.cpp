@@ -131,7 +131,7 @@ Value<> evalBinary(
             return result.value();
         }
     };
-    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
+    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation between " << left->toString() << " and " << right->toString());
 }
 
 Value<> evalWithCast(
