@@ -196,13 +196,13 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
 
 void TrajectoryPredictor::startReconnectPlanning() {
 #ifdef S2DEF
+    updateDownloadedNodeIndex(locationProvider->getCurrentLocation().first);
     //fill up the buffer before starting to calculate path
     for (size_t i = 0; i < locationBufferSize; ++i) {
         auto currentLocation = locationProvider->getCurrentLocation();
         locationBuffer.push_back(currentLocation);
         NES_DEBUG("added: " << locationBuffer.back().first->toString() << ", " << locationBuffer.back().second);
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval * locationBufferSaveRate));
-        updateDownloadedNodeIndex(currentLocation.first);
     }
     NES_TRACE("Location buffer is filled");
 
@@ -399,6 +399,10 @@ bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Locatio
 bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental::LocationPtr& newPathStart,
                                               const Spatial::Index::Experimental::LocationPtr& currentLocation) {
 #ifdef S2DEF
+    //if path end and beginning are the same location, we cannot construct a path out of that data
+    if (*newPathStart == *currentLocation) {
+        return false;
+    }
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
     S2Point currentPoint = Util::S2Utilities::locationToS2Point(*currentLocation);
