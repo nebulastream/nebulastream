@@ -17,6 +17,7 @@
 #define NES_DATAGENERATOR_HPP
 
 #include <Runtime/BufferManager.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
@@ -25,7 +26,7 @@ namespace NES::Benchmark::DataGeneration {
 
     class DataGenerator {
       public:
-        DataGenerator(Runtime::BufferManagerPtr bufferManager);
+        DataGenerator();
         virtual ~DataGenerator() = default;
 
         /**
@@ -49,12 +50,24 @@ namespace NES::Benchmark::DataGeneration {
         virtual std::string getName() = 0;
 
         /**
+         * @brief creates a string representation of this data generator
+         * @return the string representation
+         */
+        virtual std::string toString() = 0;
+
+        /**
+         * @brief adds a bufferManager to this dataGenerator
+         * @param bufferManager
+         */
+        void setBufferManager(Runtime::BufferManagerPtr bufferManager);
+
+        /**
          * @brief creates a data generator depending on the name
          * @param name
          * @return
          */
-        static std::shared_ptr<DataGenerator> createGeneratorByName(std::string name,
-                                                                    Runtime::BufferManagerPtr bufferManager);
+        static DataGeneratorPtr createGeneratorByName(std::string name,
+                                                      Yaml::Node generatorNode);
 
 
 

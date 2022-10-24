@@ -16,6 +16,7 @@
 #define NES_E2EBENCHMARKCONFIGOVERALLRUNS_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <DataGeneration/DataGenerator.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
@@ -49,7 +50,7 @@ namespace NES::Benchmark {
         Configurations::IntConfigOption numMeasurementsToCollect;
         Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
         Configurations::IntConfigOption numSources;
-        std::vector<Configurations::StringConfigOption> dataGenerators;
+        std::vector<DataGeneration::DataGeneratorPtr> dataGenerators;
         Configurations::StringConfigOption outputFile;
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;

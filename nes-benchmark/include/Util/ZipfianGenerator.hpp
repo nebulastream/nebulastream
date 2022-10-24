@@ -1,0 +1,76 @@
+
+#ifndef NES_ZIPFIANGENERATOR_HPP
+#define NES_ZIPFIANGENERATOR_HPP
+
+#include <random>
+
+class ZipfianGenerator {
+    static constexpr auto DEFAULT_ZIPFIAN_GENERATOR = .99;
+
+  public:
+    explicit ZipfianGenerator(uint64_t min_, uint64_t max_, double zipfianFactor = DEFAULT_ZIPFIAN_GENERATOR)
+        : ZipfianGenerator(min_, max_, zipfianFactor, computeZeta(0, max_ - min_ + 1, zipfianFactor, 0)) {
+        // nop
+    }
+
+    explicit ZipfianGenerator(uint64_t min_, uint64_t max_, double zipfianConstant_, double zetan_) : dist(0.0, 1.0) {
+        numItems = max_ - min_ + 1;
+        min = min_;
+        theta = zipfianConstant = zipfianConstant_;
+
+        theta = zipfianConstant;
+
+        zeta2Theta = zeta(0, 2, theta, 0);
+
+        alpha = 1.0 / (1.0 - theta);
+        zetan = zetan_;
+        countForZeta = numItems;
+        eta = (1 - std::pow(2.0 / numItems, 1 - theta)) / (1 - zeta2Theta / zetan);
+    }
+
+    uint64_t operator()(std::mt19937& rng) { return (*this)(rng, countForZeta); }
+
+    uint64_t operator()(std::mt19937& rng, uint64_t newItemCount) {
+        if (newItemCount > countForZeta) {
+            // we have added more items. can compute zetan incrementally, which is cheaper
+            numItems = newItemCount;
+            zetan = zeta(countForZeta, numItems, theta, zetan);
+            eta = (1 - std::pow(2.0 / numItems, 1 - theta)) / (1 - zeta2Theta / zetan);
+        }
+        double u = dist(rng);
+        double uz = u * zetan;
+        if (uz < 1.0) {
+            return min;
+        }
+
+        if (uz < 1.0 + std::pow(0.5, theta)) {
+            return min + 1;
+        }
+
+        long ret = min + (long)((numItems)*std::pow(eta * u - eta + 1, alpha));
+        return ret;
+    }
+
+  private:
+    double zeta(uint64_t st, uint64_t n, double thetaVal, double initialSum) {
+        countForZeta = n;
+        return computeZeta(st, n, thetaVal, initialSum);
+    }
+
+    static double computeZeta(uint64_t st, uint64_t n, double theta, double initialSum) {
+        double sum = initialSum;
+        for (auto i = st; i < n; i++) {
+            sum += 1 / (std::pow(i + 1, theta));
+        }
+        return sum;
+    }
+
+  private:
+    uint64_t numItems;
+    uint64_t min;
+    double zipfianConstant;
+    double alpha, zetan, eta, theta, zeta2Theta;
+    uint64_t countForZeta;
+    std::uniform_real_distribution<double> dist;
+};
+#endif//NES_ZIPFIANGENERATOR_HPP
