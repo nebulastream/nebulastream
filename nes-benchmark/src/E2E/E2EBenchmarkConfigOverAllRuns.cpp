@@ -13,6 +13,7 @@
 */
 
 #include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
@@ -34,7 +35,10 @@ namespace NES::Benchmark {
         inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "How to read the input data");
         query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
-        dataGenerations = ConfigurationOption<std::string>::create("dataGenerations", "Default", "DataGenerator per Source as CSV");
+
+        for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
+            dataGenerators.emplace_back(ConfigurationOption<std::string>::create("dataGenerators", "Default", "DataGenerator per Source as CSV"));
+        }
     }
     std::string E2EBenchmarkConfigOverAllRuns::toString() {
         std::stringstream oss;
@@ -46,7 +50,7 @@ namespace NES::Benchmark {
             << "- inputType: " << inputType->getValue() << std::endl
             << "- query: " << query->getValue() << std::endl
             << "- numSources: " << numSources->getValueAsString() << std::endl
-            << "- dataGenerations: " << dataGenerations->getValue() << std::endl
+            << "- dataGenerations: " << getDataGeneratorsAsString() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl;
 
         return oss.str();
@@ -62,8 +66,34 @@ namespace NES::Benchmark {
         configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
         configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
-        configOverAllRuns.dataGenerations->setValue(yamlConfig["dataGenerations"].As<std::string>());
+
+
+        /* Splitting the csv of to get the string of each DataGenerator
+         * Afterwards, we insert either the parsed values or Default, if we require another generator
+         * */
+        auto dataGenerationsStr = NES::Util::splitWithStringDelimiter<std::string>(yamlConfig["dataGenerators"].As<std::string>(), ",");
+        configOverAllRuns.dataGenerators.clear();
+        configOverAllRuns.dataGenerators.reserve(configOverAllRuns.numSources->getValue());
+
+        for (auto sourceCnt = 0UL; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+            if (sourceCnt < dataGenerationsStr.size()) {
+                configOverAllRuns.dataGenerators.emplace_back(Configurations::ConfigurationOption<std::string>::create("dataGenerations", dataGenerationsStr[sourceCnt], "DataGenerator per Source as CSV"));
+            } else {
+                configOverAllRuns.dataGenerators.emplace_back(Configurations::ConfigurationOption<std::string>::create("dataGenerations", "Default", "DataGenerator per Source as CSV"));
+            }
+        }
 
         return configOverAllRuns;
+    }
+    std::string E2EBenchmarkConfigOverAllRuns::getDataGeneratorsAsString() {
+        std::ostringstream oss;
+        for (auto cnt = 0UL; cnt < dataGenerators.size(); ++cnt) {
+            if (cnt != 0) {
+                oss << ", ";
+            }
+            oss << dataGenerators[cnt]->getValue();
+        }
+
+        return oss.str();
     }
 }
