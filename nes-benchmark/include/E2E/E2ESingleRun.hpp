@@ -15,15 +15,15 @@
 #ifndef NES_E2ESINGLERUN_HPP
 #define NES_E2ESINGLERUN_HPP
 
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataProvider/DataProvider.hpp>
+#include <E2E/configs/E2EBenchmarkConfigPerRun.hpp>
 #include <Measurements.hpp>
-#include <E2E/E2EBenchmarkConfigPerRun.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <vector>
 
 namespace NES::Benchmark{

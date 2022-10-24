@@ -22,10 +22,10 @@ namespace NES::Benchmark::DataGeneration {
       public:
         /**
          * @brief creates a DefaultDataGenerator
-         * @param bufferManager
+         * @param minValue
+         * @param maxValue
          */
-        explicit DefaultDataGenerator(Runtime::BufferManagerPtr bufferManager,
-                                      uint64_t minValue,
+        explicit DefaultDataGenerator(uint64_t minValue,
                                       uint64_t maxValue);
 
 
@@ -50,6 +50,12 @@ namespace NES::Benchmark::DataGeneration {
          * @return name
          */
         std::string getName() override;
+
+        /**
+         * @brief overrides the string representation of the parent class
+         * @return
+         */
+        std::string toString() override;
 
       private:
         uint64_t minValue;
