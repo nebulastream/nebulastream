@@ -1,14 +1,16 @@
-/*
+/*Copyright LICENSE nebulastream
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-    https://www.apache.org/licenses/LICENSE-2.0
+
+http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
-*/
+limitations under the License.*/
 #include <Execution/Expressions/Functions/CosExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
@@ -19,16 +21,15 @@ CosExpression::CosExpression(const NES::Runtime::Execution::Expressions::Express
     : leftSubExpression(leftSubExpression) {}
 
 /**
- * @brief This method calculates the modulus between x and y.
- * This function is basically a wrapper for std::fmod and enables us to use it in our execution engine framework.
+ * @brief This method calculates the cosinus of x.
+ * This function is basically a wrapper for std::cos and enables us to use it in our execution engine framework.
  * @param x double
- * @param y double
  * @return double
  */
 double calculateCos(double x) { return std::cos(x); }
 
 Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the left sub expression and retrieve the value.
+    // Evaluate the  expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
 
     // As we don't know the exact type of value here, we have to check the type and then call the function.
@@ -37,7 +38,7 @@ Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Int8>()) {
-        // call the calculateMod function with the correct type
+        // call the calculateCos function with the correct type
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int16>());
