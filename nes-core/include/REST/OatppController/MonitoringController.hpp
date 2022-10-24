@@ -17,8 +17,6 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
-#include <REST/DTOs/MonitoringControllerBoolResponse.hpp>
-#include <REST/DTOs/MonitoringControllerStringResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/OatppController/BaseRouterPrefix.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -108,8 +106,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 "Error: Monitoring ist not enabled.");
         }
         nlohmann::json responseMsg;
-        responseMsg["success"] = monitoringService->stopMonitoringStreams();
-        if (responseMsg["success"] == true) {
+        responseMsg = monitoringService->stopMonitoringStreams();
+        if (responseMsg == true) {
             return createResponse(Status::CODE_200, responseMsg.dump());
         }
         return errorHandler->handleError(Status::CODE_500, "Stopping monitoring service was not successful.");
@@ -149,8 +147,8 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                 Status::CODE_500,
                 "Error: Monitoring ist not enabled.");
         }
-        //nlohmann::json response;
-        auto response = monitoringService->requestMonitoringDataFromAllNodesAsJson();
+        nlohmann::json response;
+        response = monitoringService->requestMonitoringDataFromAllNodesAsJson();
         if(response == nullptr){
             return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
         }
