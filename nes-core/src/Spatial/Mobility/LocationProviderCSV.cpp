@@ -65,6 +65,10 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
                            time);
         waypoints.push_back(waypoint);
     }
+    if (waypoints.empty()) {
+        NES_WARNING("No data in CSV, cannot start location provider");
+        exit(EXIT_FAILURE);
+    }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
     //set first csv entry as the next wypoint
