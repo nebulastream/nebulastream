@@ -155,8 +155,9 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph> ir) {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);
-    theModule->dump();
-
+    mlir::OpPrintingFlags flangs;
+    llvm::raw_ostream& output = llvm::outs();
+    theModule->print(output, flangs);
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
