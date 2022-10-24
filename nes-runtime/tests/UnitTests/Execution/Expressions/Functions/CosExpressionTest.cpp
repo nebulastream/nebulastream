@@ -24,53 +24,53 @@ class CosExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(CosExpressionTest, evaluateModExpressionInteger) {
+TEST_F(CosExpressionTest, evaluateCosExpressionInteger) {
     auto expression = UnaryExpressionWrapper<CosExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>((int8_t) 0));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 4));
+        auto resultValue = expression.eval(Value<Int32>((int32_t) 0));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>((int64_t) 0));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-TEST_F(CosExpressionTest, evaluateModExpressionFloat) {
+TEST_F(CosExpressionTest, evaluateCosExpressionFloat) {
     auto expression = UnaryExpressionWrapper<CosExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 4));
-        ASSERT_EQ(resultValue, (float) 0);
+        auto resultValue = expression.eval(Value<Float>((float) 90));
+        ASSERT_EQ(resultValue, (double) -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 4));
-        ASSERT_EQ(resultValue, (float) 1);
+        auto resultValue = expression.eval(Value<Float>((float) 90));
+        ASSERT_EQ(resultValue,(double)  -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 4));
-        ASSERT_EQ(resultValue, (float) 1);
+        auto resultValue = expression.eval(Value<Double>((double) 90));
+        ASSERT_EQ(resultValue,(double) -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 4));
-        ASSERT_EQ(resultValue, (double) 0);
+        auto resultValue = expression.eval(Value<Double>((double) 90));
+        ASSERT_EQ(resultValue,(double)  -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -78,7 +78,7 @@ TEST_F(CosExpressionTest, evaluateModExpressionFloat) {
 /**
  * @brief If we execute the expression on a boolean it should throw an exception.
  */
-TEST_F(CosExpressionTest, evaluateModExpressionOnWrongType) {
+TEST_F(CosExpressionTest, evaluateCosExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<CosExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
