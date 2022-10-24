@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_HIGHPERFORMANCEPIPELINEPROVIDER_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_HIGHPERFORMANCEPIPELINEPROVIDER_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution {
-class HighPerformancePipelineProvider : public ExecutablePipelineProvider {
+class CompilationPipelineProvider : public ExecutablePipelineProvider {
   public:
     std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;
 };
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_HIGHPERFORMANCEPIPELINEPROVIDER_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

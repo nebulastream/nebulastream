@@ -17,6 +17,7 @@
 #include <list>
 #include <memory>
 #include <map>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Util {
 
@@ -66,7 +67,13 @@ class NamedPluginRegistry {
     static inline std::map<std::string, std::unique_ptr<T>> items = std::map<std::string, std::unique_ptr<T>>();
 
   public:
-    static std::unique_ptr<T>& getPlugin(std::string name) { return items[name]; }
+    static std::unique_ptr<T>& getPlugin(std::string name) {
+        auto found = items.find(name);
+        if(found == items.end()){
+            NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
+        }
+        return found->second;
+    }
     static std::list<std::string>& getPluginNames() { return names; }
     /** A static registration template. Use like such:
     *

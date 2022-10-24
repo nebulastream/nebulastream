@@ -15,15 +15,17 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Util/PluginRegistry.hpp>
 namespace NES::Runtime::Execution {
 class ExecutablePipelineStage;
 class ExecutablePipelineProvider {
   public:
     virtual std::unique_ptr<ExecutablePipelineStage>
     create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) = 0;
+    virtual ~ExecutablePipelineProvider() = default;
 };
 
-
+using ExecutablePipelineProviderRegistry = Util::NamedPluginRegistry<ExecutablePipelineProvider>;
 
 }// namespace NES::Runtime::Execution
 

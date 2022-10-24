@@ -14,5 +14,6 @@ add_source_files(nes-runtime
         PhysicalOperatorPipeline.cpp
         NautilusExecutablePipelineStage.cpp
         InterpreterPipelineProvider.cpp
-        HighPerformancePipelineProvider.cpp
+        CompilationPipelineProvider.cpp
+        CompiledExecutablePipelineStage.cpp
         )
