@@ -1,6 +1,8 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Util/PluginRegistry.hpp>
+
 namespace NES::Nautilus::Backends {
 class Executable;
 class CompilationBackend {
@@ -8,6 +10,9 @@ class CompilationBackend {
     virtual std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph>) = 0;
     virtual ~CompilationBackend() = default;
 };
+
+using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>;
+
 
 }// namespace NES::Nautilus::Backends
 

@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {
@@ -38,10 +38,8 @@ SymbolicExecutionContext* initThreadSymbolicExecutionContext() {
  * @brief Checks if the symbolic execution context is initialized.
  * @return boolean
  */
-bool isInSymbolicExecution() {
-    return threadLocalSymbolicExecutionContext != nullptr; }
-void disableSymbolicExecution() {
-    threadLocalSymbolicExecutionContext = nullptr; }
+bool isInSymbolicExecution() { return threadLocalSymbolicExecutionContext != nullptr; }
+void disableSymbolicExecution() { threadLocalSymbolicExecutionContext = nullptr; }
 
 /**
  * @brief Returns the symbolic execution context.
@@ -105,11 +103,11 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
     // evaluate the function for the first time
     auto resultRef = function();
     TraceOperation result = TraceOperation(RETURN);
-    if(!resultRef.type->isVoid()){
+    if (!resultRef.type->isVoid()) {
         auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(resultRef.type);
         result.input.emplace_back(resultRef);
         result.result = resultRef;
-    }else{
+    } else {
         result.result = resultRef;
     }
     tracCtx->trace(result);
@@ -128,10 +126,10 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
         // evaluate function
         auto resultRef = function();
         TraceOperation result = TraceOperation(RETURN);
-        if(!resultRef.type->isVoid()){
+        if (!resultRef.type->isVoid()) {
             result.input.emplace_back(resultRef);
             result.result = resultRef;
-        }else{
+        } else {
             result.result = resultRef;
         }
         tracCtx->trace(result);
@@ -142,6 +140,8 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
         }
     }
     NES_INFO("Symbolic Execution: iterations " << iterations);
+    std::cout << tracCtx->getExecutionTrace() << std::endl;
+
     disableThreadLocalTraceContext();
     return tracCtx->getExecutionTrace();
 }
