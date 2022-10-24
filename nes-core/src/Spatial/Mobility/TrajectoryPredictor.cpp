@@ -256,32 +256,37 @@ void TrajectoryPredictor::startReconnectPlanning() {
         }
 
         std::unique_lock reconnectVectorLock(reconnectVectorMutex);
-        //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
-        S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first)),
-                                      currentParentLocation);
 
-        //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
-        if (reconnectVector->empty() && currentDistFromParent > defaultCoverageRadiusAngle) {
-            reconnectToClosestNode(currentOwnLocation);
-        }
+        //check if we are connected to a parent with a knwon position of if we can connect to one
+        if (currentParentLocation || reconnectToClosestNode(currentOwnLocation)) {
+            //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
+            S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first)),
+                                          currentParentLocation.value());
 
-        if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
-            auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first));
+            //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
+            if (reconnectVector->empty() && currentDistFromParent > defaultCoverageRadiusAngle) {
+                reconnectToClosestNode(currentOwnLocation);
+            }
 
-            //if the next expected parent is closer than the current one: reconnect
-            if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
-                //reconnect and inform coordinator about upcoming reconnect
-                auto newParentId = reconnectVector->front()->reconnectPrediction.expectedNewParentId;
-                reconnect(newParentId, currentOwnLocation);
-                reconnectVector->erase(reconnectVector->begin());
+            if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
+                auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*(currentOwnLocation.first));
 
-                //after reconnect, check if there is a next point on the schedule
-                if (!reconnectVector->empty()) {
-                    auto coverageEndLoc = reconnectVector->front()->predictedReconnectLocation;
-                    nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.expectedNewParentId);
-                    NES_INFO("reconnect point: " << coverageEndLoc.toString());
-                } else {
-                    NES_INFO("no next reconnect scheduled")
+                //if the next expected parent is closer than the current one: reconnect
+                if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
+                    //reconnect and inform coordinator about upcoming reconnect
+                    auto newParentId = reconnectVector->front()->reconnectPrediction.expectedNewParentId;
+                    reconnect(newParentId, currentOwnLocation);
+                    reconnectVector->erase(reconnectVector->begin());
+
+                    //after reconnect, check if there is a next point on the schedule
+                    if (!reconnectVector->empty()) {
+                        auto coverageEndLoc = reconnectVector->front()->predictedReconnectLocation;
+                        nextReconnectNodeLocation =
+                            fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.expectedNewParentId);
+                        NES_INFO("reconnect point: " << coverageEndLoc.toString());
+                    } else {
+                        NES_INFO("no next reconnect scheduled")
+                    }
                 }
             }
         }
@@ -381,10 +386,10 @@ bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Locatio
     if (!positionOfLastNodeIndexUpdate
         || S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
         //if new nodes were downloaded, make sure that the current parent becomes part of the index by adding it if it was not downloaded anyway
-        if (downloadFieldNodes(*currentLocation) && fieldNodeMap.count(parentId) == 0) {
+        if (downloadFieldNodes(*currentLocation) && currentParentLocation && fieldNodeMap.count(parentId) == 0) {
             NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
-            fieldNodeMap.insert({parentId, currentParentLocation});
-            fieldNodeIndex.Add(currentParentLocation, parentId);
+            fieldNodeMap.insert({parentId, currentParentLocation.value()});
+            fieldNodeIndex.Add(currentParentLocation.value(), parentId);
         }
         return true;
     }
@@ -475,6 +480,9 @@ TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coverin
 
 void TrajectoryPredictor::scheduleReconnects() {
 #ifdef S2DEF
+    if (!currentParentLocation) {
+        return ;
+    }
     double remainingTime;
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
     std::unique_lock trajecotryLock(trajectoryLineMutex);
@@ -482,7 +490,7 @@ void TrajectoryPredictor::scheduleReconnects() {
     reconnectVector->clear();
 
     //find the end of path coverage of our curent parent
-    auto reconnectionPointTuple = findPathCoverage(trajectoryLine, currentParentLocation, S1Angle(defaultCoverageRadiusAngle));
+    auto reconnectionPointTuple = findPathCoverage(trajectoryLine, currentParentLocation.value(), S1Angle(defaultCoverageRadiusAngle));
     if (reconnectionPointTuple.second.degrees() == 0) {
         return;
     }

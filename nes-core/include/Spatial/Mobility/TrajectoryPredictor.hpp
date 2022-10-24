@@ -228,7 +228,7 @@ class TrajectoryPredictor {
     S1Angle defaultCoverageRadiusAngle;
 
     //prediction data
-    S2Point currentParentLocation;
+    std::optional<S2Point> currentParentLocation;
     S2PolylinePtr trajectoryLine;
     std::unordered_map<uint64_t, S2Point> fieldNodeMap;
     std::optional<S2Point> positionOfLastNodeIndexUpdate;
