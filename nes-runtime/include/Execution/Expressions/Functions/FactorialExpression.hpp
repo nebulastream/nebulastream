@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_FACTORIALEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_FACTORIALEXPRESSION_HPP_
+#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_FACTORIALEXPRESSION_HPP_
+#define NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_FACTORIALEXPRESSION_HPP_
+
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <cmath>
@@ -21,7 +22,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression calculates the factorial of the subEspression.
+ * @brief This expression calculates the factorial of the subExpression.
  */
 class FactorialExpression : public Expression {
   public:
@@ -34,4 +35,4 @@ class FactorialExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_FACTORiALEXPRESSION_HPP_
+#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_FACTORIALEXPRESSION_HPP_
