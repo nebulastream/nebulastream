@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <E2E/configs/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 
@@ -37,7 +37,7 @@ namespace NES::Benchmark {
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
 
         for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
-            dataGenerators.emplace_back(ConfigurationOption<std::string>::create("dataGenerators", "Default", "DataGenerator per Source as CSV"));
+            dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node()));
         }
     }
     std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -68,19 +68,22 @@ namespace NES::Benchmark {
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
 
 
-        /* Splitting the csv of to get the string of each DataGenerator
+        /* Iterating through the node
          * Afterwards, we insert either the parsed values or Default, if we require another generator
-         * */
-        auto dataGenerationsStr = NES::Util::splitWithStringDelimiter<std::string>(yamlConfig["dataGenerators"].As<std::string>(), ",");
+         */
         configOverAllRuns.dataGenerators.clear();
         configOverAllRuns.dataGenerators.reserve(configOverAllRuns.numSources->getValue());
 
-        for (auto sourceCnt = 0UL; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
-            if (sourceCnt < dataGenerationsStr.size()) {
-                configOverAllRuns.dataGenerators.emplace_back(Configurations::ConfigurationOption<std::string>::create("dataGenerations", dataGenerationsStr[sourceCnt], "DataGenerator per Source as CSV"));
-            } else {
-                configOverAllRuns.dataGenerators.emplace_back(Configurations::ConfigurationOption<std::string>::create("dataGenerations", "Default", "DataGenerator per Source as CSV"));
-            }
+        auto dataGenerators = yamlConfig["dataGenerators"];
+        for (auto it = dataGenerators.Begin(); it != dataGenerators.End(); it++) {
+            std::string name = (*it).first;
+            Yaml::Node node = (*it).second;
+            configOverAllRuns.dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName(name, node));
+        }
+
+        // Padding the data generators to fit the number of sources. Creating a default data generator
+        for (auto sourceCnt = configOverAllRuns.dataGenerators.size(); sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+            configOverAllRuns.dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node()));
         }
 
         return configOverAllRuns;
@@ -91,7 +94,7 @@ namespace NES::Benchmark {
             if (cnt != 0) {
                 oss << ", ";
             }
-            oss << dataGenerators[cnt]->getValue();
+            oss << dataGenerators[cnt]->toString();
         }
 
         return oss.str();

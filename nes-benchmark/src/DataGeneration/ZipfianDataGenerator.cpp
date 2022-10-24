@@ -1,29 +1,27 @@
-/*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
-#include <DataGeneration/DefaultDataGenerator.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <random>
+#include <Util/ZipfianGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
-    DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue,
-                                               uint64_t maxValue)  : DataGenerator(),
-                                                                     minValue(minValue), maxValue(maxValue) {}
 
-    std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+    ZipfianDataGenerator::ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue)
+        : DataGenerator(), alpha(alpha), minValue(minValue), maxValue(maxValue) {}
+
+    NES::SchemaPtr ZipfianDataGenerator::getSchema() {
+        return Schema::create()->addField(createField("id", NES::UINT64))
+            ->addField(createField("value", NES::UINT64))
+            ->addField(createField("payload", NES::UINT64))
+            ->addField(createField("timestamp", NES::UINT64));
+    }
+
+    std::string ZipfianDataGenerator::getName() {
+        return "Zipfian";
+    }
+
+    std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
@@ -39,7 +37,7 @@ namespace NES::Benchmark::DataGeneration {
 
             std::random_device randDev;
             std::mt19937 generator(randDev());
-            std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
+            ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
 
             /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
@@ -48,7 +46,7 @@ namespace NES::Benchmark::DataGeneration {
                 auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    uint64_t value = uniformIntDistribution(generator);
+                    uint64_t value = zipfianGenerator(generator);
                     rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(
                         curRecord,
                         value,
@@ -58,7 +56,7 @@ namespace NES::Benchmark::DataGeneration {
 
             } else {
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    auto value = uniformIntDistribution(generator);
+                    auto value = zipfianGenerator(generator);
                     dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
                     dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
                     dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -78,23 +76,12 @@ namespace NES::Benchmark::DataGeneration {
         NES_INFO("Created all buffers!");
         return createdBuffers;
     }
-
-    NES::SchemaPtr DefaultDataGenerator::getSchema() {
-        return Schema::create()->addField(createField("id", NES::UINT64))
-                               ->addField(createField("value", NES::UINT64))
-                               ->addField(createField("payload", NES::UINT64))
-                               ->addField(createField("timestamp", NES::UINT64));
-    }
-
-    std::string DefaultDataGenerator::getName() {
-        return "Uniform";
-    }
-
-    std::string DefaultDataGenerator::toString() {
+    std::string ZipfianDataGenerator::toString() {
         std::ostringstream oss;
 
         oss << getName()
-            << " (" << minValue << ", "
+            << " (" << alpha << ", "
+            << minValue << ", "
             << maxValue << ")";
 
         return oss.str();

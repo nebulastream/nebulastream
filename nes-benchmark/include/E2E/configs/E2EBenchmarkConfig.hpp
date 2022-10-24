@@ -17,8 +17,8 @@
 #define NES_E2EBENCHMARKCONFIG_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
-#include <E2E/E2EBenchmarkConfigOverAllRuns.hpp>
-#include <E2E/E2EBenchmarkConfigPerRun.hpp>
+#include <E2E/configs/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <E2E/configs/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 

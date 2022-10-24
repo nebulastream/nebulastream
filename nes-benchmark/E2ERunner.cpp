@@ -13,7 +13,7 @@
 */
 
 
-#include <E2E/E2EBenchmarkConfig.hpp>
+#include <E2E/configs/E2EBenchmarkConfig.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 

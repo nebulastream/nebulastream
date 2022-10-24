@@ -11,7 +11,17 @@ startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
 numberOfSources: 3
-dataGenerators: Default, Uniform, Zipfian
+dataGenerators:
+  Default:
+  Uniform:
+    minValue: 0
+    maxValue: 250
+
+  Zipfian:
+    alpha: 0.9
+    minValue: 0
+    maxValue: 100
+
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv

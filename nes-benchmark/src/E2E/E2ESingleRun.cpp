@@ -54,8 +54,10 @@ void E2ESingleRun::createSources() {
     for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                            configPerRun.numBuffersToProduce->getValue());
-        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerators[sourceCnt]->getValue(),
-                                                                                  bufferManager);
+//        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerators[sourceCnt]->getValue(),
+//                                                                                  bufferManager);
+        auto dataGenerator = configOverAllRuns.dataGenerators[sourceCnt];
+        dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers =
             dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
 

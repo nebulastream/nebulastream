@@ -14,6 +14,7 @@
 
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
+#include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -21,8 +22,7 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-    DataGenerator::DataGenerator(NES::Runtime::BufferManagerPtr bufferManager)
-        : bufferManager(std::move(bufferManager)) {}
+    DataGenerator::DataGenerator() {}
 
     Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
 
@@ -40,12 +40,37 @@ namespace NES::Benchmark::DataGeneration {
         return bufferManager->getBufferBlocking();
     }
 
-    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,Runtime::BufferManagerPtr bufferManager) {
+    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,
+                                                          Yaml::Node generatorNode) {
         if (name == "Default") {
-            return std::make_shared<DefaultDataGenerator>(bufferManager, /* minValue */ 0, /* maxValue */ 1000);
+            return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
+        } else if (name == "Uniform") {
+            if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+                NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Uniform Datagenerator!");
+            }
+
+            auto minValue = generatorNode["minValue"].As<uint64_t>();
+            auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+            return std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+
+        } else if (name == "Zipfian") {
+            if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+                NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Zipfian Datagenerator!");
+            }
+
+            auto alpha = generatorNode["alpha"].As<double>();
+            auto minValue = generatorNode["minValue"].As<uint64_t>();
+            auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+            return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+
         } else {
             // For now we only support a single data generator
             NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
         }
     }
+
+    void DataGenerator::setBufferManager(Runtime::BufferManagerPtr newBufferManager) {
+        DataGenerator::bufferManager = std::move(newBufferManager);
+    }
+
 }
