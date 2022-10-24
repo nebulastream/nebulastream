@@ -16,6 +16,7 @@
 #define NES_UTIL_HPP_
 #include <list>
 #include <memory>
+#include <map>
 
 namespace NES::Util {
 
@@ -49,6 +50,43 @@ class PluginRegistry {
         Add() { PluginRegistry<T>::items.emplace_back(CtorFn()); }
     };
 };
+
+
+/**
+ * @brief The plugin registry allows the dynamic registration of plugins at runtime.
+ * A plugin is a provider of a specific type T, which defines the plugin interface.
+ * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the plugin.
+ * @tparam T plugin interface type
+ */
+template<typename T>
+class NamedPluginRegistry {
+
+  private:
+    static inline std::list<std::string> names = std::list<std::string>();
+    static inline std::map<std::string, std::unique_ptr<T>> items = std::map<std::string, std::unique_ptr<T>>();
+
+  public:
+    static std::unique_ptr<T>& getPlugin(std::string name) { return items[name]; }
+    static std::list<std::string>& getPluginNames() { return names; }
+    /** A static registration template. Use like such:
+    *
+    * Registry<PluginInterfaceType>::Add<PluginType> X;
+    *
+    * Use of this template requires that:
+    *
+    * 1. The registered subclass has a default constructor.
+    */
+    template<typename V>
+    class Add {
+        static std::unique_ptr<T> CtorFn() { return std::make_unique<V>(); }
+
+      public:
+        Add(std::string name) {
+            NamedPluginRegistry<T>::names.emplace_back(name);
+            NamedPluginRegistry<T>::items.emplace(name, CtorFn()); }
+    };
+};
+
 }// namespace NES::Util
 
 #endif//NES_UTIL_HPP_

@@ -12,42 +12,34 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/DataTypes/InvocationPlugin.hpp"
-#include "Experimental/Utility/PluginRegistry.hpp"
+#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
 namespace NES::Nautilus {
-    
-class TypeConversionTest : public testing::Test {
+
+class TypeCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    Nautilus::IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TypeConversionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TypeConversionTest test class." << std::endl;
+        NES::Logger::setupLogging("TypeCompilationTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup TypeCompilationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+    void SetUp() override { std::cout << "Setup TypeCompilationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down TypeCompilationTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down TypeCompilationTest test class." << std::endl; }
 };
 
 Value<> negativeIntegerTest() {
@@ -57,18 +49,12 @@ Value<> negativeIntegerTest() {
     return minusOne;
 }
 
-TEST_F(TypeConversionTest, negativeIntegerTest) {
+TEST_P(TypeCompilationTest, negativeIntegerTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return negativeIntegerTest();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int32_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), -1);
 }
 
@@ -82,43 +68,32 @@ Value<> unsignedIntegerTest() {
 }
 
 // We should be able to create Values with unsigned ints, but currently we cannot.
-TEST_F(TypeConversionTest, DISABLED_unsignedIntegerTest) {
+TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return unsignedIntegerTest();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (uint32_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<uint32_t (*)()>("execute");
     ASSERT_EQ(function(), UINT32_MAX);
 }
 
 Value<> boolCompareTest() {
+    Value value = Value(1);
     Value iw = Value(true);
     if (iw == false) {
-        return iw + 41;
+        return value + 41;
     } else {
-        return iw;
+        return value;
     }
 }
 
 // Should return 1, but returns 41 (Value(true) in interpreted as 0).
-TEST_F(TypeConversionTest, DISABLED_boolCompareTest) {
+TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return boolCompareTest();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 1);
 }
 
@@ -129,18 +104,12 @@ Value<> floatTest() {
 }
 
 // Above approach, to return a float Value, does not work.
-TEST_F(TypeConversionTest, DISABLED_floatTest) {
+TEST_P(TypeCompilationTest, DISABLED_floatTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return floatTest();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 1);
 }
 
@@ -151,18 +120,12 @@ Value<> mixBoolAndIntTest() {
 }
 
 // Should return 5, but returns 4. Could extend to check for bool-int edge cases
-TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
+TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return mixBoolAndIntTest();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -220,19 +183,23 @@ Value<> customValueType() {
     return c1.getValue().x;
 }
 
-TEST_F(TypeConversionTest, customValueTypeTest) {
+TEST_P(TypeCompilationTest, customValueTypeTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return customValueType();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 128);
 }
+
+// Tests all registered compilation backends.
+// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
+INSTANTIATE_TEST_CASE_P(testTypeCompilation,
+                        TypeCompilationTest,
+                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        [](const testing::TestParamInfo<TypeCompilationTest::ParamType>& info) {
+                            return info.param;
+                        });
+
 }// namespace NES::Nautilus

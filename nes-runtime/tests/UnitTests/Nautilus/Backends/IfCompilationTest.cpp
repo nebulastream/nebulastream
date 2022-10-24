@@ -12,26 +12,19 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class IfCompilationTest : public testing::Test {
+class IfCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -39,21 +32,13 @@ class IfCompilationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+    void SetUp() override { std::cout << "Setup IfCompilationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down IfCompilationTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-
-    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
-        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        std::cout << *executionTrace.get() << std::endl;
-        auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
-        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
-    }
+    static void TearDownTestCase() { std::cout << "Tear down IfCompilationTest test class." << std::endl; }
 };
 
 Value<> ifThenCondition() {
@@ -65,7 +50,7 @@ Value<> ifThenCondition() {
     return iw + 42;
 }
 
-TEST_F(IfCompilationTest, ifConditionTest) {
+TEST_P(IfCompilationTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
@@ -85,7 +70,7 @@ Value<> ifThenElseCondition() {
     return iw + 42;
 }
 
-TEST_F(IfCompilationTest, ifThenElseConditionTest) {
+TEST_P(IfCompilationTest, ifThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenElseCondition();
     });
@@ -107,7 +92,7 @@ Value<> nestedIfThenElseCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, nestedIFThenElseConditionTest) {
+TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
@@ -130,7 +115,7 @@ Value<> nestedIfNoElseCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, nestedIFThenNoElse) {
+TEST_P(IfCompilationTest, nestedIFThenNoElse) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfNoElseCondition();
     });
@@ -151,12 +136,12 @@ Value<> doubleIfCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, doubleIfCondition) {
+TEST_P(IfCompilationTest, doubleIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return doubleIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -171,12 +156,12 @@ Value<> ifElseIfCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, ifElseIfCondition) {
+TEST_P(IfCompilationTest, ifElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -199,12 +184,12 @@ Value<> deeplyNestedIfElseCondition() {
     return iw = iw + 2;
 }
 
-TEST_F(IfCompilationTest, deeplyNestedIfElseCondition) {
+TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -224,13 +209,23 @@ Value<> deeplyNestedIfElseIfCondition() {
 }
 
 // Currently fails, because an empty block (Block 7) is created, during trace building.
-TEST_F(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
+TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t(*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 12);
 }
+
+// Tests all registered compilation backends.
+// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
+INSTANTIATE_TEST_CASE_P(testIfCompilation,
+                        IfCompilationTest,
+                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        [](const testing::TestParamInfo<IfCompilationTest::ParamType>& info) {
+                            return info.param;
+                        });
 
 }// namespace NES::Nautilus

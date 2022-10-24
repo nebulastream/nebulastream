@@ -10,6 +10,9 @@
 
 namespace NES::Nautilus::Backends::MLIR {
 
+[[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
+
+
 std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir) {
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
@@ -38,4 +41,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     timer.snapshot("MLIRGeneration");
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }
+MLIRCompilationBackend::~MLIRCompilationBackend() {
+    std::cout << "Shutdown MLIRCompilationBackend" << std::endl;
+}
+
 }// namespace NES::Nautilus::Backends::MLIR

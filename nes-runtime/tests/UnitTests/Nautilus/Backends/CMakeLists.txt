@@ -12,17 +12,21 @@
 # limitations under the License.
 
 add_executable(nautilus-expression-compilation-test "ExpressionCompilationTest.cpp")
-target_link_libraries(nautilus-expression-compilation-test nes-runtime ${GTEST_LIBRARIES})
+target_link_libraries(nautilus-expression-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-expression-compilation-test COMMAND nautilus-expression-compilation-test)
 
 add_executable(nautilus-if-compilation-test "IfCompilationTest.cpp")
-target_link_libraries(nautilus-if-compilation-test nes-runtime ${GTEST_LIBRARIES})
+target_link_libraries(nautilus-if-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-if-compilation-test COMMAND nautilus-if-compilation-test)
 
 add_executable(nautilus-loop-compilation-test "LoopCompilationTest.cpp")
-target_link_libraries(nautilus-loop-compilation-test nes-runtime ${GTEST_LIBRARIES})
+target_link_libraries(nautilus-loop-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-loop-compilation-test COMMAND nautilus-loop-compilation-test)
 
 add_executable(nautilus-memory-compilation-test "MemoryAccessCompilationTest.cpp")
-target_link_libraries(nautilus-memory-compilation-test nes-runtime ${GTEST_LIBRARIES})
+target_link_libraries(nautilus-memory-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-memory-compilation-test COMMAND nautilus-memory-compilation-test)
+
+add_executable(nautilus-type-compilation-test "TypeCompilationTest.cpp")
+target_link_libraries(nautilus-type-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME nautilus-type-compilation-test COMMAND nautilus-type-compilation-test)

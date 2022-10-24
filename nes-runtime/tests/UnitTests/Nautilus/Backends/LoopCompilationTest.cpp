@@ -12,16 +12,11 @@
     limitations under the License.
 */
 
-#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -29,11 +24,8 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class LoopCompilationTest : public testing::Test {
+class LoopCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    IR::LoopInferencePhase loopInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
@@ -49,13 +41,6 @@ class LoopCompilationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
-        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        std::cout << *executionTrace.get() << std::endl;
-        auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
-        return Backends::MLIR::MLIRCompilationBackend().compile(ir);
-    }
 };
 
 Value<> sumLoop(int upperLimit) {
@@ -66,7 +51,7 @@ Value<> sumLoop(int upperLimit) {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, sumLoopTestSCF) {
+TEST_P(LoopCompilationTest, sumLoopTestSCF) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop(10);
     });
@@ -86,7 +71,7 @@ Value<> nestedSumLoop(int upperLimit) {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, nestedLoopTest) {
+TEST_P(LoopCompilationTest, nestedLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedSumLoop(10);
     });
@@ -96,7 +81,7 @@ TEST_F(LoopCompilationTest, nestedLoopTest) {
     ASSERT_EQ(function(), 1001);
 }
 
-TEST_F(LoopCompilationTest, sumLoopTestCF) {
+TEST_P(LoopCompilationTest, sumLoopTestCF) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop(10);
     });
@@ -116,7 +101,7 @@ Value<> ifSumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, ifSumLoopTest) {
+TEST_P(LoopCompilationTest, ifSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifSumLoop();
     });
@@ -138,7 +123,7 @@ Value<> ifElseSumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, ifElseSumLoopTest) {
+TEST_P(LoopCompilationTest, ifElseSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return ifElseSumLoop();
     });
@@ -159,7 +144,7 @@ Value<> elseOnlySumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, elseOnlySumLoopTest) {
+TEST_P(LoopCompilationTest, elseOnlySumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return elseOnlySumLoop();
     });
@@ -183,7 +168,7 @@ Value<> nestedIfSumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, nestedIfSumLoopTest) {
+TEST_P(LoopCompilationTest, nestedIfSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfSumLoop();
     });
@@ -208,7 +193,7 @@ Value<> nestedIfElseSumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, nestedIfElseSumLoopTest) {
+TEST_P(LoopCompilationTest, nestedIfElseSumLoopTest) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfElseSumLoop();
     });
@@ -232,7 +217,7 @@ Value<> nestedElseOnlySumLoop() {
     return agg;
 }
 
-TEST_F(LoopCompilationTest, nestedElseOnlySumLoop) {
+TEST_P(LoopCompilationTest, nestedElseOnlySumLoop) {
     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return nestedElseOnlySumLoop();
     });
@@ -240,5 +225,15 @@ TEST_F(LoopCompilationTest, nestedElseOnlySumLoop) {
     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
     ASSERT_EQ(function(), 1);
 }
+
+// Tests all registered compilation backends.
+// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
+INSTANTIATE_TEST_CASE_P(testLoopCompilation,
+                        LoopCompilationTest,
+                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        [](const testing::TestParamInfo<LoopCompilationTest::ParamType>& info) {
+                            return info.param;
+                        });
 
 }// namespace NES::Nautilus
