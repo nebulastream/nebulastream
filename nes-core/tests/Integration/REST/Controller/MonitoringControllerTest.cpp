@@ -79,18 +79,8 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     nlohmann::json jsonsStart = nlohmann::json::parse(r.text);
     NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
     ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
-    bool check = false;
-    for (int i = 0; i < static_cast<int>(jsonsStart.size()); i++){
-        auto json = jsonsStart[i];
-        check = false;
-        NES_DEBUG("Json Values of " + std::to_string(i) + ". entry: " + json.dump());
-        for (auto& [key, val] : json.items()) {
-            if (key == "logical_stream" && (val == "wrapped_network" || val == "wrapped_cpu" || val == "memory" || val == "disk")) {
-                check = true;
-            }
-        }
-        ASSERT_TRUE(check);
-    }
+    bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsonsStart);
+    ASSERT_TRUE(check);
 }
 
 TEST_F(MonitoringControllerTest, testStopMonitoring) {
@@ -188,7 +178,6 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     ASSERT_EQ(jsonsOfResponse.size(), 1);
     auto json = jsonsOfResponse[std::to_string(1)];
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(1));
-    NES_INFO("Received Data for node 1: " << json.dump());
     ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     ASSERT_TRUE(MetricValidator::checkNodeIds(json, 1));
 }
@@ -247,10 +236,13 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
+
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
-    //TODO check content
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
+    ASSERT_TRUE(check);
 }
 
 }//namespace NES

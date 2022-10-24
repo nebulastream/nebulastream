@@ -441,6 +441,24 @@ class MetricValidator {
         return check;
     }
 
+    static bool checkEntriesOfStream(std::set<std::string> setOfStr, nlohmann::json jsons){
+        bool check = false;
+        for (auto elem : setOfStr) {
+            check = false;
+            for (int i = 0; i < static_cast<int>(jsons.size()); i++) {
+                auto json = jsons[i];
+                NES_DEBUG("Json Values of " + std::to_string(i) + ". entry: " + json.dump());
+                for (auto& [key, val] : json.items()) {
+                    if (key == "logical_stream" && val == elem) {
+                        check = true;
+                    }
+                }
+            }
+            if (check == false) return check;
+        }
+        return check;
+    }
+
     static bool checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId) {
         if (metric->getMetricType() == Monitoring::DiskMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::DiskMetrics>();
