@@ -73,15 +73,27 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
-    //TODO check content
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
 
+    //check if content of r contains valid information
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
     nlohmann::json jsonsStart = nlohmann::json::parse(r.text);
-    NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsStart.dump());
+    NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
     ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
+    bool check = false;
+    for (int i = 0; i < static_cast<int>(jsonsStart.size()); i++){
+        auto json = jsonsStart[i];
+        check = false;
+        NES_DEBUG("Json Values of " + std::to_string(i) + ". entry: " + json.dump());
+        for (auto& [key, val] : json.items()) {
+            if (key == "logical_stream" && (val == "wrapped_network" || val == "wrapped_cpu" || val == "memory" || val == "disk")) {
+                check = true;
+            }
+        }
+        ASSERT_TRUE(check);
+    }
 }
 
-TEST_F(MonitoringControllerTest, testSopMonitoring) {
+TEST_F(MonitoringControllerTest, testStopMonitoring) {
     NES_INFO("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -95,7 +107,6 @@ TEST_F(MonitoringControllerTest, testSopMonitoring) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
     EXPECT_EQ(r.status_code, 200);
 }
@@ -121,7 +132,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
 
 TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     NES_INFO("Tests for Oatpp Monitoring Controller - testRequestAllMetrics: Start coordinator");
-    uint64_t noWorkers = 2; // TODO
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -239,7 +249,6 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
     nlohmann::json jsons = nlohmann::json::parse(r.text);
-    //ASSERT_EQ(jsons.size(), 1);
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
     //TODO check content
 }
