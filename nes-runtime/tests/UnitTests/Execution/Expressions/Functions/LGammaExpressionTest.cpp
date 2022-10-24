@@ -13,7 +13,6 @@
 */
 
 #include <Execution/Expressions/Functions/LGammaExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -39,7 +38,7 @@ class LGammaExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(SubExpressionTest, subIntegers) {
+TEST_F(LGammaExpressionTest, subIntegers) {
     auto expression = BinaryExpressionWrapper<LGammaExpression>();
 
     // Int8
@@ -67,7 +66,7 @@ TEST_F(SubExpressionTest, subIntegers) {
     }
 }
 
-TEST_F(SubExpressionTest, subUnsignedIntegers) {
+TEST_F(LGammaExpressionTest, subUnsignedIntegers) {
     auto expression = BinaryExpressionWrapper<SubExpression>();
 
     // UInt8
@@ -100,7 +99,7 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
     }
 }
 
-TEST_F(SubExpressionTest, subFloat) {
+TEST_F(LGammaExpressionTest, subFloat) {
     auto expression = BinaryExpressionWrapper<SubExpression>();
     // Float
     {
