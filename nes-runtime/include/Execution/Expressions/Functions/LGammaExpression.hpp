@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_LGAMMAEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_LGAMMAEXPRESSION_HPP_
+#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_LGAMMAEXPRESSION_HPP_
+#define NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_LGAMMAEXPRESSION_HPP_
+
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <cmath>
@@ -34,4 +35,4 @@ class LGammaExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_LGAMMAEXPRESSION_HPP_
+#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_FUNCTIONS_LGAMMAEXPRESSION_HPP_
