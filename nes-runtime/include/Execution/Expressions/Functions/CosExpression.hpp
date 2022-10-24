@@ -1,14 +1,16 @@
-/*
-Licensed under the Apache License, Version 2.0 (the "License");
+/*Copyright LICENSE nebulastream
+
+    Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-    https://www.apache.org/licenses/LICENSE-2.0
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
-*/
+limitations under the License.*/
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_
 
@@ -16,9 +18,8 @@ limitations under the License.
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
-
 /**
- * @brief This expression mod the leftSubExpression with the rightSubExpression.
+ * @brief This expression cos the Expression
  */
 class CosExpression : public Expression {
   public:
@@ -26,10 +27,8 @@ class CosExpression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr leftSubExpression;
+    const ExpressionPtr leftSubExpression;
 };
-
 }// namespace NES::Runtime::Execution::Expressions
-
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_
