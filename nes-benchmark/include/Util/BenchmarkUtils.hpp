@@ -24,7 +24,7 @@
 
 #include <chrono>
 
-namespace NES::Benchmark::Utils {
+namespace NES::Benchmark::Util {
 
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
@@ -76,6 +76,7 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
     NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
     return false;
 }
-}
+
+}// namespace NES::Benchmark::Util
 
 #endif//NES_BENCHMARKUTILS_HPP

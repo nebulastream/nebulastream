@@ -41,7 +41,6 @@ namespace NES::Benchmark {
          */
         static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
-
         /**
          * @brief all configurations that are constant over all runs
          */
@@ -50,12 +49,16 @@ namespace NES::Benchmark {
         Configurations::IntConfigOption numMeasurementsToCollect;
         Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
         Configurations::IntConfigOption numSources;
-        Configurations::StringConfigOption dataGenerations;
+        std::vector<Configurations::StringConfigOption> dataGenerators;
         Configurations::StringConfigOption outputFile;
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;
         Configurations::StringConfigOption query;
         Configurations::StringConfigOption dataProviderMode;
+
+
+      private:
+        std::string getDataGeneratorsAsString();
     };
 }
 
