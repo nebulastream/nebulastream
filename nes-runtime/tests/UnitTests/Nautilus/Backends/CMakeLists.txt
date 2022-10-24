@@ -30,3 +30,7 @@ add_test(NAME nautilus-memory-compilation-test COMMAND nautilus-memory-compilati
 add_executable(nautilus-type-compilation-test "TypeCompilationTest.cpp")
 target_link_libraries(nautilus-type-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-type-compilation-test COMMAND nautilus-type-compilation-test)
+
+add_executable(nautilus-function-compilation-test "FunctionCompilationTest.cpp")
+target_link_libraries(nautilus-function-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME nautilus-function-compilation-test COMMAND nautilus-function-compilation-test)

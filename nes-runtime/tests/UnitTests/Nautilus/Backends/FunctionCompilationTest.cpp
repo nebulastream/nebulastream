@@ -12,28 +12,23 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Nautilus {
 
-class FunctionExecutionTest : public testing::Test {
+class FunctionCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("FunctionExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup FunctionExecutionTest test class." << std::endl;
+        NES::Logger::setupLogging("FunctionCompilationTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup FunctionCompilationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
@@ -55,20 +50,13 @@ Value<> addIntFunction() {
     return res;
 }
 
-TEST_F(FunctionExecutionTest, addIntFunctionTest) {
+TEST_P(FunctionCompilationTest, addIntFunctionTest) {
 
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return addIntFunction();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto result = prepare(executionTrace);
+    auto function = result->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -76,20 +64,13 @@ int64_t returnConst() { return 42; };
 
 Value<> returnConstFunction() { return FunctionCall<>("returnConst", returnConst); }
 
-TEST_F(FunctionExecutionTest, returnConstFunctionTest) {
+TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
 
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return returnConstFunction();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto result = prepare(executionTrace);
+    auto function = result->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 42);
 }
 
@@ -97,20 +78,13 @@ void voidException() { NES_THROW_RUNTIME_ERROR("An expected exception"); };
 
 void voidExceptionFunction() { FunctionCall<>("voidException", voidException); }
 
-TEST_F(FunctionExecutionTest, voidExceptionFunctionTest) {
+TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
 
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
         voidExceptionFunction();
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    auto result = prepare(executionTrace);
+    auto function = result->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_ANY_THROW(function());
 }
 
@@ -121,23 +95,26 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
     return res;
 }
 
-TEST_F(FunctionExecutionTest, multiplyArgumentTest) {
+TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
     Value<Int64> tempPara = Value<Int64>((int64_t) 0);
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
     });
-    std::cout << *executionTrace.get() << std::endl;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
-    auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
-
-    // create and print MLIR
-    auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
-    auto function = (int64_t(*)(int64_t)) engine->lookup("execute").get();
+    auto result = prepare(executionTrace);
+    auto function = result->getInvocableMember<int64_t (*)(int64_t)>("execute");
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }
+
+// Tests all registered compilation backends.
+// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
+INSTANTIATE_TEST_CASE_P(testFunctionCalls,
+                        FunctionCompilationTest,
+                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        [](const testing::TestParamInfo<FunctionCompilationTest::ParamType>& info) {
+                            return info.param;
+                        });
 
 }// namespace NES::Nautilus
