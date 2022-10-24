@@ -97,6 +97,9 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
         return {prevWaypoint->first, requestTime};
     }
 
+    if (*prevWaypoint->first == *nextWaypoint->first) {
+        return {prevWaypoint->first, requestTime};
+    }
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
     //as an s2 polyline
     S2Point prev = Util::S2Utilities::locationToS2Point(*prevWaypoint->first);
