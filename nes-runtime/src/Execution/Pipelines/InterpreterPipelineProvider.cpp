@@ -8,4 +8,7 @@ InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> ph
     return std::make_unique<NautilusExecutablePipelineStage>(physicalOperatorPipeline);
 }
 
+[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<InterpreterPipelineProvider>
+    interpretationPipelineProvider("PipelineInterpreter");
+
 }// namespace NES::Runtime::Execution

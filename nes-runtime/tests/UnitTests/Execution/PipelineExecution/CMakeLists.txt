@@ -11,12 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-pipeline-execution-test "PipelineExecutionTest.cpp")
-target_link_libraries(runtime-pipeline-execution-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-pipeline-execution-test COMMAND runtime-pipeline-execution-test)
+add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
+target_link_libraries(runtime-scan-emit-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-scan-emit-pipeline-test COMMAND runtime-scan-emit-pipeline-test)
 
-
-
+add_executable(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
+target_link_libraries(runtime-selection-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-selection-pipeline-test COMMAND runtime-selection-pipeline-test)
 
 
 
