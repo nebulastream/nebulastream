@@ -1,6 +1,6 @@
  if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
      add_executable(execution-engine-loop-execution-test "LoopExecutionTest.cpp")
-     target_link_libraries(execution-engine-loop-execution-test nes-execution-engine ${GTEST_LIBRARIES})
+     target_link_libraries(execution-engine-loop-execution-test nes-runtime ${GTEST_LIBRARIES})
      add_test(NAME execution-engine-expression-loop-test COMMAND execution-engine-loop-execution-test)
 
      add_executable(execution-engine-if-execution-test "IfExecutionTest.cpp")

@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/CUDA/CUDAUtility.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -73,6 +74,21 @@ TEST_F(LoopExecutionTest, sumLoopTestSCF) {
 
     auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 101);
+}
+
+TEST_F(LoopExecutionTest, sumLoopTestCUDA) {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return sumLoop(10);
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir->toString() << std::endl;
+    ir = loopInferencePhase.apply(ir);
+    std::cout << ir->toString() << std::endl;
+
+    auto function = Backends::CUDA::CUDAUtility::compileNESIRToMachineCode(ir);
     ASSERT_EQ(function(), 101);
 }
 
