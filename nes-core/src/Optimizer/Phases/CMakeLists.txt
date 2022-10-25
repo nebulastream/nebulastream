@@ -24,4 +24,5 @@ add_source_files(nes-core
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhaseContext.cpp
+        TopologyReconfigurationPhase.cpp
 )

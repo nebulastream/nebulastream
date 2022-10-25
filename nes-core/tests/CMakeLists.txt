@@ -282,6 +282,10 @@ add_nes_unit_test(convert-logical-to-physical-sink-tests "UnitTests/Phases/Conve
 add_nes_unit_test(convert-logical-to-physical-source-tests "UnitTests/Phases/ConvertLogicalToPhysicalSourceTest.cpp")
 
 
+# Topology ReconfigurationPhaseTest
+add_nes_unit_test(topology-reconfiguration-test "UnitTests/Phases/TopologyReconfigurationPhaseTest.cpp")
+
+
 # Type inference test
 add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 
