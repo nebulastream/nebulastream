@@ -22,6 +22,19 @@ add_executable(runtime-cos-expression-test "CosExpressionTest.cpp")
 target_link_libraries(runtime-cos-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-cos-expression-test COMMAND runtime-cos-expression-test)
 
+add_executable(runtime-radians-expression-test "RadiansExpressionTest.cpp")
+target_link_libraries(runtime-radians-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-radians-expression-test COMMAND runtime-radians-expression-test)
+
+add_executable(runtime-pi-expression-test "PiExpressionTest.cpp")
+target_link_libraries(runtime-pi-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-pi-expression-test COMMAND runtime-pi-expression-test)
+
+add_executable(runtime-degrees-expression-test "DegreesExpressionTest.cpp")
+target_link_libraries(runtime-degrees-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-degrees-expression-test COMMAND runtime-degrees-expression-test)
+
+
 add_executable(runtime-sin-expression-test "SinExpressionTest.cpp")
 target_link_libraries(runtime-sin-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-sin-expression-test COMMAND runtime-sin-expression-test)
