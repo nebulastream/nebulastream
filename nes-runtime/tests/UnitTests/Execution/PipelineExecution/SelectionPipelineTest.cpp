@@ -60,7 +60,7 @@ class SelectionPipelineTest : public testing::Test, public AbstractPipelineExecu
 };
 
 /**
- * @brief Emit operator that emits a row oriented tuple buffer.
+ * @brief Selection pipeline that execute a select operator and filters elements.
  */
 TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
