@@ -15,6 +15,11 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
 namespace NES::Runtime::Execution::Operators {
+
+/**
+ * @brief Base class of all operator state.
+ * Actual operators should inherit from this.
+ */
 class OperatorState {
   public:
     virtual ~OperatorState() = default;
