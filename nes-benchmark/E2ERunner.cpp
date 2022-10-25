@@ -104,7 +104,7 @@ int main(int argc, const char* argv[]) {
         << "\n";
     ofs.close();
 
-//    int portOffset = 0;
+    int portOffset = 0;
 //    auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
 //    for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
 //        portOffset += 23;
