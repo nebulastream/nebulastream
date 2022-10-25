@@ -4,7 +4,7 @@ bufferSizeInBytes: 5120
 numberOfBuffersToProduce: 1000000
 
 
-# Benchmark parameter for the entire run
+# ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
@@ -12,20 +12,22 @@ numberOfMeasurementsToCollect: 3
 
 numberOfSources: 3
 dataGenerators:
-  Default:
-  Uniform:
+  input1:
+      type: Default
+  input2:
+    type: Uniform
     minValue: 0
     maxValue: 250
-
-  Zipfian:
-    alpha: 0.9
+  input3:
+    type: Uniform
+#    alpha: 0.9
     minValue: 0
     maxValue: 100
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
-outputFile: JoinTwoSources.csv
-benchmarkName: JoinTwoSources
+outputFile: JoinMultipleSources.csv
+benchmarkName: JoinMultipleSources
 query: 'Query::from("input1").joinWith(Query::from("input2"))
                                   .where(Attribute("id")).equalsTo(Attribute("id"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
