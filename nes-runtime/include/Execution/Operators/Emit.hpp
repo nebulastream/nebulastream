@@ -18,8 +18,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief Basic emit operator that receives records from an upstream operator and
+ * writes them to a tuple buffer according to a memory layout.
+ */
 class Emit : public ExecutableOperator {
   public:
+    /**
+     * @brief Constructor for the emit operator.
+     * @param resultMemoryLayout memory layout.
+     */
     Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
