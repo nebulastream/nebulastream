@@ -36,6 +36,9 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
                             WorkerContext& workerContext) override;
     uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    /**
+     * @deprecated This method will be removed as it is not applicable to the new compilation backend.
+     */
     std::string getCodeAsString() override;
 
   protected:

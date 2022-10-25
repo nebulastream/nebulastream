@@ -18,8 +18,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief Selection operator that evaluates an boolean expression on each record.
+ */
 class Selection : public ExecutableOperator {
   public:
+    /**
+     * @brief Creates a selection operator with a expression.
+     * @param expression boolean predicate expression
+     */
     Selection(Runtime::Execution::Expressions::ExpressionPtr expression) : expression(expression){};
     void execute(ExecutionContext& ctx, Record& record) const override;
 

@@ -30,6 +30,7 @@ class Scan : public Operator {
      * @param projections projection vector
      */
     Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
+
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:

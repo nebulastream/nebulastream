@@ -28,14 +28,52 @@ class Operator;
 class OperatorState;
 }// namespace Operators
 
+/**
+ * The execution context manages state of operators within a pipeline and provides access to some global functionality.
+ * We differentiate between local and global operator state.
+ * Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
+ * Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
+ */
 class ExecutionContext final {
   public:
+    /**
+     * @brief Create new execution context with mem refs to the worker context and the pipeline context.
+     * @param workerContext reference to the worker context.
+     * @param pipelineContext reference to the pipeline context.
+     */
     ExecutionContext(Value<MemRef> workerContext, Value<MemRef> pipelineContext);
+
+    /**
+     * @brief Set local operator state that keeps state in a single pipeline invocation.
+     * @param op reference to the operator to identify the state.
+     * @param state operator state.
+     */
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     void setGlobalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
+
+    /**
+     * @brief Get the operator state by the operator reference.
+     * @param op operator reference
+     * @return operator state.
+     */
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
+
+    /**
+     * @brief Get worker id of the current execution.
+     * @return Value<UInt64>
+     */
     Value<UInt64> getWorkerId();
+
+    /**
+     * @brief Allocate a new tuple buffer.
+     * @return Value<MemRef>
+     */
     Value<MemRef> allocateBuffer();
+
+    /**
+     * @brief Emit a record buffer to the next pipeline or sink.
+     * @param record buffer.
+     */
     void emitBuffer(const RecordBuffer& rb);
 
   private:
