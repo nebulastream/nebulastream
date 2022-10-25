@@ -18,8 +18,17 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
+ * Furthermore, it supports projection pushdown to eliminate unneeded reads.
+ */
 class Scan : public Operator {
   public:
+    /**
+     * @brief Constructor for the scan operator that receives a memory layout and a projection vector.
+     * @param memoryLayout memory layout that describes the tuple buffer.
+     * @param projections projection vector
+     */
     Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 

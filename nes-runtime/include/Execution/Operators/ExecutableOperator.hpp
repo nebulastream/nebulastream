@@ -16,8 +16,17 @@
 #include <Execution/Operators/Operator.hpp>
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief Base class of executable operators, which receive tuple by tuple.
+ * Within a pipeline all operators except the initial scan are executable operators.
+ */
 class ExecutableOperator : public Operator {
   public:
+    /**
+     * @brief This method is called by the upstream operator (parent) and passes one record for execution.
+     * @param ctx the execution context that allows accesses to local and global state.
+     * @param record the record that should be processed.
+     */
     virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~ExecutableOperator() = default;
 };

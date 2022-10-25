@@ -27,7 +27,7 @@ using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 
 /**
  * @brief Base operator for all specific operators.
- * Each operator can implement setup, open, and close.
+ * Each operator can implement setup, open, close, and terminate.
  */
 class Operator {
   public:
@@ -37,11 +37,13 @@ class Operator {
      * @param executionCtx the RuntimeExecutionContext
      */
     virtual void setup(ExecutionContext& executionCtx) const;
+
     /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
      * @param recordBuffer
      */
     virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
     /**
      * @brief Close is called
      * @param executionCtx
@@ -50,7 +52,7 @@ class Operator {
     virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
     /**
-     * @brief Terminates the operator and fries all operator state.
+     * @brief Terminates the operator and clears all operator state.
      * @param executionCtx the RuntimeExecutionContext
      */
     virtual void terminate(ExecutionContext& executionCtx) const;
