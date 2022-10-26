@@ -92,7 +92,6 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeTest) {
     ASSERT_EQ(c1.getValue().toString(),std::to_string(ms));
 
     auto c2 = Value<TimeStamp>(TimeStamp(dur.count()));
-
     auto c3 = c1 + c2;
     ASSERT_EQ(c3.getValue().toString(),std::to_string(3333597103488));
     c1 = c2;
