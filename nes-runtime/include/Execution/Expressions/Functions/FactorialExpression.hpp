@@ -17,7 +17,6 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class FactorialExpression : public Expression {
   public:
-    GammaExpression(const ExpressionPtr& SubExpression);
+    FactorialExpression(const ExpressionPtr& SubExpression);
     Value<> execute(Record& record) const override;
 
   private:

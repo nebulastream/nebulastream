@@ -17,7 +17,6 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
