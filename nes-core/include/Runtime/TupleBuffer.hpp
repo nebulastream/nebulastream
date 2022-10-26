@@ -68,7 +68,9 @@ class TupleBuffer {
     friend class NES::Network::detail::NetworkEventSender;
 
     [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
-        : controlBlock(controlBlock), ptr(ptr), size(size) {}
+        : controlBlock(controlBlock), ptr(ptr), size(size) {
+        // nop
+    }
 
   public:
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
@@ -108,7 +110,6 @@ class TupleBuffer {
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
     TupleBuffer& operator=(TupleBuffer const& other) noexcept {
-
         if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
             return *this;
         }
@@ -130,7 +131,6 @@ class TupleBuffer {
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
-
         // Especially for rvalues, the following branch should most likely never be taken if the caller writes
         // reasonable code. Therefore, this branch is considered unlikely.
         if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
@@ -152,7 +152,9 @@ class TupleBuffer {
     [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return ptr == nullptr; }
 
     /// @brief release the resource if necessary.
-    inline ~TupleBuffer() noexcept { release(); }
+    inline ~TupleBuffer() noexcept {
+        release();
+    }
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
@@ -201,6 +203,10 @@ class TupleBuffer {
         return reinterpret_cast<const T*>(ptr);
     }
 
+    [[nodiscard]] inline uint32_t getReferenceCounter() const noexcept {
+        return controlBlock ? controlBlock->getReferenceCount() : 0;
+    }
+
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept {
@@ -244,6 +250,10 @@ class TupleBuffer {
     inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {
         controlBlock->addRecycleCallback(std::move(newCallback));
     }
+
+    [[nodiscard]] uint32_t storeChildBuffer(TupleBuffer& buffer) noexcept;
+
+    [[nodiscard]] TupleBuffer loadChildBuffer(uint32_t bufferIndex) noexcept;
 
   private:
     /**

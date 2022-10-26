@@ -13,11 +13,10 @@
 */
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Runtime/TaggedPointer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <bitset>
-#include <exception>
-#include <iostream>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <Util/Backward/backward.hpp>
@@ -26,6 +25,12 @@
 #endif
 
 namespace NES::Runtime::detail {
+
+static uint32_t calculatePointerTag(uint32_t size) {
+    NES_ASSERT2_FMT(size && !(size & (size - 1)), "size must be power of two " << size);
+    uintptr_t log_2_size = (8 * sizeof(uint32_t)) - __builtin_clz(size >> 10) - 1;
+    return 1 << log_2_size;
+}
 
 // -----------------------------------------------------------------------------
 // ------------------ Core Mechanism for Buffer recycling ----------------------
@@ -39,7 +44,7 @@ MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
                              BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
-    : ptr(ptr), size(size) {
+    : ptr(ptr, calculatePointerTag(size)), size(size) {
     controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
@@ -76,7 +81,7 @@ MemorySegment::~MemorySegment() {
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
         // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
         size_t actualBufferSize = size;
-        if ((ptr + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
+        if ((ptr.pointer() + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
             delete controlBlock;
         } else {
             actualBufferSize += sizeof(BufferControlBlock);
@@ -199,6 +204,10 @@ int32_t BufferControlBlock::getReferenceCount() const noexcept { return referenc
 bool BufferControlBlock::release() {
     if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1) {
         numberOfTuples = 0;
+        for (auto&& child : children) {
+            child->controlBlock->release();
+        }
+        children.clear();
         recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
@@ -261,6 +270,27 @@ void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");
     auto* controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
+}
+
+// -----------------------------------------------------------------------------
+// ------------------ VarLen fields support for TupleBuffer --------------------
+// -----------------------------------------------------------------------------
+
+uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control) {
+    control->retain();
+    children.emplace_back(control->owner);
+    return children.size() - 1;
+}
+
+bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) {
+    NES_ASSERT2_FMT(index < children.size(), "Invalid index");
+
+    auto* child = children[index];
+    control = child->controlBlock->retain();
+    ptr = child->ptr.pointer();
+    size = child->size;
+
+    return true;
 }
 
 }// namespace NES::Runtime::detail

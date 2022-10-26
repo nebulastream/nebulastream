@@ -23,7 +23,7 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
         recycler->recyclePooledBuffer(segment);
         delete segment;
     };
-    auto* memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
+    auto* memSegment = new detail::MemorySegment(ptr, length, parent, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 
@@ -31,6 +31,21 @@ TupleBuffer
 TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
+}
+
+uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept {
+    TupleBuffer empty;
+    auto* control = buffer.controlBlock;
+    auto index = controlBlock->storeChildBuffer(control);
+    std::swap(empty, buffer);
+    return index;
+}
+
+TupleBuffer TupleBuffer::loadChildBuffer(uint32_t bufferIndex) noexcept {
+    TupleBuffer childBuffer;
+    NES_ASSERT(controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
+               "Cannot load tuple buffer");
+    return childBuffer;
 }
 
 }// namespace NES::Runtime
