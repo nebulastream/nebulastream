@@ -21,6 +21,6 @@ class TopologyReconfigurationTest : public Testing::TestWithErrorHandling<testin
 };
 
 TEST_F(TopologyReconfigurationTest, testGetPathDifferencePathLengthOne) {
-
+    //todo: to parent change here before exectuing phase. if execution of requestProcessorService is sequential, we can later do it in there. if not, we'll have to see where we put it
 }
 }

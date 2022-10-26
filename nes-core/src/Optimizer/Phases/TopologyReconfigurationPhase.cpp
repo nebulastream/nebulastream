@@ -15,6 +15,9 @@
 #include <Optimizer/Phases/TopologyReconfigurationPhase.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Topology/Topology.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Topology/TopologyNode.hpp>
 namespace NES::Optimizer::Experimental {
 //todo: at which point should the topology actually be changed? here of before
 //todo: pass topologyNodes or ids here?
@@ -22,7 +25,36 @@ bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStr
    auto commonAncestor = getCommonAncestor(oldParent, newParent);
    auto pathFromOldParent = topology->findNodesBetween(oldParent, commonAncestor);
    //iterate over all operators and check if they are places on the path from old parent, if they are not, pin them where they are
+   //or take the oposite approach and only put these down as not placed
+   //todo: what does the "snapshot" do here and should we use it?
 
+   //first do an optimistic approach, assuming we have enough resources on our path
+   //when that does not work, we run this again but unplace more operators
+    auto operators = QueryPlanIterator(sharedQueryPlan->getQueryPlan()).snapshot();
+    for (auto op : operators) {
+        //todo: execution node has the same id as topology node and it has a map of the query subplans running on it
+        //todo: we need a mapping of placed operator nodes to the execution nodes they are placed on
+        //todo: but this mapping exists only inside the placement strategy
+        //todo: idea: put the node number into the placed attirbute instead of just a bool
+        //todo: or is there another way to keep that infromation, after the operators are placed?
+
+
+        //the above is probably all wrong. pinned_node_id is for all nodes that were somehow placed, see bottomUp
+
+
+        auto pinnedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
+        //todo: can we also get these as execution node?
+        //how can we get the node which placed operators where places on and not just a bool indicating that they have been placed
+        auto placedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
+        //can we do this better than with 2 nested loops
+        //look at how topologyMap is constructed in BasePlacementStretegy
+        for (auto topologyNode : pathFromOldParent) {
+            if (topologyNode->getNodeId() == pinnedNodeId) {
+
+                //todo: there is a getTopologyNode() function in execution node, but can i also get it the other way araound?
+            }
+        }
+    }
 
 }
 TopologyNodePtr TopologyReconfigurationPhase::getCommonAncestor(uint64_t oldParent, uint64_t newParent) {
