@@ -158,6 +158,4 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     }
 }
 
-
-
 }// namespace NES::Runtime::Execution::Operators

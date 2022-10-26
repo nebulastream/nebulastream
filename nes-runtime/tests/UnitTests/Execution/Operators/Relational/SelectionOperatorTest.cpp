@@ -43,7 +43,7 @@ class SelectionOperatorTest : public testing::Test {
 };
 
 /**
- * @brief Tests if the selection operator with qualifying record.
+ * @brief Tests the selection operator with qualifying record.
  */
 TEST_F(SelectionOperatorTest, qualifingRecordTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -63,7 +63,7 @@ TEST_F(SelectionOperatorTest, qualifingRecordTest) {
 }
 
 /**
- * @brief Tests if the selection operator with non qualifying record.
+ * @brief Tests the selection operator with non qualifying record.
  */
 TEST_F(SelectionOperatorTest, nonqualifingRecordTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");

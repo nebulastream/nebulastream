@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
@@ -18,8 +19,16 @@
 
 namespace NES::Nautilus::Backends {
 class Executable;
+
+/**
+ * @brief The compilation backend, compiles a ir graph to an executable.
+ */
 class CompilationBackend {
   public:
+    /**
+     * @brief Compiles ir graph to executable.
+     * @return std::unique_ptr<Executable>
+     */
     virtual std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph>) = 0;
     virtual ~CompilationBackend() = default;
 };

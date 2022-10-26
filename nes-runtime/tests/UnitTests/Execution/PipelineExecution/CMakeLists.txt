@@ -18,6 +18,3 @@ add_test(NAME runtime-scan-emit-pipeline-test COMMAND runtime-scan-emit-pipeline
 add_executable(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
 target_link_libraries(runtime-selection-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-selection-pipeline-test COMMAND runtime-selection-pipeline-test)
-
-
-

@@ -209,6 +209,7 @@ Value<> deeplyNestedIfElseIfCondition() {
 }
 
 // Currently fails, because an empty block (Block 7) is created, during trace building.
+// Fix in #3021
 TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
