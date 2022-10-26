@@ -12,14 +12,48 @@
     limitations under the License.
 */
 #include <Execution/Expressions/Functions/LGammaExpression.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
-Value<> LGammaExpression::execute(Record& record) const {
-    Value subValue = SubExpression->execute(record);
-    return lgamma(subValue);
-}
-AddExpression::LGammaExpression(const ExpressionPtr& SubExpression)
+LGammaExpression::LGammaExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
+/**
+ * @brief This method calculates ln(gamma(x)).
+ * @param x double
+ * @return double
+ */
+double calculateLGamma(double x) { return std::lgamma(x); }
+
+Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
+    // Evaluate the left sub expression and retrieve the value.
+    Value leftValue = SubExpression->execute(record);
+
+    if (leftValue->isType<Int8>()){
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int8>());
+    } else if (leftValue->isType<Int16>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int16>());
+    } else if (leftValue->isType<Int32>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int32>());
+    } else if (leftValue->isType<Int64>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int64>());
+    } else if (leftValue->isType<UInt8>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt8>());
+    } else if (leftValue->isType<UInt16>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt16>());
+    } else if (leftValue->isType<UInt32>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt32>());
+    } else if (leftValue->isType<UInt64>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt64>());
+    } else if (leftValue->isType<Float>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Float>());
+    } else if (leftValue->isType<Double>()) {
+        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Double>());
+    } else {
+             // If no type was applicable we throw an exception.
+            NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        }
+}
 }// namespace NES::Nautilus

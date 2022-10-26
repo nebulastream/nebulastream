@@ -39,7 +39,7 @@ class LGammaExpressionTest : public testing::Test {
 };
 
 TEST_F(LGammaExpressionTest, subIntegers) {
-    auto expression = BinaryExpressionWrapper<LGammaExpression>();
+    auto expression = UnaryExpressionWrapper<LGammaExpression>();
 
     // Int8
     {
@@ -67,7 +67,7 @@ TEST_F(LGammaExpressionTest, subIntegers) {
 }
 
 TEST_F(LGammaExpressionTest, subUnsignedIntegers) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<LGammaExpression>();
 
     // UInt8
     {
@@ -79,7 +79,7 @@ TEST_F(LGammaExpressionTest, subUnsignedIntegers) {
     {
         auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2));
         ASSERT_EQ(resultValue, (double) 2);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>(Double));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(2u));
@@ -100,7 +100,7 @@ TEST_F(LGammaExpressionTest, subUnsignedIntegers) {
 }
 
 TEST_F(LGammaExpressionTest, subFloat) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<LGammaExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 2));
