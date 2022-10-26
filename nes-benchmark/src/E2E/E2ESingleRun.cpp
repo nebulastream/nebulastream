@@ -51,12 +51,14 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
 void E2ESingleRun::createSources() {
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+//    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+    size_t sourceCnt = 0;
+    for (auto& item : configOverAllRuns.dataGenerators) {
+        auto sourceName = item.first;
+        auto dataGenerator = item.second;
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                            configPerRun.numBuffersToProduce->getValue());
-//        auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerators[sourceCnt]->getValue(),
-//                                                                                  bufferManager);
-        auto dataGenerator = configOverAllRuns.dataGenerators[sourceCnt];
+
         dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers =
             dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
@@ -82,8 +84,8 @@ void E2ESingleRun::createSources() {
                                                                               sourceAffinity,
                                                                               taskQueueId);
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = "input" + std::to_string(sourceCnt + 1);
-        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
+        auto logicalStreamName = sourceName;                    //"input" + std::to_string(sourceCnt + 1);
+        auto physicalStreamName = "physical_" + sourceName;     //"physical_input" + std::to_string(sourceCnt);
         auto logicalSource = LogicalSource::create(logicalStreamName, schema);
         auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
 
@@ -92,6 +94,8 @@ void E2ESingleRun::createSources() {
         // Adding the physical and logical source to the coordinator
         coordinatorConf->logicalSources.add(logicalSource);
         coordinatorConf->worker.physicalSources.add(physicalSource);
+
+        sourceCnt += 1;
     }
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }

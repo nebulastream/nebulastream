@@ -50,7 +50,7 @@ namespace NES::Benchmark {
         Configurations::IntConfigOption numMeasurementsToCollect;
         Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
         Configurations::IntConfigOption numSources;
-        std::vector<DataGeneration::DataGeneratorPtr> dataGenerators;
+        std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
         Configurations::StringConfigOption outputFile;
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;

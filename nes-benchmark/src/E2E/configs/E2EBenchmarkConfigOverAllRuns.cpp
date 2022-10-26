@@ -37,7 +37,8 @@ namespace NES::Benchmark {
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
 
         for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
-            dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node()));
+            std::string name = "input" + std::to_string(sourceCnt);
+            dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
         }
     }
     std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -78,23 +79,30 @@ namespace NES::Benchmark {
         for (auto it = dataGenerators.Begin(); it != dataGenerators.End(); it++) {
             std::string name = (*it).first;
             Yaml::Node node = (*it).second;
-            configOverAllRuns.dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName(name, node));
+
+            std::string generatorName = node["type"].As<std::string>();
+            configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName(generatorName, node);
         }
 
         // Padding the data generators to fit the number of sources. Creating a default data generator
         for (auto sourceCnt = configOverAllRuns.dataGenerators.size(); sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
-            configOverAllRuns.dataGenerators.emplace_back(DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node()));
+            std::string name = "input" + std::to_string(sourceCnt);
+            configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
         }
 
         return configOverAllRuns;
     }
     std::string E2EBenchmarkConfigOverAllRuns::getDataGeneratorsAsString() {
         std::ostringstream oss;
-        for (auto cnt = 0UL; cnt < dataGenerators.size(); ++cnt) {
+
+        auto cnt = 0;
+        for (auto& item : dataGenerators) {
             if (cnt != 0) {
                 oss << ", ";
             }
-            oss << dataGenerators[cnt]->toString();
+            oss << item.second->toString();
+
+            cnt += 1;
         }
 
         return oss.str();
