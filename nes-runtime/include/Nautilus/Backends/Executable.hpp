@@ -11,11 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
 #include <string>
 namespace NES::Nautilus::Backends {
 
+/**
+ * @brief Represents an executable object, which enables the invocation of dynamically defined methods.
+ */
 class Executable {
   public:
     template<typename Function>

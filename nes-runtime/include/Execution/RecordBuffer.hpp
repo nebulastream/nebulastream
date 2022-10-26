@@ -27,21 +27,61 @@ namespace NES::Nautilus {
 class Record;
 }
 
-namespace NES::Runtime::Execution{
+namespace NES::Runtime::Execution {
 using namespace Nautilus;
+
+/**
+ * @brief The RecordBuffer is a representation of a set of records that are stored together.
+ * In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
+ */
 class RecordBuffer {
   public:
+    /**
+     * @brief Creates a new record buffer with a reference to a tuple buffer
+     * @param tupleBufferRef
+     */
     explicit RecordBuffer(Value<MemRef> tupleBufferRef);
-    ~RecordBuffer() = default;
+
+    /**
+     * @brief Read number of record that are currently stored in the record buffer.
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getNumRecords();
+
+    /**
+     * @brief Retrieve the reference to the underling buffer from the record buffer.
+     * @return Value<MemRef>
+     */
+    Value<MemRef> getBuffer();
+
+    /**
+     * @brief Read a single record from a record buffer
+     * @note This method should be factored out in #3092
+     * @param memoryLayout memory layout
+     * @param projections set of projections
+     * @param bufferAddress address to the tuple buffer
+     * @param recordIndex record index to read
+     * @return Record
+     */
     Record read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
                 const std::vector<Record::RecordFieldIdentifier>& projections,
                 Value<MemRef> bufferAddress,
                 Value<UInt64> recordIndex);
-    Value<UInt64> getNumRecords();
-    Value<MemRef> getBuffer();
+    /**
+     * @brief Write a single record from a record buffer
+     * @note This method should be factored out in #3092
+     * @param memoryLayout memory layout
+     * @param bufferAddress address to the tuple buffer
+     * @param Record record
+     */
     void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
-    const Value<MemRef>& getReference();
 
+    /**
+     * @brief Get the reference to the TupleBuffer
+     * @return Value<MemRef>
+     */
+    const Value<MemRef>& getReference();
+    ~RecordBuffer() = default;
   public:
     Value<MemRef> tupleBufferRef;
     void setNumRecords(Value<UInt64> value);
@@ -64,6 +104,6 @@ class RecordBuffer {
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
-}// namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_

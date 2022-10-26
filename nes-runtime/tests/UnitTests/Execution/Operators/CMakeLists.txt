@@ -13,15 +13,13 @@
 
 add_subdirectory(Relational)
 
- add_executable(runtime-scan-operator-test "ScanOperatorTest.cpp")
- target_link_libraries(runtime-scan-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
- add_test(NAME runtime-scan-operator-test COMMAND runtime-scan-operator-test)
+add_executable(runtime-scan-operator-test "ScanOperatorTest.cpp")
+target_link_libraries(runtime-scan-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-scan-operator-test COMMAND runtime-scan-operator-test)
 
- add_executable(runtime-emit-operator-test "EmitOperatorTest.cpp")
- target_link_libraries(runtime-emit-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
- add_test(NAME runtime-emit-operator-test COMMAND runtime-emit-operator-test)
-
-
+add_executable(runtime-emit-operator-test "EmitOperatorTest.cpp")
+target_link_libraries(runtime-emit-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-emit-operator-test COMMAND runtime-emit-operator-test)
 
 
 

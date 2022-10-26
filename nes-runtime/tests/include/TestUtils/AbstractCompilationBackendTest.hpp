@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 
@@ -23,7 +24,7 @@
 
 namespace NES::Nautilus {
 /**
- * @brief This test tests execution of scala expression
+ * @brief This is an abstract test class for compilation backend tests
  */
 class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std::string> {
   public:

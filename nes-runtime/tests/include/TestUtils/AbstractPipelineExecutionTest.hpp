@@ -26,7 +26,7 @@
 
 namespace NES::Runtime {
 /**
- * @brief This test tests execution of scala expression
+ * @brief This is an abstract test class for pipeline execution tests.
  */
 class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::string> {};
 

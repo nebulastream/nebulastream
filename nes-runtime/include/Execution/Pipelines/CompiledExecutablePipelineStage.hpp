@@ -24,8 +24,9 @@
 
 namespace NES::Runtime::Execution {
 class PhysicalOperatorPipeline;
+
 /**
- * @brief This is an adopt to the legacy pipeline stage to the nautilus operators.
+ * @brief A compiled executable pipeline stage uses nautilus to compile a pipeline to a code snippit.
  */
 class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
   public:
