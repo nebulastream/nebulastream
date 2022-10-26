@@ -17,7 +17,6 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class LGammaExpression : public Expression {
   public:
-    GammaExpression(const ExpressionPtr& SubExpression);
+    LGammaExpression(const ExpressionPtr& SubExpression);
     Value<> execute(Record& record) const override;
 
   private:

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/Functions/GammaExpression.hpp>
+#include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -39,7 +39,7 @@ class FactorialExpressionTest : public testing::Test {
 };
 
 TEST_F(FactorialExpressionTest, subIntegers) {
-    auto expression = BinaryExpressionWrapper<GammaExpression>();
+    auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
     // Int8
     {
@@ -67,7 +67,7 @@ TEST_F(FactorialExpressionTest, subIntegers) {
 }
 
 TEST_F(FactorialExpressionTest, subUnsignedIntegers) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
     // UInt8
     {
@@ -100,7 +100,7 @@ TEST_F(FactorialExpressionTest, subUnsignedIntegers) {
 }
 
 TEST_F(FactorialExpressionTest, subFloat) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<FactorialExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 4));

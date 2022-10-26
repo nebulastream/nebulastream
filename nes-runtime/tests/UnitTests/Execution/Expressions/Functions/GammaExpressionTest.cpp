@@ -39,7 +39,7 @@ class GammaExpressionTest : public testing::Test {
 };
 
 TEST_F(GammaExpressionTest, subIntegers) {
-    auto expression = BinaryExpressionWrapper<GammaExpression>();
+    auto expression = UnaryExpressionWrapper<GammaExpression>();
 
     // Int8
     {
@@ -67,7 +67,7 @@ TEST_F(GammaExpressionTest, subIntegers) {
 }
 
 TEST_F(GammaExpressionTest, subUnsignedIntegers) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<GammaExpression>();
 
     // UInt8
     {
@@ -100,12 +100,12 @@ TEST_F(GammaExpressionTest, subUnsignedIntegers) {
 }
 
 TEST_F(GammaExpressionTest, subFloat) {
-    auto expression = BinaryExpressionWrapper<SubExpression>();
+    auto expression = UnaryExpressionWrapper<GammaExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 5.5));
         ASSERT_EQ(resultValue, (double) 52.34277778455352);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
