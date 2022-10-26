@@ -21,12 +21,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
-
 using namespace std::chrono_literals;
-
-template<typename T1, typename T2>
-using mul = std::ratio_multiply<T1, T2>;
-
 namespace NES::Nautilus {
 
 TimeStamp::TimeStamp(Value<> x) : Any(&type), milliseconds(x){
