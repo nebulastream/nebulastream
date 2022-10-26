@@ -13,6 +13,7 @@
 */
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <stdio.h>
 #include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -25,7 +26,8 @@ FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressi
  * @param x double
  * @return double
  */
-double calculateFactorial(double x) { return std::exp(lgamma(x))*x; }
+double calculateFactorial(double x) {return std::tgamma(x+1);}
+
 
 Value<> FactorialExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.

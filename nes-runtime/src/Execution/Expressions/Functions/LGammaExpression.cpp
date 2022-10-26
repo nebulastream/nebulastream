@@ -31,6 +31,7 @@ Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 
+    // call the calculateLGamma function with the correct type
     if (leftValue->isType<Int8>()){
         return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
