@@ -302,7 +302,7 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
 
         // parse attribute string to list of strings
         delimiter = ", ";
-        if (!(i->find(delimiter) != std::string::npos)) {
+        if (i->find(delimiter) == std::string::npos) {
             while ((pos = attributes.find(delimiter)) != std::string::npos) {
                 token = attributes.substr(0, pos);
                 attributes.erase(0, pos + delimiter.length());
@@ -339,5 +339,32 @@ std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(web::json::value jsonAt
     }
 
     return coresList;
+}
+
+MetricType MetricUtils::getMetricTypeFromCollectorType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return MetricType::WrappedCpuMetrics;
+        case MetricCollectorType::DISK_COLLECTOR: return MetricType::DiskMetric;
+        case MetricCollectorType::MEMORY_COLLECTOR: return MetricType::MemoryMetric;
+        case MetricCollectorType::NETWORK_COLLECTOR: return MetricType::WrappedNetworkMetrics;
+        default: {
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
+        }
+    }
+    return UnknownMetric;
+}
+
+MetricPtr MetricUtils::createMetricFromCollectorTypeAndSchema(MetricCollectorType type, SchemaPtr schema) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(Monitoring::CpuMetricsWrapper(schema), WrappedCpuMetrics);
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(Monitoring::DiskMetrics(schema), DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(Monitoring::MemoryMetrics(schema), MemoryMetric);
+        case MetricCollectorType::NETWORK_COLLECTOR:
+            return std::make_shared<Metric>(Monitoring::NetworkMetricsWrapper(schema), WrappedNetworkMetrics);
+        default: {
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
+        }
+    }
+    return nullptr;
 }
 }// namespace NES::Monitoring

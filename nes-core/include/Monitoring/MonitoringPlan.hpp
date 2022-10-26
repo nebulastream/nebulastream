@@ -94,7 +94,7 @@ class MonitoringPlan {
     //enum defined in SerializableDataType.proto
 //    std::set<MetricType> metricTypes;
     std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
-    std::list<uint64_t> cpuCores;
+    std::list<uint64_t> cpuCores = {};
 };
 
 }// namespace NES::Monitoring

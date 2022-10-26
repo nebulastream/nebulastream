@@ -222,7 +222,6 @@ std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
 }
 
 web::json::value CpuMetrics::toJson() const {
-    NES_DEBUG("CpuMetrics: toJson: I Am here to compare the schema: " + schema->toString());
     web::json::value metricsJson{};
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
     metricsJson["CORE_NUM"] = web::json::value::number(coreNum);

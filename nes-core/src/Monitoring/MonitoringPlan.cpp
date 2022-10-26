@@ -65,8 +65,10 @@ MonitoringPlanPtr MonitoringPlan::defaultPlan() {
 }
 
 SchemaPtr MonitoringPlan::getSchema(MetricType metric) {
-    // TODO: auffangen, falls MetricType nicht in MonitoringPlan vorhanden
-    return monitoringPlan.find(metric)->second.first;
+    if(monitoringPlan.contains(metric)) {
+        return monitoringPlan.find(metric)->second.first;
+    }
+    return nullptr;
 }
 
 uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
@@ -157,27 +159,22 @@ std::string MonitoringPlan::toString() const {
     output << "MonitoringPlan:";
 
     for (auto metric : monitoringPlan) {
-        switch (metric.first) {
-            case MetricType::CpuMetric: {
-                output << "cpu(True);";
-            };
-            case MetricType::DiskMetric: {
-                output << "disk(True);";
-            };
-            case MetricType::MemoryMetric: {
-                output << "memory(True);";
-            };
-            case MetricType::NetworkMetric: {
-                output << "network(True);";
-            };
-            case MetricType::RuntimeMetric: {
-                output << "runtimeMetrics(True);";
-            };
-            case MetricType::RegistrationMetric: {
-                output << "staticMetrics(True);";
-            };
-            default: {
-            }
+        if (metric.first == MetricType::CpuMetric) {
+            output << "cpu(True);";
+        } else if (metric.first == MetricType::DiskMetric) {
+            output << "disk(True);";
+        } else if (metric.first == MetricType::MemoryMetric) {
+            output << "memory(True);";
+        } else if (metric.first == MetricType::NetworkMetric) {
+            output << "network(True);";
+        } else if (metric.first == MetricType::RuntimeMetric) {
+            output << "runtimeMetrics(True);";
+        } else if (metric.first == MetricType::RegistrationMetric) {
+            output << "staticMetrics(True);";
+        } else if (metric.first == MetricType::WrappedCpuMetrics) {
+            output << "wrapped_cpu(True);";
+        } else if (metric.first == MetricType::WrappedNetworkMetrics) {
+            output << "wrapped_network(True);";
         }
     }
     return output.str();

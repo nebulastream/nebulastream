@@ -145,7 +145,6 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
 
 web::json::value DiskMetrics::toJson() const {
     web::json::value metricsJson{};
-    NES_DEBUG("DiskMetrics: create Json Object from DiskMetric!");
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
     if (schema->contains("F_BSIZE")) {
         metricsJson["F_BSIZE"] = web::json::value::number(fBsize);

@@ -35,10 +35,17 @@ MonitoringCatalogPtr MonitoringCatalog::createCatalog(const MonitoringPlanPtr& m
     NES_DEBUG("MonitoringCatalog: Init catalog for Monitoringplan!");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics;
+    std::list<uint64_t> cores = {};
     if(monitoringPlan->hasMetric(WrappedCpuMetrics)) {
-        metrics.insert({MetricType::WrappedCpuMetrics,
-                        std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics),
-                                                                          monitoringPlan->getCores()))});
+        if (!(monitoringPlan->getCores().empty())) {
+            metrics.insert({MetricType::WrappedCpuMetrics,
+                            std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics),
+                                                                              monitoringPlan->getCores()))});
+        } else {
+            metrics.insert({MetricType::WrappedCpuMetrics,
+                            std::shared_ptr<MetricCollector>(new CpuCollector(monitoringPlan->getSchema(WrappedCpuMetrics),
+                                                                              cores))});
+        }
     }
     if (monitoringPlan->hasMetric(DiskMetric)) {
         metrics.insert({MetricType::DiskMetric,

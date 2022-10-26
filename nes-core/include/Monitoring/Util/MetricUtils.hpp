@@ -120,7 +120,11 @@ class MetricUtils {
     //TODO: Beschreibung
     static std::list<uint64_t> jsonArrayToIntegerList(web::json::value jsonAttributes);
 
+    //TODO: Beschreibung
+    static MetricPtr createMetricFromCollectorTypeAndSchema(MetricCollectorType type, SchemaPtr schema);
 
+    //TODO: Beschreibung
+    static MetricType getMetricTypeFromCollectorType(MetricCollectorType type);
 };
 }// namespace NES::Monitoring
 

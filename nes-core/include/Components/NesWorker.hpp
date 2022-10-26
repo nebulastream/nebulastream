@@ -68,6 +68,9 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
@@ -83,8 +86,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
-
+    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr,
+              Monitoring::MonitoringManagerPtr monitoringManager = nullptr);
     /**
      * @brief default dtor
      */
@@ -300,6 +303,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    Monitoring::MonitoringManagerPtr monitoringManager;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

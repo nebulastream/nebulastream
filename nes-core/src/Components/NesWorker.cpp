@@ -57,11 +57,12 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore,
+                     Monitoring::MonitoringManagerPtr monitoringManager)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
-          workerConfig->mobilityConfiguration)) {
+          workerConfig->mobilityConfiguration)), monitoringManager(monitoringManager) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -165,6 +166,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
+        }
+        if (monitoringManager != nullptr) {
+            nodeEngine->setMonitoringManager(monitoringManager);
         }
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
@@ -333,7 +337,7 @@ bool NesWorker::connect() {
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
-
+        registerMonitoringPlan();
         if (locationProvider) {
             locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
             if (locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {

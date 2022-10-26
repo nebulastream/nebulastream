@@ -20,12 +20,16 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Monitoring/MonitoringManager.hpp>
 
 namespace NES {
 
 namespace Monitoring {
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 
 class Metric;
@@ -42,6 +46,7 @@ class MonitoringSink : public SinkMedium {
      */
     explicit MonitoringSink(SinkFormatPtr sinkFormat,
                             Monitoring::MetricStorePtr metricStore,
+                            Monitoring::MonitoringManagerPtr monitoringManager,
                             Monitoring::MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
@@ -90,6 +95,7 @@ class MonitoringSink : public SinkMedium {
   private:
     Monitoring::MetricStorePtr metricStore;
     Monitoring::MetricCollectorType collectorType;
+    Monitoring::MonitoringManagerPtr monitoringManager;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 

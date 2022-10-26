@@ -182,9 +182,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
-    worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());
+    worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore(),
+                                         monitoringService->getMonitoringManager());
     worker->start(/**blocking*/ false, /**withConnect*/ true);
-
     NES::Exceptions::installGlobalErrorListener(worker);
 
     //Start rest that accepts queryIdAndCatalogEntryMapping form the outsides

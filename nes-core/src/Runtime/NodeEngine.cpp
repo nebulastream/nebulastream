@@ -634,4 +634,9 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourcePtr>& phy
     this->physicalSources = std::move(physicalSources);
 }
 
+Monitoring::MonitoringManagerPtr NodeEngine::getMonitoringManager() { return monitoringManager; }
+void NodeEngine::setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager){
+    NES_ASSERT(monitoringManager != nullptr, "NodeEngine: MonitoringManager is null.");
+    this->monitoringManager = monitoringManager;
+}
 }// namespace NES::Runtime

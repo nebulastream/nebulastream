@@ -362,4 +362,79 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart03) {
         ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
     }
 }
+
+TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreamsConfiguration) {
+    uint64_t noWorkers = 1;
+    uint64_t localBuffers = 64;
+    uint64_t globalBuffers = 1024 * 128;
+        std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+
+//    std::set<std::string> expectedMonitoringStreams{"wrapped_network"};
+
+        std::string configMonitoring01 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" sampleRate: 6000"
+                                         " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 5000"
+                                         " - memory: attributes: \"FREE_RAM\" sampleRate: 4000"
+                                         " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, rMulticast, "
+                                         "tBytes, tPackets, tErrs, tDrop, tFifo, tColls, tCarrier, tCompressed\" ";
+
+//    std::string configMonitoring01 = " - network: attributes: \"tPackets\" sampleRate: 3000 ";
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring(),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::enableMonitoring(true),
+                                                    TestUtils::bufferSizeInBytes(32768, true),
+                                                    TestUtils::numberOfSlots(50, true),
+                                                    TestUtils::numLocalBuffers(localBuffers, true),
+                                                    TestUtils::numGlobalBuffers(globalBuffers, true)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring(),
+                                           TestUtils::enableDebug(),
+                                           TestUtils::numberOfSlots(50),
+                                           TestUtils::numLocalBuffers(localBuffers),
+                                           TestUtils::numGlobalBuffers(globalBuffers),
+                                           TestUtils::bufferSizeInBytes(32768),
+                                           TestUtils::monitoringConfiguration(configMonitoring01)});
+
+    //    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+    //                                           TestUtils::dataPort(0),
+    //                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+    //                                           TestUtils::sourceType("DefaultSource"),
+    //                                           TestUtils::logicalSourceName("default_logical"),
+    //                                           TestUtils::physicalSourceName("test1"),
+    //                                           TestUtils::workerHealthCheckWaitTime(1),
+    //                                           TestUtils::enableMonitoring(),
+    //                                           TestUtils::enableDebug(),
+    //                                           TestUtils::numberOfSlots(50),
+    //                                           TestUtils::numLocalBuffers(localBuffers),
+    //                                           TestUtils::numGlobalBuffers(globalBuffers),
+    //                                           TestUtils::bufferSizeInBytes(32768)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
+
+    auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
+    NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
+    //    ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size() * 2);
+
+    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
+    auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
+
+    // test network metrics
+    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        auto json = jsonMetrics[std::to_string(i)];
+        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+//        ASSERT_TRUE(
+//            MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
+    }
+}
 }// namespace NES

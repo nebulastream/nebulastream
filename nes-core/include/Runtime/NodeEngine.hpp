@@ -46,6 +46,9 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 namespace Monitoring {
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }//namespace Monitoring
 
 namespace Runtime {
@@ -327,6 +330,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
+    // TODO: Beschreiben
+    Monitoring::MonitoringManagerPtr getMonitoringManager();
+
+    //TODO: Beschreiben
+    void setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -371,6 +380,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    Monitoring::MonitoringManagerPtr monitoringManager;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

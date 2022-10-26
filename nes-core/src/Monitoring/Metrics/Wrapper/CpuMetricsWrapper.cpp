@@ -86,13 +86,6 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
         metrics.setSchema(schema);
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
-//    std::list<unsigned int> list = {0, 1, 5, 8};
-//    for (auto i : list) {
-//        CpuMetrics metrics = getValue(i);
-//        metrics.nodeId = nodeId;
-//        metrics.setSchema(schema);
-//        metrics.writeToBuffer(buf, tupleIndex + i);
-//    }
 }
 
 void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
@@ -100,8 +93,6 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     auto cpuList = std::vector<CpuMetrics>();
     NES_TRACE("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
-
-    std::list<int> list = {1, 5, 8};
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         CpuMetrics metrics{};
@@ -109,13 +100,6 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         cpuList.emplace_back(metrics);
     }
-//    for (auto i : list) {
-//        //for each core parse the according CpuMetrics
-//        CpuMetrics metrics{};
-//        metrics.setSchema(this->schema);
-//        NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
-//        cpuList.emplace_back(metrics);
-//    }
     cpuMetrics = std::move(cpuList);
     nodeId = cpuMetrics[0].nodeId;
 }

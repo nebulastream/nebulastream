@@ -31,22 +31,22 @@ std::string toString(MetricType type) {
 };
 
 MetricType parse(std::string metricTypeString) {
-    if (metricTypeString.find("cpu") != std::string::npos) {
-        return MetricType::CpuMetric;
+    if (metricTypeString.find("wrapped_cpu") != std::string::npos) {
+        return MetricType::WrappedCpuMetrics;
     } else if (metricTypeString.find("disk") != std::string::npos) {
         return MetricType::DiskMetric;
     } else if (metricTypeString.find("memory") != std::string::npos) {
         return MetricType::MemoryMetric;
-    } else if (metricTypeString.find("network") != std::string::npos) {
-        return MetricType::NetworkMetric;
+    } else if (metricTypeString.find("wrapped_network") != std::string::npos) {
+        return MetricType::WrappedNetworkMetrics;
     } else if (metricTypeString.find("runtime") != std::string::npos) {
         return MetricType::RuntimeMetric;
     } else if (metricTypeString.find("registration") != std::string::npos) {
         return MetricType::RegistrationMetric;
-    } else if (metricTypeString.find("wrapped_cpu") != std::string::npos) {
-        return MetricType::WrappedCpuMetrics;
-    } else if (metricTypeString.find("wrapped_network") != std::string::npos) {
-        return MetricType::WrappedNetworkMetrics;
+    } else if (metricTypeString.find("network") != std::string::npos) {
+        return MetricType::NetworkMetric;
+    } else if (metricTypeString.find("cpu") != std::string::npos) {
+        return MetricType::CpuMetric;
     }
     return MetricType::UnknownMetric;
 }
