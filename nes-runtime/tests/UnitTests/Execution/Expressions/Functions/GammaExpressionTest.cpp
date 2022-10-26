@@ -38,7 +38,7 @@ class GammaExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(GammaExpressionTest, subIntegers) {
+TEST_F(GammaExpressionTest, gammaIntegers) {
     auto expression = UnaryExpressionWrapper<GammaExpression>();
 
     // Int8
@@ -66,7 +66,7 @@ TEST_F(GammaExpressionTest, subIntegers) {
     }
 }
 
-TEST_F(GammaExpressionTest, subUnsignedIntegers) {
+TEST_F(GammaExpressionTest, gammaUnsignedIntegers) {
     auto expression = UnaryExpressionWrapper<GammaExpression>();
 
     // UInt8
@@ -88,18 +88,18 @@ TEST_F(GammaExpressionTest, subUnsignedIntegers) {
     }// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 5));
-        ASSERT_EQ(resultValue, (uint64_t) 24);
+        ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 5));
-        ASSERT_EQ(resultValue, (uint64_t) 24);
+        ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-TEST_F(GammaExpressionTest, subFloat) {
+TEST_F(GammaExpressionTest, gammaFloat) {
     auto expression = UnaryExpressionWrapper<GammaExpression>();
     // Float
     {

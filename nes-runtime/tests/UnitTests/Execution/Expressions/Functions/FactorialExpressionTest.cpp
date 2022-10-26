@@ -38,7 +38,7 @@ class FactorialExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(FactorialExpressionTest, subIntegers) {
+TEST_F(FactorialExpressionTest, factorialIntegers) {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
     // Int8
@@ -66,7 +66,7 @@ TEST_F(FactorialExpressionTest, subIntegers) {
     }
 }
 
-TEST_F(FactorialExpressionTest, subUnsignedIntegers) {
+TEST_F(FactorialExpressionTest, factorialUnsignedIntegers) {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
     // UInt8
@@ -88,24 +88,24 @@ TEST_F(FactorialExpressionTest, subUnsignedIntegers) {
     }// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
-        ASSERT_EQ(resultValue, (uint64_t) 24);
+        ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
-        ASSERT_EQ(resultValue, (uint64_t) 24);
+        ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-TEST_F(FactorialExpressionTest, subFloat) {
+TEST_F(FactorialExpressionTest, factorialFloat) {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 4));
         ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
