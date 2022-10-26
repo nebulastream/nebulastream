@@ -1180,10 +1180,12 @@ std::tuple<float,float,float> BasePlacementStrategy::calcActiveStandby(TopologyP
         memoryCost += calcOutputQueue(topology, globalExecutionPlan->getExecutionNodeByNodeId(replica->getId()));
     }
 
+
     return {procCost,networkCost,memoryCost};
 }
 
-std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
+std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId,
+                                                                         FaultToleranceConfigurationPtr ftConfig){
 
     std::vector<ExecutionNodePtr> downstreamNodes;
     for(auto& rootNode : globalExecutionPlan->getRootNodes()){
@@ -1234,9 +1236,18 @@ std::tuple<float,float,float> BasePlacementStrategy::calcCheckpointing(TopologyP
     //float memoryCost = (topPrimary->getAvailableBuffers() / interval);
     float memoryCost = topPrimary->getAvailableBuffers();*/
 
-    float procCost = -1;
-    float networkCost = -1;
-    float memoryCost = -1;
+    float c1 = ftConfig->getCheckpointSize();
+    float c2 = ftConfig->getAckInterval();
+    float c3 = ftConfig->getTotalAckSizePerSecond();
+
+    //Processing cost in bytes per second
+    float procCost = ((ftConfig->getCheckpointSize() / ftConfig->getAckInterval()) + (ftConfig->getAckSize() / ftConfig->getAckInterval())) * executionNode->getDownstreamRatio();
+
+    //auto bandwidthToDownstream = topology->findNodeWithId(executionNode->getId())->getLinkProperty(topSecondary.getId())->bandwidth;
+
+    float networkCost = ((ftConfig->getIngestionRate() * ftConfig->getTupleSize()) + ((2 * ftConfig->getAckSize()) / ftConfig->getAckInterval()));
+
+    float memoryCost = ftConfig->getCheckpointSize() + ftConfig->getOutputQueueSize(getNetworkConnectivity(topology, executionNode, executionNode->getParents()[0]->as<ExecutionNode>()));
 
     return {procCost, networkCost, memoryCost};
 
@@ -1327,6 +1338,8 @@ std::tuple<float,float,float> BasePlacementStrategy::calcUpstreamBackup(const To
     float acksSizePerSecond = ftConfig->getAckRate() * ftConfig->getAckSize();
 
     float procCost = (static_cast<float>(ftConfig->getIngestionRate() * ftConfig->getTupleSize()) + static_cast<float>(acksSizePerSecond / ackInterval)) * executionNode->getDownstreamRatio();
+
+    //auto bandwidthToParent = topology->findNodeWithId(executionNode->getId())->getLinkProperty(topology->findNodeWithId(executionNode->getParents()[0]->as<ExecutionNode>()->getId()))->bandwidth;
 
     float networkCost = static_cast<float>(ftConfig->getIngestionRate() / ftConfig->getAckRate()) * static_cast<float>(ftConfig->getAckSize());
 

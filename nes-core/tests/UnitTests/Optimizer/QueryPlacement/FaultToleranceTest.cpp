@@ -589,7 +589,7 @@ TEST_F(QueryPlacementTest, bestApproachTest){
             Optimizer::BasePlacementStrategy::calcActiveStandby(topology,globalExecutionPlan,node,replicas,queryId);
 
         std::tuple<float,float,float> checkpointingResult =
-            Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId);
+            Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId, ftConfig);
 
         std::tuple<float,float,float> upstreamBackupResult =
             Optimizer::BasePlacementStrategy::calcUpstreamBackup(topology,globalExecutionPlan,node,queryId, ftConfig);
@@ -1134,10 +1134,19 @@ TEST_F(QueryPlacementTest, calcCheckpointingTest){
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
     Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
+    csvSourceType->setGatheringInterval(25);
+    uint64_t epochRate = 18;
+    int ack_size = 8;
+
+    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
+    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
+    ftConfig->setAckRate(18);
+    ftConfig->setAckSize(8);
+
     for(auto& node : executionNodes){
 
         std::tuple<float,float,float> activeStandbyResult =
-            Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId);
+            Optimizer::BasePlacementStrategy::calcCheckpointing(topology,globalExecutionPlan,node,queryId, ftConfig);
 
         float procCost = std::get<0>(activeStandbyResult);
         float networkingCost = std::get<1>(activeStandbyResult);

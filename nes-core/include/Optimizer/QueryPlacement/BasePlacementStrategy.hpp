@@ -154,7 +154,7 @@ class BasePlacementStrategy {
     static std::tuple<float, float, float> calcCheckpointing(TopologyPtr topology,
                                                       const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                       ExecutionNodePtr executionNode,
-                                                      QueryId queryId);
+                                                      QueryId queryId, FaultToleranceConfigurationPtr ftConfig);
     static FaultToleranceType bestApproach(std::vector<float> activeStandbyCosts,
                       std::vector<float> checkpointingCosts,
                       std::vector<float> upstreamBackupCosts);
