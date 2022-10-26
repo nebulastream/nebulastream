@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include "Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp"
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -79,6 +81,33 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
     auto c3 = c1 + c2;
     c1 = c2;
     NES_DEBUG(c3.value);
+}
+
+TEST_F(CustomDataTypeTest, customTimeStampTypeTest) {
+    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    std::chrono::hours dur(ms);
+    NES_DEBUG(dur.count());
+    auto c1 = Value<TimeStamp>(TimeStamp(dur.count()));
+    ASSERT_EQ(cast<IR::Types::IntegerStamp>(c1.value->getType())->getNumberOfBits(), 64);
+    ASSERT_EQ(c1.getValue().toString(),std::to_string(ms));
+
+    auto c2 = Value<TimeStamp>(TimeStamp(dur.count()));
+
+    auto c3 = c1 + c2;
+    ASSERT_EQ(c3.getValue().toString(),std::to_string(3333597103488));
+    c1 = c2;
+    auto seconds = c1->getSeconds();
+    ASSERT_EQ(seconds->toString(),std::to_string(51));
+    auto minutes = c1->getMinutes();
+    ASSERT_EQ(minutes->toString(),std::to_string(35));
+    auto hours = c1->getHours();
+    ASSERT_EQ(hours->toString(),std::to_string(15));
+    auto days = c1->getDays();
+    ASSERT_EQ(days->toString(),std::to_string(26));
+    auto months = c1->getMonths();
+    ASSERT_EQ(months->toString(),std::to_string(10));
+    auto years = c1->getYears();
+    ASSERT_EQ(years->toString(),std::to_string(2022));
 }
 
 }// namespace NES::Nautilus
