@@ -267,6 +267,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 }
 
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
+                                 Monitoring::MonitoringManagerPtr monitoringManager,
                                  Monitoring::MetricCollectorType type,
                                  const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,
@@ -278,6 +279,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MonitoringSink>(format,
                                             metricStore,
+                                            monitoringManager,
                                             type,
                                             nodeEngine,
                                             numOfProducers,
