@@ -69,7 +69,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     scanOperator->setChild(emitOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator.get());
+    pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
