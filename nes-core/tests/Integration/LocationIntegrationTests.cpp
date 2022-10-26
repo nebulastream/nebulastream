@@ -421,7 +421,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    //coordinatorConfig->restPort = *restPort;
     NES_INFO("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -475,12 +474,6 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     while (afterQuery < loopTime) {
         if (afterQuery < timesecloc) {
             NES_DEBUG("checking first loc")
-            /*
-            EXPECT_GE(currentLocation.getLatitude(), pos1lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos1lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos2lng);
-             */
             EXPECT_EQ(currentLocation, startLocation);
         } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
             NES_DEBUG("checking second loc")
