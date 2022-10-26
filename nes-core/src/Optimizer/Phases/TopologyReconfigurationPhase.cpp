@@ -18,12 +18,18 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/TopologyNode.hpp>
+
+
 namespace NES::Optimizer::Experimental {
+
+const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
+const std::string PLACED = "PLACED";
 //todo: at which point should the topology actually be changed? here of before
 //todo: pass topologyNodes or ids here?
 bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNode, uint64_t oldParent, uint64_t newParent) {
    auto commonAncestor = getCommonAncestor(oldParent, newParent);
    auto pathFromOldParent = topology->findNodesBetween(oldParent, commonAncestor);
+   //todo; construct a set from the nodes here? could speed up execution further down
    //iterate over all operators and check if they are places on the path from old parent, if they are not, pin them where they are
    //or take the oposite approach and only put these down as not placed
    //todo: what does the "snapshot" do here and should we use it?
@@ -42,14 +48,17 @@ bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStr
         //the above is probably all wrong. pinned_node_id is for all nodes that were somehow placed, see bottomUp
 
 
-        auto pinnedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
+        auto pinnedNodeId = op->as<OperatorNode>()->getProperty(PINNED_NODE_ID);
         //todo: can we also get these as execution node?
         //how can we get the node which placed operators where places on and not just a bool indicating that they have been placed
-        auto placedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
+        //auto placedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
         //can we do this better than with 2 nested loops
         //look at how topologyMap is constructed in BasePlacementStretegy
         for (auto topologyNode : pathFromOldParent) {
             if (topologyNode->getNodeId() == pinnedNodeId) {
+                //todo: use string constants here
+                op->as<OperatorNode>()->removeProperty(PINNED_NODE_ID);
+                op->as<OperatorNode>()->removeProperty(PLACED);
 
                 //todo: there is a getTopologyNode() function in execution node, but can i also get it the other way araound?
             }
