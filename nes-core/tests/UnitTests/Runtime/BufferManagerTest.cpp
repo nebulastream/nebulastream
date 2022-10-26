@@ -598,4 +598,33 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
+TEST_F(BufferManagerTest, singleThreadedBufferRecyclingWithChildren) {
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, 10);
+    auto buffer0 = bufferManager->getBufferBlocking();
+    auto buffer1 = bufferManager->getBufferBlocking();
+    auto buffer3 = bufferManager->getUnpooledBuffer(64);
+
+    auto idx1 = buffer0.storeChildBuffer(buffer1);
+    auto idx2 = buffer0.storeChildBuffer(buffer3);
+    ASSERT_EQ(idx1, 0);
+    ASSERT_EQ(idx2, 1);
+    ASSERT_EQ(buffer1.getReferenceCounter(), 0);
+    ASSERT_EQ(buffer3.getReferenceCounter(), 0);
+    auto buffer2 = buffer0.loadChildBuffer(idx1);
+    auto buffer4 = buffer0.loadChildBuffer(idx2);
+    ASSERT_EQ(buffer0.getReferenceCounter(), 1);
+    ASSERT_EQ(buffer2.getReferenceCounter(), 2);
+    ASSERT_EQ(buffer4.getReferenceCounter(), 2);
+    buffer4.release();
+    ASSERT_EQ(buffer4.getReferenceCounter(), 0); // buffer4 does not exist anymore
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), 7); //.. but its underlying segment is still alive
+    buffer0.release();
+    ASSERT_EQ(buffer2.getReferenceCounter(), 1);
+    buffer2.release();
+    ASSERT_EQ(buffer0.getReferenceCounter(), 0);
+    ASSERT_EQ(buffer2.getReferenceCounter(), 0);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), 10);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), 10);
+}
+
 }// namespace NES

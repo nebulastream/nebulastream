@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/OriginId.hpp>
+#include <Runtime/TaggedPointer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
@@ -166,6 +167,10 @@ class BufferControlBlock {
      */
     [[nodiscard]] uint64_t getCreationTimestamp() const noexcept;
 
+    [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
+
+    [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size);
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif
@@ -177,6 +182,7 @@ class BufferControlBlock {
     SequenceNumber sequenceNumber = 0;
     int64_t creationTimestamp{};
     OriginId originId = INVALID_ORIGIN_ID;
+    std::vector<MemorySegment*> children;
 
   public:
     MemorySegment* owner;
@@ -230,6 +236,7 @@ class MemorySegment {
     friend class NES::Runtime::LocalBufferPool;
     friend class NES::Runtime::FixedSizeBufferPool;
     friend class NES::Runtime::BufferManager;
+    friend class NES::Runtime::detail::BufferControlBlock;
 
   public:
     MemorySegment(const MemorySegment& other);
@@ -245,7 +252,7 @@ class MemorySegment {
 
     ~MemorySegment();
 
-    uint8_t* getPointer() const { return ptr; }
+    uint8_t* getPointer() const { return ptr.pointer(); }
 
   private:
     /**
@@ -287,7 +294,7 @@ class MemorySegment {
      +----------------------------+-------------------------+----------------------------+
      */
 
-    uint8_t* ptr{nullptr};
+    TaggedPointer<uint8_t> ptr{nullptr, 0};
     uint32_t size{0};
     detail::BufferControlBlock* controlBlock{nullptr};
 };
