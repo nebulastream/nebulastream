@@ -16,14 +16,14 @@
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::MLIR {
 
+/**
+ * @brief Compilation backend that uses MLIR.
+ */
 class MLIRCompilationBackend : public CompilationBackend {
   public:
     std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir) override;
     ~MLIRCompilationBackend() override;
 };
 
-
-
 }// namespace NES::Nautilus::Backends::MLIR
-
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_

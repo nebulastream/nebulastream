@@ -15,10 +15,10 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
 namespace NES::Runtime::Execution {
-Operators::Operator* PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
+std::shared_ptr<Operators::Operator> PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
 
-void PhysicalOperatorPipeline::setRootOperator(Operators::Operator* rootOperator) {
-    PhysicalOperatorPipeline::rootOperator = rootOperator;
+void PhysicalOperatorPipeline::setRootOperator(std::shared_ptr<Operators::Operator> rootOperator) {
+    this->rootOperator = rootOperator;
 }
 
 }// namespace NES::Runtime::Execution

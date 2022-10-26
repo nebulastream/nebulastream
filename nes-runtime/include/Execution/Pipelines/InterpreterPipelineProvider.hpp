@@ -16,6 +16,10 @@
 
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution {
+
+/**
+ * @brief Creates an executable pipeline stage that can be executed using interpretation
+ */
 class InterpreterPipelineProvider : public ExecutablePipelineProvider {
   public:
     std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;

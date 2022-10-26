@@ -15,6 +15,11 @@
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution {
+
+/**
+ * @brief Creates an executable pipeline stage that can be executed using compilation.
+ */
+
 class CompilationPipelineProvider : public ExecutablePipelineProvider {
   public:
     std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
 #include <Nautilus/Interface/Record.hpp>
@@ -45,7 +46,7 @@ class Operator {
     virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
     /**
-     * @brief Close is called
+     * @brief Close is called for each record buffer and clears execution local state.
      * @param executionCtx
      * @param recordBuffer
      */
@@ -57,7 +58,15 @@ class Operator {
      */
     virtual void terminate(ExecutionContext& executionCtx) const;
 
+    /**
+     * @return Returns true if the operator has a child.
+     */
     bool hasChild() const;
+
+    /**
+     * @brief Sets a child operator to this operator.
+     * @param child
+     */
     void setChild(ExecuteOperatorPtr child);
     virtual ~Operator();
 

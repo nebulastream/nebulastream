@@ -56,7 +56,7 @@ class PluginRegistry {
 /**
  * @brief The plugin registry allows the dynamic registration of plugins at runtime.
  * A plugin is a provider of a specific type T, which defines the plugin interface.
- * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the plugin.
+ * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the registry.
  * @tparam T plugin interface type
  */
 template<typename T>

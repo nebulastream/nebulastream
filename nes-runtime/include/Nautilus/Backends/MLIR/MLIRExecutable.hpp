@@ -15,7 +15,12 @@
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
 #include <Nautilus/Backends/Executable.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
+
 namespace NES::Nautilus::Backends::MLIR {
+
+/**
+ * @brief Executable that calls into a code fragment that is compiled with MLIR.
+ */
 class MLIRExecutable : public Executable {
   public:
     MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine);

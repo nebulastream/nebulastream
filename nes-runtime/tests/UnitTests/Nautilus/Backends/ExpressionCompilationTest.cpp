@@ -133,7 +133,7 @@ Value<> doubleAddExpression(Value<Double> x) {
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addDobleTest) {
+TEST_P(ExpressionExecutionTest, addDoubleTest) {
     Value<Double> tempx = 0.0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createDoubleStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {

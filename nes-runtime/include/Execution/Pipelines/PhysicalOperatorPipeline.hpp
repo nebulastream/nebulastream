@@ -16,13 +16,25 @@
 #include <Execution/Operators/Operator.hpp>
 namespace NES::Runtime::Execution {
 
+/**
+ * @brief The physical operator pipeline captures a set of operators within a pipeline.
+ */
 class PhysicalOperatorPipeline {
   public:
-    Operators::Operator* getRootOperator() const;
-    void setRootOperator(Operators::Operator* rootOperator);
+    /**
+     * @brief Sets the root operator of an pipeline.
+     * @param rootOperator
+     */
+    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
+
+    /**
+     * @brief Returns the root operator of an pipeline
+     * @return operator
+     */
+    std::shared_ptr<Operators::Operator> getRootOperator() const;
 
   private:
-    Operators::Operator* rootOperator;
+    std::shared_ptr<Operators::Operator> rootOperator;
 };
 
 }// namespace NES::Runtime::Execution

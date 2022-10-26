@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
 #include <Execution/Operators/OperatorState.hpp>
@@ -49,6 +50,12 @@ class ExecutionContext final {
      * @param state operator state.
      */
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
+
+    /**
+     * @brief Sets the global operator state.
+     * @param op  reference to the operator to identify the state.
+     * @param state  operator state.
+     */
     void setGlobalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
 
     /**

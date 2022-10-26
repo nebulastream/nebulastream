@@ -31,7 +31,7 @@ void* allocateBufferProxy(void* workerContextPtr) {
     // We allocate a new tuple buffer for the runtime.
     // As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
     // This increases the reference counter in the buffer.
-    // Thus, when the buffer is not required anymore operator code has to clean it up otherwise it will leak.
+    // When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
     auto buffer = wkrCtx->allocateTupleBuffer();
     auto* tb = new Runtime::TupleBuffer(buffer);
     return tb;
