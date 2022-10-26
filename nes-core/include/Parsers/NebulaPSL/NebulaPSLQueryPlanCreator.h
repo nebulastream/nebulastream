@@ -200,7 +200,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
-
 };
 
 }// namespace NES::Parsers
