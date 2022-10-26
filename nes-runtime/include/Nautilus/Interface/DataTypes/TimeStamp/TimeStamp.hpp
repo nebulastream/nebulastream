@@ -43,7 +43,6 @@ class TimeStamp : public Any {
     std::string toString() override;
   private:
     Value<> milliseconds;
-
 };
 
 }// namespace Nautilus
