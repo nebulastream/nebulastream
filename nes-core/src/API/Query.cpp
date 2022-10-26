@@ -22,10 +22,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -110,8 +107,8 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+    std::string cepLeftKey = keyAssignment("cep_leftkey");
+    std::string cepRightKey = keyAssignment("cep_leftright");
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -130,8 +127,8 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+    std::string cepLeftKey = keyAssignment("cep_leftkey");
+    std::string cepRightKey = keyAssignment("cep_leftright");
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -175,20 +172,12 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-std::string keyAssignmentRight() {
+std::string keyAssignment(std::string keyName) {
     //first, get unique ids for the key attributes
     auto cepRightId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
+    std::string cepRightKey = keyName + std::to_string(cepRightId);
     return cepRightKey;
-}
-
-std::string keyAssignmentLeft() {
-    //first, get unique ids for the key attributes
-    auto cepLeftId = Util::getNextOperatorId();
-    //second, create a unique name for both key attributes
-    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
-    return cepLeftKey;
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
@@ -267,13 +256,9 @@ Query& Query::unionWith(const Query& subQuery) {
     const QueryPlanPtr& subQueryPlan = subQuery.queryPlan;
     queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(subQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
-    queryPlan->setSourceConsumed(updatedSourceName);
+    //update source name
+    auto newSourceName = Util::updateSourceName(queryPlan->getSourceConsumed(), subQueryPlan->getSourceConsumed());
+    queryPlan->setSourceConsumed(newSourceName);
     return *this;
 }
 
@@ -361,18 +346,9 @@ Query& Query::join(const Query& subQueryRhs,
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    // accumulating sourceNames with delimiters _ between all sourceNames to enable backtracking of origin
-    auto updatedSourceName =
-        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
-            return a + "_" + b;
-        });
-    queryPlan->setSourceConsumed(updatedSourceName);
-
+    //update source name
+    auto newSourceName = Util::updateSourceName(queryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
+    queryPlan->setSourceConsumed(newSourceName);
     return *this;
 }
 
@@ -408,13 +384,9 @@ Query& Query::batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, Exp
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
-    queryPlan->setSourceConsumed(updatedSourceName);
+    //update source name
+    auto newSourceName = Util::updateSourceName(queryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
+    queryPlan->setSourceConsumed(newSourceName);
 
     return *this;
 }
@@ -424,14 +396,12 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
 Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
-    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-
+    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Batch Join Operator");
     return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey);
 }
 
