@@ -22,17 +22,15 @@ class ZipfianGenerator {
     static constexpr auto DEFAULT_ZIPFIAN_GENERATOR = .99;
 
   public:
-    explicit ZipfianGenerator(uint64_t min_, uint64_t max_, double zipfianFactor = DEFAULT_ZIPFIAN_GENERATOR)
-        : ZipfianGenerator(min_, max_, zipfianFactor, computeZeta(0, max_ - min_ + 1, zipfianFactor, 0)) {
-        // nop
-    }
+    explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianFactor = DEFAULT_ZIPFIAN_GENERATOR)
+        : ZipfianGenerator(min, max, zipfianFactor, computeZeta(0, max - min + 1, zipfianFactor, 0)) {}
 
-    explicit ZipfianGenerator(uint64_t min_, uint64_t max_, double zipfianConstant_, double zetan_) : dist(0.0, 1.0) {
-        numItems = max_ - min_ + 1;
-        min = min_;
-        theta = zipfianConstant = zipfianConstant_;
+    explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianConstant, double zetan_) : dist(0.0, 1.0) {
+        numItems = max - min + 1;
+        this->min = min;
+        this->zipfianConstant = zipfianConstant;
+        this->theta = this->zipfianConstant;
 
-        theta = zipfianConstant;
 
         zeta2Theta = zeta(0, 2, theta, 0);
 
@@ -61,7 +59,7 @@ class ZipfianGenerator {
             return min + 1;
         }
 
-        long ret = min + (long)((numItems)*std::pow(eta * u - eta + 1, alpha));
+        uint64_t ret = min + (long)((numItems)*std::pow(eta * u - eta + 1, alpha));
         return ret;
     }
 
