@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-mod-expression-test "ModExpressionTest.cpp")
+add_executable(runtime-mod-expression-test "ModExpressionTest.cpp" AtanExpressionTest.cpp)
 target_link_libraries(runtime-mod-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-mod-expression-test COMMAND runtime-mod-expression-test)
 add_executable(runtime-cos-expression-test "CosExpressionTest.cpp")
