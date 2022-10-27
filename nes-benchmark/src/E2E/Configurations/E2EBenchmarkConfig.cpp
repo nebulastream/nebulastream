@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <E2E/configs/E2EBenchmarkConfig.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
