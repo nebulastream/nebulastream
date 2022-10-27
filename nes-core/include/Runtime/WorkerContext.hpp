@@ -38,6 +38,10 @@ class AbstractBufferProvider;
  */
 class WorkerContext {
   private:
+    using WorkerContextBufferProviderPtr = LocalBufferPoolPtr;
+    using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
+    using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
+
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
     /// object reference counters
@@ -46,8 +50,10 @@ class WorkerContext {
     std::unordered_map<Network::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// event only channels that send events upstream
     std::unordered_map<Network::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
-    /// worker local buffer pool
-    static folly::ThreadLocalPtr<LocalBufferPool> localBufferPool;
+    /// worker local buffer pool stored in tls
+    static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
+    /// worker local buffer pool stored :: use this for fast access
+    WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
@@ -67,10 +73,18 @@ class WorkerContext {
     TupleBuffer allocateTupleBuffer();
 
     /**
-     * @brief Returns the local buffer provider
-     * @return std::shared_ptr<AbstractBufferProvider>
+     * @brief Returns the thread-local buffer provider singleton.
+     * This can be accessed at any point in time also without the pointer to the context.
+     * Calling this method from a non worker thread results in undefined behaviour.
+     * @return raw pointer to AbstractBufferProvider
      */
-    static AbstractBufferProvider* getBufferProvider();
+    static WorkerContextBufferProviderRawPtr getBufferProviderTLS();
+
+    /**
+     * @brief Returns the thread-local buffer provider
+     * @return shared_ptr to LocalBufferPool
+     */
+    WorkerContextBufferProviderPtr getBufferProvider();
 
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()

@@ -434,7 +434,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 //            ASSERT_EQ(Runtime::WorkerContext::getBufferProvider(), nullptr);
             Runtime::WorkerContext workerContext(1, nodeEngine->getBufferManager(), 4);
-            ASSERT_NE(Runtime::WorkerContext::getBufferProvider(), nullptr);
+            ASSERT_NE(Runtime::WorkerContext::getBufferProviderTLS(), nullptr);
             if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
                 auto memoryLayout =
                     Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());

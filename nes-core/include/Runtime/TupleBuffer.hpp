@@ -73,6 +73,11 @@ class TupleBuffer {
     }
 
   public:
+
+    ///@brief This is the logical identifier of a child tuple buffer
+    using NestedTupleBufferKey = uint32_t;
+
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
 
@@ -251,9 +256,11 @@ class TupleBuffer {
         controlBlock->addRecycleCallback(std::move(newCallback));
     }
 
-    [[nodiscard]] uint32_t storeChildBuffer(TupleBuffer& buffer) noexcept;
+    ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
+    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) noexcept;
 
-    [[nodiscard]] TupleBuffer loadChildBuffer(uint32_t bufferIndex) noexcept;
+    ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
+    [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) noexcept;
 
   private:
     /**
