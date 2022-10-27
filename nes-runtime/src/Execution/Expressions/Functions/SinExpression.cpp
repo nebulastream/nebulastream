@@ -16,52 +16,24 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 
-
-
  namespace NES::Runtime::Execution::Expressions {
-
-
 
              SinExpression::SinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
-
-
-             /**
-
+    /**
   * @brief This method calculates the sine of X.
-
   * This function is basically a wrapper for std::sin and enables us to use it in our execution engine framework.
-
   * @param x double
-
   * @return double
-
   */
-
              double calculateSin(double x) { return std::sin(x); }
-
-
 
              Value<> SinExpression::execute(NES::Nautilus::Record& record) const {
 
-                 // Evaluate the sub expression and retrieve the value.
-
                  Value subValue = subExpression->execute(record);
 
-                 // As we don't know the exact type of value here, we have to check the type and then call the function.
-
-                 // subValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-
-                 // In all cases we can call the same calculateSin function as under the hood C++ can do an implicit cast from
-
-                 // primitive integer types to the double argument.
-
-                 // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-
                  if (subValue->isType<Int8>()) {
-
-                     // call the calculateSin function with the correct type
 
                      return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int8>());
 
