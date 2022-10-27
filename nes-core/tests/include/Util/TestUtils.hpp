@@ -27,24 +27,17 @@
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
 #include <cpr/cpr.h>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
 using std::endl;
 using std::string;
 using namespace std::string_literals;
-
-namespace web {
-namespace json {
-class value;
-}// namespace json
-}// namespace web
 
 namespace NES {
 static const std::string BASE_URL = "http://127.0.0.1:";
@@ -678,31 +671,23 @@ template<typename T>
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t currentResult = 0;
-    web::json::value json_return;
+    nlohmann::json json_return;
     std::string currentStatus;
 
     NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
-        web::uri_builder builder(("/"));
-        builder.append_query(("queryId"), queryId);
-        clientProc.request(web::http::methods::GET, builder.to_string())
-            .then([](const web::http::http_response& response) {
-                //cout << "Get query status" << endl;
-                return response.extract_json();
-            })
-            .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
-                try {
-                    NES_DEBUG("got status=" << json_return);
-                    json_return = task.get();
-                    currentStatus = json_return.at("status").as_string();
-                } catch (const web::http::http_exception& e) {
-                    NES_ERROR("error while setting return" << e.what());
-                }
-            })
-            .wait();
-        if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
-            break;
+        std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
+        nlohmann::json jsonReturn;
+        auto future = cpr::GetAsync(cpr::Url{url},
+                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        future.wait();
+        auto response = future.get();
+        nlohmann::json result = nlohmann::json::parse(response.text);
+        if(response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
+            currentStatus = result["status"];
+            if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
+                break;
+            }
         }
         NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
@@ -712,29 +697,18 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
-        web::http::client::http_client clientProc("http://localhost:" + restPort
-                                                  + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
-        web::uri_builder builder(("/"));
-        builder.append_query(("queryId"), queryId);
-        clientProc.request(web::http::methods::GET, builder.to_string())
-            .then([](const web::http::http_response& response) {
-                cout << "read number of buffers" << endl;
-                return response.extract_json();
-            })
-            .then([&json_return, &currentResult](const pplx::task<web::json::value>& task) {
-                try {
-                    NES_DEBUG("got #buffers=" << json_return);
-                    json_return = task.get();
-                    currentResult = json_return.at("producedBuffers").as_integer();
-                } catch (const web::http::http_exception& e) {
-                    NES_ERROR("error while setting return" << e.what());
-                }
-            })
-            .wait();
-
-        if (currentResult >= expectedNumberBuffers) {
-            NES_DEBUG("checkCompleteOrTimeout: results are correct");
-            return true;
+        std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers";
+        nlohmann::json jsonReturn;
+        auto future = cpr::GetAsync(cpr::Url{url},
+                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        future.wait();
+        auto response = future.get();
+        nlohmann::json result = nlohmann::json::parse(response.text);
+        if(response.status_code == cpr::status::HTTP_OK && result.contains("producedBuffers")) {
+            if (currentResult >= expectedNumberBuffers) {
+                NES_DEBUG("checkCompleteOrTimeout: results are correct");
+                return true;
+            }
         }
         NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedNumberBuffers);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
@@ -753,29 +727,19 @@ template<typename T>
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t currentResult = 0;
-    web::json::value json_return;
+    nlohmann::json json_return;
     std::string currentStatus;
 
     NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
-        web::uri_builder builder(("/"));
-        builder.append_query(("queryId"), queryId);
-        clientProc.request(web::http::methods::GET, builder.to_string())
-            .then([](const web::http::http_response& response) {
-                //cout << "Get query status" << endl;
-                return response.extract_json();
-            })
-            .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
-                try {
-                    NES_DEBUG("got status=" << json_return);
-                    json_return = task.get();
-                    currentStatus = json_return.at("status").as_string();
-                } catch (const web::http::http_exception& e) {
-                    NES_ERROR("error while setting return" << e.what());
-                }
-            })
-            .wait();
+        std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
+        nlohmann::json jsonReturn;
+        auto future = cpr::GetAsync(cpr::Url{url},
+                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        future.wait();
+        auto response = future.get();
+        nlohmann::json result = nlohmann::json::parse(response.text);
+        currentStatus = result["status"];
         if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
             return true;
         }
@@ -792,30 +756,18 @@ template<typename T>
      * @return if stopped
      */
 [[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
-    web::json::value json_return;
+    nlohmann::json json_return;
 
-    web::http::client::http_client client(BASE_URL + restPort + "/v1/nes/query/stop-query");
-    web::uri_builder builder(("/"));
-    builder.append_query(("queryId"), queryId);
-    client.request(web::http::methods::DEL, builder.to_string())
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
+    std::string url = BASE_URL + restPort + "/v1/nes/query/stop-query";
+    nlohmann::json jsonReturn;
+    auto future = cpr::DeleteAsync(cpr::Url{url},
+                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("stopQueryViaRest: status =" << result.dump());
 
-    NES_DEBUG("stopQueryViaRest: status =" << json_return);
-
-    return json_return.at("success").as_bool();
+    return result["success"].get<bool>();
 }
 
 /**
@@ -823,29 +775,20 @@ template<typename T>
      * @param query string
      * @return if stopped
      */
-[[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081") {
-    web::json::value json_return;
+[[nodiscard]] nlohmann::json startQueryViaRest(const string& queryString, const std::string& restPort = "8081") {
+    nlohmann::json json_return;
 
-    web::http::client::http_client clientQ1(BASE_URL + restPort + "/v1/nes/");
-    clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
+    std::string url = BASE_URL + restPort + "/v1/nes/query/execute-query";
+    nlohmann::json jsonReturn;
+    auto future = cpr::PostAsync(cpr::Url{url},
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{queryString});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("startQueryViaRest: status =" << result.dump());
 
-    NES_DEBUG("startQueryViaRest: status =" << json_return);
-
-    return json_return;
+    return result;
 }
 
 /**
@@ -854,29 +797,15 @@ template<typename T>
      * @param2 the rest port
      * @return the json
      */
-[[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081") {
-    web::json::value json_return;
+[[nodiscard]] nlohmann::json makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081") {
+    std::string url = BASE_URL + restPort + "/v1/nes/monitoring/" + restCall;
+    auto future = cpr::GetAsync(cpr::Url{url});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("getAllMonitoringMetricsViaRest: status =" << result.dump());
 
-    web::http::client::http_client clientQ1(BASE_URL + restPort + "/v1/nes/");
-    clientQ1.request(web::http::methods::GET, "monitoring/" + restCall)
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_DEBUG("getAllMonitoringMetricsViaRest: status =" << json_return);
-
-    return json_return;
+    return result;
 }
 
 /**
@@ -885,57 +814,40 @@ template<typename T>
    * @return
    */
 [[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081") {
-    web::json::value json_returnSchema;
+    nlohmann::json json_returnSchema;
 
-    web::http::client::http_client clientSchema(BASE_URL + restPort + "/v1/nes/sourceCatalog/addLogicalSource");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_returnSchema = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_DEBUG("addLogicalSource: status =" << json_returnSchema);
-
-    return json_returnSchema.at("Success").as_bool();
+    std::string url = BASE_URL + restPort + "/v1/nes/sourceCatalog/addLogicalSource";
+    cpr::AsyncResponse future =
+        cpr::PostAsync(cpr::Url{url},
+                       cpr::Header{{"Content-Type", "application/json"}},
+                       cpr::Body{schemaString});
+    future.wait();
+    cpr::Response response = future.get();
+    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+    NES_DEBUG("addLogicalSource: status =" << jsonResponse.dump());
+    return jsonResponse["success"].get<bool>();
 }
 
 bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
     NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
-    web::json::value json_return;
-    web::http::client::http_client client(baseUri);
+    nlohmann::json json_return;
     size_t nodeNo = 0;
 
     for (int i = 0; i < maxTimeout; i++) {
         try {
-            client.request(web::http::methods::GET)
-                .then([](const web::http::http_response& response) {
-                    return response.extract_json();
-                })
-                .then([&json_return](const pplx::task<web::json::value>& task) {
-                    try {
-                        json_return = task.get();
-                    } catch (const web::http::http_exception& e) {
-                        NES_ERROR("TestUtils: Error while setting return: " << e.what());
-                    }
-                })
-                .wait();
+            cpr::AsyncResponse future =
+                cpr::GetAsync(cpr::Url{baseUri},
+                              cpr::Timeout(3000));
+            future.wait();
+            cpr::Response response = future.get();
+            nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
 
-            nodeNo = json_return.at("nodes").size();
+            nodeNo = jsonResponse["nodes"].size();
 
             if (nodeNo == expectedWorkers + 1U) {
                 NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
-                NES_DEBUG("TestUtils: Received topology JSON:\n" << json_return.to_string());
+                NES_DEBUG("TestUtils: Received topology JSON:\n" << jsonResponse.dump());
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
@@ -955,30 +867,16 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
      * @param1 the rest port
      * @return the json
      */
-[[nodiscard]] web::json::value getTopology(uint64_t restPort) {
+[[nodiscard]] nlohmann::json getTopology(uint64_t restPort) {
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
     NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
-    web::json::value json_return;
-    web::http::client::http_client client(baseUri);
 
-    try {
-        client.request(web::http::methods::GET)
-            .then([](const web::http::http_response& response) {
-                return response.extract_json();
-            })
-            .then([&json_return](const pplx::task<web::json::value>& task) {
-                try {
-                    json_return = task.get();
-                } catch (const web::http::http_exception& e) {
-                    NES_ERROR("TestUtils: Error while setting return: " << e.what());
-                }
-            })
-            .wait();
-    } catch (const std::exception& e) {
-        NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
-    }
-    return json_return;
+    auto future = cpr::GetAsync(cpr::Url{baseUri},
+                                cpr::Timeout{3000});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    return result;
 }
 
 };// namespace TestUtils
