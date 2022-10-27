@@ -33,15 +33,12 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-using std::cout;
-using std::endl;
-
 namespace NES {
 
-uint16_t timeout = 15;
 class MonitoringControllerTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
+    uint16_t timeout = 15;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MonitoringControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MonitoringControllerTest test class.");
@@ -115,6 +112,25 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
         FAIL() << "Rest server failed to start";
     }
     auto future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
+    future.wait();
+    auto r = future.get();
+    EXPECT_EQ(r.status_code, 500);
+}
+
+TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEnabled) {
+    NES_INFO("Tests for Oatpp Monitoring Controller: Start coordinator");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->restServerType = ServerType::Oatpp;
+    auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    NES_INFO("MonitoringControllerTest: Coordinator started successfully");
+    bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
+    if (!success) {
+        FAIL() << "Rest server failed to start";
+    }
+    auto future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);

@@ -18,7 +18,6 @@
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 #include <vector>
 

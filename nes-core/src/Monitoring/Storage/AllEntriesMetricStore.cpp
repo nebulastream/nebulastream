@@ -16,7 +16,6 @@
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
-#include <mutex>
 
 namespace NES::Monitoring {
 

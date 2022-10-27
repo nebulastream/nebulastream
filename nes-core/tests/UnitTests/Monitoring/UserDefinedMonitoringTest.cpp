@@ -27,7 +27,6 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
-#include <nlohmann/json.hpp>
 
 namespace NES {
 using namespace Configurations;

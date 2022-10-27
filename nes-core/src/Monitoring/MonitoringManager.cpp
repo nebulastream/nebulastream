@@ -29,7 +29,6 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <nlohmann/json.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>

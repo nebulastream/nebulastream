@@ -17,7 +17,6 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;

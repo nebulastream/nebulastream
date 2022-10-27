@@ -451,6 +451,7 @@ class MetricValidator {
                 for (auto& [key, val] : json.items()) {
                     if (key == "logical_stream" && val == elem) {
                         check = true;
+                        continue;
                     }
                 }
             }
