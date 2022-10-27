@@ -23,6 +23,22 @@ namespace NES::Nautilus {
 
 class TimeStampInvocationPlugin : public InvocationPlugin {
   public:
+    TimeStampInvocationPlugin() = default;
+
+    std::optional<Value<>>
+    performBinaryOperationAndCast(const Value<>& left,
+                                  const Value<>& right,
+                                  std::function<Value<>(const TimeStamp& left, const TimeStamp& right)> function) const {
+        auto& leftValue = left.getValue();
+        auto& rightValue = right.getValue();
+        if (isa<TimeStamp>(leftValue) && isa<TimeStamp>(rightValue)) {
+            auto& leftTs = leftValue.staticCast<TimeStamp>();
+            auto& rightTs = rightValue.staticCast<TimeStamp>();
+            return function(leftTs, rightTs);
+        }
+        return std::nullopt;
+    }
+
     std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const override {
         if (isa<TimeStamp>(left.value) && isa<TimeStamp>(right.value)) {
             auto& ct1 = left.getValue().staticCast<TimeStamp>();
@@ -31,6 +47,27 @@ class TimeStampInvocationPlugin : public InvocationPlugin {
         } else {
             return std::nullopt;
         }
+    }
+
+    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const TimeStamp& left, const TimeStamp& right) {
+            auto result = left.equals(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> LessThan(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const TimeStamp& left, const TimeStamp& right) {
+                auto result = left.lessThan(right);
+                return Value<>(std::move(result));
+            });
+        }
+
+    std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const TimeStamp& left, const TimeStamp& right) {
+            auto result = left.greaterThan(right);
+            return Value<>(std::move(result));
+        });
     }
 };
 
