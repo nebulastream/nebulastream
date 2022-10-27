@@ -20,9 +20,9 @@ namespace NES::Runtime::Execution::Expressions {
         AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
             : leftSubExpression(leftSubExpression) {}
 
-        double calculateAtanDouble(double x) { return std::atan((double) x);
+        double calculateAtanDouble(double x) { return std::atan(x);
         }
-        double calculateAtanFloat(float x) { return std::atanf( (float) x);
+        double calculateAtanFloat(float x) { return std::atan(float (x));
         }
 
         Value<> AtanExpression::execute(NES::Nautilus::Record& record) const {
