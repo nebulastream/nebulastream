@@ -54,8 +54,8 @@ namespace NES::Runtime::Execution::Expressions {
             auto expression = UnaryExpressionWrapper<AtanExpression>();
             // Float
             {
-                auto resultValue = expression.eval(Value<Float>(float (0.5)));
-                ASSERT_EQ(resultValue, 0.463648);
+                auto resultValue = expression.eval(Value<Float>((float) 0.5));
+                ASSERT_EQ(resultValue, (float) 0.4636476090008061);
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
         }
@@ -65,7 +65,12 @@ namespace NES::Runtime::Execution::Expressions {
 */
         TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
             auto expression = UnaryExpressionWrapper<AtanExpression>();
+
             ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+            ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
+
+
+
         }
 
     }// namespace NES::Runtime::Execution::Expressions

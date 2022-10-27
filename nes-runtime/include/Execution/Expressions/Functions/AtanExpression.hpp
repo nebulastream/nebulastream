@@ -20,9 +20,6 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-/**
- * @brief This expression atan the leftSubExpression with the rightSubExpression.
- */
 class AtanExpression : public Expression {
   public:
     AtanExpression(const ExpressionPtr& leftSubExpression);
