@@ -29,6 +29,9 @@ class TimeStamp : public Any {
     TimeStamp(Value<> milliseconds);
     Nautilus::IR::Types::StampPtr getType() const override;
     AnyPtr add(const TimeStamp& other) const;
+    AnyPtr equals(const TimeStamp& other) const;
+    AnyPtr lessThan(const TimeStamp& other) const;
+    AnyPtr greaterThan(const TimeStamp& other) const;
 
     Value<> getMilliSeconds();
     Value<> getSeconds();

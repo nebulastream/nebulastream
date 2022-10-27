@@ -86,15 +86,19 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
 TEST_F(CustomDataTypeTest, customTimeStampTypeTest) {
     long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
-    NES_DEBUG(dur.count());
     auto c1 = Value<TimeStamp>(TimeStamp(dur.count()));
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(c1.value->getType())->getNumberOfBits(), 64);
     ASSERT_EQ(c1.getValue().toString(),std::to_string(ms));
 
-    auto c2 = Value<TimeStamp>(TimeStamp(dur.count()));
+    const TimeStamp c2 = TimeStamp(dur.count());
     auto c3 = c1 + c2;
     ASSERT_EQ(c3.getValue().toString(),std::to_string(3333597103488));
-    c1 = c2;
+    const TimeStamp c4 = TimeStamp(dur.count()-1000);
+    //greater and less than, equals
+    ASSERT_EQ((c1 > c4),true);
+    ASSERT_EQ((c4 < c1),true);
+    ASSERT_EQ((c1 == c2),true);
+    ASSERT_EQ((c1 == c3),false);
     auto seconds = c1->getSeconds();
     ASSERT_EQ(seconds->toString(),std::to_string(51));
     auto minutes = c1->getMinutes();
