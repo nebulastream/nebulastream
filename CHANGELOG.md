@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.20](https://github.com/nebulastream/nebulastream/tree/v0.3.20) (2022-10-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.19...v0.3.20)
+
+### Bug Fixes 🐛
+
+- \[BUG\] LocationService crashes when requested json of reconnect schedule with empty path [\#3079](https://github.com/nebulastream/nebulastream/issues/3079)
+- \[BUG\] Logical Source Name not allowed in Join [\#2971](https://github.com/nebulastream/nebulastream/issues/2971)
+
 ## [v0.3.19](https://github.com/nebulastream/nebulastream/tree/v0.3.19) (2022-10-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.18...v0.3.19)
