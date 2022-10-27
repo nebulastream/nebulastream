@@ -27,7 +27,7 @@ AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::Express
 
 /**
   * @brief This method computes the absolute value of n.
-  * This function is basically a wrapper for std::sin and enables us to use it in our execution engine framework.
+  * This function is basically a wrapper for std::abs and enables us to use it in our execution engine framework.
   * @param n double
   * @return double
   */
