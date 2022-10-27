@@ -74,7 +74,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
     //TODO: This should be addressed by issue 2803
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 }
@@ -107,7 +107,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 
@@ -146,7 +146,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 

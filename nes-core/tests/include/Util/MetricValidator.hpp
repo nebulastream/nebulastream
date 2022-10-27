@@ -247,7 +247,7 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -255,14 +255,14 @@ class MetricValidator {
             return true;
         }
 
-        if (!json.has_field("registration")) {
+        if (!json.contains("registration")) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
         } else {
             check = isValidRegistrationMetrics(reader, json["registration"]);
         }
 
-        if (!json.has_field("disk")) {
+        if (!json.contains("disk")) {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
@@ -272,7 +272,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("wrapped_cpu")) {
+        if (!json.contains("wrapped_cpu")) {
             NES_ERROR("MetricValidator: Missing field wrapped cpu");
             check = false;
         } else {
@@ -283,7 +283,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("wrapped_network")) {
+        if (!json.contains("wrapped_network")) {
             NES_ERROR("MetricValidator: Missing field wrapped network");
             check = false;
         } else {
@@ -294,7 +294,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("memory")) {
+        if (!json.contains("memory")) {
             NES_ERROR("MetricValidator: Missing field memory");
             check = false;
         } else {
@@ -307,21 +307,21 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidAllStorage(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidAllStorage(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json) {
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
             NES_WARNING("MetricValidator: AbstractReader used. Returning true");
             return true;
         }
 
         bool check = true;
-        if (!json.has_field("registration")) {
+        if (!json.contains("registration")) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
         } else {
             check = isValidRegistrationMetrics(reader, json["registration"][0]["value"]);
         }
 
-        if (!json.has_field("disk")) {
+        if (!json.contains("disk")) {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
@@ -331,7 +331,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("wrapped_cpu")) {
+        if (!json.contains("wrapped_cpu")) {
             NES_ERROR("MetricValidator: Missing field wrapped cpu");
             check = false;
         } else {
@@ -342,7 +342,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("wrapped_network")) {
+        if (!json.contains("wrapped_network")) {
             NES_ERROR("MetricValidator: Missing field wrapped network");
             check = false;
         } else {
@@ -353,7 +353,7 @@ class MetricValidator {
             }
         }
 
-        if (!json.has_field("memory")) {
+        if (!json.contains("memory")) {
             NES_ERROR("MetricValidator: Missing field memory");
             check = false;
         } else {
@@ -366,7 +366,7 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValidRegistrationMetrics(Monitoring::AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidRegistrationMetrics(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -379,37 +379,37 @@ class MetricValidator {
             return true;
         }
 
-        if (!(json.has_field("CpuCoreNum"))) {
+        if (!(json.contains("CpuCoreNum"))) {
             NES_ERROR("MetricValidator: Wrong CpuCoreNum.");
             check = false;
         }
 
-        if (!(json.has_field("CpuPeriodUS"))) {
+        if (!(json.contains("CpuPeriodUS"))) {
             NES_ERROR("MetricValidator: Wrong CpuPeriodUS.");
             check = false;
         }
 
-        if (!(json.has_field("CpuQuotaUS"))) {
+        if (!(json.contains("CpuQuotaUS"))) {
             NES_ERROR("MetricValidator: Wrong CpuQuotaUS.");
             check = false;
         }
 
-        if (!(json.has_field("HasBattery"))) {
+        if (!(json.contains("HasBattery"))) {
             NES_ERROR("MetricValidator: Wrong HasBattery.");
             check = false;
         }
 
-        if (!(json.has_field("IsMoving"))) {
+        if (!(json.contains("IsMoving"))) {
             NES_ERROR("MetricValidator: Wrong IsMoving.");
             check = false;
         }
 
-        if (!(json.has_field("TotalCPUJiffies"))) {
+        if (!(json.contains("TotalCPUJiffies"))) {
             NES_ERROR("MetricValidator: Wrong TotalCPUJiffies.");
             check = false;
         }
 
-        if (!(json.has_field("TotalMemory"))) {
+        if (!(json.contains("TotalMemory"))) {
             NES_ERROR("MetricValidator: Wrong TotalMemory.");
             check = false;
         }
@@ -417,26 +417,22 @@ class MetricValidator {
         return check;
     }
 
-    static bool checkNodeIds(web::json::value json, uint64_t nodeId) {
+    static bool checkNodeIds(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto iter = json.as_object().cbegin(); iter != json.as_object().cend(); ++iter) {
-            // This change lets you get the string straight up from "first"
-            const utility::string_t& str = iter->first;
-            const web::json::value& v = iter->second;
-            if (json[str].has_field("NODE_ID") && json[str]["NODE_ID"] != nodeId) {
-                NES_ERROR("MetricValidator: Wrong node ID for " << str << " where " << json[str]["NODE_ID"] << "!=" << nodeId);
+        for (auto& [key, val] : json.items()){
+            if (json[key].contains("NODE_ID") && json[key]["NODE_ID"] != nodeId) {
+                NES_ERROR("MetricValidator: Wrong node ID for " << key << " where " << json[key]["NODE_ID"] << "!=" << nodeId);
                 check = false;
             }
         }
         return check;
     }
 
-    static bool checkNodeIdsStorage(web::json::value json, uint64_t nodeId) {
+    static bool checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto iter = json.as_object().cbegin(); iter != json.as_object().cend(); ++iter) {
+        for (auto& [key, val] : json.items()){
             // This change lets you get the string straight up from "first"
-            const utility::string_t& str = iter->first;
-            auto jsonMetric = json[str][0]["value"];
+            auto jsonMetric = json[key][0]["value"];
             if (!checkNodeIds(jsonMetric, nodeId)) {
                 check = false;
             }
@@ -483,7 +479,7 @@ class MetricValidator {
             bool missing = false;
             for (uint64_t nodeId = 1; nodeId <= json.size(); nodeId++) {
                 for (auto stream : monitoringStreams) {
-                    if (!json[std::to_string(nodeId)].has_field(stream)) {
+                    if (!json[std::to_string(nodeId)].contains(stream)) {
                         NES_ERROR("MetricValidator: Missing metric " << stream << " for node " << nodeId);
                         missing = true;
                         break;
