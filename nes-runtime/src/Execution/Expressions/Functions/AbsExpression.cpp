@@ -27,41 +27,19 @@ AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::Express
   * @param n double
   * @return double
   */
-
 double calculateAbs(double n) { return std::abs(n); }
 
 Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
-
-    // Evaluate the sub expression and retrieve the value.
-
     Value subValue = subExpression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-
-    // subValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-
-    // In all cases we can call the same calculateSin function as under the hood C++ can do an implicit cast from
-
-    // primitive integer types to the double argument.
-
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-
     if (subValue->isType<Float>()) {
-
         return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Float>());
 
     } else if (subValue->isType<Double>()) {
-
         return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Double>());
 
     } else {
-
-        // If no type was applicable we throw an exception.
-
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Float or Double.");
-
     }
-
 }
-
 }// namespace NES::Runtime::Execution::Expressions
