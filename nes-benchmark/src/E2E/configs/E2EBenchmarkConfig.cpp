@@ -24,7 +24,7 @@ LogLevel Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfi
         Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
         if (configFile.IsNone()) {
-            std::cerr << "Error while reading the log level. Setting the loglevel to" << getLogName(defaultLogLevel)
+            std::cerr << "Error while reading the log level. Setting the loglevel to " << getLogName(defaultLogLevel)
                       << std::endl;
             return defaultLogLevel;
         }
@@ -35,7 +35,7 @@ LogLevel Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfi
             retLogLevel = logLevelMagicEnum.value();
         }
     } catch (std::exception& e) {
-        std::cerr << "Error while reading the log level. Setting the loglevel to" << getLogName(defaultLogLevel)
+        std::cerr << "Error while reading the log level. Setting the loglevel to " << getLogName(defaultLogLevel)
                   << std::endl;
         retLogLevel = defaultLogLevel;
     }
