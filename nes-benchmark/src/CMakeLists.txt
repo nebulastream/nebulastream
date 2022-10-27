@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-benchmark E2E/configs/E2EBenchmarkConfig.cpp
-        E2E/configs/E2EBenchmarkConfigOverAllRuns.cpp
-        E2E/configs/E2EBenchmarkConfigPerRun.cpp
+add_source_files(nes-benchmark E2E/Configs/E2EBenchmarkConfig.cpp
+        E2E/Configs/E2EBenchmarkConfigOverAllRuns.cpp
+        E2E/Configs/E2EBenchmarkConfigPerRun.cpp
         E2E/E2ESingleRun.cpp
         DataGeneration/DataGenerator.cpp
         DataGeneration/DefaultDataGenerator.cpp
