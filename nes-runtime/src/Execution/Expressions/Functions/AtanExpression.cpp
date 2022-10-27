@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+
 #include <Execution/Expressions/Functions/AtanExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
