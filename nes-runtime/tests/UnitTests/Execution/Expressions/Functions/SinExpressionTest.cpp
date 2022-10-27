@@ -1,5 +1,3 @@
-
-
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,216 +12,83 @@
     limitations under the License.
 */
 
-
-
 #include <Execution/Expressions/Functions/SinExpression.hpp>
-
 #include <TestUtils/ExpressionWrapper.hpp>
-
 #include <Util/Logger/Logger.hpp>
-
 #include <gtest/gtest.h>
-
 #include <memory>
 
-
-
 namespace NES::Runtime::Execution::Expressions {
-
-
 
 class SinExpressionTest : public testing::Test {
 
   public:
-
     /* Will be called before any test in this class are executed. */
-
     static void SetUpTestCase() {
-
         NES::Logger::setupLogging("SinExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-
         std::cout << "Setup SinExpressionTest test class." << std::endl;
-
     }
 
-
-
     /* Will be called before a test is executed. */
-
     void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
 
-
-
     /* Will be called before a test is executed. */
-
     void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
 
-
-
     /* Will be called after all tests in this class are finished. */
-
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-
 };
 
-
-
 TEST_F(SinExpressionTest, evaluateSinExpressionInteger) {
-
     auto expression = UnaryExpressionWrapper<SinExpression>();
-
     // Int8
-
     {
-
         auto resultValue = expression.eval(Value<Int8>((int8_t) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
     // Int16
-
     {
-
         auto resultValue = expression.eval(Value<Int16>((int16_t) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
-
-
     // Int32
-
     {
-
         auto resultValue = expression.eval(Value<Int32>((int32_t) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
     // Int64
-
     {
-
         auto resultValue = expression.eval(Value<Int64>((int64_t) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
-}
-
-TEST_F(SinExpressionTest, evaluateSinExpressionUInteger) {
-
-    auto expression = UnaryExpressionWrapper<SinExpression>();
-
-    // UInt8
-
-    {
-
-        auto resultValue = expression.eval(Value<UInt8>((u_int8_t) 90));
-
-        ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
-    }
-
-    // UInt16
-
-    {
-
-        auto resultValue = expression.eval(Value<UInt16>((u_int16_t) 90));
-
-        ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
-    }
-
-
-
-    // UInt32
-
-    {
-
-        auto resultValue = expression.eval(Value<UInt32>((u_int32_t) 90));
-
-        ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
-    }
-    // UInt64
-
-    {
-
-        auto resultValue = expression.eval(Value<UInt64>((u_int64_t) 90));
-
-        ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
-    }
-
 }
 
 TEST_F(SinExpressionTest, evaluateSinExpressionFloat) {
-
     auto expression = UnaryExpressionWrapper<SinExpression>();
-
     // Float
-
     {
-
         auto resultValue = expression.eval(Value<Float>((float) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
     // Double
-
     {
-
         auto resultValue = expression.eval(Value<Double>((double) 90));
-
         ASSERT_EQ(resultValue, (double) 0.8939966636005579);
-
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
 }
-
-
 
 /**
-
   * @brief If we execute the expression on a boolean it should throw an exception.
-
   */
-
 TEST_F(SinExpressionTest, evaluateSinExpressionOnWrongType) {
-
     auto expression = UnaryExpressionWrapper<SinExpression>();
-
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-
 }
-
-
 
 }// namespace NES::Runtime::Execution::Expressions
