@@ -14,8 +14,10 @@
 
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -108,6 +110,21 @@ TEST_F(AddExpressionTest, addFloat) {
         ASSERT_EQ(resultValue, (float) 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+}
+
+TEST_F(AddExpressionTest, addTimeStamps) {
+    auto addExpression = BinaryExpressionWrapper<AddExpression>();
+    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    std::chrono::hours dur(ms);
+    NES_DEBUG(dur.count());
+    auto c1 = Value<TimeStamp>(TimeStamp(dur.count()));
+    // TimeStamp
+    {
+        auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp(dur.count())), Value<TimeStamp>(TimeStamp(dur.count())));
+        ASSERT_EQ(resultValue.getValue().toString(),std::to_string(3333597103488));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<TimeStamp>());
+    }
+
 }
 
 }// namespace NES::Runtime::Execution::Expressions
