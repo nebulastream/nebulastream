@@ -151,7 +151,7 @@ template<typename T>
 [[nodiscard]] std::string enableMonitoring(bool prefix = false) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
 
 [[nodiscard]] std::string restServerType(string sType) {
-    return "--serverType=" + SERVER_TYPE + sType;
+    return "--restServerType=" + sType;
 }
 
 // 2884: Fix configuration to disable distributed window rule
@@ -656,8 +656,10 @@ template<typename T>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
-        NES_TRACE("check if NES REST interface is up");
-        cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        NES_INFO("check if NES REST interface is up");
+        std::future<cpr::Response> rf = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        rf.wait();
+        cpr::Response r = rf.get();
         if (r.status_code == 200l) {
             return true;
         }
@@ -710,6 +712,7 @@ template<typename T>
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
         if(response.status_code == cpr::status::HTTP_OK && result.contains("producedBuffers")) {
+            currentResult = result["producedBuffers"];
             if (currentResult >= expectedNumberBuffers) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
@@ -846,8 +849,10 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
                               cpr::Timeout(3000));
             future.wait();
             cpr::Response response = future.get();
+            if(!nlohmann::json::accept(response.text)){
+                std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            }
             nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-
             nodeNo = jsonResponse["nodes"].size();
 
             if (nodeNo == expectedWorkers + 1U) {
