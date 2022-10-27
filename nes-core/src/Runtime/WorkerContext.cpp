@@ -20,7 +20,7 @@
 
 namespace NES::Runtime {
 
-folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPool{};
+folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPoolTLS{};
 
 WorkerContext::WorkerContext(uint32_t workerId,
                              const BufferManagerPtr& bufferManager,
@@ -28,14 +28,19 @@ WorkerContext::WorkerContext(uint32_t workerId,
                              uint32_t queueId)
     : workerId(workerId), queueId(queueId) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
-    localBufferPool.reset(bufferManager->createLocalBufferPool(numberOfBuffersPerWorker).get(),
+    localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
+    localBufferPoolTLS.reset(localBufferPool.get(),
                           [](auto*, folly::TLPDestructionMode) {
                               // nop
                           });
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
+    NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
 }
 
-WorkerContext::~WorkerContext() { localBufferPool->destroy(); }
+WorkerContext::~WorkerContext() {
+    localBufferPool->destroy();
+    localBufferPoolTLS.reset(nullptr);
+}
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
@@ -141,6 +146,10 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
     return (*it).second.get();
 }
 
-AbstractBufferProvider* WorkerContext::getBufferProvider() { return localBufferPool.get(); }
+LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
+
+LocalBufferPoolPtr WorkerContext::getBufferProvider() {
+    return localBufferPool;
+}
 
 }// namespace NES::Runtime
