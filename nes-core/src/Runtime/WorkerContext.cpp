@@ -20,14 +20,19 @@
 
 namespace NES::Runtime {
 
+folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPool{};
+
 WorkerContext::WorkerContext(uint32_t workerId,
                              const BufferManagerPtr& bufferManager,
                              uint64_t numberOfBuffersPerWorker,
                              uint32_t queueId)
     : workerId(workerId), queueId(queueId) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
-    localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
-    NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
+    localBufferPool.reset(bufferManager->createLocalBufferPool(numberOfBuffersPerWorker).get(),
+                          [](auto*, folly::TLPDestructionMode) {
+                              // nop
+                          });
+    NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
 }
 
 WorkerContext::~WorkerContext() { localBufferPool->destroy(); }
@@ -135,6 +140,7 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
     auto it = reverseEventChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
-std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider() { return localBufferPool; }
+
+AbstractBufferProvider* WorkerContext::getBufferProvider() { return localBufferPool.get(); }
 
 }// namespace NES::Runtime

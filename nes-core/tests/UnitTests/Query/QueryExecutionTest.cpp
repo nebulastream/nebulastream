@@ -71,6 +71,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         // create test input buffer
         windowSchema = Schema::create()
                            ->addField("test$key", BasicType::INT64)
@@ -109,6 +110,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
+        Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -430,7 +432,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
             ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
             ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+//            ASSERT_EQ(Runtime::WorkerContext::getBufferProvider(), nullptr);
             Runtime::WorkerContext workerContext(1, nodeEngine->getBufferManager(), 4);
+            ASSERT_NE(Runtime::WorkerContext::getBufferProvider(), nullptr);
             if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
                 auto memoryLayout =
                     Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());

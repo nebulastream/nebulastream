@@ -101,5 +101,9 @@ class AbstractPoolProvider {
     virtual FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
 };
 
+//// free functions for buffer provider
+
+TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
+
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
