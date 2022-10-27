@@ -35,6 +35,10 @@ TimeStamp::TimeStamp(Value<> x) : Any(&type), milliseconds(x){
                                               };
 AnyPtr TimeStamp::copy() { return create<TimeStamp>(milliseconds); }
 AnyPtr TimeStamp::add(const TimeStamp& other) const { return create<TimeStamp>(milliseconds + other.milliseconds); }
+AnyPtr TimeStamp::equals(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds == otherValue.milliseconds); }
+AnyPtr TimeStamp::lessThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds < otherValue.milliseconds); }
+AnyPtr TimeStamp::greaterThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds > otherValue.milliseconds); }
+
 tm convertToUTC_TM(int64_t milliseconds) {
     std::chrono::duration<int64_t, std::milli> dur(milliseconds);
     auto tp = std::chrono::system_clock::time_point(
