@@ -26,7 +26,7 @@ namespace NES::Benchmark::DataGeneration {
         createdBuffers.reserve(numberOfBuffers);
 
         auto memoryLayout = this->getMemoryLayout(bufferSize);
-        NES_INFO("Default source mode");
+        NES_INFO("Zipfian source mode");
 
         // Prints every five percent the current progress
         uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
@@ -65,7 +65,7 @@ namespace NES::Benchmark::DataGeneration {
             }
 
             if (curBuffer % noTuplesInFivePercent == 0) {
-                NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
+                NES_INFO("ZipfianDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
             }
 
             dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -80,9 +80,9 @@ namespace NES::Benchmark::DataGeneration {
         std::ostringstream oss;
 
         oss << getName()
-            << " (" << alpha << ", "
-            << minValue << ", "
-            << maxValue << ")";
+            << " (" << minValue << ", "
+            << maxValue << ", "
+            << alpha << ")";
 
         return oss.str();
     }

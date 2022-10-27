@@ -1,6 +1,6 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1, 2
-bufferSizeInBytes: 5120
+numberOfWorkerThreads: 1, 2, 4
+bufferSizeInBytes: 5120, 5120, 5120
 numberOfBuffersToProduce: 1000000
 
 
@@ -17,21 +17,22 @@ dataGenerators:
   input2:
     type: Uniform
     minValue: 0
-    maxValue: 250
+    maxValue: 1000
   input3:
-    type: Zipfian
-    alpha: 0.99
+    type: Uniform
+#    alpha: 0.99
     minValue: 0
     maxValue: 1000
+
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinMultipleSources.csv
 benchmarkName: JoinMultipleSources
-query: 'Query::from("input2").joinWith(Query::from("input3"))
-                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+query: 'Query::from("input1").filter(Attribute("value") < 100).joinWith(Query::from("input2").filter(Attribute("value") < 500))
+                                  .where(Attribute("value")).equalsTo(Attribute("value"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
-                             .joinWith(Query::from("input1"))
-                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                             .joinWith(Query::from("input3").filter(Attribute("value") < 900))
+                                  .where(Attribute("value")).equalsTo(Attribute("value"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                              .sink(NullOutputSinkDescriptor::create());'
