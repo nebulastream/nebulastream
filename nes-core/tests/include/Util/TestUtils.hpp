@@ -32,6 +32,7 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <REST/ServerTypes.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
