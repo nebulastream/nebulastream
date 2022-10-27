@@ -63,19 +63,31 @@ int main(int argc, const char* argv[]) {
     auto runner = std::make_shared<BenchmarkRunner>();
     NES::Exceptions::installGlobalErrorListener(runner);
 
-    if (argc > 2 || argc == 0) {
-        std::cerr << "Error: Only --configPath= is allowed as a command line argument!\nExiting now..." << std::endl;
+    if (argc > 3 || argc == 0) {
+        std::cerr << "Error: Only --configPath= and --logPath= are allowed as a command line argument!\nExiting now..." << std::endl;
         return -1;
     }
 
-    auto configPathArg = std::string(argv[1]);
-    if (configPathArg.find("--configPath") == std::string::npos) {
-        std::cerr << "Error: --configPath could not been found in " << configPathArg << "!" << std::endl;
+    // Iterating through the arguments
+    std::unordered_map<std::string, std::string> argMap;
+    for (int i = 0; i < argc; ++i) {
+        auto pathArg = std::string(argv[i]);
+        if (pathArg.find("--configPath") != std::string::npos) {
+            argMap["configPath"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        }
+        if (pathArg.find("--logPath") != std::string::npos) {
+            argMap["logPath"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        }
+    }
+
+    if (argMap.size() < 2) {
+        std::cerr << "Error: Missing --configPath or --logPath could not been found in arguments!" << std::endl;
         return -1;
     }
 
+    std::string configPath = argMap["configPath"];
+    std::string logPath = argMap["logPath"];
     // Reading and parsing the config yaml file
-    auto configPath = configPathArg.substr(configPathArg.find("=") + 1, configPathArg.length() - 1);
     std::cout << "parsed yaml config: " << configPath << std::endl;
     if (configPath.empty() || !std::filesystem::exists(configPath)) {
         std::cerr << "No yaml file provided or the file does not exist!" << std::endl;
@@ -83,7 +95,7 @@ int main(int argc, const char* argv[]) {
     }
 
 
-    NES::Logger::setupLogging("e2eRunnerStartup.log", NES::Benchmark::E2EBenchmarkConfig::getLogLevel(configPath));
+    NES::Logger::setupLogging(logPath, NES::Benchmark::E2EBenchmarkConfig::getLogLevel(configPath));
     NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig;
 
     try {

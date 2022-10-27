@@ -44,7 +44,7 @@ namespace NES::Benchmark {
          * @return loglevel
          */
         static NES::LogLevel getLogLevel(const std::string& yamlConfigFile,
-                                         NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_NONE);
+                                         NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_DEBUG);
 
         /**
          * @brief creates a string representation of this object
