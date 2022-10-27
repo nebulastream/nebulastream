@@ -22,6 +22,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
+#include <folly/ThreadLocal.h>
 #include <memory>
 #include <queue>
 #include <unordered_map>
@@ -46,7 +47,7 @@ class WorkerContext {
     /// event only channels that send events upstream
     std::unordered_map<Network::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool
-    LocalBufferPoolPtr localBufferPool;
+    static folly::ThreadLocalPtr<LocalBufferPool> localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
@@ -69,7 +70,7 @@ class WorkerContext {
      * @brief Returns the local buffer provider
      * @return std::shared_ptr<AbstractBufferProvider>
      */
-    std::shared_ptr<AbstractBufferProvider> getBufferProvider();
+    static AbstractBufferProvider* getBufferProvider();
 
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
@@ -178,12 +179,6 @@ class WorkerContext {
      * @return an output channel
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(Network::OperatorId ownerId);
-
-    /**
-    * @brief getter of buffer storage
-    * @return bufferStorage
-    */
-    BufferStoragePtr getBufferStorage();
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
