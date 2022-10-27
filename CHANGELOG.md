@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.21](https://github.com/nebulastream/nebulastream/tree/v0.3.21) (2022-10-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.20...v0.3.21)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Stabilize operator and expression implementation [\#3022](https://github.com/nebulastream/nebulastream/issues/3022)
+
 ## [v0.3.20](https://github.com/nebulastream/nebulastream/tree/v0.3.20) (2022-10-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.19...v0.3.20)
