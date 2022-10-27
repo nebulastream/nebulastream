@@ -14,10 +14,10 @@
 
 #ifndef NES_UTIL_HPP_
 #define NES_UTIL_HPP_
-#include <list>
-#include <memory>
-#include <map>
 #include <Util/Logger/Logger.hpp>
+#include <list>
+#include <map>
+#include <memory>
 
 namespace NES::Util {
 
@@ -52,7 +52,6 @@ class PluginRegistry {
     };
 };
 
-
 /**
  * @brief The plugin registry allows the dynamic registration of plugins at runtime.
  * A plugin is a provider of a specific type T, which defines the plugin interface.
@@ -69,7 +68,7 @@ class NamedPluginRegistry {
   public:
     static std::unique_ptr<T>& getPlugin(std::string name) {
         auto found = items.find(name);
-        if(found == items.end()){
+        if (found == items.end()) {
             NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
         }
         return found->second;
@@ -90,7 +89,8 @@ class NamedPluginRegistry {
       public:
         Add(std::string name) {
             NamedPluginRegistry<T>::names.emplace_back(name);
-            NamedPluginRegistry<T>::items.emplace(name, CtorFn()); }
+            NamedPluginRegistry<T>::items.emplace(name, CtorFn());
+        }
     };
 };
 
