@@ -43,7 +43,7 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO(" start coordinator");
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug(), TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -111,7 +111,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -190,7 +190,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -287,7 +287,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -381,7 +381,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
                                                     TestUtils::setDistributedWindowCombinerThreshold(1000),
                                                     // Enable THREAD_LOCAL on the coordinator.
-                                                    TestUtils::enableThreadLocalWindowing(true)});
+                                                    TestUtils::enableThreadLocalWindowing(true),
+                                                    TestUtils::restServerType("Oatpp")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     NES_DEBUG("Configure a schema that consists of a timestamp, a grouping key and a value.");
