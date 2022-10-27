@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <E2E/configs/E2EBenchmarkConfigPerRun.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 

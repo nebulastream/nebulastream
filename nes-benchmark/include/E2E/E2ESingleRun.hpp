@@ -22,7 +22,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataProvider/DataProvider.hpp>
-#include <E2E/configs/E2EBenchmarkConfigPerRun.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Measurements.hpp>
 #include <vector>
 
