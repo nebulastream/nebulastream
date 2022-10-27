@@ -25,21 +25,30 @@ namespace NES::Runtime {
 
 // on x86 pointers starts with the same 16 bits
 
+/**
+ * @brief An immutable pointer holder with a tag
+ * @tparam T the internal object type to store
+ */
 template<typename T>
 class TaggedPointer {
-    static constexpr uintptr_t pointer_mask = 0x0000ffffffffffffull;
-    static constexpr uintptr_t original_tag = 0x7fff000000000000ull;
-    static constexpr uintptr_t tag_mask = ~pointer_mask;
+    static constexpr uintptr_t POINTER_MASK = 0x0000ffffffffffffull;
+    static constexpr uintptr_t ORIGINAL_TAG = 0x7fff000000000000ull;
+    static constexpr uintptr_t TAG_MASK = ~POINTER_MASK;
 
   public:
+    /// @brief initialize empty tagged pointer
     constexpr TaggedPointer() noexcept : raw(0) {}
 
+    /// @brief initialize empty tagged pointer
     constexpr TaggedPointer(std::nullptr_t) noexcept : raw(0) {}
 
+    /// @brief initialize using value
     constexpr TaggedPointer(uintptr_t value) noexcept : raw(value) {}
 
+    /// @brief initialize using pointer and tag
     explicit TaggedPointer(T* pointer, uint16_t tag = 0) noexcept {
-        _address = extractPointer(reinterpret_cast<uintptr_t>(pointer));
+        auto ptr = reinterpret_cast<uintptr_t>(pointer);
+        _address = ptr & POINTER_MASK;
         _tag = tag;
     }
 
@@ -73,34 +82,43 @@ class TaggedPointer {
         swap(lhs.raw, rhs.raw);
     }
 
-    friend bool operator==(const TaggedPointer& lhs, const TaggedPointer& rhs) { return lhs.raw == rhs.raw; }
+    friend bool operator==(const TaggedPointer& lhs, const TaggedPointer& rhs) noexcept { return lhs.raw == rhs.raw; }
 
-    friend bool operator!=(const TaggedPointer& lhs, const TaggedPointer& rhs) { return lhs.raw != rhs.raw; }
+    friend bool operator!=(const TaggedPointer& lhs, const TaggedPointer& rhs) noexcept { return lhs.raw != rhs.raw; }
 
-    friend bool operator==(const TaggedPointer& lhs, const std::nullptr_t&) { return lhs.raw == 0; }
+    friend bool operator==(const TaggedPointer& lhs, const std::nullptr_t&) noexcept { return lhs.raw == 0; }
 
-    friend bool operator!=(const TaggedPointer& lhs, const std::nullptr_t&) { return lhs.raw != 0; }
+    friend bool operator!=(const TaggedPointer& lhs, const std::nullptr_t&) noexcept { return lhs.raw != 0; }
 
-    explicit operator bool() { return _address != 0; }
+    operator bool() noexcept { return _address != 0; }
 
-    explicit operator bool() const { return _address != 0; }
+    operator bool() const noexcept { return _address != 0; }
 
     T* operator->() const noexcept { return pointer(); }
 
     T& operator*() const noexcept { return *pointer(); }
 
-    inline T* pointer() const { return reinterpret_cast<T*>(_address); }
+    /**
+     * @brief Provides the internal address as pointer (no tag)
+     * @return the internal pointer without its tag
+     */
+    inline T* pointer() const noexcept { return reinterpret_cast<T*>(_address); }
 
-    inline uint16_t tag() { return _tag; }
+    /**
+     * @brief Provides the tag of the pointer
+     * @return the tag of the pointer
+     */
+    inline uint16_t tag() const noexcept { return _tag; }
 
-    explicit operator T*() { return pointer(); }
+    explicit operator T*() noexcept { return pointer(); }
 
-    explicit operator uintptr_t() { return raw; }
+    explicit operator uintptr_t() noexcept { return raw; }
 
-    inline uintptr_t internal() const { return raw; }
-
-  private:
-    static constexpr uintptr_t extractPointer(uintptr_t ptr) { return (ptr & pointer_mask); }
+    /**
+     * @brief Provides the internal address+tag as an unsigned long
+     * @return the internal pointer+tag as an unsigned long
+     */
+    inline uintptr_t internal() const noexcept { return raw; }
 
   private:
     union {
@@ -109,7 +127,7 @@ class TaggedPointer {
             uintptr_t _tag : 16;
         };
         uintptr_t raw;
-        T* _debug;
+        T* debug;
     };
 };
 
