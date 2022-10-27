@@ -27,21 +27,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
 #include <gtest/gtest.h>
 #include <thread>
 
-using namespace utility;
 using namespace std;
-using namespace web;
-// Common features like URIs.
-using namespace web::http;
-// Common HTTP functionality
-using namespace web::http::client;
-// HTTP client features
-using namespace concurrency::streams;
-
 namespace NES {
 
 using namespace Configurations;
@@ -72,6 +61,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
