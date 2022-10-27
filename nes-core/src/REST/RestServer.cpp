@@ -189,6 +189,12 @@ void RestServer::run() {
         REST::Controller::MaintenanceController::create(objectMapper, maintenanceService, errorHandler, "/maintenance");
     auto locationController =
         REST::Controller::LocationController::create(objectMapper, locationService, "/location", errorHandler);
+    auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,
+                                                                               monitoringService,
+                                                                               bufferManager,
+                                                                               errorHandler,
+                                                                               "/monitoring");
+
 
     router->addController(connectivityController);
     router->addController(queryCatalogController);
@@ -198,14 +204,6 @@ void RestServer::run() {
     router->addController(udfCatalogController);
     router->addController(maintenanceController);
     router->addController(locationController);
-
-    /* Create monitoring controller and add all of its endpoints to the router */
-    auto monitoringController = REST::Controller::MonitoringController::createShared(objectMapper,
-                                                                                         monitoringService,
-                                                                                         bufferManager,
-                                                                                         errorHandler,
-                                                                                         "/monitoring");
-
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(monitoringController);

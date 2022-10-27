@@ -113,7 +113,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << std::to_string(i));
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
         auto jsonString = json.serialize();

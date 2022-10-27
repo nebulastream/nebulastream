@@ -13,7 +13,6 @@
 */
 
 #include <REST/Controller/MonitoringController.hpp>
-#include <REST/Controller/BaseController.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>

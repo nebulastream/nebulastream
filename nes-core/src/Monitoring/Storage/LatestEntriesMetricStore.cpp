@@ -15,7 +15,6 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <mutex>
 #include <sys/time.h>
 
 namespace NES::Monitoring {

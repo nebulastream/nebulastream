@@ -94,7 +94,6 @@ nlohmann::json MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJs
 
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
     Monitoring::StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
-
     metricsJson[std::to_string(root->getId())] = Monitoring::MetricUtils::toJson(parsedValues);
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
