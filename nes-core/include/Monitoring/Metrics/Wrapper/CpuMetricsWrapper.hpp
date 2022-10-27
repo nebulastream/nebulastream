@@ -18,7 +18,7 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <nlohmann/json_fwd.hpp>
+
 namespace NES::Monitoring {
 
 /**

@@ -32,7 +32,6 @@
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -76,7 +75,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "monitoringController/")
      * @return MonitoringController
      */
-    static std::shared_ptr<MonitoringController> createShared(const std::shared_ptr<ObjectMapper>& objectMapper,
+    static std::shared_ptr<MonitoringController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                               MonitoringServicePtr mService,
                                                               Runtime::BufferManagerPtr bManager,
                                                               ErrorHandlerPtr errorHandler,

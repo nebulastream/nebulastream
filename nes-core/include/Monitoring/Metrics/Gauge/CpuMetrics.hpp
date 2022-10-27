@@ -19,7 +19,6 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 #include <vector>
-#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Monitoring {
 

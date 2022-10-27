@@ -20,7 +20,6 @@
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <unordered_map>
-#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Monitoring {
 

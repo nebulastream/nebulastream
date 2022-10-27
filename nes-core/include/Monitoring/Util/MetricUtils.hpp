@@ -17,7 +17,6 @@
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
