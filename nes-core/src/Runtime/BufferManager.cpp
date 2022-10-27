@@ -389,4 +389,10 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
     return ret;
 }
 
+TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size) {
+    auto optBuffer = provider->getUnpooledBuffer(size);
+    NES_ASSERT2_FMT(!!optBuffer, "Cannot allocate buffer of size " << size);
+    return *optBuffer;
+}
+
 }// namespace NES::Runtime
