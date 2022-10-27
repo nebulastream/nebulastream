@@ -16,7 +16,7 @@
 #define NES_DATAPROVIDER_HPP
 
 #include <DataProvider/TupleBufferHolder.hpp>
-#include <E2E/configs/E2EBenchmarkConfig.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
