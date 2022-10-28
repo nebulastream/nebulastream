@@ -51,6 +51,11 @@ namespace NES::Runtime {
  * Important note: when a component is done with a TupleBuffer, it must be released. Not returning a TupleBuffer will
  * result in a Runtime error that the BufferManager will raise by the termination of the NES program.
  *
+ * A TupleBuffer may store one or more child/nested TupleBuffer. As soon as a TupleBuffer is attached to a parent,
+ * it loses ownership of its internal MemorySegment, whose lifecycle is linked to the lifecycle of the parent.
+ * This means that when the parent TupleBuffer goes out of scope, no child TupleBuffer must be alive in the program.
+ * If that occurs, an error is raised.
+ *
  * Reminder: this class should be header-only to help inlining
  */
 

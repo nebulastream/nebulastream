@@ -32,7 +32,7 @@ namespace NES::Runtime {
 /// do not use this class from components that do not belong to the worker execution engine!!!
 class NesThread {
   public:
-    /// The number of entries in table. Currently, this is fixed at 64 and never changes or grows.
+    /// The number of entries in table. Currently, this is fixed at 256 and never changes or grows.
     /// If the table runs out of entries, then the current implementation will throw a
     /// std::runtime_error.
     /// do not change this value
