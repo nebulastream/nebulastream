@@ -131,6 +131,9 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/FaultTo
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Monitoring/MetricCollectors/MetricCollectorType.hpp Monitoring/MetricCollectors/MetricCollectorType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/LineageType.hpp Util/LineageType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/OriginId.hpp Operators/OriginId.hpp)
+register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/folly/ folly)
+register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/glog/ glog)
+register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-conversion/ double-conversion)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
