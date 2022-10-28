@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Nautilus/Interface/FunctionCall.hpp"
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <chrono>
 #include <ctime>
@@ -24,7 +24,7 @@ TimeStamp::TimeStamp(Value<> x) : Any(&type), milliseconds(x){
                                                       milliseconds = x;
                                                   }else{
                                                       NES_ERROR("Can not make a TimeStamp object out of" << x)
-                                                      //TODO string to millis
+                                                      //TODO convert a string such as 2009-06-15T13:45:30 to millis (DBPRO'22 issue)
                                                   }
 
                                               };
@@ -34,6 +34,7 @@ AnyPtr TimeStamp::equals(const TimeStamp& otherValue) const { return create<Bool
 AnyPtr TimeStamp::lessThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds < otherValue.milliseconds); }
 AnyPtr TimeStamp::greaterThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds > otherValue.milliseconds); }
 
+// this method converts long milliseconds to a clock time representation
 tm convertToUTC_TM(int64_t milliseconds) {
     std::chrono::duration<int64_t, std::milli> dur(milliseconds);
     auto tp = std::chrono::system_clock::time_point(

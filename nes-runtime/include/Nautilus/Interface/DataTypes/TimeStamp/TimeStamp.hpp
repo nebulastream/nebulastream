@@ -13,8 +13,11 @@
 */
 #ifndef NES_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_HPP_
 #define NES_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_HPP_
-#include "Nautilus/Interface/DataTypes/Value.hpp"
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
+/**
+ * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
+ */
 namespace NES::Nautilus {
 
 class TimeStamp : public Any {
