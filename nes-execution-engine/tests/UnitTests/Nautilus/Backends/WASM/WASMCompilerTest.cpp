@@ -219,4 +219,50 @@ TEST_F(WASMExpressionTest, gtInt32FunctionTest) {
     BinaryenModulePrint(wasm);
 }
 
+Value<> ifExpression(Value<Int32> x) {
+    Value<Int32> y = 1;
+    if (x > 10) {
+        y = 7;
+    }
+    return y;
+}
+
+TEST_F(WASMExpressionTest, ifFunctionTest) {
+    Value<Int32> tempx = 11;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return ifExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
+Value<> loopExpression(Value<Int32> x) {
+    Value<Int32> y = 1;
+    for (int i = 0; i < x; ++i) {
+        y = y + 1;
+    }
+    return y;
+}
+
+TEST_F(WASMExpressionTest, loopFunctionTest) {
+    Value<Int32> tempx = 5;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return loopExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.compile(ir);
+    BinaryenModulePrint(wasm);
+}
+
 }// namespace NES::Nautilus

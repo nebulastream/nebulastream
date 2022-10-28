@@ -54,6 +54,8 @@ class WASMCompiler {
   private:
     BinaryenModuleRef wasm;
     std::map<std::string, BinaryenExpressionRef> consumed;
+    std::unordered_map<std::string, BinaryenExpressionRef> blockMapping;
+
     void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> funcOp);
@@ -82,6 +84,8 @@ class WASMCompiler {
     BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    BinaryenExpressionRef generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
+                                             std::vector<BinaryenExpressionRef> blockArgs);
 };
 }// namespace NES::Nautilus::Backends::WASM
 
