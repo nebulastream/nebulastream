@@ -17,7 +17,6 @@
 
 #include <API/Schema.hpp>
 #include <Operators/OriginId.hpp>
-#include <Runtime/TaggedPointer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
@@ -55,7 +54,7 @@ class MemorySegment;
  *
  * Reminder: this class should be header-only to help inlining
  */
-class BufferControlBlock {
+class alignas(64) BufferControlBlock {
   public:
     explicit BufferControlBlock(MemorySegment* owner,
                                 BufferRecycler* recycler,
@@ -216,7 +215,7 @@ class BufferControlBlock {
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif
 };
-
+static_assert(sizeof(BufferControlBlock) % 64 == 0);
 /**
  * @brief The MemorySegment is a wrapper around a pointer to allocated memory of size bytes and a control block
  * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.
@@ -252,7 +251,7 @@ class MemorySegment {
 
     ~MemorySegment();
 
-    uint8_t* getPointer() const { return ptr.pointer(); }
+    uint8_t* getPointer() const { return ptr; }
 
   private:
     /**
@@ -282,19 +281,19 @@ class MemorySegment {
     /*
 
      Layout of the mem segment (padding might be added differently depending on the compiler in-use).
-     +-----------------------+-----------+-------------------+-------------------------------+
-     | pointer to data  (8b) | size (4b) | likely 4b padding | pointer to control block (8b) |
-     +------------+----------+-----------+-------------------+---------+---------------------+
+     +--------------------------------+-----------+-------------------+----------------------+
+     | pointer to control block  (8b) | size (4b) | likely 4b padding | pointer to data (8b) |
+     +------------+-------------------+-----------+-------------------+---------+------------+
                   |                                                    |
-     +------------+                                          +---------+
-     |                                                       |
-     v                                                       v
-     +----------------------------+-------------------------+----------------------------+
-     |    data region (variable size)                       | control block (fixed size) |
-     +----------------------------+-------------------------+----------------------------+
+     +------------+                +-----------------------------------+
+     |                             |
+     v                             v
+     +----------------------------+------------------------------------------------------+
+     | control block (fixed size) |    data region (variable size)                       |
+     +----------------------------+------------------------------------------------------+
      */
 
-    TaggedPointer<uint8_t> ptr{nullptr, 0};
+    uint8_t* ptr{nullptr};
     uint32_t size{0};
     detail::BufferControlBlock* controlBlock{nullptr};
 };
