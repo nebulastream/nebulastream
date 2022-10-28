@@ -13,7 +13,6 @@
 */
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Runtime/TaggedPointer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <bitset>
@@ -25,12 +24,6 @@
 #endif
 
 namespace NES::Runtime::detail {
-
-static uint32_t calculatePointerTag(uint32_t size) {
-    NES_ASSERT2_FMT(size && !(size & (size - 1)), "size must be power of two " << size);
-    uintptr_t log_2_size = (8 * sizeof(uint32_t)) - __builtin_clz(size >> 10) - 1;
-    return 1 << log_2_size;
-}
 
 // -----------------------------------------------------------------------------
 // ------------------ Core Mechanism for Buffer recycling ----------------------
@@ -44,8 +37,8 @@ MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
                              BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
-    : ptr(ptr, calculatePointerTag(size)), size(size) {
-    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    : ptr(ptr + sizeof(BufferControlBlock)), size(size) {
+    controlBlock = new (ptr) BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -81,7 +74,7 @@ MemorySegment::~MemorySegment() {
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
         // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
         size_t actualBufferSize = size;
-        if ((ptr.pointer() + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
+        if ((ptr - sizeof(BufferControlBlock)) != reinterpret_cast<uint8_t*>(controlBlock)) {
             delete controlBlock;
         } else {
             actualBufferSize += sizeof(BufferControlBlock);
@@ -205,6 +198,7 @@ bool BufferControlBlock::release() {
     if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1) {
         numberOfTuples = 0;
         for (auto&& child : children) {
+            NES_ASSERT2_FMT(child->controlBlock->getReferenceCount() == 1, "Child buffer is leaked");
             child->controlBlock->release();
         }
         children.clear();
@@ -287,7 +281,7 @@ bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& co
 
     auto* child = children[index];
     control = child->controlBlock->retain();
-    ptr = child->ptr.pointer();
+    ptr = child->ptr;
     size = child->size;
 
     return true;
