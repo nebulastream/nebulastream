@@ -90,7 +90,6 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //find the last point behind us on the way
     auto prevWaypoint = std::prev(nextWaypoint);
 
-
 #ifdef S2DEF
     //if we already reached the last position in the file, we assume that the device stays in that location and does not move further
     //we therefore keep returning the location of the last timestamp, without looking at the request time
