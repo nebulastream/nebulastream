@@ -26,7 +26,7 @@ target_compile_definitions(nes-runtime PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PR
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
 endif ()
-message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
+
 target_link_libraries(nes-runtime PUBLIC nes)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

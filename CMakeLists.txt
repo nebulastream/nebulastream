@@ -154,6 +154,7 @@ if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
     endif ()
     find_package(folly CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+    include_directories(${FOLLY_INCLUDE_DIR})
 endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created
@@ -375,8 +376,8 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     find_dependency(gflags CONFIG REQUIRED) # required on macos
     find_package(folly CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+    include_directories(${FOLLY_INCLUDE_DIR})
 endif ()
-
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
