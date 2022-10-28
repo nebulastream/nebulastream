@@ -61,7 +61,7 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES} include/REST/ServerTypes.hpp)
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -70,7 +70,7 @@ target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach (dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")
-    message(STATUS "LIBNES inclues ${dir}")
+    message(STATUS "LIBNES includes ${dir}")
 endforeach ()
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
