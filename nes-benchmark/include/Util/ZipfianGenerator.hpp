@@ -18,6 +18,8 @@
 
 #include <random>
 
+
+// Inspired by https://github.com/brianfrankcooper/YCSB/blob/master/core/src/main/java/site/ycsb/generator/ZipfianGenerator.java
 class ZipfianGenerator {
     static constexpr auto DEFAULT_ZIPFIAN_GENERATOR = .99;
 
