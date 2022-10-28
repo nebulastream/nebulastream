@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_KAFKA_BUILD
 
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,9 +34,9 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, originId, numSourceLocalBuffers), brokers(brokers),
+    : DataSource(schema, bufferManager, queryManager, operatorId, originId, numSourceLocalBuffers, GatheringMode::INTERVAL_MODE), brokers(brokers),
       topic(topic), groupId(groupId), autoCommit(autoCommit),
-      kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
+      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)) {
 
     config = {{"metadata.broker.list", brokers.c_str()},
               {"group.id", groupId},

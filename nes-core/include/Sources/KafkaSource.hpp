@@ -14,11 +14,10 @@
 
 #ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#ifdef ENABLE_KAFKA_BUILD
 #include <cstdint>
 #include <memory>
 #include <string>
-
+#include <Runtime/BufferManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <cppkafka/cppkafka.h>
 
@@ -96,5 +95,4 @@ class KafkaSource : public DataSource {
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
-#endif
 #endif// NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_

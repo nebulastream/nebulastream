@@ -27,14 +27,10 @@ add_source_files(nes-core
         BenchmarkSource.cpp
         MaterializedViewSource.cpp
         TCPSource.cpp
+        KafkaSource.cpp
 )
 add_subdirectory(Parsers)
 
-if(NES_USE_KAFKA)
-    add_source_files(nes-core
-            KafkaSource.cpp
-    )
-endif()
 if(NES_USE_OPC)
     add_source_files(nes-core
             OPCSource.cpp
