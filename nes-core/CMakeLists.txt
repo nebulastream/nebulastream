@@ -69,7 +69,7 @@ target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
 
 if(NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
-    target_link_libraries(nes PUBLIC libtensorflowlite_c.so)
+    target_link_libraries(nes PUBLIC tensorflowlite_c::tensorflowlite_c)
 endif()
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
@@ -84,9 +84,8 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Windowing Windowing)
-register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators Operators)
-#register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
-#register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
+register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
+register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/ExecutableType Common/ExecutableType)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/PhysicalTypes Common/PhysicalTypes)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/ QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/)
@@ -149,6 +148,7 @@ target_link_libraries(nesCoordinator PUBLIC nes)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes)
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
