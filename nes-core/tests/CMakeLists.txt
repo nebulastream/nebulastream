@@ -161,6 +161,9 @@ add_nes_unit_test(state-manager-tests "UnitTests/State/StateTest.cpp")
 ### ZMQ Data Source Sink Tests ###
 add_nes_unit_test(zmq-tests "UnitTests/Source/ZMQTest.cpp")
 
+### Kafka Data Source Sink Tests ###
+add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaSourceTest.cpp")
+
 ### Source Tests ###
 add_nes_integration_test(source-tests "UnitTests/Source/SourceTest.cpp")
 
@@ -169,7 +172,7 @@ add_nes_unit_test(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTe
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
-    add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaTest.cpp")
+    add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaSourceTest.cpp")
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###

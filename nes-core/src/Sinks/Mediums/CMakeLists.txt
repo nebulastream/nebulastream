@@ -19,13 +19,9 @@ add_source_files(nes-core
         NullOutputSink.cpp
         MaterializedViewSink.cpp
         MonitoringSink.cpp
+        KafkaSink.cpp
 )
 
-if(NES_USE_KAFKA)
-    add_source_files(nes-core
-            KafkaSink.cpp
-    )
-endif()
 
 if (NES_USE_OPC)
     add_source_files(nes-core
