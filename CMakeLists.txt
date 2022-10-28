@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v20)
+set(VCPKG_BINARY_VERSION v20-tf)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -27,7 +27,6 @@ cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies
 #toggle import and usage of s2 library
 option(USE_S2 "Toggle use of s2 library" OFF)
 option(NES_USE_TF "Toggle tensorflow library" OFF)
-
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
@@ -580,12 +579,13 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 # Check if we build with TensorFlow Lite
 if(NES_USE_TF)
-    message(STATUS "Building with tensorflowlite")
+    find_package(tensorflow-lite-c REQUIRED)
+    if (tensorflowlite_c_FOUND)
+        message(STATUS "Found tensorflow")
+        set(LIBRARIES ${LIBRARIES} tensorflowlite_c::tensorflowlite_c)
+        message(INFO "${LIBRARIES}")
+    endif ()
     add_compile_definitions(TFDEF)
-    if (APPLE)
-        include_directories(SYSTEM /usr/local/include)
-        link_directories(/usr/local/lib)
-    endif()
 endif()
 
 # $ORIGIN is to read the shared object from the installation directory
