@@ -18,11 +18,8 @@
 #include <memory>
 #include <vector>
 
-#ifdef TFDEF
-#include <tensorflow/lite/c/c_api.h>
-#include <tensorflow/lite/c/c_api_experimental.h>
-#include <tensorflow/lite/c/common.h>
-#endif // TFDEF
+
+class TfLiteInterpreter;
 
 namespace NES {
 

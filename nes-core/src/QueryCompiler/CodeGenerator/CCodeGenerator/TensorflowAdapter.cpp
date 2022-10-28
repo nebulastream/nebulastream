@@ -37,12 +37,9 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
 
     input.close();
     NES_INFO("MODEL SIZE: " + std::to_string(bytes.size()));
-
-    NES_INFO(std::string("Hello from TensorFlow C library version ") << TfLiteVersion());
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(model.c_str()), options);
     TfLiteInterpreterAllocateTensors(interpreter);
-
 }
 
  NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() {
