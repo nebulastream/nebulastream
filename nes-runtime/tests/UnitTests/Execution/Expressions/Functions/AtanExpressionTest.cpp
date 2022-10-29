@@ -65,12 +65,8 @@ namespace NES::Runtime::Execution::Expressions {
 */
         TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
             auto expression = UnaryExpressionWrapper<AtanExpression>();
-
             ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
             ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
-
-
-
         }
 
     }// namespace NES::Runtime::Execution::Expressions
