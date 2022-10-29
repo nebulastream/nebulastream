@@ -31,15 +31,14 @@ namespace NES::Runtime::Execution::Expressions {
             // Evaluate the left sub expression and retrieve the value.
             Value leftValue = leftSubExpression->execute(record);
 
-
-           if (leftValue->isType<Float>()) {
+            if (leftValue->isType<Float>()) {
                 return FunctionCall<>("calculateAtanFloat", calculateAtanFloat, leftValue.as<Float>());
             } else if (leftValue->isType<Double>()) {
                 return FunctionCall<>("calculateAtanDouble", calculateAtanDouble, leftValue.as<Double>());
             } else {
                 // If no type was applicable we throw an exception.
                 NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Double or Float.");
+                }
             }
-        }
 
     }// namespace NES::Runtime::Execution::Expressions
