@@ -134,6 +134,7 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Or
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/folly/ folly)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/glog/ glog)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/boost/ boost)
+register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/gflags/ gflags)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-conversion/ double-conversion)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
