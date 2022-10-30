@@ -14,11 +14,12 @@
 
 #include <Optimizer/Phases/TopologyReconfigurationPhase.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Topology/Topology.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/TopologyNode.hpp>
-
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Topology/Topology.hpp>
 
 namespace NES::Optimizer::Experimental {
 
@@ -26,9 +27,15 @@ const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 const std::string PLACED = "PLACED";
 //todo: at which point should the topology actually be changed? here of before
 //todo: pass topologyNodes or ids here?
+TopologyReconfigurationPhase::TopologyReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan,
+TopologyPtr topology) : globalExecutionPlan(globalExecutionPlan), topology(topology) {};
+
 bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNode, uint64_t oldParent, uint64_t newParent) {
+    (void) movingNode;
    auto commonAncestor = getCommonAncestor(oldParent, newParent);
-   auto pathFromOldParent = topology->findNodesBetween(oldParent, commonAncestor);
+   //todo: restructure so we only need to call find node with id once
+    auto oldParentNode = topology->findNodeWithId(oldParent);
+   auto pathFromOldParent = topology->findNodesBetween(oldParentNode, commonAncestor);
    //todo; construct a set from the nodes here? could speed up execution further down
    //iterate over all operators and check if they are places on the path from old parent, if they are not, pin them where they are
    //or take the oposite approach and only put these down as not placed
@@ -48,15 +55,14 @@ bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStr
         //the above is probably all wrong. pinned_node_id is for all nodes that were somehow placed, see bottomUp
 
 
-        auto pinnedNodeId = op->as<OperatorNode>()->getProperty(PINNED_NODE_ID);
+        auto pinnedNodeId = std::any_cast<uint64_t>(op->as<OperatorNode>()->getProperty(PINNED_NODE_ID));
         //todo: can we also get these as execution node?
         //how can we get the node which placed operators where places on and not just a bool indicating that they have been placed
         //auto placedNodeId = op->as<OperatorNode>()->getProperty("PINNED_NODE_ID");
         //can we do this better than with 2 nested loops
         //look at how topologyMap is constructed in BasePlacementStretegy
         for (auto topologyNode : pathFromOldParent) {
-            if (topologyNode->getNodeId() == pinnedNodeId) {
-                //todo: use string constants here
+            if (topologyNode->getId() == pinnedNodeId) {
                 op->as<OperatorNode>()->removeProperty(PINNED_NODE_ID);
                 op->as<OperatorNode>()->removeProperty(PLACED);
 
@@ -64,14 +70,14 @@ bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStr
             }
         }
     }
-
+    queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
+    //todo: when to return false?
+    return true;
 }
 TopologyNodePtr TopologyReconfigurationPhase::getCommonAncestor(uint64_t oldParent, uint64_t newParent) {
     //todo: error handling
-    /*
     auto oldParentNode = topology->findNodeWithId(oldParent);
     auto newParentNode = topology->findNodeWithId(newParent);
-     */
-    return topology->findCommonAncestor(oldParent, newParent);
+    return topology->findCommonAncestor({oldParentNode, newParentNode});
 }
 }

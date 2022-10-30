@@ -16,6 +16,7 @@
 #define NES_TOPOLOGYRECONFIGURATIONPHASE_HPP
 
 #include <memory>
+#include <Util/PlacementStrategy.hpp>
 namespace NES {
 
 class Topology;
@@ -33,6 +34,11 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
+namespace Optimizer {
+class QueryPlacementPhase;
+using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+}
+
 namespace Optimizer::Experimental {
 
 class TopologyReconfigurationPhase;
@@ -40,17 +46,18 @@ using TopologyReconfigurationPhasePtr = std::shared_ptr<TopologyReconfigurationP
 
 class TopologyReconfigurationPhase {
   public:
-    TopologyReconfigurationPhasePtr  create();
+    TopologyReconfigurationPhasePtr create();
 
-    bool execute();
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNode, uint64_t oldParent, uint64_t newParent);
 
   private:
     explicit TopologyReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                              TopologyPtr topology, );
+                                              TopologyPtr topology);
 
     TopologyNodePtr getCommonAncestor(uint64_t oldParent, uint64_t newParent);
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
+    QueryPlacementPhasePtr queryPlacementPhase;
 };
 }
 }

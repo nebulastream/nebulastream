@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <map>
 
 namespace NES {
 
