@@ -50,9 +50,9 @@ class TopologyReconfigurationPhase {
 
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNode, uint64_t oldParent, uint64_t newParent);
 
-  private:
     explicit TopologyReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                              TopologyPtr topology);
+                                          TopologyPtr topology);
+  private:
 
     TopologyNodePtr getCommonAncestor(uint64_t oldParent, uint64_t newParent);
     GlobalExecutionPlanPtr globalExecutionPlan;

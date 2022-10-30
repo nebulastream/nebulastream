@@ -54,6 +54,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
+#include <Optimizer/Phases/TopologyReconfigurationPhase.hpp>
 
 using namespace NES;
 using namespace z3;
@@ -109,16 +110,23 @@ class TopologyReconfigurationPhaseTest : public Testing::TestWithErrorHandling<t
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
-        const std::string sourceName = "car";
+        const std::string sourceName1 = "car";
+        const std::string sourceName2 = "car2";
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-        sourceCatalog->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        sourceCatalog->addLogicalSource(sourceName1, schema);
+        sourceCatalog->addLogicalSource(sourceName2, schema);
+        auto logicalSource1 = sourceCatalog->getLogicalSource(sourceName1);
+        auto logicalSource2 = sourceCatalog->getLogicalSource(sourceName2);
 
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-        csvSourceType->setGatheringInterval(0);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+        csvSourceType1->setGatheringInterval(0);
+        csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+        CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+        csvSourceType2->setGatheringInterval(0);
+        csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource1 = PhysicalSource::create(sourceName1, "test2", csvSourceType1);
+        auto physicalSource2 = PhysicalSource::create(sourceName2, "test2", csvSourceType2);
 
         /*
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
@@ -127,12 +135,12 @@ class TopologyReconfigurationPhaseTest : public Testing::TestWithErrorHandling<t
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
             */
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, mobileNode1);
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, mobileNode1);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, mobileNode2);
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource2, logicalSource2, mobileNode2);
 
-        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
-        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+        sourceCatalog->addPhysicalSource(sourceName1, sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource(sourceName2, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -223,7 +231,7 @@ TEST_F(TopologyReconfigurationPhaseTest, testPlacingQueryWithBottomUpStrategy) {
         } else {
             FAIL();
         }
-        topology->changeParent
+        //topology->changeParent
     }
 }
 
@@ -232,7 +240,8 @@ TEST_F(TopologyReconfigurationPhaseTest, testMovingNodePathLengthOne) {
     //todo: putting 0 resources will not allow placing source, but putting one allows filter
     setupTopologyAndSourceCatalog({4, 4, 4, 1, 1});
     topology->print();
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    //Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").joinWith(Query::from("car2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(IngestionTime(), Seconds(10))).sink(PrintSinkDescriptor::create());
     //todo: why do 2 operators also work with on a node with resources = 1
     //Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("value") = 2 * Attribute("value")).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -296,6 +305,16 @@ TEST_F(TopologyReconfigurationPhaseTest, testMovingNodePathLengthOne) {
             FAIL();
         }
     }
+    auto pathNode1 = topology->findNodeWithId(2);
+    auto pathNode2 = topology->findNodeWithId(3);
+    auto mobileNode1 = topology->findNodeWithId(4);
+    auto mobileNode2 = topology->findNodeWithId(5);
+    topology->removeNodeAsChild(pathNode1, mobileNode1);
+    topology->addNewTopologyNodeAsChild(pathNode2, mobileNode1);
+    //todo: make constructor private and use create function
+    auto topologyReconfigurationPhase = Optimizer::Experimental::TopologyReconfigurationPhase(globalExecutionPlan, topology);
+
+
 }
 
 /* Test query placement with top down strategy  */
