@@ -29,23 +29,6 @@ RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
     && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update && apt install -y cmake
 
-
-RUN git clone https://github.com/tensorflow/tensorflow.git tensorflow_src && \
-    cd tensorflow_src && \
-    git checkout v2.6.0 && \
-    cd .. && \
-    mkdir tflite_build && \
-    cd tflite_build && \
-    cmake ../tensorflow_src/tensorflow/lite/c && \
-    cmake --build . -j && \
-    cd .. && \
-    mkdir -p /usr/local/include/tensorflow/lite && \
-    cp -R tensorflow_src/tensorflow/lite/* /usr/local/include/tensorflow/lite && \
-    cp tflite_build/libtensorflowlite_c.so /lib/. && \
-    ldconfig /lib && \
-    rm -r tflite_build && \
-    rm -r tensorflow_src
-
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 # docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time

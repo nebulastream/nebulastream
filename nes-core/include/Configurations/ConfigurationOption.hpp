@@ -272,7 +272,10 @@ const std::string BINARY_SOURCE_CONFIG = "BinarySource";
 const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
-const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
+const std::string DEFAULT_SOURCE_CONFIG = "physicalSources:\n"
+                                          "        - logicalSourceName: wind_turbines\n"
+                                          "          physicalSourceName: wind_turbine_1\n"
+                                          "          type: CSVSource";
 const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 const std::string TCP_SOURCE_CONFIG = "TCPSource";
 

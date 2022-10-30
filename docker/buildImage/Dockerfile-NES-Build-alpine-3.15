@@ -35,20 +35,3 @@ RUN apk add --no-cache  -q cmake --repository=http://dl-cdn.alpinelinux.org/alpi
     libbsd-dev \
     doxygen \
     graphviz
-
-RUN git clone https://github.com/tensorflow/tensorflow.git tensorflow_src && \
-   cd tensorflow_src && \
-   git checkout v2.6.0 && \
-   cd .. && \
-   mkdir tflite_build && \
-   cd tflite_build && \
-   cmake ../tensorflow_src/tensorflow/lite/c && \
-   cmake --build . -j && \
-   cd .. && \
-   mkdir -p /usr/local/include/tensorflow/lite && \
-   cp -R tensorflow_src/tensorflow/lite/* /usr/local/include/tensorflow/lite && \
-   cp tflite_build/libtensorflowlite_c.so /lib/. && \
-   ldconfig /lib && \
-   rm -r tflite_build && \
-   rm -r tensorflow_src
-
