@@ -150,7 +150,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * value being used as the start time to which offsets will be added to obtain absolute timestamps
      */
     UIntOption locationProviderSimulatedStartTime = {LOCATION_SIMULATED_START_TIME_CONFIG, 0,
-                                                     "the start time to be simulated by if deice movement is simulated"};
+                                                     "The start time to be simulated if device movement is simulated"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
