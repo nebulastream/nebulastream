@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.23](https://github.com/nebulastream/nebulastream/tree/v0.3.23) (2022-10-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.22...v0.3.23)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add cos\(x\) expression [\#3039](https://github.com/nebulastream/nebulastream/issues/3039)
+
 ## [v0.3.22](https://github.com/nebulastream/nebulastream/tree/v0.3.22) (2022-10-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.21...v0.3.22)
