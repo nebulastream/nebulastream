@@ -29,10 +29,9 @@ WorkerContext::WorkerContext(uint32_t workerId,
     : workerId(workerId), queueId(queueId) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
-    localBufferPoolTLS.reset(localBufferPool.get(),
-                          [](auto*, folly::TLPDestructionMode) {
-                              // nop
-                          });
+    localBufferPoolTLS.reset(localBufferPool.get(), [](auto*, folly::TLPDestructionMode) {
+        // nop
+    });
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
     NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
 }
@@ -148,8 +147,6 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
 
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
-LocalBufferPoolPtr WorkerContext::getBufferProvider() {
-    return localBufferPool;
-}
+LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
 }// namespace NES::Runtime

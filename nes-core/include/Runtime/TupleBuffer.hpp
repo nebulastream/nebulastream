@@ -78,10 +78,8 @@ class TupleBuffer {
     }
 
   public:
-
     ///@brief This is the logical identifier of a child tuple buffer
     using NestedTupleBufferKey = uint32_t;
-
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
@@ -162,9 +160,7 @@ class TupleBuffer {
     [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return ptr == nullptr; }
 
     /// @brief release the resource if necessary.
-    inline ~TupleBuffer() noexcept {
-        release();
-    }
+    inline ~TupleBuffer() noexcept { release(); }
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
