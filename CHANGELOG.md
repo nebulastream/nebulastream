@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.22](https://github.com/nebulastream/nebulastream/tree/v0.3.22) (2022-10-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.21...v0.3.22)
+
+#### Operators 
+
+- \[Feature\] Introduce Variable Length Datatype support in memory management layer [\#3068](https://github.com/nebulastream/nebulastream/issues/3068)
+
 ## [v0.3.21](https://github.com/nebulastream/nebulastream/tree/v0.3.21) (2022-10-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.20...v0.3.21)
