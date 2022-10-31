@@ -175,11 +175,11 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 
 Value<> customValueType() {
 
-    auto c1 = Value<CustomType>(CustomType(32l, 32l));
-    auto c2 = Value<CustomType>(CustomType(32l, 32l));
+    auto c1 = Value<CustomType>(CustomType((int64_t)32, (int64_t)32));
+    auto c2 = Value<CustomType>(CustomType((int64_t)32, (int64_t)32));
 
     c1 = c1 + c2;
-    c1 = c1 * 2l;
+    c1 = c1 * (int64_t)2;
     return c1.getValue().x;
 }
 
