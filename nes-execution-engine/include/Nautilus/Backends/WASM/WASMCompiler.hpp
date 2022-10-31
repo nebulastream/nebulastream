@@ -53,6 +53,9 @@ class WASMCompiler {
     using BinaryenExpressions = Frame<std::string, BinaryenExpressionRef>;
   private:
     BinaryenModuleRef wasm;
+    RelooperRef relooper;
+    int index;
+    std::vector<BinaryenType> localVariables;
     std::map<std::string, BinaryenExpressionRef> consumed;
     std::unordered_map<std::string, BinaryenExpressionRef> blockMapping;
 
