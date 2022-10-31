@@ -30,12 +30,12 @@ const std::string PLACED = "PLACED";
 TopologyReconfigurationPhase::TopologyReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan,
 TopologyPtr topology) : globalExecutionPlan(globalExecutionPlan), topology(topology) {};
 
-bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNode, uint64_t oldParent, uint64_t newParent) {
-    (void) movingNode;
+bool TopologyReconfigurationPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, uint64_t movingNodeId, uint64_t oldParent, uint64_t newParent) {
    auto commonAncestor = getCommonAncestor(oldParent, newParent);
    //todo: restructure so we only need to call find node with id once
     auto oldParentNode = topology->findNodeWithId(oldParent);
-   auto pathFromOldParent = topology->findNodesBetween(oldParentNode, commonAncestor);
+   //auto pathFromOldParent = topology->findNodesBetween(oldParentNode, commonAncestor);
+    auto pathFromOldParent = topology->findNodesBetween(topology->findNodeWithId(movingNodeId), commonAncestor);
    //todo; construct a set from the nodes here? could speed up execution further down
    //iterate over all operators and check if they are places on the path from old parent, if they are not, pin them where they are
    //or take the oposite approach and only put these down as not placed
