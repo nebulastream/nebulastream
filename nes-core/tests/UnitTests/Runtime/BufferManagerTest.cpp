@@ -626,7 +626,7 @@ TEST_F(BufferManagerTest, singleThreadedBufferRecyclingWithChildren) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), 7);//.. but its underlying segment is still alive
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
     ASSERT_EQ(buffer2.getReferenceCounter(), 2);
-    buffer2.release(); // if we do not release it here, the program crashes
+    buffer2.release();// if we do not release it here, the program crashes
     buffer0.release();
     //    ASSERT_EQ(buffer2.getReferenceCounter(), 1);
     //    buffer2.release();
@@ -636,7 +636,5 @@ TEST_F(BufferManagerTest, singleThreadedBufferRecyclingWithChildren) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), 10);
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
 }
-
-
 
 }// namespace NES

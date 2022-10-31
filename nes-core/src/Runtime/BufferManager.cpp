@@ -112,7 +112,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
     NES_DEBUG("NES memory allocation requires " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
-//    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
+    //    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes,
                     "NES tries to allocate more memory than physically available requested="
                         << requiredMemorySpace << " available=" << memorySizeInBytes);
