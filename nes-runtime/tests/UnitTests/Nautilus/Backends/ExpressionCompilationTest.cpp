@@ -93,7 +93,7 @@ TEST_P(ExpressionExecutionTest, addI32Test) {
 }
 
 Value<> int64AddExpression(Value<Int64> x) {
-    Value<Int64> y = 7l;
+    Value<Int64> y = (int64_t) 7;
     return x + y;
 }
 
@@ -165,7 +165,7 @@ TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
 }
 
 Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
-    Value<Int64> y = 7l;
+    Value<Int64> y = (int64_t) 7;
     return x + y;
 }
 
@@ -183,7 +183,7 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
 }
 
 Value<> castInt8ToInt64AddExpression2(Value<> x) {
-    Value<> y = 42l;
+    Value<Int64> y = (int64_t) 42;
     return y + x;
 }
 
