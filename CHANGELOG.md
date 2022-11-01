@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.24](https://github.com/nebulastream/nebulastream/tree/v0.3.24) (2022-11-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.23...v0.3.24)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] LocationProviderCSV: improve csv format, allow simulated start time [\#3081](https://github.com/nebulastream/nebulastream/issues/3081)
+
 ## [v0.3.23](https://github.com/nebulastream/nebulastream/tree/v0.3.23) (2022-10-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.22...v0.3.23)
