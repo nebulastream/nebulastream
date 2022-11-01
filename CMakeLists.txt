@@ -634,7 +634,6 @@ add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
 
-
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
