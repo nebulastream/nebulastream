@@ -11,14 +11,15 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-add_source_files(nes-runtime
-        ModExpression.cpp
-        PiExpression.cpp
-        RadiansExpression.cpp
-        DegreesExpression.cpp
-        CosExpression.cpp
-        SinExpression.cpp
-        AbsExpression.cpp
-        Atan2Expression.cpp
-        AcosExpression.cpp
-        )
+ add_source_files(nes-runtime
+         ModExpression.cpp
+         PiExpression.cpp
+         RadiansExpression.cpp
+         DegreesExpression.cpp
+         CosExpression.cpp
+         SinExpression.cpp
+         AbsExpression.cpp
+         AtanExpression.cpp
+         Atan2Expression.cpp
+         AcosExpression.cpp
+         )
