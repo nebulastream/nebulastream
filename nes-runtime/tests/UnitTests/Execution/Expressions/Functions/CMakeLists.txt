@@ -34,10 +34,13 @@ add_executable(runtime-degrees-expression-test "DegreesExpressionTest.cpp")
 target_link_libraries(runtime-degrees-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-degrees-expression-test COMMAND runtime-degrees-expression-test)
 
-
 add_executable(runtime-sin-expression-test "SinExpressionTest.cpp")
 target_link_libraries(runtime-sin-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-sin-expression-test COMMAND runtime-sin-expression-test)
+
+add_executable(runtime-atan-expression-test "AtanExpressionTest.cpp")
+target_link_libraries(runtime-atan-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-atan-expression-test COMMAND runtime-atan-expression-test)
 
 add_executable(runtime-atan2-expression-test "Atan2ExpressionTest.cpp")
 target_link_libraries(runtime-atan2-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
