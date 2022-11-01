@@ -22,6 +22,12 @@ namespace NES::Runtime::Execution::Expressions {
         AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
             : leftSubExpression(leftSubExpression) {}
 
+/**
+ * @brief This method calculates the atan of x.
+ * This function is basically a wrapper for std::atan and enables us to use it in our execution engine framework.
+ * @param x double
+ * @return double
+ */
         double calculateAtanDouble(double x) { return std::atan(x);
         }
         double calculateAtanFloat(float x) { return std::atan(float (x));
@@ -30,7 +36,6 @@ namespace NES::Runtime::Execution::Expressions {
         Value<> AtanExpression::execute(NES::Nautilus::Record& record) const {
             // Evaluate the left sub expression and retrieve the value.
             Value leftValue = leftSubExpression->execute(record);
-
             if (leftValue->isType<Float>()) {
                 return FunctionCall<>("calculateAtanFloat", calculateAtanFloat, leftValue.as<Float>());
             } else if (leftValue->isType<Double>()) {

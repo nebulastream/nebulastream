@@ -19,6 +19,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
+/**
+ * @brief This expression atan the Expression
+ */
 
 class AtanExpression : public Expression {
   public:
