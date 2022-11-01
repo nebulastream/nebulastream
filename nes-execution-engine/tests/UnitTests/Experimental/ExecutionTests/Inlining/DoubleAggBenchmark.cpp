@@ -130,13 +130,13 @@ auto loadLineItemTable(std::shared_ptr<Runtime::BufferManager> bm, bool getLineI
     inFile.seekg(0, std::ios::beg);
 
     int currentLineCount = 0;
-    printf("Current LineCount: %ld\n", linecount);
+    // printf("Current LineCount: %ld\n", linecount);
 
     int runningSum = 0;
     while (std::getline(inFile, line)) {
-        if(!(currentLineCount % 60000)) {
-            printf("Current LineCount: %f\n", currentLineCount/60012.150);
-        }
+        // if(!(currentLineCount % 60000)) {
+        //     printf("Current LineCount: %f\n", currentLineCount/60012.150);
+        // }
         ++currentLineCount;
         // using printf() in all tests for consistency
         auto index = dynamicBuffer.getNumberOfTuples();

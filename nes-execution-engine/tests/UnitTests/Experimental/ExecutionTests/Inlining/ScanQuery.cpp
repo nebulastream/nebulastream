@@ -172,6 +172,14 @@ void scan(Value<Int64> size, Value<MemRef> inPtr, Value<MemRef> outPtr) {
         outAddress.as<MemRef>().store<Int64>(value);
     }
 }
+Value<Int64> sumLoop(Value<Int64> size) {
+    Value<Int64> agg = 1l;
+    for (Value<Int64> i = 0l; i < size; i = i + 1l) {
+        agg = agg + 10l;
+    }
+    return agg;
+}
+
 
 // Struct to convert TupleBufferPtrs to Memrefs in MLIR. 'N' is the dimension of the Memref.
 // template<typename T, size_t N>
@@ -200,7 +208,8 @@ TEST_F(ScanQuery, scanBenchmark) {
     std::vector<std::vector<double>> runningSnapshotVectors(CONF->NUM_SNAPSHOTS);
 
     // Execute workload NUM_ITERATIONS number of times.
-    for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
+    for(int i = 0; i < 1; ++i) {
+    // for(int i = 0; i < CONF->NUM_ITERATIONS; ++i) {
         auto timer = std::make_shared<Timer<>>("Scan Map Benchmark Timer Nr." + std::to_string(i));
 
         // Set up empty values for symbolic execution
@@ -214,11 +223,17 @@ TEST_F(ScanQuery, scanBenchmark) {
         std::shared_ptr<Tracing::ExecutionTrace> executionTrace;
         std::cout << "Creating Execution Trace.\n";
         // executionTrace = Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        executionTrace = Tracing::traceFunctionSymbolically([&size, &inPtr, &outPtr]() {
+        executionTrace = Tracing::traceFunctionSymbolically([&size]() {
             // return standardDeviationAggregation(memPtr, size);
-            scan(size, inPtr, outPtr);
+            sumLoop(size);
             // return standardDeviationAggregation();
         });
+        // // executionTrace = Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        // executionTrace = Tracing::traceFunctionSymbolically([&size, &inPtr, &outPtr]() {
+        //     // return standardDeviationAggregation(memPtr, size);
+        //     scan(size, inPtr, outPtr);
+        //     // return standardDeviationAggregation();
+        // });
         std::cout << "Created Execution Trace.\n";
         timer->snapshot(CONF->snapshotNames.at(0));
 
@@ -228,6 +243,7 @@ TEST_F(ScanQuery, scanBenchmark) {
 
         // Create Nautilus IR from SSA trace.
         auto ir = irCreationPhase.apply(executionTrace);
+        std::cout << ir->toString() << '\n';
         timer->snapshot(CONF->snapshotNames.at(2));
 
         // Create MLIR

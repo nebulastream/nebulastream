@@ -88,11 +88,11 @@ std::pair<std::shared_ptr<NES::Runtime::MemoryLayouts::RowLayout>, NES::Runtime:
     int currentLineCount = 0;
     // 6001215
     // 2715000
-    printf("Current LineCount: %ld\n", linecount);
+    // printf("Current LineCount: %ld\n", linecount);
     while (std::getline(inFile, line)) {
-        if(!(currentLineCount % 60000)) {
-            printf("Current LineCount: %f\n", currentLineCount/60012.150);
-        }
+        // if(!(currentLineCount % 60000)) {
+            // printf("Current LineCount: %f\n", currentLineCount/60012.150);
+        // }
         ++currentLineCount;
         // using printf() in all tests for consistency
         auto index = dynamicBuffer.getNumberOfTuples();
@@ -137,9 +137,9 @@ std::vector<std::string> NES::ExecutionEngine::Experimental::TestUtility::loadSt
     int currentLineCount = 0;
     std::vector<std::string> lineitemStrings;
     while (std::getline(inFile, line)) {
-        if(!(currentLineCount % 60000)) {
-            printf("Current LineCount: %f\n", currentLineCount/60012.150);
-        }
+        // if(!(currentLineCount % 60000)) {
+        //     printf("Current LineCount: %f\n", currentLineCount/60012.150);
+        // }
         //Comments 44 bytes
         auto strings = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
         lineitemStrings.emplace_back(strings[15]);

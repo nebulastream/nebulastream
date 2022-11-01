@@ -67,7 +67,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
 
                     std::string llvmIRString;
                     llvm::raw_string_ostream llvmStringStream(llvmIRString);
-                    llvmIRModule->print(llvmStringStream, nullptr);
+                    // llvmIRModule->print(llvmStringStream, nullptr);
 
                     auto* basicError = new std::error_code();
                     llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR2) + "generated.ll", *basicError);
@@ -105,7 +105,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
 
                     std::string llvmIRString;
                     llvm::raw_string_ostream llvmStringStream(llvmIRString);
-                    llvmIRModule->print(llvmStringStream, nullptr);
+                    // llvmIRModule->print(llvmStringStream, nullptr);
 
                     auto* basicError = new std::error_code();
                     llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR2) + "generated.ll", *basicError);
@@ -143,7 +143,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
 
                     std::string llvmIRString;
                     llvm::raw_string_ostream llvmStringStream(llvmIRString);
-                    llvmIRModule->print(llvmStringStream, nullptr);
+                    // llvmIRModule->print(llvmStringStream, nullptr);
 
                     auto* basicError = new std::error_code();
                     llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR2) + "generated.ll", *basicError);
@@ -180,7 +180,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
 
                     std::string llvmIRString;
                     llvm::raw_string_ostream llvmStringStream(llvmIRString);
-                    llvmIRModule->print(llvmStringStream, nullptr);
+                    // llvmIRModule->print(llvmStringStream, nullptr);
 
                     auto* basicError = new std::error_code();
                     llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR2) + "generated.ll", *basicError);
@@ -217,7 +217,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
 
                     std::string llvmIRString;
                     llvm::raw_string_ostream llvmStringStream(llvmIRString);
-                    llvmIRModule->print(llvmStringStream, nullptr);
+                    // llvmIRModule->print(llvmStringStream, nullptr);
 
                     auto* basicError = new std::error_code();
                     llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR2) + "generated.ll", *basicError);
@@ -249,7 +249,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     if(fs.is_open()) { 
                         fs.write(timerString.c_str(), timerString.size());
                     }
-                    llvmIRModule->print(llvm::outs(), nullptr);
+                    // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
@@ -350,7 +350,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(OptimizationLevel optLevel, bool inlin
                     if(fs.is_open()) { 
                         fs.write(timerString.c_str(), timerString.size());
                     }
-                    llvmIRModule->print(llvm::outs(), nullptr);
+                    // llvmIRModule->print(llvm::outs(), nullptr);
                     return optimizedModule;
                 };
             }
