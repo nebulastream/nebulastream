@@ -36,7 +36,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
-    resultBuffer.write(resultMemoryLayout, outputIndex, recordBuffer);
+    resultBuffer.write(memoryProvider->getMemoryLayoutPtr(), outputIndex, recordBuffer);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
@@ -56,7 +56,7 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.emitBuffer(resultBuffer);
 }
 
-Emit::Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout)
-    : maxRecordsPerBuffer(resultMemoryLayout->getCapacity()), resultMemoryLayout(resultMemoryLayout) {}
+Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
+    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
 
 }// namespace NES::Runtime::Execution::Operators

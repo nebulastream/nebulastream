@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
+#include "Execution/MemoryProvider/MemoryProvider.hpp"
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
@@ -28,14 +29,14 @@ class Emit : public ExecutableOperator {
      * @brief Constructor for the emit operator.
      * @param resultMemoryLayout memory layout.
      */
-    Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout);
+    Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
     const uint64_t maxRecordsPerBuffer;
-    const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;
+    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
 }// namespace NES::Runtime::Execution::Operators

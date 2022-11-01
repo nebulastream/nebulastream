@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Execution/MemoryProvider/ColumnMemoryProvider.hpp"
+#include "Execution/MemoryProvider/RowMemoryProvider.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -53,7 +55,8 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanOperator = Scan(memoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
@@ -85,14 +88,15 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
 
-    auto scanOperator = Scan(memoryLayout);
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 2);
         dynamicBuffer[i]["f2"].write((int64_t) 1);

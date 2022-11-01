@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Execution/MemoryProvider/RowMemoryProvider.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -76,14 +77,15 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    auto emitOperator = Emit(memoryLayout);
+    auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
     }
@@ -91,10 +93,10 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), memoryLayout->getCapacity());
+    ASSERT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowMemoryLayout, buffer);
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
         ASSERT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
     }
 }
@@ -108,14 +110,15 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    auto emitOperator = Emit(memoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity() * 2; i++) {
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity() * 2; i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
     }
@@ -123,7 +126,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 2);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), memoryLayout->getCapacity());
+    ASSERT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 }
 
 /**
@@ -135,14 +138,15 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    auto emitOperator = Emit(memoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(columnMemoryLayout);
+    auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
     }
@@ -150,10 +154,10 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), memoryLayout->getCapacity());
+    ASSERT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
 
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
+    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
         ASSERT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
     }
 }
