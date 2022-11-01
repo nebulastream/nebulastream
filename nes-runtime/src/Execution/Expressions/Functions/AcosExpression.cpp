@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
