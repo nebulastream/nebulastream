@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp"
+#include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
@@ -94,7 +94,7 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeTest) {
     auto c3 = c1 + c2;
     ASSERT_EQ(c3.getValue().toString(),std::to_string(3333597103488));
     const TimeStamp c4 = TimeStamp(dur.count()-1000);
-    //greater and less than, equals
+    /* tests the functions greater and less than, equals */
     ASSERT_EQ((c1 > c4),true);
     ASSERT_EQ((c4 < c1),true);
     ASSERT_EQ((c1 == c2),true);
