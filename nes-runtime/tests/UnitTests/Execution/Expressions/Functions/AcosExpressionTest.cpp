@@ -65,30 +65,30 @@ namespace NES::Runtime::Execution::Expressions {
             // Float
             {
                 auto resultValue = expression.eval(Value<Float>((float) 0.5));
-                ASSERT_EQ(resultValue, (double) 1.0471975511965976);
+                ASSERT_EQ(resultValue, (float) 1.0471975511965976);
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
             // Float
             {
                 auto resultValue = expression.eval(Value<Float>((float) 0.5));
-                ASSERT_EQ(resultValue,(double)  1.0471975511965976);
+                ASSERT_EQ(resultValue,(float)  1.0471975511965976);
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
             // Double
             {
                 auto resultValue = expression.eval(Value<Double>((double) 0.5));
-                ASSERT_EQ(resultValue,(double) 1.0471975511965976);
+                ASSERT_EQ(resultValue,(float) 1.0471975511965976);
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
             // Double
             {
                 auto resultValue = expression.eval(Value<Double>((double) 0.5));
-                ASSERT_EQ(resultValue,(double)  1.0471975511965976);
+                ASSERT_EQ(resultValue, (double) 1.0471975511965976);
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
         }
 
-        /**
+/**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
         TEST_F(AcosExpressionTest, evaluateAcosExpressionOnWrongType) {
