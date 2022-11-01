@@ -88,7 +88,6 @@ namespace NES::Runtime::Execution::Expressions {
                 ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
             }
         }
-
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
@@ -96,5 +95,4 @@ namespace NES::Runtime::Execution::Expressions {
             auto expression = UnaryExpressionWrapper<AcosExpression>();
             ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
         }
-
     }// namespace NES::Runtime::Execution::Expressions
