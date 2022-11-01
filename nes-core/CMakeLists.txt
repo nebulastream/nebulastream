@@ -92,6 +92,7 @@ register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Execution/ Runtime/Execution/)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/State/ State/)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/QueryCompilerForwardDeclaration.hpp QueryCompiler/QueryCompilerForwardDeclaration.hpp)
+register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/InferModelOperatorHandler.hpp Operators/LogicalOperators/InferModelOperatorHandler.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Reconfigurable.hpp Runtime/Reconfigurable.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ReconfigurationType.hpp Runtime/ReconfigurationType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ReconfigurationMessage.hpp Runtime/ReconfigurationMessage.hpp)
