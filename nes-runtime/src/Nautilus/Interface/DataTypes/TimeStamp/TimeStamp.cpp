@@ -23,18 +23,18 @@ TimeStamp::TimeStamp(Value<> x) : Any(&type), milliseconds(x){
                                                    if(x->isType<Int64>()){
                                                       milliseconds = x;
                                                   }else{
-                                                      NES_ERROR("Can not make a TimeStamp object out of" << x)
+                                                      NES_THROW_RUNTIME_ERROR("Can not make a TimeStamp object out of" << x);
                                                       //TODO convert a string such as 2009-06-15T13:45:30 to millis (DBPRO'22 issue)
                                                   }
 
                                               };
 AnyPtr TimeStamp::copy() { return create<TimeStamp>(milliseconds); }
 AnyPtr TimeStamp::add(const TimeStamp& other) const { return create<TimeStamp>(milliseconds + other.milliseconds); }
-AnyPtr TimeStamp::equals(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds == otherValue.milliseconds); }
-AnyPtr TimeStamp::lessThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds < otherValue.milliseconds); }
-AnyPtr TimeStamp::greaterThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds > otherValue.milliseconds); }
+std::shared_ptr<Boolean> TimeStamp::equals(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds == otherValue.milliseconds); }
+std::shared_ptr<Boolean> TimeStamp::lessThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds < otherValue.milliseconds); }
+std::shared_ptr<Boolean> TimeStamp::greaterThan(const TimeStamp& otherValue) const { return create<Boolean>(milliseconds > otherValue.milliseconds); }
 
-// this method converts long milliseconds to a clock time representation
+/* this method converts long milliseconds to a clock time representation */
 tm convertToUTC_TM(int64_t milliseconds) {
     std::chrono::duration<int64_t, std::milli> dur(milliseconds);
     auto tp = std::chrono::system_clock::time_point(

@@ -15,33 +15,85 @@
 #define NES_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
+
+namespace NES::Nautilus {
 /**
  * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
  */
-namespace NES::Nautilus {
-
 class TimeStamp : public Any {
   public:
     static const inline auto type = TypeIdentifier::create<TimeStamp>();
 
     TimeStamp(Value<> milliseconds);
     Nautilus::IR::Types::StampPtr getType() const override;
-    AnyPtr add(const TimeStamp& other) const;
-    AnyPtr equals(const TimeStamp& other) const;
-    AnyPtr lessThan(const TimeStamp& other) const;
-    AnyPtr greaterThan(const TimeStamp& other) const;
+    AnyPtr copy() override;
+    std::string toString() override;
 
+    /**
+    * @brief Addition of two TimeStamps, i.e., their milliseconds
+    * @param other the TimeStamp to add to this TimeStamp instance
+    */
+    AnyPtr add(const TimeStamp& other) const;
+
+    /**
+    * @brief Tests if this TimeStamp Value is equal to the other TimeSTamp Value
+    * @param other the other TimeStamp
+    */
+    std::shared_ptr<Boolean> equals(const TimeStamp& other) const;
+
+    /**
+    * @brief Tests if this TimeStamp Value is less than the other TimeSTamp Value
+    * @param other the other TimeStamp
+    */
+    std::shared_ptr<Boolean> lessThan(const TimeStamp& other) const;
+
+    /**
+    * @brief Tests if this TimeStamp Value is greater than the other TimeSTamp Value
+    * @param other the other TimeStamp
+    */
+    std::shared_ptr<Boolean> greaterThan(const TimeStamp& other) const;
+
+    /**
+    * @brief Returns the Milliseconds of the TimeStamp
+    */
     Value<> getMilliSeconds();
+
+    /**
+    * @brief Returns the Seconds of the TimeStamp
+    */
     Value<> getSeconds();
+
+    /**
+    * @brief Returns the Minutes of the TimeStamp
+    */
     Value<> getMinutes();
+
+    /**
+    * @brief Returns the Hours of the TimeStamp
+    */
     Value<> getHours();
+
+    /**
+    * @brief Returns the Day of the TimeStamp
+    */
     Value<> getDays();
+
+    /**
+    * @brief Returns the Month of the TimeStamp
+    */
     Value<> getMonths();
+
+    /**
+    * @brief Returns the Year of the TimeStamp
+    */
     Value<> getYears();
 
-    AnyPtr copy() override;
+    /**
+    * @brief Returns the TimeStamp in milliseconds
+    * @param other the other TimeStamp
+    */
     Value<> getValue();
-    std::string toString() override;
+
   private:
     Value<> milliseconds;
 };
