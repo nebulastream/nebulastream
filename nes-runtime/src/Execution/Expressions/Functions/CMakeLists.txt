@@ -16,4 +16,5 @@
          CosExpression.cpp
          SinExpression.cpp
          AbsExpression.cpp
+         AcosExpression.cpp
          )
