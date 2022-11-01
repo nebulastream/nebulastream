@@ -149,7 +149,8 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * @brief if the locationprovider simulates device movement, setting this option to a non zero value will result in that
      * value being used as the start time to which offsets will be added to obtain absolute timestamps
      */
-    UIntOption locationProviderSimulatedStartTime = {LOCATION_SIMULATED_START_TIME_CONFIG, 0,
+    UIntOption locationProviderSimulatedStartTime = {LOCATION_SIMULATED_START_TIME_CONFIG,
+                                                     0,
                                                      "The start time to be simulated if device movement is simulated"};
 
   private:

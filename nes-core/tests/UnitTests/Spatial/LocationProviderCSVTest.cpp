@@ -117,7 +117,8 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     Timestamp offset = 400000000;
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
-    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv", simulatedStartTime);
+    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv",
+                                                                        simulatedStartTime);
     auto startTime = sourceCsv.getStarttime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
@@ -199,7 +200,8 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     Timestamp offset = -100000000;
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
-    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv", simulatedStartTime);
+    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv",
+                                                                        simulatedStartTime);
     auto startTime = sourceCsv.getStarttime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;

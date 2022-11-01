@@ -468,7 +468,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
 
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStarttime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
@@ -585,7 +585,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
 
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStarttime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
