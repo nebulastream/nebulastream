@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp"
-#include "Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp"
-#include "Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp"
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/AttributeField.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -30,6 +30,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
+#include <Parsers/QueryPlanBuilder.h>
 #include <Windowing/DistributionCharacteristic.hpp>
 
 namespace NES::Parsers {
@@ -236,9 +237,8 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
     // if for simple patterns without binary CEP operators
     if (this->pattern.getOperatorList().empty() && this->pattern.getSources().size() == 1) {
         auto sourceName = pattern.getSources().at(0);
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
-        auto queryPlan = QueryPlan::create(sourceOperator);
-        this->queryPlan->setSourceConsumed(sourceName);
+        this->queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
+
     // else for pattern with binary operators
     } else {
         // iterate over OperatorList, create and add LogicalOperatorNodes
@@ -253,11 +253,7 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add unary operator " + opName)
 
                 auto sourceName = pattern.getSources().at(it->second.getLeftChildId());
-                auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
-                auto subqueryPlan = QueryPlan::create(sourceOperator);
-                this->queryPlan->addRootOperator(subqueryPlan->getRootOperators()[0]);
-                //this->queryPlan->appendOperatorAsNewRoot(op);
-                this->queryPlan->setSourceConsumed(sourceName);
+                this->queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: created subquery from "
                           + pattern.getSources().at(it->second.getLeftChildId()))
 
@@ -386,28 +382,18 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
     NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: create subqueryLeft from "
               + pattern.getSources().at(it->second.getLeftChildId()))
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
-    auto leftSourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(leftSourceName));
-    auto leftQueryPlan = QueryPlan::create(leftSourceOperator);
-    leftQueryPlan->setSourceConsumed(leftSourceName);
+    auto leftQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
+
     // right
     NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: create subqueryRight from "
               + pattern.getSources().at(it->second.getRightChildId()))
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
-    auto rightSourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(leftSourceName));
-    auto rightQueryPlan = QueryPlan::create(rightSourceOperator);
-    rightQueryPlan->setSourceConsumed(rightSourceName);
+    auto rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
 
     if (opName == "OR") {
-        OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-        this->queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-        this->queryPlan->addRootOperator(leftQueryPlan->getRootOperators()[0]);
-        this->queryPlan->appendOperatorAsNewRoot(op);
-        //update source name
-        auto newSourceName =
-            Util::updateSourceName(queryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
-        this->queryPlan->setSourceConsumed(newSourceName);
+
+        this->queryPlan = QueryPlanBuilder::addUnionOperatorNode(leftQueryPlan, rightQueryPlan, this->queryPlan);
+
     } else {
         // Seq and And require a window, so first we create and check the window operator
         auto window = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -416,9 +402,6 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
                 Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),
                                              window.first,
                                              window.second);
-
-            //we use a on time trigger as default that triggers on each change of the watermark
-            auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
 
             //Next, we add artificial key attributes to the sources in order to reuse the join-logic later
             std::string cepLeftKey = keyAssignment("cep_leftLeft");
@@ -437,62 +420,14 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
             auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
             auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
 
-            //Join Logic (almost equivalent to QueryPlan)
-            //we use a lazy NL join because this is currently the only one that is implemented
-            auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-
-            // we use a complete window type as we currently do not have a distributed join
-            auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-
-            NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
-
-            // check if query contain watermark assigner, and add if missing (as default behaviour)
-            if (leftQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-                // we only consider Event time in CEP
-                leftQueryPlan->appendOperatorAsNewRoot(
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                        API::Milliseconds(0),
-                        windowType->getTimeCharacteristic()->getTimeUnit())));
-            }
-
-            if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-                auto op =
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                        API::Milliseconds(0),
-                        windowType->getTimeCharacteristic()->getTimeUnit()));
-                rightQueryPlan->appendOperatorAsNewRoot(op);
-            }
-
-            //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-            //TODO(Ventura?>Steffen) can we know this at this query submission time?
-            auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
-                                                                      rightKeyFieldAccess,
-                                                                      windowType,
-                                                                      distrType,
-                                                                      triggerPolicy,
-                                                                      triggerAction,
-                                                                      1,
-                                                                      1,
-                                                                      Join::LogicalJoinDefinition::CARTESIAN_PRODUCT);
-
-            auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-            this->queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-            this->queryPlan->addRootOperator(leftQueryPlan->getRootOperators()[0]);
-            this->queryPlan->appendOperatorAsNewRoot(op);
-            //update source name
-            auto sourceNameLeft = leftQueryPlan->getSourceConsumed();
-            auto sourceNameRight = rightQueryPlan->getSourceConsumed();
-            auto newSourceName = Util::updateSourceName(sourceNameLeft, sourceNameRight);
-            auto newSourceNames2 = Util::updateSourceName(this->queryPlan->getSourceConsumed(),newSourceName);
-            this->queryPlan->setSourceConsumed(newSourceNames2);
+            this->queryPlan = QueryPlanBuilder::addJoinOperatorNode(leftQueryPlan, rightQueryPlan, this->queryPlan, onLeftKey, onRightKey, windowType, Join::LogicalJoinDefinition::CARTESIAN_PRODUCT);
 
             if (opName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
                 auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
+                auto sourceNameRight = rightQueryPlan->getSourceConsumed();
                 if (sourceNameRight.find("_") != std::string::npos) {
                     // we find the most left source and use its timestamp for the filter constraint
                     uint64_t posStart = sourceNameRight.find("_");
@@ -502,6 +437,7 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
                 else {
                     sourceNameRight = sourceNameRight + "$" + timestamp;
                 }
+                auto sourceNameLeft = leftQueryPlan->getSourceConsumed();
                 // in case of composed sources on the left branch
                 if (sourceNameLeft.find("_") != std::string::npos) {
                     // we find the most right source and use its timestamp for the filter constraint
