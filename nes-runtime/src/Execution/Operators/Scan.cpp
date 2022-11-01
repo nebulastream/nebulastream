@@ -18,8 +18,10 @@
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryLayout(memoryLayout), projections(projections) {}
+// Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, std::vector<Record::RecordFieldIdentifier> projections)
+//     : memoryLayout(memoryLayout), projections(projections) {}
+Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
+    : memoryProvider(std::move(memoryProvider)), projections(projections) {}
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
@@ -28,9 +30,9 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-        auto record = recordBuffer.read(memoryLayout, projections, bufferAddress, i);
+        auto record = recordBuffer.read(memoryProvider->getMemoryLayoutPtr(), projections, bufferAddress, i);
         child->execute(ctx, record);
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::MemoryProvider

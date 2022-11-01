@@ -11,10 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        RecordBuffer.cpp
+        MemoryProvider.cpp
+        ColumnMemoryProvider.cpp
+        RowMemoryProvider.cpp
         )
-
-add_subdirectory(Expressions)
-add_subdirectory(Operators)
-add_subdirectory(Pipelines)
-add_subdirectory(MemoryProvider)
