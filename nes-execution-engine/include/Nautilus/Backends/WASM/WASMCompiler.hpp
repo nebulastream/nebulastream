@@ -50,7 +50,7 @@ class WASMCompiler {
     WASMCompiler();
     BinaryenModuleRef compile(std::shared_ptr<IR::IRGraph> ir);
 
-    using BinaryenExpressions = Frame<std::string, BinaryenExpressionRef>;
+    using BinaryenExpressions = std::vector<std::pair<std::string, BinaryenExpressionRef>>;
   private:
     BinaryenModuleRef wasm;
     RelooperRef relooper;
@@ -83,6 +83,7 @@ class WASMCompiler {
     void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
     BinaryenType getType(IR::Types::StampPtr stampPtr);
+    BinaryenExpressionRef getValue(BinaryenExpressions& expressions, const std::string& key);
     BinaryenOp convertToInt32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
