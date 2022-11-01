@@ -56,5 +56,4 @@ namespace NES::Runtime::Execution::Expressions {
                 NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
             }
         }
-
     }
