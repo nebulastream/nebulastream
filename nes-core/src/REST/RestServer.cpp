@@ -143,7 +143,7 @@ bool RestServer::stop() {
     else {
         std::unique_lock lock(mutex);
         stopRequested = true;
-        return true;
+        return stopRequested;
     }
 }
 
