@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.26](https://github.com/nebulastream/nebulastream/tree/v0.3.26) (2022-11-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.25...v0.3.26)
+
+### Miscellaneous Issues ✌️
+
+- Machine Learning Operator \(Implementation and Placement\) [\#1779](https://github.com/nebulastream/nebulastream/issues/1779)
+
 ## [v0.3.25](https://github.com/nebulastream/nebulastream/tree/v0.3.25) (2022-11-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.24...v0.3.25)
