@@ -419,7 +419,7 @@ class MetricValidator {
 
     static bool checkNodeIds(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto& [key, val] : json.items()){
+        for (auto& [key, val] : json.items()) {
             if (json[key].contains("NODE_ID") && json[key]["NODE_ID"] != nodeId) {
                 NES_ERROR("MetricValidator: Wrong node ID for " << key << " where " << json[key]["NODE_ID"] << "!=" << nodeId);
                 check = false;
@@ -430,7 +430,7 @@ class MetricValidator {
 
     static bool checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto& [key, val] : json.items()){
+        for (auto& [key, val] : json.items()) {
             // This change lets you get the string straight up from "first"
             auto jsonMetric = json[key][0]["value"];
             if (!checkNodeIds(jsonMetric, nodeId)) {
