@@ -16,9 +16,9 @@
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
-#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <log4cxx/helpers/exception.h>
 
@@ -36,13 +36,12 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         case PlacementStrategy::Manual:
             return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
-            // #2486        case PlacementStrategy::IFCOP:
-            //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-            #ifdef TFDEF
-            case PlacementStrategy::MlHeuristic:
+// #2486        case PlacementStrategy::IFCOP:
+//            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+#ifdef TFDEF
+        case PlacementStrategy::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-            #endif
-
+#endif
 
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);

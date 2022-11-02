@@ -68,20 +68,19 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     static std::unique_ptr<BasePlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
-
   private:
     explicit MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                              TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase);
+                                 TopologyPtr topology,
+                                 TypeInferencePhasePtr typeInferencePhase);
 
     void performOperatorPlacement(QueryId queryId,
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(QueryId queryId,
-                       const OperatorNodePtr& operatorNode,
-                       TopologyNodePtr candidateTopologyNode,
-                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                 const OperatorNodePtr& operatorNode,
+                                 TopologyNodePtr candidateTopologyNode,
+                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities
@@ -96,11 +95,12 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @param faultToleranceType
      * @param lineageType
      */
-    void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType::Value faultToleranceType,
+    void performOperatorRedundancyElimination(QueryId queryId,
+                                              FaultToleranceType::Value faultToleranceType,
                                               LineageType::Value lineageType);
 };
 }// namespace NES::Optimizer
 
 #endif//MLHEURISTIC_HPP
 
-#endif //TFDEF
+#endif//TFDEF

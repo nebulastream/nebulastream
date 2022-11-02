@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringPlan.hpp>

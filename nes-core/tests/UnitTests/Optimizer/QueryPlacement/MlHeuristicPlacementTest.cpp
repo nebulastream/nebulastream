@@ -23,8 +23,8 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -71,7 +71,6 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down MlHeuristicPlacementTest test class." << std::endl; }
 
-
     void topologyGenerator() {
         topology = Topology::create();
 
@@ -82,23 +81,23 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         std::vector<int> low_throughput_sources = {11};
         std::vector<int> ml_hardwares = {};
 
-        std::vector<int> sources {8, 9, 10, 11, 12};
+        std::vector<int> sources{8, 9, 10, 11, 12};
 
         std::vector<TopologyNodePtr> nodes;
         for (int i = 0; i < (int) resources.size(); i++) {
             nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i]));
-            if(i == 0) {
+            if (i == 0) {
                 topology->setAsRoot(nodes[i]);
             } else {
                 topology->addNewTopologyNodeAsChild(nodes[parents[i]], nodes[i]);
             }
-            if(std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i)) {
+            if (std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i)) {
                 nodes[i]->addNodeProperty("tf_installed", true);
             }
-            if(std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i)) {
+            if (std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i)) {
                 nodes[i]->addNodeProperty("low_throughput_source", true);
             }
-            if(std::count(ml_hardwares.begin(), ml_hardwares.end(), i)) {
+            if (std::count(ml_hardwares.begin(), ml_hardwares.end(), i)) {
                 nodes[i]->addNodeProperty("ml_hardware", true);
             }
         }
@@ -111,14 +110,14 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
                            ->addField(createField("SpeciesCode", UINT64));)";
 
         const std::string streamName = "iris";
-//        SchemaPtr irisSchema = Schema::create()
-//                                   ->addField(createField("id", UINT64))
-//                                   ->addField(createField("SepalLengthCm", FLOAT32))
-//                                   ->addField(createField("SepalWidthCm", FLOAT32))
-//                                   ->addField(createField("PetalLengthCm", FLOAT32))
-//                                   ->addField(createField("PetalWidthCm", FLOAT32))
-//                                   ->addField(createField("SpeciesCode", UINT64))
-//                                   ->addField(createField("CreationTime", UINT64));
+        //        SchemaPtr irisSchema = Schema::create()
+        //                                   ->addField(createField("id", UINT64))
+        //                                   ->addField(createField("SepalLengthCm", FLOAT32))
+        //                                   ->addField(createField("SepalWidthCm", FLOAT32))
+        //                                   ->addField(createField("PetalLengthCm", FLOAT32))
+        //                                   ->addField(createField("PetalWidthCm", FLOAT32))
+        //                                   ->addField(createField("SpeciesCode", UINT64))
+        //                                   ->addField(createField("CreationTime", UINT64));
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, irisSchema);
@@ -130,7 +129,8 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
         for (int source : sources) {
-            Catalogs::Source::SourceCatalogEntryPtr streamCatalogEntry = std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
+            Catalogs::Source::SourceCatalogEntryPtr streamCatalogEntry =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
@@ -143,13 +143,15 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
 TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     topologyGenerator();
-    Query query = Query::from("iris")
-                      .inferModel("../../../test_data/iris.tflite",
-                                  {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
-                      .filter(Attribute("iris0") < 3.0)
-                      .project(Attribute("iris1"), Attribute("iris2"))
-                      .sink(PrintSinkDescriptor::create());
+    Query query =
+        Query::from("iris")
+            .inferModel(
+                "../../../test_data/iris.tflite",
+                {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+            .filter(Attribute("iris0") < 3.0)
+            .project(Attribute("iris1"), Attribute("iris2"))
+            .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
 

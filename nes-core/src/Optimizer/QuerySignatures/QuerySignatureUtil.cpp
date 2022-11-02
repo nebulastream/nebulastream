@@ -13,15 +13,15 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -107,13 +107,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-            #ifdef TFDEF
+#ifdef TFDEF
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
-            #else
+#else
             NES_THROW_RUNTIME_ERROR("Trying to use InferModelLogicalOperatorNode but TFDEF not defined!");
-            #endif // TFDEF
+#endif// TFDEF
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     } catch (const std::exception& ex) {
@@ -211,8 +211,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
 }
 
 #ifdef TFDEF
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3::ContextPtr& context,
-                                                                 const NES::InferModel::InferModelLogicalOperatorNodePtr& inferModelOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
+    const z3::ContextPtr& context,
+    const NES::InferModel::InferModelLogicalOperatorNodePtr& inferModelOperator) {
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = inferModelOperator->getChildren();
     NES_ASSERT(children.size() == 1, "InferModel operator should only have one non null children.");
@@ -232,7 +233,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3
         auto inputfields = inferModelOperator->getInputFieldsAsPtr();
         auto outoutfields = inferModelOperator->getInputFieldsAsPtr();
 
-        for (auto in_field : inputfields){
+        for (auto in_field : inputfields) {
             auto fieldname = in_field->getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
         }
 
@@ -267,7 +268,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowsExpressions));
 }
-#endif // TFDEF
+#endif// TFDEF
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context,
                                                                  const MapLogicalOperatorNodePtr& mapOperator) {

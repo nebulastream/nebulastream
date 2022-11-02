@@ -12,20 +12,22 @@
     limitations under the License.
 */
 
-
 #include <filesystem>
 
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-#include <API/Schema.hpp>
-#include <API/Expressions/Expressions.hpp>
 
 namespace NES::InferModel {
 
 #ifdef TFDEF
-InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id)
+InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
+                                                             std::vector<ExpressionItemPtr> inputFields,
+                                                             std::vector<ExpressionItemPtr> outputFields,
+                                                             OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id) {
     NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << model);
     this->model = model;
@@ -62,7 +64,7 @@ bool InferModelLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<InferModelLogicalOperatorNode>()->getId() == id;
 }
 
-void InferModelLogicalOperatorNode::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field){
+void InferModelLogicalOperatorNode::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
     auto existingField = schema->hasFieldName(fieldName);
@@ -86,7 +88,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
 
     auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFieldsPtr){
+    for (auto inputField : inputFieldsPtr) {
         auto inputExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(typeInferencePhaseContext, inputSchema);
@@ -94,14 +96,15 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }
 
-    for (auto outputField : outputFieldsPtr){
+    for (auto outputField : outputFieldsPtr) {
         auto outputExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
         if (outputSchema->hasFieldName(fieldName)) {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
-            NES_TRACE("Infer Model Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
+            NES_TRACE("Infer Model Logical Operator: the field " << fieldName
+                                                                 << " is already in the schema, so we updated its type.");
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
         } else {
             // The assigned field is not part of the current schema.
@@ -140,14 +143,9 @@ const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     return path;
 }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() {
-    return inputFieldsPtr;
-}
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() {
-    return outputFieldsPtr;
-}
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() { return inputFieldsPtr; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() { return outputFieldsPtr; }
 
-#endif // TFDEF
+#endif// TFDEF
 
-}// namespace NES
-
+}// namespace NES::InferModel
