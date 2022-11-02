@@ -84,8 +84,8 @@ void E2ESingleRun::createSources() {
                                                                               sourceAffinity,
                                                                               taskQueueId);
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = sourceName;                    //"input" + std::to_string(sourceCnt + 1);
-        auto physicalStreamName = "physical_" + sourceName;     //"physical_input" + std::to_string(sourceCnt);
+        auto logicalStreamName = sourceName;
+        auto physicalStreamName = "physical_" + sourceName;
         auto logicalSource = LogicalSource::create(logicalStreamName, schema);
         auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
 

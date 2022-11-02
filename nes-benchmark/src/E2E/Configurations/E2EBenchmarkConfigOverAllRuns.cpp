@@ -101,7 +101,6 @@ namespace NES::Benchmark {
                 oss << ", ";
             }
             oss << item.second->toString();
-
             cnt += 1;
         }
 

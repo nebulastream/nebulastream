@@ -24,6 +24,12 @@ class ZipfianGenerator {
     static constexpr auto DEFAULT_ZIPFIAN_GENERATOR = .99;
 
   public:
+    /**
+     * @brief Constructs a ZipfianGenerator
+     * @param min
+     * @param max
+     * @param zipfianFactor
+     */
     explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianFactor = DEFAULT_ZIPFIAN_GENERATOR)
         : ZipfianGenerator(min, max, zipfianFactor, computeZeta(0, max - min + 1, zipfianFactor, 0)) {}
 
@@ -33,7 +39,6 @@ class ZipfianGenerator {
         this->zipfianConstant = zipfianConstant;
         this->theta = this->zipfianConstant;
 
-
         zeta2Theta = zeta(0, 2, theta, 0);
 
         alpha = 1.0 / (1.0 - theta);
@@ -42,8 +47,18 @@ class ZipfianGenerator {
         eta = (1 - std::pow(2.0 / numItems, 1 - theta)) / (1 - zeta2Theta / zetan);
     }
 
+    /**
+     * @brief overrides the operator() and generates a new random value drawn from a Zipfian distribution
+     * @param rng
+     * @return random value
+     */
     uint64_t operator()(std::mt19937& rng) { return (*this)(rng, countForZeta); }
 
+    /**
+     * @brief overrides the operator() and generates a new random value drawn from a Zipfian distribution
+     * @param rng
+     * @return random value
+     */
     uint64_t operator()(std::mt19937& rng, uint64_t newItemCount) {
         if (newItemCount > countForZeta) {
             // we have added more items. can compute zetan incrementally, which is cheaper
@@ -61,16 +76,33 @@ class ZipfianGenerator {
             return min + 1;
         }
 
-        uint64_t ret = min + (long)((numItems)*std::pow(eta * u - eta + 1, alpha));
+        uint64_t ret = min + (long)((numItems) * std::pow(eta * u - eta + 1, alpha));
         return ret;
     }
 
   private:
+
+    /**
+     * @brief this function calculates the zeta constant needed for the distribution
+     * @param st
+     * @param n
+     * @param thetaVal
+     * @param initialSum
+     * @return newly computed zeta constant
+     */
     double zeta(uint64_t st, uint64_t n, double thetaVal, double initialSum) {
         countForZeta = n;
         return computeZeta(st, n, thetaVal, initialSum);
     }
 
+    /**
+     * @brief Computes the zeta function by iterating over all numbers in the range of st .. n
+     * @param st
+     * @param n
+     * @param theta
+     * @param initialSum
+     * @return newly computed zeta function
+     */
     static double computeZeta(uint64_t st, uint64_t n, double theta, double initialSum) {
         double sum = initialSum;
         for (auto i = st; i < n; i++) {
