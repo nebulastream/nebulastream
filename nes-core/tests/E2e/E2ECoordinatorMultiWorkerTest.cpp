@@ -15,9 +15,9 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <nlohmann/json.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -42,8 +42,10 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
  */
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO(" start coordinator");
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug(), TestUtils::restServerType("Oatpp")});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -111,7 +113,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -190,7 +193,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -287,7 +291,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;

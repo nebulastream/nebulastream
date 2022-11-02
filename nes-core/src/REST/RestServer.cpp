@@ -129,7 +129,7 @@ bool RestServer::startWithRestSDK() {
 }
 
 bool RestServer::stop() {
-    if(!usingOatpp) {
+    if (!usingOatpp) {
         NES_DEBUG("RestServer::stop");
         auto task = restEngine->shutdown();
         task.wait();
@@ -139,8 +139,7 @@ bool RestServer::stop() {
             cvar.notify_all();
         }
         return shutdownPromise.get_future().get();
-    }
-    else {
+    } else {
         std::unique_lock lock(mutex);
         stopRequested = true;
         return stopRequested;
@@ -219,7 +218,7 @@ void RestServer::run() {
         {
             NES_DEBUG("checking if stop request has arrived for rest server");
             std::unique_lock lock(mutex);
-            if(stopRequested){
+            if (stopRequested) {
                 run = false;
             }
         }
