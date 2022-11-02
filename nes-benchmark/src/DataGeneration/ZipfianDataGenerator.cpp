@@ -59,6 +59,11 @@ namespace NES::Benchmark::DataGeneration {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
                 auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 
+                /*
+                 * Iterating over all tuples of the current buffer and insert the tuples according to the schema.
+                 * The value is drawn from the zipfianGenerator and thus has a zipfian shape.
+                 * As we do know the memory layout, we can use the custom pushRecord() method to
+                 */
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                     uint64_t value = zipfianGenerator(generator);
                     rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(
@@ -69,6 +74,12 @@ namespace NES::Benchmark::DataGeneration {
                 }
 
             } else {
+
+                /*
+                 * Iterating over all tuples of the current buffer and insert the tuples according to the schema.
+                 * The value is drawn from the zipfianGenerator and thus has a zipfian shape.
+                 * As we do not know the memory layout, we use dynamic field handlers
+                 */
                 for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                     auto value = zipfianGenerator(generator);
                     dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
