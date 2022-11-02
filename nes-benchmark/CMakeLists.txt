@@ -32,7 +32,7 @@ target_link_libraries(e2e-benchmark-runner PUBLIC nes-benchmark)
 
 
 #-------------------------------##################------------------------------
-#-------------------------------# Micro Benchmarks#-----------------------------
+#-------------------------------#Micro Benchmarks#-----------------------------
 include(ExternalProject)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
