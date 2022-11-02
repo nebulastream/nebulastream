@@ -59,7 +59,7 @@ TEST_F(WASMExpressionTest, addIntFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -78,7 +78,7 @@ TEST_F(WASMExpressionTest, subIntFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -97,7 +97,7 @@ TEST_F(WASMExpressionTest, mulIntFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -116,7 +116,7 @@ TEST_F(WASMExpressionTest, divIntFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -136,7 +136,7 @@ TEST_F(WASMExpressionTest, addInt32ArgsFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -156,7 +156,7 @@ TEST_F(WASMExpressionTest, addInt64ArgsFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -175,7 +175,7 @@ TEST_F(WASMExpressionTest, orBooleanFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -195,7 +195,7 @@ TEST_F(WASMExpressionTest, divFloatFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -215,7 +215,7 @@ TEST_F(WASMExpressionTest, gtInt32FunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -238,7 +238,7 @@ TEST_F(WASMExpressionTest, ifFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 
@@ -261,7 +261,7 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.compile(ir);
+    auto wasm = wasmCompiler.lower(ir);
     BinaryenModulePrint(wasm);
 }
 

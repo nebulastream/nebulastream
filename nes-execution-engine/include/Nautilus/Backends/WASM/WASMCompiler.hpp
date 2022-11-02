@@ -40,7 +40,8 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
-#include <Nautilus/Util/Frame.hpp>
+#include <Nautilus/Util/Mapping.hpp>
+#include <unordered_map>
 #include <map>
 
 namespace NES::Nautilus::Backends::WASM {
@@ -48,16 +49,18 @@ namespace NES::Nautilus::Backends::WASM {
 class WASMCompiler {
   public:
     WASMCompiler();
-    BinaryenModuleRef compile(std::shared_ptr<IR::IRGraph> ir);
+    BinaryenModuleRef lower(const std::shared_ptr<IR::IRGraph>& ir);
 
-    using BinaryenExpressions = std::vector<std::pair<std::string, BinaryenExpressionRef>>;
+    using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
+    using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
   private:
     BinaryenModuleRef wasm;
     RelooperRef relooper;
-    int index;
+    RelooperBlocks relooperBlocks;
     std::vector<BinaryenType> localVariables;
     std::map<std::string, BinaryenExpressionRef> consumed;
     std::unordered_map<std::string, BinaryenExpressionRef> blockMapping;
+    Mapping<std::string, std::string> blockLinking;
 
     void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
@@ -83,13 +86,13 @@ class WASMCompiler {
     void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
     BinaryenType getType(IR::Types::StampPtr stampPtr);
-    BinaryenExpressionRef getValue(BinaryenExpressions& expressions, const std::string& key);
     BinaryenOp convertToInt32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenExpressionRef generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
-                                             std::vector<BinaryenExpressionRef> blockArgs);
+                                             BinaryenExpressions blockArgs);
+    void tmpFunc();
 };
 }// namespace NES::Nautilus::Backends::WASM
 
