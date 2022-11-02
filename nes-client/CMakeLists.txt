@@ -15,13 +15,20 @@
 add_subdirectory(src)
 get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
+# CPR
+find_package(cpr REQUIRED)
+if (cpr_FOUND)
+    find_package(CURL REQUIRED)
+    message(STATUS "Found CURL : ${CURL_LIBRARIES}")
+    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
+endif ()
+
 # Add Library
 add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PRIVATE nes)
+target_link_libraries(nes-client PRIVATE ${CURL_LIBRARIES} cpr::cpr nes)
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
