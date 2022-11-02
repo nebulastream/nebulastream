@@ -644,12 +644,11 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
-    
+
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
-
 
 TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));

@@ -54,10 +54,10 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <filesystem>
 
 using namespace std;
 using namespace std;
@@ -171,11 +171,10 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
-
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -227,21 +226,20 @@ TEST_F(QueryCompilerTest, mapQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                          .build();    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+                          .build();
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from(logicalSourceName)
-                     .map(Attribute("F1") = Attribute("F1") + 2.0)
-                     .sink(NullOutputSinkDescriptor::create());
+    auto query =
+        Query::from(logicalSourceName).map(Attribute("F1") = Attribute("F1") + 2.0).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
     vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 

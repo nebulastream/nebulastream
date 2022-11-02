@@ -217,14 +217,14 @@ void DefaultGeneratableOperatorProvider::lowerFilter(const QueryPlanPtr& queryPl
 }
 
 void DefaultGeneratableOperatorProvider::lowerInferModel(QueryPlanPtr queryPlan,
-                                                     PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+                                                         PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalInferModelOperator = operatorNode->as<PhysicalOperators::PhysicalInferModelOperator>();
     auto generatableInferModelOperator =
         GeneratableOperators::GeneratableInferModelOperator::create(physicalInferModelOperator->getInputSchema(),
                                                                     physicalInferModelOperator->getOutputSchema(),
                                                                     physicalInferModelOperator->getModel(),
                                                                     physicalInferModelOperator->getInputFields(),
-                                                                   physicalInferModelOperator->getOutputFields(),
+                                                                    physicalInferModelOperator->getOutputFields(),
                                                                     physicalInferModelOperator->getInferModelHandler());
     queryPlan->replaceOperator(physicalInferModelOperator, generatableInferModelOperator);
 }

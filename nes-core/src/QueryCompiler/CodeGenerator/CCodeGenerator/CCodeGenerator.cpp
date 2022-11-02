@@ -49,7 +49,7 @@
 
 #ifdef TFDEF
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
-#endif //TFDEF
+#endif//TFDEF
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
@@ -386,11 +386,13 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
  * @brief Code generation for an infer model operator
  * @return flag if the generation was successful.
  */
-bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
+bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
+                                               std::vector<ExpressionItemPtr> inputFields,
+                                               std::vector<ExpressionItemPtr> outputFields) {
 
-    for (auto f : inputFields){
+    for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
-        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
     }
 
     auto code = context->code;
@@ -402,7 +404,8 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     auto inferModelOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
     auto getOperatorHandlerCall = call("getOperatorHandler<InferModel::InferModelOperatorHandler>");
-    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
+    auto constantOperatorHandlerIndex =
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
     auto windowOperatorStatement =
@@ -410,26 +413,28 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
     auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tensorflowAdapter");
-    auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(call("inferModelOperatorHandler->getTensorflowAdapter"));
+    auto tensorflowDeclStatement =
+        VarDeclStatement(tensorflowDeclaration).assign(call("inferModelOperatorHandler->getTensorflowAdapter"));
     code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
-    generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
+    generateTensorFlowInferCall->addParameter(
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
 
-    for (auto f : inputFields){
+    for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
         auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
         generateTensorFlowInferCall->addParameter(
-            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
-                .accessRef(VarRef(variableDeclaration)));
+            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(variableDeclaration)));
     }
 
     code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
 
     for (unsigned long i = 0; i < outputFields.size(); ++i) {
         auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();
-        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
 
         auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
         auto attributeVariable = VarDeclStatement(variableDeclaration);
@@ -4111,7 +4116,8 @@ uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
     return 0;
 }
 
-uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler){
+uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context,
+                                                 InferModel::InferModelOperatorHandlerPtr operatorHandler) {
 
     context->registerOperatorHandler(operatorHandler);
     return 0;

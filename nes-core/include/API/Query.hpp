@@ -440,7 +440,6 @@ class Query {
      */
     Query& filter(ExpressionNodePtr const& filterExpression);
 
-
     /**
      * @brief: Create watermark assihner operator.
      * @param onField filed to retrieve the timestamp for watermark.
@@ -463,7 +462,9 @@ class Query {
      * @param param
      * @return query
      */
-    Query& inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
+    Query& inferModel(std::string model,
+                      std::initializer_list<ExpressionItem> inputFields,
+                      std::initializer_list<ExpressionItem> outputFields);
 
     /**
      * @brief Add sink operator for the query.

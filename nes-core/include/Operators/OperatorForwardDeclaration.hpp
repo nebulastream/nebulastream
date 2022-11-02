@@ -63,14 +63,12 @@ class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 namespace InferModel {
-    class InferModelLogicalOperatorNode;
-    using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
+class InferModelLogicalOperatorNode;
+using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
 
-
-    class InferModelOperatorHandler;
-    using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-}// namespace NES::InferModel
-
+class InferModelOperatorHandler;
+using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
+}// namespace InferModel
 
 }// namespace NES
 #endif// NES_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

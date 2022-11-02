@@ -872,7 +872,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
     }
     testHarness.validate().setupTopology();
 
-
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
     struct Output {
         uint32_t id;

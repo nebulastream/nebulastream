@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 
-
 class TfLiteInterpreter;
 
 namespace NES {
@@ -47,10 +46,11 @@ class TensorflowAdapter {
     float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
+
   private:
     TfLiteInterpreter* interpreter;
     float* output{};
-#endif // TFDEF
+#endif// TFDEF
 };
 
 }// namespace NES

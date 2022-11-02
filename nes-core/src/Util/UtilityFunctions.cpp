@@ -104,14 +104,13 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
             }
             offset += fieldSize;
         }
-//        #ifdef TFDEF
-//        auto ts = std::chrono::system_clock::now();
-//        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-//                                 ts.time_since_epoch()).count();
-//        ss << "," << std::to_string(expulsionTime);
-//        #endif
+        //        #ifdef TFDEF
+        //        auto ts = std::chrono::system_clock::now();
+        //        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        //                                 ts.time_since_epoch()).count();
+        //        ss << "," << std::to_string(expulsionTime);
+        //        #endif
         ss << std::endl;
-
     }
     return ss.str();
 }

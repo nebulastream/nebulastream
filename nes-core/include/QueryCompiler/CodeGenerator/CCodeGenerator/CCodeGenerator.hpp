@@ -64,12 +64,13 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForFilter(PredicatePtr pred, PipelineContextPtr context) override;
 
-
     /**
      * @brief Code generation for an infer model operator
      * @return flag if the generation was successful.
      */
-    bool generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) override;
+    bool generateCodeForInferModel(PipelineContextPtr context,
+                                   std::vector<ExpressionItemPtr> inputFields,
+                                   std::vector<ExpressionItemPtr> outputFields) override;
 
     /**
     * @brief Code generation for a (branchless) predicated filter operator.
@@ -286,7 +287,8 @@ class CCodeGenerator : public CodeGenerator {
      * @param operatorHandler
      * @return
      */
-    uint64_t generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler) override;
+    uint64_t generateInferModelSetup(PipelineContextPtr context,
+                                     InferModel::InferModelOperatorHandlerPtr operatorHandler) override;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
