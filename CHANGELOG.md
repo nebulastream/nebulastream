@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.28](https://github.com/nebulastream/nebulastream/tree/v0.3.28) (2022-11-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.27...v0.3.28)
+
+**Implemented enhancements:**
+
+- \[Feature\] Different Data Generators for each source [\#3067](https://github.com/nebulastream/nebulastream/issues/3067)
+
 ## [v0.3.27](https://github.com/nebulastream/nebulastream/tree/v0.3.27) (2022-11-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.26...v0.3.27)
