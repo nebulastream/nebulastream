@@ -20,6 +20,7 @@
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
@@ -32,7 +33,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <REST/ServerTypes.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -150,9 +150,7 @@ template<typename T>
 
 [[nodiscard]] std::string enableMonitoring(bool prefix = false) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
 
-[[nodiscard]] std::string restServerType(string sType) {
-    return "--restServerType=" + sType;
-}
+[[nodiscard]] std::string restServerType(string sType) { return "--restServerType=" + sType; }
 
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
@@ -657,9 +655,9 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         NES_INFO("check if NES REST interface is up");
-        std::future<cpr::Response> rf = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
-        rf.wait();
-        cpr::Response r = rf.get();
+        auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        future.wait();
+        cpr::Response r = future.get();
         if (r.status_code == 200l) {
             return true;
         }
@@ -685,12 +683,11 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url},
-                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
-        if(response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
+        if (response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
             currentStatus = result["status"];
             if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
                 break;
@@ -706,12 +703,11 @@ template<typename T>
 
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url},
-                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
-        if(response.status_code == cpr::status::HTTP_OK && result.contains("producedBuffers")) {
+        if (response.status_code == cpr::status::HTTP_OK && result.contains("producedBuffers")) {
             currentResult = result["producedBuffers"];
             if (currentResult >= expectedNumberBuffers) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
@@ -742,8 +738,7 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url},
-                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
@@ -768,8 +763,7 @@ template<typename T>
 
     std::string url = BASE_URL + restPort + "/v1/nes/query/stop-query";
     nlohmann::json jsonReturn;
-    auto future = cpr::DeleteAsync(cpr::Url{url},
-                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    auto future = cpr::DeleteAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -788,9 +782,7 @@ template<typename T>
 
     std::string url = BASE_URL + restPort + "/v1/nes/query/execute-query";
     nlohmann::json jsonReturn;
-    auto future = cpr::PostAsync(cpr::Url{url},
-                                 cpr::Header{{"Content-Type", "application/json"}},
-                                 cpr::Body{queryString});
+    auto future = cpr::PostAsync(cpr::Url{url}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{queryString});
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -825,10 +817,7 @@ template<typename T>
     nlohmann::json json_returnSchema;
 
     std::string url = BASE_URL + restPort + "/v1/nes/sourceCatalog/addLogicalSource";
-    cpr::AsyncResponse future =
-        cpr::PostAsync(cpr::Url{url},
-                       cpr::Header{{"Content-Type", "application/json"}},
-                       cpr::Body{schemaString});
+    auto future = cpr::PostAsync(cpr::Url{url}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{schemaString});
     future.wait();
     cpr::Response response = future.get();
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
@@ -844,12 +833,10 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
 
     for (int i = 0; i < maxTimeout; i++) {
         try {
-            cpr::AsyncResponse future =
-                cpr::GetAsync(cpr::Url{baseUri},
-                              cpr::Timeout(3000));
+            auto future = cpr::GetAsync(cpr::Url{baseUri}, cpr::Timeout(3000));
             future.wait();
             cpr::Response response = future.get();
-            if(!nlohmann::json::accept(response.text)){
+            if (!nlohmann::json::accept(response.text)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
             }
             nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
@@ -881,8 +868,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
     NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
 
-    auto future = cpr::GetAsync(cpr::Url{baseUri},
-                                cpr::Timeout{3000});
+    auto future = cpr::GetAsync(cpr::Url{baseUri}, cpr::Timeout{3000});
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
