@@ -30,4 +30,25 @@ add_executable(e2e-benchmark-runner "E2ERunner.cpp")
 target_link_libraries(e2e-benchmark-runner PUBLIC nes-benchmark)
 
 
+
+#-------------------------------##################------------------------------
+#-------------------------------# Micro Benchmarks#-----------------------------
+include(ExternalProject)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
+### Query Merger Benchmark ###
+add_executable(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
+target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
+add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json)
+
+### Incremental Placement Benchmark ###
+add_executable(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp")
+target_link_libraries(incremental-placement-benchmark nes ${GBENCHMARK_LIBRARIES})
+add_test(NAME incremental-placement-benchmark COMMAND incremental-placement-benchmark --benchmark_out=BenchmarkIncrementalPlacement.log --benchmark_out_format=json)
+
+add_executable(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
+target_link_libraries(output-channel-benchmark nes ${GBENCHMARK_LIBRARIES})
+add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json)
+
+
 message("---Done building benchmarks")
