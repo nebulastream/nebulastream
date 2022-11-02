@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.27](https://github.com/nebulastream/nebulastream/tree/v0.3.27) (2022-11-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.26...v0.3.27)
+
+#### REST API 
+
+- Remove cpprestsdk from TestUtils class [\#3097](https://github.com/nebulastream/nebulastream/issues/3097)
+
 ## [v0.3.26](https://github.com/nebulastream/nebulastream/tree/v0.3.26) (2022-11-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.25...v0.3.26)
