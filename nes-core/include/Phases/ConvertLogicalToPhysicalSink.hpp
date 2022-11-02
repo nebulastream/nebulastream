@@ -38,7 +38,7 @@ class ConvertLogicalToPhysicalSink {
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(Network::OperatorId operatorId,
+    static DataSinkPtr createDataSink(NES::OperatorId operatorId,
                                       const SinkDescriptorPtr& sinkDescriptor,
                                       const SchemaPtr& schema,
                                       const Runtime::NodeEnginePtr& nodeEngine,

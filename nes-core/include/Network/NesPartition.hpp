@@ -16,16 +16,10 @@
 #define NES_INCLUDE_NETWORK_NESPARTITION_HPP_
 #include <cstdint>
 #include <string>
+#include <Util/IdentifiersOfNetworkRuntimeAndCoordinator.hpp>
 
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
-
-// TODO unify among network, runtime, and optimizer (see https://github.com/nebulastream/nebulastream/issues/2370)
-using NodeId = uint64_t;
-using SubpartitionId = uint64_t;
-using PartitionId = uint64_t;
-using OperatorId = uint64_t;
-using QueryId = uint64_t;
 
 class NesPartition {
   public:
