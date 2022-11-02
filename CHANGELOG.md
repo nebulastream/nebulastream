@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.25](https://github.com/nebulastream/nebulastream/tree/v0.3.25) (2022-11-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.24...v0.3.25)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add sin\(x\) expression [\#3051](https://github.com/nebulastream/nebulastream/issues/3051)
+- \[DBPRO\] Add abs\(x\) expression [\#3031](https://github.com/nebulastream/nebulastream/issues/3031)
+
 ## [v0.3.24](https://github.com/nebulastream/nebulastream/tree/v0.3.24) (2022-11-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.23...v0.3.24)
