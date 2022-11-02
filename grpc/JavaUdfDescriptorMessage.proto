@@ -13,6 +13,7 @@
 */
 
 syntax = "proto3";
+import "SerializableOperator.proto";
 package NES;
 
 message JavaUdfDescriptorMessage {
@@ -25,5 +26,6 @@ message JavaUdfDescriptorMessage {
   string udf_method_name = 2;
   bytes serialized_instance = 3;
   repeated JavaUdfClassDefinition classes = 4;
+  SerializableSchema outputSchema = 5;
 }
 
