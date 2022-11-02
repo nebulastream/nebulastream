@@ -49,7 +49,7 @@ namespace NES::Benchmark::DataGeneration {
 
         /**
          * @brief overrides the string representation of the parent class
-         * @return
+         * @return string representation
          */
         std::string toString() override;
 
