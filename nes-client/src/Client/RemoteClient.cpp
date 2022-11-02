@@ -186,7 +186,7 @@ std::string RemoteClient::getTopology() {
 }
 
 std::string RemoteClient::getQueries() {
-    auto path = "queryCatalogService/allRegisteredQueries";
+    auto path = "queryCatalog/allRegisteredQueries";
 
     nlohmann::json jsonReturn;
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path},
@@ -198,36 +198,18 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-//TODO: remove completely. The endpoint "queryIdAndCatalogEntryMapping" isn't supported anymore
-/*std::string RemoteClient::getQueries(QueryStatus::Value status) {
+[[maybe_unused]] std::string RemoteClient::getQueries(QueryStatus::Value status) {
     std::string queryStatus = QueryStatus::toString(status);
 
-    auto restMethod = web::http::methods::POST;
-    auto path = "queryIdAndCatalogEntryMapping?status=" + queryStatus;
-    auto message = "";
+    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"},
+                                               cpr::Parameters{{"status", queryStatus}});
 
-    nlohmann::json jsonReturn;
-    web::http::client::http_client_config cfg;
-    cfg.set_timeout(requestTimeout);
-    NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
-    web::http::client::http_client client(getHostName(), cfg);
-    client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
-            NES_INFO("RemoteClient::send: received response");
-            try {
-                jsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
-                throw ClientException("RemoteClient::send: error while setting return.");
-            }
-        })
-        .wait();
-    return jsonReturn.serialize();
+    future.wait();
+    auto response = future.get();
+    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+    return jsonResponse.dump();
 }
- */
+
 
 std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
     NES_ASSERT2_FMT(!logicalSourceName.empty(), "Empty logicalSourceName");

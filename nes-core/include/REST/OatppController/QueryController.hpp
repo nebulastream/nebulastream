@@ -161,7 +161,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
             //nlohmann::json library has trouble parsing Oatpp String type

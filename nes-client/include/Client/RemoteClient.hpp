@@ -110,7 +110,7 @@ class RemoteClient {
      * @param QueryStatus query status, i.e. registered
      * @return query information
      */
-    std::string getQueries(QueryStatus::Value status);
+    [[maybe_unused]] std::string getQueries(QueryStatus::Value status);
 
     /**
      * @brief add a logical source
