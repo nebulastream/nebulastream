@@ -21,19 +21,17 @@
 #ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
-#endif // TFDEF
+#endif// TFDEF
 
 #ifdef TFDEF
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
-void NES::TensorflowAdapter::initializeModel(std::string model){
+void NES::TensorflowAdapter::initializeModel(std::string model) {
     std::cout << "INITIALIZING MODEL: " << model << std::endl;
 
     std::ifstream input(model, std::ios::in | std::ios::binary);
 
-    std::string bytes(
-            (std::istreambuf_iterator<char>(input)),
-            (std::istreambuf_iterator<char>()));
+    std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 
     input.close();
     NES_INFO("MODEL SIZE: " + std::to_string(bytes.size()));
@@ -42,15 +40,11 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
     TfLiteInterpreterAllocateTensors(interpreter);
 }
 
- NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() {
-    return std::make_shared<TensorflowAdapter>();
-}
+NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
-float NES::TensorflowAdapter::getResultAt(int i) {
-    return output[i];
-}
+float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void NES::TensorflowAdapter::infer(int n, ...){
+void NES::TensorflowAdapter::infer(int n, ...) {
     va_list vl;
     va_start(vl, n);
 
@@ -69,7 +63,7 @@ void NES::TensorflowAdapter::infer(int n, ...){
     const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
     free(input);
-    if(output != nullptr){
+    if (output != nullptr) {
         free(output);
     }
 
@@ -78,4 +72,4 @@ void NES::TensorflowAdapter::infer(int n, ...){
     TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 }
 
-#endif // TFDEF
+#endif// TFDEF

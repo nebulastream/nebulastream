@@ -15,9 +15,9 @@
 #ifndef INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
 #define INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
 
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::InferModel {
 
@@ -27,7 +27,10 @@ namespace NES::InferModel {
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
 #ifdef TFDEF
   public:
-    InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id);
+    InferModelLogicalOperatorNode(std::string model,
+                                  std::vector<ExpressionItemPtr> inputFields,
+                                  std::vector<ExpressionItemPtr> outputFields,
+                                  OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -103,11 +106,9 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     std::vector<ExpressionItemPtr> outputFieldsPtr;
     std::string model;
 
-#endif // TFDEF
+#endif// TFDEF
 };
 
-}// namespace NES
-
-
+}// namespace NES::InferModel
 
 #endif// INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP

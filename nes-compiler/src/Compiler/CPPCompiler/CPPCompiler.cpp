@@ -95,9 +95,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto logLevel = getLogLevel(Logger::getInstance()->getCurrentLogLevel());
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
-    #ifdef TFDEF
+#ifdef TFDEF
     compilationFlags.addFlag("-DTFDEF=1");
-    #endif // TFDEF
+#endif// TFDEF
 
     compilationFlags.addFlag(sourceFileName);
 

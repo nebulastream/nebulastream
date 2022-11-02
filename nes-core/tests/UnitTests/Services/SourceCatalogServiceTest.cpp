@@ -103,9 +103,13 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     csvSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
-    uint64_t nodeId =
-        topologyManagerService->registerNode(address, 4000, 5000, 6, NES::Spatial::Index::Experimental::Location(),
-                                             NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION, /* isTfInstalled */ false);
+    uint64_t nodeId = topologyManagerService->registerNode(address,
+                                                           4000,
+                                                           5000,
+                                                           6,
+                                                           NES::Spatial::Index::Experimental::Location(),
+                                                           NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                                           /* isTfInstalled */ false);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

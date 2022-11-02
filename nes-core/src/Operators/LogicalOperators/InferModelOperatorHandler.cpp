@@ -19,7 +19,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 
-
 namespace NES::InferModel {
 
 InferModelOperatorHandlerPtr InferModelOperatorHandler::create(std::string model) {
@@ -34,7 +33,7 @@ InferModelOperatorHandler::InferModelOperatorHandler(std::string model) {
 
 void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                       Runtime::StateManagerPtr stateManager,
-                                uint32_t localStateVariableId) {
+                                      uint32_t localStateVariableId) {
     NES_DEBUG("nodeId: " << stateManager->getNodeId());
     NES_DEBUG("localStateVaribaleId: " << localStateVariableId);
 }
@@ -55,4 +54,4 @@ const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() co
 
 }// namespace NES::InferModel
 
-#endif // TFDEF
+#endif// TFDEF

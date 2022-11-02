@@ -181,7 +181,6 @@ TEST_F(SyntacticQueryValidationTest, validQueryWithInferModelOperatorTest) {
                               "                                .inferModel(\"models/iris.tflite\",\n"
                               "                                           {Attribute(\"value\"), Attribute(\"id\")},\n"
                               "                                           {Attribute(\"value\")}); ";
-
 }
 
 }// namespace NES

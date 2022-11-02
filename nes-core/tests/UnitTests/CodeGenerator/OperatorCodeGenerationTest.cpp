@@ -928,7 +928,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
     workerConfiguration->physicalSources.add(physicalSource);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
@@ -938,7 +938,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
-    auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto inferModelOperatorHandler =
+        InferModel::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
     context->registerOperatorHandler(inferModelOperatorHandler);
 
     auto inputSchema = source->getSchema();
@@ -949,26 +950,24 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-        ->addField("id", DataTypeFactory::createInt32())
-        ->addField("valueSmall", DataTypeFactory::createInt16())
-        ->addField("valueFloat", DataTypeFactory::createFloat())
-        ->addField("valueDouble", DataTypeFactory::createDouble())
-        ->addField(iris0)
-        ->addField(iris1)
-        ->addField(iris2)
-        ->addField("valueChar", DataTypeFactory::createChar())
-        ->addField("text", DataTypeFactory::createFixedChar(12));
+                            ->addField("id", DataTypeFactory::createInt32())
+                            ->addField("valueSmall", DataTypeFactory::createInt16())
+                            ->addField("valueFloat", DataTypeFactory::createFloat())
+                            ->addField("valueDouble", DataTypeFactory::createDouble())
+                            ->addField(iris0)
+                            ->addField(iris1)
+                            ->addField(iris2)
+                            ->addField("valueChar", DataTypeFactory::createChar())
+                            ->addField("text", DataTypeFactory::createFixedChar(12));
 
     auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat"));
     auto input0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
     auto input1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
     auto input2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
     auto op = LogicalOperatorFactory::createInferModelOperator(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
-                                                     {valF, valF, valF, valF},
-                                                     {input0, input1, input2});
+                                                               {valF, valF, valF, valF},
+                                                               {input0, input1, input2});
     auto imop = op->as<InferModel::InferModelLogicalOperatorNode>();
-
-
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
     codeGenerator->generateInferModelSetup(context, inferModelOperatorHandler);
@@ -987,8 +986,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     /* execute Stage */
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 46};
 
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       inferModelOperatorHandler);
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), inferModelOperatorHandler);
 
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());

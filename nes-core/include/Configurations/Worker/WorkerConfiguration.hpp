@@ -202,9 +202,9 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
-    #ifdef TFDEF
+#ifdef TFDEF
     BoolOption isTfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
-    #endif // TFDEF
+#endif// TFDEF
     /**
      * @brief Factory function for a worker config
      */
@@ -283,10 +283,10 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
-                #ifdef TFDEF
+#ifdef TFDEF
                 &isTfInstalled
-                #endif
-                };
+#endif
+        };
     }
 };
 }// namespace Configurations

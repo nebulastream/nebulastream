@@ -90,7 +90,9 @@ class CodeGenerator {
      * @brief Code generation for an infer model operator
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) = 0;
+    virtual bool generateCodeForInferModel(PipelineContextPtr context,
+                                           std::vector<ExpressionItemPtr> inputFields,
+                                           std::vector<ExpressionItemPtr> outputFields) = 0;
 
     /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
@@ -418,7 +420,8 @@ class CodeGenerator {
     /**
     * @brief Code generation the setup method for inferModel operators.
     */
-    virtual uint64_t generateInferModelSetup(PipelineContextPtr context, InferModel::InferModelOperatorHandlerPtr operatorHandler) = 0;
+    virtual uint64_t generateInferModelSetup(PipelineContextPtr context,
+                                             InferModel::InferModelOperatorHandlerPtr operatorHandler) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

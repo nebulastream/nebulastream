@@ -463,7 +463,6 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     return *this;
 }
 
-
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
@@ -475,17 +474,19 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
 }
 
 #ifdef TFDEF
-Query& Query::inferModel(const std::string model, const std::initializer_list<ExpressionItem> inputFields, const std::initializer_list<ExpressionItem> outputFields) {
+Query& Query::inferModel(const std::string model,
+                         const std::initializer_list<ExpressionItem> inputFields,
+                         const std::initializer_list<ExpressionItem> outputFields) {
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
     std::vector<ExpressionItemPtr> inputFieldsPtr;
     std::vector<ExpressionItemPtr> outputFieldsPtr;
-    for(auto f : inputFieldVector){
+    for (auto f : inputFieldVector) {
         ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
         inputFieldsPtr.push_back(fp);
     }
-    for(auto f : outputFieldVector){
+    for (auto f : outputFieldVector) {
         ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
         outputFieldsPtr.push_back(fp);
     }
@@ -495,7 +496,7 @@ Query& Query::inferModel(const std::string model, const std::initializer_list<Ex
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
-#endif // TFDEF
+#endif// TFDEF
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");

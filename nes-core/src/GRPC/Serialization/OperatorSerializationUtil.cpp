@@ -150,7 +150,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator.mutable_details()->PackFrom(mapDetails);
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-        #ifdef TFDEF
+#ifdef TFDEF
         // serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperatorNode");
         auto inferModelDetails = SerializableOperator_InferModelDetails();
@@ -172,9 +172,8 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         input.close();
         inferModelDetails.set_mlfilecontent(bytes);
         serializedOperator.mutable_details()->PackFrom(inferModelDetails);
-        #endif // TFDEF
-    }
-    else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
+#endif// TFDEF
+    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
         auto iterationDetails = SerializableOperator_CEPIterationDetails();
@@ -349,9 +348,10 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         // de-serialize map expression
         auto fieldAssignmentExpression =
             ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
-        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(), Util::getNextOperatorId());
+        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(),
+                                                                 Util::getNextOperatorId());
     } else if (details.Is<SerializableOperator_InferModelDetails>()) {
-        #ifdef TFDEF
+#ifdef TFDEF
         // de-serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
         auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
@@ -374,8 +374,11 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         output << content;
         output.close();
 
-        operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields, Util::getNextOperatorId());
-        #endif // TFDEF
+        operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(),
+                                                                        inputFields,
+                                                                        outputFields,
+                                                                        Util::getNextOperatorId());
+#endif// TFDEF
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
@@ -402,7 +405,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(&serializedWatermarkStrategyDetails);
-        operatorNode = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, Util::getNextOperatorId());
+        operatorNode =
+            LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, Util::getNextOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
