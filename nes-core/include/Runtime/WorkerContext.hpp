@@ -47,9 +47,9 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    std::unordered_map<Network::OperatorId, Network::NetworkChannelPtr> dataChannels;
+    std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// event only channels that send events upstream
-    std::unordered_map<Network::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
+    std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
     /// worker local buffer pool stored :: use this for fast access
@@ -124,7 +124,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -164,35 +164,35 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param type the termination type
      */
-    bool releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType type);
+    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type);
 
     /**
      * @brief This stores a network channel for an operator
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeEventOnlyChannel(Network::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
+    void storeEventOnlyChannel(NES::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
 
     /**
      * @brief removes a registered network channel
      * @param id of the operator that we want to store the output channel
      * @param terminationType the termination type
      */
-    bool releaseEventOnlyChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType);
+    bool releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannel* getNetworkChannel(Network::OperatorId ownerId);
+    Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
 
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(Network::OperatorId ownerId);
+    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
