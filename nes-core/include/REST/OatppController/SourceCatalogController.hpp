@@ -302,7 +302,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
