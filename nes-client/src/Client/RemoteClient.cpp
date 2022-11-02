@@ -198,7 +198,7 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-[[maybe_unused]] std::string RemoteClient::getQueries(QueryStatus::Value status) {
+std::string RemoteClient::getQueries(QueryStatus::Value status) {
     std::string queryStatus = QueryStatus::toString(status);
 
     cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"},
