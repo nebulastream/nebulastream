@@ -175,7 +175,7 @@ TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
     auto result = response.as_object();
     auto queryId = response.at("queryId");
     NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(web::http::status_codes::Created == httpResponse.status_code());
+    EXPECT_TRUE(web::http::status_codes::Accepted == httpResponse.status_code());
 }
 
 TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
