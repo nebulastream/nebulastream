@@ -16,6 +16,7 @@
 #define NES_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 
 #include <memory>
+#include <Util/IdentifiersOfNetworkRuntimeAndCoordinator.hpp>
 
 #define FORWARD_DECLARE_CLASS_UP(T)                                                                                              \
     class T;                                                                                                                     \
@@ -28,11 +29,6 @@
 namespace NES::Network {
 class ExchangeProtocol;
 class NodeLocation;
-using NodeId = uint64_t;
-using SubpartitionId = uint64_t;
-using PartitionId = uint64_t;
-using OperatorId = uint64_t;
-using QueryId = uint64_t;
 FORWARD_DECLARE_CLASS_UP(ZmqServer);
 FORWARD_DECLARE_CLASS_UP(NetworkChannel);
 FORWARD_DECLARE_CLASS_UP(EventOnlyNetworkChannel);

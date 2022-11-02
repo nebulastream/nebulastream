@@ -65,7 +65,7 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
-void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel) {
+void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);
     dataChannels[id] = std::move(channel);
 }
@@ -105,7 +105,7 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
     }
 }
 
-bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -117,12 +117,12 @@ bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::Query
     return false;
 }
 
-void WorkerContext::storeEventOnlyChannel(Network::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
+void WorkerContext::storeEventOnlyChannel(NES::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);
     reverseEventChannels[id] = std::move(channel);
 }
 
-bool WorkerContext::releaseEventOnlyChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = reverseEventChannels.find(id); it != reverseEventChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -134,13 +134,13 @@ bool WorkerContext::releaseEventOnlyChannel(Network::OperatorId id, Runtime::Que
     return false;
 }
 
-Network::NetworkChannel* WorkerContext::getNetworkChannel(Network::OperatorId ownerId) {
+Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator " << ownerId << " for context " << workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
 
-Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Network::OperatorId ownerId) {
+Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving event only channel for operator " << ownerId << " for context " << workerId);
     auto it = reverseEventChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
