@@ -55,7 +55,7 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
 }
 
 void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer) {
-    FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.tupleBufferRef);
+    FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
 uint64_t getWorkerIdProxy(void* workerContext) {

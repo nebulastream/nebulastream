@@ -12,25 +12,54 @@
     limitations under the License.
 */
 
-#include "Execution/MemoryProvider/MemoryProvider.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <memory>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
-    ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::MemoryLayoutPtr columnMemoryLayoutPtr) : 
-        columnMemoryLayoutPtr(columnMemoryLayoutPtr) {
-            //todo assert that MemoryLayoutPtr is ColumnLayoutPtr
-            // - if correct layout is confirmed here, we can change dynamic_pointer_cast to static_pointer_cast
-            // - could delete constructor and use static 'constructor' function to enable error handling
-        };
-    
-    MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() {
-        return columnMemoryLayoutPtr;
-    }
 
-    // MemoryLayouts::ColumnLayoutPtr ColumnMemoryProvider::getColumnMemoryLayoutPtr() {
-    //     return std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(columnMemoryLayoutPtr);
-    // }
+ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr) : 
+    columnMemoryLayoutPtr(columnMemoryLayoutPtr) {};
+
+MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() {
+    return columnMemoryLayoutPtr;
+}
+
+Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+                        Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                        Nautilus::Value<Nautilus::UInt64> recordIndex) {
+    // read all fields
+    Nautilus::Record record;
+    for (uint64_t i = 0; i < columnMemoryLayoutPtr->getSchema()->getSize(); i++) {
+        auto fieldName = columnMemoryLayoutPtr->getSchema()->fields[i]->getName();
+        if (!includesField(projections, fieldName))
+            continue;
+        auto fieldSize = columnMemoryLayoutPtr->getFieldSizes()[i];
+        auto columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[i];
+        auto fieldOffset = recordIndex * fieldSize + columnOffset;
+        auto fieldAddress = bufferAddress + fieldOffset;
+        auto memRef = fieldAddress.as<Nautilus::MemRef>();
+        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[i], memRef);
+        record.write(columnMemoryLayoutPtr->getSchema()->fields[i]->getName(), value);
+    }
+    return record;
+}
+
+void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
+                                 Nautilus::Value<Nautilus::MemRef> bufferAddress, 
+                                 NES::Nautilus::Record& rec) {
+    auto fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
+    auto schema = columnMemoryLayoutPtr->getSchema();
+    auto& columnOffsets = columnMemoryLayoutPtr->getColumnOffsets();
+    for (uint64_t i = 0; i < fieldSizes.size(); i++) {
+        auto fieldOffset = (recordIndex * fieldSizes[i]) + columnOffsets[i];
+        auto fieldAddress = bufferAddress + fieldOffset;
+        // auto fieldAddress = outputBufferAddress + fieldOffset;
+        auto value = rec.read(schema->fields[i]->getName());
+        auto memRef = fieldAddress.as<Nautilus::MemRef>();
+        memRef.store(value);
+    }
+}
 
 } //namespace

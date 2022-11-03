@@ -46,6 +46,7 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
     }
     return std::optional<uint64_t>(nameFieldIt->second);
 }
+
 uint64_t MemoryLayout::getCapacity() const { return capacity; }
 const SchemaPtr& MemoryLayout::getSchema() const { return schema; }
 uint64_t MemoryLayout::getBufferSize() const { return bufferSize; }

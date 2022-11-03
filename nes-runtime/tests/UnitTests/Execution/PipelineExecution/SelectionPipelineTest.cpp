@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -68,7 +69,8 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanOperator = std::make_shared<Operators::Scan>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ConstantIntegerExpression>(5);
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -76,7 +78,8 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
-    auto emitOperator = std::make_shared<Operators::Emit>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();

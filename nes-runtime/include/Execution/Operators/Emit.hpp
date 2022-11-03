@@ -35,8 +35,8 @@ class Emit : public ExecutableOperator {
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
-    const uint64_t maxRecordsPerBuffer;
-    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+    uint64_t maxRecordsPerBuffer;
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
 }// namespace NES::Runtime::Execution::Operators
