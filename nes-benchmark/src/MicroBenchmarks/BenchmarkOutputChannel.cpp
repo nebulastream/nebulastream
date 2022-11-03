@@ -21,7 +21,9 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Utils/BenchmarkUtils.hpp>
+#include <Util/BenchmarkUtils.hpp>
+#include <Util/ThreadBarrier.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -31,7 +33,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-namespace NES::Benchmarking {
+namespace NES::Benchmark {
 
 /**
  * This benchmark measures the performance of the output channel. This is done by spawning a zmq server. 
@@ -158,7 +160,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
     return throughputRet;
 }
 
-}// namespace NES::Benchmarking
+}// namespace NES::Benchmark
 
 int main(int argc, char** argv) {
     ((void) argc);
@@ -174,10 +176,10 @@ int main(int argc, char** argv) {
     std::vector<uint64_t> allServerThreads;
     std::vector<uint64_t> allDataSizesToBeSent;
 
-    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 32 * 1024, 128 * 1024);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 4, 8, 2);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 4, 8, 2);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent,
+    NES::Benchmark::Util::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 32 * 1024, 128 * 1024);
+    NES::Benchmark::Util::createRangeVector<uint64_t>(allSenderThreads, 4, 8, 2);
+    NES::Benchmark::Util::createRangeVector<uint64_t>(allServerThreads, 4, 8, 2);
+    NES::Benchmark::Util::createRangeVector<uint64_t>(allDataSizesToBeSent,
                                                                    (uint64_t) 1 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 4 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 1 * 1024 * 1024 * 1024);
@@ -209,7 +211,7 @@ int main(int argc, char** argv) {
                     throughputVec.clear();
                     int32_t port = startPort;// + curComb;
                     for (uint64_t i = 0; i < NUM_REPS; ++i) {
-                        double throughput = NES::Benchmarking::BM_TestMassiveSending(bufferSize,
+                        double throughput = NES::Benchmark::BM_TestMassiveSending(bufferSize,
                                                                                      buffersManaged,
                                                                                      numSenderThreads,
                                                                                      numServerThreads,
