@@ -638,10 +638,6 @@ add_subdirectory(nes-runtime)
 # Add target for client
 add_subdirectory(nes-client)
 
-# Add target for old benchmarks
-#if (NES_BUILD_BENCHMARKS)
-#    add_subdirectory(benchmark)
-#endif(NES_BUILD_BENCHMARKS)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
