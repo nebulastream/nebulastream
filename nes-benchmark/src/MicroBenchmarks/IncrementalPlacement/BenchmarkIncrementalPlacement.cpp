@@ -36,7 +36,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <Utils/BenchmarkUtils.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
@@ -44,7 +44,7 @@
 #include <z3++.h>
 
 using namespace NES;
-using namespace NES::Benchmarking;
+using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 std::chrono::nanoseconds Runtime;
@@ -157,15 +157,17 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
                                          0,
                                          0,
                                          UINT16_MAX,
+                                         NES::Spatial::Index::Experimental::Location(),
                                          NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                         NES::Spatial::Index::Experimental::Location());
+                                         /* isTfInstalled */ false);
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
         topologyManagerService->registerNode(std::to_string(i),
                                              0,
                                              0,
                                              UINT16_MAX,
+                                             NES::Spatial::Index::Experimental::Location(),
                                              NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                             NES::Spatial::Index::Experimental::Location());
+                                             /* isTfInstalled */ false);
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
