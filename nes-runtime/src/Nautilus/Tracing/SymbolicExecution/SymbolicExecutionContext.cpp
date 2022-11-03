@@ -143,6 +143,7 @@ SymbolicExecutionContext::apply(const std::function<NES::Nautilus::Tracing::Valu
     std::cout << tracCtx->getExecutionTrace() << std::endl;
 
     disableThreadLocalTraceContext();
+    disableSymbolicExecution();
     return tracCtx->getExecutionTrace();
 }
 

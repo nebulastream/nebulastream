@@ -162,8 +162,7 @@ size_t LocalBufferPool::getBufferSize() const { return bufferManager->getBufferS
 size_t LocalBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
 
 size_t LocalBufferPool::getNumOfUnpooledBuffers() const {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
-    return 0;
+    return bufferManager->getNumOfUnpooledBuffers();
 }
 
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() {
@@ -175,8 +174,5 @@ std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::millis
     return std::optional<TupleBuffer>();
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t) {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
-    return std::optional<TupleBuffer>();
-}
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size) { return bufferManager->getUnpooledBuffer(size); }
 }// namespace NES::Runtime

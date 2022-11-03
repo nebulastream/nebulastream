@@ -16,6 +16,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 #include <stdio.h>
@@ -51,14 +52,20 @@ auto transform(Arg argument) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<MemRef>>::value) {
         return (void*) argument.value->getValue();
+    } else if constexpr (std::is_base_of<BaseTypedRef, Arg>::value) {
+        return argument.get();
     } else {
         static_assert(dependent_false<Arg>::value);
     }
 }
 
 template<typename Arg>
-Nautilus::Tracing::InputVariant getRefs(Arg argument) {
-    return argument.ref;
+Nautilus::Tracing::InputVariant getRefs(Arg& argument) {
+    if constexpr (std::is_base_of<BaseTypedRef, Arg>::value) {
+        return argument.value->ref;
+    } else{
+        return argument.ref;
+    }
 }
 
 template<typename Arg>
@@ -87,6 +94,8 @@ auto transformReturnValues(Arg argument) {
         return Value<Boolean>(std::make_unique<Boolean>((bool) argument));
     } else if constexpr (std::is_same<Arg, float>::value) {
         return Value<Float>(std::make_unique<Float>(argument));
+    } else if constexpr (std::is_same<Arg, double>::value) {
+        return Value<Double>(std::make_unique<Double>(argument));
     } else if constexpr (std::is_same<Arg, double>::value) {
         return Value<Double>(std::make_unique<Double>(argument));
     } else {

@@ -13,7 +13,9 @@
 */
 
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
@@ -32,7 +34,7 @@ class TypeCompilationTest : public testing::Test, public AbstractCompilationBack
         std::cout << "Setup TypeCompilationTest test class." << std::endl;
     }
 
-    /* Will be called before a test is executed. */
+    /* Will be called before a testValue is executed. */
     void SetUp() override { std::cout << "Setup TypeCompilationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
@@ -190,6 +192,27 @@ TEST_P(TypeCompilationTest, customValueTypeTest) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t (*)()>("execute");
     ASSERT_EQ(function(), 128);
+}
+
+Value<> listLengthTest(Value<List>& list) { return list->length() + 4; }
+
+TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
+
+    auto list = RawList(10);
+    auto listRef = TypedRef<RawList>(list);
+    Value<List> valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
+    listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&]() {
+        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(valueList.value->rawReference.value->ref);
+        return listLengthTest(valueList);
+    });
+
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    ASSERT_EQ(function(&listRef.get()), 14);
 }
 
 // Tests all registered compilation backends.

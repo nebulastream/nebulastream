@@ -100,7 +100,6 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functo
         auto res = func();
         return res.ref;
     });
-    disableSymbolicExecution();
 }
 
 }// namespace NES::Nautilus::Tracing
