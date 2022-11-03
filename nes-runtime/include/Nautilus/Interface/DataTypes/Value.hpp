@@ -16,6 +16,7 @@
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
@@ -63,6 +64,18 @@ class Value : BaseValue {
     using ValueTypePtr = std::shared_ptr<ValueType>;
 
   public:
+    class ValueIndexReference {
+      public:
+        ValueIndexReference(uint32_t index, Value<ValueType> inputValue) : index(index), inputValue(inputValue){};
+        operator const Value<>() const;
+        ValueIndexReference operator=(const Value<>&);
+
+      private:
+        const uint32_t index;
+        Value<ValueType> inputValue;
+    };
+    using element_type = ValueType;
+
     /*
      * Creates a Value<Int8> object from an std::int8_t.
      */
@@ -113,6 +126,8 @@ class Value : BaseValue {
      */
     Value(double value) : Value(Any::create<Double>(value)) { TraceConstOperation(this->value, this->ref); };
 
+    Value(const char* value);
+
     /*
      * Creates a Value<Boolean> object from a bool.
      */
@@ -122,6 +137,8 @@ class Value : BaseValue {
      * Creates a Value<MemRef> object from an std::int8_t*.
      */
     Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
+
+    Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
 
     /**
      * @brief copy constructor
@@ -143,7 +160,7 @@ class Value : BaseValue {
     /**
      * @brief copy constructor
      */
-    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {}
+    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value))), ref(other.ref) {}
 
     /**
      * @brief move constructor
@@ -171,11 +188,7 @@ class Value : BaseValue {
         return *this;
     }
 
-    operator const Value<>() const {
-        std::shared_ptr<Any> copy = value->copy();
-        auto lRef = this->ref;
-        return Value<>(std::move(copy), lRef);
-    };
+    operator const Value<>() const { return Value<>(value, ref); };
 
     /**
      * @brief Special case flor loads on memref values.
@@ -213,10 +226,12 @@ class Value : BaseValue {
         }
     }
 
+    ValueIndexReference inline operator[](int32_t index) { return ValueIndexReference(index, *this); };
+
     Value<> castTo(const TypeIdentifier* toStamp) const;
 
     template<class T>
-    auto as() {
+    auto as() const {
         return Value<T>(cast<T>(value), ref);
     }
 
@@ -231,14 +246,9 @@ class Value : BaseValue {
     ValueType* operator->() const { return value.get(); }
     ValueType& getValue() const { return *value.get(); };
 
-    /**
-     * @brief destructor
-     */
-    ~Value() {}
-
   public:
     mutable ValueTypePtr value;
-    Nautilus::Tracing::ValueRef ref;
+    mutable Nautilus::Tracing::ValueRef ref;
 };
 
 Value<> AddOp(const Value<>& leftExp, const Value<>& rightExp);
@@ -247,11 +257,25 @@ Value<> MulOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> DivOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> EqualsOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> NegateOp(const Value<>& exp);
+const Value<> ReadListIndexOp(const Value<>& list, int32_t index);
 Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
+Value<> ReadArrayIndexOp(const Value<>& input, int32_t index);
+void WriteArrayIndexOp(const Value<>& input, int32_t index, const Value<>& value);
+
+template<typename LHS>
+Value<LHS>::ValueIndexReference::operator const Value<>() const {
+    return ReadArrayIndexOp(inputValue, index);
+}
+
+template<typename LHS>
+typename Value<LHS>::ValueIndexReference Value<LHS>::ValueIndexReference::operator=(const Value<>& value) {
+    WriteArrayIndexOp(inputValue, index, value);
+    return *this;
+}
 
 template<typename T, typename = std::enable_if_t<std::is_constructible_v<Value<>, std::decay_t<T>>>>
 inline auto toValue(T&& t) {
@@ -475,9 +499,15 @@ auto inline operator||(const LHS& left, const RHS& right) {
     return OrOp(left, right);
 };
 
-std::ostream& operator<<(std::ostream& out, Value<>& value);
+template<typename T>
+std::ostream& operator<<(std::ostream& out, Value<T>& value) {
+    return out << value.getValue().toString();
+}
 
-void PrintTo(const Value<Any>& value, std::ostream* os);
+template<typename T>
+void PrintTo(const Value<T>& value, std::ostream* os) {
+    *os << value.getValue().toString();
+}
 
 }// namespace NES::Nautilus
 
