@@ -12,6 +12,15 @@
 
 message("---Building benchmarks...")
 
+
+function(add_nes_benchmarks TARGET_NAME FILE_PATH COMMAND_LINE_ARGS)
+    add_executable(${TARGET_NAME} ${FILE_PATH})
+    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES})
+    add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME} ${COMMAND_LINE_ARGS})
+    message(STATUS "Added benchmark ${TARGET_NAME}")
+endfunction()
+
+
 # include dirs
 include_directories("include/")
 
@@ -37,18 +46,13 @@ include(ExternalProject)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 ### Query Merger Benchmark ###
-add_executable(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
-target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
-add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json)
+add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp" "--benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json")
 
 ### Incremental Placement Benchmark ###
-add_executable(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp")
-target_link_libraries(incremental-placement-benchmark nes ${GBENCHMARK_LIBRARIES})
-add_test(NAME incremental-placement-benchmark COMMAND incremental-placement-benchmark --benchmark_out=BenchmarkIncrementalPlacement.log --benchmark_out_format=json)
+add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp" "--benchmark_out=BenchmarkIncrementalPlacement.log --benchmark_out_format=json")
 
-add_executable(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
-target_link_libraries(output-channel-benchmark nes ${GBENCHMARK_LIBRARIES})
-add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json)
+#add_executable(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
+add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp" "--benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json")
 
 
 message("---Done building benchmarks")
