@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.30](https://github.com/nebulastream/nebulastream/tree/v0.3.30) (2022-11-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.29...v0.3.30)
+
+#### REST API 
+
+- Remove CPPRestSdk from RemoteClient [\#3096](https://github.com/nebulastream/nebulastream/issues/3096)
+
 ## [v0.3.29](https://github.com/nebulastream/nebulastream/tree/v0.3.29) (2022-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.28...v0.3.29)
