@@ -13,6 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/PluginRegistry.hpp>
 
@@ -131,7 +132,8 @@ Value<> evalBinary(
             return result.value();
         }
     };
-    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation between " << left->toString() << " and " << right->toString());
+    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation between " << left->toString() << " and "
+                                                                                           << right->toString());
 }
 
 Value<> evalWithCast(
@@ -258,8 +260,44 @@ Value<> NegateOp(const Value<>& input) {
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-std::ostream& operator<<(std::ostream& out, Value<>& value) { return out << value.getValue().toString(); }
+Value<> ReadArrayIndexOp(const Value<>& input, int32_t index) {
+    auto& plugins = InvocationPluginRegistry::getPlugins();
+    for (auto& plugin : plugins) {
+        auto result = plugin->ReadArrayIndex(input, index);
+        if (result.has_value()) {
+            return result.value();
+        }
+    };
+    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
+}
 
-void PrintTo(const Value<Any>& value, std::ostream* os) { *os << value.getValue().toString(); }
+void WriteArrayIndexOp(const Value<>& input, int32_t index, const Value<>& value) {
+    auto& plugins = InvocationPluginRegistry::getPlugins();
+    for (auto& plugin : plugins) {
+        auto result = plugin->WriteArrayIndex(input, index, value);
+        if (result.has_value()) {
+            return;
+        }
+    };
+    NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
+}
+
+template<>
+Value<Text>::Value(const char* s) {
+    std::string string(s);
+    auto text = RawText(string);
+    auto textRef = TypedRef<RawText>(text);
+    this->value = std::make_shared<Text>(textRef);
+    this->ref = createNextValueReference(value->getType());
+}
+
+template<>
+Value<>::Value(const char* s) {
+    std::string string(s);
+    auto text = RawText(string);
+    auto textRef = TypedRef<RawText>(text);
+    this->value = std::make_shared<Text>(textRef);
+    this->ref = createNextValueReference(value->getType());
+}
 
 }// namespace NES::Nautilus
