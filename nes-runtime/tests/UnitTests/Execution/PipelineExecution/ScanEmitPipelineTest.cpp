@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -64,8 +65,10 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanOperator = std::make_shared<Operators::Scan>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     scanOperator->setChild(emitOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();

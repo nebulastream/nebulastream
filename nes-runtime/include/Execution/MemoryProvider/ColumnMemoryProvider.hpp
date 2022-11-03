@@ -14,8 +14,6 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
 
-#include "Runtime/RuntimeForwardRefs.hpp"
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
@@ -29,25 +27,20 @@ class ColumnMemoryProvider : public MemoryProvider {
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
      * @param Column memory layout pointer used to create the ColumnMemoryProvider.
      */
-    ColumnMemoryProvider(Runtime::MemoryLayouts::MemoryLayoutPtr columnMemoryLayoutPtr);
+    ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr);
     ~ColumnMemoryProvider() = default;
 
-    /**
-     * @brief Return a base-class memory layout pointer.
-     * 
-     * @return MemoryLayouts::MemoryLayoutPtr: Pointer to base-class memory layout.
-     */
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    /**
-     * @brief Return the memory layout as a column layout pointer. Returns nullptr if layout is not column layout.
-     * 
-     * @return MemoryLayouts::ColumnLayoutPtr: Is nullptr, if layout is not a column layout.
-     */
-    // MemoryLayouts::ColumnLayoutPtr getColumnMemoryLayoutPtr();
+    Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+                          Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                          Nautilus::Value<Nautilus::UInt64> recordIndex) override;
+
+    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
+               Nautilus::Value<Nautilus::MemRef> bufferAddress, NES::Nautilus::Record& rec) override;
 
   private:
-    const Runtime::MemoryLayouts::MemoryLayoutPtr columnMemoryLayoutPtr;
+    Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

@@ -17,7 +17,9 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Operators {
+    
 class EmitState : public OperatorState {
   public:
     EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
@@ -36,7 +38,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
-    resultBuffer.write(memoryProvider->getMemoryLayoutPtr(), outputIndex, recordBuffer);
+    memoryProvider->write(outputIndex, resultBuffer.getBuffer(), recordBuffer);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
@@ -56,7 +58,8 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.emitBuffer(resultBuffer);
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
-    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
+Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider) : 
+    maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), 
+    memoryProvider(std::move(memoryProvider)) {}
 
 }// namespace NES::Runtime::Execution::Operators

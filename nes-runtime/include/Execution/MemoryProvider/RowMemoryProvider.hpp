@@ -14,7 +14,6 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_ROWMEMORYPROVIDER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_ROWMEMORYPROVIDER_HPP_
 
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
@@ -28,25 +27,20 @@ class RowMemoryProvider : public MemoryProvider {
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
      * @param Row memory layout pointer used to create the RowMemoryProvider.
      */
-    RowMemoryProvider(Runtime::MemoryLayouts::MemoryLayoutPtr rowMemoryLayoutPtr);
+    RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
     ~RowMemoryProvider() = default;
 
-    /**
-     * @brief Return a base-class memory layout pointer.
-     * 
-     * @return MemoryLayouts::MemoryLayoutPtr: Pointer to base-class memory layout.
-     */
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    /**
-     * @brief Return the memory layout as a row layout pointer. Returns nullptr if layout is not row layout.
-     * 
-     * @return MemoryLayouts::RowLayoutPtr: Is nullptr, if layout is not a row layout.
-     */
-    // MemoryLayouts::RowLayoutPtr getRowMemoryLayoutPtr();
+    Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+                          Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                          Nautilus::Value<Nautilus::UInt64> recordIndex) override;
+
+    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
+               Nautilus::Value<Nautilus::MemRef> bufferAddress, NES::Nautilus::Record& rec) override;
 
   private:
-    const Runtime::MemoryLayouts::MemoryLayoutPtr rowMemoryLayoutPtr;
+    const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
