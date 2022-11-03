@@ -210,7 +210,7 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     auto jsonResponse = nlohmann::json::parse(response);
 
     std::string restSDKResponse = "Provided QueryId: " + to_string(nonExistingQueryId) + " does not exist";
-    std::string oatppResponse = "No query with given ID: " +  to_string(nonExistingQueryId);
+    std::string oatppResponse = "No query with given ID: " + to_string(nonExistingQueryId);
     EXPECT_TRUE(jsonResponse["message"] == restSDKResponse || jsonResponse["message"] == oatppResponse);
     ASSERT_TRUE(stopQuery(queryId));
 }
