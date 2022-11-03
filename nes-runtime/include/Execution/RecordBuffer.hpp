@@ -55,51 +55,21 @@ class RecordBuffer {
     Value<MemRef> getBuffer();
 
     /**
-     * @brief Read a single record from a record buffer
-     * @note This method should be factored out in #3092
-     * @param memoryLayout memory layout
-     * @param projections set of projections
-     * @param bufferAddress address to the tuple buffer
-     * @param recordIndex record index to read
-     * @return Record
-     */
-    Record read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                const std::vector<Record::RecordFieldIdentifier>& projections,
-                Value<MemRef> bufferAddress,
-                Value<UInt64> recordIndex);
-    /**
-     * @brief Write a single record from a record buffer
-     * @note This method should be factored out in #3092
-     * @param memoryLayout memory layout
-     * @param bufferAddress address to the tuple buffer
-     * @param Record record
-     */
-    void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
-
-    /**
      * @brief Get the reference to the TupleBuffer
      * @return Value<MemRef>
      */
-    const Value<MemRef>& getReference();
+    const Value<MemRef>& getReference() const;
+    
     ~RecordBuffer() = default;
-  public:
-    Value<MemRef> tupleBufferRef;
-    void setNumRecords(Value<UInt64> value);
+
+    /**
+     * @brief Set the number of records.
+     * @param: Number-of-records-value to set.
+     */
+    void setNumRecords(Value<UInt64> numRecordsValue);
 
   private:
-    Record readRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                         const std::vector<Record::RecordFieldIdentifier>& projections,
-                         Value<MemRef> bufferAddress,
-                         Value<UInt64> recordIndex);
-    Record readColumnarLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                              const std::vector<Record::RecordFieldIdentifier>& projections,
-                              Value<MemRef> bufferAddress,
-                              Value<UInt64> recordIndex);
-
-    void writeRowLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
-    void writeColumnLayout(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
-
-    bool includeField(const std::vector<Record::RecordFieldIdentifier>& projections, Record::RecordFieldIdentifier fieldIndex);
+    Value<MemRef> tupleBufferRef;
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;

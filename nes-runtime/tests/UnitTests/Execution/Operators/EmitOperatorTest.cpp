@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Execution/MemoryProvider/ColumnMemoryProvider.hpp"
 #include "Execution/MemoryProvider/RowMemoryProvider.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -141,7 +142,7 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(columnMemoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
