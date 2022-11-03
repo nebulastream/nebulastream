@@ -34,6 +34,8 @@ class InvocationPlugin {
     virtual std::optional<Value<>> And(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> Or(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> CastTo(const Value<>& left, const TypeIdentifier* toType) const;
+    virtual std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<Int32> index) const;
+    virtual std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<Int32> index, const Value<>& value) const;
     virtual bool IsCastable(const Value<>&, const TypeIdentifier*) const;
 };
 
