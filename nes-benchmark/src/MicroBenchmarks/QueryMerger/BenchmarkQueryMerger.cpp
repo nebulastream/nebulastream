@@ -30,13 +30,14 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <Utils/BenchmarkUtils.hpp>
+#include <Version/version.hpp>
 #include <fstream>
 
 using namespace NES;
-using namespace NES::Benchmarking;
+using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 uint64_t sourceCnt;

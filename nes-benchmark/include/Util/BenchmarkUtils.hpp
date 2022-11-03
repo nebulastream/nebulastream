@@ -77,6 +77,28 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
     return false;
 }
 
+/**
+    * @brief creates a vector with a range of [start, stop) and step size
+    */
+template<typename T>
+static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize) {
+    for (T i = start; i < stop; i += stepSize) {
+        vector.push_back(i);
+    }
+}
+
+/**
+    * @brief creates a vector with a range of [start, stop). This will increase by a power of two. So e.g. 2kb, 4kb, 8kb
+    */
+template<typename T>
+static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop) {
+    for (T i = start; i < stop; i = i << 1) {
+        vector.push_back(i);
+    }
+}
+
+
+
 }// namespace NES::Benchmark::Util
 
 #endif//NES_BENCHMARKUTILS_HPP
