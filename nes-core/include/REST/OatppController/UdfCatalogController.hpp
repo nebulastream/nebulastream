@@ -13,6 +13,8 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_UDFCATALOGCONTROLLER_HPP
 #define NES_NES_CORE_INCLUDE_REST_OATPPCONTROLLER_UDFCATALOGCONTROLLER_HPP
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <API/Schema.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
@@ -154,11 +156,14 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                     {classDefinition.class_name(),
                      JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
             }
+            // Deserialize the output schema.
+            auto outputSchema = SchemaSerializationUtil::deserializeSchema(descriptorMessage.mutable_outputschema());
             // Register JavaUdfDescriptor in UDF catalog and return success.
             auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
                                                                descriptorMessage.udf_method_name(),
                                                                serializedInstance,
-                                                               javaUdfByteCodeList);
+                                                               javaUdfByteCodeList,
+                                                               outputSchema);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
             udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");
