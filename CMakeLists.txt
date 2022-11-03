@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v21)
+set(VCPKG_BINARY_VERSION vS2)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -409,26 +409,8 @@ set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 # s2 Library
 if (USE_S2)
     message(STATUS "s2 is enabled")
-
-    if (NOT S2_ABSL_INCLUDE_PATH)
-        message(STATUS "s2 requires absl lts_2021_11_02 which is not included in the nes dependencies, please specify the path to the include directory containing the header folder of the absl files used to compile s2")
-    endif ()
-    include_directories(${S2_ABSL_INCLUDE_PATH})
-
-    if (S2_PATH)
-        add_library(s2 STATIC IMPORTED)
-        set_target_properties(s2 PROPERTIES
-                IMPORTED_LOCATION "${S2_PATH}/lib/libs2.so"
-                INTERFACE_INCLUDE_DIRECTORIES "${S2_PATH}/include/"
-                )
-
-        #to get the static library for linking libnes.so
-        link_directories(${S2_PATH}/lib)
-    else ()
-        find_package(s2)
-    endif ()
-
-    set(LIBRARIES ${LIBRARIES} s2)
+    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/s2)
+    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libs2.a)
     add_compile_definitions(S2DEF)
 else ()
     message(STATUS "s2 is disabled")
