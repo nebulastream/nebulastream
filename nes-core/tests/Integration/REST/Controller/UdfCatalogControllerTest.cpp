@@ -34,6 +34,7 @@ using namespace std::string_literals;
 using namespace NES::Catalogs;
 using namespace google::protobuf;
 using namespace oatpp::web::protocol::http;
+
 class UdfCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
@@ -72,6 +73,15 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         return udfResponse;
     }
 
+    [[nodiscard]] static Catalogs::UDF::JavaUdfDescriptorPtr createJavaUdfDescriptor() {
+        return Catalogs::UDF::JavaUdfDescriptor::create(
+            "some_package.my_udf",
+            "udf_method",
+            {1},
+            {{"some_package.my_udf", {1}}},
+            std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
+    }
+
     void startCoordinator() {
         NES_INFO("UdfCatalogController: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
@@ -95,8 +105,7 @@ TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor =
-        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
@@ -162,8 +171,9 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
-    auto javaUdfRequest =
-        ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
+    auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
+    javaUdfRequest.mutable_java_udf_descriptor()->clear_classes();
+
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                                  cpr::Header{{"Content-Type", "text/plain"}},
                                  cpr::Body{javaUdfRequest.SerializeAsString()});
@@ -184,11 +194,7 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
     //check to see if no udfs registered
     ASSERT_TRUE(udfCatalog->listUdfs().empty());
     // create a javaUdfRequest
-    auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
-                                                                               "some_package.my_udf",
-                                                                               "udf_method",
-                                                                               {1},
-                                                                               {{"some_package.my_udf", {1}}});
+    auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
 
     // submit the javaUdfRequest to the registerJavaUdf endpoint
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
@@ -220,8 +226,7 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor =
-        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
@@ -310,8 +315,7 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor =
-        Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf", "udf_method", {1}, {{"some_package.my_udf", {1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 

@@ -17,6 +17,8 @@
 
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <UdfCatalogService.pb.h>
+#include <API/AttributeField.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES {
 
@@ -33,19 +35,36 @@ class ProtobufMessageFactory {
                                                                const std::string& udfClassName,
                                                                const std::string& methodName,
                                                                const Catalogs::UDF::JavaSerializedInstance& serializedInstance,
-                                                               const Catalogs::UDF::JavaUdfByteCodeList& byteCodeList) {
+                                                               const Catalogs::UDF::JavaUdfByteCodeList& byteCodeList,
+                                                               const SchemaPtr& outputSchema) {
         auto request = RegisterJavaUdfRequest{};
+        // Set udfName
         request.set_udf_name(udfName);
         auto* udfDescriptor = request.mutable_java_udf_descriptor();
+        // Set udfClassName, methodName, and serializedInstance
         udfDescriptor->set_udf_class_name(udfClassName);
         udfDescriptor->set_udf_method_name(methodName);
         udfDescriptor->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
+        // Set byteCodeList
         for (const auto& [className, byteCode] : byteCodeList) {
             auto* javaClass = udfDescriptor->add_classes();
             javaClass->set_class_name(className);
             javaClass->set_byte_code(std::string{byteCode.begin(), byteCode.end()});
         }
+        // Set outputSchema
+        SchemaSerializationUtil::serializeSchema(outputSchema, udfDescriptor->mutable_outputschema());
         return request;
+    }
+
+    static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
+        return createRegisterJavaUdfRequest("my_udf",
+                                           "some_package.my_udf",
+                                           "udf_method",
+                                           {1},
+                                           {{"some_package.my_udf", {1}}},
+                                           std::make_shared<Schema>()->addField("field",
+                                                                             DataTypeFactory::createUInt64()));
+
     }
 };
 
