@@ -189,13 +189,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             // try to add the user supplied source
             bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
-            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
-                      << added);
+            NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?" << added);
 
             if (!added) {
                 nlohmann::json errorResponse{};
-                errorResponse["detail"] =
-                   "Logical Source name: " + sourceName + " already exists!";
+                errorResponse["detail"] = "Logical Source name: " + sourceName + " already exists!";
                 return errorHandler->handleError(Status::CODE_400, errorResponse.dump());
             }
 
