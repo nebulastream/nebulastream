@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.29](https://github.com/nebulastream/nebulastream/tree/v0.3.29) (2022-11-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.28...v0.3.29)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Move old Benchmarks to new folder [\#3018](https://github.com/nebulastream/nebulastream/issues/3018)
+
 ## [v0.3.28](https://github.com/nebulastream/nebulastream/tree/v0.3.28) (2022-11-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.27...v0.3.28)
