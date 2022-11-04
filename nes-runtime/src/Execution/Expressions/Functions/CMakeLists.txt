@@ -19,6 +19,8 @@
          CosExpression.cpp
          SinExpression.cpp
          AbsExpression.cpp
+         MinExpression.cpp
+         MaxExpression.cpp
          AtanExpression.cpp
          Atan2Expression.cpp
          AcosExpression.cpp

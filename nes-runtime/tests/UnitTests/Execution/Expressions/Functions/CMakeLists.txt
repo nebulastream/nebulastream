@@ -49,3 +49,11 @@ add_test(NAME runtime-atan2-expression-test COMMAND runtime-atan2-expression-tes
 add_executable(runtime-acos-expression-test "AcosExpressionTest.cpp")
 target_link_libraries(runtime-acos-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-acos-expression-test COMMAND runtime-acos-expression-test)
+
+add_executable(runtime-max-expression-test "MaxExpressionTest.cpp")
+target_link_libraries(runtime-max-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-max-expression-test COMMAND runtime-max-expression-test)
+
+add_executable(runtime-min-expression-test "MinExpressionTest.cpp")
+target_link_libraries(runtime-min-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-min-expression-test COMMAND runtime-min-expression-test)
