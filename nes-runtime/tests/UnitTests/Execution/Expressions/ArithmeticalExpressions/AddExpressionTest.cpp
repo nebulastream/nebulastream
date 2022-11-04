@@ -114,17 +114,17 @@ TEST_F(AddExpressionTest, addFloat) {
 
 TEST_F(AddExpressionTest, addTimeStamps) {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
-    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    long ms = 1666798551744;// Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
     NES_DEBUG(dur.count());
-    auto c1 = Value<TimeStamp>(TimeStamp(dur.count()));
+    auto c1 = Value<TimeStamp>(TimeStamp((int64_t) dur.count()));
     // TimeStamp
     {
-        auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp(dur.count())), Value<TimeStamp>(TimeStamp(dur.count())));
-        ASSERT_EQ(resultValue.getValue().toString(),std::to_string(3333597103488));
+        auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp((int64_t) dur.count())),
+                                              Value<TimeStamp>(TimeStamp((int64_t) dur.count())));
+        ASSERT_EQ(resultValue.getValue().toString(), std::to_string(3333597103488));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<TimeStamp>());
     }
-
 }
 
 }// namespace NES::Runtime::Execution::Expressions
