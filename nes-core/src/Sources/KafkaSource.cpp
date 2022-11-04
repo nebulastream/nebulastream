@@ -60,7 +60,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             }
             return std::nullopt;
         } else {
-            Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
+            Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
 
             const uint64_t tupleSize = schema->getSchemaSizeInBytes();
             const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
@@ -97,6 +97,7 @@ void KafkaSource::_connect() {
             if (tpp.get_offset() == cppkafka::TopicPartition::Offset::OFFSET_INVALID) {
                 NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition() << " get invalid offset "
                                      << tpp.get_offset());
+
                 // TODO: enforce to set offset to -1 or abort ?
                 auto tuple = consumer->query_offsets(tpp);
                 uint64_t high = std::get<1>(tuple);
@@ -130,4 +131,3 @@ const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { 
 const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const { return consumer; }
 
 }// namespace NES
-#endif

@@ -23,6 +23,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
