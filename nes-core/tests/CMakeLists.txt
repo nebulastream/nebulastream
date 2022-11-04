@@ -245,7 +245,9 @@ if (CMAKE_USE_PAPI_PROFILER)
 endif ()
 
 # LogicalOperatorPlanNodeTest
-add_nes_unit_test(logical-operator-node-tests "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
+add_nes_unit_test(logical-operator-node-tests
+        "UnitTests/Operators/LogicalOperatorNodeTest.cpp"
+        "UnitTests/Operators/LogicalOperators/MapUdfLogicalOperatorNodeTest.cpp")
 
 
 # ExpressionNodeTest
