@@ -33,8 +33,9 @@ Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::
     Nautilus::Record record;
     for (uint64_t i = 0; i < columnMemoryLayoutPtr->getSchema()->getSize(); i++) {
         auto fieldName = columnMemoryLayoutPtr->getSchema()->fields[i]->getName();
-        if (!includesField(projections, fieldName))
+        if (!includesField(projections, fieldName)) {
             continue;
+        }
         auto fieldSize = columnMemoryLayoutPtr->getFieldSizes()[i];
         auto columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[i];
         auto fieldOffset = recordIndex * fieldSize + columnOffset;
@@ -55,7 +56,6 @@ void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIn
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
         auto fieldOffset = (recordIndex * fieldSizes[i]) + columnOffsets[i];
         auto fieldAddress = bufferAddress + fieldOffset;
-        // auto fieldAddress = outputBufferAddress + fieldOffset;
         auto value = rec.read(schema->fields[i]->getName());
         auto memRef = fieldAddress.as<Nautilus::MemRef>();
         memRef.store(value);

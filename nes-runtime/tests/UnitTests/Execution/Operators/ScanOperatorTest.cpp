@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "Execution/MemoryProvider/ColumnMemoryProvider.hpp"
-#include "Execution/MemoryProvider/RowMemoryProvider.hpp"
 #include <API/Schema.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -90,7 +90,8 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
     schema->addField("f2", BasicType::INT64);
     auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
 
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr =
+        std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
@@ -112,7 +113,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
         ASSERT_EQ(record.numberOfFields(), 2);
         ASSERT_EQ(record.read("f1"), (int64_t) i % 2);
         ASSERT_EQ(record.read("f2"), (int64_t) 1);
-    }
+    }   
 }
 
 }// namespace NES::Runtime::Execution::Operators

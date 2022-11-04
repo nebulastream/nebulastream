@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "Execution/MemoryProvider/ColumnMemoryProvider.hpp"
-#include "Execution/MemoryProvider/RowMemoryProvider.hpp"
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -92,13 +92,13 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     }
     emitOperator.close(ctx, recordBuffer);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    EXPECT_EQ(pipelineContext.buffers.size(), 1);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
+    EXPECT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowMemoryLayout, buffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
+        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
     }
 }
 
@@ -125,9 +125,9 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     }
     emitOperator.close(ctx, recordBuffer);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 2);
+    EXPECT_EQ(pipelineContext.buffers.size(), 2);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
+    EXPECT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 }
 
 /**
@@ -153,13 +153,13 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     }
     emitOperator.close(ctx, recordBuffer);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    EXPECT_EQ(pipelineContext.buffers.size(), 1);
     auto buffer = pipelineContext.buffers[0];
-    ASSERT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
+    EXPECT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
+        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
     }
 }
 
