@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -177,11 +178,11 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 
 Value<> customValueType() {
 
-    auto c1 = Value<CustomType>(CustomType((int64_t)32, (int64_t)32));
-    auto c2 = Value<CustomType>(CustomType((int64_t)32, (int64_t)32));
+    auto c1 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
+    auto c2 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
 
     c1 = c1 + c2;
-    c1 = c1 * (int64_t)2;
+    c1 = c1 * (int64_t) 2;
     return c1.getValue().x;
 }
 
@@ -213,6 +214,34 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
     ASSERT_EQ(function(&listRef.get()), 14);
+}
+
+Value<> textTestFunction(Value<Text>& list) {
+    auto length = list->length();
+    auto list2 = list->upper();
+    //for (Value<Int32> i = 0; i < list->length(); i = i + 1) {
+   //     list[i] = (int8_t) 'o';
+    //}
+    return list2;
+}
+
+TEST_P(TypeCompilationTest, compileTextFunctionTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
+
+    auto textA = Value<Text>("test");
+    auto listRef = textA.value->rawReference;
+
+    listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&]() {
+        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(listRef.value->ref);
+        return textTestFunction(textA);
+    });
+
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    ASSERT_EQ(function(&listRef.get()), 4);
 }
 
 // Tests all registered compilation backends.
