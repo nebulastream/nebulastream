@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.31](https://github.com/nebulastream/nebulastream/tree/v0.3.31) (2022-11-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.30...v0.3.31)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] add TimeStamp Data Type to Nautilus [\#3091](https://github.com/nebulastream/nebulastream/issues/3091)
+
 ## [v0.3.30](https://github.com/nebulastream/nebulastream/tree/v0.3.30) (2022-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.29...v0.3.30)
