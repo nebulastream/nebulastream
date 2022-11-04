@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.32](https://github.com/nebulastream/nebulastream/tree/v0.3.32) (2022-11-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.31...v0.3.32)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add acos\(x\) expression [\#3032](https://github.com/nebulastream/nebulastream/issues/3032)
+
 ## [v0.3.31](https://github.com/nebulastream/nebulastream/tree/v0.3.31) (2022-11-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.30...v0.3.31)
