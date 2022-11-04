@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.33](https://github.com/nebulastream/nebulastream/tree/v0.3.33) (2022-11-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.32...v0.3.33)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add atan2\(x\) expression [\#3035](https://github.com/nebulastream/nebulastream/issues/3035)
+
 ## [v0.3.32](https://github.com/nebulastream/nebulastream/tree/v0.3.32) (2022-11-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.31...v0.3.32)
