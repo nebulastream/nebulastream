@@ -26,7 +26,13 @@ Catalogs::UDF::JavaUdfDescriptorPtr MapUdfLogicalOperatorNode::getJavaUdfDescrip
 }
 
 bool MapUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    return LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext);
+    // Set the input schema.
+    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+        return false;
+    }
+    // The output schema of this operation is determined by the Java UDF.
+    outputSchema = javaUdfDescriptor->getOutputSchema();
+    return true;
 }
 
 void MapUdfLogicalOperatorNode::inferStringSignature() {
