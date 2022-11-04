@@ -38,6 +38,7 @@ class TypedRef final : public BaseTypedRef {
         delete typedPtr;
     }
     static const inline auto type = TypeIdentifier::create<TypedRef<T>>();
+    TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))){};
     TypedRef(T t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*) new Container(t))){};
 
     // copy constructor

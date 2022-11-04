@@ -15,13 +15,14 @@ class RawText {
     RawText(const void*&) {}
     RawText(int32_t length);
     RawText(const std::string& string);
-    uint32_t length() const;
+    int32_t length() const;
     char* str();
     const char* c_str() const { return buffer.getBuffer<char>(); };
 
   private:
     Runtime::TupleBuffer buffer;
 };
+
 
 class Text : public Nautilus::Any {
   public:
@@ -30,11 +31,12 @@ class Text : public Nautilus::Any {
     Value<Boolean> equals(const Value<Text>& other) const;
     AnyPtr copy() override;
     const Value<Int32> length() const;
+    const Value<> upper() const;
     Value<Int8> read(Value<Int32> index);
     void write(Value<Int32> index, Value<Int8> value);
+    IR::Types::StampPtr getType() const override;
     ~Text() override;
 
-  private:
     const TypedRef<RawText> rawReference;
 };
 }// namespace NES::Nautilus
