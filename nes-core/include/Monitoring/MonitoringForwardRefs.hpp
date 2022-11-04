@@ -22,7 +22,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 namespace NES {
@@ -55,9 +54,5 @@ class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 }//namespace Monitoring
 }// namespace NES
-
-namespace web::json {
-class value;
-}// namespace web::json
 
 #endif// NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
