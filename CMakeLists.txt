@@ -25,7 +25,7 @@ option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
 #toggle import and usage of s2 library
-option(USE_S2 "Toggle use of s2 library" OFF)
+option(NES_USE_S2 "Toggle use of s2 library" OFF)
 option(NES_USE_TF "Toggle tensorflow library" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
@@ -407,7 +407,7 @@ find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 
 # s2 Library
-if (USE_S2)
+if (NES_USE_S2)
     message(STATUS "s2 is enabled")
     find_package(s2 REQUIRED)
     if (NOT s2_FOUND)
