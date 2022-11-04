@@ -17,6 +17,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
+
 namespace NES::Monitoring {
 
 void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t) {

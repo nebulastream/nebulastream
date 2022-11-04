@@ -18,6 +18,7 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 
