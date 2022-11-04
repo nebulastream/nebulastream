@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD_SINK
 namespace NES {
 
 KafkaSinkDescriptor::KafkaSinkDescriptor(std::string topic, std::string brokers, uint64_t timeout)

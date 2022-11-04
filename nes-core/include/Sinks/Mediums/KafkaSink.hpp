@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #define NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD_SINK
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -40,9 +40,10 @@ class KafkaSink : public SinkMedium {
     /**
      * @brief Get sink type
      */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
-    bool writeData(Runtime::TupleBuffer& input_buffer);
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+
     void setup() override;
     void shutdown() override;
 
@@ -59,7 +60,7 @@ class KafkaSink : public SinkMedium {
     /**
      * @brief Get kafka producer timeout
      */
-    const uint64_t getKafkaProducerTimeout() const;
+    uint64_t getKafkaProducerTimeout() const;
     std::string toString() const override;
 
   private:

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD_SINK
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,7 +24,17 @@ using namespace std::chrono_literals;
 namespace NES {
 
 KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
-    : DataSink(schema), brokers(brokers), topic(topic),
+    : DataSink(schema),
+      SinkMedium(nullptr,
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {}
+
+      brokers(brokers), topic(topic),
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()}};

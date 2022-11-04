@@ -89,7 +89,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     monitoringSinkDescriptor->getFaultToleranceType(),
                                     monitoringSinkDescriptor->getNumberOfOrigins());
     }
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD_SINK
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();

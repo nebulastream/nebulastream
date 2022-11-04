@@ -418,8 +418,14 @@ endif ()
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
-    find_package(CppKafka CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} CppKafka::cppkafka)
+    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
+
+    if (NOT APPLE)
+        message(STATUS CPPKAFKA ${NES_DEPENDENCIES_BINARY_ROOT})
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/librdkafka.a)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/librdkafka++.a)
+    endif ()
     add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 
