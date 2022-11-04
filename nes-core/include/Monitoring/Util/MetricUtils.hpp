@@ -41,7 +41,7 @@ class MetricUtils {
      */
     static nlohmann::json toJson(std::vector<MetricPtr> metrics);
 
-        /**
+    /**
      * Converts a map of metric types to metrics into json.
      * @param metrics
      * @return json of metrics
