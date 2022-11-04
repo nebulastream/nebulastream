@@ -53,14 +53,54 @@ class WASMCompiler {
 
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
+    using BlockExpressions = Mapping<std::string, BinaryenExpressionRef>;
+    using ExpressionsInBlocks = Mapping<std::string, std::vector<BinaryenExpressionRef>>;
   private:
+    /**
+     * Binaryen module which generates the final wasm binary code
+     */
     BinaryenModuleRef wasm;
+    /**
+     * The Relooper instance used for creating structured CFGs
+     */
     RelooperRef relooper;
+    /**
+     * Create RelooperBlock from BinaryenBlocks and store them
+     */
     RelooperBlocks relooperBlocks;
+    /**
+     * Remove?
+     */
     std::vector<BinaryenType> localVariables;
+    /**
+     * Contains all expressions that have been already added. That way we prevent adding duplicate
+     * expressions.
+     */
     std::map<std::string, BinaryenExpressionRef> consumed;
+    /**
+     * Remove?
+     */
     std::unordered_map<std::string, BinaryenExpressionRef> blockMapping;
+    /**
+     * Contains branches between blocks, which need to be added after all blocks are created
+     */
     Mapping<std::string, std::string> blockLinking;
+    /**
+     * Contains all expressions inside the current block
+     */
+    BinaryenExpressions currentExpressions;
+    /**
+     * Stores created blocks before we link them via branches
+     */
+    BlockExpressions blocks;
+    /**
+     * Current block over which we iterate
+     */
+    IR::BasicBlockPtr currentBlock;
+    /**
+     * Mapping of blocks and their contents
+     */
+    ExpressionsInBlocks blockExpressions;
 
     void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
@@ -93,6 +133,7 @@ class WASMCompiler {
     BinaryenExpressionRef generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
                                              BinaryenExpressions blockArgs);
     void tmpFunc();
+    BinaryenExpressionRef generateBody();
 };
 }// namespace NES::Nautilus::Backends::WASM
 

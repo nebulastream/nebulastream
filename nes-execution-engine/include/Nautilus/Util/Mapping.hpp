@@ -39,10 +39,15 @@ class Mapping {
         return false;
     }
     void setValue(K key, V value) { mapping.emplace_back(std::make_pair(key, value)); }
+    void setUniqueValue(K key, V value) {
+        if (!contains(key)) {
+            mapping.emplace_back(std::make_pair(key, value));
+        }
+    }
     size_t size() { return mapping.size(); }
     std::vector<std::pair<K, V>>& getMapping() { return mapping; }
     std::pair<K, V>& operator[](size_t index) { return mapping[index]; }
-
+    void clear() { mapping.clear(); }
   private:
     std::vector<std::pair<K, V>> mapping;
 };
