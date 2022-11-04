@@ -13,12 +13,11 @@
 
  add_source_files(nes-runtime
          ModExpression.cpp
-         PiExpression.cpp
-         RadiansExpression.cpp
-         DegreesExpression.cpp
          CosExpression.cpp
          SinExpression.cpp
          AbsExpression.cpp
+         CotExpression.cpp
+         AsinExpression.cpp
          MinExpression.cpp
          MaxExpression.cpp
          AtanExpression.cpp

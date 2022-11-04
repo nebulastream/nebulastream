@@ -38,6 +38,14 @@ add_executable(runtime-sin-expression-test "SinExpressionTest.cpp")
 target_link_libraries(runtime-sin-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-sin-expression-test COMMAND runtime-sin-expression-test)
 
+add_executable(runtime-cot-expression-test "CotExpressionTest.cpp")
+target_link_libraries(runtime-cot-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-cot-expression-test COMMAND runtime-cot-expression-test)
+
+add_executable(runtime-asin-expression-test "AsinExpressionTest.cpp")
+target_link_libraries(runtime-asin-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-asin-expression-test COMMAND runtime-asin-expression-test)
+
 add_executable(runtime-atan-expression-test "AtanExpressionTest.cpp")
 target_link_libraries(runtime-atan-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-atan-expression-test COMMAND runtime-atan-expression-test)
