@@ -52,6 +52,7 @@ Nautilus::Value<> MemoryProvider::load(PhysicalTypePtr type, Nautilus::Value<Nau
                 return memRef.load<Nautilus::Double>();
             };
             default: {
+                NES_ERROR("MemoryProvider::load: Physical Type: " << type << " is currently not supported");
                 NES_NOT_IMPLEMENTED();
             };
         }
@@ -61,8 +62,9 @@ Nautilus::Value<> MemoryProvider::load(PhysicalTypePtr type, Nautilus::Value<Nau
 
 bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                             Nautilus::Record::RecordFieldIdentifier fieldIndex) {
-    if (projections.empty())
+    if (projections.empty()) {
         return true;
+    }
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 

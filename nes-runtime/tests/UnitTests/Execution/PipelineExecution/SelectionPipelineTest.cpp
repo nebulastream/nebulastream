@@ -96,7 +96,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto executablePipeline = provider->create(pipeline);
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    executablePipeline->setup(pipelineContext);
+    executablePipeline->setup(pipelineContext); 
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 

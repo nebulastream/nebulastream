@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
+
 #include <Execution/Operators/Operator.hpp>
-// #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 
 namespace NES::Runtime::Execution::Operators {
