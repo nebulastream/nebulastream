@@ -41,7 +41,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <cpprest/json.h>
 #include <gtest/gtest.h>
 
 using std::map;
@@ -1307,10 +1306,10 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1429,10 +1428,10 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1547,10 +1546,10 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1763,10 +1762,10 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
