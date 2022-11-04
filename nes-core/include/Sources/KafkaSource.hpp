@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Runtime/BufferManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <cppkafka/cppkafka.h>
 
@@ -34,6 +33,7 @@ class KafkaSource : public DataSource {
                 std::string groupId,
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout,
+                OriginId originId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers);
 
@@ -82,6 +82,11 @@ class KafkaSource : public DataSource {
     const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
 
   private:
+    /**
+     * @brief method to connect mqtt using the host and port specified before
+     * check if already connected, if not connect try to connect, if already connected return
+     * @return bool indicating if connection could be established
+     */
     void _connect();
 
     std::string brokers;

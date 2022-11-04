@@ -419,7 +419,7 @@ endif ()
 # Library containing Kafka client
 if (NES_USE_KAFKA)
     find_package(CppKafka CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} ${CppKafka_LIBRARIES})
+    set(LIBRARIES ${LIBRARIES} CppKafka::cppkafka)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 
