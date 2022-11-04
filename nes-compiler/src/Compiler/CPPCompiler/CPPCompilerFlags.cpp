@@ -28,6 +28,8 @@ CPPCompilerFlags CPPCompilerFlags::createDefaultCompilerFlags() {
 #endif
 #ifdef __APPLE__
     flags.addFlag(std::string("-isysroot ") + std::string(NES_OSX_SYSROOT));
+    flags.addFlag(std::string("-DTARGET_OS_IPHONE=0"));
+    flags.addFlag(std::string("-DTARGET_OS_SIMULATOR=0"));
 #endif
     return flags;
 }
