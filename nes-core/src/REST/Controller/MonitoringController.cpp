@@ -17,6 +17,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cpprest/http_client.h>
 #include <string>
