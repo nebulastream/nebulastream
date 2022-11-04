@@ -409,8 +409,11 @@ set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 # s2 Library
 if (USE_S2)
     message(STATUS "s2 is enabled")
-    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/s2)
-    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libs2.a)
+    find_package(s2 REQUIRED)
+    if (NOT s2_FOUND)
+        message(FATAL_ERROR "Unable to find s2 library")
+    endif ()
+    set(LIBRARIES ${LIBRARIES} s2::s2)
     add_compile_definitions(S2DEF)
 else ()
     message(STATUS "s2 is disabled")
@@ -560,7 +563,7 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 
 # Check if we build with TensorFlow Lite
-if(NES_USE_TF)
+if (NES_USE_TF)
     find_package(tensorflow-lite-c REQUIRED)
     if (tensorflowlite_c_FOUND)
         message(STATUS "Found tensorflow")
@@ -568,7 +571,7 @@ if(NES_USE_TF)
         message(INFO "${LIBRARIES}")
     endif ()
     add_compile_definitions(TFDEF)
-endif()
+endif ()
 
 # $ORIGIN is to read the shared object from the installation directory
 if (ORIGIN)
@@ -624,8 +627,7 @@ add_subdirectory(nes-client)
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
-endif(NES_BUILD_BENCHMARKS)
-
+endif (NES_BUILD_BENCHMARKS)
 
 
 # Documentation
