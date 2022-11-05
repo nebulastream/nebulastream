@@ -14,9 +14,9 @@
 #include <Execution/Expressions/Functions/DegreesExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <memory>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -35,30 +35,32 @@ class DegreesExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
+double calculateDegrees(double x) { return (x * 180.0) / M_PI; }
+
 TEST_F(DegreesExpressionTest, evaluateDegreesExpressionInteger) {
     auto expression = UnaryExpressionWrapper<DegreesExpression>();
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) M_PI));
-        ASSERT_EQ(resultValue, 180);
+        ASSERT_EQ(resultValue, calculateDegrees((int8_t) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t) M_PI_2));
-        ASSERT_EQ(resultValue, 90);
+        ASSERT_EQ(resultValue, calculateDegrees((int16_t) M_PI_2));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) M_PI_4));
-        ASSERT_EQ(resultValue, 45);
+        ASSERT_EQ(resultValue, calculateDegrees((int32_t) M_PI_4));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) M_PI));
-        ASSERT_EQ(resultValue, 180);
+        ASSERT_EQ(resultValue, calculateDegrees((int64_t) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -69,14 +71,14 @@ TEST_F(DegreesExpressionTest, evaluateDegreesExpressionFloat) {
     {
         auto resultValue = expression.eval(Value<Float>((float) M_PI));
         //TODO: We currently receive a Double as result here #3112
-      //  ASSERT_EQ(resultValue, 180);
+        //  ASSERT_EQ(resultValue, 180);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 2*M_PI));
+        auto resultValue = expression.eval(Value<Double>((double) 2 * M_PI));
         ASSERT_EQ(resultValue, 360.00);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-}
+}// namespace NES::Runtime::Execution::Expressions
