@@ -10,40 +10,33 @@
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Nautilus {
 
-class TextPtr {
+class TextValue final {
   public:
-    int32_t& length();
-    char* str();
-};
-
-class RawText {
-  public:
-    RawText(const void*&) {}
-    RawText(int32_t length);
-    RawText(const std::string& string);
+    static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
+    static TextValue* create(int32_t size);
+    static TextValue* create(const std::string& string);
+    static TextValue* load(Runtime::TupleBuffer& tupleBuffer);
     int32_t length() const;
     char* str();
-    const char* c_str() const { return buffer.getBuffer<char>(); };
-
+    const char* c_str() const;
+    ~TextValue();
   private:
-    Runtime::TupleBuffer buffer;
+    TextValue(int32_t size);
+    const int32_t size;
 };
-
 
 class Text : public Nautilus::Any {
   public:
     static const inline auto type = TypeIdentifier::create<Text>();
-    Text(TypedRef<RawText> rawReference) : Any(&type), rawReference(rawReference){};
+    Text(TypedRef<TextValue> rawReference) : Any(&type), rawReference(rawReference){};
     Value<Boolean> equals(const Value<Text>& other) const;
     AnyPtr copy() override;
     const Value<Int32> length() const;
-    const Value<> upper() const;
+    const Value<Text> upper() const;
     Value<Int8> read(Value<Int32> index);
     void write(Value<Int32> index, Value<Int8> value);
     IR::Types::StampPtr getType() const override;
-    ~Text() override;
-
-    const TypedRef<RawText> rawReference;
+    const TypedRef<TextValue> rawReference;
 };
 }// namespace NES::Nautilus
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_CUSTOMDATATYPES_TEXT_HPP_

@@ -285,8 +285,8 @@ void WriteArrayIndexOp(const Value<>& input, int32_t index, const Value<>& value
 template<>
 Value<Text>::Value(const char* s) {
     std::string string(s);
-    auto text = RawText(string);
-    auto textRef = TypedRef<RawText>(text);
+    auto text = TextValue::create(string);
+    auto textRef = TypedRef<TextValue>(text);
     this->value = std::make_shared<Text>(textRef);
     this->ref = createNextValueReference(value->getType());
 }
@@ -294,8 +294,8 @@ Value<Text>::Value(const char* s) {
 template<>
 Value<>::Value(const char* s) {
     std::string string(s);
-    auto text = RawText(string);
-    auto textRef = TypedRef<RawText>(text);
+    auto text = TextValue::create(string);
+    auto textRef = TypedRef<TextValue>(text);
     this->value = std::make_shared<Text>(textRef);
     this->ref = createNextValueReference(value->getType());
 }
