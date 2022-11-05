@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.36](https://github.com/nebulastream/nebulastream/tree/v0.3.36) (2022-11-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.35...v0.3.36)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query compilation fails on macOS Ventura 13.1 [\#3123](https://github.com/nebulastream/nebulastream/issues/3123)
+
 ## [v0.3.35](https://github.com/nebulastream/nebulastream/tree/v0.3.35) (2022-11-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.34...v0.3.35)
