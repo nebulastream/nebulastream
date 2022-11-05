@@ -83,16 +83,14 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
 }
 
 void MapLogicalOperatorNode::inferStringSignature() {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("MapLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
-    NES_ASSERT(!children.empty(), "MapLogicalOperatorNode: Map should have 2 children.");
-    //Infer query signatures for child operators
-    for (auto& child : children) {
-        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
-        childOperator->inferStringSignature();
-    }
+    NES_TRACE("MapLogicalOperatorNode: Inferring String signature for " << toString());
+    NES_ASSERT(children.size() == 1, "MapLogicalOperatorNode: Map should have 1 child.");
+    //Infer query signatures for child operator
+    auto child = children[0]->as<LogicalOperatorNode>();
+    child->inferStringSignature();
+    // Infer signature for this operator.
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    auto childSignature = child->getHashBasedSignature();
     signatureStream << "MAP(" + mapExpression->toString() + ")." << *childSignature.begin()->second.begin();
 
     //Update the signature
