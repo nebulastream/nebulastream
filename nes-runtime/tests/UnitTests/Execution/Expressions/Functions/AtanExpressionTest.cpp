@@ -20,53 +20,51 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-        class AtanExpressionTest : public testing::Test {
-          public:
-            /* Will be called before any test in this class are executed. */
-            static void SetUpTestCase() {
-                NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-                std::cout << "Setup AtanExpressionTest test class." << std::endl;
-            }
+class AtanExpressionTest : public testing::Test {
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup AtanExpressionTest test class." << std::endl;
+    }
 
-            /* Will be called before a test is executed. */
-            void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+    /* Will be called before a test is executed. */
+    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
 
-            /* Will be called before a test is executed. */
-            void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+    /* Will be called before a test is executed. */
+    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
 
-            /* Will be called after all tests in this class are finished. */
-            static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-        };
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+};
 
+TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
+    auto expression = UnaryExpressionWrapper<AtanExpression>();
+    // Double
+    {
+        auto resultValue = expression.eval(Value<Double>(0.5));
+        ASSERT_EQ(resultValue, (double) 0.4636476090008061);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+}
 
+TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
+    auto expression = UnaryExpressionWrapper<AtanExpression>();
+    // Float
+    {
+        auto resultValue = expression.eval(Value<Float>((float) 0.5));
+        ASSERT_EQ(resultValue, (float) 0.4636476090008061);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+}
 
-        TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
-            auto expression = UnaryExpressionWrapper<AtanExpression>();
-            // Double
-            {
-                auto resultValue = expression.eval(Value<Double>(0.5));
-                ASSERT_EQ(resultValue, (double) 0.4636476090008061);
-                ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-            }
-        }
-
-        TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
-            auto expression = UnaryExpressionWrapper<AtanExpression>();
-            // Float
-            {
-                auto resultValue = expression.eval(Value<Float>((float) 0.5));
-                ASSERT_EQ(resultValue, (float) 0.4636476090008061);
-                ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-            }
-        }
-
-        /**
+/**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-        TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
-            auto expression = UnaryExpressionWrapper<AtanExpression>();
-            ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-            ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
-        }
+TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
+    auto expression = UnaryExpressionWrapper<AtanExpression>();
+    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
+}
 
-    }// namespace NES::Runtime::Execution::Expressions
+}// namespace NES::Runtime::Execution::Expressions
