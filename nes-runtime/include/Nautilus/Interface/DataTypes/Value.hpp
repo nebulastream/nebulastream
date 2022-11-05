@@ -48,7 +48,7 @@ concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
  * @tparam ValueType
  */
 template<class ValueType = Any>
-class Value : BaseValue {
+class Value : BaseValue, public std::initializer_list {
     using ValueTypePtr = std::shared_ptr<ValueType>;
 
   public:
