@@ -23,17 +23,15 @@ namespace NES::Runtime::Execution::Expressions {
 /**
  * @brief This expression atan the Expression
  */
-
 class AtanExpression : public Expression {
   public:
     AtanExpression(const ExpressionPtr& leftSubExpression);
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr leftSubExpression;
+    const ExpressionPtr leftSubExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
-
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_
