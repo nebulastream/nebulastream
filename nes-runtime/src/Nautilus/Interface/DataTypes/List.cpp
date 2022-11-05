@@ -17,8 +17,8 @@ int8_t* RawList::data() { return buffer.getBuffer<int8_t>(); };
 void destructList(RawList* list){//delete list;
                                  NES_DEBUG("~ " << list)}
 
-int32_t listGetLength(const RawList& list) {
-    return list.length();
+int32_t listGetLength(const RawList* list) {
+    return list->length();
 }
 
 Value<Int32> List::length() { return FunctionCall<>("listGetLength", listGetLength, this->rawReference); }

@@ -7,48 +7,60 @@
 
 namespace NES::Nautilus {
 
-int32_t& TextPtr::length() { return *(int32_t*) this; }
+int32_t TextValue::length() const { return size; }
 
-char* TextPtr::str() {
-    return (char*) this + size_of();
-}
+char* TextValue::str() { return reinterpret_cast<char*>(this + DATA_FIELD_OFFSET); }
+const char* TextValue::c_str() const { return reinterpret_cast<const char*>(this + DATA_FIELD_OFFSET); }
 
-RawText::RawText(int32_t length) {
+TextValue* TextValue::create(int32_t size) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
-    auto optBuffer = provider->getUnpooledBuffer(length);
-    NES_ASSERT2_FMT(!!optBuffer, "Cannot allocate buffer of size " << length);
-    buffer = optBuffer.value();
-    buffer.setNumberOfTuples(length);
+    auto optBuffer = provider->getUnpooledBuffer(size);
+    if (!optBuffer.has_value()) {
+        NES_THROW_RUNTIME_ERROR("Buffer allocation failed for text");
+    }
+    auto buffer = optBuffer.value();
+    buffer.retain();
+    return new (buffer.getBuffer()) TextValue(size);
 }
 
-RawText::RawText(const std::string& string) : RawText(string.length()) { std::memcpy(str(), string.c_str(), string.length()); }
-int32_t RawText::length() const { return buffer.getNumberOfTuples(); };
+TextValue::TextValue(int32_t size) : size(size) {}
 
-char* RawText::str() { return buffer.getBuffer<char>(); };
+TextValue* TextValue::create(const std::string& string) {
+    auto* textValue = create(string.length());
+    std::memcpy(textValue->str(), string.c_str(), string.length());
+    return textValue;
+}
 
-bool textEquals(const RawText& leftText, const RawText& rightText) {
-    if (leftText.length() != rightText.length()) {
+TextValue* TextValue::load(Runtime::TupleBuffer& buffer) {
+    buffer.retain();
+    return reinterpret_cast<TextValue*>(buffer.getBuffer());
+}
+
+TextValue::~TextValue() {
+    // A text value always is backed by the data region of a tuple buffer.
+    // In the following, we recycle the tuple buffer and return it to the buffer pool.
+    Runtime::recycleTupleBuffer(this);
+}
+
+bool textEquals(const TextValue* leftText, const TextValue* rightText) {
+    if (leftText->length() != rightText->length()) {
         return false;
     }
-    return std::memcmp(leftText.c_str(), rightText.c_str(), leftText.length()) == 0;
+    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0;
 }
 
 Value<Boolean> Text::equals(const Value<Text>& other) const {
     return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
 }
 
-int32_t TextGetLength(const RawText& text) { return text.length(); }
+int32_t TextGetLength(const TextValue* text) { return text->length(); }
 
 const Value<Int32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
 
-Text::~Text() {
-    // NES_DEBUG("~Text:" << std::to_string(*rawReference.value->value))
-    //FunctionCall<>("destructTest", destructTest, rawReference.);
-}
 AnyPtr Text::copy() { return NES::Nautilus::AnyPtr(); }
 
-int8_t readTextIndex(const RawText& text, int32_t index) { return text.c_str()[index]; }
-void writeTextIndex(RawText&& text, int32_t index, int8_t value) { text.str()[index] = value; }
+int8_t readTextIndex(const TextValue* text, int32_t index) { return text->c_str()[index]; }
+void writeTextIndex(TextValue* text, int32_t index, int8_t value) { text->str()[index] = value; }
 
 Value<Int8> Text::read(Value<Int32> index) { return FunctionCall<>("readTextIndex", readTextIndex, rawReference, index); }
 
@@ -56,28 +68,29 @@ void Text::write(Value<Int32> index, Value<Int8> value) {
     FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
 }
 
-RawText* uppercaseText(const RawText& text) {
-    auto resultText = new RawText(text.length());
-    for (int32_t i = 0; i < text.length(); i++) {
-        resultText->str()[i] = toupper(text.c_str()[i]);
+TextValue* uppercaseText(const TextValue* text) {
+    auto resultText = TextValue::create(text->length());
+    for (int32_t i = 0; i < text->length(); i++) {
+        resultText->str()[i] = toupper(text->c_str()[i]);
     }
     return resultText;
 }
 
 template<>
-auto transformReturnValues(RawText*) {
-    auto textRef = TypedRef<RawText>();
+auto transformReturnValues(TextValue* value) {
+    auto textRef = TypedRef<TextValue>(value);
     return Value<Text>(std::make_unique<Text>(textRef));
 }
 
 template<>
-auto createDefault<RawText*>() {
-    auto textRef = TypedRef<RawText>();
+auto createDefault<TextValue*>() {
+    auto textRef = TypedRef<TextValue>();
     auto text = Value<Text>(std::make_unique<Text>(textRef));
     return text;
 }
 
-const Value<> Text::upper() const { return FunctionCall<>("uppercaseText", uppercaseText, rawReference); }
+const Value<Text> Text::upper() const {
+    return FunctionCall<>("uppercaseText", uppercaseText, rawReference); }
 IR::Types::StampPtr Text::getType() const { return rawReference.getType(); }
 
 }// namespace NES::Nautilus
