@@ -43,10 +43,10 @@ void MapUdfLogicalOperatorNode::inferStringSignature() {
     child->inferStringSignature();
     // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
     // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
-    auto elementHash = std::hash<Catalogs::UDF::JavaSerializedInstance::value_type>{};
     // Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
     // based on the hashes of the individual elements.
-    auto charArrayHashHelper = [&elementHash](std::size_t h, char v) {
+    auto elementHash = std::hash<char>{};
+    auto charArrayHashHelper = [&elementHash](std::size_t h, const char v) {
         return h = h * 31 + elementHash(v);
     };
     // Compute hashed value of the UDF instance.
