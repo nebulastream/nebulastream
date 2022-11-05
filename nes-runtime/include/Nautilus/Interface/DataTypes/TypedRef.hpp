@@ -28,18 +28,14 @@ template<typename T>
 class TypedRef final : public BaseTypedRef {
   public:
     using element_type = T;
-    struct Container {
-        T element;
-        Container(T value) : element(value) {}
-        T* get() { return &element; }
-    };
-    static void destructContainer(void* value) {
-        auto* typedPtr = (Container*) value;
-        delete typedPtr;
+
+    static void destructReference(void* value) {
+        auto* typedPtr = (T*) value;
+        typedPtr->~T();
     }
     static const inline auto type = TypeIdentifier::create<TypedRef<T>>();
     TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))){};
-    TypedRef(T t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*) new Container(t))){};
+    TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*) t)){};
 
     // copy constructor
     TypedRef(const TypedRef<T>& t) : BaseTypedRef(&type), value(t.value){};
@@ -57,12 +53,12 @@ class TypedRef final : public BaseTypedRef {
     };
 
     std::shared_ptr<Any> copy() override { return std::make_shared<TypedRef<T>>(*this); }
-    T& get() { return ((Container*)value->value->value)->element; }
+    T* get() { return ((T*) value->value->value); }
     Nautilus::IR::Types::StampPtr getType() const override { return Nautilus::IR::Types::StampFactory::createAddressStamp(); }
     std::shared_ptr<Value<MemRef>> value;
     ~TypedRef() {
         if (value.use_count() == 1) {
-            FunctionCall<>("DestructTypedRef", destructContainer, *value.get());
+            FunctionCall<>("DestructTypedRef", destructReference, *value.get());
         }
     }
 };

@@ -197,6 +197,7 @@ TEST_P(TypeCompilationTest, customValueTypeTest) {
 
 Value<> listLengthTest(Value<List>& list) { return list->length() + 4; }
 
+/*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
@@ -215,14 +216,15 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
     auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
     ASSERT_EQ(function(&listRef.get()), 14);
 }
+ */
 
 Value<> textTestFunction(Value<Text>& list) {
     auto length = list->length();
     auto list2 = list->upper();
     //for (Value<Int32> i = 0; i < list->length(); i = i + 1) {
-   //     list[i] = (int8_t) 'o';
+    //     list[i] = (int8_t) 'o';
     //}
-    return list2;
+    return list2->length();
 }
 
 TEST_P(TypeCompilationTest, compileTextFunctionTest) {
@@ -241,7 +243,7 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
-    ASSERT_EQ(function(&listRef.get()), 4);
+    ASSERT_EQ(function(listRef.get()), 4);
 }
 
 // Tests all registered compilation backends.

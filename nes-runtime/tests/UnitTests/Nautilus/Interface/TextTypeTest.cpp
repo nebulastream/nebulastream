@@ -50,13 +50,6 @@ class TextTypeTest : public testing::Test {
 
 TEST_F(TextTypeTest, createTextTest) {
 
-    auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
-    auto optBuffer = provider->getUnpooledBuffer(42);
-    auto buffer = optBuffer->getBuffer();
-
-    auto t = (TextPtr*) buffer;
-
-
     auto textValue = Value<Text>("test");
     auto length = textValue->length();
     ASSERT_EQ(length, 4);
@@ -76,7 +69,7 @@ TEST_F(TextTypeTest, createTextTest) {
     ASSERT_EQ(textValue, textValue3);
 
     for (auto i = 0; i < textValue->length(); i++) {
-        textValue[i] = (int8_t)'z';
+        textValue[i] = (int8_t) 'z';
     }
     auto textValue4 = Value<Text>("zzzz");
     ASSERT_EQ(textValue, textValue4);
