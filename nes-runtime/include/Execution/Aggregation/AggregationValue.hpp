@@ -65,6 +65,20 @@ struct MaxAggregationValue : AggregationValue {
     T max = std::numeric_limits<T>::min();
 };
 
+/**
+ * Class for distinct aggregation Value, maintains the approximate distinct value of all occurred tuples
+ */
+struct DistinctAggregationValue : AggregationValue
+    int64_t count = 0;
+};
+
+/**
+ * Class for quantile aggregation Value, maintains the quantile value of all occurred tuples
+ */
+struct QuantileAggregationValue : AggregationValue
+    int64_t count = 0;
+};
+
 }// namespace NES::Runtime::Execution::Aggregation
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

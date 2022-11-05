@@ -23,6 +23,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Execution/Aggregation/DistinctAggregation.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -279,6 +280,60 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     // test reset
     maxAgg.reset(memref);
     EXPECT_EQ(maxValue.max, std::numeric_limits<int64_t>::min());
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Distinct Aggregation
+ */
+TEST_F(AggregationFunctionTest, scanEmitPipelineDistinct) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto disAgg = Aggregation::DistinctAggregationFunction(integerType, integerType);
+    auto disValue = Aggregation::DistinctAggregationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &disValue);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+
+    // lift value in disAgg
+    disAgg.lift(memref, incomingValue);
+    disAgg.lift(memref, incomingValue);
+    disAgg.lift(memref, incomingValue);
+    disAgg.lift(memref, incomingValue);
+    disAgg.lift(memref, incomingValue);
+    ASSERT_EQ(disAgg.getSize(), 5);
+
+    // combine memrefs in minAgg
+    disAgg.combine(memref, memref);
+    ASSERT_EQ(disAgg.getSize(), 10);
+
+    // lower value in minAgg
+    auto aggregationResult = disAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 1);
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Quantile Aggregation
+ */
+TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto quAgg = Aggregation::DistinctAggregationFunction(integerType, integerType);
+    auto quValue = Aggregation::DistinctAggregationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quValue);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+
+    // lift value in disAgg
+    quAgg.lift(memref, incomingValue);
+    quAgg.lift(memref, incomingValue);
+    quAgg.lift(memref, incomingValue);
+    quAgg.lift(memref, incomingValue);
+    quAgg.lift(memref, incomingValue);
+    ASSERT_EQ(memref, 1);
+
+    // combine memrefs in minAgg
+    quAgg.combine(memref, memref);
+    ASSERT_EQ(memref, 1);
+
+    // lower value in minAgg
+    auto aggregationResult = quAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 1);
 }
 
 }// namespace NES::Runtime::Execution::Expressions
