@@ -109,3 +109,7 @@ add_test(NAME runtime-bitcounter-expression-test COMMAND runtime-bitcounter-expr
 add_executable(runtime-tan-expression-test "TanExpressionTest.cpp")
 target_link_libraries(runtime-tan-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-tan-expression-test COMMAND runtime-tan-expression-test)
+
+add_executable(runtime-random-expression-test "RandomExpressionTest.cpp")
+target_link_libraries(runtime-random-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-random-expression-test COMMAND runtime-random-expression-test)
