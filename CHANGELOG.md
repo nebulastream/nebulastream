@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.35](https://github.com/nebulastream/nebulastream/tree/v0.3.35) (2022-11-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.34...v0.3.35)
+
+**Implemented enhancements:**
+
+- Nautilus: Designated MemoryProvider [\#3113](https://github.com/nebulastream/nebulastream/issues/3113)
+
 ## [v0.3.34](https://github.com/nebulastream/nebulastream/tree/v0.3.34) (2022-11-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.33...v0.3.34)
