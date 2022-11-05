@@ -54,4 +54,9 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
     }
 }
 
+bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
+    return className == other.className && getMethodName() == other.getMethodName()
+        && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList;
+}
+
 }// namespace NES::Catalogs::UDF

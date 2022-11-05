@@ -99,6 +99,17 @@ class JavaUdfDescriptor : public UdfDescriptor {
     // TODO
     [[nodiscard]] const SchemaPtr& getOutputSchema() const { return outputSchema; }
 
+    /**
+     * Compare to Java UDF descriptors.
+     *
+     * This comparison ignores the outputSchema because it can be derived from the method signature of the Java UDF.
+     *
+     * @param other The other JavaUdfDescriptor in the comparison.
+     * @return True, if both JavaUdfDescriptors are the same, i.e., same UDF class and method name,
+     * same serialized instance (state), and same byte code list; False, otherwise.
+     */
+    bool operator==(const JavaUdfDescriptor& other) const;
+
   private:
     const std::string className;
     const JavaSerializedInstance serializedInstance;
