@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.34](https://github.com/nebulastream/nebulastream/tree/v0.3.34) (2022-11-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.33...v0.3.34)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add radians\(x\) expression [\#3056](https://github.com/nebulastream/nebulastream/issues/3056)
+- \[DBPRO\] Add pi\(\) expression [\#3049](https://github.com/nebulastream/nebulastream/issues/3049)
+- \[DBPRO\] Add degrees\(x\) expression [\#3041](https://github.com/nebulastream/nebulastream/issues/3041)
+
 ## [v0.3.33](https://github.com/nebulastream/nebulastream/tree/v0.3.33) (2022-11-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.32...v0.3.33)
