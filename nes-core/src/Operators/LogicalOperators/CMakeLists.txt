@@ -17,7 +17,7 @@ add_source_files(nes-core
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
         InferModelLogicalOperatorNode.cpp
-        MapUdfLogicalOperatorNode.cpp
+        MapJavaUdfLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
