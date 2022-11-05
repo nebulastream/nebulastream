@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/MapUdfLogicalOperatorNode.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
-#include <sstream>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <numeric>
+#include <sstream>
 
 namespace NES {
 
-MapUdfLogicalOperatorNode::MapUdfLogicalOperatorNode(OperatorId id, const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
+MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(OperatorId id, const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUdfDescriptor(javaUdfDescriptor) {}
 
-Catalogs::UDF::JavaUdfDescriptorPtr MapUdfLogicalOperatorNode::getJavaUdfDescriptor() const {
+Catalogs::UDF::JavaUdfDescriptorPtr MapJavaUdfLogicalOperatorNode::getJavaUdfDescriptor() const {
     return javaUdfDescriptor;
 }
 
-bool MapUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
     // Set the input schema.
     if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
@@ -36,7 +36,7 @@ bool MapUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     return true;
 }
 
-void MapUdfLogicalOperatorNode::inferStringSignature() {
+void MapJavaUdfLogicalOperatorNode::inferStringSignature() {
     NES_ASSERT(children.size() == 1, "MapUdfLogicalOperatorNode should have exactly 1 child.");
     // Infer query signatures for child operator.
     auto child = children[0]->as<LogicalOperatorNode>();
@@ -74,26 +74,26 @@ void MapUdfLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[stringHash(signature)] = {signature};
 }
 
-std::string MapUdfLogicalOperatorNode::toString() const {
+std::string MapJavaUdfLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "MAP_JAVA_UDF(" << id << ")";
     return ss.str();
 }
 
-OperatorNodePtr MapUdfLogicalOperatorNode::copy() {
-    return std::make_shared<MapUdfLogicalOperatorNode>(*this);
+OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
+    return std::make_shared<MapJavaUdfLogicalOperatorNode>(*this);
 }
 
-bool MapUdfLogicalOperatorNode::equal(const NodePtr& other) const {
+bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
     // Explicit check here, so the cast using as throws no exception.
-    if (!other->instanceOf<MapUdfLogicalOperatorNode>()) {
+    if (!other->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
         return false;
     }
-    return javaUdfDescriptor == other->as<MapUdfLogicalOperatorNode>()->javaUdfDescriptor;
+    return javaUdfDescriptor == other->as<MapJavaUdfLogicalOperatorNode>()->javaUdfDescriptor;
 }
 
-bool MapUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<MapUdfLogicalOperatorNode>()->id;
+bool MapJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
+    return equal(other) && id == other->as<MapJavaUdfLogicalOperatorNode>()->id;
 }
 
 }
