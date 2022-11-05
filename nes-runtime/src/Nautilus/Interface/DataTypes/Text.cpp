@@ -7,6 +7,12 @@
 
 namespace NES::Nautilus {
 
+int32_t& TextPtr::length() { return *(int32_t*) this; }
+
+char* TextPtr::str() {
+    return (char*) this + size_of();
+}
+
 RawText::RawText(int32_t length) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
     auto optBuffer = provider->getUnpooledBuffer(length);
