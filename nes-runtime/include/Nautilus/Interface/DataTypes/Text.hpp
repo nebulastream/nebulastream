@@ -10,6 +10,12 @@
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Nautilus {
 
+class TextPtr {
+  public:
+    int32_t& length();
+    char* str();
+};
+
 class RawText {
   public:
     RawText(const void*&) {}
