@@ -117,3 +117,7 @@ add_test(NAME runtime-floor-expression-test COMMAND runtime-floor-expression-tes
 add_executable(runtime-ceil-expression-test "CeilExpressionTest.cpp")
 target_link_libraries(runtime-ceil-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-ceil-expression-test COMMAND runtime-ceil-expression-test)
+
+add_executable(runtime-random-expression-test "RandomExpressionTest.cpp")
+target_link_libraries(runtime-random-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-random-expression-test COMMAND runtime-random-expression-test)

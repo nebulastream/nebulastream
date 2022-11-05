@@ -38,4 +38,5 @@
          TanExpression.cpp
          FloorExpression.cpp
          CeilExpression.cpp
+         RandomExpression.cpp
          )
