@@ -84,18 +84,16 @@ OperatorNodePtr MapUdfLogicalOperatorNode::copy() {
     return std::make_shared<MapUdfLogicalOperatorNode>(*this);
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
 bool MapUdfLogicalOperatorNode::equal(const NodePtr& other) const {
-    return false;
+    // Explicit check here, so the cast using as throws no exception.
+    if (!other->instanceOf<MapUdfLogicalOperatorNode>()) {
+        return false;
+    }
+    return javaUdfDescriptor == other->as<MapUdfLogicalOperatorNode>()->javaUdfDescriptor;
 }
-#pragma clang diagnostic pop
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
 bool MapUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
-    return false;
+    return equal(other) && id == other->as<MapUdfLogicalOperatorNode>()->id;
 }
-#pragma clang diagnostic pop
 
 }
