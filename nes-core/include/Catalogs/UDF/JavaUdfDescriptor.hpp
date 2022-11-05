@@ -25,8 +25,8 @@
 namespace NES::Catalogs::UDF {
 
 // Utility types
-using JavaSerializedInstance = std::vector<const char>;
-using JavaByteCode = std::vector<const char>;
+using JavaSerializedInstance = std::vector<char>;
+using JavaByteCode = std::vector<char>;
 using JavaUdfByteCodeList = std::unordered_map<std::string, JavaByteCode>;
 
 class JavaUdfDescriptor;
