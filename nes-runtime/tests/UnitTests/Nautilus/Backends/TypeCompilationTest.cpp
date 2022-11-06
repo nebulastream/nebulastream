@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -218,12 +218,17 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
 }
  */
 
-Value<> textTestFunction(Value<Text>& list) {
-    auto length = list->length();
-    auto list2 = list->upper();
-    //for (Value<Int32> i = 0; i < list->length(); i = i + 1) {
-    //     list[i] = (int8_t) 'o';
-    //}
+/**
+ * @brief Simple text function that calls text length, uppercase and manipulates the text content.
+ * @param text
+ * @return
+ */
+Value<> textTestFunction(Value<Text>& text) {
+    auto length = text->length();
+    auto list2 = text->upper();
+    for (Value<Int32> i = 0; i < text->length(); i = i + 1) {
+        text[i] = (int8_t) 'o';
+    }
     return list2->length();
 }
 
@@ -232,7 +237,7 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
 
     auto textA = Value<Text>("test");
-    auto listRef = textA.value->rawReference;
+    auto listRef = textA.value->getReference();
 
     listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
 
