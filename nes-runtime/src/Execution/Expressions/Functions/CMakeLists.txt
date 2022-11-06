@@ -29,4 +29,5 @@
          GammaExpression.cpp
          LGammaExpression.cpp
          PowerExpression.cpp
+         Log2Expression.cpp
          )
