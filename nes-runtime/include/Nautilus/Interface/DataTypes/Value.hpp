@@ -66,13 +66,14 @@ class Value : BaseValue {
   public:
     class ValueIndexReference {
       public:
-        ValueIndexReference(uint32_t index, Value<ValueType> inputValue) : index(index), inputValue(inputValue){};
+        ValueIndexReference(Value<> index, Value<ValueType>& inputValue)
+            : index(std::make_unique<Value<>>(index)), inputValue(inputValue){};
         operator const Value<>() const;
-        ValueIndexReference operator=(const Value<>&);
+        ValueIndexReference& operator=(const Value<>&);
 
       private:
-        const uint32_t index;
-        Value<ValueType> inputValue;
+        std::unique_ptr<Value<>> index;
+        Value<ValueType>& inputValue;
     };
     using element_type = ValueType;
 
@@ -226,7 +227,7 @@ class Value : BaseValue {
         }
     }
 
-    ValueIndexReference inline operator[](int32_t index) { return ValueIndexReference(index, *this); };
+    ValueIndexReference inline operator[](Value<> index) { return ValueIndexReference(index, *this); };
 
     Value<> castTo(const TypeIdentifier* toStamp) const;
 
@@ -263,17 +264,19 @@ Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
-Value<> ReadArrayIndexOp(const Value<>& input, int32_t index);
-void WriteArrayIndexOp(const Value<>& input, int32_t index, const Value<>& value);
+Value<> ReadArrayIndexOp(const Value<>& input, Value<Int32>& index);
+void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>& value);
 
 template<typename LHS>
 Value<LHS>::ValueIndexReference::operator const Value<>() const {
-    return ReadArrayIndexOp(inputValue, index);
+    auto idx = index->as<Int32>();
+    return ReadArrayIndexOp(inputValue, idx);
 }
 
 template<typename LHS>
-typename Value<LHS>::ValueIndexReference Value<LHS>::ValueIndexReference::operator=(const Value<>& value) {
-    WriteArrayIndexOp(inputValue, index, value);
+typename Value<LHS>::ValueIndexReference& Value<LHS>::ValueIndexReference::operator=(const Value<>& value) {
+    auto idx = index->as<Int32>();
+    WriteArrayIndexOp(inputValue, idx, value);
     return *this;
 }
 
