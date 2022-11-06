@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.38](https://github.com/nebulastream/nebulastream/tree/v0.3.38) (2022-11-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.37...v0.3.38)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add min\(x\) expression [\#3059](https://github.com/nebulastream/nebulastream/issues/3059)
+- \[DBPRO\] Add max\(x,y\) expression [\#3058](https://github.com/nebulastream/nebulastream/issues/3058)
+
 ## [v0.3.37](https://github.com/nebulastream/nebulastream/tree/v0.3.37) (2022-11-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.36...v0.3.37)
