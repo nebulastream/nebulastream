@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
-#include <Nautilus/Interface/DataTypes/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/PluginRegistry.hpp>
 
@@ -260,7 +260,7 @@ Value<> NegateOp(const Value<>& input) {
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-Value<> ReadArrayIndexOp(const Value<>& input, int32_t index) {
+Value<> ReadArrayIndexOp(const Value<>& input, Value<Int32>& index) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
     for (auto& plugin : plugins) {
         auto result = plugin->ReadArrayIndex(input, index);
@@ -271,7 +271,7 @@ Value<> ReadArrayIndexOp(const Value<>& input, int32_t index) {
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-void WriteArrayIndexOp(const Value<>& input, int32_t index, const Value<>& value) {
+void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>& value) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
     for (auto& plugin : plugins) {
         auto result = plugin->WriteArrayIndex(input, index, value);
@@ -299,5 +299,6 @@ Value<>::Value(const char* s) {
     this->value = std::make_shared<Text>(textRef);
     this->ref = createNextValueReference(value->getType());
 }
+
 
 }// namespace NES::Nautilus

@@ -1,0 +1,64 @@
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <cstring>
+#include <iostream>
+#include <string>
+
+namespace NES::Nautilus {
+
+template<>
+auto transformReturnValues(TextValue* value) {
+    auto textRef = TypedRef<TextValue>(value);
+    return Value<Text>(std::make_unique<Text>(textRef));
+}
+
+template<>
+auto createDefault<TextValue*>() {
+    auto textRef = TypedRef<TextValue>();
+    auto text = Value<Text>(std::make_unique<Text>(textRef));
+    return text;
+}
+
+Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
+
+bool textEquals(const TextValue* leftText, const TextValue* rightText) {
+    if (leftText->length() != rightText->length()) {
+        return false;
+    }
+    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0;
+}
+
+Value<Boolean> Text::equals(const Value<Text>& other) const {
+    return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
+}
+
+int32_t TextGetLength(const TextValue* text) { return text->length(); }
+
+const Value<Int32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
+
+AnyPtr Text::copy() { return NES::Nautilus::AnyPtr(); }
+
+int8_t readTextIndex(const TextValue* text, int32_t index) { return text->c_str()[index]; }
+
+void writeTextIndex(TextValue* text, int32_t index, int8_t value) { text->str()[index] = value; }
+
+Value<Int8> Text::read(Value<Int32> index) { return FunctionCall<>("readTextIndex", readTextIndex, rawReference, index); }
+
+void Text::write(Value<Int32> index, Value<Int8> value) {
+    FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
+}
+
+TextValue* uppercaseText(const TextValue* text) {
+    auto resultText = TextValue::create(text->length());
+    for (int32_t i = 0; i < text->length(); i++) {
+        resultText->str()[i] = toupper(text->c_str()[i]);
+    }
+    return resultText;
+}
+
+const Value<Text> Text::upper() const { return FunctionCall<>("uppercaseText", uppercaseText, rawReference); }
+
+IR::Types::StampPtr Text::getType() const { return rawReference.getType(); }
+const TypedRef<TextValue>& Text::getReference() const { return rawReference; }
+
+}// namespace NES::Nautilus
