@@ -17,6 +17,6 @@
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 3
 #define NES_VERSION_PATCH 37
-#define NES_VERSION_POST_FIX -SNAPSHOT
-constexpr char const* NES_VERSION      = "0.3.37-SNAPSHOT";
+#define NES_VERSION_POST_FIX 
+constexpr char const* NES_VERSION      = "0.3.37";
 #endif
