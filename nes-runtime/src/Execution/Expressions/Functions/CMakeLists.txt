@@ -24,4 +24,7 @@
          AtanExpression.cpp
          Atan2Expression.cpp
          AcosExpression.cpp
+         FactorialExpression.cpp
+         GammaExpression.cpp
+         LGammaExpression.cpp
          )
