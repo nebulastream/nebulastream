@@ -17,11 +17,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
-#include <nlohmann/json.hpp>
-
-namespace web::json {
-class value;
-}// namespace web::json
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES {
 class Topology;

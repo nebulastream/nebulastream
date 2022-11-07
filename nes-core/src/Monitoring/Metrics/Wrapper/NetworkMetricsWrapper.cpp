@@ -15,14 +15,10 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-
 #include <nlohmann/json.hpp>
-#include <cstring>
 
 namespace NES::Monitoring {
 NetworkMetricsWrapper::NetworkMetricsWrapper() : schema(NetworkMetrics::getDefaultSchema("")) {}

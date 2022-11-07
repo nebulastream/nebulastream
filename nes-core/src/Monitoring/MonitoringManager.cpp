@@ -42,6 +42,8 @@
 #include <regex>
 #include <utility>
 
+#include <nlohmann/json.hpp>
+
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      TopologyPtr topology,
