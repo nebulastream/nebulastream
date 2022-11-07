@@ -44,6 +44,7 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <gmock/gmock-matchers.h>
@@ -322,6 +323,63 @@ TEST_F(QueryTest, windowAggregationWithAs) {
     NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: " << outputSchemaString);
 
     EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
+}
+
+/**
+ * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
+ */
+TEST_F(QueryTest, ThresholdWindowQueryTest) {
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    Catalogs::Source::SourceCatalogEntryPtr sce =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+
+    // without by key
+    auto query = Query::from("default_logical")
+                     .window(ThresholdWindow::of(Attribute("f1") < 45))
+                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .sink(PrintSinkDescriptor::create());
+
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 1U);
+
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1U);
+
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+    EXPECT_EQ(sinkOperators.size(), 1U);
+
+    // with by key
+    auto query2 = Query::from("default_logical")
+                     .window(ThresholdWindow::of(Attribute("f1") < 45))
+                     .byKey(Attribute("id", INT64))
+                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .sink(PrintSinkDescriptor::create());
+
+    auto plan2 = query2.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators2 = plan2->getSourceOperators();
+    EXPECT_EQ(sourceOperators2.size(), 1U);
+
+    SourceLogicalOperatorNodePtr srcOptr2 = sourceOperators2[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators2 = plan2->getSinkOperators();
+    EXPECT_EQ(sinkOperators2.size(), 1U);
+
+    SinkLogicalOperatorNodePtr sinkOptr2 = sinkOperators2[0];
+    EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
 }// namespace NES

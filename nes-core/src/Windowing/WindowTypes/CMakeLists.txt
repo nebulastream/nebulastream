@@ -15,4 +15,5 @@ add_source_files(nes-core
         WindowType.cpp
         TumblingWindow.cpp
         SlidingWindow.cpp
+        ThresholdWindow.cpp
 )
