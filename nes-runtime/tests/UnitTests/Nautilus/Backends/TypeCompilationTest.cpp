@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
-#include <Nautilus/Interface/DataTypes/List.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>

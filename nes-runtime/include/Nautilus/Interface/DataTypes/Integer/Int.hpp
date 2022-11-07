@@ -89,6 +89,7 @@ class Int16 : public Int {
  */
 class Int32 : public Int {
   public:
+    using RawType = int32_t;
     static const inline auto type = TypeIdentifier::create<Int32>();
     Int32(int32_t value);
     Nautilus::IR::Types::StampPtr getType() const override;

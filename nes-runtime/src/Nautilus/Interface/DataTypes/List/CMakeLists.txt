@@ -12,16 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        Any.cpp
-        Value.cpp
-        Boolean.cpp
-        InvocationPlugin.cpp
-        BooleanInvocationPlugin.cpp
-        MemRefInvocationPlugin.cpp
+        List.cpp
+        ListValue.cpp
         )
-
-add_subdirectory(Text)
-add_subdirectory(List)
-add_subdirectory(Integer)
-add_subdirectory(Float)
-add_subdirectory(TimeStamp)
