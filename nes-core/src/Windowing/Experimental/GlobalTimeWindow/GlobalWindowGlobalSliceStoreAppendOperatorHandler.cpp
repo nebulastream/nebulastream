@@ -24,15 +24,16 @@
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 GlobalWindowGlobalSliceStoreAppendOperatorHandler::GlobalWindowGlobalSliceStoreAppendOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
+    auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    windowSize = timeBasedWindowType->getSize().getTime();
+    windowSlide = timeBasedWindowType->getSlide().getTime();
 }
 
 void GlobalWindowGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,

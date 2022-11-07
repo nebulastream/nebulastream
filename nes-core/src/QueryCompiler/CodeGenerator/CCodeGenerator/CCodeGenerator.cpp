@@ -995,7 +995,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -1149,7 +1149,7 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -2371,20 +2371,21 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     // get current timestamp
     // TODO add support for event time
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid number of input tuples");
-        auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
+        auto timeCharacteristicField = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         auto tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
 
         /**
          * calculateUnitMultiplier => cal to ms
          */
-        auto multiplier = window->getWindowType()->getTimeCharacteristic()->getTimeUnit().getMultiplier();
+        auto multiplier = timeBasedWindowType->getTimeCharacteristic()->getTimeUnit().getMultiplier();
         //In this case we need to multiply the ts with the multiplier to get ms
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(tsVariableDeclaration)
             * Constant(tf->createValueType(DataTypeFactory::createBasicValue(multiplier)));
@@ -2987,8 +2988,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     context->code->currentCodeInsertionPoint->addStatement(windowStateVariableStatement.copy());
 
     // get current timestamp
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDef->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
@@ -2997,7 +2999,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
-        std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
+        std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
@@ -3211,7 +3213,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 
     // get current timestamp
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDef->getWindowType());
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
@@ -3220,7 +3223,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
-        std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
+        std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         if (buildSide == QueryCompilation::JoinBuildSide::Right) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
@@ -3581,7 +3584,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(
         context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
 
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {

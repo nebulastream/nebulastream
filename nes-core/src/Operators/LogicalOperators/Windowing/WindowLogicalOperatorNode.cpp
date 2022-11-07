@@ -21,7 +21,7 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <sstream>
 
 namespace NES {
@@ -72,7 +72,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = windowDefinition->getWindowType();
+    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     windowType->inferStamp(inputSchema);
 
     //Construct output schema

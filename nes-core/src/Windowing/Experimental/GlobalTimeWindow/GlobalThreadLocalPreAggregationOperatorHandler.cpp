@@ -26,6 +26,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 namespace NES::Windowing::Experimental {
 
@@ -35,8 +36,9 @@ GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationO
     std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
     watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
+    auto windowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    windowSize = windowType->getSize().getTime();
+    windowSlide = windowType->getSlide().getTime();
 }
 
 GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
