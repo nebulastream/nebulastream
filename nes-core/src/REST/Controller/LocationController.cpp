@@ -15,8 +15,8 @@
 #include <REST/Controller/LocationController.hpp>
 #include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 namespace NES {
 
