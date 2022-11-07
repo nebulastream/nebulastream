@@ -23,6 +23,8 @@ class WindowType {
   public:
     explicit WindowType(TimeCharacteristicPtr timeCharacteristic);
 
+    explicit WindowType();
+
     virtual ~WindowType() = default;
     /**
       * Calculates the next window end based on a given timestamp
@@ -66,6 +68,11 @@ class WindowType {
     * @return true if this is a sliding window
     */
     virtual bool isSlidingWindow();
+
+    /**
+    * @return true if this is a threshold window
+    */
+    virtual bool isThresholdWindow();
 
     virtual std::string toString() = 0;
 

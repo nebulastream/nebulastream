@@ -76,6 +76,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <API/Windowing.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -603,6 +605,23 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
+    }
+
+    // threshold window operator
+    {
+        auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
+        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
+        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+        auto windowDefinition = Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                                windowType,
+                                                                Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                                triggerPolicy,
+                                                                triggerAction,
+                                                                0);
+        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(thresholdWindow->equal(thresholdWindow));
     }
 }
 
