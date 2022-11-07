@@ -132,6 +132,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  kafkaSourceDescriptor->isAutoCommit(),
                                  kafkaSourceDescriptor->getKafkaConnectTimeout(),
                                  operatorId,
+                                 originId,
                                  numSourceLocalBuffers);
 #endif
 #ifdef ENABLE_MQTT_BUILD
