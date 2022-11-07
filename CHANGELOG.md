@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.39](https://github.com/nebulastream/nebulastream/tree/v0.3.39) (2022-11-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.38...v0.3.39)
+
+#### User Defined Functions
+
+- \[Feature\] Update JavaUdfDescriptor GRPC message to include output schema [\#3070](https://github.com/nebulastream/nebulastream/issues/3070)
+- \[Feature\] Define new class MapUDFLogicalOperatorNode [\#3069](https://github.com/nebulastream/nebulastream/issues/3069)
+
 ## [v0.3.38](https://github.com/nebulastream/nebulastream/tree/v0.3.38) (2022-11-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.37...v0.3.38)
