@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <API/AttributeField.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
@@ -164,12 +166,15 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
                     {classDefinition.class_name(),
                      JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
             }
+            // Deserialize the output schema.
+            auto outputSchema = SchemaSerializationUtil::deserializeSchema(descriptorMessage.mutable_outputschema());
             // Register JavaUdfDescriptor in UDF catalog and return success.
             try {
                 auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
                                                                    descriptorMessage.udf_method_name(),
                                                                    serializedInstance,
-                                                                   javaUdfByteCodeList);
+                                                                   javaUdfByteCodeList,
+                                                                   outputSchema);
                 NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
                 udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             } catch (const UdfException& e) {

@@ -29,6 +29,7 @@ using namespace NES::Catalogs;
 namespace NES {
 
 //TODO: to be deleted with #3001
+
 class UdfCatalogControllerTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
@@ -99,6 +100,15 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         }
     }
 
+    [[nodiscard]] static Catalogs::UDF::JavaUdfDescriptorPtr createJavaUdfDescriptor() {
+        return Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
+                                                        "udf_method",
+                                                        {1},
+                                                        {{"some_package.my_udf", {1}}},
+                                                        std::make_shared<Schema>()->addField("attribute",
+                                                                                             DataTypeFactory::createUInt64()));
+    }
+
     [[nodiscard]] static GetJavaUdfDescriptorResponse
     extractGetJavaUdfDescriptorResponse(const web::http::http_request& request) {
         GetJavaUdfDescriptorResponse response;
@@ -121,11 +131,7 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
 
 TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     // given a REST message containing a Java UDF
-    auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
-                                                                               "some_package.my_udf",
-                                                                               "udf_method",
-                                                                               {1},
-                                                                               {{"some_package.my_udf", {1}}});
+    auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
     auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller
@@ -162,8 +168,8 @@ TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
 
 TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
-    auto javaUdfRequest =
-        ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
+    auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
+    javaUdfRequest.mutable_java_udf_descriptor()->mutable_classes()->Clear();
     auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller (which should cause an exception)
@@ -186,10 +192,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     // given the UDF catalog contains a Java UDF
-    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
-                                                       "udf_method"s,
-                                                       JavaSerializedInstance{1},
-                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
     auto udfName = "my_udf"s;
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to remove the UDF
@@ -257,10 +260,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
 
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
     // given the UDF catalog contains a Java UDF
-    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
-                                                       "udf_method"s,
-                                                       JavaSerializedInstance{1},
-                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
     auto udfName = "my_udf"s;
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get the UDF descriptor
@@ -331,10 +331,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
 
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
     // given the UDF catalog contains a Java UDF
-    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
-                                                       "udf_method"s,
-                                                       JavaSerializedInstance{1},
-                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto javaUdfDescriptor = createJavaUdfDescriptor();
     auto udfName = "my_udf"s;
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get a list of the UDFs

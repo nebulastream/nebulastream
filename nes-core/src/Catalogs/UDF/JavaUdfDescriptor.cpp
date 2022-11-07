@@ -20,8 +20,13 @@ namespace NES::Catalogs::UDF {
 JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
                                      const std::string& methodName,
                                      const JavaSerializedInstance& serializedInstance,
-                                     const JavaUdfByteCodeList& byteCodeList)
-    : UdfDescriptor(methodName), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList) {
+                                     const JavaUdfByteCodeList& byteCodeList,
+                                     const SchemaPtr outputSchema)
+    : UdfDescriptor(methodName),
+      className(className),
+      serializedInstance(serializedInstance),
+      byteCodeList(byteCodeList),
+      outputSchema(outputSchema) {
     if (className.empty()) {
         throw UdfException("The class name of a Java UDF must not be empty");
     }
@@ -44,6 +49,14 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
             throw UdfException("The bytecode of a class must not not be empty");
         }
     }
+    if (outputSchema->empty()) {
+        throw UdfException("The output schema of a Java UDF must not be empty");
+    }
+}
+
+bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
+    return className == other.className && getMethodName() == other.getMethodName()
+        && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList;
 }
 
 }// namespace NES::Catalogs::UDF

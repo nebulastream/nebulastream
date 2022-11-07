@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
 using namespace std::string_literals;
 
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,7 +33,8 @@ class UdfCatalogTest : public Testing::NESBaseTest {
         auto methodName = "udf_method"s;
         auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
         auto byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
-        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList);
+        auto outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
+        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema);
     }
 
     static PythonUdfDescriptorPtr createPythonDescriptor() {

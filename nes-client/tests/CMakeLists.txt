@@ -14,7 +14,7 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-add_nes_unit_test(remote-client-test "Client/RemoteClientTest.cpp" NOCC)
+add_nes_unit_test(remote-client-test "Client/RemoteClientTest.cpp")
 target_link_libraries(remote-client-test nes-client)
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
