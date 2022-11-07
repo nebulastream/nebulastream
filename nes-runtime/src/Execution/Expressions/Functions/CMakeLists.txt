@@ -36,4 +36,6 @@
          Log2Expression.cpp
          LnExpression.cpp
          TanExpression.cpp
+         FloorExpression.cpp
+         CeilExpression.cpp
          )
