@@ -37,7 +37,7 @@ class LocationProviderCSVTest : public testing::Test {
 TEST_F(LocationProviderCSVTest, testCsvMovement) {
     //todo: make location provider csv be mobile spatial type by default?
     NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
-    auto startTime = sourceCsv.getStarttime();
+    auto startTime = sourceCsv.getStartTime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
     auto timethirdloc = startTime + 200000000;
@@ -119,7 +119,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     Timestamp simulatedStartTime = currTime + offset;
     NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv",
                                                                         simulatedStartTime);
-    auto startTime = sourceCsv.getStarttime();
+    auto startTime = sourceCsv.getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
@@ -202,7 +202,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     Timestamp simulatedStartTime = currTime + offset;
     NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv",
                                                                         simulatedStartTime);
-    auto startTime = sourceCsv.getStarttime();
+    auto startTime = sourceCsv.getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
