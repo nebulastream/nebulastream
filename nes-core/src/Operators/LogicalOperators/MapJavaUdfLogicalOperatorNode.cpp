@@ -19,12 +19,11 @@
 
 namespace NES {
 
-MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(OperatorId id, const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
+MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(OperatorId id,
+                                                             const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUdfDescriptor(javaUdfDescriptor) {}
 
-Catalogs::UDF::JavaUdfDescriptorPtr MapJavaUdfLogicalOperatorNode::getJavaUdfDescriptor() const {
-    return javaUdfDescriptor;
-}
+Catalogs::UDF::JavaUdfDescriptorPtr MapJavaUdfLogicalOperatorNode::getJavaUdfDescriptor() const { return javaUdfDescriptor; }
 
 bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
     // Set the input schema.
@@ -55,20 +54,20 @@ void MapJavaUdfLogicalOperatorNode::inferStringSignature() {
     // Compute hashed value of the UDF byte code list.
     auto stringHash = std::hash<std::string>{};
     auto& byteCodeList = javaUdfDescriptor->getByteCodeList();
-    auto byteCodeListHash = std::accumulate(
-        byteCodeList.begin(), byteCodeList.end(), byteCodeList.size(),
-        [&stringHash, &charArrayHashHelper](std::size_t h, Catalogs::UDF::JavaUdfByteCodeList::value_type v) {
-            auto& className = v.first;
-            h = h * 31 + stringHash(className);
-            auto& byteCode = v.second;
-            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
-            return h;
-    });
+    auto byteCodeListHash =
+        std::accumulate(byteCodeList.begin(),
+                        byteCodeList.end(),
+                        byteCodeList.size(),
+                        [&stringHash, &charArrayHashHelper](std::size_t h, Catalogs::UDF::JavaUdfByteCodeList::value_type v) {
+                            auto& className = v.first;
+                            h = h * 31 + stringHash(className);
+                            auto& byteCode = v.second;
+                            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
+                            return h;
+                        });
     auto signatureStream = std::stringstream{};
-    signatureStream << "MAP_JAVA_UDF("
-                    << javaUdfDescriptor->getClassName() << "." << javaUdfDescriptor->getMethodName()
-                    << ", instance=" << instanceHash
-                    << ", byteCode=" << byteCodeListHash << ")"
+    signatureStream << "MAP_JAVA_UDF(" << javaUdfDescriptor->getClassName() << "." << javaUdfDescriptor->getMethodName()
+                    << ", instance=" << instanceHash << ", byteCode=" << byteCodeListHash << ")"
                     << "." << *child->getHashBasedSignature().begin()->second.begin();
     auto signature = signatureStream.str();
     hashBasedSignature[stringHash(signature)] = {signature};
@@ -80,9 +79,7 @@ std::string MapJavaUdfLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
-    return std::make_shared<MapJavaUdfLogicalOperatorNode>(*this);
-}
+OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() { return std::make_shared<MapJavaUdfLogicalOperatorNode>(*this); }
 
 bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
     // Explicit check here, so the cast using as throws no exception.
@@ -96,4 +93,4 @@ bool MapJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
     return equal(other) && id == other->as<MapJavaUdfLogicalOperatorNode>()->id;
 }
 
-}
+}// namespace NES

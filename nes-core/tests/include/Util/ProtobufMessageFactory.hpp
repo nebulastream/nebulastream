@@ -15,10 +15,10 @@
 #ifndef NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
 #define NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
 
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <UdfCatalogService.pb.h>
 #include <API/AttributeField.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <UdfCatalogService.pb.h>
 
 namespace NES {
 
@@ -58,13 +58,11 @@ class ProtobufMessageFactory {
 
     static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
         return createRegisterJavaUdfRequest("my_udf",
-                                           "some_package.my_udf",
-                                           "udf_method",
-                                           {1},
-                                           {{"some_package.my_udf", {1}}},
-                                           std::make_shared<Schema>()->addField("field",
-                                                                             DataTypeFactory::createUInt64()));
-
+                                            "some_package.my_udf",
+                                            "udf_method",
+                                            {1},
+                                            {{"some_package.my_udf", {1}}},
+                                            std::make_shared<Schema>()->addField("field", DataTypeFactory::createUInt64()));
     }
 };
 

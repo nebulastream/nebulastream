@@ -17,13 +17,12 @@
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
-
 namespace NES {
 
 namespace Catalogs::UDF {
 class JavaUdfDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
-}
+}// namespace Catalogs::UDF
 
 /**
  * Logical operator node for a map operation which uses a Java UDF.
@@ -33,7 +32,6 @@ using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
  */
 class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-
     /**
      * Construct a MapUdfLogicalOperatorNode.
      * @param id The ID of the operator.
@@ -85,6 +83,6 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
     const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
 };
 
-}
+}// namespace NES
 
 #endif//NES_MAPJAVAUDFLOGICALOPERATORNODE_H

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/Logger/Logger.hpp>

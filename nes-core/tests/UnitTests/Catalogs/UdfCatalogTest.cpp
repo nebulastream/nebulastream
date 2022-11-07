@@ -17,8 +17,8 @@
 
 using namespace std::string_literals;
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger/Logger.hpp>
 
