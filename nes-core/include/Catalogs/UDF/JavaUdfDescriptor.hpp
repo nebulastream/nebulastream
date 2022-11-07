@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 #define NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 
-#include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <API/Schema.hpp>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>

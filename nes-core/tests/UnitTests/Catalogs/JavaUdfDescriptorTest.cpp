@@ -17,8 +17,8 @@
 
 using namespace std::string_literals;
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -73,12 +73,13 @@ TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByt
     // when
     auto byteCodeListWithEmptyByteCode = JavaUdfByteCodeList{{className, JavaByteCode{}}};// empty byte array
     // then
-    EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeListWithEmptyByteCode, outputSchema), UdfException);
+    EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeListWithEmptyByteCode, outputSchema),
+                 UdfException);
 }
 
 TEST_F(JavaUdfDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
     // when
-    auto emptyOutputSchema = std::make_shared<Schema>(); // empty list
+    auto emptyOutputSchema = std::make_shared<Schema>();// empty list
     // then
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeList, emptyOutputSchema), UdfException);
 }
@@ -96,23 +97,23 @@ TEST_F(JavaUdfDescriptorTest, InEquality) {
     auto descriptor = JavaUdfDescriptor{className, methodName, serializedInstance, byteCodeList, outputSchema};
     // Check a different class name. In this case, the byte code list must contain the byte code for the different class name.
     auto differentClassName = "different_class_name"s;
-    auto descriptorWithDifferentClassName = JavaUdfDescriptor{differentClassName, methodName, serializedInstance,
-                                                              {{differentClassName, {1}}}, outputSchema};
+    auto descriptorWithDifferentClassName =
+        JavaUdfDescriptor{differentClassName, methodName, serializedInstance, {{differentClassName, {1}}}, outputSchema};
     EXPECT_FALSE(descriptor == descriptorWithDifferentClassName);
     // Check a different method name.
-    auto descriptorWithDifferentMethodName = JavaUdfDescriptor{className, "different_method_name", serializedInstance,
-                                                               byteCodeList, outputSchema};
+    auto descriptorWithDifferentMethodName =
+        JavaUdfDescriptor{className, "different_method_name", serializedInstance, byteCodeList, outputSchema};
     EXPECT_FALSE(descriptor == descriptorWithDifferentMethodName);
     // Check a different serialized instance (internal state of the UDF).
     auto descriptorWithDifferentSerializedInstance = JavaUdfDescriptor{className, methodName, {2}, byteCodeList, outputSchema};
     EXPECT_FALSE(descriptor == descriptorWithDifferentSerializedInstance);
     // Check a different byte code definition of the UDF class.
-    auto descriptorWithDifferentByteCode = JavaUdfDescriptor{className, methodName, serializedInstance, {{className, {2}}},
-                                                             outputSchema};
+    auto descriptorWithDifferentByteCode =
+        JavaUdfDescriptor{className, methodName, serializedInstance, {{className, {2}}}, outputSchema};
     EXPECT_FALSE(descriptor == descriptorWithDifferentByteCode);
     // Check a different byte code list, i.e., additional dependencies.
-    auto descriptorWithDifferentByteCodeList = JavaUdfDescriptor{className, methodName, serializedInstance,
-                                                                 {{className, {1}}, {differentClassName, {1}}}, outputSchema};
+    auto descriptorWithDifferentByteCodeList =
+        JavaUdfDescriptor{className, methodName, serializedInstance, {{className, {1}}, {differentClassName, {1}}}, outputSchema};
     EXPECT_FALSE(descriptor == descriptorWithDifferentByteCodeList);
     // The output schema is ignored because it can be derived from the method signature.
     // We trust the Java client to do this correctly; it would cause errors otherwise during query execution.
