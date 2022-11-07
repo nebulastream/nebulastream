@@ -16,6 +16,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
 
 
 namespace NES::Monitoring {
