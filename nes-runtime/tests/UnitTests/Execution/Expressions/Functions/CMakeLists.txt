@@ -109,3 +109,11 @@ add_test(NAME runtime-bitcounter-expression-test COMMAND runtime-bitcounter-expr
 add_executable(runtime-tan-expression-test "TanExpressionTest.cpp")
 target_link_libraries(runtime-tan-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-tan-expression-test COMMAND runtime-tan-expression-test)
+
+add_executable(runtime-floor-expression-test "FloorExpressionTest.cpp")
+target_link_libraries(runtime-floor-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-floor-expression-test COMMAND runtime-floor-expression-test)
+
+add_executable(runtime-ceil-expression-test "CeilExpressionTest.cpp")
+target_link_libraries(runtime-ceil-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-ceil-expression-test COMMAND runtime-ceil-expression-test)
