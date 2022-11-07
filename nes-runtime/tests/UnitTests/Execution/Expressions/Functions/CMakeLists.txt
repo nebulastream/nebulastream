@@ -14,6 +14,14 @@ add_executable(runtime-mod-expression-test "ModExpressionTest.cpp")
 target_link_libraries(runtime-mod-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-mod-expression-test COMMAND runtime-mod-expression-test)
 
+add_executable(runtime-sqrt-expression-test "SqrtExpressionTest.cpp")
+target_link_libraries(runtime-sqrt-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-sqrt-expression-test COMMAND runtime-sqrt-expression-test)
+
+add_executable(runtime-cbrt-expression-test "CbrtExpressionTest.cpp")
+target_link_libraries(runtime-cbrt-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-cbrt-expression-test COMMAND runtime-cbrt-expression-test)
+
 add_executable(runtime-abs-expression-test "AbsExpressionTest.cpp")
 target_link_libraries(runtime-abs-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-abs-expression-test COMMAND runtime-abs-expression-test)
