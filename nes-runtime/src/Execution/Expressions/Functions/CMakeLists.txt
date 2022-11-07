@@ -28,6 +28,7 @@
          FactorialExpression.cpp
          GammaExpression.cpp
          LGammaExpression.cpp
+         Log10Expression.cpp
          PowerExpression.cpp
          Log2Expression.cpp
          LnExpression.cpp
