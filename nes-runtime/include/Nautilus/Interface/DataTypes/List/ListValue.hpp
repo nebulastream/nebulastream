@@ -1,0 +1,52 @@
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_LISTVALUE_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_LISTVALUE_HPP_
+
+#include <Runtime/TupleBuffer.hpp>
+#include <string>
+namespace NES::Nautilus {
+
+/**
+ * @brief Physical data type that represents a ListValue.
+ * A list value is backed by an tuple buffer.
+ * Physical layout:
+ * | ----- size 4 byte ----- | ----- variable length data
+ */
+template<class T>
+class ListValue final {
+  public:
+    static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
+    static ListValue* create(int32_t size);
+    static ListValue* load(Runtime::TupleBuffer& tupleBuffer);
+
+    /**
+     * @brief Returns the length in the number of characters of the text value
+     * @return int32_t
+     */
+    int32_t length() const;
+
+    /**
+     * @brief Destructor for the text value that also releases the underling tuple buffer.
+     */
+    ~ListValue();
+
+  private:
+    /**
+     * @brief Private constructor to initialize a new text
+     * @param size
+     */
+    ListValue(int32_t size);
+    const int32_t size;
+};
+
+template<class T>
+int32_t getLength(const ListValue<T>* list) {
+    return list->length();
+}
+
+template<class T>
+bool listEquals(const ListValue<T>*, const ListValue<T>*) {
+    return true;
+}
+
+}// namespace NES::Nautilus
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_LISTVALUE_HPP_
