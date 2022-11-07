@@ -25,6 +25,8 @@
          AtanExpression.cpp
          Atan2Expression.cpp
          AcosExpression.cpp
+         SqrtExpression.cpp
+         CbrtExpression.cpp
          FactorialExpression.cpp
          GammaExpression.cpp
          LGammaExpression.cpp
