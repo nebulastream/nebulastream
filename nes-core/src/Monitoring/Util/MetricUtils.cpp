@@ -41,7 +41,6 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
     return hasName && hasLastField;
 }
 
-
 nlohmann::json MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     nlohmann::json metricsJson{};
     for (const auto& metric : metrics) {
@@ -50,7 +49,6 @@ nlohmann::json MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     }
     return metricsJson;
 }
-
 
 nlohmann::json MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
     nlohmann::json metricsJson{};

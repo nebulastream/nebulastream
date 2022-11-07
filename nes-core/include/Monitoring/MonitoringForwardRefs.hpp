@@ -19,10 +19,10 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <cstdint>
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <nlohmann/json_fwd.hpp>
 
 namespace NES {
 class Schema;

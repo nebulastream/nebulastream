@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 
-
 namespace NES::Monitoring {
 
 void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t) {

@@ -118,7 +118,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
-        ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
+        ASSERT_TRUE(
+            MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
         ASSERT_TRUE(MetricValidator::checkNodeIds(jsonLohmann, i));
     }
 }
@@ -227,8 +228,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
-        ASSERT_TRUE(
-            MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
+        ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
+                                                       jsonLohmann));
         ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(jsonLohmann, i));
     }
 }

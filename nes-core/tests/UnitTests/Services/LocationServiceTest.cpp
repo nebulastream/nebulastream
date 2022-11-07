@@ -23,9 +23,9 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <nlohmann/json.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 

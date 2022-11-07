@@ -431,7 +431,7 @@ class MetricValidator {
 
     static bool checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId) {
         bool check = true;
-        for (auto& [key, val] : json.items()){
+        for (auto& [key, val] : json.items()) {
             // This change lets you get the string straight up from "first"
             auto jsonMetric = json[key][0]["value"];
             if (!checkNodeIds(jsonMetric, nodeId)) {
@@ -441,7 +441,7 @@ class MetricValidator {
         return check;
     }
 
-    static bool checkEntriesOfStream(std::set<std::string> setOfStr, nlohmann::json jsons){
+    static bool checkEntriesOfStream(std::set<std::string> setOfStr, nlohmann::json jsons) {
         bool check = false;
         for (auto elem : setOfStr) {
             check = false;
@@ -455,7 +455,8 @@ class MetricValidator {
                     }
                 }
             }
-            if (check == false) return check;
+            if (check == false)
+                return check;
         }
         return check;
     }
