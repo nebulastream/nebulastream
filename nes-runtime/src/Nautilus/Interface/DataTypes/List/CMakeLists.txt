@@ -14,4 +14,5 @@
 add_source_files(nes-runtime
         List.cpp
         ListValue.cpp
+        ListInvocationPlugin.cpp
         )

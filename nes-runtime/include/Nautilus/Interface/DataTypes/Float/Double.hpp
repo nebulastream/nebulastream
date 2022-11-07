@@ -23,6 +23,7 @@ namespace NES::Nautilus {
  */
 class Double : public TraceableType {
   public:
+    using RawType = double;
     static const inline auto type = TypeIdentifier::create<Double>();
     Double(double value);
     ~Double() {}

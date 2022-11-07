@@ -41,6 +41,7 @@ class Int : public TraceableType {
  */
 class Int8 : public Int {
   public:
+    using RawType = int8_t;
     static const inline auto type = TypeIdentifier::create<Int8>();
     Int8(int8_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -65,6 +66,7 @@ class Int8 : public Int {
  */
 class Int16 : public Int {
   public:
+    using RawType = int16_t;
     static const inline auto type = TypeIdentifier::create<Int16>();
     Int16(int16_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -114,6 +116,7 @@ class Int32 : public Int {
  */
 class Int64 : public Int {
   public:
+    using RawType = int64_t;
     static const inline auto type = TypeIdentifier::create<Int64>();
     Int64(int64_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -138,6 +141,7 @@ class Int64 : public Int {
  */
 class UInt8 : public Int {
   public:
+    using RawType = uint8_t;
     static const inline auto type = TypeIdentifier::create<UInt8>();
     UInt8(uint8_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -162,6 +166,7 @@ class UInt8 : public Int {
  */
 class UInt16 : public Int {
   public:
+    using RawType = uint16_t;
     static const inline auto type = TypeIdentifier::create<UInt16>();
     UInt16(uint16_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -185,6 +190,7 @@ class UInt16 : public Int {
  */
 class UInt32 : public Int {
   public:
+    using RawType = uint32_t;
     static const inline auto type = TypeIdentifier::create<UInt32>();
     UInt32(uint32_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
@@ -208,6 +214,7 @@ class UInt32 : public Int {
  */
 class UInt64 : public Int {
   public:
+    using RawType = uint64_t;
     static const inline auto type = TypeIdentifier::create<UInt64>();
     UInt64(uint64_t value);
     Nautilus::IR::Types::StampPtr getType() const override;
