@@ -22,7 +22,7 @@
 namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : WindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide)) {}
+    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide)) {}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
@@ -62,10 +62,15 @@ std::string SlidingWindow::toString() {
 }
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
-    return this->isSlidingWindow() && otherWindowType->isSlidingWindow()
-        && this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
-        && this->size.getTime() == otherWindowType->getSize().getTime()
-        && this->slide.getTime() == otherWindowType->getSlide().getTime();
+    if (otherWindowType->isSlidingWindow()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType);
+        return this->isSlidingWindow() && otherWindowType->isSlidingWindow()
+            && this->timeCharacteristic->getField()->getName() == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
+            && this->size.getTime() == timeBasedWindowType->getSize().getTime()
+            && this->slide.getTime() == timeBasedWindowType->getSlide().getTime();
+    } else {
+        return false;
+    }
 }
 
 }// namespace NES::Windowing

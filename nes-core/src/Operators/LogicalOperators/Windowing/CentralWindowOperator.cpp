@@ -22,7 +22,7 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 #include <z3++.h>
 
@@ -72,7 +72,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = windowDefinition->getWindowType();
+    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     windowType->inferStamp(inputSchema);
 
     //Construct output schema

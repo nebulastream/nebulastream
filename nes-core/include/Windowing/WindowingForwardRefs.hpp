@@ -103,6 +103,9 @@ class SliceMetaData;
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
+class TimeBasedWindowType;
+using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
+
 class TumblingWindow;
 using TumblingWindowPtr = std::shared_ptr<TumblingWindow>;
 

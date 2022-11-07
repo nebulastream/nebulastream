@@ -16,14 +16,14 @@
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
 
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {
 /**
  * A TumblingWindow assigns records to non-overlapping windows.
  */
-class TumblingWindow : public WindowType {
+class TumblingWindow : public TimeBasedWindowType {
   public:
     /**
     * Creates a new TumblingWindow that assigns

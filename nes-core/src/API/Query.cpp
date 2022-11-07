@@ -33,7 +33,7 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <iostream>
 #include <numeric>
 
@@ -142,7 +142,7 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
-    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName(); // assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
@@ -206,7 +206,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
 }
 
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
-    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName();
     // if no min and max occurrence is defined, apply count without filter
     if (!bounded) {
         return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
@@ -312,31 +312,33 @@ Query& Query::join(const Query& subQueryRhs,
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();
 
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                 Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-        } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                     API::Milliseconds(0),
-                    windowType->getTimeCharacteristic()->getTimeUnit())));
+                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
         }
     }
 
     if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
                 Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
             rightQueryPlan->appendOperatorAsNewRoot(op);
-        } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             auto op =
                 LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                     API::Milliseconds(0),
-                    windowType->getTimeCharacteristic()->getTimeUnit()));
+                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
             rightQueryPlan->appendOperatorAsNewRoot(op);
         }
     }

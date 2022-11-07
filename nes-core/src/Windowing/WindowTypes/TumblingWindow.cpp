@@ -23,10 +23,11 @@
 namespace NES::Windowing {
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : WindowType(std::move(timeCharacteristic)), size(std::move(size)) {}
+    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
-    return std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size)));
+    return std::dynamic_pointer_cast<WindowType>(std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic),
+                                                                                                 std::move(size))));
 }
 
 uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
@@ -62,8 +63,13 @@ std::string TumblingWindow::toString() {
 }
 
 bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
-    return this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
-        && this->isTumblingWindow() && otherWindowType->isTumblingWindow()
-        && this->size.getTime() == otherWindowType->getSize().getTime();
+    if (otherWindowType->isTumblingWindow()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType);
+        return this->timeCharacteristic->getField()->getName() == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
+            && this->size.getTime() == timeBasedWindowType->getSize().getTime();
+    } else {
+        return false;
+    }
+
 }
 }// namespace NES::Windowing
