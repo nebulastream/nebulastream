@@ -182,8 +182,9 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     if (!success) {
         FAIL() << "Rest server failed to start";
     }
-    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
-                               cpr::Parameters{{"nodeId", std::to_string(1)}});
+    cpr::AsyncResponse future =
+        cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/metrics"},
+                      cpr::Parameters{{"nodeId", std::to_string(1)}});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
@@ -214,7 +215,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
-    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
+    cpr::AsyncResponse future =
+        cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/storage"});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
@@ -226,9 +228,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(1));
     NES_INFO("Received Data for node 1: " << json.dump());
     auto jsonRegistration = json["registration"][0]["value"];
-    ASSERT_TRUE(
-        MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
-                                                    jsonRegistration));
+    ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
+                                                            jsonRegistration));
     ASSERT_EQ(jsonRegistration["NODE_ID"], 1);
 }
 
@@ -248,7 +249,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     }
     MonitoringServicePtr monitoringService = coordinator->getMonitoringService();
     auto expected = monitoringService->startMonitoringStreams();
-    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
+    cpr::AsyncResponse future =
+        cpr::GetAsync(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/streams"});
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);

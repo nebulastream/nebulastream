@@ -17,12 +17,12 @@
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <nlohmann/json.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <nlohmann/json.hpp>
 #include <utility>
 
 namespace NES {
