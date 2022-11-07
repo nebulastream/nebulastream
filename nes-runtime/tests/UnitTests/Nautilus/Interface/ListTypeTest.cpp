@@ -15,7 +15,8 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/List.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
+#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -49,11 +50,18 @@ class ListTypeTest : public testing::Test {
 };
 
 TEST_F(ListTypeTest, createListTest) {
-    auto list = RawList(10);
-    auto listRef = TypedRef<RawList>(list);
+    auto list = ListValue<int32_t>::create(10);
+    auto listRef = TypedRef<ListValue<int32_t>>(list);
     auto valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
     auto length = valueList->length();
     ASSERT_EQ(length, 10);
+    Value<> any = valueList;
+    Value<List> l = any.as<List>();
+    auto res = (valueList->equals(l));
+    auto res2 = (valueList->equals(l));
+    auto isList2 = dynamic_cast<List*>(&any.getValue());
+    auto isList = any->isType<TypedList<Int32>>();
+    ASSERT_TRUE(isList);
 }
 
 }// namespace NES::Nautilus
