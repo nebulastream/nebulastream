@@ -86,3 +86,6 @@ add_executable(runtime-log2-expression-test "Log2ExpressionTest.cpp")
 target_link_libraries(runtime-log2-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-log2-expression-test COMMAND runtime-log2-expression-test)
 
+add_executable(runtime-ln-expression-test "LnExpressionTest.cpp")
+target_link_libraries(runtime-ln-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-ln-expression-test COMMAND runtime-ln-expression-test)
