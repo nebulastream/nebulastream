@@ -40,6 +40,14 @@ namespace NES::Runtime::Execution::Expressions {
             return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int32>());
         } else if (subValue->isType<Int64>()) {
             return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int64>());
+        } else if (subValue->isType<UInt8>()) {
+            return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt8>());
+        } else if (subValue->isType<UInt16>()) {
+            return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt16>());
+        } else if (subValue->isType<UInt32>()) {
+            return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt32>());
+        } else if (subValue->isType<UInt64>()) {
+            return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt64>());
         } else if (subValue->isType<Float>()) {
             return FunctionCall<>("calculateLn", calculateLn, subValue.as<Float>());
         } else if (subValue->isType<Double>()) {
