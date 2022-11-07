@@ -15,7 +15,26 @@ template<class T>
 class ListValue final {
   public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
+    static constexpr size_t FIELD_SIZE = sizeof(T);
+
+    /**
+     * @brief Creates a ListValue for a specific number of elements.
+     * @param size number of elements
+     * @return ListValue*
+     */
     static ListValue* create(int32_t size);
+
+    /**
+     * @brief Creates a ListValue from a T* and a specific size.
+     * @param size number of elements
+     * @return ListValue*
+     */
+    static ListValue* create(const T* data, int32_t size);
+
+    /**
+     * @brief Loads a ListValue from a TupleBuffer.
+     * @return ListValue*
+     */
     static ListValue* load(Runtime::TupleBuffer& tupleBuffer);
 
     /**
@@ -23,6 +42,24 @@ class ListValue final {
      * @return int32_t
      */
     int32_t length() const;
+
+    /**
+     * @brief compares this and another list.
+     * @return boolean
+     */
+    bool equals(const ListValue<T>* other) const;
+
+    /**
+     * @brief Returns pointer to the underling array of values.
+     * @return T*
+     */
+    T* data();
+
+    /**
+     * @brief Returns const pointer to the underling array of values.
+     * @return T*
+     */
+    const T* c_data() const;
 
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.
@@ -44,8 +81,8 @@ int32_t getLength(const ListValue<T>* list) {
 }
 
 template<class T>
-bool listEquals(const ListValue<T>*, const ListValue<T>*) {
-    return true;
+bool listEquals(const ListValue<T>* left, const ListValue<T>* right) {
+    return left->equals(right);
 }
 
 }// namespace NES::Nautilus

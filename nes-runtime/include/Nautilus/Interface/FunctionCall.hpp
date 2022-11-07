@@ -81,7 +81,7 @@ auto transformReturnValues(Arg argument) {
     } else if constexpr (std::is_same<Arg, uint8_t>::value) {
         return Value<UInt8>(std::make_unique<UInt8>(argument));
     } else if constexpr (std::is_same<Arg, uint16_t>::value) {
-        return Value<UInt64>(std::make_unique<UInt64>(argument));
+        return Value<UInt16>(std::make_unique<UInt16>(argument));
     } else if constexpr (std::is_same<Arg, uint32_t>::value) {
         return Value<UInt32>(std::make_unique<UInt32>(argument));
     } else if constexpr (std::is_same<Arg, uint64_t>::value) {
