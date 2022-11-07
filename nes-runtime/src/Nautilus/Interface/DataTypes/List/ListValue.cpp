@@ -9,14 +9,9 @@
 namespace NES::Nautilus {
 
 template<typename T>
-int32_t ListValue<T>::length() const {
-    return size;
-}
-
-template<typename T>
 ListValue<T>* ListValue<T>::create(int32_t size) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
-    auto optBuffer = provider->getUnpooledBuffer(size);
+    auto optBuffer = provider->getUnpooledBuffer(size * FIELD_SIZE + DATA_FIELD_OFFSET);
     if (!optBuffer.has_value()) {
         NES_THROW_RUNTIME_ERROR("Buffer allocation failed for text");
     }
@@ -24,13 +19,45 @@ ListValue<T>* ListValue<T>::create(int32_t size) {
     buffer.retain();
     return new (buffer.getBuffer()) ListValue<T>(size);
 }
+
+template<typename T>
+ListValue<T>* ListValue<T>::create(const T* data, int32_t size) {
+    auto* list = create(size);
+    std::memcpy(list->data(), data, size * FIELD_SIZE);
+    return list;
+}
+
 template<typename T>
 ListValue<T>::ListValue(int32_t size) : size(size) {}
+
+template<typename T>
+T* ListValue<T>::data() {
+    return reinterpret_cast<T*>(this + DATA_FIELD_OFFSET);
+}
+
+template<typename T>
+const T* ListValue<T>::c_data() const {
+    return reinterpret_cast<const T*>(this + DATA_FIELD_OFFSET);
+}
+
+template<typename T>
+int32_t ListValue<T>::length() const {
+    return size;
+}
 
 template<typename T>
 ListValue<T>* ListValue<T>::load(Runtime::TupleBuffer& buffer) {
     buffer.retain();
     return reinterpret_cast<ListValue*>(buffer.getBuffer());
+}
+
+template<class T>
+bool ListValue<T>::equals(const ListValue<T>* other) const {
+    if (length() != other->length()) {
+        return false;
+    }
+    // mem compare of both underling arrays.
+    return std::memcmp(c_data(), other->c_data(), size * sizeof(T)) == 0;
 }
 
 template<typename T>
@@ -40,6 +67,16 @@ ListValue<T>::~ListValue() {
     Runtime::recycleTupleBuffer(this);
 }
 
+// Instantiate ListValue types
+template class ListValue<int8_t>;
+template class ListValue<int16_t>;
 template class ListValue<int32_t>;
+template class ListValue<int64_t>;
+template class ListValue<uint8_t>;
+template class ListValue<uint16_t>;
+template class ListValue<uint32_t>;
+template class ListValue<uint64_t>;
+template class ListValue<float>;
+template class ListValue<double>;
 
 }// namespace NES::Nautilus

@@ -57,11 +57,21 @@ TEST_F(ListTypeTest, createListTest) {
     ASSERT_EQ(length, 10);
     Value<> any = valueList;
     Value<List> l = any.as<List>();
-    auto res = (valueList->equals(l));
+    ASSERT_EQ(valueList, l);
     auto res2 = (valueList->equals(l));
     auto isList2 = dynamic_cast<List*>(&any.getValue());
     auto isList = any->isType<TypedList<Int32>>();
     ASSERT_TRUE(isList);
+}
+
+TEST_F(ListTypeTest, createListTypeFromArray) {
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list = ListValue<int32_t>::create(array, 6);
+    for (auto i = 0; i < 6; i++) {
+        ASSERT_EQ(array[i], i);
+    }
+    // free list value explicitly here.
+    list->~ListValue<int32_t>();
 }
 
 }// namespace NES::Nautilus
