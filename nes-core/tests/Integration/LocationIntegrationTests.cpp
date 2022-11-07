@@ -352,7 +352,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStarttime();
+    auto startTime = sourceCsv->getStartTime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
     auto timethirdloc = startTime + 200000000;
@@ -462,7 +462,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
             NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStarttime();
+    auto startTime = sourceCsv->getStartTime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
     auto timethirdloc = startTime + 200000000;
@@ -575,7 +575,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStarttime();
+    auto startTime = sourceCsv->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
@@ -692,7 +692,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStarttime();
+    auto startTime = sourceCsv->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;

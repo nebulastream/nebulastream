@@ -18,6 +18,7 @@
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
+using Waypoint = std::pair<Index::Experimental::LocationPtr, Timestamp>;
 
 /**
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
@@ -44,7 +45,7 @@ class LocationProviderCSV : public LocationProvider {
      *
      * @return the Timestamp recorded when this object was created
      */
-    [[nodiscard]] Timestamp getStarttime() const;
+    [[nodiscard]] Timestamp getStartTime() const;
 
     /**
      * @brief get the simulated last known location of the device. if s2 is enabled this will be an interpolated point along
@@ -59,12 +60,19 @@ class LocationProviderCSV : public LocationProvider {
      * @brief return a vector containing all the waypoints read from the csv file
      * @return a vector of pairs of Locations and Timestamps
      */
-    const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& getWaypoints() const;
+    [[nodiscard]] const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& getWaypoints() const;
 
   private:
+    /**
+     * @brief get the waypoint at the position of the iterator
+     * @param it: the iterator which marks the position in the vector of waypoints
+     * @return the waypoint
+     */
+    Waypoint getWaypointAt(std::vector<Waypoint>::iterator it);
+
     Timestamp startTime;
-    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>> waypoints;
-    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>::iterator nextWaypoint;
+    std::vector<Waypoint> waypoints;
+    std::vector<Waypoint>::iterator nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
