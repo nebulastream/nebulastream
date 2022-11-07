@@ -353,6 +353,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
                                       OperatorId operatorId,
+                                      OriginId originId,
                                       size_t numSourceLocalBuffers);
 #endif
 
