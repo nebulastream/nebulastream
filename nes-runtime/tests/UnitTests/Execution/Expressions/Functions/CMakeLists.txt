@@ -81,3 +81,8 @@ add_test(NAME runtime-gamma-expression-test COMMAND runtime-gamma-expression-tes
 add_executable(runtime-power-expression-test "PowerExpressionTest.cpp")
 target_link_libraries(runtime-power-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-power-expression-test COMMAND runtime-power-expression-test)
+
+add_executable(runtime-log2-expression-test "Log2ExpressionTest.cpp")
+target_link_libraries(runtime-log2-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-log2-expression-test COMMAND runtime-log2-expression-test)
+

@@ -39,6 +39,14 @@ Value<> Log2Expression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int32>());
     } else if (subValue->isType<Int64>()) {
         return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int64>());
+    } else if (subValue->isType<UInt8>()) {
+        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt8>());
+    } else if (subValue->isType<UInt16>()) {
+        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt16>());
+    } else if (subValue->isType<UInt32>()) {
+        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt32>());
+    } else if (subValue->isType<UInt64>()) {
+        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt64>());
     } else if (subValue->isType<Float>()) {
         return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Float>());
     } else if (subValue->isType<Double>()) {
