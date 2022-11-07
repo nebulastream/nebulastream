@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.40](https://github.com/nebulastream/nebulastream/tree/v0.3.40) (2022-11-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.39...v0.3.40)
+
+### Miscellaneous Issues ✌️
+
+- Make MonitoringController an oatpp endpoint \(Move to oatapp REST server\) [\#2838](https://github.com/nebulastream/nebulastream/issues/2838)
+
 ## [v0.3.39](https://github.com/nebulastream/nebulastream/tree/v0.3.39) (2022-11-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.38...v0.3.39)
