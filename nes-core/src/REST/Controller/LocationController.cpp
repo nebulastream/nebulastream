@@ -16,6 +16,7 @@
 #include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 
