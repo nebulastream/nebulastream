@@ -22,10 +22,7 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
                                      const JavaSerializedInstance& serializedInstance,
                                      const JavaUdfByteCodeList& byteCodeList,
                                      const SchemaPtr outputSchema)
-    : UdfDescriptor(methodName),
-      className(className),
-      serializedInstance(serializedInstance),
-      byteCodeList(byteCodeList),
+    : UdfDescriptor(methodName), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
       outputSchema(outputSchema) {
     if (className.empty()) {
         throw UdfException("The class name of a Java UDF must not be empty");

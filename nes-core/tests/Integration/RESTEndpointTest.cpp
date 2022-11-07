@@ -532,7 +532,10 @@ TEST_F(RESTEndpointTest, DISABLED_DelegateDeleteRequestToRemoveUdf) {
     auto coordinator = createAndStartCoordinator();
     // given the udfCatalog contains a Java UDF
     auto javaUdfDescriptor =
-        JavaUdfDescriptor::create("some_package.my_udf_class", "udf_method", {1}, {{"some_package.my_udf_class", {1}}},
+        JavaUdfDescriptor::create("some_package.my_udf_class",
+                                  "udf_method",
+                                  {1},
+                                  {{"some_package.my_udf_class", {1}}},
                                   std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
     auto udfCatalog = coordinator->getUdfCatalog();
     auto udfName = "my_udf"s;
@@ -551,7 +554,10 @@ TEST_F(RESTEndpointTest, DISABLED_DelegateGetRequestToRetrieveUdfDescriptor) {
     auto coordinator = createAndStartCoordinator();
     // given the udfCatalog contains a Java UDF
     auto javaUdfDescriptor =
-        JavaUdfDescriptor::create("some_package.my_udf_class", "udf_method", {1}, {{"some_package.my_udf_class", {1}}},
+        JavaUdfDescriptor::create("some_package.my_udf_class",
+                                  "udf_method",
+                                  {1},
+                                  {{"some_package.my_udf_class", {1}}},
                                   std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
     auto udfCatalog = coordinator->getUdfCatalog();
     auto udfName = "my_udf"s;

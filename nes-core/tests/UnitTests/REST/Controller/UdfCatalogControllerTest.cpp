@@ -101,12 +101,12 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
     }
 
     [[nodiscard]] static Catalogs::UDF::JavaUdfDescriptorPtr createJavaUdfDescriptor() {
-        return Catalogs::UDF::JavaUdfDescriptor::create("some_package.my_udf",
-                                                        "udf_method",
-                                                        {1},
-                                                        {{"some_package.my_udf", {1}}},
-                                                        std::make_shared<Schema>()->addField("attribute",
-                                                                                             DataTypeFactory::createUInt64()));
+        return Catalogs::UDF::JavaUdfDescriptor::create(
+            "some_package.my_udf",
+            "udf_method",
+            {1},
+            {{"some_package.my_udf", {1}}},
+            std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
     }
 
     [[nodiscard]] static GetJavaUdfDescriptorResponse
