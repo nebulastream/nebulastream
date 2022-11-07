@@ -118,6 +118,7 @@ template<>
 Value<Any> Value<Any>::castTo(const TypeIdentifier* toStamp) const {
     return CastToOp(*this, toStamp).value();
 }
+
 const TraceableType& TraceableType::asTraceableType(const Any& val) { return static_cast<const TraceableType&>(val); }
 
 Value<> evalBinary(
@@ -282,8 +283,9 @@ void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>&
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-template<>
-Value<Text>::Value(const char* s) {
+template<class ValueType>
+template<typename T, typename>
+Value<ValueType>::Value(const char* s) {
     std::string string(s);
     auto text = TextValue::create(string);
     auto textRef = TypedRef<TextValue>(text);
@@ -292,6 +294,7 @@ Value<Text>::Value(const char* s) {
 }
 
 template<>
+template<typename T, typename>
 Value<>::Value(const char* s) {
     std::string string(s);
     auto text = TextValue::create(string);
@@ -299,6 +302,5 @@ Value<>::Value(const char* s) {
     this->value = std::make_shared<Text>(textRef);
     this->ref = createNextValueReference(value->getType());
 }
-
 
 }// namespace NES::Nautilus

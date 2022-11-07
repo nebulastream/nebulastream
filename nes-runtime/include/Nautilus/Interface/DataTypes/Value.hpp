@@ -127,6 +127,7 @@ class Value : BaseValue {
      */
     Value(double value) : Value(Any::create<Double>(value)) { TraceConstOperation(this->value, this->ref); };
 
+    template<typename T = ValueType, typename = std::enable_if_t<std::negation<std::is_same<T, MemRef>>::value>>
     Value(const char* value);
 
     /*
@@ -137,6 +138,7 @@ class Value : BaseValue {
     /*
      * Creates a Value<MemRef> object from an std::int8_t*.
      */
+    template<typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
 
     Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
