@@ -48,14 +48,8 @@ class BinaryExpressionWrapper {
     }
 
     std::shared_ptr<ExpressionType> expression;
-
-
-
-    Nautilus::Value<> eval(Value<Any> left) {
-        auto record = Record({{"left", left}});
-        return expression -> execute(record); }
 };
 
-};// namespace NES::Runtime::Execution::Expressions
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
