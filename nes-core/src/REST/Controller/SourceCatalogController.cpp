@@ -147,7 +147,7 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                               << added);
                     //Prepare the response
                     web::json::value result{};
-                    result["Success"] = web::json::value::boolean(added);
+                    result["success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
