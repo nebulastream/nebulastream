@@ -30,4 +30,5 @@
          LGammaExpression.cpp
          PowerExpression.cpp
          Log2Expression.cpp
+         LnExpression.cpp
          )
