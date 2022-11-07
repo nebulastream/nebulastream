@@ -83,17 +83,19 @@ class KafkaSource : public DataSource {
 
   private:
     /**
-     * @brief method to connect mqtt using the host and port specified before
+     * @brief method to connect kafka using the host and port specified before
      * check if already connected, if not connect try to connect, if already connected return
      * @return bool indicating if connection could be established
      */
-    void _connect();
+    bool connect();
+
 
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
     cppkafka::Configuration config;
+    bool connected{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::unique_ptr<cppkafka::Consumer> consumer;
 };
