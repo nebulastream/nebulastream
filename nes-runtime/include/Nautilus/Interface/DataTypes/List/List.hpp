@@ -11,36 +11,84 @@
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Nautilus {
 
+/**
+ * @brief Base type for all lists. A list can have different values that all have the same underlying type.
+ * LISTs are typically used to store arrays of numbers.
+ */
 class List : public Nautilus::Any {
   public:
     static const inline auto type = TypeIdentifier::create<List>();
     List(const TypeIdentifier* type) : Any(type){};
+
+    /**
+     * @brief Return the length of the list.
+     * @return Value<Int32> as length.
+     */
     virtual Value<Int32> length() = 0;
+
+    /**
+     * @brief Returns if true if both lists are equals.
+     * @param otherList
+     * @return Value<Boolean>.
+     */
     virtual Value<Boolean> equals(const Value<List>& otherList) = 0;
+
+    /**
+    * @brief Reads one element from the text value at a specific index.
+    * @param index as Value<Int32>
+    * @return Value<>
+    */
+    virtual Value<> read(Value<Int32>& index) const = 0;
+
+    /**
+     * @brief Writes one element a specific index.
+     * @param index as Value<Int32>
+     * @param value as Value<>
+     */
+    virtual void write(Value<Int32>& index, const Value<>& value) = 0;
+
     virtual ~List() override;
 };
 
-template<typename BaseType>
-class TypedList : public List {
+/**
+ * @brief Checks if T is a valid list component type.
+ * Currently, lists are restricted to Ints and Floats.
+ * @tparam T
+ */
+template<typename T>
+concept IsListComponentType = std::is_base_of_v<Int, T> || std::is_same_v<Float, T> || std::is_same_v<T, Double>;
+
+/**
+ * @brief A typed list that contains values of a specific nautilus data types.
+ * @tparam BaseType
+ */
+template<IsListComponentType BaseType>
+class TypedList final : public List {
   public:
+    /**
+     * @brief Exposes the component type of this TypedList.
+     */
     using ComponentType = typename BaseType::RawType;
+    /**
+     * @brief Exposes the raw type of this TypedList.
+     */
     using RawType = ListValue<ComponentType>;
     static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
-    TypedList(TypedRef<ListValue<int32_t>> ref) : List(&type), rawReference(ref) {}
-    Value<Boolean> equals(const Value<List>& otherList) override {
-        if (getTypeIdentifier() != otherList->getTypeIdentifier()) {
-            return false;
-        }
-        if (this->length() != otherList->length()) {
-            return false;
-        }
-        auto value = otherList.as<TypedList<BaseType>>();
-        return FunctionCall("listEquals", listEquals<ComponentType>, rawReference, value->rawReference);
-    }
-    Value<Int32> length() override { return FunctionCall("getLength", getLength<ComponentType>, rawReference); }
-    AnyPtr copy() override { return std::make_shared<TypedList<BaseType>>(rawReference); };
 
+    /**
+     * @brief Constructor to create a typed list from a reference to the correct raw type.
+     * @param ref
+     */
+    TypedList(TypedRef<RawType> ref);
+    Value<Boolean> equals(const Value<List>& otherList) override;
+    Value<Int32> length() override;
+    AnyPtr copy() override;
+    Value<> read(Value<Int32>& index) const override;
+    void write(Value<Int32>& index, const Value<>& value) override;
+
+  private:
     const TypedRef<RawType> rawReference;
 };
+
 }// namespace NES::Nautilus
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_CUSTOMDATATYPES_List_HPP_

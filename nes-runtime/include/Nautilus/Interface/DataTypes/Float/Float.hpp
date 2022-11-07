@@ -23,8 +23,8 @@ namespace NES::Nautilus {
  */
 class Float : public TraceableType {
   public:
+    using RawType = float;
     static const inline auto type = TypeIdentifier::create<Float>();
-
     Float(float value);
     Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
