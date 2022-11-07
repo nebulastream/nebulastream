@@ -57,3 +57,15 @@ add_test(NAME runtime-max-expression-test COMMAND runtime-max-expression-test)
 add_executable(runtime-min-expression-test "MinExpressionTest.cpp")
 target_link_libraries(runtime-min-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-min-expression-test COMMAND runtime-min-expression-test)
+
+add_executable(runtime-factorial-expression-test "FactorialExpressionTest.cpp")
+target_link_libraries(runtime-factorial-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-factorial-expression-test COMMAND runtime-factorial-expression-test)
+
+add_executable(runtime-lgamma-expression-test "LGammaExpressionTest.cpp")
+target_link_libraries(runtime-lgamma-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-lgamma-expression-test COMMAND runtime-lgamma-expression-test)
+
+add_executable(runtime-gamma-expression-test "GammaExpressionTest.cpp")
+target_link_libraries(runtime-gamma-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-gamma-expression-test COMMAND runtime-gamma-expression-test)
