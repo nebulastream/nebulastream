@@ -491,7 +491,8 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
     auto windowType = windowDefinition->getWindowType();
 
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
-        auto timeCharacteristic = windowType->getTimeCharacteristic();
+        auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+        auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_WindowDetails_TimeCharacteristic();
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime);
@@ -624,7 +625,8 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
     ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightJoinKey(), joinDetails.mutable_onrightkey());
 
     auto windowType = joinDefinition->getWindowType();
-    auto timeCharacteristic = windowType->getTimeCharacteristic();
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+    auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_JoinDetails_TimeCharacteristic();
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime);

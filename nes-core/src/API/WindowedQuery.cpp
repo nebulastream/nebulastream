@@ -29,7 +29,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 #include <API/WindowedQuery.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
@@ -70,17 +70,18 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
     // TODO 2981: is allowedLateness required for threshold windows?
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");
-            if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-            } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+            } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                        Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
-                        windowType->getTimeCharacteristic()->getTimeUnit())));
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
             }
         } else {
             NES_DEBUG("add existing watermark strategy for window");
@@ -135,18 +136,19 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
     // TODO 2981: is allowedLateness required for threshold windows?
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
         // check if query contain watermark assigner, and add if missing (as default behaviour)
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");
-            if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-            } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+            } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                        Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
-                        windowType->getTimeCharacteristic()->getTimeUnit())));
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
             }
         } else {
             NES_DEBUG("add existing watermark strategy for window");

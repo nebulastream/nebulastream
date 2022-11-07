@@ -23,33 +23,12 @@
 
 namespace NES::Windowing {
 
-WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic)) {}
-
 WindowType::WindowType() = default;
-
-TimeCharacteristicPtr WindowType::getTimeCharacteristic() const { return this->timeCharacteristic; }
 
 bool WindowType::isSlidingWindow() { return false; }
 
 bool WindowType::isTumblingWindow() { return false; }
 
-bool WindowType::inferStamp(const SchemaPtr& schema) {
-    if ( (isTumblingWindow() || isSlidingWindow()) && timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
-        // If the window type is either tumbling or sliding window, check the field used to define the time
-        auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->hasFieldName(fieldName);
-        if (existingField) {
-            timeCharacteristic->getField()->setName(existingField->getName());
-            return true;
-        } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
-            return true;
-        } else {
-            NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
-            throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
-        }
-    }
-    return true;
-}
 bool WindowType::isThresholdWindow() { return false; }
 
 }// namespace NES::Windowing

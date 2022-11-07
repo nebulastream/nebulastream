@@ -23,13 +23,14 @@
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 KeyedSliceMergingOperatorHandler::KeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
     : sliceStaging(std::make_shared<KeyedSliceStaging>()), windowDefinition(windowDefinition) {
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
+    auto timeBasedWindowtype = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    windowSize = timeBasedWindowtype->getSize().getTime();
+    windowSlide = timeBasedWindowtype->getSlide().getTime();
 }
 
 void KeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,

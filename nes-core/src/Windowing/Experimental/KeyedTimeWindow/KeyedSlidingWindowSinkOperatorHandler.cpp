@@ -23,15 +23,16 @@
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 KeyedSlidingWindowSinkOperatorHandler::KeyedSlidingWindowSinkOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::shared_ptr<GlobalSliceStore<KeyedSlice>>& globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
+    auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    windowSize = timeBasedWindowType->getSize().getTime();
+    windowSlide = timeBasedWindowType->getSlide().getTime();
 }
 
 void KeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,

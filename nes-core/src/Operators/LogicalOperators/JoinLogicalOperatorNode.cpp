@@ -20,7 +20,7 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <utility>
 #include <z3++.h>
 
@@ -137,7 +137,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     }
 
     //Infer stamp of window definition
-    auto windowType = joinDefinition->getWindowType();
+    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
     windowType->inferStamp(leftInputSchema);
 
     //Reset output schema and add fields from left and right input schema
