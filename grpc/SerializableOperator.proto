@@ -442,6 +442,10 @@ message SerializableOperator{
       uint32 slide = 3;
     }
 
+    message ThresholdWindow {
+      SerializableExpression predicate = 1;
+    }
+
     message Aggregation {
       enum Type{
         SUM = 0;
