@@ -124,7 +124,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Configuration of Server Type using oatpp or cpprestSDK
      */
-    EnumOption<ServerType> restServerType = {SERVER_TYPE, ServerType::CPPRestSDK, "Sets the Server Type (Oatpp, CPPRestSDK)"};
+    EnumOption<ServerType> restServerType = {SERVER_TYPE, ServerType::Oatpp, "Sets the Server Type (Oatpp, CPPRestSDK)"};
 
     /**
      * Create a CoordinatorConfiguration object with default values.
