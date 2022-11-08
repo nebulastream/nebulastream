@@ -26,21 +26,21 @@ class TextTypeTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TextTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TextTypeTest test class." << std::endl;
+        NES_DEBUG("Setup TextTypeTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
-        std::cout << "Setup TextTypeTest test case." << std::endl;
+        NES_DEBUG("Setup TextTypeTest test case.")
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TextTypeTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down TextTypeTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TextTypeTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
@@ -65,7 +65,7 @@ TEST_F(TextTypeTest, createTextTest) {
     ASSERT_EQ(character, 'o');
     ASSERT_EQ(textValue, textValue3);
 
-    for (Value<UInt32> i = (uint32_t) 0; i < textValue->length(); i = i + (uint32_t)1) {
+    for (Value<UInt32> i = (uint32_t) 0; i < textValue->length(); i = i + (uint32_t) 1) {
         textValue[i] = (int8_t) 'z';
     }
     auto textValue4 = Value<Text>("zzzz");

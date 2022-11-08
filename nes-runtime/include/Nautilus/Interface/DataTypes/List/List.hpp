@@ -31,7 +31,7 @@ namespace NES::Nautilus {
 class List : public Nautilus::Any {
   public:
     static const inline auto type = TypeIdentifier::create<List>();
-    List(const TypeIdentifier* type) : Any(type){};
+    List(const TypeIdentifier* childType) : Any(childType){};
 
     /**
      * @brief Return the length of the list.
@@ -40,9 +40,10 @@ class List : public Nautilus::Any {
     virtual Value<UInt32> length() = 0;
 
     /**
-     * @brief Returns if true if both lists are equals.
+     * @brief Checks if this lists is equal to another list.
+     * Two lists are equal if they contain equal elements of the same type.
      * @param otherList
-     * @return Value<Boolean>.
+     * @return Value<Boolean>
      */
     virtual Value<Boolean> equals(const Value<List>& otherList) = 0;
 
@@ -78,6 +79,7 @@ concept IsListComponentType = std::is_base_of_v<Int, T> || std::is_same_v<Float,
 template<IsListComponentType BaseType>
 class TypedList final : public List {
   public:
+    static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
     /**
      * @brief Exposes the component type of this TypedList.
      */
@@ -86,19 +88,42 @@ class TypedList final : public List {
      * @brief Exposes the raw type of this TypedList.
      */
     using RawType = ListValue<ComponentType>;
-    static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
 
     /**
      * @brief Constructor to create a typed list from a reference to the correct raw type.
      * @param ref
      */
     TypedList(TypedRef<RawType> ref);
-    Value<Boolean> equals(const Value<List>& otherList) override;
+
+    /**
+     * @brief Return the length of the list.
+     * @return Value<Int32> as length.
+     */
     Value<UInt32> length() override;
-    AnyPtr copy() override;
+
+    /**
+    * @brief Checks if this lists is equal to another list.
+    * Two lists are equal if they contain equal elements of the same type.
+    * @param otherList
+    * @return Value<Boolean>
+    */
+    Value<Boolean> equals(const Value<List>& otherList) override;
+
+    /**
+    * @brief Reads one element from the text value at a specific index.
+    * @param index as Value<Int32>
+    * @return Value<>
+    */
     Value<> read(Value<UInt32>& index) const override;
+
+    /**
+     * @brief Writes one element a specific index.
+     * @param index as Value<Int32>
+     * @param value as Value<>
+     */
     void write(Value<UInt32>& index, const Value<>& value) override;
 
+    AnyPtr copy() override;
   private:
     const TypedRef<RawType> rawReference;
 };
