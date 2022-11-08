@@ -283,9 +283,9 @@ void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>&
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-template<class ValueType>
-template<typename T, typename>
-Value<ValueType>::Value(const char* s) {
+template<>
+template<>
+Value<Text>::Value(const char* s) {
     std::string string(s);
     auto text = TextValue::create(string);
     auto textRef = TypedRef<TextValue>(text);

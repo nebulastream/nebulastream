@@ -16,16 +16,19 @@
 namespace NES::Nautilus {
 
 template<typename T>
-Value<> transformReturnValues(ListValue<T>* value) {
+auto transformReturnValues(ListValue<T>* value) {
     auto textRef = TypedRef<ListValue<T>>(value);
-    return Value<>(TypedList<Int32>(textRef));
+    using ComponentType = typename RawTypeToNautilusType<T>::type;
+    return Value<TypedList<ComponentType>>(TypedList<ComponentType>(textRef));
 }
 
 template<typename T>
     requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
-Value<> createDefault() {
-    auto textRef = TypedRef<ListValue<typename std::remove_pointer<T>::type::RawType>>(nullptr);
-    return Value<>(TypedList<Int32>(textRef));
+auto createDefault() {
+    using RawType = typename std::remove_pointer<T>::type::RawType;
+    auto textRef = TypedRef<ListValue<RawType>>(nullptr);
+    using ComponentType = typename RawTypeToNautilusType<RawType>::type;
+    return Value<TypedList<ComponentType>>(TypedList<ComponentType>(textRef));
 }
 
 List::~List() { NES_DEBUG("~List"); }
@@ -67,9 +70,6 @@ ListValue<T>* reverseList(const ListValue<T>* i) {
 
 template<IsListComponentType BaseType>
 Value<> TypedList<BaseType>::read(Value<Int32>& index) const {
-    auto z = std::is_base_of<BaseListValue, typename std::remove_pointer<ListValue<int32_t>*>::type>::value;
-    auto x = std::is_base_of<BaseListValue, std::remove_pointer<ListValue<int32_t>*>::type>::value;
-    FunctionCall("reverseList", reverseList<ComponentType>, rawReference);
     return FunctionCall("readListIndex", readListIndex<ComponentType>, rawReference, index);
 }
 
@@ -85,17 +85,15 @@ void TypedList<BaseType>::write(Value<Int32>& index, const Value<>& value) {
 }
 
 // Instantiate List types
-//template class TypedList<Int8>;
-//template class TypedList<Int16>;
+template class TypedList<Int8>;
+template class TypedList<Int16>;
 template class TypedList<Int32>;
-//template class TypedList<Int64>;
-//template class TypedList<UInt8>;
-//template class TypedList<UInt16>;
-//template class TypedList<UInt32>;
-//template class TypedList<UInt64>;
-//template class TypedList<Float>;
-//template class TypedList<Double>;
-
-auto x = getNautilusType<int32_t>::type ;
+template class TypedList<Int64>;
+template class TypedList<UInt8>;
+template class TypedList<UInt16>;
+template class TypedList<UInt32>;
+template class TypedList<UInt64>;
+template class TypedList<Float>;
+template class TypedList<Double>;
 
 }// namespace NES::Nautilus
