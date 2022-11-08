@@ -12,17 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        RestEngine.cpp
-        Controller/BaseController.cpp
-        Controller/UdfCatalogController.cpp
-        Controller/ConnectivityController.cpp
-        Controller/MonitoringController.cpp
-        Controller/QueryCatalogController.cpp
-        Controller/QueryController.cpp
-        Controller/SourceCatalogController.cpp
-        Controller/TopologyController.cpp
-        Controller/MaintenanceController.cpp
-        Controller/LocationController.cpp
         Handlers/ErrorHandler.cpp
         RestServer.cpp
         RestServerInterruptHandler.cpp
