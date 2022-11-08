@@ -39,18 +39,20 @@ class AsinExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
+double calculateAsin(double x) { return std::asin(x); }
+
 TEST_F(AsinExpressionTest, evaluateSinExpressionFloat) {
     auto expression = UnaryExpressionWrapper<AsinExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 1));
-        ASSERT_EQ(resultValue, (double) M_2_PI);
+        ASSERT_EQ(resultValue, (double) calculateAsin((float) 1));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 1));
-        ASSERT_EQ(resultValue, (double) M_2_PI);
+        ASSERT_EQ(resultValue, (double) calculateAsin(1));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
