@@ -25,12 +25,7 @@ auto transformReturnValues(TextValue* value) {
     return Value<Text>(std::make_unique<Text>(textRef));
 }
 
-template<>
-auto createDefault<TextValue*>() {
-    auto textRef = TypedRef<TextValue>();
-    auto text = Value<Text>(std::make_unique<Text>(textRef));
-    return text;
-}
+
 
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
@@ -69,7 +64,7 @@ TextValue* uppercaseText(const TextValue* text) {
     return resultText;
 }
 
-const Value<Text> Text::upper() const { return FunctionCall<>("uppercaseText", uppercaseText, rawReference); }
+const Value<Text> Text::upper() const { return  FunctionCall<>("uppercaseText", uppercaseText, rawReference); }
 
 IR::Types::StampPtr Text::getType() const { return rawReference.getType(); }
 const TypedRef<TextValue>& Text::getReference() const { return rawReference; }
