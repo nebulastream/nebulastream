@@ -47,7 +47,7 @@ class Text final : public Nautilus::Any {
      * @brief Returns the number of characters of this text value.
      * @return Value<Int32>
      */
-    const Value<Int32> length() const;
+    const Value<UInt32> length() const;
 
     /**
      * @brief Converts this text to uppercase
@@ -60,7 +60,7 @@ class Text final : public Nautilus::Any {
      * @param index as Value<Int32>
      * @return Value<Int8> as character
      */
-    Value<Int8> read(Value<Int32> index);
+    Value<Int8> read(Value<UInt32> index);
 
     /**
      * @brief Writes one character from the text value at a specific index.
@@ -68,7 +68,7 @@ class Text final : public Nautilus::Any {
      * @param value as Value<Int8>
      * @return Value<Int8> as character
      */
-    void write(Value<Int32> index, Value<Int8> value);
+    void write(Value<UInt32> index, Value<Int8> value);
     IR::Types::StampPtr getType() const override;
     AnyPtr copy() override;
     [[maybe_unused]] const TypedRef<TextValue>& getReference() const;
@@ -78,7 +78,7 @@ class Text final : public Nautilus::Any {
 };
 
 template<typename T>
-    requires std::same_as<TextValue*, T>
+    requires std::is_same_v<TextValue*, T>
 auto createDefault() {
     auto textRef = TypedRef<TextValue>();
     auto text = Value<Text>(std::make_unique<Text>(textRef));

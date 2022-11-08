@@ -49,7 +49,7 @@ Value<Boolean> TypedList<BaseType>::equals(const Value<List>& otherList) {
 }
 
 template<IsListComponentType BaseType>
-Value<Int32> TypedList<BaseType>::length() {
+Value<UInt32> TypedList<BaseType>::length() {
     return FunctionCall("getLength", getLength<ComponentType>, rawReference);
 }
 
@@ -69,7 +69,7 @@ ListValue<T>* reverseList(const ListValue<T>* i) {
 }
 
 template<IsListComponentType BaseType>
-Value<> TypedList<BaseType>::read(Value<Int32>& index) const {
+Value<> TypedList<BaseType>::read(Value<UInt32>& index) const {
     return FunctionCall("readListIndex", readListIndex<ComponentType>, rawReference, index);
 }
 
@@ -79,7 +79,7 @@ void writeListIndex(ListValue<T>* list, int32_t index, T value) {
 }
 
 template<IsListComponentType BaseType>
-void TypedList<BaseType>::write(Value<Int32>& index, const Value<>& value) {
+void TypedList<BaseType>::write(Value<UInt32>& index, const Value<>& value) {
     auto baseValue = value.as<BaseType>();
     FunctionCall("writeListIndex", writeListIndex<ComponentType>, rawReference, index, baseValue);
 }

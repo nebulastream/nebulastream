@@ -24,7 +24,6 @@
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Nautilus {
 
-
 /**
  * @brief Base type for all lists. A list can have different values that all have the same underlying type.
  * LISTs are typically used to store arrays of numbers.
@@ -38,7 +37,7 @@ class List : public Nautilus::Any {
      * @brief Return the length of the list.
      * @return Value<Int32> as length.
      */
-    virtual Value<Int32> length() = 0;
+    virtual Value<UInt32> length() = 0;
 
     /**
      * @brief Returns if true if both lists are equals.
@@ -52,14 +51,14 @@ class List : public Nautilus::Any {
     * @param index as Value<Int32>
     * @return Value<>
     */
-    virtual Value<> read(Value<Int32>& index) const = 0;
+    virtual Value<> read(Value<UInt32>& index) const = 0;
 
     /**
      * @brief Writes one element a specific index.
      * @param index as Value<Int32>
      * @param value as Value<>
      */
-    virtual void write(Value<Int32>& index, const Value<>& value) = 0;
+    virtual void write(Value<UInt32>& index, const Value<>& value) = 0;
 
     virtual ~List() override;
 };
@@ -95,10 +94,10 @@ class TypedList final : public List {
      */
     TypedList(TypedRef<RawType> ref);
     Value<Boolean> equals(const Value<List>& otherList) override;
-    Value<Int32> length() override;
+    Value<UInt32> length() override;
     AnyPtr copy() override;
-    Value<> read(Value<Int32>& index) const override;
-    void write(Value<Int32>& index, const Value<>& value) override;
+    Value<> read(Value<UInt32>& index) const override;
+    void write(Value<UInt32>& index, const Value<>& value) override;
 
   private:
     const TypedRef<RawType> rawReference;

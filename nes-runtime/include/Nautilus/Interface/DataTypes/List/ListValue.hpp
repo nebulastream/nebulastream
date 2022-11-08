@@ -30,7 +30,7 @@ template<class T>
 class ListValue final : public BaseListValue {
   public:
     using RawType = T;
-    static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
+    static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     static constexpr size_t FIELD_SIZE = sizeof(T);
 
     /**
@@ -38,14 +38,14 @@ class ListValue final : public BaseListValue {
      * @param size number of elements
      * @return ListValue*
      */
-    static ListValue* create(int32_t size);
+    static ListValue* create(uint32_t size);
 
     /**
      * @brief Creates a ListValue from a T* and a specific size.
      * @param size number of elements
      * @return ListValue*
      */
-    static ListValue* create(const T* data, int32_t size);
+    static ListValue* create(const T* data, uint32_t size);
 
     /**
      * @brief Loads a ListValue from a TupleBuffer.
@@ -57,7 +57,7 @@ class ListValue final : public BaseListValue {
      * @brief Returns the length in the number of characters of the text value
      * @return int32_t
      */
-    int32_t length() const;
+    uint32_t length() const;
 
     /**
      * @brief compares this and another list.
@@ -87,12 +87,12 @@ class ListValue final : public BaseListValue {
      * @brief Private constructor to initialize a new text
      * @param size
      */
-    ListValue(int32_t size);
-    const int32_t size;
+    ListValue(uint32_t size);
+    const uint32_t size;
 };
 
 template<class T>
-int32_t getLength(const ListValue<T>* list) {
+uint32_t getLength(const ListValue<T>* list) {
     return list->length();
 }
 

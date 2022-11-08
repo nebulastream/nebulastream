@@ -50,7 +50,7 @@ TupleBuffer TupleBuffer::loadChildBuffer(uint32_t bufferIndex) noexcept {
 
 bool recycleTupleBuffer(void* bufferPointer) {
     NES_ASSERT2_FMT(bufferPointer, "invalid bufferPointer");
-    auto buffer = reinterpret_cast<int8_t*>(bufferPointer);
+    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
     return block->release();
 }

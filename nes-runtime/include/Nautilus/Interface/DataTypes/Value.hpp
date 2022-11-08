@@ -139,7 +139,9 @@ class Value : BaseValue {
      * Creates a Value<MemRef> object from an std::int8_t*.
      */
     template<typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
-    Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) {
+        TraceConstOperation(this->value, this->ref);
+    };
 
     Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
 
@@ -229,7 +231,8 @@ class Value : BaseValue {
         }
     }
 
-    ValueIndexReference inline operator[](Value<> index) { return ValueIndexReference(index, *this); };
+    ValueIndexReference inline operator[](uint32_t index);
+    ValueIndexReference inline operator[](Value<>& index) { return ValueIndexReference(index, *this); };
 
     Value<> castTo(const TypeIdentifier* toStamp) const;
 
@@ -260,24 +263,23 @@ Value<> MulOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> DivOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> EqualsOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> NegateOp(const Value<>& exp);
-const Value<> ReadListIndexOp(const Value<>& list, int32_t index);
 Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
-Value<> ReadArrayIndexOp(const Value<>& input, Value<Int32>& index);
-void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>& value);
+Value<> ReadArrayIndexOp(const Value<>& input, Value<UInt32>& index);
+void WriteArrayIndexOp(const Value<>& input, Value<UInt32>& index, const Value<>& value);
 
 template<typename LHS>
 Value<LHS>::ValueIndexReference::operator const Value<>() const {
-    auto idx = index->as<Int32>();
+    auto idx = index->as<UInt32>();
     return ReadArrayIndexOp(inputValue, idx);
 }
 
 template<typename LHS>
 typename Value<LHS>::ValueIndexReference& Value<LHS>::ValueIndexReference::operator=(const Value<>& value) {
-    auto idx = index->as<Int32>();
+    auto idx = index->as<UInt32>();
     WriteArrayIndexOp(inputValue, idx, value);
     return *this;
 }
@@ -512,6 +514,12 @@ std::ostream& operator<<(std::ostream& out, Value<T>& value) {
 template<typename T>
 void PrintTo(const Value<T>& value, std::ostream* os) {
     *os << value.getValue().toString();
+}
+
+template<class ValueType>
+typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint32_t index) {
+    auto indexValue = toValue(index);
+    return ValueIndexReference(indexValue, *this);
 }
 
 }// namespace NES::Nautilus
