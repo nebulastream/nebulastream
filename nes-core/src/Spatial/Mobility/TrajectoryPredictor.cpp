@@ -481,7 +481,7 @@ TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coverin
 void TrajectoryPredictor::scheduleReconnects() {
 #ifdef S2DEF
     if (!currentParentLocation) {
-        return ;
+        return;
     }
     double remainingTime;
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
@@ -490,7 +490,8 @@ void TrajectoryPredictor::scheduleReconnects() {
     reconnectVector->clear();
 
     //find the end of path coverage of our curent parent
-    auto reconnectionPointTuple = findPathCoverage(trajectoryLine, currentParentLocation.value(), S1Angle(defaultCoverageRadiusAngle));
+    auto reconnectionPointTuple =
+        findPathCoverage(trajectoryLine, currentParentLocation.value(), S1Angle(defaultCoverageRadiusAngle));
     if (reconnectionPointTuple.second.degrees() == 0) {
         return;
     }
