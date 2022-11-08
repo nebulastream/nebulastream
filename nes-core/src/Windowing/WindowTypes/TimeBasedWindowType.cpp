@@ -16,7 +16,6 @@ limitations under the License.
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <API/AttributeField.hpp>
-#include <sstream>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 
