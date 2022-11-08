@@ -60,7 +60,7 @@ class WindowManager {
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, KeyType key) {
         NES_TRACE("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
                                         << " allowedLateness=" << allowedLateness);
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType);
+        auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowType);
         // updates the maximal record ts
         // check if the slice store is empty or if the first slice has a larger ts then the current event.
         if (store->empty() || store->getSliceMetadata().front().getStartTs() > ts) {
@@ -118,7 +118,7 @@ class WindowManager {
     template<class SourceType, class KeyType>
     inline void sliceStream(const uint64_t ts, WindowedJoinSliceListStore<SourceType>* store, KeyType key) {
         NES_TRACE("WindowManager list " << id << ": sliceStream for ts=" << ts << " key=" << key);
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType);
+        auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowType);
         // updates the maximal record ts
         // store->updateMaxTs(ts);
         // check if the slice store is empty

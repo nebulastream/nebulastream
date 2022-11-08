@@ -326,7 +326,7 @@ TEST_F(QueryTest, windowAggregationWithAs) {
 }
 
 /**
- * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
+ * @brief Test if the system can create a logical query plan with a Threshold Window Operator
  */
 TEST_F(QueryTest, ThresholdWindowQueryTest) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);

@@ -47,7 +47,13 @@ class WindowType {
      * @return true if equal else false
      */
     virtual bool equal(WindowTypePtr otherWindowType) = 0;
-  };
+
+    /**
+       * Cast the current window type as a time based window type
+       * @return a shared pointer of TimeBasedWindowType
+       */
+    static std::shared_ptr<TimeBasedWindowType> asTimeBasedWindowType(std::shared_ptr<WindowType> windowType);
+};
 
 }// namespace NES::Windowing
 
