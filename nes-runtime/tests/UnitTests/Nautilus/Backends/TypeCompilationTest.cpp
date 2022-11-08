@@ -226,7 +226,7 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
 Value<> textTestFunction(Value<Text>& text) {
     auto length = text->length();
     auto list2 = text->upper();
-    for (Value<Int32> i = 0; i < text->length(); i = i + 1) {
+    for (Value<UInt32> i = (uint32_t) 0; i < text->length(); i = i + (uint32_t) 1) {
         text[i] = (int8_t) 'o';
     }
     return list2->length();

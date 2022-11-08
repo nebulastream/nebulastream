@@ -54,7 +54,7 @@ TEST_F(ListTypeTest, createListTest) {
     auto listRef = TypedRef<ListValue<int32_t>>(list);
     auto valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
     auto length = valueList->length();
-    ASSERT_EQ(length, 10);
+    ASSERT_EQ(length, (uint32_t)10);
     Value<> any = valueList;
     Value<List> l = any.as<List>();
     ASSERT_EQ(valueList, l);
