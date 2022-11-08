@@ -1,5 +1,32 @@
 # Changelog
 
+## [v0.3.42](https://github.com/nebulastream/nebulastream/tree/v0.3.42) (2022-11-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.41...v0.3.42)
+
+### Bug Fixes 🐛
+
+- In-/Decrement operators \(++/--\) are compiled as a BinaryExpressionNode [\#1885](https://github.com/nebulastream/nebulastream/issues/1885)
+- Setting wide bounds of a Datatype results in Integer overflow of bounds [\#1875](https://github.com/nebulastream/nebulastream/issues/1875)
+
+#### Query Compiler
+
+- \[Feature\] IR: Operations should identify result stamp  [\#2817](https://github.com/nebulastream/nebulastream/issues/2817)
+- IMPRO: Improve Codegen with Header Selection [\#2440](https://github.com/nebulastream/nebulastream/issues/2440)
+- Add executable Data Types [\#1921](https://github.com/nebulastream/nebulastream/issues/1921)
+- Integrate logging in codegeneration [\#1419](https://github.com/nebulastream/nebulastream/issues/1419)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add lgamma\(x\) expression [\#3045](https://github.com/nebulastream/nebulastream/issues/3045)
+- \[DBPRO\] Add gamma\(x\) expression [\#3044](https://github.com/nebulastream/nebulastream/issues/3044)
+- \[DBPRO\] Add factorial\(x\) expression [\#3042](https://github.com/nebulastream/nebulastream/issues/3042)
+- More features for BatchJoin implementation [\#2788](https://github.com/nebulastream/nebulastream/issues/2788)
+- create draft for Pipeline IR [\#2371](https://github.com/nebulastream/nebulastream/issues/2371)
+- Remove arity from code generator [\#2179](https://github.com/nebulastream/nebulastream/issues/2179)
+- NES\_FATAL\_ERROR\(\) will not fail query compilation [\#2139](https://github.com/nebulastream/nebulastream/issues/2139)
+- Add Round operator with user-defined precision [\#2044](https://github.com/nebulastream/nebulastream/issues/2044)
+
 ## [v0.3.41](https://github.com/nebulastream/nebulastream/tree/v0.3.41) (2022-11-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.40...v0.3.41)
