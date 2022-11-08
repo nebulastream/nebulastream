@@ -16,16 +16,15 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include <REST/OatppController/ConnectivityController.hpp>
-#include <REST/OatppController/LocationController.hpp>
-#include <REST/OatppController/MaintenanceController.hpp>
-#include <REST/OatppController/MonitoringController.hpp>
-#include <REST/OatppController/QueryCatalogController.hpp>
-#include <REST/OatppController/QueryController.hpp>
-#include <REST/OatppController/SourceCatalogController.hpp>
-#include <REST/OatppController/TopologyController.hpp>
-#include <REST/OatppController/UdfCatalogController.hpp>
-#include <REST/RestEngine.hpp>
+#include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/LocationController.hpp>
+#include <REST/Controller/MaintenanceController.hpp>
+#include <REST/Controller/MonitoringController.hpp>
+#include <REST/Controller/QueryCatalogController.hpp>
+#include <REST/Controller/QueryController.hpp>
+#include <REST/Controller/SourceCatalogController.hpp>
+#include <REST/Controller/TopologyController.hpp>
+#include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/RestServerInterruptHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -54,19 +53,7 @@ RestServer::RestServer(std::string host,
                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr& bufferManager,
                        const NES::Spatial::Index::Experimental::LocationServicePtr& locationService)
-    : restEngine(std::make_shared<RestEngine>(sourceCatalog,
-                                              coordinator,
-                                              queryCatalogService,
-                                              topology,
-                                              globalExecutionPlan,
-                                              queryService,
-                                              monitoringService,
-                                              maintenanceService,
-                                              globalQueryPlan,
-                                              udfCatalog,
-                                              bufferManager,
-                                              locationService)),
-      host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
+    : host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
       globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
       sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), locationService(locationService),
       maintenanceService(maintenanceService), monitoringService(std::move(monitoringService)),
@@ -101,46 +88,14 @@ bool RestServer::startWithOatpp() {
 }
 
 bool RestServer::startWithRestSDK() {
-    NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
-    RestServerInterruptHandler::hookUserInterruptHandler();
-    restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
-    try {
-        // wait for server initialization...
-        auto task = restEngine->accept();
-        NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
-        task.wait();
-        {
-            std::unique_lock lock(mutex);
-            while (!stopRequested) {
-                cvar.wait(lock);
-            }
-        }
-        restEngine.reset();
-        shutdownPromise.set_value(true);
-        NES_DEBUG("RestServer: after waitForUserInterrupt");
-    } catch (const std::exception& e) {
-        NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
-        shutdownPromise.set_exception(std::make_exception_ptr(e));
-        return false;
-    } catch (...) {
-        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
-        shutdownPromise.set_exception(std::current_exception());
-        return false;
-    }
-    return true;
+    NES_DEBUG("Starting REST server with cpp rest sdk is no longer available");
+    return false;
 }
 
 bool RestServer::stop() {
     if (!usingOatpp) {
-        NES_DEBUG("RestServer::stop");
-        auto task = restEngine->shutdown();
-        task.wait();
-        {
-            std::unique_lock lock(mutex);
-            stopRequested = true;
-            cvar.notify_all();
-        }
-        return shutdownPromise.get_future().get();
+        NES_DEBUG("Starting REST server with cpp rest sdk is no longer available");
+        return false;
     } else {
         std::unique_lock lock(mutex);
         stopRequested = true;
