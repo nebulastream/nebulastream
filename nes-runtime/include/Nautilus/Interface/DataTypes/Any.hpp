@@ -60,6 +60,39 @@ inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
     return value->copy();
 }
 
-}// namespace NES::Nautilus::Interface
+class Int8;
+class Int16;
+class Int32;
+class Int64;
+class UInt8;
+class UInt16;
+class UInt32;
+class UInt64;
+class Double;
+class Float;
+class Boolean;
+
+template<class T>
+struct RawTypeToNautilusType;
+
+#define SPECIALIZE_RAW_TO_NAUTILUS_TYPE(RawType, NautilusType)                                                                   \
+    template<>                                                                                                                   \
+    struct RawTypeToNautilusType<RawType> {                                                                                      \
+        typedef NautilusType type;                                                                                               \
+    };
+
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int8_t, Int8);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int16_t, Int16);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int32_t, Int32);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int64_t, Int64);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(uint8_t, UInt8);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(uint16_t, UInt16);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(uint32_t, UInt32);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(uint64_t, UInt64);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(double, Double);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(float, Float);
+SPECIALIZE_RAW_TO_NAUTILUS_TYPE(bool, Boolean);
+
+}// namespace NES::Nautilus
 
 #endif//NES_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_

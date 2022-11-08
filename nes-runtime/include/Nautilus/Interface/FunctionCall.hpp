@@ -26,17 +26,6 @@ namespace NES::Nautilus {
 template<class T>
 struct dependent_false : std::false_type {};
 
-template<IsAnyType T>
-struct getNautilusTypeHelper {
-    using type = T;
-};
-
-
-template<typename T, typename = std::enable_if_t<std::is_same<T, int16_t>::value>>
-auto getNautilusType() {
-    return getNautilusTypeHelper<Int16>();
-};
-
 template<typename Arg>
 auto transform(Arg argument) {
     if constexpr (std::is_same<Arg, Value<Int8>>::value) {
@@ -122,7 +111,7 @@ auto createDefault();
 class BaseListValue;
 template<typename T>
     requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
-Value<> createDefault();
+auto createDefault();
 
 template<typename R>
     requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
