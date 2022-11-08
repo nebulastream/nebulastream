@@ -34,7 +34,8 @@ bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
 
 std::string ThresholdWindow::toString() {
     std::stringstream ss;
-    ss << "Threshold Window";
+    ss << "Threshold Window: ";
+    ss << predicate->toString();
     ss << std::endl;
     return ss.str();
 }
