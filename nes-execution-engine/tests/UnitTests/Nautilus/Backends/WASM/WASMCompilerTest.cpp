@@ -16,7 +16,6 @@
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
@@ -60,7 +59,7 @@ TEST_F(WASMExpressionTest, addIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int32SubExpression() {
@@ -79,7 +78,7 @@ TEST_F(WASMExpressionTest, subIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int32MulExpression() {
@@ -98,7 +97,7 @@ TEST_F(WASMExpressionTest, mulIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int32DivExpression() {
@@ -117,7 +116,7 @@ TEST_F(WASMExpressionTest, divIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int32AddArgsExpression(Value<Int32> x) {
@@ -137,7 +136,7 @@ TEST_F(WASMExpressionTest, addInt32ArgsFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int64AddArgsExpression(Value<Int64> x) {
@@ -157,7 +156,7 @@ TEST_F(WASMExpressionTest, addInt64ArgsFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> booleanOrExpression() {
@@ -176,7 +175,7 @@ TEST_F(WASMExpressionTest, orBooleanFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> floatDivArgsExpression(Value<Float> x) {
@@ -196,7 +195,7 @@ TEST_F(WASMExpressionTest, divFloatFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> int32GTExpression(Value<Int32> x) {
@@ -216,7 +215,7 @@ TEST_F(WASMExpressionTest, gtInt32FunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> ifExpression(Value<Int32> x) {
@@ -239,7 +238,7 @@ TEST_F(WASMExpressionTest, ifFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 Value<> loopExpression(Value<Int32> x) {
@@ -262,7 +261,7 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    BinaryenModulePrint(wasm);
+    //BinaryenModulePrint(wasm);
 }
 
 }// namespace NES::Nautilus

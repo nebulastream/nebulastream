@@ -41,7 +41,6 @@
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Util/Mapping.hpp>
-#include <unordered_map>
 #include <map>
 
 namespace NES::Nautilus::Backends::WASM {
@@ -71,20 +70,16 @@ class WASMCompiler {
     /**
      * Remove?
      */
-    std::vector<BinaryenType> localVariables;
+    Mapping<std::string, BinaryenType> localVariables;
     /**
      * Contains all expressions that have been already added. That way we prevent adding duplicate
      * expressions.
      */
     std::map<std::string, BinaryenExpressionRef> consumed;
     /**
-     * Remove?
-     */
-    std::unordered_map<std::string, BinaryenExpressionRef> blockMapping;
-    /**
      * Contains branches between blocks, which need to be added after all blocks are created
      */
-    Mapping<std::string, std::string> blockLinking;
+    std::vector<std::tuple<std::string, std::string, BinaryenExpressionRef>> blockLinking;
     /**
      * Contains all expressions inside the current block
      */
@@ -101,6 +96,9 @@ class WASMCompiler {
      * Mapping of blocks and their contents
      */
     ExpressionsInBlocks blockExpressions;
+
+    int index;
+    int argIndex;
 
     void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
@@ -130,10 +128,13 @@ class WASMCompiler {
     BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
     BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
-    BinaryenExpressionRef generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
+    void generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
                                              BinaryenExpressions blockArgs);
-    void tmpFunc();
+    void genBody(BinaryenExpressions expressions);
     BinaryenExpressionRef generateBody();
+    void convertConstToLocal(std::string& key, BinaryenExpressions expressions);
+    //BinaryenExpressionRef WASMCompiler::generateLocalGet(std::string& key);
+    void tmp();
 };
 }// namespace NES::Nautilus::Backends::WASM
 

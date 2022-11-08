@@ -13,6 +13,7 @@
 */
 #ifndef NES_NAUTILUS_UTIL_MAPPING_HPP_
 #define NES_NAUTILUS_UTIL_MAPPING_HPP_
+#include <algorithm>
 #include <Util/Logger/Logger.hpp>
 #include <vector>
 
@@ -48,6 +49,23 @@ class Mapping {
     std::vector<std::pair<K, V>>& getMapping() { return mapping; }
     std::pair<K, V>& operator[](size_t index) { return mapping[index]; }
     void clear() { mapping.clear(); }
+    V& getLastValue() {
+        return mapping.end()->second;
+    }
+    void remove(K key) {
+        mapping.erase(std::remove(mapping.begin(), mapping.end(), std::make_pair(key, getValue(key))), mapping.end());
+    }
+    int getIndex(K key) {
+        int i;
+        auto it = find(mapping.begin(), mapping.end(), std::make_pair(key, getValue(key)));
+        if (it != mapping.end()) {
+            i = it - mapping.begin();
+        }
+        else {
+            i = -1;
+        }
+        return i;
+    }
   private:
     std::vector<std::pair<K, V>> mapping;
 };
