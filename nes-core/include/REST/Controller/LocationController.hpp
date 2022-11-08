@@ -11,44 +11,86 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_LOCATIONCONTROLLER_HPP
+#define NES_LOCATIONCONTROLLER_HPP
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
-#define NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
-#include <REST/Controller/BaseController.hpp>
-#include <memory>
-#include <optional>
+#include <REST/DTOs/ErrorResponse.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
+#include <Services/LocationService.hpp>
+#include <nlohmann/json.hpp>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include <Util/Logger/Logger.hpp>
 
+#include OATPP_CODEGEN_BEGIN(ApiController)
 namespace NES {
-
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 }// namespace Spatial::Index::Experimental
+namespace REST {
+namespace Controller {
+class LocationController : public oatpp::web::server::api::ApiController {
 
-//TODO: to be deleted with #3001
-class LocationController : public BaseController {
   public:
-    LocationController(NES::Spatial::Index::Experimental::LocationServicePtr locationService);
+    /**
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
+     */
+    LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                       oatpp::String completeRouterPrefix,
+                       const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
+                       ErrorHandlerPtr errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
+          errorHandler(errorHandler) {}
 
     /**
-     * Handling the Get requests for the locations
-     * @param path : the url of the rest request
-     * @param message : the user message
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @return
      */
-    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+    static std::shared_ptr<LocationController>
+    create(const std::shared_ptr<ObjectMapper>& objectMapper,
+           const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
+           std::string routerPrefixAddition,
+           ErrorHandlerPtr errorHandler) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, locationService, errorHandler);
+    }
+
+    ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
+        auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
+        if (nodeLocationJson == nullptr) {
+            NES_ERROR("node with id " << nodeId << " does not exist");
+            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
+        }
+        return createResponse(Status::CODE_200, nodeLocationJson.dump());
+    }
+
+    ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
+        auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
+        return createResponse(Status::CODE_200, locationsJson.dump());
+    }
+
+    ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
+        auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeId);
+        if (reconnectScheduleJson == nullptr) {
+            NES_ERROR("node with id " << nodeId << " does not exist");
+            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
+        }
+        return createResponse(Status::CODE_200, reconnectScheduleJson.dump());
+    }
 
   private:
-    /**
-     * Extracts the node id from the http requests parameters. if the parameter is not found or can not be converted to uint64_t,
-     * the appropriate error response will be send and the return value will be nullopt_t
-     * @param parameters: a map containing the string parameters
-     * @param httpRequest:
-     * @return : an optional containing the id or a nullopt_t if an error occurred.
-     */
-    static std::optional<uint64_t> getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
-                                                             const web::http::http_request& httpRequest);
-
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    ErrorHandlerPtr errorHandler;
 };
+}//namespace Controller
+}// namespace REST
 }// namespace NES
-#endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
+#include OATPP_CODEGEN_END(ApiController)
+#endif//NES_LOCATIONCONTROLLER_HPP

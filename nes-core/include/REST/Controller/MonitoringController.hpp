@@ -12,45 +12,163 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
+#ifndef NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
+#define NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
 
-#include <REST/Controller/BaseController.hpp>
-#include <REST/CpprestForwardedRefs.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Plans/Utils/PlanJsonGenerator.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Services/MonitoringService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/core/parser/Caret.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include <string>
+#include <vector>
+
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
+namespace Runtime {
+class BufferManager;
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
+}// namespace Runtime
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
+class ErrorHandler;
+using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
-//TODO: to be deleted with #3001
-class MonitoringController : public BaseController {
+namespace REST {
+namespace Controller {
+class MonitoringController : public oatpp::web::server::api::ApiController {
 
   public:
-    explicit MonitoringController(MonitoringServicePtr mService, Runtime::BufferManagerPtr bufferManager);
+    /**
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param monitoringService
+     * @param BufferManager
+     * @param ErrorHandler - for sending error messages via DTO
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "monitoringController")
+     */
+    MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                         MonitoringServicePtr mService,
+                         Runtime::BufferManagerPtr bManager,
+                         ErrorHandlerPtr eHandler,
+                         oatpp::String completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService),
+          bufferManager(bManager), errorHandler(eHandler) {}
 
     /**
-     * Handling the Get requests for the query
-     * @param path : the url of the rest request
-     * @param message : the user message
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param MonitoringServicePtr
+     * @param BufferManagerPtr
+     * @param ErrorHandlerPtr - for sending error messages via DTO
+     * @param routerPrefixAddition - controller specific router prefix (e.g "monitoringController/")
+     * @return MonitoringController
      */
-    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+    static std::shared_ptr<MonitoringController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                        MonitoringServicePtr mService,
+                                                        Runtime::BufferManagerPtr bManager,
+                                                        ErrorHandlerPtr errorHandler,
+                                                        std::string routerPrefixAddition) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<MonitoringController>(objectMapper, mService, bManager, errorHandler, completeRouterPrefix);
+    }
 
-    /**
-     * Handling the Post requests for the query
-     * @param path : the url of the rest request
-     * @param message : the user message
-     */
-    void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+    ENDPOINT("GET", "/start", getMonitoringControllerStart) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        nlohmann::json responseMsg;
+        responseMsg = monitoringService->startMonitoringStreams();
+        if (responseMsg == nullptr) {
+            return errorHandler->handleError(Status::CODE_500, "Request was not successful.");
+        }
+        return createResponse(Status::CODE_200, responseMsg.dump());
+    }
+
+    ENDPOINT("GET", "/stop", getMonitoringControllerStop) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        nlohmann::json responseMsg;
+        responseMsg = monitoringService->stopMonitoringStreams();
+        if (responseMsg == true) {
+            return createResponse(Status::CODE_200, responseMsg.dump());
+        }
+        return errorHandler->handleError(Status::CODE_500, "Stopping monitoring service was not successful.");
+    }
+
+    ENDPOINT("GET", "/streams", getMonitoringControllerStreams) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        nlohmann::json response;
+        response = monitoringService->getMonitoringStreams();
+        if (response == nullptr) {
+            return errorHandler->handleError(Status::CODE_500, "Getting streams of monitoring service was not successful.");
+        }
+        return createResponse(Status::CODE_200, response.dump());
+    }
+
+    ENDPOINT("GET", "/storage", getMonitoringControllerStorage) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        nlohmann::json response;
+        response = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
+        if (response == nullptr) {
+            return errorHandler->handleError(
+                Status::CODE_500,
+                "Getting newest monitoring data from metric store of monitoring service was not successful.");
+        }
+        return createResponse(Status::CODE_200, response.dump());
+    }
+
+    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromAllNodes) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        nlohmann::json response;
+        response = monitoringService->requestMonitoringDataFromAllNodesAsJson();
+        if (response == nullptr) {
+            return errorHandler->handleError(Status::CODE_500, "Getting monitoring data from all nodes was not successful.");
+        }
+        return createResponse(Status::CODE_200, response.dump());
+    }
+
+    ENDPOINT("GET", "/metrics", getMonitoringControllerDataFromOneNode, QUERY(UInt64, nodeId, "nodeId")) {
+        if (!monitoringService->isMonitoringEnabled()) {
+            return errorHandler->handleError(Status::CODE_500, "Error: Monitoring ist not enabled.");
+        }
+        try {
+            nlohmann::json response;
+            response = monitoringService->requestMonitoringDataAsJson(nodeId);
+            if (!(response == nullptr)) {
+                return createResponse(Status::CODE_200, response.dump());
+            }
+        } catch (std::runtime_error& ex) {
+            std::string errorMsg = ex.what();
+            return errorHandler->handleError(Status::CODE_500, errorMsg);
+        }
+        return errorHandler->handleError(Status::CODE_500, "Resource not found.");
+    }
 
   private:
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;
+    ErrorHandlerPtr errorHandler;
 };
-
-using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
-
+}// namespace Controller
+}// namespace REST
 }// namespace NES
-
-#endif// NES_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
+#include OATPP_CODEGEN_END(ApiController)
+#endif//NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
