@@ -16,7 +16,7 @@
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
 
@@ -35,9 +35,9 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount: " << tupleCount);
     std::vector<std::string> helperToken;
     // extract values as strings from JSON message - should be improved with JSON library
-    web::json::value parsedJSONObject;
+    nlohmann::json parsedJSONObject;
     try {
-        parsedJSONObject = web::json::value::parse(jsonTuple);
+        parsedJSONObject = nlohmann::json ::parse(jsonTuple);
     } catch (std::exception e) {
         NES_THROW_RUNTIME_ERROR(
             "JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
@@ -51,8 +51,8 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field: " << schemaKeys[fieldIndex]);
-            jsonValue = parsedJSONObject.at(schemaKeys[fieldIndex]).serialize();
-        } catch (web::json::json_exception& jsonException) {
+            jsonValue = parsedJSONObject[schemaKeys[fieldIndex]].dump();
+        } catch (nlohmann::json::exception jsonException) {
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }

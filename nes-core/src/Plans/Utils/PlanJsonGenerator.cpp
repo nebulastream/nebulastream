@@ -78,180 +78,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     return operatorType;
 }
 
-web::json::value PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
-
-    NES_INFO("UtilityFunctions: getting execution plan as JSON");
-
-    web::json::value executionPlanJson{};
-    std::vector<web::json::value> nodes = {};
-
-    std::vector<ExecutionNodePtr> executionNodes;
-    if (queryId != INVALID_QUERY_ID) {
-        executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    } else {
-        executionNodes = globalExecutionPlan->getAllExecutionNodes();
-    }
-
-    for (const ExecutionNodePtr& executionNode : executionNodes) {
-        web::json::value currentExecutionNodeJsonValue{};
-
-        currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
-        currentExecutionNodeJsonValue["topologyId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-        currentExecutionNodeJsonValue["topologyNodeIpAddress"] =
-            web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
-
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
-        std::vector<QueryPlanPtr> querySubPlans;
-        if (queryId == INVALID_QUERY_ID) {
-            queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
-        } else {
-            querySubPlans = executionNode->getQuerySubPlans(queryId);
-            if (!querySubPlans.empty()) {
-                queryToQuerySubPlansMap[queryId] = querySubPlans;
-            }
-        }
-
-        std::vector<web::json::value> scheduledQueries = {};
-
-        for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
-
-            std::vector<web::json::value> scheduledSubQueries;
-            web::json::value queryToQuerySubPlans{};
-            queryToQuerySubPlans["queryId"] = web::json::value::number(queryId);
-
-            // loop over all query sub plans inside the current executionNode
-            for (const QueryPlanPtr& querySubPlan : querySubPlans) {
-                // prepare json object to hold information on current query sub plan
-                web::json::value currentQuerySubPlan{};
-
-                // id of current query sub plan
-                currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
-
-                // add the string containing operator to the json object of current query sub plan
-                currentQuerySubPlan["operator"] = web::json::value::string(querySubPlan->toString());
-
-                scheduledSubQueries.push_back(currentQuerySubPlan);
-            }
-            queryToQuerySubPlans["querySubPlans"] = web::json::value::array(scheduledSubQueries);
-            scheduledQueries.push_back(queryToQuerySubPlans);
-        }
-
-        currentExecutionNodeJsonValue["ScheduledQueries"] = web::json::value::array(scheduledQueries);
-        nodes.push_back(currentExecutionNodeJsonValue);
-    }
-
-    // add `executionNodes` JSON array to the final JSON result
-    executionPlanJson["executionNodes"] = web::json::value::array(nodes);
-
-    return executionPlanJson;
-}
-
-web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
-
-    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-
-    web::json::value result{};
-    std::vector<web::json::value> nodes{};
-    std::vector<web::json::value> edges{};
-
-    OperatorNodePtr root = queryPlan->getRootOperators()[0];
-
-    if (!root) {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
-        auto node = web::json::value::object();
-        node["id"] = web::json::value::string("NONE");
-        node["name"] = web::json::value::string("NONE");
-        nodes.push_back(node);
-    } else {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
-        std::string rootOperatorType = getOperatorType(root);
-
-        // Create a node JSON object for the root operator
-        auto node = web::json::value::object();
-
-        // use the id of the root operator to fill the id field
-        node["id"] = web::json::value::string(std::to_string(root->getId()));
-
-        // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        node["name"] = web::json::value::string(rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
-
-        node["nodeType"] = web::json::value::string(rootOperatorType);
-
-        nodes.push_back(node);
-
-        // traverse to the children of the current operator
-        getChildren(root, nodes, edges);
-    }
-
-    // add `nodes` and `edges` JSON array to the final JSON result
-    result["nodes"] = web::json::value::array(nodes);
-    result["edges"] = web::json::value::array(edges);
-
-    return result;
-}
-
 void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
-                                    std::vector<web::json::value>& nodes,
-                                    std::vector<web::json::value>& edges) {
-
-    std::vector<web::json::value> childrenNode;
-
-    std::vector<NodePtr> children = root->getChildren();
-    if (children.empty()) {
-        NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
-        return;
-    }
-
-    NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
-    for (const NodePtr& child : children) {
-        // Create a node JSON object for the current operator
-        auto node = web::json::value::object();
-        auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
-        std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
-
-        // use the id of the current operator to fill the id field
-        node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
-
-        if (childOPeratorType == "WINDOW AGGREGATION") {
-            // window operator node needs more information, therefore we added information about window type and aggregation
-            node["name"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
-            std::cout << childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString() << std::endl;
-        } else {
-            // use concatenation of <operator type>(OP-<operator id>) to fill name field
-            // e.g. FILTER(OP-1)
-            node["name"] =
-                web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        }
-        node["nodeType"] = web::json::value::string(childOPeratorType);
-
-        // store current node JSON object to the `nodes` JSON array
-        nodes.push_back(node);
-
-        // Create an edge JSON object for current operator
-        auto edge = web::json::value::object();
-
-        if (childOPeratorType == "WINDOW AGGREGATION") {
-            // window operator node needs more information, therefore we added information about window type and aggregation
-            edge["source"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
-        } else {
-            edge["source"] =
-                web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        }
-
-        if (getOperatorType(root) == "WINDOW AGGREGATION") {
-            edge["target"] = web::json::value::string(root->as<WindowLogicalOperatorNode>()->toString());
-        } else {
-            edge["target"] = web::json::value::string(getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
-        }
-        // store current edge JSON object to `edges` JSON array
-        edges.push_back(edge);
-
-        // traverse to the children of current operator
-        getChildren(childLogicalOperatorNode, nodes, edges);
-    }
-}
-
-void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
                                             std::vector<nlohmann::json>& nodes,
                                             std::vector<nlohmann::json>& edges) {
 
@@ -306,11 +133,11 @@ void PlanJsonGenerator::getChildrenNlohmann(OperatorNodePtr const& root,
         edges.push_back(edge);
 
         // traverse to the children of current operator
-        getChildrenNlohmann(childLogicalOperatorNode, nodes, edges);
+        getChildren(childLogicalOperatorNode, nodes, edges);
     }
 }
 
-nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
+nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                  QueryId queryId) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
@@ -367,7 +194,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsNlohmannJson(const GlobalExe
     return executionPlanJson;
 }
 
-nlohmann::json PlanJsonGenerator::getQueryPlanAsNlohmannJson(const QueryPlanPtr& queryPlan) {
+nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
 
     NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
 
@@ -401,7 +228,7 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsNlohmannJson(const QueryPlanPtr&
         nodes.push_back(node);
 
         // traverse to the children of the current operator
-        getChildrenNlohmann(root, nodes, edges);
+        getChildren(root, nodes, edges);
     }
 
     // add `nodes` and `edges` JSON array to the final JSON result

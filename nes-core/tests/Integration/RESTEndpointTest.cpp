@@ -29,8 +29,8 @@
 #include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <cpprest/http_client.h>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
 
@@ -52,6 +52,7 @@ class RESTEndpointTest : public Testing::NESBaseTest {
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
         NES_INFO("RESTEndpointTest: Coordinator started successfully");
@@ -90,18 +91,12 @@ class RESTEndpointTest : public Testing::NESBaseTest {
         NES_INFO("RESTEndpointTest: Stop worker " << id);
         EXPECT_TRUE(worker.stop(true));
     }
-
-    [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) const {
-        auto url = "http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/" + restEndpoint;
-        return web::http::client::http_client{url};
-    }
 };
 
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
-    auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -122,31 +117,21 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("get execution plan request body=" << getExecutionPlanStringSource.str());
     string getExecutionPlanRequestBody = getExecutionPlanStringSource.str();
-    web::json::value getExecutionPlanJsonReturn;
+    nlohmann::json getExecutionPlanJsonReturn;
 
-    web::uri_builder builder(("/"));
-    builder.append_query(("queryId"), queryId);
-    getExecutionPlanClient.request(web::http::methods::GET, builder.to_string())
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&getExecutionPlanJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("get execution-plan: set return");
-                getExecutionPlanJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("get execution-plan: error while setting return" << e.what());
-            }
-        })
-        .wait();
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
+                           cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    future.wait();
+    auto result = future.get();
+    EXPECT_EQ(result.status_code, 200l);
+    getExecutionPlanJsonReturn = nlohmann::json::parse(result.text);
 
     NES_INFO("get execution-plan: try to acc return");
-    NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
+    NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.dump());
     const auto* expected =
         R"({"executionNodes":[{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(4)\n  SOURCE(1,default_logical)\n","querySubPlanId":1}]}],"executionNodeId":2,"topologyId":2,"topologyNodeIpAddress":"127.0.0.1"},{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(2)\n  SOURCE(3,)\n","querySubPlanId":2}]}],"executionNodeId":1,"topologyId":1,"topologyNodeIpAddress":"127.0.0.1"}]})";
     NES_DEBUG("getExecutionPlan response: expected = " << expected);
-    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
+    ASSERT_EQ(getExecutionPlanJsonReturn.dump(), expected);
 
     NES_INFO("RESTEndpointTest: Remove query");
     ;
@@ -160,8 +145,6 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
-    //make httpclient with new endpoint -ex:
-    auto httpClient = createRestClient("query/execute-query-ex");
 
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
@@ -175,21 +158,13 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
 
     std::string msg = request.SerializeAsString();
 
-    web::json::value postJsonReturn;
-    httpClient.request(web::http::methods::POST, "", msg)
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post execute-query-ex: set return");
-                postJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
+    nlohmann::json postJsonReturn;
+
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"},
+                                 cpr::Body{msg});
+    future.wait();
+    auto result = future.get();
+    postJsonReturn = nlohmann::json::parse(result.text);
 
     stopCoordinator(*crd);
 }
@@ -197,8 +172,6 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     auto crd = createAndStartCoordinator();
-    //make httpclient with new endpoint -ex:
-    auto httpClient = createRestClient("query/execute-query-ex");
 
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -234,30 +207,22 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
 
     std::string msg = request.SerializeAsString();
 
-    web::json::value postJsonReturn;
-    httpClient.request(web::http::methods::POST, "", msg)
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post execute-query-ex: set return");
-                postJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
+    nlohmann::json postJsonReturn;
 
-    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(queryCatalogService->getEntryForQuery(postJsonReturn.at("queryId").as_integer()));
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan-ex"},
+                                 cpr::Body{msg});
+    future.wait();
+    auto result = future.get();
+    postJsonReturn = nlohmann::json::parse(result.text);
 
-    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn.at("queryId").as_integer()));
+    EXPECT_TRUE(postJsonReturn.contains("queryId"));
+    EXPECT_TRUE(queryCatalogService->getEntryForQuery(postJsonReturn["queryId"].get<int>()));
+
+    EXPECT_TRUE(postJsonReturn.contains("queryId"));
+    EXPECT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn["queryId"].get<int>()));
 
     auto insertedQueryPlan =
-        crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+        crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn["queryId"].get<int>())->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
@@ -273,29 +238,18 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
-    //make httpclient with new endpoint -ex:
-    auto httpClient = createRestClient("query/execute-query-ex");
 
     std::string msg = "hello";
-    web::json::value postJsonReturn;
+    nlohmann::json postJsonReturn;
     int statusCode = 0;
-    httpClient.request(web::http::methods::POST, "", msg)
-        .then([&statusCode](const web::http::http_response& response) {
-            statusCode = response.status_code();
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post execute-query-ex: set return");
-                postJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
+
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"},
+                                 cpr::Body{msg});
+    future.wait();
+    auto result = future.get();
+    postJsonReturn = nlohmann::json::parse(result.text);
     EXPECT_EQ(statusCode, 400);
-    EXPECT_TRUE(postJsonReturn.has_field("detail"));
+    EXPECT_TRUE(postJsonReturn.contains("detail"));
 
     stopWorker(*wrk1);
     stopCoordinator(*crd);
@@ -305,7 +259,6 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
 TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
-    auto getExecutionPlanClient = createRestClient("queryCatalogService/allRegisteredQueries");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -317,31 +270,20 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    // get the execution plan
-    web::json::value response;
-    web::uri_builder builder(("/"));
-    getExecutionPlanClient.request(web::http::methods::GET, builder.to_string())
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&response](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("get all registered queryIdAndCatalogEntryMapping: set return");
-                response = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("Error while setting return. " << e.what());
-            }
-        })
-        .wait();
+    cpr::AsyncResponse future1 =
+        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    future1.wait();
+    auto r = future1.get();
+    EXPECT_EQ(r.status_code, 200l);
+    nlohmann::json response = nlohmann::json::parse(r.text);
 
     //Assertions
-    auto catalogEntries = response.as_array();
-    NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(catalogEntries.size() == 1);
-    EXPECT_TRUE(catalogEntries.at(0).has_number_field("queryId"));
-    EXPECT_TRUE(catalogEntries.at(0).has_object_field("queryPlan"));
-    EXPECT_TRUE(catalogEntries.at(0).has_string_field("queryStatus"));
-    EXPECT_TRUE(catalogEntries.at(0).has_string_field("queryString"));
+    NES_DEBUG("Response: " << response.dump());
+    EXPECT_TRUE(response.size() == 1);
+    EXPECT_TRUE(response.at(0).contains("queryId"));
+    EXPECT_TRUE(response.at(0).contains("queryPlan"));
+    EXPECT_TRUE(response.at(0).contains("queryStatus"));
+    EXPECT_TRUE(response.at(0).contains("queryString"));
 
     NES_INFO("RESTEndpointTest: Remove query");
     ;
@@ -356,7 +298,6 @@ TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
     auto wrk2 = createAndStartWorker(2);
-    auto addParent = createRestClient("topology/addParent");
 
     uint64_t parentId = wrk2->getWorkerId();
     uint64_t childId = wrk1->getWorkerId();
@@ -366,27 +307,21 @@ TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
 
     ASSERT_FALSE(child->containAsParent(parent));
 
-    web::json::value response;
-    std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
-    addParent.request(web::http::methods::POST, "", msg)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&response](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("get status of adding parent");
-                response = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("Error while setting return. " << e.what());
-            }
-        })
-        .wait();
+    nlohmann::json request {};
+    request["parentId"] = parentId;
+    request["childId"] = childId;
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                              cpr::Header{{"Content-Type", "application/json"}},
+                              cpr::Body{request.dump()});
+    future.wait();
+    auto response = future.get();
+    EXPECT_EQ(response.status_code, 200l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
 
-    auto addParentResponse = response.as_object();
-    NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(addParentResponse.size() == 1);
-    EXPECT_TRUE(addParentResponse.find("Success") != addParentResponse.end());
-    EXPECT_TRUE(addParentResponse.at("Success").as_bool());
+    NES_DEBUG("Response: " << res.dump());
+    EXPECT_TRUE(res.size() == 1);
+    EXPECT_TRUE(res.contains("success"));
+    EXPECT_TRUE(res["success"]);
 
     ASSERT_TRUE(child->containAsParent(parent));
 
@@ -396,85 +331,8 @@ TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
 }
 
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_testRemoveParentTopology) {
-    auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker();
-    auto removeParent = createRestClient("topology/removeParent");
-
-    uint64_t parentId = crd->getNesWorker()->getWorkerId();
-    uint64_t childId = wrk1->getWorkerId();
-
-    auto parent = crd->getTopology()->findNodeWithId(parentId);
-    auto child = crd->getTopology()->findNodeWithId(childId);
-
-    ASSERT_TRUE(child->containAsParent(parent));
-
-    web::json::value response;
-    std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
-    removeParent.request(web::http::methods::POST, "", msg)
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&response](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("get status of removing parent");
-                response = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("Error while setting return. " << e.what());
-            }
-        })
-        .wait();
-
-    auto removeParentResponse = response.as_object();
-    NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(removeParentResponse.size() == 1);
-    EXPECT_TRUE(removeParentResponse.find("Success") != removeParentResponse.end());
-    EXPECT_TRUE(removeParentResponse.at("Success").as_bool());
-
-    ASSERT_FALSE(child->containAsParent(parent));
-
-    stopWorker(*wrk1);
-    stopCoordinator(*crd);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_testConnectivityCheck) {
-    auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker();
-    auto getConnectivityCheck = createRestClient("connectivity/check");
-
-    web::json::value response;
-
-    web::uri_builder builder(("/"));
-    getConnectivityCheck.request(web::http::methods::GET, builder.to_string())
-        .then([](const web::http::http_response& response) {
-            return response.extract_json();
-        })
-        .then([&response](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("get status of checking connectivity");
-                response = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("Error while setting return. " << e.what());
-            }
-        })
-        .wait();
-
-    auto connectivityResponse = response.as_object();
-    NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(connectivityResponse.size() == 1);
-    EXPECT_TRUE(connectivityResponse.find("success") != connectivityResponse.end());
-    EXPECT_TRUE(connectivityResponse.at("success").as_bool());
-
-    stopWorker(*wrk1);
-    stopCoordinator(*crd);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testAddLogicalSourceEx) {
     auto crd = createAndStartCoordinator();
-    //make httpclient with new endpoint -ex:
-    auto httpClient = createRestClient("sourceCatalog/addLogicalStream-ex");
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = crd->getSourceCatalog();
 
@@ -487,177 +345,17 @@ TEST_F(RESTEndpointTest, DISABLED_testAddLogicalSourceEx) {
     std::string msg = request.SerializeAsString();
     request.release_schema();
 
-    web::json::value postJsonReturn;
-    int statusCode = 0;
-    httpClient.request(web::http::methods::POST, "", msg)
-        .then([&statusCode](const web::http::http_response& response) {
-            statusCode = response.status_code();
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post addLogicalSource-ex: set return");
-                postJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
+    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource-ex"},
+                              cpr::Header{{"Content-Type", "application/json"}},
+                              cpr::Body{msg});
+    future.wait();
+    auto response = future.get();
+    EXPECT_EQ(response.status_code, 200l);
+    nlohmann::json res = nlohmann::json::parse(response.text);
 
-    EXPECT_EQ(statusCode, 200);
-    EXPECT_TRUE(postJsonReturn.has_field("Success"));
+    EXPECT_TRUE(res.contains("success"));
     EXPECT_EQ(sourceCatalog->getAllLogicalSourceAsString().size(), 3U);
 
     stopCoordinator(*crd);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_DelegatePostRequestToRegisterUdf) {
-    auto coordinator = createAndStartCoordinator();
-    // when a REST client tries to register a Java UDF
-    auto udfName = "my_udf"s;
-    auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
-    auto restClient = createRestClient(UdfCatalogController::path_prefix);
-    auto request = restClient.request(web::http::methods::POST, "registerUdf", javaUdfRequest.SerializeAsString());
-    request.wait();
-    // then the Java UDF is stored in the UDF catalog of the coordinator
-    auto udfCatalog = coordinator->getUdfCatalog();
-    ASSERT_NE(udfCatalog->getUdfDescriptor(udfName), nullptr);
-    stopCoordinator(*coordinator);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_DelegateDeleteRequestToRemoveUdf) {
-    auto coordinator = createAndStartCoordinator();
-    // given the udfCatalog contains a Java UDF
-    auto javaUdfDescriptor =
-        JavaUdfDescriptor::create("some_package.my_udf_class",
-                                  "udf_method",
-                                  {1},
-                                  {{"some_package.my_udf_class", {1}}},
-                                  std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
-    auto udfCatalog = coordinator->getUdfCatalog();
-    auto udfName = "my_udf"s;
-    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
-    // when a REST client tries to remove the Java UDF
-    auto restClient = createRestClient(UdfCatalogController::path_prefix);
-    auto request = restClient.request(web::http::methods::DEL, "removeUdf?udfName="s + udfName);
-    request.wait();
-    // then the Java UDF is no longer stored in the UDF catalog
-    ASSERT_EQ(udfCatalog->getUdfDescriptor(udfName), nullptr);
-    stopCoordinator(*coordinator);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_DelegateGetRequestToRetrieveUdfDescriptor) {
-    auto coordinator = createAndStartCoordinator();
-    // given the udfCatalog contains a Java UDF
-    auto javaUdfDescriptor =
-        JavaUdfDescriptor::create("some_package.my_udf_class",
-                                  "udf_method",
-                                  {1},
-                                  {{"some_package.my_udf_class", {1}}},
-                                  std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
-    auto udfCatalog = coordinator->getUdfCatalog();
-    auto udfName = "my_udf"s;
-    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
-    // when a REST client tries to remove the Java UDF
-    auto restClient = createRestClient(UdfCatalogController::path_prefix);
-    auto request = restClient.request(web::http::methods::GET, "getUdfDescriptor?udfName="s + udfName);
-    // then the response contains the Java UDF
-    GetJavaUdfDescriptorResponse response;
-    request
-        .then([&](const web::http::http_response& http_response) {
-            return http_response.extract_string(true);
-        })
-        .then([&response](const pplx::task<std::string>& task) {
-            response.ParseFromString(task.get());
-        })
-        .wait();
-    ASSERT_TRUE(response.found());
-    // Skip verifying the remaining contents of the response, that is already done in UdfCatalogControllerTest.
-    stopCoordinator(*coordinator);
-}
-
-// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
-    auto coordinator = createAndStartCoordinator();
-    auto restClient = createRestClient("maintenance/mark");
-    web::json::value missingIDRequest;
-    missingIDRequest["migrationType"] = web::json::value::string("random");
-    web::json::value missingIDResponse;
-    int missingIDStatusCode = 0;
-    restClient.request(web::http::methods::POST, "maintenance/mark", missingIDRequest)
-        .then([&missingIDStatusCode](const web::http::http_response& response) {
-            missingIDStatusCode = response.status_code();
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&missingIDResponse](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post addLogicalSource-ex: set return");
-                missingIDResponse = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
-    EXPECT_EQ(missingIDStatusCode, 400);
-    EXPECT_TRUE(missingIDResponse.has_field("detail"));
-    EXPECT_EQ(missingIDResponse["detail"].as_string(), "Field id must be provided");
-
-    web::json::value missingMigrationTypeRequest;
-    missingMigrationTypeRequest["id"] = web::json::value::number(1);
-    web::json::value missingMigrationTypeResponse;
-    int missingMigrationTypeStatusCode = 0;
-    restClient.request(web::http::methods::POST, "maintenance/mark", missingMigrationTypeRequest)
-        .then([&missingMigrationTypeStatusCode](const web::http::http_response& response) {
-            missingMigrationTypeStatusCode = response.status_code();
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&missingMigrationTypeResponse](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post addLogicalSource-ex: set return");
-                missingMigrationTypeResponse = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
-    EXPECT_EQ(missingMigrationTypeStatusCode, 400);
-    EXPECT_TRUE(missingMigrationTypeResponse.has_field("detail"));
-    EXPECT_EQ(missingMigrationTypeResponse["detail"].as_string(), "Field migrationType must be provided");
-
-    web::json::value validRequest;
-    validRequest["id"] = web::json::value::number(1);
-    validRequest["migrationType"] = web::json::value::string("restart");
-    web::json::value validRequestResponse;
-    int validRequestStatusCode = 0;
-    restClient.request(web::http::methods::POST, "maintenance/mark", validRequest)
-        .then([&validRequestStatusCode](const web::http::http_response& response) {
-            validRequestStatusCode = response.status_code();
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&validRequestResponse](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("post addLogicalSource-ex: set return");
-                validRequestResponse = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
-            }
-        })
-        .wait();
-    EXPECT_EQ(validRequestStatusCode, 200);
-    EXPECT_TRUE(validRequestResponse.has_field("Info"));
-    EXPECT_TRUE(validRequestResponse.has_field("Node Id"));
-    EXPECT_TRUE(validRequestResponse.has_field("Migration Type"));
-    EXPECT_EQ(validRequestResponse["Info"].as_string(), "Successfully submitted Maintenance Request");
-    EXPECT_EQ(validRequestResponse["Node Id"].as_integer(), 1);
-    EXPECT_EQ(validRequestResponse["Migration Type"].as_string(), "restart");
-
-    stopCoordinator(*coordinator);
 }
 }// namespace NES
