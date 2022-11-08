@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class DegreesExpression : public Expression {
   public:
-    DegreesExpression(const ExpressionPtr& SubExpression);
+    DegreesExpression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
   private:
     const  ExpressionPtr SubExpression;
