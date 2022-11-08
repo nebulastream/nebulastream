@@ -46,10 +46,6 @@ endif()
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
-
-add_nes_unit_test(udf-catalog-controller-test "UnitTests/REST/Controller/UdfCatalogControllerTest.cpp")
-
-
 add_nes_unit_test(udf-test "UnitTests/Catalogs/UdfCatalogTest.cpp" "UnitTests/Catalogs/JavaUdfDescriptorTest.cpp" "UnitTests/Catalogs/PythonUdfDescriptorTest.cpp")
 
 
@@ -107,17 +103,8 @@ add_nes_unit_test(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTes
 ### NES Topology Tests ###
 add_nes_unit_test(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 
-
-### NES Query Controller Tests ###
-add_nes_unit_test(query-controller-test "UnitTests/REST/Controller/QueryControllerTest.cpp")
-
-
-### NES Topology Controller Tests ###
-add_nes_unit_test(topology-controller-tests "UnitTests/REST/Controller/TopologyControllerTest.cpp")
-
-### NES Location Controller Tests ###
-add_nes_unit_test(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
-
+#-------------------------------##############----------------------------------
+#------------------------------- # Integration Test Suite --------------------------------
 ### NES Connectivity Controller Tests ###
 add_nes_integration_test(connectivity-controller-integration-tests "Integration/REST/Controller/ConnectivityControllerTest.cpp")
 
