@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.43](https://github.com/nebulastream/nebulastream/tree/v0.3.43) (2022-11-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.42...v0.3.43)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add cot\(x\) expression [\#3040](https://github.com/nebulastream/nebulastream/issues/3040)
+- \[DBPRO\] Add asin\(x\) expression [\#3033](https://github.com/nebulastream/nebulastream/issues/3033)
+- Add Log operator with user-defined base [\#2043](https://github.com/nebulastream/nebulastream/issues/2043)
+- Decide upon output datatypes of arithmetic operations [\#2016](https://github.com/nebulastream/nebulastream/issues/2016)
+- Enable type-specific code generation [\#1986](https://github.com/nebulastream/nebulastream/issues/1986)
+
 ## [v0.3.42](https://github.com/nebulastream/nebulastream/tree/v0.3.42) (2022-11-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.41...v0.3.42)
