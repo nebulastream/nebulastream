@@ -14,12 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
-#include <utility>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 
@@ -30,5 +28,12 @@ bool WindowType::isSlidingWindow() { return false; }
 bool WindowType::isTumblingWindow() { return false; }
 
 bool WindowType::isThresholdWindow() { return false; }
-
+std::shared_ptr<TimeBasedWindowType> WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
+    if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {
+        return timeBasedWindowType;
+    } else {
+        NES_ERROR("Can not cast the window type to a time based window type");
+        NES_THROW_RUNTIME_ERROR("Can not cast the window type to a time based window type");
+    }
+}
 }// namespace NES::Windowing

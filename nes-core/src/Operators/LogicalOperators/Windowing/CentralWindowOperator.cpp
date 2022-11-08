@@ -72,7 +72,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowType->inferStamp(inputSchema);
 
     //Construct output schema

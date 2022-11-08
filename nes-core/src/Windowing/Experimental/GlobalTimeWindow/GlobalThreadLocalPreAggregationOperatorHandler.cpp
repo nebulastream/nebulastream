@@ -36,7 +36,7 @@ GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationO
     std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
     watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
-    auto windowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = windowType->getSize().getTime();
     windowSlide = windowType->getSlide().getTime();
 }

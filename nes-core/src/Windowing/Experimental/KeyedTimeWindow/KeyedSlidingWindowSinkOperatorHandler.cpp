@@ -30,7 +30,7 @@ KeyedSlidingWindowSinkOperatorHandler::KeyedSlidingWindowSinkOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::shared_ptr<GlobalSliceStore<KeyedSlice>>& globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
-    auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = timeBasedWindowType->getSize().getTime();
     windowSlide = timeBasedWindowType->getSlide().getTime();
 }

@@ -137,7 +137,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     }
 
     //Infer stamp of window definition
-    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
+    auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
     windowType->inferStamp(leftInputSchema);
 
     //Reset output schema and add fields from left and right input schema
