@@ -12,10 +12,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_IDENTIFIERSOFNETWORKRUNTIMEANDCOORDINATOR_HPP
-#define NES_IDENTIFIERSOFNETWORKRUNTIMEANDCOORDINATOR_HPP
+#ifndef NES_IDENTIFIERS_HPP
+#define NES_IDENTIFIERS_HPP
 
-#include <string>
+#include <cstdint>
 
 namespace NES{
 
@@ -27,4 +27,4 @@ using QueryId = uint64_t;
 
 }// namespace NES
 
-#endif//NES_IDENTIFIERSOFNETWORKRUNTIMEANDCOORDINATOR_HPP
+#endif//NES_IDENTIFIERS_HPP
