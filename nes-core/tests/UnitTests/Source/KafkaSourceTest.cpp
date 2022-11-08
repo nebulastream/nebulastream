@@ -35,7 +35,9 @@
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 
-#include <cppkafka/cppkafka.h>
+//#include <cppkafka/cppkafka.h>
+//#include "/home/zeuchste/git/cppkafka/build/include/cppkafka/cppkafka.h"
+#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h"
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -249,29 +251,27 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     //first call to connect
     auto tuple_bufferJ = kafkaSource->receiveData();
 
-    cppkafka::Configuration config = {
-        {"metadata.broker.list", brokers.c_str()},
-        {"group.id", group},
-        {"enable.auto.commit", true}
-    };
-    {
-        std::unique_ptr<cppkafka::Producer> producer = std::make_unique<cppkafka::Producer>(config);
-        //    cppkafka::Producer producer(config);
+    cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()},
+                                      {"group.id", group},
+                                      {"enable.auto.commit", true}};
+    cppkafka::Producer producer(config);
 
-        // Produce a message!
-        string message = "32";
-        producer->produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
-        producer->flush(std::chrono::seconds(5));
-    }
+    // Produce a message!
+    string message = "32";
+    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
+    producer.flush();
+//    rd_kafka_destroy(producer.get_handle());
+
     auto tuple_buffer = kafkaSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     auto* tuple = (char*) tuple_buffer->getBuffer();
     std::string str(tuple);
     std::string expected = "32";
-    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: "
-              << expected << ". Received value is: " << str);
+    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: " << expected
+                                                                                               << ". Received value is: " << str);
     EXPECT_EQ(str, expected);
-
+//    bool stop= nodeEngine->stop(true);
+//    std::cout << stop << std::endl;
 }
 
 // Disabled, because it requires a manually set up Kafka broker
