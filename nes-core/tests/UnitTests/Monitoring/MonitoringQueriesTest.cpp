@@ -41,7 +41,6 @@
 #include <Components/NesWorker.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryService.hpp>
-#include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
 #include <regex>
@@ -72,6 +71,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;
+        coordinatorConfig->restServerType = ServerType::Oatpp;
         return std::make_shared<NesCoordinator>(coordinatorConfig);
     }
 
