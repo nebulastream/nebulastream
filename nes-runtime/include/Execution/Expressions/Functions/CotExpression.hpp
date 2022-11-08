@@ -15,7 +15,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COTEXPRESSION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COTEXPRESSION_HPP_
 
-#include "Execution/Expressions/ReadFieldExpression.hpp"
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <cmath>
