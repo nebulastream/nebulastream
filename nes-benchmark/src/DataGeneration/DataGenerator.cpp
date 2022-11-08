@@ -12,38 +12,36 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
+#include <DataGeneration/YSBDataGenerator.h>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <API/Schema.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
-    DataGenerator::DataGenerator() {}
+DataGenerator::DataGenerator() {}
 
-    Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
+Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
 
-        auto schema = this->getSchema();
-        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
-            return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
-        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-            return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        }
-
-        return nullptr;
+    auto schema = this->getSchema();
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
     }
 
-    NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() {
-        return bufferManager->getBufferBlocking();
-    }
+    return nullptr;
+}
 
-    DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name,
-                                                          Yaml::Node generatorNode) {
-        if (name == "Default") {
-            return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
+NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() { return bufferManager->getBufferBlocking(); }
+
+DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::Node generatorNode) {
+    if (name == "Default") {
+        return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
         } else if (name == "Uniform") {
             if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
                 NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Uniform Datagenerator!");
@@ -62,11 +60,11 @@ namespace NES::Benchmark::DataGeneration {
             auto minValue = generatorNode["minValue"].As<uint64_t>();
             auto maxValue = generatorNode["maxValue"].As<uint64_t>();
             return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-
-        } else {
-            // For now we only support a single data generator
-            NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
-        }
+    } else if (name == "YSB") {
+        return std::make_shared<YSBDataGenerator>(bufferManager);
+    } else {
+        // For now we only support a single data generator
+        NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
     }
 
     void DataGenerator::setBufferManager(Runtime::BufferManagerPtr newBufferManager) {
@@ -74,3 +72,4 @@ namespace NES::Benchmark::DataGeneration {
     }
 
 }
+}// namespace NES::Benchmark::DataGeneration

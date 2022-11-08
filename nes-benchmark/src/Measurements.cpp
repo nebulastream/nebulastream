@@ -27,6 +27,8 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         measurementsCsv << "," << allProcessedTuples[measurementIdx];
         measurementsCsv << "," << allLatencySum[measurementIdx];
         measurementsCsv << "," << allQueueSizeSums[measurementIdx];
+        measurementsCsv << "," << allAvailGlobalBufferSum[measurementIdx];
+        measurementsCsv << "," << allAvailFixedBufferSum[measurementIdx];
 
         double timeDeltaSeconds = (allTimeStamps[measurementIdx+1] - allTimeStamps[measurementIdx]) / 1000;
         double tuplesPerSecond = (allProcessedTuples[measurementIdx+1] - allProcessedTuples[measurementIdx]) /
