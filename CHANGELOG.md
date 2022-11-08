@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.41](https://github.com/nebulastream/nebulastream/tree/v0.3.41) (2022-11-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.40...v0.3.41)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Trajectory predictor crashes when parent has no known location or when 2 waypoints in the csv have the same position [\#3084](https://github.com/nebulastream/nebulastream/issues/3084)
+
+### Miscellaneous Issues ✌️
+
+- \[JITCompiler\] Abstract tuple buffer accesses from record buffer. [\#3092](https://github.com/nebulastream/nebulastream/issues/3092)
+
 ## [v0.3.40](https://github.com/nebulastream/nebulastream/tree/v0.3.40) (2022-11-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.39...v0.3.40)
