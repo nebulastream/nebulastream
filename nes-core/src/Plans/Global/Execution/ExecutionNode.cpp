@@ -81,6 +81,20 @@ float ExecutionNode::getDownstreamRatio(){
     return this->downstreamRatio;
 }
 
+void ExecutionNode::setAvailableBandwidth(float bandwidth) { this->availableBandwidth = bandwidth; }
+
+float ExecutionNode::getAvailableBandwidth() {return this->availableBandwidth; }
+
+void ExecutionNode::increaseUsedBandwidth(float usedBandwidth) { this->usedBandwidth += usedBandwidth; }
+
+float ExecutionNode::getUsedBandwidth() { return this->usedBandwidth; }
+
+float ExecutionNode::getBandwidthRatio() { return (this->usedBandwidth / this->availableBandwidth); }
+
+bool ExecutionNode::isRoot() { return this->root; }
+
+void ExecutionNode::setRoot() { this->root = true; }
+
 uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
     // In this method we iterate from the root operators to all their child operator within a query sub plan

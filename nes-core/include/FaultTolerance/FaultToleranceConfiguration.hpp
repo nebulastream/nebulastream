@@ -48,20 +48,47 @@ namespace NES {
             int getAckSize() const;
             float getCheckpointSize() const;
             float getTotalAckSizePerSecond() const;
-            float getOutputQueueSize(int delayToDownstream) const;
+            float getOutputQueueSize(float delayToDownstream) const;
             float getTimeBetweenAcks() const;
+            QueryId getQueryId() const;
             void setProcessingGuarantee(FaultToleranceType processingGuarantee);
             void setTupleSize(int tupleSize);
             void setIngestionRate(int ingestionRate);
             void setAckRate(int ackRate);
             void setAckSize(int ackSize);
+            void setQueryId(QueryId queryId);
 
           private:
             FaultToleranceType processingGuarantee;
+
+            /**
+             * t_size
+             * tuple size in bytes
+             */
             int tuple_size;
+
+            /**
+             * n
+             * tuple ingestion rate per second
+             */
             int ingestion_rate;
+
+            /**
+             * i_t
+             * acknowledgement / checkpointing interval in tuples (sent every i_t tuples)
+             */
             int ack_rate;
+
+            /**
+             * a_size
+             * acknowledgement tuple / queue-trimming message size
+             */
             int ack_size;
+
+            /**
+             * QueryId of the relevant queue
+             */
+            QueryId queryId;
             };
         };
     // namespace NES

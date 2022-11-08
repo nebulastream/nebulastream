@@ -116,11 +116,25 @@ class ExecutionNode : public Node {
 
     float getDownstreamRatio();
 
+    void setAvailableBandwidth(float bandwidth);
+
+    float getAvailableBandwidth();
+
+    void increaseUsedBandwidth(float usedBandwidth);
+
+    float getUsedBandwidth();
+
+    float getBandwidthRatio();
+
     int getQueryDepth(QueryId queryId);
 
     void setQueryDepth(QueryId queryId, int depth);
 
     int getDelayToRoot(int delay);
+
+    bool isRoot();
+
+    void setRoot();
 
     bool equal(NodePtr const& rhs) const override;
 
@@ -154,6 +168,9 @@ class ExecutionNode : public Node {
     const std::vector<std::string> toMultilineString() const;
 
     float downstreamRatio = 0;
+    float availableBandwidth = 0;
+    float usedBandwidth = 0;
+    bool root = false;
     std::map<QueryId, float> adjustedCosts;
 };
 }// namespace NES

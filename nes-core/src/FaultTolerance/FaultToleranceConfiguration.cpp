@@ -56,7 +56,7 @@ int FaultToleranceConfiguration::getAckSize() const { return ack_size; }
  * i_s
  * @return acknowledgement tuple interval in seconds (one tuple sent every <ackInterval> seconds)
  */
-float FaultToleranceConfiguration::getAckInterval() const { return ( static_cast<float>(this->ack_rate) * static_cast<float>(this->ingestion_rate)); }
+float FaultToleranceConfiguration::getAckInterval() const { return ( static_cast<float>(this->ingestion_rate) / static_cast<float>(this->getAckRate())); }
 
 /**
  * c
@@ -74,17 +74,20 @@ float FaultToleranceConfiguration::getTotalAckSizePerSecond() const { return (th
  * t_i
  * @return time between acknowledgement tuples in seconds
  */
-float FaultToleranceConfiguration::getTimeBetweenAcks() const { return (1 / this->ingestion_rate); }
+float FaultToleranceConfiguration::getTimeBetweenAcks() const { return (static_cast<float>(1) / static_cast<float>(this->ingestion_rate)); }
 
 /**
  * o
  * @param delayToDownstream - network delay to the downstream node in seconds
  * @return output queue size in byte
  */
-float FaultToleranceConfiguration::getOutputQueueSize(int delayToDownstream) const {
+float FaultToleranceConfiguration::getOutputQueueSize(float delayToDownstream) const {
     return ((this->getTimeBetweenAcks() * this->tuple_size * this->tuple_size) + (delayToDownstream * this->ingestion_rate * this->tuple_size));
 }
 
+void FaultToleranceConfiguration::setQueryId(QueryId queryId){ this->queryId = queryId; };
+
+QueryId FaultToleranceConfiguration::getQueryId() const { return this->queryId; };
 
 void FaultToleranceConfiguration::setProcessingGuarantee(FaultToleranceType processingGuarantee) {
     FaultToleranceConfiguration::processingGuarantee = processingGuarantee;

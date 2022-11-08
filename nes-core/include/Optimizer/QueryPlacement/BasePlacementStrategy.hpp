@@ -131,7 +131,7 @@ class BasePlacementStrategy {
      */
     static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix);
 
-    static int getDepth(const GlobalExecutionPlanPtr& globalExecutionPlan, const ExecutionNodePtr& executionNode, int counter);
+    static int getDepth(const ExecutionNodePtr& executionNode);
     static std::vector<ExecutionNodePtr> getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth);
     //static float calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
     static float calcLinkWeight(const TopologyPtr& topology, ExecutionNodePtr upstreamNode, const ExecutionNodePtr& downstreamNode);
@@ -148,7 +148,8 @@ class BasePlacementStrategy {
                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    QueryId queryId);
     static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                             const ExecutionNodePtr& executionNode, int replicas, QueryId queryId);
+                                                             const ExecutionNodePtr& executionNode, int replicas, QueryId queryId,
+                                                             FaultToleranceConfigurationPtr ftConfig);
     static std::tuple<float,float,float> calcUpstreamBackup(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId,
                                                               FaultToleranceConfigurationPtr ftConfig);
     static std::tuple<float, float, float> calcCheckpointing(TopologyPtr topology,
@@ -160,7 +161,37 @@ class BasePlacementStrategy {
                       std::vector<float> upstreamBackupCosts);
     static int getDelayToRoot(ExecutionNodePtr executionNode, TopologyPtr topology, int delay);
 
+    static float calcUpstreamBackupProcessing(ExecutionNodePtr executionNode, QueryId queryId);
 
+    static float calcUpstreamBackupNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
+
+    static int calcUpstreamBackupMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
+
+    static float calcExecutionNodeNormalizedFTCost(int processingCost,
+                                            float networkingCost,
+                                            float memoryCost,
+                                            int maxProc,
+                                            int minProc,
+                                            float maxNetw,
+                                            float minNetw,
+                                            float maxMem,
+                                            float minMem);
+
+    static std::vector<ExecutionNodePtr> getSortedListForFirstFit(std::vector<ExecutionNodePtr> executionNodes,
+                                                           FaultToleranceConfigurationPtr ftConfig,
+                                                           TopologyPtr topology,
+                                                            GlobalExecutionPlanPtr globalExecutionPlan);
+
+    static std::pair<ExecutionNodePtr,FaultToleranceType> firstFitPlacement(std::vector<ExecutionNodePtr> executionNodes,
+                                                                             QueryId queryId,
+                                                                             FaultToleranceConfigurationPtr ftConfig,
+                                                                             TopologyPtr topology,
+                                                                             GlobalExecutionPlanPtr globalExecutionPlan);
+
+    static std::pair<FaultToleranceType,float> getBestApproachForNode(ExecutionNodePtr executionNode,
+                                                                       std::vector<ExecutionNodePtr> executionNodes,
+                                                                       FaultToleranceConfigurationPtr ftConfig,
+                                                                       TopologyPtr topology);
 
   protected:
     /**
@@ -284,6 +315,36 @@ class BasePlacementStrategy {
      */
     bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
 
+    std::tuple<float, float, float> calcCheckpointingOld(TopologyPtr topology,
+                                                         const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                         ExecutionNodePtr executionNode,
+                                                         QueryId queryId,
+                                                         FaultToleranceConfigurationPtr ftConfig);
+    static ExecutionNodePtr getExecutionNodeParent(ExecutionNodePtr executionNode);
+    static int getOperatorCostsRecursively(LogicalOperatorNodePtr operatorNode);
+    static int getExecutionNodeOperatorCosts(ExecutionNodePtr executionNode, QueryId queryId);
+    static int getStatefulOperatorCostsRecursively(LogicalOperatorNodePtr operatorNode);
+    static int getExecutionNodeStatefulOperatorCosts(ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcUpstreamBackupCost(ExecutionNodePtr executionNode,
+                                 std::vector<ExecutionNodePtr> executionNodes,
+                                 FaultToleranceConfigurationPtr ftConfig,
+                                 TopologyPtr topology);
+    static float calcActiveStandbyProcessing(ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcActiveStandbyNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
+    static int calcActiveStandbyMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
+    static float calcActiveStandbyCost(ExecutionNodePtr executionNode,
+                                std::vector<ExecutionNodePtr> executionNodes,
+                                FaultToleranceConfigurationPtr ftConfig,
+                                TopologyPtr topology);
+    static float calcCheckpointingProcessing(ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcCheckpointingNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
+    static int calcCheckpointingMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
+    static float calcCheckpointingCost(ExecutionNodePtr executionNode,
+                                std::vector<ExecutionNodePtr> executionNodes,
+                                FaultToleranceConfigurationPtr ftConfig,
+                                TopologyPtr topology);
+    static int getNumberOfStatefulOperatorsRecursively(LogicalOperatorNodePtr operatorNode);
+    static int getNumberOfStatefulOperatorsOnExecutionNodeRecursively(ExecutionNodePtr executionNode, QueryId queryId);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
