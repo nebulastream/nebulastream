@@ -21,7 +21,6 @@
 
 namespace NES::Nautilus {
 
-
 /**
  * @brief Nautilus value type for variable length text values.
  * The value type is physically represented by a TextValue.
@@ -69,9 +68,20 @@ class Text final : public Nautilus::Any {
      * @return Value<Int8> as character
      */
     void write(Value<UInt32> index, Value<Int8> value);
+
+    /**
+     * @brief Returns the stamp of this type
+     * @return IR::Types::StampPtr
+     */
     IR::Types::StampPtr getType() const override;
-    AnyPtr copy() override;
+
+    /**
+     * @brief Returns the underling reference
+     * @return TypedRef<TextValue>&
+     */
     [[maybe_unused]] const TypedRef<TextValue>& getReference() const;
+
+    AnyPtr copy() override;
 
   private:
     const TypedRef<TextValue> rawReference;

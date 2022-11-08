@@ -30,21 +30,21 @@ class ListTypeTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ListTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ListTypeTest test class." << std::endl;
+        NES_DEBUG("Setup ListTypeTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
-        std::cout << "Setup ListTypeTest test case." << std::endl;
+        NES_DEBUG("Setup ListTypeTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ListTypeTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down ListTypeTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ListTypeTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down ListTypeTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
@@ -54,7 +54,7 @@ TEST_F(ListTypeTest, createListTest) {
     auto listRef = TypedRef<ListValue<int32_t>>(list);
     auto valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
     auto length = valueList->length();
-    ASSERT_EQ(length, (uint32_t)10);
+    ASSERT_EQ(length, (uint32_t) 10);
     Value<> any = valueList;
     Value<List> l = any.as<List>();
     ASSERT_EQ(valueList, l);
