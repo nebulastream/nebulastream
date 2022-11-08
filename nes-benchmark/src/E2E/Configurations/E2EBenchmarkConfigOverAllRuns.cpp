@@ -30,11 +30,15 @@ namespace NES::Benchmark {
             ConfigurationOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "Measuring duration of one sample");
 
         numSources = ConfigurationOption<uint32_t>::create("numSources", 1, "Number of sources");
+        numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
         outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
         benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
         inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "How to read the input data");
         query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
+        dataGenerator = ConfigurationOption<std::string>::create("dataGenerator", "Default", "The source that provides the data");
+        logicalStreamName = ConfigurationOption<std::string>::create("logicalStreamName", "input", "Source stream name");
+
 
         for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
             std::string name = "input" + std::to_string(sourceCnt+1);
@@ -51,6 +55,10 @@ namespace NES::Benchmark {
             << "- inputType: " << inputType->getValue() << std::endl
             << "- query: " << query->getValue() << std::endl
             << "- numSources: " << numSources->getValueAsString() << std::endl
+            << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
+            << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
+            << "- dataGenerator: " << dataGenerator->getValue() << std::endl
+            << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl;
             << "- dataGenerations: " << getDataGeneratorsAsString() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl;
 
@@ -66,7 +74,10 @@ namespace NES::Benchmark {
         configOverAllRuns.benchmarkName->setValue(yamlConfig["benchmarkName"].As<std::string>());
         configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
         configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
+        configOverAllRuns.dataGenerator->setValue(yamlConfig["dataGenerator"].As<std::string>());
+        configOverAllRuns.logicalStreamName->setValue(yamlConfig["logicalStreamName"].As<std::string>());
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
+        configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
 
         if (yamlConfig["dataGenerators"].Size() > 0) {
             /* Iterating through the node
