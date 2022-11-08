@@ -14,9 +14,9 @@
 #ifndef NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
 #define NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 #include <stdio.h>
@@ -25,6 +25,17 @@ namespace NES::Nautilus {
 
 template<class T>
 struct dependent_false : std::false_type {};
+
+template<IsAnyType T>
+struct getNautilusTypeHelper {
+    using type = T;
+};
+
+
+template<typename T, typename = std::enable_if_t<std::is_same<T, int16_t>::value>>
+auto getNautilusType() {
+    return getNautilusTypeHelper<Int16>();
+};
 
 template<typename Arg>
 auto transform(Arg argument) {
@@ -63,7 +74,7 @@ template<typename Arg>
 Nautilus::Tracing::InputVariant getRefs(Arg& argument) {
     if constexpr (std::is_base_of<BaseTypedRef, Arg>::value) {
         return argument.value->ref;
-    } else{
+    } else {
         return argument.ref;
     }
 }
@@ -103,7 +114,18 @@ auto transformReturnValues(Arg argument) {
     }
 }
 
+class TextValue;
+template<typename T>
+    requires std::same_as<TextValue*, T>
+auto createDefault();
+
+class BaseListValue;
+template<typename T>
+    requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
+Value<> createDefault();
+
 template<typename R>
+    requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
 auto createDefault() {
     if constexpr (std::is_same<R, int8_t>::value) {
         return Value<Int8>(std::make_unique<Int8>((int8_t) 0));
@@ -127,6 +149,8 @@ auto createDefault() {
         return Value<Double>(std::make_unique<Double>(0.0));
     } else if constexpr (std::is_same<R, bool>::value) {
         return Value<Boolean>(std::make_unique<Boolean>(false));
+    } else if constexpr (std::is_same<R, void*>::value) {
+        return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     } else if constexpr (std::is_same<R, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     } else {
