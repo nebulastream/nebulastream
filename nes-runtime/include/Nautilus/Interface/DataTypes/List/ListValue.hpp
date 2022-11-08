@@ -18,6 +18,8 @@
 #include <string>
 namespace NES::Nautilus {
 
+class BaseListValue {};
+
 /**
  * @brief Physical data type that represents a ListValue.
  * A list value is backed by an tuple buffer.
@@ -25,8 +27,9 @@ namespace NES::Nautilus {
  * | ----- size 4 byte ----- | ----- variable length data
  */
 template<class T>
-class ListValue final {
+class ListValue final : public BaseListValue {
   public:
+    using RawType = T;
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
     static constexpr size_t FIELD_SIZE = sizeof(T);
 

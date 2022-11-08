@@ -20,6 +20,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus {
+
+
 /**
  * @brief Nautilus value type for variable length text values.
  * The value type is physically represented by a TextValue.
@@ -74,5 +76,13 @@ class Text final : public Nautilus::Any {
   private:
     const TypedRef<TextValue> rawReference;
 };
+
+template<typename T>
+    requires std::same_as<TextValue*, T>
+auto createDefault() {
+    auto textRef = TypedRef<TextValue>();
+    auto text = Value<Text>(std::make_unique<Text>(textRef));
+    return text;
+}
 }// namespace NES::Nautilus
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_CUSTOMDATATYPES_TEXT_HPP_
