@@ -11,21 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <REST/Controller/ConnectivityController.hpp>
-#include <cpprest/json.h>
-
-namespace NES {
-
-ConnectivityController::ConnectivityController() = default;
-
-void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
-    if (path[1] == "check") {
-        web::json::value result{};
-        result["success"] = web::json::value::boolean(true);
-        successMessageImpl(message, result);
-    } else {
-        resourceNotFoundImpl(message);
-    }
-}
-}// namespace NES
+#ifndef NES_NES_CORE_INCLUDE_REST_Controller_BASEROUTERPREFIX_HPP_
+#define NES_NES_CORE_INCLUDE_REST_Controller_BASEROUTERPREFIX_HPP_
+#include <string>
+static const std::string BASE_ROUTER_PREFIX = "/v1/nes";
+#endif//NES_NES_CORE_INCLUDE_REST_Controller_BASEROUTERPREFIX_HPP_

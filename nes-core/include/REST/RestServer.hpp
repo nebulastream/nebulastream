@@ -132,7 +132,6 @@ class RestServer {
     bool stop();
 
   private:
-    RestEnginePtr restEngine;
     std::string host;
     uint16_t port;
     NesCoordinatorWeakPtr coordinator;

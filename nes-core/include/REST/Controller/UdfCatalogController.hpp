@@ -11,12 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
-#include <REST/Controller/BaseController.hpp>
-#include <REST/CpprestForwardedRefs.hpp>
-#include <unordered_set>
+#ifndef NES_NES_CORE_INCLUDE_REST_Controller_UDFCATALOGCONTROLLER_HPP
+#define NES_NES_CORE_INCLUDE_REST_Controller_UDFCATALOGCONTROLLER_HPP
+#include <API/Schema.hpp>
+#include <Exceptions/UdfException.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <UdfCatalogService.pb.h>
+#include <nlohmann/json.hpp>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
+#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
 
@@ -25,52 +36,177 @@ class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs::UDF
 
+namespace REST {
+
+namespace Controller {
+
 using namespace Catalogs::UDF;
 
-//TODO: class to be deleted with #3001
-class UdfCatalogController : public BaseController {
+class UdfCatalogController : public oatpp::web::server::api::ApiController {
 
   public:
-    static const std::string path_prefix;
+    /**
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param udfCatalog - catalog for user defined functions
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
+     * @param errorHandler - responsible for handling errors
+     */
+    UdfCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                         UdfCatalogPtr udfCatalog,
+                         oatpp::String completeRouterPrefix,
+                         ErrorHandlerPtr errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(udfCatalog),
+          errorHandler(errorHandler) {}
 
-    explicit UdfCatalogController(UdfCatalogPtr udfCatalog) : udfCatalog(std::move(udfCatalog)) {}
+    /**
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param udfCatalog - catalog for user defined functions
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @param errorHandler - responsible for handling errors
+     */
+    static std::shared_ptr<UdfCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                        UdfCatalogPtr udfCatalog,
+                                                        std::string routerPrefixAddition,
+                                                        ErrorHandlerPtr errorHandler) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
+    }
 
-    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request);
+    /**
+     *  Endpoint to retrieve udf descriptor
+     *  returns 200 and descriptor if present
+     *  returns 400 if request doesnt contain udf as query parameter
+     *  returns 404 if no udf found with given name
+     *  returns 500 for internal server errors
+     * @param udf : name of udf to retrieve
+     */
+    ENDPOINT("GET", "/getUdfDescriptor", getUdfDescriptor, QUERY(String, udf, "udfName")) {
+        try {
+            std::string udfName = udf.getValue("");
+            auto udfDescriptor = UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(udfName));
+            GetJavaUdfDescriptorResponse response;
+            if (udfDescriptor == nullptr) {
+                // Signal that the UDF does not exist in the catalog.
+                NES_DEBUG("REST client tried retrieving UDF descriptor for non-existing Java UDF: " << udfName);
+                response.set_found(false);
+                return createResponse(Status::CODE_404, response.SerializeAsString());
+            } else {
+                // Return the UDF descriptor to the client.
+                NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
+                response.set_found(true);
+                auto* descriptorMessage = response.mutable_java_udf_descriptor();
+                descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
+                descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
+                descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
+                                                           udfDescriptor->getSerializedInstance().size());
+                for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
+                    auto* javaClass = descriptorMessage->add_classes();
+                    javaClass->set_class_name(className);
+                    javaClass->set_byte_code(byteCode.data(), byteCode.size());
+                }
+                return createResponse(Status::CODE_200, response.SerializeAsString());
+            }
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
 
-    void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request);
+    /**
+     * Endpoint to retrieve names of all udfs
+     * returns 200 and list of udf names. Lists can be empty
+     * returns 500 for internal server errors
+     *
+     */
+    ENDPOINT("GET", "/listUdfs", listUdfs) {
+        try {
+            nlohmann::json response;
+            response["udfs"] = nlohmann::json::array();
+            for (const auto& udf : udfCatalog->listUdfs()) {
+                response["udfs"].push_back(udf);
+            }
+            return createResponse(Status::CODE_200, response.dump());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
 
-    void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request);
+    /**
+     * Endpoint to register a java udf
+     * Request body must contain a protobuf message serialized as string
+     * returns 200 if java udf was successfully registered
+     * returns 400 if request body is emtpy or if errors occur parsing protobuf message into a JavaUdfDescriptor object
+     * returns 500 for internal server errors
+     */
+    ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
+        auto udfCatalog = this->udfCatalog;
+        try {
+            // Convert protobuf message contents to JavaUdfDescriptor.
+            std::string body = request.getValue("");
+            if (body.empty()) {
+                errorHandler->handleError(Status::CODE_400, "Protobuf message is empty");
+            }
+            NES_DEBUG("Parsing Java UDF descriptor from REST request");
+            auto javaUdfRequest = RegisterJavaUdfRequest{};
+            javaUdfRequest.ParseFromString(body);
+            auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
+            // C++ represents the bytes type of serialized_instance and byte_code as std::strings
+            // which have to be converted to typed byte arrays.
+            auto serializedInstance = JavaSerializedInstance{descriptorMessage.serialized_instance().begin(),
+                                                             descriptorMessage.serialized_instance().end()};
+            auto javaUdfByteCodeList = JavaUdfByteCodeList{};
+            javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
+            for (const auto& classDefinition : descriptorMessage.classes()) {
+                javaUdfByteCodeList.insert(
+                    {classDefinition.class_name(),
+                     JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
+            }
+            // Deserialize the output schema.
+            auto outputSchema = SchemaSerializationUtil::deserializeSchema(descriptorMessage.mutable_outputschema());
+            // Register JavaUdfDescriptor in UDF catalog and return success.
+            auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
+                                                               descriptorMessage.udf_method_name(),
+                                                               serializedInstance,
+                                                               javaUdfByteCodeList,
+                                                               outputSchema);
+            NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
+            udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+            return createResponse(Status::CODE_200, "Registered Java UDF");
+        } catch (const UdfException& e) {
+            NES_WARNING("Exception occurred during UDF registration: " << e.what());
+            // Just return the exception message to the client, not the stack trace.
+            return errorHandler->handleError(Status::CODE_400, e.getMessage());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
+
+    /**
+     * Endpoint for deleting udfs
+     * returns 200 if delete is successful or no such udf found
+     * returns 500 for internal server errors
+     * @param udf : name of udf to delete
+     */
+    ENDPOINT("DELETE", "/removeUdf", removeUdf, QUERY(String, udf, "udfName")) {
+        try {
+            std::string udfName = udf.getValue("");
+            NES_DEBUG("Removing Java UDF '" << udfName << "'");
+            auto removed = udfCatalog->removeUdf(udfName);
+            nlohmann::json result;
+            result["removed"] = removed;
+            return createResponse(Status::CODE_200, result.dump());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server error");
+        }
+    }
 
   private:
-    // Sanity check that the REST engine delegated the correct requests to this controller.
-    // If this is not the case, this method constructs a InternalServerError response and returns false.
-    // Handler methods should call this method in the beginning and immediately return when this method returns false.
-    [[nodiscard]] static bool verifyCorrectPathPrefix(const std::string& path_prefix, web::http::http_request& request);
-
-    // Check that a handler method was called for a known REST endpoint.
-    // If this is not the case, this method constructs a BadRequest response and returns false.
-    // Handler methods should call this method in the beginning and immediately return when this method returns false.
-    [[nodiscard]] static bool verifyCorrectEndpoints(const std::vector<std::string>& path,
-                                                     const std::unordered_set<std::string>& endpoints,
-                                                     web::http::http_request& request);
-
-    // Convenience method to check for a single known REST endpoint.
-    [[nodiscard]] static bool
-    verifyCorrectEndpoint(const std::vector<std::string>& path, const std::string& endpoint, web::http::http_request& request);
-
-    // Extract the udfName parameter from the URL query string.
-    // This method checks if the udfName parameter exists and if it's the only parameter.
-    // If either is not true, this method constructs a BadRequest response and returns false as the first return value.
-    // Otherwise, the UDF name is returned as the second return value;
-    // Handler methods may call this method in the beginning and should immediately return when this method returns false.
-    [[nodiscard]] static std::pair<bool, const std::string> extractUdfNameParameter(web::http::http_request& request);
-
-    void handleGetUdfDescriptor(web::http::http_request& request);
-
-    void handleListUdfs(web::http::http_request& request);
-
     UdfCatalogPtr udfCatalog;
+    ErrorHandlerPtr errorHandler;
 };
-
+}// namespace Controller
+}// namespace REST
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
+#include OATPP_CODEGEN_END(ApiController)
+#endif//NES_NES_CORE_INCLUDE_REST_Controller_UDFCATALOGCONTROLLER_HPP

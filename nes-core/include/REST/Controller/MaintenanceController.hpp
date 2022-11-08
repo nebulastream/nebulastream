@@ -11,35 +11,89 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_NES_CORE_INCLUDE_REST_Controller_MAINTENANCECONTROLLER_HPP_
+#define NES_NES_CORE_INCLUDE_REST_Controller_MAINTENANCECONTROLLER_HPP_
 
-#ifndef NES_MAINTENANCECONTROLLER_HPP
-#define NES_MAINTENANCECONTROLLER_HPP
-
-#include <REST/Controller/BaseController.hpp>
+#include <Phases/MigrationType.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
 #include <Services/MaintenanceService.hpp>
-#include <cpprest/http_msg.h>
+#include <nlohmann/json.hpp>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
-namespace NES::Experimental {
+namespace NES {
+namespace REST {
+namespace Controller {
 
-/**
- * @brief this class represents the web service handler for maintenance requests
- */
-//TODO: to be deleted with #3001
-class MaintenanceController : public BaseController {
+class MaintenanceController : public oatpp::web::server::api::ApiController {
 
   public:
-    explicit MaintenanceController(MaintenanceServicePtr maintenanceService);
+    /**
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
+     */
+    MaintenanceController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                          Experimental::MaintenanceServicePtr maintenanceService,
+                          oatpp::String completeRouterPrefix,
+                          ErrorHandlerPtr errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), maintenanceService(maintenanceService),
+          errorHandler(errorHandler) {}
 
     /**
-     * Handles Post request for marking nodes for maintenance
-     * @param paths : the url of the rest request
-     * @param message : the user message
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @return
      */
-    void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
+    static std::shared_ptr<MaintenanceController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                         Experimental::MaintenanceServicePtr maintenanceService,
+                                                         ErrorHandlerPtr errorHandler,
+                                                         std::string routerPrefixAddition) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<MaintenanceController>(objectMapper, maintenanceService, completeRouterPrefix, errorHandler);
+    }
+
+    ENDPOINT("POST", "/scheduleMaintenance", scheduleNodeForMaintenance, BODY_STRING(String, request)) {
+        //nlohmann::json library has trouble parsing Oatpp String type
+        //we extract a std::string from the Oatpp String type to then be parsed
+        std::string req = request.getValue("{}");
+        nlohmann::json requestJson = nlohmann::json::parse(req);
+        if (!requestJson.contains("id")) {
+            NES_ERROR("MaintenanceController: Unable to find Field: id ");
+            return errorHandler->handleError(Status::CODE_400, "Field 'id' must be provided");
+        }
+        if (!requestJson.contains("migrationType")) {
+            NES_ERROR("MaintenanceController: Unable to find Field: migrationType ");
+            return errorHandler->handleError(Status::CODE_400, "Field 'migrationType' must be provided");
+        }
+        uint64_t id = requestJson["id"];
+        Experimental::MigrationType::Value migrationType =
+            Experimental::MigrationType::getFromString(requestJson["migrationType"]);
+        auto info = maintenanceService->submitMaintenanceRequest(id, migrationType);
+        if (info.first == true) {
+            nlohmann::json result{};
+            result["Info"] = "Successfully submitted Maintenance Request";
+            result["Node Id"] = id;
+            result["Migration Type"] = Experimental::MigrationType::toString(migrationType);
+            return createResponse(Status::CODE_200, result.dump());
+        } else {
+            std::string errorMessage = info.second;
+            return errorHandler->handleError(Status::CODE_404, errorMessage);
+        }
+    }
 
   private:
-    MaintenanceServicePtr maintenanceService;
+    Experimental::MaintenanceServicePtr maintenanceService;
+    ErrorHandlerPtr errorHandler;
 };
+}//namespace Controller
+}// namespace REST
+}// namespace NES
 
-}//namespace NES::Experimental
-#endif//NES_MAINTENANCECONTROLLER_HPP
+#include OATPP_CODEGEN_END(ApiController)
+
+#endif//NES_NES_CORE_INCLUDE_REST_Controller_MAINTENANCECONTROLLER_HPP_
