@@ -11,30 +11,56 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
+#define NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
+#include <REST/Controller/BaseRouterPrefix.hpp>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include <nlohmann/json.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
 
-#include <REST/Controller/BaseController.hpp>
-#include <REST/CpprestForwardedRefs.hpp>
-#include <memory>
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
-
-//TODO: to be deleted with #3001
-class ConnectivityController : public BaseController {
+namespace REST {
+namespace Controller {
+class ConnectivityController : public oatpp::web::server::api::ApiController {
 
   public:
-    explicit ConnectivityController();
-
-    ~ConnectivityController() = default;
     /**
-     * Handling the Get requests for the query
-     * @param path : the url of the rest request
-     * @param message : the user message
+     * Constructor with object mapper.
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      */
-    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, oatpp::String completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix) {}
+
+    /**
+     * Create a shared object of the API controller
+     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
+     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
+     * @return
+     */
+    static std::shared_ptr<ConnectivityController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                          std::string routerPrefixAddition) {
+        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
+        return std::make_shared<ConnectivityController>(objectMapper, completeRouterPrefix);
+    }
+
+    ENDPOINT("GET", "/check", root) {
+        nlohmann::json response;
+        response["statusCode"] = 200;
+        response["success"] = true;
+        return createResponse(Status::CODE_200, response.dump());
+    }
 };
-using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
+}//namespace Controller
+}// namespace REST
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
+
+#include OATPP_CODEGEN_END(ApiController)
+
+#endif//NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
