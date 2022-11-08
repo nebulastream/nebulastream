@@ -69,7 +69,7 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
 
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
@@ -134,7 +134,7 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
 
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         // check if query contain watermark assigner, and add if missing (as default behaviour)
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");

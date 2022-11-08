@@ -995,7 +995,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -1149,7 +1149,7 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -2371,7 +2371,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     // get current timestamp
     // TODO add support for event time
-    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType());
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
     if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
@@ -2988,7 +2988,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     context->code->currentCodeInsertionPoint->addStatement(windowStateVariableStatement.copy());
 
     // get current timestamp
-    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDef->getWindowType());
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(joinDef->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
     if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
@@ -3213,7 +3213,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 
     // get current timestamp
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(joinDef->getWindowType());
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(joinDef->getWindowType());
     if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
@@ -3584,7 +3584,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(
         context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
 
-    if (std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(window->getWindowType())->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {

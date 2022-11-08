@@ -28,7 +28,7 @@ namespace NES::Windowing::Experimental {
 
 KeyedSliceMergingOperatorHandler::KeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
     : sliceStaging(std::make_shared<KeyedSliceStaging>()), windowDefinition(windowDefinition) {
-    auto timeBasedWindowtype = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto timeBasedWindowtype = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = timeBasedWindowtype->getSize().getTime();
     windowSlide = timeBasedWindowtype->getSlide().getTime();
 }

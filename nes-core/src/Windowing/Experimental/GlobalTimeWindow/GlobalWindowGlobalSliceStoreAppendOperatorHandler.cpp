@@ -31,7 +31,7 @@ GlobalWindowGlobalSliceStoreAppendOperatorHandler::GlobalWindowGlobalSliceStoreA
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
-    auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = timeBasedWindowType->getSize().getTime();
     windowSlide = timeBasedWindowType->getSlide().getTime();
 }
