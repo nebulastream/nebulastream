@@ -44,26 +44,26 @@ namespace NES::Runtime::Execution::Expressions {
         auto expression = UnaryExpressionWrapper<LnExpression>();
         // Int8
         {
-            auto resultValue = expression.eval(Value<Int8>((int8_t) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Int8>((int8_t) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
         // Int16
         {
-            auto resultValue = expression.eval(Value<Int16>((int16_t) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Int16>((int16_t) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
         // Int32
         {
-            auto resultValue = expression.eval(Value<Int32>((int32_t) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Int32>((int32_t) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
         // Int64
         {
-            auto resultValue = expression.eval(Value<Int64>((int64_t) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Int64>((int64_t) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
     }
@@ -72,14 +72,14 @@ namespace NES::Runtime::Execution::Expressions {
         auto expression = UnaryExpressionWrapper<LnExpression>();
         // Float
         {
-            auto resultValue = expression.eval(Value<Float>((float) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Float>((float) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
         // Double
         {
-            auto resultValue = expression.eval(Value<Double>((double) 90));
-            ASSERT_EQ(resultValue, std::log(90));
+            auto resultValue = expression.eval(Value<Double>((double) 2));
+            ASSERT_EQ(resultValue, (double) 0.6931471805599453);
             ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
         }
     }
