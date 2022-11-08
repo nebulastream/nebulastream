@@ -261,7 +261,7 @@ Value<> NegateOp(const Value<>& input) {
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-Value<> ReadArrayIndexOp(const Value<>& input, Value<Int32>& index) {
+Value<> ReadArrayIndexOp(const Value<>& input, Value<UInt32>& index) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
     for (auto& plugin : plugins) {
         auto result = plugin->ReadArrayIndex(input, index);
@@ -272,7 +272,7 @@ Value<> ReadArrayIndexOp(const Value<>& input, Value<Int32>& index) {
     NES_THROW_RUNTIME_ERROR("No plugin registered that can handle this operation");
 }
 
-void WriteArrayIndexOp(const Value<>& input, Value<Int32>& index, const Value<>& value) {
+void WriteArrayIndexOp(const Value<>& input, Value<UInt32>& index, const Value<>& value) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
     for (auto& plugin : plugins) {
         auto result = plugin->WriteArrayIndex(input, index, value);
@@ -292,6 +292,7 @@ Value<Text>::Value(const char* s) {
     this->value = std::make_shared<Text>(textRef);
     this->ref = createNextValueReference(value->getType());
 }
+
 
 template<>
 template<typename T, typename>

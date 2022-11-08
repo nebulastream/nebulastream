@@ -40,25 +40,25 @@ Value<Boolean> Text::equals(const Value<Text>& other) const {
     return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
 }
 
-int32_t TextGetLength(const TextValue* text) { return text->length(); }
+uint32_t TextGetLength(const TextValue* text) { return text->length(); }
 
-const Value<Int32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
+const Value<UInt32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
 
 AnyPtr Text::copy() { return NES::Nautilus::AnyPtr(); }
 
-int8_t readTextIndex(const TextValue* text, int32_t index) { return text->c_str()[index]; }
+int8_t readTextIndex(const TextValue* text, uint32_t index) { return text->c_str()[index]; }
 
-void writeTextIndex(TextValue* text, int32_t index, int8_t value) { text->str()[index] = value; }
+void writeTextIndex(TextValue* text, uint32_t index, int8_t value) { text->str()[index] = value; }
 
-Value<Int8> Text::read(Value<Int32> index) { return FunctionCall<>("readTextIndex", readTextIndex, rawReference, index); }
+Value<Int8> Text::read(Value<UInt32> index) { return FunctionCall<>("readTextIndex", readTextIndex, rawReference, index); }
 
-void Text::write(Value<Int32> index, Value<Int8> value) {
+void Text::write(Value<UInt32> index, Value<Int8> value) {
     FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
 }
 
 TextValue* uppercaseText(const TextValue* text) {
     auto resultText = TextValue::create(text->length());
-    for (int32_t i = 0; i < text->length(); i++) {
+    for (uint32_t i = 0; i < text->length(); i++) {
         resultText->str()[i] = toupper(text->c_str()[i]);
     }
     return resultText;

@@ -22,7 +22,7 @@
 namespace NES::Nautilus {
 
 template<typename T>
-ListValue<T>* ListValue<T>::create(int32_t size) {
+ListValue<T>* ListValue<T>::create(uint32_t size) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
     auto optBuffer = provider->getUnpooledBuffer(size * FIELD_SIZE + DATA_FIELD_OFFSET);
     if (!optBuffer.has_value()) {
@@ -34,14 +34,14 @@ ListValue<T>* ListValue<T>::create(int32_t size) {
 }
 
 template<typename T>
-ListValue<T>* ListValue<T>::create(const T* data, int32_t size) {
+ListValue<T>* ListValue<T>::create(const T* data, uint32_t size) {
     auto* list = create(size);
     std::memcpy(list->data(), data, size * FIELD_SIZE);
     return list;
 }
 
 template<typename T>
-ListValue<T>::ListValue(int32_t size) : size(size) {}
+ListValue<T>::ListValue(uint32_t size) : size(size) {}
 
 template<typename T>
 T* ListValue<T>::data() {
@@ -54,7 +54,7 @@ const T* ListValue<T>::c_data() const {
 }
 
 template<typename T>
-int32_t ListValue<T>::length() const {
+uint32_t ListValue<T>::length() const {
     return size;
 }
 

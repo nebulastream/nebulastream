@@ -26,14 +26,14 @@ class TextInvocationPlugin : public InvocationPlugin {
         return std::nullopt;
     }
 
-    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<Int32> index) const override {
+    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const override {
         if (array->isType<Text>()) {
             return array.as<Text>()->read(index);
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<Int32> index, const Value<>& value) const override {
+    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override {
         if (array->isType<Text>() && value->isType<Int8>()) {
              array.as<Text>()->write(index, value.as<Int8>());
             return array;
