@@ -18,12 +18,6 @@
 #include <Plans/Query/QueryId.hpp>
 #include <nlohmann/json.hpp>
 
-namespace web {
-namespace json {
-class value;
-}// namespace json
-}// namespace web
-
 namespace NES {
 
 class QueryPlan;
@@ -41,13 +35,8 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class PlanJsonGenerator {
 
   public:
-    /**
-     * @brief function to generate the query plan from of a query.
-     * @param queryCatalog in which the query is stored
-     * @param the id of the query
-     * @return a JSON object representing the query plan
-     */
-    static web::json::value getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
+
+    static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief get the json representation of execution plan of a query
@@ -55,24 +44,7 @@ class PlanJsonGenerator {
      * @param id of the query
      * @return a JSON object representing the execution plan
      */
-    static web::json::value getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                   QueryId queryId = INVALID_QUERY_ID);
-
-    /**
-     * @brief function to generate the query plan from of a query.
-     * @param queryCatalog in which the query is stored
-     * @param the id of the query
-     * @return a JSON object representing the query plan
-     */
-    static nlohmann::json getQueryPlanAsNlohmannJson(const QueryPlanPtr& queryPlan);
-
-    /**
-     * @brief get the json representation of execution plan of a query
-     * @param the global execution plan
-     * @param id of the query
-     * @return a JSON object representing the execution plan
-     */
-    static nlohmann::json getExecutionPlanAsNlohmannJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    static nlohmann::json getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                          QueryId queryId = INVALID_QUERY_ID);
 
   private:
@@ -83,16 +55,7 @@ class PlanJsonGenerator {
      * @param edges JSON array to store the traversed edge
      */
     static void
-    getChildrenNlohmann(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
-
-    /**
-     * @brief function to traverse to queryPlanChildren
-     * @param root root operator of the queryPlan
-     * @param nodes JSON array to store the traversed node
-     * @param edges JSON array to store the traversed edge
-     */
-    static void
-    getChildren(OperatorNodePtr const& root, std::vector<web::json::value>& nodes, std::vector<web::json::value>& edges);
+    getChildren(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
 
     /**
      * @param an operator node

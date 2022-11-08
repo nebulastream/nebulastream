@@ -31,7 +31,6 @@
 #include <Util/TestUtils.hpp>
 #include <chrono>
 #include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 namespace NES {
 
