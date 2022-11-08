@@ -18,10 +18,10 @@ limitations under the License.
 
 namespace NES::Windowing {
 
-ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate) : WindowType(), predicate(std::move(predicate)) {}
+ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate)) {}
 
 WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate) {
-    return std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate)));
+    return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
 }
 
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {

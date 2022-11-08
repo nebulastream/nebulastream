@@ -67,7 +67,6 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
-    // TODO 2981: is allowedLateness required for threshold windows?
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
         auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
@@ -133,7 +132,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
-    // TODO 2981: is allowedLateness required for threshold windows?
     uint64_t allowedLateness = 0;
     if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
         auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
