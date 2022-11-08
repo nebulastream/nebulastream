@@ -53,7 +53,7 @@ class TypedRef final : public BaseTypedRef {
     };
 
     std::shared_ptr<Any> copy() override { return std::make_shared<TypedRef<T>>(*this); }
-    T* get() { return ((T*) value->value->value); }
+    T* get() { return reinterpret_cast<T*>(value->value->value); }
     Nautilus::IR::Types::StampPtr getType() const override { return Nautilus::IR::Types::StampFactory::createAddressStamp(); }
     std::shared_ptr<Value<MemRef>> value;
     ~TypedRef() {

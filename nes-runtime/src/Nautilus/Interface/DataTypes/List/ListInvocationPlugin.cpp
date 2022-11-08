@@ -33,14 +33,14 @@ class ListInvocationPlugin final : public InvocationPlugin {
         return std::nullopt;
     }
 
-    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<Int32> index) const override {
+    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const override {
         if (isList(array)) {
             return array.as<List>()->read(index);
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<Int32> index, const Value<>& value) const override {
+    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override {
         if (array->isType<List>()) {
             array.as<List>()->write(index, value);
             return array;

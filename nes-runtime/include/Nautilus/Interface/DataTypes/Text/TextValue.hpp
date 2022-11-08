@@ -26,8 +26,8 @@ namespace NES::Nautilus {
  */
 class TextValue final {
   public:
-    static constexpr size_t DATA_FIELD_OFFSET = sizeof(int32_t);
-    static TextValue* create(int32_t size);
+    static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
+    static TextValue* create(uint32_t size);
     static TextValue* create(const std::string& string);
     static TextValue* load(Runtime::TupleBuffer& tupleBuffer);
 
@@ -35,7 +35,7 @@ class TextValue final {
      * @brief Returns the length in the number of characters of the text value
      * @return int32_t
      */
-    int32_t length() const;
+    uint32_t length() const;
 
     /**
      * @brief Returns the char* to the text.
@@ -59,8 +59,8 @@ class TextValue final {
      * @brief Private constructor to initialize a new text
      * @param size
      */
-    TextValue(int32_t size);
-    const int32_t size;
+    TextValue(uint32_t size);
+    const uint32_t size;
 };
 }// namespace NES::Nautilus
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_

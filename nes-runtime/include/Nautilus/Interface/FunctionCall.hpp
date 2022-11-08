@@ -105,7 +105,7 @@ auto transformReturnValues(Arg argument) {
 
 class TextValue;
 template<typename T>
-    requires std::same_as<TextValue*, T>
+    requires std::is_same_v<TextValue*, T>
 auto createDefault();
 
 class BaseListValue;

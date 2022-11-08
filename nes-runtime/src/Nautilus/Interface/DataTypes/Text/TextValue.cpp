@@ -13,21 +13,21 @@
 */
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <cstring>
 #include <iostream>
 #include <string>
 
 namespace NES::Nautilus {
 
-int32_t TextValue::length() const { return size; }
+uint32_t TextValue::length() const { return size; }
 
 char* TextValue::str() { return reinterpret_cast<char*>(this + DATA_FIELD_OFFSET); }
 
 const char* TextValue::c_str() const { return reinterpret_cast<const char*>(this + DATA_FIELD_OFFSET); }
 
-TextValue* TextValue::create(int32_t size) {
+TextValue* TextValue::create(uint32_t size) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
     auto optBuffer = provider->getUnpooledBuffer(size);
     if (!optBuffer.has_value()) {
@@ -38,7 +38,7 @@ TextValue* TextValue::create(int32_t size) {
     return new (buffer.getBuffer()) TextValue(size);
 }
 
-TextValue::TextValue(int32_t size) : size(size) {}
+TextValue::TextValue(uint32_t size) : size(size) {}
 
 TextValue* TextValue::create(const std::string& string) {
     auto* textValue = create(string.length());

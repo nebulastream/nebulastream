@@ -14,8 +14,8 @@
 
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -60,7 +60,7 @@ TEST_F(TextTypeTest, createTextTest) {
     Value<> character = textValue[0];
     ASSERT_EQ(character, 't');
 
-    textValue[3] = (int8_t) 'o';
+    textValue[(uint32_t) 3] = (int8_t) 'o';
     character = textValue[3];
     ASSERT_EQ(character, 'o');
     ASSERT_EQ(textValue, textValue3);

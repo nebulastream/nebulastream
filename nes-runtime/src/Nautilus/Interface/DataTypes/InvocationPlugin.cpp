@@ -28,6 +28,6 @@ std::optional<Value<>> InvocationPlugin::And(const Value<>&, const Value<>&) con
 std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::CastTo(const Value<>&, const TypeIdentifier*) const { return std::nullopt; }
 bool InvocationPlugin::IsCastable(const Value<>&, const TypeIdentifier*) const { return false; }
-std::optional<Value<>> InvocationPlugin::WriteArrayIndex(const Value<>&, Value<Int32>, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::ReadArrayIndex(const Value<>&, Value<Int32>) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::WriteArrayIndex(const Value<>&, Value<UInt32>, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::ReadArrayIndex(const Value<>&, Value<UInt32>) const { return std::nullopt; }
 }// namespace NES::Nautilus
