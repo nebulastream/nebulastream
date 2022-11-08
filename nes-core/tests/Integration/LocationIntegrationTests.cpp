@@ -461,7 +461,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
 
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStartTime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
