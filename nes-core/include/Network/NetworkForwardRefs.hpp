@@ -16,7 +16,7 @@
 #define NES_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 
 #include <memory>
-#include <Util/IdentifiersOfNetworkRuntimeAndCoordinator.hpp>
+#include <Common/Identifiers.hpp>
 
 #define FORWARD_DECLARE_CLASS_UP(T)                                                                                              \
     class T;                                                                                                                     \
