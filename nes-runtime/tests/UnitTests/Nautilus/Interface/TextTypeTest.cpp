@@ -49,7 +49,7 @@ TEST_F(TextTypeTest, createTextTest) {
 
     auto textValue = Value<Text>("test");
     auto length = textValue->length();
-    ASSERT_EQ(length, 4);
+    ASSERT_EQ(length, (uint32_t) 4);
 
     auto textValue2 = Value<Text>("test");
     ASSERT_EQ(textValue, textValue2);
@@ -60,12 +60,12 @@ TEST_F(TextTypeTest, createTextTest) {
     Value<> character = textValue[0];
     ASSERT_EQ(character, 't');
 
-    textValue[(uint32_t) 3] = (int8_t) 'o';
+    textValue[3] = (int8_t) 'o';
     character = textValue[3];
     ASSERT_EQ(character, 'o');
     ASSERT_EQ(textValue, textValue3);
 
-    for (auto i = 0; i < textValue->length(); i++) {
+    for (Value<UInt32> i = (uint32_t) 0; i < textValue->length(); i = i + (uint32_t)1) {
         textValue[i] = (int8_t) 'z';
     }
     auto textValue4 = Value<Text>("zzzz");

@@ -232,7 +232,8 @@ class Value : BaseValue {
     }
 
     ValueIndexReference inline operator[](uint32_t index);
-    ValueIndexReference inline operator[](Value<>& index) { return ValueIndexReference(index, *this); };
+    template<class T>
+    ValueIndexReference inline operator[](Value<T>& index) { return ValueIndexReference(index, *this); };
 
     Value<> castTo(const TypeIdentifier* toStamp) const;
 
