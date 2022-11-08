@@ -27,8 +27,26 @@ namespace NES::Nautilus {
 class TextValue final {
   public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
+    /**
+     * @brief Create a new TextValue with a specific size in characters.
+     * @param size in characters
+     * @return TextValue*
+     */
     static TextValue* create(uint32_t size);
+
+    /**
+     * @brief Creates a new TextValue from a string
+     * @param string
+     * @return TextValue*
+     */
     static TextValue* create(const std::string& string);
+
+    /**
+     * @brief Loads a text value from a tuple buffer.
+     * The data region of the tuple buffer is reinterpreted as a ListValue.
+     * @param string
+     * @return TextValue*
+     */
     static TextValue* load(Runtime::TupleBuffer& tupleBuffer);
 
     /**
