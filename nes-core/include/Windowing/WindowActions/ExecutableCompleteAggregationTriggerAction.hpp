@@ -165,7 +165,7 @@ class ExecutableCompleteAggregationTriggerAction
         if (slices.empty()) {
             return;
         }
-        uint64_t slideSize = windowDef->getWindowType()->getSize().getTime();
+        uint64_t slideSize = Windowing::WindowType::asTimeBasedWindowType(windowDef->getWindowType())->getSize().getTime();
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
@@ -178,7 +178,7 @@ class ExecutableCompleteAggregationTriggerAction
             NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows trigger because currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
-            windowDef->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
+            Windowing::WindowType::asTimeBasedWindowType(windowDef->getWindowType())->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
             NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << " (" << this->windowDefinition->getDistributionType()->toString()
                       << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
