@@ -150,8 +150,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &workerConfigPath,
                 &optimizer,
                 &logicalSources,
-                &coordinatorHealthCheckWaitTime,
-                &restServerType};
+                &coordinatorHealthCheckWaitTime};
     }
 };
 
