@@ -995,7 +995,8 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField =
+        Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -1149,7 +1150,8 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
     auto recordHandler = context->getRecordHandler();
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
 
-    auto timeCharacteristicField = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
+    auto timeCharacteristicField =
+        Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -3584,7 +3586,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(
         context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
 
-    if (Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getType()
+        == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {

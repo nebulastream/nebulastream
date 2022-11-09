@@ -363,10 +363,10 @@ TEST_F(QueryTest, ThresholdWindowQueryTest) {
 
     // with by key
     auto query2 = Query::from("default_logical")
-                     .window(ThresholdWindow::of(Attribute("f1") < 45))
-                     .byKey(Attribute("id", INT64))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                     .sink(PrintSinkDescriptor::create());
+                      .window(ThresholdWindow::of(Attribute("f1") < 45))
+                      .byKey(Attribute("id", INT64))
+                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                      .sink(PrintSinkDescriptor::create());
 
     auto plan2 = query2.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators2 = plan2->getSourceOperators();

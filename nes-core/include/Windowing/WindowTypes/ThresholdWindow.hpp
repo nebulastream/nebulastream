@@ -15,15 +15,14 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP
 
-#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 
 namespace NES::Windowing {
 
 class ThresholdWindow : public ContentBasedWindowType {
   public:
-
-    static WindowTypePtr of(ExpressionNodePtr predicate); //TODO #3135: allow specification of minimum-count
+    static WindowTypePtr of(ExpressionNodePtr predicate);//TODO #3135: allow specification of minimum-count
 
     /**
     * @brief Returns true, because this a threshold window
@@ -41,9 +40,8 @@ class ThresholdWindow : public ContentBasedWindowType {
     explicit ThresholdWindow(ExpressionNodePtr predicate);
 
     ExpressionNodePtr predicate;
-
 };
 
-} // namespace NES::Windowing
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP

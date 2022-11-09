@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 
 namespace NES::Windowing {
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
-} // NES::Windowing
+}// namespace NES::Windowing

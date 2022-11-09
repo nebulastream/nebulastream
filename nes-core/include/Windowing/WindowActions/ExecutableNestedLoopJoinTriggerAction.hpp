@@ -206,7 +206,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         if (currentWatermark > lastWatermark) {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: joinWindows trigger because currentWatermark="
                                                                << currentWatermark << " > lastWatermark=" << lastWatermark);
-            Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())->triggerWindows(windows, lastWatermark, currentWatermark);
+            Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())
+                ->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                       << id << ":: aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
@@ -267,7 +268,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     }
                 }
 
-                uint64_t slideSize = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())->getSize().getTime();
+                uint64_t slideSize =
+                    Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())->getSize().getTime();
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: largestClosedWindow=" << largestClosedWindow
                                                                    << " slideSize=" << slideSize);
 

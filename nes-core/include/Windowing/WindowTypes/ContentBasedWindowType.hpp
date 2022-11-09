@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_CONTENTBASEDWINDOWTYPE_HPP
 #define NES_CONTENTBASEDWINDOWTYPE_HPP
 

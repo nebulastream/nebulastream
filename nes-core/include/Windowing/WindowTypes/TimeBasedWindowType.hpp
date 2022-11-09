@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_TIMEBASEDWINDOWTYPE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_TIMEBASEDWINDOWTYPE_HPP_
 
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
 namespace NES::Windowing {
 
