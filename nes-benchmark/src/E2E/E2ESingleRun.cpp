@@ -41,8 +41,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
 
     coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numberOfBuffersInGlobalBufferManager->getValue();
-    coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool =
-        configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
+    coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool = configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
     coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool = configPerRun.numberOfBuffersPerPipeline->getValue();
 
     coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
@@ -61,7 +60,7 @@ void E2ESingleRun::createSources() {
     for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager =
             std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                     configPerRun.numberOfBuffersInGlobalBufferManager->getValue());
+                                                     configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
         auto dataGenerator =
             DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), bufferManager);
         auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
