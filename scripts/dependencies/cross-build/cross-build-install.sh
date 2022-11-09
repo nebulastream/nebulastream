@@ -58,7 +58,6 @@ sudo apt-get install -qq --no-install-recommends \
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
   liblog4cxx-dev:arm64 \
-  libcpprest-dev:arm64 \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \
@@ -197,7 +196,6 @@ sudo cp -r -v -L /usr/include/log4* /opt/sysroots/aarch64-linux-gnu/include/ && 
 sudo cp -r -v -L /usr/include/libdwarf* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/dwarf* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/elfutils* /opt/sysroots/aarch64-linux-gnu/include/ && \
-sudo cp -r -v -L /usr/include/cpprest* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/pplx* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/aarch64-linux-gnu/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
@@ -210,16 +208,10 @@ sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/liblog4* /opt/sysroots/aarch64-linux
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libdwarf* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libdw* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libebl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
-sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
-sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarch64-linux-gnu/lib/cmake/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
-sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/lib/ && \
-sudo sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
-sudo sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
-sudo sed -i -- 's|/include/|/aarch64-linux-gnu/include/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 cd
 
 RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
