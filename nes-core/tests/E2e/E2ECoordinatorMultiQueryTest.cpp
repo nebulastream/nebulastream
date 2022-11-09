@@ -13,7 +13,7 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>

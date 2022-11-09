@@ -23,7 +23,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>

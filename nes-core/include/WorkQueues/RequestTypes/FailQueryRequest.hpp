@@ -15,7 +15,7 @@
 #ifndef NES_FAILQUERYREQUEST_HPP
 #define NES_FAILQUERYREQUEST_HPP
 
-#include <Plans/Global/Query/SharedQueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <memory>
 #include <string>

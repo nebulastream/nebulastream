@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
 #define NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <iostream>
 #include <memory>
 #include <vector>

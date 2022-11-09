@@ -22,7 +22,7 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
 

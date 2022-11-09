@@ -16,8 +16,7 @@
 #define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>

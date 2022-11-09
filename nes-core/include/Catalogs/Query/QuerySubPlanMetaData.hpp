@@ -15,7 +15,7 @@
 #ifndef NES_QUERYSUBPLANMETADATA_HPP
 #define NES_QUERYSUBPLANMETADATA_HPP
 
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/QueryStatus.hpp>
 #include <memory>
 

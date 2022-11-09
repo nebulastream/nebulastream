@@ -96,8 +96,6 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Lo
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Reconfigurable.hpp Runtime/Reconfigurable.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ReconfigurationType.hpp Runtime/ReconfigurationType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ReconfigurationMessage.hpp Runtime/ReconfigurationMessage.hpp)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryId.hpp Plans/Query/QueryId.hpp)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QuerySubPlanId.hpp Plans/Query/QuerySubPlanId.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/NesThread.hpp Runtime/NesThread.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/RuntimeForwardRefs.hpp Runtime/RuntimeForwardRefs.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/UtilityFunctions.hpp Util/UtilityFunctions.hpp)
