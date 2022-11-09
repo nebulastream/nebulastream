@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <unordered_map>
 

@@ -16,7 +16,6 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <Operators/OperatorId.hpp>
 #include <Common/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>

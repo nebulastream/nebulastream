@@ -18,7 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Topology/TopologyNodeId.hpp>
+#include <Common/Identifiers.hpp>
 #include <memory>
 
 namespace NES::Monitoring {

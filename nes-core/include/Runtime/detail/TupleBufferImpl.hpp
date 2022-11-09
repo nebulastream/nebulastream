@@ -16,7 +16,7 @@
 #define NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
 #include <API/Schema.hpp>
-#include <Operators/OriginId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>

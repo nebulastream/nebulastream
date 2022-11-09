@@ -13,7 +13,7 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
 #define NES_NES_CORE_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
-#include <Operators/OperatorId.hpp>
+
 #include <Common/Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>

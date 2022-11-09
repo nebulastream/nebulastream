@@ -14,9 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
 #define NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
-#include <Operators/OperatorId.hpp>
+
 #include <Common/Identifiers.hpp>
-#include <Topology/TopologyNodeId.hpp>
 #include <map>
 #include <memory>
 #include <vector>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Operators/OperatorId.hpp>
+
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
