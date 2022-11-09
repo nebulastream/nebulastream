@@ -76,8 +76,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <API/Windowing.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -91,6 +89,8 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 using namespace NES;
@@ -612,12 +612,13 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-        auto windowDefinition = Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
-                                                                windowType,
-                                                                Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                                triggerPolicy,
-                                                                triggerAction,
-                                                                0);
+        auto windowDefinition =
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                       windowType,
+                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                       triggerPolicy,
+                                                       triggerAction,
+                                                       0);
         auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

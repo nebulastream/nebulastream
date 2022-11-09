@@ -142,7 +142,10 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
-    auto timestamp = Windowing::WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName(); // assume time-based windows
+    auto timestamp = Windowing::WindowType::asTimeBasedWindowType(windowType)
+                         ->getTimeCharacteristic()
+                         ->getField()
+                         ->getName();// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp

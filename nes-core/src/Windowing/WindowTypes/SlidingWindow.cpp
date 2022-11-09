@@ -65,7 +65,8 @@ bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
     if (otherWindowType->isSlidingWindow()) {
         auto timeBasedWindowType = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType);
         return this->isSlidingWindow() && otherWindowType->isSlidingWindow()
-            && this->timeCharacteristic->getField()->getName() == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
+            && this->timeCharacteristic->getField()->getName()
+            == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
             && this->size.getTime() == timeBasedWindowType->getSize().getTime()
             && this->slide.getTime() == timeBasedWindowType->getSlide().getTime();
     } else {

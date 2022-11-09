@@ -178,7 +178,8 @@ class ExecutableCompleteAggregationTriggerAction
             NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows trigger because currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
-            Windowing::WindowType::asTimeBasedWindowType(windowDef->getWindowType())->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
+            Windowing::WindowType::asTimeBasedWindowType(windowDef->getWindowType())
+                ->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
             NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << " (" << this->windowDefinition->getDistributionType()->toString()
                       << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
