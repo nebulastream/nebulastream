@@ -72,9 +72,9 @@ namespace NES::Benchmark {
             e2EBenchmarkConfigPerRun.numBuffersToProduce->setValue(numBuffersToProduce[i]);
             e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
 
-            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(numberOfBuffersInGlobalBufferManager[i]);
-            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(numberOfBuffersPerPipeline[i]);
-            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
+            e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
+            e2EBenchmarkConfigPerRun.numberOfBuffersPerPipeline->setValue(numberOfBuffersPerPipeline[i]);
+            e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
 
             allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
         }
