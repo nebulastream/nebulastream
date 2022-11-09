@@ -81,8 +81,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
                                                         TestUtils::enableDebug(),
                                                         TestUtils::enableNemoPlacement(),
                                                         TestUtils::setDistributedWindowChildThreshold(childThreshold),
-                                                        TestUtils::setDistributedWindowCombinerThreshold(combinerThreshold),
-                                                        TestUtils::restServerType("Oatpp")});
+                                                        TestUtils::setDistributedWindowCombinerThreshold(combinerThreshold)});
         assert(TestUtils::waitForWorkers(restPort, timeout, 0));
 
         std::stringstream schema;

@@ -253,7 +253,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     remove(testFile.c_str());
 
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(*restPort));
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
@@ -347,8 +347,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -431,8 +430,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -496,8 +494,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -558,8 +555,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -580,8 +576,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -619,8 +614,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -661,8 +655,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -709,8 +702,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 

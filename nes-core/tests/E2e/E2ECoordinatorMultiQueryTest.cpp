@@ -52,8 +52,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableDebug(),
-                                                    TestUtils::numberOfSlots(8, true),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::numberOfSlots(8, true)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -137,7 +136,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery3.c_str());
 
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -230,7 +229,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     remove(Qpath2.c_str());
 
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::restServerType("Oatpp")});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -333,8 +332,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(100),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(0),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::setDistributedWindowCombinerThreshold(0)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -436,8 +434,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(100),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(0),
-                                                    TestUtils::restServerType("Oatpp")});
+                                                    TestUtils::setDistributedWindowCombinerThreshold(0)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
