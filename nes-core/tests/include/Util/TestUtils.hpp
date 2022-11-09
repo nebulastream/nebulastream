@@ -660,9 +660,9 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         NES_INFO("check if NES REST interface is up");
-        std::future<cpr::Response> rf = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
-        rf.wait();
-        cpr::Response r = rf.get();
+        auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        future.wait();
+        cpr::Response r = future.get();
         if (r.status_code == 200l) {
             return true;
         }
@@ -671,6 +671,12 @@ template<typename T>
     return false;
 }
 
+/**
+     * @brief This method is used for checking if the submitted query produced the expected result within the timeout
+     * @param queryId: Id of the query
+     * @param expectedNumberBuffers: The expected value
+     * @return true if matched the expected result within the timeout
+     */
 /**
      * @brief This method is used for checking if the submitted query produced the expected result within the timeout
      * @param queryId: Id of the query
@@ -688,12 +694,11 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url},
-                                    cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
-        if(response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
+        if (response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
             currentStatus = result["status"];
             if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
                 break;

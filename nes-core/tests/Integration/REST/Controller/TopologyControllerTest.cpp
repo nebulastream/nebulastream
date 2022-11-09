@@ -39,14 +39,12 @@ class TopologyControllerTest : public Testing::NESBaseTest {
      * Starts a coordinator with the following configurations
      * rpcPort = rpcCoordinatorPort specified in NESBaseTest
      * restPort = restPort specified in NESBaseTest
-     * restServerType = Oatpp
      */
     void startCoordinator() {
         NES_INFO("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     }

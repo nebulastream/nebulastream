@@ -211,7 +211,6 @@ const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string WORKER_CONFIG = "worker";
 const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
-const std::string SERVER_TYPE = "restServerType";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 
 //Optimizer Configurations
