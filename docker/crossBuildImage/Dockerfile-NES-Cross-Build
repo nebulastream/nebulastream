@@ -44,7 +44,6 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o 
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
   liblog4cxx-dev:arm64 \
-  libcpprest-dev:arm64 \
   librdkafka1:arm64 \
   librdkafka++1:arm64 \
   librdkafka-dev:arm64 \
@@ -104,7 +103,6 @@ cp -r -v -L /usr/include/log4* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/libdwarf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/dwarf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/elfutils* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
-cp -r -v -L /usr/include/cpprest* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/pplx* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/aarch64-linux-gnu/openssl* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
@@ -123,27 +121,20 @@ cp -r -v -L /usr/include/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/includ
 cp -r -v -L /usr/include/boost/graph/graphviz* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/jemalloc* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/mbedtls* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
-
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/liblog4* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libdwarf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libdw* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libebl* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
-cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
-cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
-cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/x86_64-linux-gnu/graphviz* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L -fd /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/lib/ && \
-sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
-sed -i -- 's|/lib/aarch64-linux-gnu/|/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
-sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 cp -r -v -L /usr/local/lib/libopen62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/local/lib/cmake/open62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
