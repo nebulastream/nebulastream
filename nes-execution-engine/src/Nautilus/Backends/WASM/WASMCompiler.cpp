@@ -35,17 +35,20 @@ BinaryenModuleRef WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     index = 0;
     argIndex = 0;
     ir->toString();
-    //generateWASM(ir->getRootOperation());
-    tmp();
+    generateWASM(ir->getRootOperation());
+    //tmp();
+    BinaryenModuleAutoDrop(wasm);
     if (!BinaryenModuleValidate(wasm)) {
         std::cout << "Generated pre-optimized wasm is incorrect!" << std::endl;
     }
 
-    //BinaryenModuleOptimize(wasm);
 
+    //BinaryenModuleOptimize(wasm);
+    /*
     if (!BinaryenModuleValidate(wasm)) {
         std::cout << "Generated post-optimized wasm is incorrect!" << std::endl;
     }
+    */
     BinaryenModulePrintStackIR(wasm, false);
     return wasm;
 }
@@ -71,17 +74,6 @@ void WASMCompiler::tmp() {
                               BinaryenTypeInt32(),
                               BinaryenTypeNone());
     BinaryenType localTypes[] = {BinaryenTypeInt32()};
-
-    BinaryenType localTypes2[] = {BinaryenTypeInt32(),
-                                 BinaryenTypeInt32(),
-                                 BinaryenTypeInt64(),
-                                 BinaryenTypeInt32(),
-                                 BinaryenTypeFloat32(),
-                                 BinaryenTypeFloat64(),
-                                 BinaryenTypeInt32()};
-
-    std::cout << "HERE!! " << sizeof(localTypes2) / sizeof(BinaryenType) << std::endl;
-
     RelooperBlockRef block0 =
         RelooperAddBlock(relooper, makeCallCheck(wasm, 0));
     RelooperBlockRef block1 =
@@ -301,6 +293,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstIntOperatio
             expressions.setValue("set_" + constIntOp->getIdentifier(), x);
             auto y = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt64());
             expressions.setValue(constIntOp->getIdentifier(), y);
+            consumed.emplace(constIntOp->getIdentifier(), y);
             index++;
             //expressions.setValue(constIntOp->getIdentifier(),
             //                     BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
@@ -312,6 +305,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstIntOperatio
             expressions.setValue("set_" + constIntOp->getIdentifier(), x);
             auto y = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt32());
             expressions.setValue(constIntOp->getIdentifier(), y);
+            consumed.emplace(constIntOp->getIdentifier(), y);
             index++;
             //expressions.setValue(constIntOp->getIdentifier(),
             //                     BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
@@ -633,7 +627,6 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
         //expressions.setValue(blockArg->getIdentifier(), expressions.getValue(blockArg->getIdentifier()));
     }
     generateBasicBlock(ifOp->getFalseBlockInvocation(), falseBlockArgs);
-
     //auto ifOperation = BinaryenIf(wasm, expressions.getValue(ifOp->getValue()->getIdentifier()), trueBlock, falseBlock);
     //expressions.setValue(ifOp->getIdentifier(), ifOperation);
     //currentExpressions.setValue(ifOp->getIdentifier(), ifOperation);

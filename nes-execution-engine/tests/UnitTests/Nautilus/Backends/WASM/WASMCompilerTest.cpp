@@ -241,6 +241,32 @@ TEST_F(WASMExpressionTest, ifFunctionTest) {
     //BinaryenModulePrint(wasm);
 }
 
+Value<> ifElseExpression(Value<Int32> x) {
+    Value<Int32> y = 1;
+    Value<Int32> z = 7;
+    if (x > 10) {
+        y = 7;
+    } else if (x < 10) {
+        y = 5;
+    }
+    return y;
+}
+
+TEST_F(WASMExpressionTest, ifElseFunctionTest) {
+    Value<Int32> tempx = 4;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return ifElseExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    auto wasm = wasmCompiler.lower(ir);
+    //BinaryenModulePrint(wasm);
+}
+
 Value<> loopExpression(Value<Int32> x) {
     Value<Int32> y = 1;
     for (int i = 0; i < x; ++i) {
