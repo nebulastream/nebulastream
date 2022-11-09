@@ -16,8 +16,7 @@
 #define NES_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <memory>

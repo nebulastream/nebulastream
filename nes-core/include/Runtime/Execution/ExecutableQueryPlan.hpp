@@ -15,8 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>

@@ -16,8 +16,7 @@
 #define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryStatus.hpp>
 #include <condition_variable>

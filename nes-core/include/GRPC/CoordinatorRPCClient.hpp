@@ -17,8 +17,7 @@
 
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <Operators/OperatorId.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>

@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>

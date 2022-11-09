@@ -16,7 +16,7 @@
 
 #include <Listeners/QueryStatusListener.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>

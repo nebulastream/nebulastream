@@ -15,8 +15,7 @@
 #ifndef NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 #define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryStatus.hpp>
 #include <map>
