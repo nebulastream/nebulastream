@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <sstream>
 
 namespace NES::Windowing {

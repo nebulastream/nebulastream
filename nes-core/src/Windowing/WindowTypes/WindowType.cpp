@@ -14,10 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES::Windowing {
 

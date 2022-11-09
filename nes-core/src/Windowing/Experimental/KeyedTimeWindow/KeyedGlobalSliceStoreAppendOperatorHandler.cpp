@@ -24,8 +24,8 @@
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorHandler(

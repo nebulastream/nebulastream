@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 namespace NES::Windowing {
 
