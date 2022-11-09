@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.44](https://github.com/nebulastream/nebulastream/tree/v0.3.44) (2022-11-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.43...v0.3.44)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add Physical and Nautilus Variable-Length-Data-Type [\#3095](https://github.com/nebulastream/nebulastream/issues/3095)
+
 ## [v0.3.43](https://github.com/nebulastream/nebulastream/tree/v0.3.43) (2022-11-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.42...v0.3.43)
