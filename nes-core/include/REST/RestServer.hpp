@@ -136,7 +136,6 @@ class RestServer {
     std::condition_variable cvar;
     std::mutex mutex;
     bool stopRequested{false};
-    bool usingOatpp{false};
     std::promise<bool> shutdownPromise;
 };
 }// namespace NES
