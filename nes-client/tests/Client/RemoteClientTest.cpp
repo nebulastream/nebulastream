@@ -50,7 +50,6 @@ class RemoteClientTest : public Testing::NESBaseTest {
 
         crdConf->rpcPort = (*rpcCoordinatorPort);
         crdConf->restPort = *restPort;
-        crdConf
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
         NES_DEBUG("RemoteClientTest: Start coordinator");
         crd = std::make_shared<NesCoordinator>(crdConf);
