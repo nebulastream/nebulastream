@@ -17,11 +17,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <cpprest/json.h>
-
-namespace web::json {
-class value;
-}// namespace web::json
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 
@@ -29,11 +25,11 @@ class IRSerialization {
   public:
     std::string serialize(std::shared_ptr<IR::NESIR> ir);
     void serializeBlock(std::shared_ptr<IR::BasicBlock> block);
-    void serializeOperation(std::shared_ptr<IR::Operations::Operation> block, std::vector<web::json::value>& currentBlock);
-    web::json::value serializeOperation(IR::Operations::BasicBlockInvocation& blockInvocation);
+    void serializeOperation(std::shared_ptr<IR::Operations::Operation> block, std::vector<nlohmann::json>& currentBlock);
+    nlohmann::json serializeOperation(IR::Operations::BasicBlockInvocation& blockInvocation);
 
   private:
-    std::vector<web::json::value> blocks;
+    std::vector<nlohmann::json> blocks;
 };
 
 }// namespace NES::ExecutionEngine::Experimental
