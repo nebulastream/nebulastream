@@ -27,7 +27,7 @@
 #include <sstream>
 #include <string>
 
-#include <Operators/OperatorId.hpp>
+
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>

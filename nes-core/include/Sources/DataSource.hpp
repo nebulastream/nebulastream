@@ -17,7 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Operators/OperatorId.hpp>
+
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>

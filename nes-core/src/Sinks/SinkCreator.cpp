@@ -13,7 +13,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Operators/OperatorId.hpp>
+
 #include <Common/Identifiers.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
