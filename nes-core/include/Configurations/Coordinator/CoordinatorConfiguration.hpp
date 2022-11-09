@@ -122,11 +122,6 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
     /**
-     * @brief Configuration of Server Type using oatpp or cpprestSDK
-     */
-    EnumOption<ServerType> restServerType = {SERVER_TYPE, ServerType::Oatpp, "Sets the Server Type (Oatpp, CPPRestSDK)"};
-
-    /**
      * Create a CoordinatorConfiguration object with default values.
      * @return A CoordinatorConfiguration object with default values.
      */
