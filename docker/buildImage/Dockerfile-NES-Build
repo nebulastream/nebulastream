@@ -2,28 +2,32 @@ FROM ubuntu:22.04
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf-dev \
-    libdwarf1 \
-    binutils-dev \
-    libunwind-dev \
-    libdw-dev \
-    libssl-dev \
-    build-essential \
-    clang-format \
-    libnuma-dev \
-    numactl \
-    libmbedtls-dev \
-    libjemalloc-dev \
-    git \
-    wget \
-    python3 \
-    libsodium-dev \
-    tar \
-    p7zip \
-    doxygen \
-    graphviz \
-    libbsd-dev \
-    cmake \
-    software-properties-common
+  libdwarf1 \
+  binutils-dev \
+  libunwind-dev \
+  libdw-dev \
+  libssl-dev \
+  build-essential \
+  clang-format \
+  libnuma-dev \
+  numactl \
+  libmbedtls-dev \
+  libjemalloc-dev \
+  git \
+  wget \
+  python3 \
+  libsodium-dev \
+  tar \
+  p7zip \
+  doxygen \
+  graphviz \
+  libbsd-dev \
+  cmake \
+  libopencv-dev \
+  libopencv4.2-java \
+  libopencv4.2-jni \
+  software-properties-common \
+  && apt-get clean -qq
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
