@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <Operators/OperatorId.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <memory>

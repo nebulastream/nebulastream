@@ -16,7 +16,7 @@
 #define NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
 #include <API/Schema.hpp>
-#include <Operators/OperatorId.hpp>
+
 #include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>

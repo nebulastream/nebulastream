@@ -16,8 +16,7 @@
 #define NES_INCLUDE_OPERATORS_OPERATORNODE_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Operators/OperatorId.hpp>
-#include <Operators/OriginId.hpp>
+#include <Common/Identifiers.hpp>
 #include <any>
 #include <unordered_map>
 

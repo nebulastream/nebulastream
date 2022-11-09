@@ -15,7 +15,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Operators/OperatorId.hpp>
+
 #include <Common/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
