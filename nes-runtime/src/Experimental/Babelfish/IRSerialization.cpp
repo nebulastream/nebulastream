@@ -27,101 +27,102 @@
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 
 std::string IRSerialization::serialize(std::shared_ptr<IR::NESIR> ir) {
-    web::json::value irJson{};
-    irJson["id"] = web::json::value(42);
+    nlohmann::json irJson{};
+    irJson["id"] = 42;
 
     auto rootBlock = ir->getRootOperation()->getFunctionBasicBlock();
     serializeBlock(rootBlock);
 
-    irJson["blocks"] = web::json::value::array(blocks);
+    irJson["blocks"] = blocks;
 
     return irJson.serialize();
 }
 
 void IRSerialization::serializeBlock(std::shared_ptr<IR::BasicBlock> block) {
-    blocks.emplace_back(web::json::value{});
-    web::json::value& blockJson = blocks.back();
+    blocks.emplace_back(nlohmann::json{});
+    nlohmann::json& blockJson = blocks.back();
 
-    blockJson["id"] = web::json::value(block->getIdentifier());
-    std::vector<web::json::value> arguments;
+    blockJson["id"] = block->getIdentifier();
+    std::vector<nlohmann::json> arguments;
     for (auto arg : block->getArguments()) {
         arguments.emplace_back(arg->getIdentifier());
     }
-    blockJson["arguments"] = web::json::value::array(arguments);
-    std::vector<web::json::value> jsonOperations;
+    blockJson["arguments"] = arguments;
+    std::vector<nlohmann::json> jsonOperations;
     for (auto op : block->getOperations()) {
         serializeOperation(op, jsonOperations);
     }
     for (auto& jsonBlock : blocks) {
         if ((jsonBlock["id"].as_string()) == block->getIdentifier()) {
-            jsonBlock["operations"] = web::json::value::array(jsonOperations);
+            jsonBlock["operations"] = jsonOperations;
         }
     }
 }
 
 void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operation> operation,
-                                         std::vector<web::json::value>& jsonOperations) {
-    jsonOperations.emplace_back(web::json::value{});
+                                         std::vector<nlohmann::json>& jsonOperations) {
+    jsonOperations.emplace_back(nlohmann::json{});
     ;
-    web::json::value& opJson = jsonOperations.back();
+    nlohmann::json& opJson = jsonOperations.back();
     ;
-    opJson["stamp"] = web::json::value(operation->getStamp()->toString());
-    opJson["id"] = web::json::value(operation->getIdentifier());
+    opJson["stamp"] = operation->getStamp()->toString();
+    opJson["id"] = operation->getIdentifier();
     if (operation->getOperationType() == IR::Operations::Operation::ConstIntOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation);
-        opJson["type"] = web::json::value("ConstInt");
-        opJson["value"] = web::json::value(constOp->getConstantIntValue());
+        opJson["type"] = "ConstInt";
+        opJson["value"] = constOp->getConstantIntValue();
     } else if (operation->getOperationType() == IR::Operations::Operation::ConstBooleanOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
-        opJson["type"] = web::json::value("ConstBool");
-        opJson["value"] = web::json::value(constOp->getValue());
+        opJson["type"] = "ConstBool";
+        opJson["value"] = constOp->getValue();
     } else if (operation->getOperationType() == IR::Operations::Operation::AddOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
-        opJson["type"] = web::json::value("Add");
-        opJson["left"] = web::json::value(constOp->getLeftInput()->getIdentifier());
-        opJson["right"] = web::json::value(constOp->getRightInput()->getIdentifier());
+        opJson["type"] = "Add";
+        opJson["left"] = constOp->getLeftInput()->getIdentifier();
+        opJson["right"] = constOp->getRightInput()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::SubOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
-        opJson["type"] = web::json::value("Sub");
-        opJson["left"] = web::json::value(constOp->getLeftInput()->getIdentifier());
-        opJson["right"] = web::json::value(constOp->getRightInput()->getIdentifier());
+        opJson["type"] = "Sub";
+        opJson["left"] = constOp->getLeftInput()->getIdentifier();
+        opJson["right"] = constOp->getRightInput()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::MulOp) {
         auto mulOp = std::static_pointer_cast<IR::Operations::MulOperation>(operation);
-        opJson["type"] = web::json::value("Mul");
-        opJson["left"] = web::json::value(mulOp->getLeftInput()->getIdentifier());
-        opJson["right"] = web::json::value(mulOp->getRightInput()->getIdentifier());
+        opJson["type"] = "Mul";
+        opJson["left"] = mulOp->getLeftInput()->getIdentifier();
+        opJson["right"] = mulOp->getRightInput()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::ReturnOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::ReturnOperation>(operation);
-        opJson["type"] = web::json::value("Return");
+        opJson["type"] = "Return";
         if (constOp->hasReturnValue())
-            opJson["value"] = web::json::value(constOp->getReturnValue()->getIdentifier());
+            opJson["value"] = constOp->getReturnValue()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::LoopOp) {
         auto loopOperation = std::static_pointer_cast<IR::Operations::LoopOperation>(operation);
-        opJson["type"] = web::json::value("Loop");
+        opJson["type"] = "Loop";
         opJson["head"] = serializeOperation(loopOperation->getLoopHeadBlock());
 
     } else if (operation->getOperationType() == IR::Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operation);
-        opJson["type"] = web::json::value("If");
-        opJson["input"] = web::json::value(ifOp->getValue()->getIdentifier());
+        opJson["type"] = "If";
+        opJson["input"] = ifOp->getValue()->getIdentifier();
         opJson["trueCase"] = serializeOperation(ifOp->getTrueBlockInvocation());
         opJson["falseCase"] = serializeOperation(ifOp->getFalseBlockInvocation());
     } else if (operation->getOperationType() == IR::Operations::Operation::CompareOp) {
         auto compOp = std::static_pointer_cast<IR::Operations::CompareOperation>(operation);
-        opJson["type"] = web::json::value("Compare");
-        opJson["left"] = web::json::value(compOp->getLeftInput()->getIdentifier());
-        opJson["right"] = web::json::value(compOp->getRightInput()->getIdentifier());
+        opJson["type"] = "Compare";
+        opJson["left"] = compOp->getLeftInput()->getIdentifier();
+        opJson["right"] = compOp->getRightInput()->getIdentifier();
         switch (compOp->getComparator()) {
             case IR::Operations::CompareOperation::Comparator::IEQ: {
-                opJson["Compare"] = web::json::value("EQ");
+                opJson["Compare"] = "EQ";
                 break;
             }
             case IR::Operations::CompareOperation::Comparator::ISLT: {
-                opJson["Compare"] = web::json::value("LT");
+                opJson["Compare"] = "LT";
                 break;
             }
             default: {
@@ -129,41 +130,41 @@ void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operati
         }
     } else if (operation->getOperationType() == IR::Operations::Operation::AndOp) {
         auto andOp = std::static_pointer_cast<IR::Operations::AndOperation>(operation);
-        opJson["type"] = web::json::value("And");
-        opJson["left"] = web::json::value(andOp->getLeftInput()->getIdentifier());
-        opJson["right"] = web::json::value(andOp->getRightInput()->getIdentifier());
+        opJson["type"] = "And";
+        opJson["left"] = andOp->getLeftInput()->getIdentifier();
+        opJson["right"] = andOp->getRightInput()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::NegateOp) {
         auto negate = std::static_pointer_cast<IR::Operations::NegateOperation>(operation);
-        opJson["type"] = web::json::value("Negate");
-        opJson["input"] = web::json::value(negate->getInput()->getIdentifier());
+        opJson["type"] = "Negate";
+        opJson["input"] = negate->getInput()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::BranchOp) {
         auto compOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operation);
-        opJson["type"] = web::json::value("Branch");
+        opJson["type"] = "Branch";
         opJson["next"] = serializeOperation(compOp->getNextBlockInvocation());
     } else if (operation->getOperationType() == IR::Operations::Operation::LoadOp) {
         auto loadOp = std::static_pointer_cast<IR::Operations::LoadOperation>(operation);
-        opJson["type"] = web::json::value("Load");
-        opJson["address"] = web::json::value(loadOp->getAddress()->getIdentifier());
+        opJson["type"] = "Load";
+        opJson["address"] = loadOp->getAddress()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::StoreOp) {
         auto storeOp = std::static_pointer_cast<IR::Operations::StoreOperation>(operation);
-        opJson["type"] = web::json::value("Store");
-        opJson["address"] = web::json::value(storeOp->getAddress()->getIdentifier());
-        opJson["value"] = web::json::value(storeOp->getValue()->getIdentifier());
+        opJson["type"] = "Store";
+        opJson["address"] = storeOp->getAddress()->getIdentifier();
+        opJson["value"] = storeOp->getValue()->getIdentifier();
     } else if (operation->getOperationType() == IR::Operations::Operation::ProxyCallOp) {
         auto proxyCallOp = std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation);
-        opJson["type"] = web::json::value("call");
-        opJson["symbol"] = web::json::value(proxyCallOp->getFunctionSymbol());
+        opJson["type"] = "call";
+        opJson["symbol"] = proxyCallOp->getFunctionSymbol();
         std::vector<web::json::value> arguments;
         for (auto arg : proxyCallOp->getInputArguments()) {
             arguments.emplace_back(arg->getIdentifier());
         }
-        opJson["arguments"] = web::json::value::array(arguments);
+        opJson["arguments"] = arguments;
     } else {
         NES_THROW_RUNTIME_ERROR("operator is not known: " << operation->toString());
     }
 }
 
-web::json::value IRSerialization::serializeOperation(IR::Operations::BasicBlockInvocation& blockInvocation) {
+nlohmann::json IRSerialization::serializeOperation(IR::Operations::BasicBlockInvocation& blockInvocation) {
 
     bool containsBlock = false;
     for (auto& block : blocks) {
@@ -177,13 +178,13 @@ web::json::value IRSerialization::serializeOperation(IR::Operations::BasicBlockI
         serializeBlock(blockInvocation.getBlock());
     }
 
-    web::json::value opJson{};
-    opJson["target"] = web::json::value(blockInvocation.getBlock()->getIdentifier());
-    std::vector<web::json::value> arguments;
+    nlohmann::json opJson{};
+    opJson["target"] = blockInvocation.getBlock()->getIdentifier();
+    std::vector<nlohmann::json> arguments;
     for (auto arg : blockInvocation.getArguments()) {
         arguments.emplace_back(arg->getIdentifier());
     }
-    opJson["arguments"] = web::json::value::array(arguments);
+    opJson["arguments"] = arguments;
     return opJson;
 }
 
