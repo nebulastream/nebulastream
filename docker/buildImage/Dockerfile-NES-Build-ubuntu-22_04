@@ -22,6 +22,9 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     doxygen \
     graphviz \
     libbsd-dev \
+    libopencv-dev \
+    libopencv4.5-java \
+    libopencv4.5d-jni \
     cmake \
     software-properties-common
 

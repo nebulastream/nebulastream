@@ -34,4 +34,7 @@ RUN apk add --no-cache  -q cmake --repository=http://dl-cdn.alpinelinux.org/alpi
     p7zip \
     libbsd-dev \
     doxygen \
-    graphviz
+    graphviz \
+    # https://github.com/akapril/alpine-opencv-java/blob/master/Dockerfile if full integration is needed
+    opencv \
+    opencv-dev

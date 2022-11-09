@@ -23,6 +23,9 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   doxygen \
   graphviz \
   libbsd-dev \
+  libopencv-dev \
+  libopencv4.2-java \
+  libopencv4.2-jni \
   software-properties-common \
   && apt-get clean -qq && pip install lcov_cobertura
 
