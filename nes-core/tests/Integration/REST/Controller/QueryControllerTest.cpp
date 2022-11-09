@@ -40,7 +40,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->restServerType = ServerType::Oatpp;
+
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
         NES_INFO("QueryControllerTest: Coordinator started successfully");
@@ -158,7 +158,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
+
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
@@ -191,7 +191,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
+
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
@@ -252,7 +252,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
+
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
@@ -299,7 +299,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
+
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
@@ -351,7 +351,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->restServerType = ServerType::Oatpp;
+
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());

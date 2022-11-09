@@ -102,22 +102,9 @@ class RestServer {
 
     /**
    * @brief method to start the rest server
-   * calls then startwithOatpp or startwithRestSDK according to bool useOatpp
    * @return bool indicating success
    */
-    bool start(bool useOatpp = false);
-
-    /**
-   * @brief method to start the rest server with Oatpp
-   * @return bool indicating success
-   */
-    bool startWithOatpp();
-
-    /**
-   * @brief method to start the rest server with SDK
-   * @return bool indicating success
-   */
-    bool startWithRestSDK();
+    bool start();
 
     /**
    * @brief method called within startWithOatpp
