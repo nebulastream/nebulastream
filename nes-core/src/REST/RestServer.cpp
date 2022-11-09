@@ -59,15 +59,7 @@ RestServer::RestServer(std::string host,
       maintenanceService(maintenanceService), monitoringService(std::move(monitoringService)),
       bufferManager(std::move(bufferManager)) {}
 
-bool RestServer::start(bool useOatpp) {
-    if (useOatpp == true) {
-        usingOatpp = true;
-        return startWithOatpp();
-    }
-    return startWithRestSDK();
-}
-
-bool RestServer::startWithOatpp() {
+bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     try {
@@ -87,20 +79,11 @@ bool RestServer::startWithOatpp() {
     return true;
 }
 
-bool RestServer::startWithRestSDK() {
-    NES_DEBUG("Starting REST server with cpp rest sdk is no longer available");
-    return false;
-}
-
 bool RestServer::stop() {
-    if (!usingOatpp) {
-        NES_DEBUG("Starting REST server with cpp rest sdk is no longer available");
-        return false;
-    } else {
-        std::unique_lock lock(mutex);
-        stopRequested = true;
-        return stopRequested;
-    }
+    std::unique_lock lock(mutex);
+    stopRequested = true;
+    return stopRequested;
+
 }
 
 void RestServer::run() {

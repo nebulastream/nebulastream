@@ -71,7 +71,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;
-        coordinatorConfig->restServerType = ServerType::Oatpp;
+
         return std::make_shared<NesCoordinator>(coordinatorConfig);
     }
 

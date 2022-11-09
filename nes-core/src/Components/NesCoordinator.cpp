@@ -205,14 +205,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               locationService);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
-
-        if (this->coordinatorConfiguration->restServerType == NES::ServerType::Oatpp) {
-            NES_DEBUG("NesCoordinator::startCoordinatorRESTServerOATPP: ready");
-            restServer->start(true);//this call is blocking
-        } else {
-            restServer->start(false);//this call is blocking
-        }
-        NES_DEBUG("NesCoordinator: startRestServer thread terminates");
+        restServer->start();//this call is blocking
     }));
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
