@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.45](https://github.com/nebulastream/nebulastream/tree/v0.3.45) (2022-11-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.44...v0.3.45)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Threshold windows Logical Operator [\#2981](https://github.com/nebulastream/nebulastream/issues/2981)
+
 ## [v0.3.44](https://github.com/nebulastream/nebulastream/tree/v0.3.44) (2022-11-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.43...v0.3.44)
