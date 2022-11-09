@@ -161,9 +161,7 @@ size_t LocalBufferPool::getBufferSize() const { return bufferManager->getBufferS
 
 size_t LocalBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
 
-size_t LocalBufferPool::getNumOfUnpooledBuffers() const {
-    return bufferManager->getNumOfUnpooledBuffers();
-}
+size_t LocalBufferPool::getNumOfUnpooledBuffers() const { return bufferManager->getNumOfUnpooledBuffers(); }
 
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() {
     NES_ASSERT2_FMT(false, "This is not supported currently");
