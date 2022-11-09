@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 
-#include <Plans/Global/Query/SharedQueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
 

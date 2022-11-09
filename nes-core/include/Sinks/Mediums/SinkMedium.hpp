@@ -17,7 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>

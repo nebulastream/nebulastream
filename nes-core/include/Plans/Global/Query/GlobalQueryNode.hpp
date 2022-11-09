@@ -16,7 +16,7 @@
 #define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYNODE_HPP_
 
 #include <Operators/OperatorNode.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <memory>
 #include <string>
 #include <vector>

@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
 #define NES_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES {

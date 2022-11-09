@@ -15,9 +15,7 @@
 #ifndef NES_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 #define NES_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 
 namespace NES {
 

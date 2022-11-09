@@ -16,8 +16,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>

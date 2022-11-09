@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
 #define NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <exception>
 #include <memory>
 #include <stdexcept>

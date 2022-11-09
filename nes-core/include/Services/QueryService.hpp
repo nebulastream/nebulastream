@@ -17,8 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <future>
 
 namespace NES::Optimizer {

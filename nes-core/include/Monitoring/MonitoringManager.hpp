@@ -18,7 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <chrono>

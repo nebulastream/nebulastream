@@ -16,9 +16,7 @@
 #define NES_QUERYCATALOGSERVICE_HPP
 
 #include <Operators/OperatorId.hpp>
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/QueryStatus.hpp>
 #include <mutex>
 

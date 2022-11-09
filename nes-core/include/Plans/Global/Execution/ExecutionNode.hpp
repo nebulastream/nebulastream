@@ -16,7 +16,7 @@
 #define NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <list>
 #include <map>
 #include <memory>

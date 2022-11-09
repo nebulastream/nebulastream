@@ -24,6 +24,11 @@ using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
 using QueryId = uint64_t;
+using SharedQueryId = uint64_t;
+using QuerySubPlanId = uint64_t;
+static constexpr QueryId INVALID_QUERY_ID = 0;
+static constexpr uint64_t INVALID_QUERY_SUB_PLAN_ID = 0;
+static constexpr uint64_t INVALID_SHARED_QUERY_ID = 0;
 
 }// namespace NES
 

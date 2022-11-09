@@ -16,7 +16,7 @@
 #define NES_MAINTENANCESERVICE_HPP
 
 #include <Phases/MigrationType.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <optional>
