@@ -26,17 +26,18 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristi
     : timeCharacteristic(std::move(timeCharacteristic)) {}
 
 bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
-    // If the window type is either tumbling or sliding window, check the field used to define the time
-    auto fieldName = timeCharacteristic->getField()->getName();
-    auto existingField = schema->hasFieldName(fieldName);
-    if (existingField) {
-        timeCharacteristic->getField()->setName(existingField->getName());
-        return true;
-    } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
-        return true;
-    } else {
-        NES_ERROR("TimeBasedWindow using a non existing time field " + fieldName);
-        throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
+    if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
+        auto fieldName = timeCharacteristic->getField()->getName();
+        auto existingField = schema->hasFieldName(fieldName);
+        if (existingField) {
+            timeCharacteristic->getField()->setName(existingField->getName());
+            return true;
+        } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+            return true;
+        } else {
+            NES_ERROR("TimeBasedWindow using a non existing time field " + fieldName);
+            throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
+        }
     }
     return true;
 }
