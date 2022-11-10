@@ -130,6 +130,67 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryVariableSizeWithFileOutput) {
+    NES_INFO(" start coordinator");
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
+    remove(outputFilePath.c_str());
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
+    ss << outputFilePath;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss << R"());","placement" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    NES_INFO("try to acc return");
+
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
+
+    ifstream my_file(outputFilePath);
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs(outputFilePath.c_str());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    int response = remove(outputFilePath.c_str());
+    EXPECT_TRUE(response == 0);
+}
+
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "UserQueryWithFileOutputWithFilterTestResult.txt";
