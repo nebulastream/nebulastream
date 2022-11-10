@@ -51,10 +51,18 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
 }
 
 QueryPlanPtr QueryPlanBuilder::addUnionOperatorNode(NES::QueryPlanPtr left, NES::QueryPlanPtr right, NES::QueryPlanPtr currentPlan) {
+    NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-    currentPlan->addRootOperator(right->getRootOperators()[0]);
-    currentPlan->addRootOperator(left->getRootOperators()[0]);
-    currentPlan->appendOperatorAsNewRoot(op);
+    if (currentPlan){
+        currentPlan->addRootOperator(right->getRootOperators()[0]);
+        currentPlan->addRootOperator(left->getRootOperators()[0]);
+        currentPlan->appendOperatorAsNewRoot(op);
+    }else{
+        currentPlan = left;
+        currentPlan->addRootOperator(right->getRootOperators()[0]);
+        currentPlan->appendOperatorAsNewRoot(op);
+    }
+
     //update source name
     auto newSourceName =
         Util::updateSourceName(currentPlan->getSourceConsumed(), left->getSourceConsumed());
@@ -142,9 +150,15 @@ QueryPlanPtr QueryPlanBuilder::addJoinOperatorNode(NES::QueryPlanPtr left, NES::
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
 
 
-    currentPlan->addRootOperator(right->getRootOperators()[0]);
-    currentPlan->addRootOperator(left->getRootOperators()[0]);
-    currentPlan->appendOperatorAsNewRoot(op);
+    if (currentPlan){
+        currentPlan->addRootOperator(right->getRootOperators()[0]);
+        currentPlan->addRootOperator(left->getRootOperators()[0]);
+        currentPlan->appendOperatorAsNewRoot(op);
+    }else{
+        currentPlan = left;
+        currentPlan->addRootOperator(right->getRootOperators()[0]);
+        currentPlan->appendOperatorAsNewRoot(op);
+    }
     //update source name
     auto sourceNameLeft = left->getSourceConsumed();
     auto sourceNameRight = right->getSourceConsumed();

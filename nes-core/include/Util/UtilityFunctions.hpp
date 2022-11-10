@@ -283,14 +283,6 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
     }
 }
 
-/**
-      * @brief: Update the Source names by sorting and then concatenating the source names from the sub- and query plan
-      * @param string queryPlanSourceConsumed
-      * @param string subQueryPlanSourceConsumed
-      * @return string with new source name
-      */
-std::string updateSourceName(std::string basic_string_1, std::string basic_string_2);
-
 };// namespace Util
 }// namespace NES
 
