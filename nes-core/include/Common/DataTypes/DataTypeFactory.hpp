@@ -160,6 +160,13 @@ class DataTypeFactory {
     * @param length length of the char
     * @return DataTypePtr
     */
+    static DataTypePtr createText();
+
+    /**
+    * @brief Creates a new Char data type.
+    * @param length length of the char
+    * @return DataTypePtr
+    */
     static DataTypePtr createChar();
 
     /**

@@ -109,6 +109,11 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
                 break;
             }
+            case NES::BasicPhysicalType::TEXT: {
+                char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
+                strcpy(value, inputString.c_str());
+                break;
+            }
             case NES::BasicPhysicalType::BOOLEAN: {
                 //verify that a valid bool was transmitted (valid{true,false,0,1})
                 bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");

@@ -15,6 +15,7 @@
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
+#include <Common/DataTypes/Text.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -88,6 +89,8 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
 }
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
+
+DataTypePtr DataTypeFactory::createText() { return std::make_shared<Text>(); }
 
 DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 

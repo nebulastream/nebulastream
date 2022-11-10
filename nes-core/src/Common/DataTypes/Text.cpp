@@ -12,26 +12,20 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Text.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
-bool DataType::isBoolean() const { return false; }
+bool Text::isEquals(DataTypePtr otherDataType) { return otherDataType->isText(); }
 
-bool DataType::isUndefined() const { return false; }
+DataTypePtr Text::join(DataTypePtr otherDataType) {
+    if (otherDataType->isText()) {
+        return DataTypeFactory::createText();
+    }
+    return DataTypeFactory::createUndefined();
+}
 
-bool DataType::isArray() const { return false; }
-
-bool DataType::isCharArray() const { return false; }
-
-bool DataType::isFloat() const { return false; }
-
-bool DataType::isInteger() const { return false; }
-
-bool DataType::isNumeric() const { return false; }
-
-bool DataType::isChar() const { return false; }
-
-bool DataType::isText() const { return false; }
+std::string Text::toString() { return "Text"; }
 
 }// namespace NES

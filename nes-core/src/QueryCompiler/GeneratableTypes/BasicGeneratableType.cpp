@@ -42,6 +42,7 @@ CodeExpressionPtr BasicGeneratableType::getCode() const {
         case BasicPhysicalType::DOUBLE: return std::make_shared<CodeExpression>("double");
         case BasicPhysicalType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
         case BasicPhysicalType::CHAR: return std::make_shared<CodeExpression>("char");
+        case BasicPhysicalType::TEXT: return std::make_shared<CodeExpression>("text");
     }
     NES_THROW_RUNTIME_ERROR("BasicGeneratableType: it was not possible to generate code for this type: " + type->toString());
     return nullptr;

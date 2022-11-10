@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Char.hpp>
+#include <Common/DataTypes/Text.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -38,6 +39,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
         return getPhysicalType(DataType::as<ArrayType>(dataType));
     } else if (dataType->isChar()) {
         return getPhysicalType(DataType::as<Char>(dataType));
+    } else if (dataType->isText()) {
+        return getPhysicalType(DataType::as<Text>(dataType));
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "
                             + dataType->toString());
@@ -92,6 +95,10 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arra
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charType) {
     return BasicPhysicalType::create(charType, BasicPhysicalType::CHAR);
+}
+
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextPtr& textType) {
+    return BasicPhysicalType::create(textType, BasicPhysicalType::TEXT);
 }
 
 }// namespace NES
