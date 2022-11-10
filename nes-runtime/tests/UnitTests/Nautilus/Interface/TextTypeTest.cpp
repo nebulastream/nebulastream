@@ -46,7 +46,6 @@ class TextTypeTest : public testing::Test {
 };
 
 TEST_F(TextTypeTest, createTextTest) {
-
     auto textValue = Value<Text>("test");
     auto length = textValue->length();
     ASSERT_EQ(length, (uint32_t) 4);
