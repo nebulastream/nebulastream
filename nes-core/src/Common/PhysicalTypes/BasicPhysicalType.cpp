@@ -40,6 +40,7 @@ uint64_t BasicPhysicalType::size() const {
         case DOUBLE: return sizeof(double);
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
+        case TEXT: return sizeof(std::string);
     }
     return -1;
 }
@@ -109,6 +110,7 @@ std::string BasicPhysicalType::toString() const noexcept {
         case DOUBLE: return "FLOAT64";
         case BOOLEAN: return "BOOLEAN";
         case CHAR: return "CHAR";
+        case TEXT: return "TEXT";
     }
     return "";
 }

@@ -53,17 +53,25 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
-        uint64_t key;
+        uint64_t cameraId;
         uint64_t timestamp;
+        uint64_t rows;
+        uint64_t cols;
+        uint64_t type;
+        std::string data;
     };
-    static_assert(sizeof(Record) == 16);
+    static_assert(sizeof(Record) == 72);
 
     auto schema = Schema::create()
-                      ->addField("key", DataTypeFactory::createUInt64())
-                      ->addField("timestamp", DataTypeFactory::createUInt64());
+                      ->addField("cameraId", DataTypeFactory::createUInt64())
+                      ->addField("timestamp", DataTypeFactory::createUInt64())
+                      ->addField("rows", DataTypeFactory::createUInt64())
+                      ->addField("cols", DataTypeFactory::createUInt64())
+                      ->addField("type", DataTypeFactory::createUInt64())
+                      ->addField("data", DataTypeFactory::createText());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
-    sourceCatalog->addLogicalSource("memory_stream", schema);
+    sourceCatalog->addLogicalSource("var_length_stream", schema);
 
     NES_INFO("VariableLengthIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -77,13 +85,17 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
     size_t numRecords = memAreaSize / recordSize;
-    for (auto i = 0U; i < numRecords; ++i) {
-        records[i].key = i;
+    for (uint64_t i = 0U; i < numRecords; ++i) {
+        records[i].cameraId = i;
         records[i].timestamp = i;
+        records[i].rows = i;
+        records[i].cols = i;
+        records[i].type = i;
+        records[i].data = "1";
     }
 
     auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, "interval");
-    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
+    auto physicalSource = PhysicalSource::create("var_length_stream", "stream_1", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -96,7 +108,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
 
     //register query
     std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("var_length_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -121,7 +133,9 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
+            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
+                + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
+                + std::to_string(lineCnt - 1);
             ASSERT_EQ(line, expectedString);
         }
         lineCnt++;
