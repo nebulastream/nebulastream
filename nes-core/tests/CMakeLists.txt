@@ -42,7 +42,7 @@ target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 
 if (CODE_COVERAGE)
     target_code_coverage(nes AUTO)
-endif()
+endif ()
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
@@ -373,9 +373,9 @@ add_nes_unit_test(query-placement-test "UnitTests/Optimizer/QueryPlacement/Query
 
 add_nes_unit_test(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp")
 
-if(NES_USE_TF)
+if (NES_USE_TF)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
-endif()
+endif ()
 
 add_nes_unit_test(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
 #add_executable(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
@@ -484,90 +484,90 @@ add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationPr
 add_nes_unit_test(trajectory-predictor-tests "UnitTests/Spatial/TrajectoryPredictorTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
-add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp" )
+add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")
 
 
 ### QueryDeploymentTest ###
-add_nes_integration_test(query-deployment-test "Integration/QueryDeploymentTest.cpp" )
+add_nes_integration_test(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 
 
 ### MQTTSinkDepleymentTest ###
-add_nes_integration_test(mqtt-sink-deployment-test "Integration/MQTTSinkDeploymentTest.cpp" )
+add_nes_integration_test(mqtt-sink-deployment-test "Integration/MQTTSinkDeploymentTest.cpp")
 
 
 ### RenameTest ###
-add_nes_integration_test(rename-test "Integration/RenameTest.cpp" )
+add_nes_integration_test(rename-test "Integration/RenameTest.cpp")
 
 
 ### JoinDeploymentTest ###
-add_nes_integration_test(join-deployment-test "Integration/JoinDeploymentTest.cpp" )
+add_nes_integration_test(join-deployment-test "Integration/JoinDeploymentTest.cpp")
 
 ### windowDeploymentTest ###
-add_nes_integration_test(window-deployment-test "Integration/WindowDeploymentTest.cpp" )
+add_nes_integration_test(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 
 
 ### windowDeploymentTest ###
-add_nes_integration_test(thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalTumblingWindowTests.cpp" )
+add_nes_integration_test(thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalTumblingWindowTests.cpp")
 
 
-add_nes_integration_test(thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalGlobalTumblingWindowTests.cpp" )
+add_nes_integration_test(thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalGlobalTumblingWindowTests.cpp")
 
 
-add_nes_integration_test(thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalKeyedSlidingWindowTests.cpp" )
+add_nes_integration_test(thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalKeyedSlidingWindowTests.cpp")
 
 
-add_nes_integration_test(thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalGlobalSlidingWindowTests.cpp" )
+add_nes_integration_test(thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalGlobalSlidingWindowTests.cpp")
 
 
 ### concurrent window deployment test ###
-add_nes_integration_test(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp" )
+add_nes_integration_test(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
 
 
 ### MultipleWindowsTest ###
-add_nes_integration_test(multi-window-test "Integration/MultipleWindowsTest.cpp" )
+add_nes_integration_test(multi-window-test "Integration/MultipleWindowsTest.cpp")
 
 
 ### MultiJoinsTest ###
-add_nes_integration_test(multi-join-test "Integration/MultipleJoinsTest.cpp" )
+add_nes_integration_test(multi-join-test "Integration/MultipleJoinsTest.cpp")
 
 
 ### MultiThreadedTest ###
-add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp" )
+add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp")
 
 
 ### AssignWatermarkTest ###
 #TODO: activate for testing
-add_nes_integration_test(assignment-watermark-test "Integration/AssignWatermarkTest.cpp" )
+add_nes_integration_test(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
 
 
-add_nes_integration_test(allowed-lateness-test "Integration/AllowedLatenessTest.cpp" )
+add_nes_integration_test(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
 
 
-add_nes_integration_test(complex-sequence-test "Integration/ComplexSequenceTest.cpp" )
+add_nes_integration_test(complex-sequence-test "Integration/ComplexSequenceTest.cpp")
 
 
 ### unionDeploymentTest ###
-add_nes_integration_test(union-deployment-test "Integration/UnionDeploymentTest.cpp" )
+add_nes_integration_test(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 
 # TCPSourceIntegrationTest
-add_nes_integration_test(tcp-source-integration-test "Integration/Source/TCPSourceIntegrationTest.cpp" )
+add_nes_integration_test(tcp-source-integration-test "Integration/Source/TCPSourceIntegrationTest.cpp")
 set_tests_properties(tcp-source-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
 
 ### ContiniousSourceTest ###
-add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp" )
+add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp")
 
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
-add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp" )
+add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
 
 
 ### Catalog Remote Tests ###
-add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCatalogRemoteTest.cpp" )
+add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCatalogRemoteTest.cpp")
 
 
 ### WorkerCoordinatorStarter Tests ###
-add_nes_integration_test(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp" )
+add_nes_integration_test(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
 
 
 # RESTEndpointTest
@@ -575,7 +575,7 @@ add_nes_integration_test(rest-endpoint-test "Integration/RESTEndpointTest.cpp")
 
 
 ### WorkerCoordinatorStarter Tests ###
-add_nes_integration_test(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp" )
+add_nes_integration_test(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
 
 
 # NetworkStackUnitTest
@@ -603,11 +603,11 @@ add_nes_unit_test(metric-store-test "UnitTests/Monitoring/MetricStoreTest.cpp")
 
 
 # UserDefinedMonitoringTest
-add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp" )
+add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp")
 
 
 # MonitoringIntegrationTest
-add_nes_integration_test(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp" )
+add_nes_integration_test(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
 set_tests_properties(monitoring-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
 
@@ -616,27 +616,30 @@ add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.
 add_dependencies(nemo-integration-test nesCoordinator nesWorker)
 
 ### MemorySourceIntegrationTest ###
-add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp" )
+add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp")
+
+### MemorySourceIntegrationTest ###
+add_nes_integration_test(variable-length-integration-test "Integration/Source/VariableLengthIntegrationTest.cpp")
 
 
 ### StaticDataSourceIntegrationTest ###
-add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp" )
+add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
 
 
 ### BenchmarkSourceIntegrationTest ###
-add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp" )
+add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp")
 
 
 ### TestHarnessUtilTest ###
-add_nes_integration_test(test-harness-util-test "Integration/TestHarnessUtilTest.cpp" )
+add_nes_integration_test(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
 
 
 ### StringQueryTest ###
-add_nes_integration_test(string-query-test "Integration/StringQueryTest.cpp" )
+add_nes_integration_test(string-query-test "Integration/StringQueryTest.cpp")
 
 
 ### UpstreamBackup ###
-add_nes_integration_test(upstream-backup-test "Integration/UpstreamBackupTest.cpp" )
+add_nes_integration_test(upstream-backup-test "Integration/UpstreamBackupTest.cpp")
 
 ### gRPC Tests
 add_nes_integration_test(grpc-test "UnitTests/gRPC/grpcTests.cpp")
