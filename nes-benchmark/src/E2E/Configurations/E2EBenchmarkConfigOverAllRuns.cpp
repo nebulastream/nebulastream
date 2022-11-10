@@ -68,8 +68,6 @@ namespace NES::Benchmark {
         configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
 
-
-
         if (!yamlConfig["dataGenerators"].IsNone()) {
             /* Iterating through the node
              * Afterwards, we insert either the parsed values or Default, if we require another generator
