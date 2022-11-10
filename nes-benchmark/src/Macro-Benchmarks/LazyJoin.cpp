@@ -160,6 +160,8 @@ class ycsb_zipfian_generator : public abstract_zipfian_generator {
     std::uniform_real_distribution<double> dist;
 };
 }// namespace Slash
+
+
 namespace NES {
 namespace detail {
 
@@ -863,7 +865,7 @@ void createBenchmarkSources(std::vector<DataSourcePtr>& dataProducers,
         dataProducers.emplace_back(source);
         auto diff = std::chrono::system_clock::now() - start;
         NES_INFO("Created BenchmarkSource #" << i << " in "
-                                             << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count());
+                                             << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms");
     }
 }
 
@@ -1078,6 +1080,7 @@ int main(int, char**) {
 
         auto executionContextLeft = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
             0,
+            0,
             engine->getQueryManager(),
             [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
                 sink->writeData(buffer, wctx);
@@ -1087,6 +1090,7 @@ int main(int, char**) {
             operatorHandlers);
 
         auto executionContextRight = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+            1,
             0,
             engine->getQueryManager(),
             [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContext& wctx) {
