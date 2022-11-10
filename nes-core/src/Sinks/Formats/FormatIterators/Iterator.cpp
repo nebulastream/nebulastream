@@ -13,7 +13,7 @@
 */
 
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 
@@ -23,20 +23,20 @@ std::string Iterator::dataJson() {
     // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
     // values as the corresponding values
     // Adding the first tuple before the loop avoids checking if last tuple is processed in order to omit "," after json value
-    auto jsonObject = web::json::value::object();
+    auto jsonObject = nlohmann::json {};
     try {
         for (uint32_t currentField = 0; currentField < fieldNames.size(); currentField++) {
             auto currentFieldOffset = fieldOffsets[currentField];
             auto currentFieldType = fieldTypes[currentField];
             auto fieldName = fieldNames[currentField];
             auto fieldValue = currentFieldType->convertRawToStringWithoutFill(tuplePointer + currentFieldOffset);
-            jsonObject[fieldName] = web::json::value(fieldValue);
+            jsonObject[fieldName] = fieldValue;
         }
-    } catch (web::json::json_exception& jsonException) {
+    } catch (nlohmann::json::exception& jsonException) {
         NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values" << jsonException.what());
         return "";
     }
-    return jsonObject.serialize();
+    return jsonObject.dump();
 }
 
 }// namespace NES
