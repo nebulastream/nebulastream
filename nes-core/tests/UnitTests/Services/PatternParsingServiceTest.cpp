@@ -11,20 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Services/PatternParsingService.hpp"
-#include "API/Query.hpp"
-#include "API/QueryAPI.hpp"
-#include "API/Windowing.hpp"
-#include "NesBaseTest.hpp"
-#include "Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp"
-#include "Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp"
-#include "Operators/LogicalOperators/FilterLogicalOperatorNode.hpp"
-#include "Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp"
-#include "Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp"
-#include "Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
-#include "Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp"
-#include "Plans/Query/QueryPlan.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Services/PatternParsingService.hpp>
+#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
+#include <NesBaseTest.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <climits>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -50,6 +47,14 @@ class PatternParsingServiceTest : public Testing::TestWithErrorHandling<testing:
     static void TearDownTestCase() { NES_INFO("Tear down QueryPlanTest test class."); }
 };
 
+std::string queryPlanToString(const QueryPlanPtr queryPlan) {
+    std::regex r2("[0-9]");
+    std::regex r1("  ");
+    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
+    queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
+    return queryPlanStr;
+}
+
 TEST_F(PatternParsingServiceTest, simplePattern) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
@@ -70,10 +75,7 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
@@ -100,10 +102,7 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
@@ -128,13 +127,10 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     queryPlan->addRootOperator(sinkNull);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
+TEST_F(PatternParsingServiceTest, DisjunctionPattern){
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
         "PATTERN test:= (A OR B) FROM default_logical AS A, default_logical_b AS B  INTO Print :: testSink ";
@@ -151,16 +147,14 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     LogicalOperatorNodePtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
-    NES::Query qOR = NES::Query(queryPlan).orWith(NES::Query(subQueryPlan));
-    queryPlan = qOR.getQueryPlan();
+    OperatorNodePtr unionOp = LogicalOperatorFactory::createUnionOperator();
+    queryPlan->appendOperatorAsNewRoot(unionOp);
+    queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
@@ -188,10 +182,7 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
@@ -223,10 +214,7 @@ TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, SequencePattern) {
@@ -254,10 +242,7 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     queryPlan->appendOperatorAsNewRoot(sink4);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
@@ -281,10 +266,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
@@ -311,10 +293,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperator) {
@@ -335,10 +314,7 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
@@ -359,11 +335,7 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    NES_DEBUG("PatternParsingServiceTest:" + patternPlanStr);
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
@@ -384,11 +356,7 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
-    std::regex r2("[0-9]");
-    std::string patternPlanStr = std::regex_replace(patternPlan->toString(), r2, "");
-    NES_DEBUG("PatternParsingServiceTest:" + patternPlanStr);
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r2, "");
-    EXPECT_EQ(queryPlanStr, patternPlanStr);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
@@ -396,7 +364,7 @@ TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
     std::string patternString = "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
     std::shared_ptr<PatternParsingService> patternParsingService;
     QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr queryPlanPattern = query->getQueryPlan();
+    const QueryPlanPtr patternPlan = query->getQueryPlan();
 
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
@@ -407,25 +375,7 @@ TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
     queryPlan->appendOperatorAsNewRoot(op1);
 
     //Comparison of the expected and the actual generated query plan
-    std::string queryPlanString = queryPlan->toString();
-    std::string queryPlanPatternString = queryPlanPattern->toString();
-    int current = 0;
-    for (unsigned long i = 0; i <= queryPlanString.size(); ++i) {
-        if (!isdigit(queryPlanString[i])) {
-            queryPlanString[current] = queryPlanString[i];
-            current++;
-        }
-    }
-    queryPlanString = queryPlanString.substr(0, current);
-    current = 0;
-    for (unsigned long i = 0; i <= queryPlanPatternString.size(); ++i) {
-        if (!isdigit(queryPlanPatternString[i])) {
-            queryPlanPatternString[current] = queryPlanPatternString[i];
-            current++;
-        }
-    }
-    queryPlanPatternString = queryPlanPatternString.substr(0, current);
-    EXPECT_TRUE(queryPlanString == queryPlanPatternString);
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
 //   std::string patternString =

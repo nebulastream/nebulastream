@@ -240,6 +240,14 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 /**
+      * @brief: Update the Source names by sorting and then concatenating the source names from the sub- and query plan
+      * @param string queryPlanSourceConsumed
+      * @param string subQueryPlanSourceConsumed
+      * @return string with new source name
+      */
+std::string updateSourceName(std::string basic_string_1, std::string basic_string_2);
+
+/**
  * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
  * @param input the vector
  * @param n the chunks
@@ -274,14 +282,6 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
         vector.push_back(newValue);
     }
 }
-
-/**
-      * @brief: Update the Source names by sorting and then concatenating the source names from the sub- and query plan
-      * @param string queryPlanSourceConsumed
-      * @param string subQueryPlanSourceConsumed
-      * @return string with new source name
-      */
-std::string updateSourceName(std::string basic_string_1, std::string basic_string_2);
 
 };// namespace Util
 }// namespace NES
