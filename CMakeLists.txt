@@ -384,10 +384,6 @@ endif ()
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
-# C++ REST SDK
-find_package(cpprestsdk CONFIG REQUIRED)
-set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
-
 #Oatpp
 find_package(oatpp REQUIRED)
 set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
