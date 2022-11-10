@@ -172,6 +172,8 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      */
     std::string keyAssignment(std::string keyName);
 
+    void addBinaryOperatorToQueryPlan(std::string string, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
+
 
 
   private:
@@ -187,7 +189,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
-    void addBinaryOperatorToQueryPlan(std::string string, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
+
 };
 
 }// namespace NES::Parsers
