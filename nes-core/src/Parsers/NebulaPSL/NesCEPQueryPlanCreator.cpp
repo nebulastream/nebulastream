@@ -32,6 +32,8 @@
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/QueryPlanBuilder.h>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 
 namespace NES::Parsers {
 
@@ -269,51 +271,60 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
                     //we use a on time trigger as default that triggers on each change of the watermark
                     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
 
+                    // check if query contain watermark assigner, and add if missing (as default behaviour)
+                    if (this->queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+                        // we only consider Event time in CEP
+                        this->queryPlan->appendOperatorAsNewRoot(
+                            LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                                Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                                API::Milliseconds(0),
+                                windowType->getTimeCharacteristic()->getTimeUnit())));
+                    }
 
+                    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+
+                    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
+                    std::vector<WindowAggregationPtr> windowAggs;
+                    std::shared_ptr<WindowAggregationDescriptor> windowAgg = API::Sum(Attribute("Count"));
+                    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+                    std::shared_ptr<WindowAggregationDescriptor> windowTs = API::Max(Attribute(timestamp));
+                    windowAggs.push_back(windowAgg);
+                    windowAggs.push_back(windowTs);
+
+                    auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs,
+                                                                                       windowType,
+                                                                                       distrType,
+                                                                                       triggerPolicy,
+                                                                                       triggerAction,
+                                                                                       0);
+
+                    OperatorNodePtr op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+                    this->queryPlan->appendOperatorAsNewRoot(op);
 
                     int32_t min = it->second.getMinMax().first;
                     int32_t max = it->second.getMinMax().second;
 
-                    if (min == max) {
-                        if (min == 0) {
+                    if(min != 0 && max != 0) { //TODO min = 1 max = 0
+                        ExpressionNodePtr predicate;
 
-                            // check if query contain watermark assigner, and add if missing (as default behaviour)
-                            if (this->queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-                                // we only consider Event time in CEP
-                                this->queryPlan->appendOperatorAsNewRoot(
-                                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                                        Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                                        API::Milliseconds(0),
-                                        windowType->getTimeCharacteristic()->getTimeUnit())));
-                            }
-
-                            auto windowDefinition = Windowing::LogicalWindowDefinition::create(API::Sum(Attribute("Count")),
-                                                                                               windowType,
-                                                                                               const DistributionCharacteristicPtr& distChar,
-                                                                                               triggerPolicy,
-                                                                                               const WindowActionDescriptorPtr& triggerAction,
-                                                                                               0);
-
-                            OperatorNodePtr op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
-                            this->queryPlan->appendOperatorAsNewRoot(op);
-
-                            query = subQueryLeft.times().window(
-                                Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), window.first, window.second));
-
+                        if (min == max) {
+                            predicate = Attribute("Count") = min;
+                        } else if (min == 0) {
+                            predicate = Attribute("Count") <= max;
+                        } else if (max == 0) {
+                            predicate = Attribute("Count") >= min;
                         } else {
-                            query = subQueryLeft.times(min).window(
-                                Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), window.first, window.second));
+                            predicate = Attribute("Count") >= min && Attribute("Count") <= max;
                         }
-                    } else {
-                        query = subQueryLeft.times(min, max).window(
-                            Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), window.first, window.second));
+
+                        OperatorNodePtr filterOp = LogicalOperatorFactory::createFilterOperator(predicate);
+                        this->queryPlan->appendOperatorAsNewRoot(filterOp);
                     }
-                }
-                else{
+                } else{
                     NES_ERROR("The Iteration operator requires a time window.")
                 }
-            }
-            else{
+            } else{
                 NES_ERROR("Unkown CEP operator" << opName);
             }
         }
@@ -324,7 +335,8 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
     if (!pattern.getProjectionFields().empty()) {
         addProjections();
     }
-    return this->query;
+
+    return Query(this->queryPlan);
 }
 
 void NesCEPQueryPlanCreator::addFilters() {
@@ -376,22 +388,22 @@ std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) {
 }
 
 void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, std::map<int, NebulaPSLOperatorNode>::const_iterator it) {
-    NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add binary operator " + opName)
+    NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: add binary operator " + opName)
     // find left (query) and right branch (subquery) of binary operator
     //left
-    NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: create subqueryLeft from "
+    NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryLeft from "
               + pattern.getSources().at(it->second.getLeftChildId()))
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
     auto leftQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
 
     // right
-    NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: create subqueryRight from "
+    NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from "
               + pattern.getSources().at(it->second.getRightChildId()))
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
 
     if (opName == "OR") {
-
+        NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: addUnionOperator")
         this->queryPlan = QueryPlanBuilder::addUnionOperatorNode(leftQueryPlan, rightQueryPlan, this->queryPlan);
 
     } else {
