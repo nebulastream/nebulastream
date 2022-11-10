@@ -69,6 +69,11 @@ class DataType {
     */
     [[nodiscard]] virtual bool isChar() const;
 
+    /**
+    * @brief Checks if this data type is Char.
+    */
+    [[nodiscard]] virtual bool isText() const;
+
     template<class DataType>
     static std::shared_ptr<DataType> as(DataTypePtr ptr) {
         return std::dynamic_pointer_cast<DataType>(ptr);

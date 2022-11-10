@@ -22,4 +22,5 @@ add_source_files(nes-core
         Float.cpp
         DataTypeFactory.cpp
         FixedChar.cpp
-)
+        Text.cpp
+        )
