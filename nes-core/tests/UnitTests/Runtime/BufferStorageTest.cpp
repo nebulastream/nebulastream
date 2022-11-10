@@ -31,7 +31,7 @@ class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   protected:
     virtual void SetUp() {
-        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
+        bufferManager = std::make_shared<Runtime::BufferManager>(1024,1);
         bufferStorage = std::make_shared<Runtime::BufferStorage>();
     }
     /* Will be called before any test in this class are executed. */

@@ -45,6 +45,7 @@ std::string toString(const FaultToleranceType faultToleranceMode) {
         case FaultToleranceType::ACTIVE_STANDBY: return "ACTIVE_STANDBY";
         case FaultToleranceType::CHECKPOINTING: return "CHECKPOINTING";
         case FaultToleranceType::UPSTREAM_BACKUP: return "UPSTREAM_BACKUP";
+        case FaultToleranceType::AMNESIA: return "AMNESIA";
         case FaultToleranceType::INVALID: return "INVALID";
     }
 }

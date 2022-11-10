@@ -182,16 +182,34 @@ class BasePlacementStrategy {
                                                            TopologyPtr topology,
                                                             GlobalExecutionPlanPtr globalExecutionPlan);
 
-    static std::pair<ExecutionNodePtr,FaultToleranceType> firstFitPlacement(std::vector<ExecutionNodePtr> executionNodes,
-                                                                             QueryId queryId,
-                                                                             FaultToleranceConfigurationPtr ftConfig,
-                                                                             TopologyPtr topology,
-                                                                             GlobalExecutionPlanPtr globalExecutionPlan);
+    static FaultToleranceType firstFitPlacement(ExecutionNodePtr executionNode,
+                                                FaultToleranceConfigurationPtr ftConfig,
+                                                TopologyPtr topology,
+                                                GlobalExecutionPlanPtr globalExecutionPlan);
 
     static std::pair<FaultToleranceType,float> getBestApproachForNode(ExecutionNodePtr executionNode,
                                                                        std::vector<ExecutionNodePtr> executionNodes,
                                                                        FaultToleranceConfigurationPtr ftConfig,
                                                                        TopologyPtr topology);
+
+    static void firstFitRecursivePlacement(std::vector<ExecutionNodePtr> sortedList,
+                                           FaultToleranceConfigurationPtr ftConfig,
+                                           TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
+
+    static FaultToleranceType firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes,
+                                                     //std::vector<FaultToleranceType> sortedApproaches,
+                                                     FaultToleranceConfigurationPtr ftConfig,
+                                                     TopologyPtr topology);
+
+    static ExecutionNodePtr getExecutionNodeRootNode(ExecutionNodePtr executionNode);
+
+    static std::vector<FaultToleranceType> getSortedApproachList(std::vector<ExecutionNodePtr> sourceNodes,
+                                                                 std::vector<ExecutionNodePtr> restNodes,
+                                                                 FaultToleranceConfigurationPtr ftConfig,
+                                                                 TopologyPtr topology);
+
+    static FaultToleranceType getStricterProcessingGuarantee(FaultToleranceConfigurationPtr ftConfig1,
+                                                             FaultToleranceConfigurationPtr ftConfig2);
 
   protected:
     /**
@@ -345,6 +363,26 @@ class BasePlacementStrategy {
                                 TopologyPtr topology);
     static int getNumberOfStatefulOperatorsRecursively(LogicalOperatorNodePtr operatorNode);
     static int getNumberOfStatefulOperatorsOnExecutionNodeRecursively(ExecutionNodePtr executionNode, QueryId queryId);
+    static std::tuple<ExecutionNodePtr, FaultToleranceType, float> getFirstFitResultTuple(std::vector<ExecutionNodePtr> sortedList,
+                                             FaultToleranceConfigurationPtr ftConfig,
+                                             TopologyPtr topology);
+    static bool checkActiveStandbyConstraints(ExecutionNodePtr executionNode,
+                                       FaultToleranceConfigurationPtr ftConfig,
+                                       std::vector<ExecutionNodePtr> downstreamNeighbors,
+                                       TopologyPtr topology);
+    static bool checkCheckpointingConstraints(ExecutionNodePtr executionNode,
+                                       FaultToleranceConfigurationPtr ftConfig,
+                                       std::vector<ExecutionNodePtr> downstreamNeighbors,
+                                       TopologyPtr topology);
+    static bool
+    checkUpstreamBackupConstraints(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology);
+    static bool checkIfOperatorIsArbitraryRecursively(LogicalOperatorNodePtr operatorNode);
+    static bool checkIfSubPlanIsArbitrary(ExecutionNodePtr executionNode, QueryId queryId);
+    static float calcUpstreamBackupMemorySingleNode(ExecutionNodePtr executionNode,
+                                             TopologyPtr topology,
+                                             FaultToleranceConfigurationPtr ftConfig);
+
+
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

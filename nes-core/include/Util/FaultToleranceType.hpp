@@ -26,7 +26,8 @@ enum class FaultToleranceType : int8_t {
     INVALID = 4,
     ACTIVE_STANDBY = 5,
     CHECKPOINTING = 6,
-    UPSTREAM_BACKUP = 7
+    UPSTREAM_BACKUP = 7,
+    AMNESIA = 8
 };
 
 std::string toString(const FaultToleranceType faultToleranceMode);

@@ -55,6 +55,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <FaultTolerance//FaultToleranceConfiguration.hpp>
 
 
@@ -75,6 +77,9 @@ using namespace NES;
             QueryId queryId;
             QueryId queryId2;
             FaultToleranceConfigurationPtr ftConfig;
+            Runtime::BufferManagerPtr bufferManager;
+            Runtime::BufferStoragePtr bufferStorage;
+
             /* Will be called before any test in this class are executed. */
             static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -123,6 +128,8 @@ using namespace NES;
                 queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
                 executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
+                //bufferManager = std::make_shared<Runtime::BufferManager>(1024,16);
+                //bufferStorage = std::make_shared<Runtime::BufferStorage>();
 
                 NES_INFO("\n"+globalExecutionPlan->getAsString())
             }
@@ -261,6 +268,80 @@ using namespace NES;
                     Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
                 queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
                 executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+                NES_INFO("\n"+globalExecutionPlan->getAsString())
+            }
+
+            void setupTopology1(){
+                topology = Topology::create();
+
+                TopologyNodePtr node1 = TopologyNode::create(1, "localhost", 123, 124, 5);
+                topology->setAsRoot(node1);
+
+                TopologyNodePtr node2 = TopologyNode::create(2,"localhost", 125, 126, 3);
+                topology->addNewTopologyNodeAsChild(node1, node2);
+
+                TopologyNodePtr node3 = TopologyNode::create(3,"localhost", 127, 128, 1);
+                topology->addNewTopologyNodeAsChild(node2, node3);
+
+                std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                                     "->addField(\"sepLength\", BasicType::FLOAT64)"
+                                     "->addField(\"sepWidth\", BasicType::FLOAT64)"
+                                     "->addField(\"petLength\", BasicType::FLOAT64)"
+                                     "->addField(\"petWidth\", BasicType::FLOAT64);";
+                const std::string sourceName = "iris";
+
+                sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+                sourceCatalog->addLogicalSource(sourceName, schema);
+                auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+                CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+                csvSourceType->setGatheringInterval(12);
+                csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+                auto physicalSource = PhysicalSource::create(sourceName, "irisPhysical", csvSourceType);
+
+                SourceCatalogEntryPtr sourceCatalogEntry = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node3);
+
+                sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+
+                globalExecutionPlan = GlobalExecutionPlan::create();
+                typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+            }
+
+            void setupQuery1(){
+                Query query = Query::from("iris").filter(Attribute("id") < 45)
+                                  .filter(Attribute("id") < 40)
+                                  .project(Attribute("id").as("id_new"), Attribute("petLength"), Attribute("petWidth"), Attribute("sepLength"), Attribute("sepWidth"))
+                                  .filter(Attribute("sepWidth") < 2.5)
+                                  .map(Attribute("sum") = Attribute("sepLength") * Attribute("petWidth"))
+                                  .as("irisRename")
+                                  .sink(PrintSinkDescriptor::create());
+                QueryPlanPtr queryPlan = query.getQueryPlan();
+
+
+                auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+                queryPlan = queryReWritePhase->execute(queryPlan);
+                typeInferencePhase->execute(queryPlan);
+
+                auto topologySpecificQueryRewrite =
+                    Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+                topologySpecificQueryRewrite->execute(queryPlan);
+                typeInferencePhase->execute(queryPlan);
+
+                auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+                queryId = sharedQueryPlan->getSharedQueryId();
+                auto queryPlacementPhase =
+                    Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+                queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+                executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+                globalExecutionPlan->getExecutionNodeByNodeId(2)->setAvailableBandwidth(2000000);
+                topology->findNodeWithId(globalExecutionPlan->getExecutionNodeByNodeId(2)->getId())->setAvailableBuffers(5120);
+
+                globalExecutionPlan->getExecutionNodeByNodeId(3)->setAvailableBandwidth(1000000);
+                topology->findNodeWithId(globalExecutionPlan->getExecutionNodeByNodeId(3)->getId())->setAvailableBuffers(5120);
+
+
 
                 NES_INFO("\n"+globalExecutionPlan->getAsString())
             }
@@ -660,7 +741,7 @@ TEST_F(QueryPlacementTest, bestApproachTest){
     NES_INFO("\n"+globalExecutionPlan->getAsString())
 
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
     std::vector<std::vector<float>> nodeResults;
 
@@ -737,7 +818,7 @@ TEST_F(QueryPlacementTest, getDownstreamNeighborsTest){
                                                              globalExecutionPlan->getExecutionNodeByNodeId(13)};
 
 
-    EXPECT_EQ(Optimizer::BasePlacementStrategy::getNeighborNodes(globalExecutionPlan->getRootNodes()[0], 0, (
+    ASSERT_EQ(Optimizer::BasePlacementStrategy::getNeighborNodes(globalExecutionPlan->getRootNodes()[0], 0, (
                                                                                     (Optimizer::BasePlacementStrategy::getDepth(globalExecutionPlan->getExecutionNodeByNodeId(16)) - 1)
                                                                                                             )), downstreamNeighborsOf16);
 }
@@ -814,7 +895,7 @@ TEST_F(QueryPlacementTest, calcConnectivitiesTest){
 
     NES_INFO("\n"+globalExecutionPlan->getAsString())
 
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology,globalExecutionPlan,queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology,globalExecutionPlan,queryId);
 
     for(auto& node : globalExecutionPlan->getExecutionNodesByQueryId(queryId)){
         for(auto& connectivity : topology->findNodeWithId(node->getId())->connectivities){
@@ -831,7 +912,7 @@ TEST_F(QueryPlacementTest, calcLinkWeightTest){
 
     ASSERT_EQ(executionNodes.size(), globalExecutionPlan->getExecutionNodesByQueryId(queryId).size());
 
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
     for(auto& node : executionNodes) {
         for (auto& connectivity : topology->findNodeWithId(node->getId())->connectivities) {
@@ -852,6 +933,7 @@ TEST_F(QueryPlacementTest, firstFitPlacementTest){
     setupLargeTopologyAndSourceCatalog({4,4,4});
     setupSimpleQuery();
 
+
     globalExecutionPlan->getExecutionNodeByNodeId(6)->setAvailableBandwidth(6250);
     globalExecutionPlan->getExecutionNodeByNodeId(8)->setAvailableBandwidth(6250);
     globalExecutionPlan->getExecutionNodeByNodeId(9)->setAvailableBandwidth(6250);
@@ -871,8 +953,10 @@ TEST_F(QueryPlacementTest, firstFitPlacementTest){
     globalExecutionPlan->getExecutionNodeByNodeId(2)->setAvailableBandwidth(2000000);
     globalExecutionPlan->getExecutionNodeByNodeId(3)->setAvailableBandwidth(2000000);
 
+
+
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(25);
@@ -887,10 +971,16 @@ TEST_F(QueryPlacementTest, firstFitPlacementTest){
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
+    std::for_each(executionNodes.begin(), executionNodes.end(),
+                  [&](ExecutionNodePtr &executionNode){ topology->findNodeWithId(executionNode->getId())->setAvailableBuffers(4096);});
+
+
     std::vector<ExecutionNodePtr> executionNodesToUse;
 
     std::copy_if(executionNodes.begin(), executionNodes.end(), std::back_inserter(executionNodesToUse),
                  [](const ExecutionNodePtr executionNode) { return executionNode->getId() != 1; });
+
+
 
     std::vector<ExecutionNodePtr> sortedList =
         Optimizer::BasePlacementStrategy::getSortedListForFirstFit(executionNodesToUse, ftConfig, topology, globalExecutionPlan);
@@ -899,12 +989,26 @@ TEST_F(QueryPlacementTest, firstFitPlacementTest){
     for (size_t i = 0; i != sortedList.size(); ++i){
         NES_INFO("\n" << i << ". NODE#" << sortedList[i]->getId());
     }
-     std::pair<ExecutionNodePtr ,FaultToleranceType> result = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedList, queryId, ftConfig, topology, globalExecutionPlan);
 
-    ExecutionNodePtr chosenNode = result.first;
-    FaultToleranceType chosenApproach = result.second;
+    Optimizer::BasePlacementStrategy::firstFitRecursivePlacement(sortedList, ftConfig, topology, globalExecutionPlan);
 
-    NES_INFO("\nCHOSE NODE#" << chosenNode->getId() << " AND " << toString(chosenApproach));
+    //std::pair<ExecutionNodePtr ,FaultToleranceType> result = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedList, queryId, ftConfig, topology, globalExecutionPlan);
+
+     //ExecutionNodePtr chosenNode = result.first;
+     //FaultToleranceType chosenApproach = result.second;
+
+
+     //NES_INFO("\nCHOSE NODE# " << chosenNode->getId() << " AND " << toString(chosenApproach));
+
+
+    //std::vector<std::tuple<ExecutionNodePtr,FaultToleranceType,float>> placements = Optimizer::BasePlacementStrategy::firstFitRecursivePlacement(sortedList, ftConfig, topology);
+
+    //NES_INFO("\nFT-PLACEMENTS:")
+    //for(std::tuple<ExecutionNodePtr,FaultToleranceType,float> placement : placements){
+    //    NES_INFO("\nON NODE#" << std::get<0>(placement)->getId() << " CHOOSE " << toString(std::get<1>(placement)) << " WITH COSTS OF " << std::get<2>(placement));
+    //}
+
+
 
     //std::for_each(executionNodes.begin(), executionNodes.end(),
     //              [](ExecutionNodePtr &executionNode){ executionNode->increaseUsedBandwidth((25*20));});
@@ -934,8 +1038,11 @@ TEST_F(QueryPlacementTest, firstFitTwoQueriesTest){
     globalExecutionPlan->getExecutionNodeByNodeId(2)->setAvailableBandwidth(2000000);
     globalExecutionPlan->getExecutionNodeByNodeId(3)->setAvailableBandwidth(2000000);
 
+    std::for_each(globalExecutionPlan->getAllExecutionNodes().begin(), globalExecutionPlan->getAllExecutionNodes().end(),
+                  [&](ExecutionNodePtr &executionNode){ topology->findNodeWithId(executionNode->getId())->setAvailableBuffers(4096);});
+
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(25);
@@ -975,11 +1082,11 @@ TEST_F(QueryPlacementTest, firstFitTwoQueriesTest){
         NES_INFO("\n" << i << ". NODE#" << sortedList[i]->getId());
     }
 
-    std::pair<ExecutionNodePtr ,FaultToleranceType> result = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedList, queryId, ftConfig, topology, globalExecutionPlan);
+    /*std::pair<ExecutionNodePtr ,FaultToleranceType> result = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedList, queryId, ftConfig, topology, globalExecutionPlan);
 
     ExecutionNodePtr chosenNode = result.first;
     FaultToleranceType chosenApproach = result.second;
-    NES_INFO("\nCHOSE NODE#" << chosenNode->getId() << " AND " << toString(chosenApproach));
+    NES_INFO("\nCHOSE NODE#" << chosenNode->getId() << " AND " << toString(chosenApproach));*/
 
 
     std::vector<ExecutionNodePtr> sortedListQuery2 =
@@ -989,11 +1096,11 @@ TEST_F(QueryPlacementTest, firstFitTwoQueriesTest){
     for (size_t i = 0; i != sortedListQuery2.size(); ++i){
         NES_INFO("\n" << i << ". NODE#" << sortedListQuery2[i]->getId());
     }
-    std::pair<ExecutionNodePtr ,FaultToleranceType> result2 = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedListQuery2, queryId2, ftConfig2, topology, globalExecutionPlan);
+    /*std::pair<ExecutionNodePtr ,FaultToleranceType> result2 = Optimizer::BasePlacementStrategy::firstFitPlacement(sortedListQuery2, queryId2, ftConfig2, topology, globalExecutionPlan);
 
     ExecutionNodePtr chosenNode2 = result2.first;
     FaultToleranceType chosenApproach2 = result2.second;
-    NES_INFO("\n2: CHOSE NODE#" << chosenNode2->getId() << " AND " << toString(chosenApproach2));
+    NES_INFO("\n2: CHOSE NODE#" << chosenNode2->getId() << " AND " << toString(chosenApproach2));*/
 
 
     //std::for_each(executionNodes.begin(), executionNodes.end(),
@@ -1002,8 +1109,25 @@ TEST_F(QueryPlacementTest, firstFitTwoQueriesTest){
 
 TEST_F(QueryPlacementTest, firstFitMergingTest){
     setupLargeTopologyAndSourceCatalog({4,4,4});
+
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(25);
+    uint64_t epochRate = 18;
+    int ack_size = 8;
+
+    //QueryId 1
     setupFirstSimpleCarQuery();
-    setupSecondSimpleCarQuery();
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodesToUse = {};
+    std::copy_if(executionNodes.begin(), executionNodes.end(), std::back_inserter(executionNodesToUse),
+                 [](const ExecutionNodePtr executionNode) { return executionNode->getId() != 1; });
+
+    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
+    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
+    ftConfig->setAckRate(18);
+    ftConfig->setAckSize(8);
+    ftConfig->setQueryId(queryId);
+    ftConfig->setProcessingGuarantee(FaultToleranceType::AT_LEAST_ONCE);
 
     globalExecutionPlan->getExecutionNodeByNodeId(6)->setAvailableBandwidth(6250);
     globalExecutionPlan->getExecutionNodeByNodeId(8)->setAvailableBandwidth(6250);
@@ -1024,42 +1148,41 @@ TEST_F(QueryPlacementTest, firstFitMergingTest){
     globalExecutionPlan->getExecutionNodeByNodeId(2)->setAvailableBandwidth(2000000);
     globalExecutionPlan->getExecutionNodeByNodeId(3)->setAvailableBandwidth(2000000);
 
-    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    std::for_each(executionNodes.begin(), executionNodes.end(),
+                  [&](ExecutionNodePtr &executionNode){
+                      topology->findNodeWithId(executionNode->getId())->setAvailableBuffers(5120);});
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setGatheringInterval(25);
-    uint64_t epochRate = 18;
-    int ack_size = 8;
 
-    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
-    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
-    ftConfig->setAckRate(18);
-    ftConfig->setAckSize(8);
-    ftConfig->setQueryId(queryId);
-    ftConfig->setProcessingGuarantee(FaultToleranceType::EXACTLY_ONCE);
+    std::for_each(executionNodesToUse.begin(), executionNodesToUse.end(),
+                  [](ExecutionNodePtr &executionNode){ executionNode->increaseUsedBandwidth((20*25));});
+
+    //QueryId 2
+    setupSecondSimpleCarQuery();
+    std::vector<ExecutionNodePtr> executionNodes2 = globalExecutionPlan->getExecutionNodesByQueryId(queryId2);
+    std::vector<ExecutionNodePtr> executionNodesToUse2 = {};
+    std::copy_if(executionNodes2.begin(), executionNodes2.end(), std::back_inserter(executionNodesToUse2),
+                 [](const ExecutionNodePtr executionNode) { return executionNode->getId() != 1; });
 
     FaultToleranceConfigurationPtr  ftConfig2 = FaultToleranceConfiguration::create();
     ftConfig2->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
     ftConfig2->setTupleSize(sourceCatalog->getSchemaForLogicalSource("car")->getSchemaSizeInBytes());
-    ftConfig2->setAckRate(18);
+    ftConfig2->setAckRate(30);
     ftConfig2->setAckSize(8);
     ftConfig2->setQueryId(queryId2);
     ftConfig2->setProcessingGuarantee(FaultToleranceType::EXACTLY_ONCE);
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    std::vector<ExecutionNodePtr> executionNodes2 = globalExecutionPlan->getExecutionNodesByQueryId(queryId2);
+    std::for_each(executionNodesToUse2.begin(), executionNodesToUse2.end(),
+                  [](ExecutionNodePtr &executionNode){ executionNode->increaseUsedBandwidth((20*25));});
 
-    std::vector<ExecutionNodePtr> executionNodesToUse = {};
-    std::vector<ExecutionNodePtr> executionNodesToUse2 = {};
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
+    //Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+
+
+    FaultToleranceType stricterProcessingGuarantee = Optimizer::BasePlacementStrategy::getStricterProcessingGuarantee(ftConfig, ftConfig2);
+    ftConfig->setProcessingGuarantee(stricterProcessingGuarantee);
+    ftConfig2->setProcessingGuarantee(stricterProcessingGuarantee);
 
     ExecutionNodePtr executionNodeToMergeOn = globalExecutionPlan->getExecutionNodeByNodeId(7);
-
-    std::copy_if(executionNodes.begin(), executionNodes.end(), std::back_inserter(executionNodesToUse),
-                 [](const ExecutionNodePtr executionNode) { return executionNode->getId() != 1; });
-
-    std::copy_if(executionNodes2.begin(), executionNodes2.end(), std::back_inserter(executionNodesToUse2),
-                 [](const ExecutionNodePtr executionNode) { return executionNode->getId() != 1; });
 
     std::pair<FaultToleranceType,float> resultQuery1 = Optimizer::BasePlacementStrategy::getBestApproachForNode(executionNodeToMergeOn, executionNodesToUse, ftConfig, topology);
     std::pair<FaultToleranceType,float> resultQuery2 = Optimizer::BasePlacementStrategy::getBestApproachForNode(executionNodeToMergeOn, executionNodesToUse2, ftConfig2, topology);
@@ -1843,30 +1966,66 @@ TEST_F(QueryPlacementTest, mergerTest){
     }
 }
 
-/*TEST_F(QueryPlacementTest, calcUpstreamBackupTest){
-    setupLargeTopologyAndSourceCatalog({4,4,4});
-    setupSimpleQuery();
+TEST_F(QueryPlacementTest, finalTest1){
+    setupTopology1();
+    setupQuery1();
 
-    Optimizer::BasePlacementStrategy::initAdjustedCosts(globalExecutionPlan, queryId);
-    Optimizer::BasePlacementStrategy::calcAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
-    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology, globalExecutionPlan, queryId);
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
 
-    for(auto& node : executionNodes){
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(12);
+    uint64_t epochRate = 18;
+    int ack_size = 8;
 
-        std::tuple<float,float,float> UpstreamBackupResult =
-            Optimizer::BasePlacementStrategy::calc
+    ftConfig->setIngestionRate(csvSourceType->getGatheringInterval()->getValue());
+    ftConfig->setTupleSize(sourceCatalog->getSchemaForLogicalSource("iris")->getSchemaSizeInBytes());
+    ftConfig->setAckRate(18);
+    ftConfig->setAckSize(8);
+    ftConfig->setProcessingGuarantee(FaultToleranceType::AT_LEAST_ONCE);
+    ftConfig->setQueryId(queryId);
 
-        float procCost = std::get<0>(activeStandbyResult);
-        float networkingCost = std::get<1>(activeStandbyResult);
-        float memoryCost = std::get<2>(activeStandbyResult);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
-        if((procCost + networkingCost + memoryCost) != -3){
-            NES_INFO("\nACTIVE STANDBY COST OF NODE#" + std::to_string(node->getId()) + ": [" +
-                     std::to_string(procCost) + ", " + std::to_string(networkingCost) +
-                     ", " + std::to_string(memoryCost) + "]");
-        }
+    //std::vector<ExecutionNodePtr> executionNodesToUse = {globalExecutionPlan->getExecutionNodeByNodeId(2), globalExecutionPlan->getExecutionNodeByNodeId(3)};
+
+    //std::vector<ExecutionNodePtr> sortedList =
+    //    Optimizer::BasePlacementStrategy::getSortedListForFirstFit(executionNodesToUse, ftConfig, topology, globalExecutionPlan);
+
+    /*NES_INFO("\nSORTED BY UB+AS COST:");
+    for (size_t i = 0; i != sortedList.size(); ++i){
+        NES_INFO("\n" << i << ". NODE#" << sortedList[i]->getId());
     }
-}*/
+
+    Optimizer::BasePlacementStrategy::firstFitRecursivePlacement(sortedList, ftConfig, topology, globalExecutionPlan);*/
+
+
+
+    std::vector<ExecutionNodePtr> sourceNodes = {globalExecutionPlan->getExecutionNodeByNodeId(3)};
+    std::vector<ExecutionNodePtr> restNodes = {globalExecutionPlan->getExecutionNodeByNodeId(2)};
+    std::vector<ExecutionNodePtr> nodesToUse = {globalExecutionPlan->getExecutionNodeByNodeId(3),
+                                                globalExecutionPlan->getExecutionNodeByNodeId(2)};
+
+    std::vector<FaultToleranceType> sortedApproaches = Optimizer::BasePlacementStrategy::getSortedApproachList(sourceNodes, nodesToUse, ftConfig, topology);
+
+    for (size_t i = 0; i != sortedApproaches.size(); ++i){
+        NES_INFO("\n" << i << ". APPROACH: " << toString(sortedApproaches[i]));
+    }
+
+    FaultToleranceType placedFT = Optimizer::BasePlacementStrategy::firstFitQueryPlacement(executionNodes, ftConfig, topology);
+
+    NES_INFO("\nFOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT));
+
+}
+
+TEST_F(QueryPlacementTest, getRootNodeTest){
+    setupTopology1();
+    setupQuery1();
+
+
+
+    ASSERT_EQ(Optimizer::BasePlacementStrategy::getExecutionNodeRootNode(globalExecutionPlan->getExecutionNodeByNodeId(3)),
+              globalExecutionPlan->getExecutionNodeByNodeId(1));
+}
 
 /**
  * Setup:

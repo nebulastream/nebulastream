@@ -100,6 +100,8 @@ class TopologyNode : public Node {
 
     void setAvailableBuffers(int availableBuffersSet);
 
+    void increaseUsedBuffers(int usedBuffers);
+
     int getEffectiveLatency() const;
 
     void setEffectiveLatency(float effectiveLatencySet);

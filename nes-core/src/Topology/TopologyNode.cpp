@@ -239,7 +239,9 @@ int TopologyNode::getAvailableBuffers() const { return availableBuffers; }
 
 int TopologyNode::getEffectiveLatency() const { return effectiveLatency; }
 
-void TopologyNode::setAvailableBuffers(int availableBuffersSet){ availableBuffers = availableBuffersSet; }
+void TopologyNode::setAvailableBuffers(int availableBuffersSet){ this->availableBuffers = availableBuffersSet; }
+
+void TopologyNode::increaseUsedBuffers(int usedBuffers){ this->availableBuffers -= usedBuffers; }
 
 void TopologyNode::setEffectiveRessources(float effectiveRessourcesSet){ effectiveResources = effectiveRessourcesSet; }
 

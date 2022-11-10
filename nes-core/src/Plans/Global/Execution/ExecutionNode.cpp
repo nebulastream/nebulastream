@@ -85,7 +85,7 @@ void ExecutionNode::setAvailableBandwidth(float bandwidth) { this->availableBand
 
 float ExecutionNode::getAvailableBandwidth() {return this->availableBandwidth; }
 
-void ExecutionNode::increaseUsedBandwidth(float usedBandwidth) { this->usedBandwidth += usedBandwidth; }
+void ExecutionNode::increaseUsedBandwidth(float usedBandwidth) { this->usedBandwidth += usedBandwidth; this->availableBandwidth -= usedBandwidth; }
 
 float ExecutionNode::getUsedBandwidth() { return this->usedBandwidth; }
 
