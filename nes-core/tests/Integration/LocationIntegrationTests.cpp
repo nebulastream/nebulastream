@@ -706,21 +706,21 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
             NES_DEBUG("checking first loc")
             EXPECT_GE(currentLocation.getLatitude(), pos1lat);
             EXPECT_GE(currentLocation.getLongitude(), pos1lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos2lng);
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
+            EXPECT_LT(currentLocation.getLatitude(), pos2lat);
+            EXPECT_LT(currentLocation.getLongitude(), pos2lng);
+        } else if (beforeQuery >= timesecloc && afterQuery < timethirdloc) {
             NES_DEBUG("checking second loc")
             EXPECT_GE(currentLocation.getLatitude(), pos2lat);
             EXPECT_GE(currentLocation.getLongitude(), pos2lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos3lng);
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
+            EXPECT_LT(currentLocation.getLatitude(), pos3lat);
+            EXPECT_LT(currentLocation.getLongitude(), pos3lng);
+        } else if (beforeQuery >= timethirdloc && afterQuery < timefourthloc) {
             NES_DEBUG("checking third loc")
             EXPECT_GE(currentLocation.getLatitude(), pos3lat);
             EXPECT_GE(currentLocation.getLongitude(), pos3lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos4lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos4lng);
-        } else if (beforeQuery > timefourthloc) {
+            EXPECT_LT(currentLocation.getLatitude(), pos4lat);
+            EXPECT_LT(currentLocation.getLongitude(), pos4lng);
+        } else if (beforeQuery >= timefourthloc) {
             NES_DEBUG("checking fourth loc")
             EXPECT_EQ((currentLocation), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
         }
