@@ -154,7 +154,7 @@ void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operati
         auto proxyCallOp = std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation);
         opJson["type"] = "call";
         opJson["symbol"] = proxyCallOp->getFunctionSymbol();
-        std::vector<web::json::value> arguments;
+        std::vector<nlohmann::json> arguments;
         for (auto arg : proxyCallOp->getInputArguments()) {
             arguments.emplace_back(arg->getIdentifier());
         }
