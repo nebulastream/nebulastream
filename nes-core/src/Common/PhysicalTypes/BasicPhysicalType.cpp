@@ -45,7 +45,6 @@ uint64_t BasicPhysicalType::size() const {
     return -1;
 }
 std::string BasicPhysicalType::convertRawToString(void const* data) const noexcept {
-
     if (!data) {
         return std::string();
     }
@@ -61,6 +60,10 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
+        case TEXT: {
+            std::string s = *static_cast<std::string const*>(data);
+            return s;
+        }
         case CHAR:
             if (size() != 1) {
                 return "invalid char type";
@@ -87,6 +90,10 @@ std::string BasicPhysicalType::convertRawToStringWithoutFill(void const* data) c
         case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
+        case TEXT: {
+            std::string s = *static_cast<std::string const*>(data);
+            return s;
+        }
         case CHAR:
             if (size() != 1) {
                 return "invalid char type";

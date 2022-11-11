@@ -130,7 +130,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryVariableSizeWithFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVariableSizeWithFileOutput) {
+    //TODO: This is part of issue #3146 and will be addressed there
     NES_INFO(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());

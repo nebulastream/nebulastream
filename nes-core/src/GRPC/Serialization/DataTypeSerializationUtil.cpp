@@ -51,14 +51,14 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     } else if (dataType->isArray()) {
         serializedDataType->set_type(SerializableDataType_Type_ARRAY);
-
         // store dimension and datatype into ArrayDetails by invoking this function recursively.
         auto serializedArray = SerializableDataType_ArrayDetails();
         auto const arrayType = DataType::as<ArrayType>(dataType);
         serializedArray.set_dimensions(arrayType->length);
         serializeDataType(arrayType->component, serializedArray.mutable_componenttype());
-
         serializedDataType->mutable_details()->PackFrom(serializedArray);
+    } else if (dataType->isText()) {
+        serializedDataType->set_type(SerializableDataType_Type_TEXT);
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
@@ -74,6 +74,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     }
     if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
+    } else if (serializedDataType->type() == SerializableDataType_Type_TEXT) {
+        return DataTypeFactory::createText();
     } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);
