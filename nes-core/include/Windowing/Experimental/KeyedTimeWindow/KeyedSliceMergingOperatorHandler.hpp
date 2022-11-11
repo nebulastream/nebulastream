@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGINGWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGINGWINDOWHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 
 namespace NES::Experimental {

@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        apex_memmove.cpp
         NodeEngine.cpp
         AsyncTaskExecutor.cpp
         QueryManager.cpp
@@ -20,27 +19,16 @@ add_source_files(nes-core
         QueryManagerTaskScheduler.cpp
         QueryManagerStatusListener.cpp
         ReconfigurationMessage.cpp
-        BufferStorage.cpp
-        BufferManager.cpp
         InMemoryLineageManager.cpp
-        FixedSizeBufferPool.cpp
         ThreadPool.cpp
         Task.cpp
-        TupleBuffer.cpp
         QueryStatistics.cpp
-        NesThread.cpp
-        WorkerContext.cpp
-        LocalBufferPool.cpp
         NodeEngineBuilder.cpp
-        HardwareManager.cpp
         MaterializedViewManager.cpp
-        Allocator/NumaRegionMemoryAllocator.cpp
-        Allocator/NesDefaultMemoryAllocator.cpp
         )
-add_subdirectory(MemoryLayout)
-add_subdirectory(Execution)
-add_subdirectory(detail)
+
 add_subdirectory(Profiler)
+add_subdirectory(Execution)
 if (UNIX AND NOT APPLE)
     #add_subdirectory(CoreDumper)
 endif ()

@@ -613,10 +613,10 @@ endif ()
 add_subdirectory(nes-common)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
+# Add target for the runtime
+add_subdirectory(nes-runtime)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
-# Add target for execution engines
-add_subdirectory(nes-runtime)
 # Add target for client
 add_subdirectory(nes-client)
 

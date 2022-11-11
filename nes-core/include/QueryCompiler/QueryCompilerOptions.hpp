@@ -24,6 +24,12 @@ namespace QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
+    enum QueryCompiler {
+        // Uses the default query compiler
+        DEFAULT_QUERY_COMPILER,
+        // Uses the nautilus query compiler
+        NAUTILUS_QUERY_COMPILER
+    };
     enum FilterProcessingStrategy {
         // Uses a branches to process filter expressions
         BRANCHED,
@@ -83,6 +89,11 @@ class QueryCompilerOptions {
 
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
+
+    [[nodiscard]] QueryCompiler getQueryCompiler() const;
+
+    void setQueryCompiler(QueryCompiler pipeliningStrategy);
+
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
 
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
@@ -123,6 +134,7 @@ class QueryCompilerOptions {
     CompilationStrategy compilationStrategy;
     FilterProcessingStrategy filterProcessingStrategy;
     WindowingStrategy windowingStrategy;
+    QueryCompiler queryCompiler;
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(API)
+add_subdirectory(Common)
 add_subdirectory(Configurations)
 add_subdirectory(Exceptions)
 add_subdirectory(Util)
