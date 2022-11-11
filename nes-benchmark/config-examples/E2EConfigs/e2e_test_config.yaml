@@ -1,0 +1,41 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 5120
+numberOfBuffersToProduce: 100000
+
+
+# Benchmark parameter for the entire run
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 0
+numberOfMeasurementsToCollect: 1
+
+numberOfSources: 3
+dataGenerators:
+  input1:
+    type: Default
+  input2:
+    type: Uniform
+    minValue: 0
+    maxValue: 250
+  input3:
+    type: Zipfian
+    alpha: 0.99
+    minValue: 0
+    maxValue: 1000
+
+inputType: MemoryMode
+dataProviderMode: MemCopy
+outputFile: E2ETestConfig.csv
+benchmarkName: E2ETestConfig
+query: 'Query::from("input1").joinWith(Query::from("input2"))
+                                  .where(Attribute("value")).equalsTo(Attribute("value"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .joinWith(Query::from("input3"))
+                                  .where(Attribute("value")).equalsTo(Attribute("value"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .filter(Attribute("id") > 100)
+                             .project(Attribute("id"), Attribute("value"), Attribute("timestamp"))
+                             .map(Attribute("sum_id_value") = Attribute("id") + Attribute("value"))
+                             .as("new_name")
+                             .sink(NullOutputSinkDescriptor::create());'
