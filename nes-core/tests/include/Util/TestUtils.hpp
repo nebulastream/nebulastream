@@ -988,7 +988,9 @@ void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesT
                 auto nextLng = waypointLocation->getLongitude();
                 auto waypointNumber = std::distance(waypoints.cbegin(), it);
 
-                if (beforeQuery > previousWaypointTime + timeError) {
+                //if we are looking at waypoint at index 1, we do not need to check the time, because the position at index 0 is
+                //the first waypoint
+                if (beforeQuery > previousWaypointTime + timeError || waypointNumber == 1) {
                     NES_DEBUG("run checks for path from waypoint " <<  waypointNumber - 1 << " to " << waypointNumber)
                     EXPECT_TRUE((prevLat <= deviceLat && deviceLat < nextLat) ||
                                 prevLat >= deviceLat && deviceLat > nextLat);
