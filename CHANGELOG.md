@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.46](https://github.com/nebulastream/nebulastream/tree/v0.3.46) (2022-11-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.45...v0.3.46)
+
+### Bug Fixes 🐛
+
+- \[BUG\] E2EBenchmark Runner crashes without data generator [\#3158](https://github.com/nebulastream/nebulastream/issues/3158)
+
 ## [v0.3.45](https://github.com/nebulastream/nebulastream/tree/v0.3.45) (2022-11-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.44...v0.3.45)
