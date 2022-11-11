@@ -108,6 +108,16 @@ class KafkaSourceType : public PhysicalSourceType {
      */
     void setConnectionTimeout(uint32_t connectionTimeout);
 
+    /**
+     * @brief Get number of buffers to pool
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief Set connection time out for source, needed for: KafkaSource
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
   private:
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
@@ -129,6 +139,7 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption groupId;
     Configurations::StringConfigOption topic;
     Configurations::IntConfigOption connectionTimeout;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
 };
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

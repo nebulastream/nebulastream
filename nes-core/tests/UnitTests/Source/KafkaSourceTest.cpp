@@ -100,6 +100,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
     auto kafkaSource = createKafkaSource(test_schema,
                                          nodeEngine->getBufferManager(),
                                          nodeEngine->getQueryManager(),
+                                         2,
                                          brokers,
                                          topic,
                                          groupId,
@@ -107,7 +108,8 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          100,
                                          OPERATORID,
                                          OPERATORID,
-                                         NUMSOURCELOCALBUFFERS);
+                                         NUMSOURCELOCALBUFFERS,
+                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     SUCCEED();
 }
@@ -119,6 +121,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
     auto kafkaSource = createKafkaSource(test_schema,
                                          nodeEngine->getBufferManager(),
                                          nodeEngine->getQueryManager(),
+                                         2,
                                          brokers,
                                          topic,
                                          groupId,
@@ -126,7 +129,8 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          100,
                                          OPERATORID,
                                          OPERATORID,
-                                         NUMSOURCELOCALBUFFERS);
+                                         NUMSOURCELOCALBUFFERS,
+                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(nes). ";
 
@@ -235,10 +239,10 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     std::string topic = "test";
     std::string group = "g1";
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
     auto kafkaSource = createKafkaSource(test_schema,
                                          nodeEngine->getBufferManager(),
                                          nodeEngine->getQueryManager(),
+                                         2,
                                          brokers,
                                          topic,
                                          group,
@@ -246,7 +250,9 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          100,
                                          OPERATORID,
                                          OPERATORID,
-                                         NUMSOURCELOCALBUFFERS);
+                                         NUMSOURCELOCALBUFFERS,
+                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    auto test_schema = Schema::create()->addField("var", UINT32);
 
     //first call to connect
     auto tuple_bufferJ = kafkaSource->receiveData();
@@ -260,7 +266,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     string message = "32";
     producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
     producer.flush();
-//    rd_kafka_destroy(producer.get_handle());
+    //    rd_kafka_destroy(producer.get_handle());
 
     auto tuple_buffer = kafkaSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
@@ -270,8 +276,8 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: " << expected
                                                                                                << ". Received value is: " << str);
     EXPECT_EQ(str, expected);
-//    bool stop= nodeEngine->stop(true);
-//    std::cout << stop << std::endl;
+    //    bool stop= nodeEngine->stop(true);
+    //    std::cout << stop << std::endl;
 }
 
 // Disabled, because it requires a manually set up Kafka broker
@@ -308,6 +314,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     kafkaSourceType->setGroupId(groupId);
     kafkaSourceType->setAutoCommit(true);
     kafkaSourceType->setConnectionTimeout(100);
+    kafkaSourceType->setNumberOfBuffersToProduce(2);
     auto physicalSource = PhysicalSource::create("stream", "test_stream", kafkaSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

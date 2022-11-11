@@ -347,6 +347,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,
                                       Runtime::QueryManagerPtr queryManager,
+                                      uint64_t numbersOfBufferToProduce,
                                       std::string brokers,
                                       std::string topic,
                                       std::string groupId,
@@ -354,7 +355,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       uint64_t kafkaConsumerTimeout,
                                       OperatorId operatorId,
                                       OriginId originId,
-                                      size_t numSourceLocalBuffers);
+                                      size_t numSourceLocalBuffers,
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
 #ifdef ENABLE_OPC_BUILD
