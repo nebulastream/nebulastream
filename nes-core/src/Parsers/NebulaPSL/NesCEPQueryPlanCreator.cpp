@@ -368,8 +368,7 @@ std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTim
 }
 
 void NesCEPQueryPlanCreator::addProjections() {
-    OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(pattern.getProjectionFields());
-    this->queryPlan->appendOperatorAsNewRoot(op);
+    this->queryPlan = QueryPlanBuilder::addProjectNode(pattern.getProjectionFields(),this->queryPlan);
    }
 
 const Query& NesCEPQueryPlanCreator::getQuery() const { return this->query; }
