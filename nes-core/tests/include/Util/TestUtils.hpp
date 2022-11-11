@@ -33,6 +33,8 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <gtest/gtest.h>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;

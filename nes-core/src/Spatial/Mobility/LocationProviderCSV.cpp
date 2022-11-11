@@ -43,6 +43,7 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     std::string latitudeString;
     std::string longitudeString;
     std::string timeString;
+    nextWaypoint = 0;
 
     NES_DEBUG("Started csv location source at " << startTime)
 
@@ -72,7 +73,6 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
     //set first csv entry as the next wypoint
-    nextWaypoint = 0;
 }
 
 std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getCurrentLocation() {
