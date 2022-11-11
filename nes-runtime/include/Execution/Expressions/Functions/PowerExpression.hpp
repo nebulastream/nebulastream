@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class PowerExpression : public Expression {
   public:
-    PwerExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+    PowerExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
     Value<> execute(Record& record) const override;
 
   private:
@@ -34,6 +34,5 @@ class PowerExpression : public Expression {
 };
 
 }// namespace NES::Runtime::Execution::Expressions
-
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_POWEREXPRESSION_HPP_

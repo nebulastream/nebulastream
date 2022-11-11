@@ -30,7 +30,7 @@ PowerExpression::PowerExpression(const NES::Runtime::Execution::Expressions::Exp
  */
 double calculatePower(double x, double y) { return std::pow(x, y); }
 
-Value<> PowExpression::execute(NES::Nautilus::Record& record) const {
+Value<> PowerExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.
@@ -43,17 +43,17 @@ Value<> PowExpression::execute(NES::Nautilus::Record& record) const {
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Int8>() && rightValue->isType<Int8>()) {
         // call the calculatePow function with the correct type
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Int8>(), rightValue.as<Int8>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int8>(), rightValue.as<Int8>());
     } else if (leftValue->isType<Int16>() && rightValue->isType<Int16>()) {
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Int16>(), rightValue.as<Int16>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int16>(), rightValue.as<Int16>());
     } else if (leftValue->isType<Int32>() && rightValue->isType<Int32>()) {
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Int32>(), rightValue.as<Int32>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int32>(), rightValue.as<Int32>());
     } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Int64>(), rightValue.as<Int64>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int64>(), rightValue.as<Int64>());
     } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Float>(), rightValue.as<Float>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Float>(), rightValue.as<Float>());
     } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
-        return FunctionCall<>("calculatePow", calculatePow, leftValue.as<Double>(), rightValue.as<Double>());
+        return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Double>(), rightValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
