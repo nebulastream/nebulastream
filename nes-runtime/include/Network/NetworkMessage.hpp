@@ -213,9 +213,10 @@ class DataBufferMessage {
                                       OriginId originId,
                                       uint64_t watermark,
                                       uint64_t creationTimestamp,
-                                      uint64_t sequenceNumber) noexcept
+                                      uint64_t sequenceNumber,
+                                      uint32_t numOfChildren = 0) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
-          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber) {}
+          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber), numOfChildren(numOfChildren) {}
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
@@ -223,6 +224,7 @@ class DataBufferMessage {
     uint64_t const watermark;
     uint64_t const creationTimestamp;
     uint64_t const sequenceNumber;
+    uint32_t const numOfChildren;
 };
 
 /**

@@ -52,18 +52,48 @@ class NetworkDataSender : public BaseChannelType {
         auto creationTimestamp = inputBuffer.getCreationTimestamp();
         auto payloadSize = tupleSize * numOfTuples;
         auto* ptr = inputBuffer.getBuffer<uint8_t>();
+        auto numOfChildren = inputBuffer.getNumberOfChildrenBuffer();
         if (payloadSize == 0) {
             return true;
         }
+
         sendMessage<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
                                                                payloadSize,
                                                                numOfTuples,
                                                                originId,
                                                                watermark,
                                                                creationTimestamp,
-                                                               sequenceNumber);
+                                                               sequenceNumber,
+                                                               numOfChildren);
 
-        // We need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
+
+        bool res = true;
+        for (auto i = 0u; i < numOfChildren; ++i) {
+            auto childBuffer = inputBuffer.loadChildBuffer(i);
+            // We need to retain the `childBuffer` here, because the send function operates asynchronously and we therefore
+            // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
+            childBuffer.retain();
+            sendMessageNoHeader<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
+                                                                   childBuffer.getBufferSize(),
+                                                                   1,
+                                                                   originId,
+                                                                   watermark,
+                                                                   creationTimestamp,
+                                                                   sequenceNumber,
+                                                                   0);
+            auto const sentBytesOpt = this->zmqSocket.send(
+                zmq::message_t(childBuffer.getBuffer(), childBuffer.getBufferSize(), &Runtime::detail::zmqBufferRecyclingCallback, childBuffer.getControlBlock()),
+                kZmqSendMore);
+            res &= !!sentBytesOpt;
+            NES_TRACE("Sending child #" << i << " was" << ((!!sentBytesOpt) ? " successful " : " not successful"));
+        }
+
+        if (!res) {
+            NES_ERROR("DataChannel: Error sending children buffer for " << this->channelId);
+            return false;
+        }
+
+        // again, we need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
         // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
         inputBuffer.retain();
         auto const sentBytesOpt = this->zmqSocket.send(
@@ -72,9 +102,11 @@ class NetworkDataSender : public BaseChannelType {
         if (!!sentBytesOpt) {
             NES_TRACE("DataChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
                                                           << "-" << inputBuffer.getOriginId());
+
             return true;
         }
-        NES_DEBUG("DataChannel: Error sending buffer for " << this->channelId);
+
+        NES_ERROR("DataChannel: Error sending buffer for " << this->channelId);
         return false;
     }
 };

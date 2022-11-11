@@ -56,6 +56,23 @@ void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
 }
 
 /**
+     * Send a message MessageType(args) through an open zmqSocket with no header
+     * @tparam MessageType
+     * @tparam Arguments
+     * @param zmqSocket
+     * @param args
+     */
+template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
+void sendMessageNoHeader(zmq::socket_t& zmqSocket, Arguments&&... args) {
+    // create a payload MessageType object to send via zmq
+    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
+    // create zmq envelopes
+    zmq::message_t sendMsg(&message, sizeof(MessageType));
+    // send msg messages in one shot
+    NES_ASSERT2_FMT(!!zmqSocket.send(sendMsg, flags), "send failed");
+}
+
+/**
      * Send a zmqIdentity followed by a message MessageType(args) via zmqSocket
      * @tparam MessageType
      * @tparam Arguments
