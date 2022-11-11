@@ -129,4 +129,5 @@ int main(int argc, const char* argv[]) {
         NES_INFO("Done with single experiment run!");
     }
 
+    return 0;
 }
