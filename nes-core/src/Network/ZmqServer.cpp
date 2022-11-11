@@ -295,7 +295,27 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
 
                     NES_TRACE("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  DataBuffer received from origin="
                                            << bufferHeader->originId << " and NesPartition=" << nesPartition->toString()
-                                           << " with payload size " << bufferHeader->payloadSize);
+                                           << " with payload size " << bufferHeader->payloadSize << " with num children buffer "
+                                           << bufferHeader->numOfChildren);
+
+                    // get children if necessary
+                    std::vector<Runtime::TupleBuffer> children;
+                    for (uint32_t i = 0u, numOfChildren = bufferHeader->numOfChildren; i < numOfChildren; ++i) {
+                        zmq::message_t childBufferHeaderMsg;
+                        auto optRecvStatus = dispatcherSocket.recv(childBufferHeaderMsg, kZmqRecvDefault);
+                        NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
+                        auto* childBufferHeader = childBufferHeaderMsg.data<Messages::DataBufferMessage>();
+
+                        auto childBuffer = bufferManager->getUnpooledBuffer(childBufferHeader->payloadSize);
+                        auto optRetSize =
+                            dispatcherSocket.recv(zmq::mutable_buffer(childBuffer->getBuffer(), childBufferHeader->payloadSize),
+                                                  kZmqRecvDefault);
+                        NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                        NES_ASSERT2_FMT(optRetSize.value().size == childBufferHeader->payloadSize,
+                                        "Recv not matching sizes " << optRetSize.value().size
+                                                                   << "!=" << childBufferHeader->payloadSize);
+                        children.emplace_back(std::move(*childBuffer));
+                    }
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
@@ -312,6 +332,11 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
                     buffer.setSequenceNumber(bufferHeader->sequenceNumber);
+
+                    for (auto&& childBuffer : children) {
+                        auto idx = buffer.storeChildBuffer(childBuffer);
+                        NES_ASSERT2_FMT(idx >= 0, "Invalid child index: " << idx);
+                    }
 
                     exchangeProtocol.onBuffer(*nesPartition, buffer);
                     break;
