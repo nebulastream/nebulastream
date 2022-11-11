@@ -68,11 +68,11 @@ class LocationProviderCSV : public LocationProvider {
      * @param it: the iterator which marks the position in the vector of waypoints
      * @return the waypoint
      */
-    Waypoint getWaypointAt(std::vector<Waypoint>::iterator it);
+    Waypoint getWaypointAt(size_t index);
 
     Timestamp startTime;
     std::vector<Waypoint> waypoints;
-    std::vector<Waypoint>::iterator nextWaypoint;
+    size_t nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
