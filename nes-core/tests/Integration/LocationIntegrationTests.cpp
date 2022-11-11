@@ -61,7 +61,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
 
-    //wrapper function so allow the generic utility function to call the mamber function of LocationProvider
+    //wrapper function so allow the util function to call the member function of LocationProvider
     static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromTopologyNode(std::shared_ptr<void> node) {
         auto casted = std::static_pointer_cast<TopologyNode>(node);
         return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
