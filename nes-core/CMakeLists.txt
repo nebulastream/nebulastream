@@ -83,6 +83,7 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 # Select fine-grained headers
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
+register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/Identifiers Common/Identifiers)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Windowing Windowing)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
