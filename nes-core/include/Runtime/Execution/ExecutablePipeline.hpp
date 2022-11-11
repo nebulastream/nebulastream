@@ -45,6 +45,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Constructor for an executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param querySubPlanId the id of the query sub plan
+     * @param queryManager reference to the queryManager
      * @param pipelineContext the pipeline context
      * @param executablePipelineStage the executable pipeline stage
      * @param numOfProducingPipelines number of producing pipelines
@@ -55,6 +56,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     explicit ExecutablePipeline(uint64_t pipelineId,
                                 QueryId queryId,
                                 QuerySubPlanId qepId,
+                                QueryManagerPtr queryManager,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
                                 uint32_t numOfProducingPipelines,
@@ -75,6 +77,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     static ExecutablePipelinePtr create(uint64_t pipelineId,
                                         QueryId queryId,
                                         QuerySubPlanId querySubPlanId,
+                                        const QueryManagerPtr& queryManager,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
                                         uint32_t numOfProducingPipelines,

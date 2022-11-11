@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>

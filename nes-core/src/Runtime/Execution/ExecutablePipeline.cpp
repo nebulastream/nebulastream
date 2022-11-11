@@ -28,14 +28,15 @@ namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
                                        QueryId queryId,
                                        QuerySubPlanId querySubPlanId,
+                                       QueryManagerPtr queryManager,
                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        uint32_t numOfProducingPipelines,
                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
                                        bool reconfiguration)
-    : pipelineId(pipelineId), queryId(queryId), querySubPlanId(querySubPlanId),
-      queryManager(pipelineExecutionContext->getQueryManager()), executablePipelineStage(std::move(executablePipelineStage)),
-      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration),
+    : pipelineId(pipelineId), queryId(queryId), querySubPlanId(querySubPlanId), queryManager(queryManager),
+      executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)),
+      reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
       activeProducers(numOfProducingPipelines), successorPipelines(std::move(successorPipelines)) {
     // nop
@@ -72,7 +73,6 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     auto expected = PipelineStatus::PipelineCreated;
     uint32_t localStateVariableId = 0;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
-        auto queryManager = pipelineContext->getQueryManager();
         auto newReconf = ReconfigurationMessage(queryId,
                                                 querySubPlanId,
                                                 Initialize,
@@ -159,6 +159,7 @@ bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                                                  QueryId queryId,
                                                  QuerySubPlanId querySubPlanId,
+                                                 const QueryManagerPtr& queryManager,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
                                                  uint32_t numOfProducingPipelines,
@@ -173,6 +174,7 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
     return std::make_shared<ExecutablePipeline>(pipelineId,
                                                 queryId,
                                                 querySubPlanId,
+                                                queryManager,
                                                 pipelineExecutionContext,
                                                 executablePipelineStage,
                                                 numOfProducingPipelines,

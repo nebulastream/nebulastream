@@ -202,8 +202,9 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
                   .build()
             : this->jitCompiler;
-        auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
+
+        auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions,
                                                                        phaseFactory,

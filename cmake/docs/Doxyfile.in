@@ -784,6 +784,7 @@ WARN_LOGFILE           =
 INPUT                  = "@PROJECT_SOURCE_DIR@/nes-core" \
                          "@PROJECT_SOURCE_DIR@/nes-client" \
                          "@PROJECT_SOURCE_DIR@/nes-compiler" \
+                         "@PROJECT_SOURCE_DIR@/nes-runtime" \
                          "@PROJECT_SOURCE_DIR@/nes-common"
 
 # This tag can be used to specify the character encoding of the source files
