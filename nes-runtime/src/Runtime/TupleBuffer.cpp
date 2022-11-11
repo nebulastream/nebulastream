@@ -36,6 +36,7 @@ TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::
 uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
+    NES_ASSERT2_FMT(controlBlock != control, "Cannot attach buffer to self");
     auto index = controlBlock->storeChildBuffer(control);
     std::swap(empty, buffer);
     return index;

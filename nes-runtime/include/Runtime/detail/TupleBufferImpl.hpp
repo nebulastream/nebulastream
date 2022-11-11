@@ -170,6 +170,7 @@ class alignas(64) BufferControlBlock {
 
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size);
 
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif
@@ -223,11 +224,7 @@ static_assert(sizeof(BufferControlBlock) % 64 == 0);
  * inside its allocated memory and has no way to expose the pointer to outside world.
  * The public companion of a MemorySegment is the TupleBuffer, which can "leak" the pointer to the outside world.
  *
- *
  * Reminder: this class should be header-only to help inlining
- *
- *
- *
  *
  */
 class MemorySegment {
