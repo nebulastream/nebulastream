@@ -13,18 +13,17 @@
 message("---Building benchmarks...")
 
 
-function(add_nes_benchmarks TARGET_NAME FILE_PATH COMMAND_LINE_ARGS)
+function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
-    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES})
-    add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME} ${COMMAND_LINE_ARGS})
+    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
 
 
-# include dirs
+# Include dirs
 include_directories("include/")
 
-# add src
+# Add src
 add_subdirectory(src)
 
 # Get all source files
@@ -34,25 +33,25 @@ get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
 
-# add E2E benchmark runner
-add_executable(e2e-benchmark-runner "E2ERunner.cpp")
-target_link_libraries(e2e-benchmark-runner PUBLIC nes-benchmark)
+# Add E2E benchmark runner with custom e2e test config
+add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp")
+add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml --logPath=e2eRunner.log)
 
 
 
 #-------------------------------##################------------------------------
-#-------------------------------#Micro Benchmarks#-----------------------------
+#-------------------------------#Micro Benchmarks#------------------------------
 include(ExternalProject)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 ### Query Merger Benchmark ###
-add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp" "--benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json")
+add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
 
 ### Incremental Placement Benchmark ###
-add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp" "--benchmark_out=BenchmarkIncrementalPlacement.log --benchmark_out_format=json")
+add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp")
 
-#add_executable(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
-add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp" "--benchmark_out=BenchmarkOutputChannel.log --benchmark_out_format=json")
+### Output Channel Benchmark ###
+add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
 
 
 message("---Done building benchmarks")
