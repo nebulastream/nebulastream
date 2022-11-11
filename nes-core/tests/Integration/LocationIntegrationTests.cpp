@@ -346,7 +346,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 #ifdef S2DEF
     checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
 #endif
-
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 

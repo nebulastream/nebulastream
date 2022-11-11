@@ -900,6 +900,13 @@ class DummyQueryListener : public AbstractQueryStatusListener {
 };
 
 using Waypoint = std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>;
+
+/**
+ * @brief read mobile device path waypoints from csv
+ * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
+ * @param startTime the real or simulated start time of the LocationProvider
+ * @return a vector of waypoints with timestamps calculated by adding startTime to the offset obtained from csv
+ */
 std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp startTime) {
     std::vector<Waypoint> waypoints;
     std::string csvLine;
@@ -908,7 +915,7 @@ std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp 
     std::string longitudeString;
     std::string timeString;
 
-    NES_DEBUG("Creating list of waypoints with startTime" << startTime)
+    NES_DEBUG("Creating list of waypoints with startTime " << startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
@@ -932,6 +939,16 @@ std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp 
     return waypoints;
 }
 
+/**
+ * @brief compare the movement of a device with data from csv
+ * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
+ * @param startTime the real or simulated start time of the LocationProvider
+ * @param timesToCheckEndLocation how often to check that the device actually remains motionless after arriving at its final position
+ * @param sleepTime time to sleep between two checks of the devices location
+ * @param timeError maximum permitted error of the clock
+ * @param getLocation function to get the devices location (eg. wrapper around LocationProvider or TopologyNode object)
+ * @param functionParameters parameter to be passed to the getLocation function (eg. the LocationProvider object from which the wrapper obtains the location)
+ */
 void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesToCheckEndLocation, Timestamp sleepTime, Timestamp timeError, std::shared_ptr<NES::Spatial::Index::Experimental::Location>(*getLocation)(std::shared_ptr<void>), std::shared_ptr<void> functionParameters) {
     std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, startTime);
     NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
@@ -946,12 +963,12 @@ void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesT
     NES::Spatial::Index::Experimental::Location lastWaypoint;
 
     while (afterQuery < loopTime) {
+        std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
+        beforeQuery = getTimestamp();
+        currentDeviceLocation = getLocation(functionParameters);
+        afterQuery = getTimestamp();
         NES_TRACE("Device is at location: " << currentDeviceLocation->toString());
         for (auto it = waypoints.cbegin(); it != waypoints.end(); ++it) {
-            std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
-            beforeQuery = getTimestamp();
-            currentDeviceLocation = getLocation(functionParameters);
-            afterQuery = getTimestamp();
             auto [waypointLocation, waypointTime] = *it;
             if (afterQuery < waypointTime - timeError) {
                 if (it == waypoints.cbegin()) {
@@ -959,28 +976,36 @@ void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesT
                     EXPECT_EQ(*waypointLocation, *currentDeviceLocation);
                     break;
                 }
-                auto [previousWaypointLocation, previousWaypointTime] = *std::prev(it);
-                if (beforeQuery > previousWaypointTime + timeError) {
-                    auto waypointNumber = std::distance(waypoints.cbegin(), it);
-                    NES_DEBUG("run checks for path from waypoint " <<  waypointNumber - 1 << " to " << waypointNumber)
-                    auto deviceLat = currentDeviceLocation->getLatitude();
-                    auto deviceLng = currentDeviceLocation->getLongitude();
-                    auto prevLat = previousWaypointLocation->getLatitude();
-                    auto prevLng = previousWaypointLocation->getLongitude();
-                    auto nextLat = waypointLocation->getLatitude();
-                    auto nextLng = waypointLocation->getLongitude();
 
+                auto [previousWaypointLocation, previousWaypointTime] = *std::prev(it);
+                auto deviceLat = currentDeviceLocation->getLatitude();
+                auto deviceLng = currentDeviceLocation->getLongitude();
+                auto prevLat = previousWaypointLocation->getLatitude();
+                auto prevLng = previousWaypointLocation->getLongitude();
+                auto nextLat = waypointLocation->getLatitude();
+                auto nextLng = waypointLocation->getLongitude();
+                auto waypointNumber = std::distance(waypoints.cbegin(), it);
+
+                if (beforeQuery > previousWaypointTime + timeError) {
+                    NES_DEBUG("run checks for path from waypoint " <<  waypointNumber - 1 << " to " << waypointNumber)
                     EXPECT_TRUE((prevLat <= deviceLat && deviceLat < nextLat) ||
                                 prevLat >= deviceLat && deviceLat > nextLat);
                     EXPECT_TRUE((prevLng <= deviceLng && deviceLng < nextLng) ||
                                 prevLng >= deviceLng && deviceLng > nextLng);
-                    break;
+                } else {
+                    NES_DEBUG("run check if device is either on path from " << waypointNumber - 2 << " to " << waypointNumber - 1
+                              << " or " << waypointNumber - 1 << " to " << waypointNumber);
+                    auto [prevPrevLocation, prevPrevTime] = *std::prev(std::prev(it));
+                    auto prevPrevLat = prevPrevLocation->getLatitude();
+                    auto prevPrevLng = prevPrevLocation->getLongitude();
+                    auto minLat = std::min({prevPrevLat, prevLat, nextLat});
+                    auto minLng = std::min({prevPrevLng, prevLng, nextLng});
+                    auto maxLat = std::max({prevPrevLat, prevLat, nextLat});
+                    auto maxLng = std::max({prevPrevLng, prevLng, nextLng});
+                    EXPECT_TRUE(minLat <= deviceLat && deviceLat <= maxLat);
+                    EXPECT_TRUE(minLng <= deviceLng && deviceLng <= maxLng);
                 }
-                if (it == waypoints.cend() && afterQuery > waypointTime + timeError) {
-                    NES_DEBUG("Device has reached its final position");
-                    EXPECT_EQ(waypointLocation, currentDeviceLocation);
-                    break;
-                }
+                break;
             }
         }
     }
@@ -994,7 +1019,5 @@ void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesT
         currentDeviceLocation = getLocation(functionParameters);
     }
 }
-
-
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_
