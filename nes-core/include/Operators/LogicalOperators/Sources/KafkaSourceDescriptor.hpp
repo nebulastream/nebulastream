@@ -30,14 +30,16 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
-                                      uint64_t kafkaConnectTimeout);
+                                      uint64_t kafkaConnectTimeout,
+                                      uint64_t numbersOfBufferToProduce);
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
                                       std::string logicalSourceName,
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
-                                      uint64_t kafkaConnectTimeout);
+                                      uint64_t kafkaConnectTimeout,
+                                      uint64_t numbersOfBufferToProduce);
 
     /**
      * @brief Get the list of kafka brokers
@@ -48,6 +50,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @brief Get the kafka topic name
      */
     const std::string& getTopic() const;
+
+    /**
+     * @brief Get the number of buffers to process
+     */
+    std::uint64_t getNumberOfToProcessBuffers() const;
 
     /**
      * @brief Get the kafka consumer group id
@@ -76,19 +83,22 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string topic,
                                    std::string groupId,
                                    bool autoCommit,
-                                   uint64_t kafkaConnectTimeout);
+                                   uint64_t kafkaConnectTimeout,
+                                   uint64_t numbersOfBufferToProduce);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
                                    std::string logicalSourceName,
                                    std::string brokers,
                                    std::string topic,
                                    std::string groupId,
                                    bool autoCommit,
-                                   uint64_t kafkaConnectTimeout);
+                                   uint64_t kafkaConnectTimeout,
+                                   uint64_t numbersOfBufferToProduce);
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
     uint64_t kafkaConnectTimeout;
+    uint64_t numbersOfBufferToProduce;
 };
 
 using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;

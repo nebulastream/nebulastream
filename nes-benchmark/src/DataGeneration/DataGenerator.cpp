@@ -60,7 +60,7 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
             auto minValue = generatorNode["minValue"].As<uint64_t>();
             auto maxValue = generatorNode["maxValue"].As<uint64_t>();
             return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-    } else if (name == "YSB") {
+    } else if (name == "YSB" || name == "YSBKafka") {
         return std::make_shared<YSBDataGenerator>(bufferManager);
     } else {
         // For now we only support a single data generator

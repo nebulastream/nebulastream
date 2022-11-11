@@ -14,11 +14,11 @@
 
 #ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#include <Sources/DataSource.hpp>
+#include <cppkafka/cppkafka.h>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Sources/DataSource.hpp>
-#include <cppkafka/cppkafka.h>
 
 namespace NES {
 
@@ -28,6 +28,7 @@ class KafkaSource : public DataSource {
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
                 Runtime::QueryManagerPtr queryManager,
+                uint64_t numbersOfBufferToProduce,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,
@@ -35,7 +36,8 @@ class KafkaSource : public DataSource {
                 uint64_t kafkaConsumerTimeout,
                 OriginId originId,
                 OperatorId operatorId,
-                size_t numSourceLocalBuffers);
+                size_t numSourceLocalBuffers,
+                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**
      * @brief Get source type
@@ -88,7 +90,6 @@ class KafkaSource : public DataSource {
      * @return bool indicating if connection could be established
      */
     bool connect();
-
 
     std::string brokers;
     std::string topic;

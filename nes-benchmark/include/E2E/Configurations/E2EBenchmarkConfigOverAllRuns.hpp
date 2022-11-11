@@ -63,6 +63,7 @@ namespace NES::Benchmark {
 
       private:
         std::string getDataGeneratorsAsString();
+        Configurations::StringConfigOption connectionString;
     };
 }
 
