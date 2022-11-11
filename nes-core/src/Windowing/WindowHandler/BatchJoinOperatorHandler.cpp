@@ -97,7 +97,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
 
         this->foundAndStartedBuildSide = true;
         // we expect one EoS message & on call of reconfigure() per logical predecessor and per thread.
-        uint16_t threadsOnWorker = context->getQueryManager()->getNumberOfWorkerThreads();
+        uint16_t threadsOnWorker = context->getNumberOfWorkerThreads();
         this->workerThreadsBuildSideTotal = this->buildPredecessors.size() * threadsOnWorker;
         return;
     }

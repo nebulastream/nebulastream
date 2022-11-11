@@ -12,10 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        Schema.cpp
         Query.cpp
-        AttributeField.cpp
         Windowing.cpp
         WindowedQuery.cpp
-)
+        )
 add_subdirectory(Expressions)

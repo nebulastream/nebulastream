@@ -35,12 +35,21 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
     options.setWindowingStrategy(DEFAULT);
+    options.setQueryCompiler(DEFAULT_QUERY_COMPILER);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
 
 void QueryCompilerOptions::setPipeliningStrategy(QueryCompilerOptions::PipeliningStrategy pipeliningStrategy) {
     this->pipeliningStrategy = pipeliningStrategy;
+}
+
+void QueryCompilerOptions::setQueryCompiler(NES::QueryCompilation::QueryCompilerOptions::QueryCompiler queryCompiler) {
+    this->queryCompiler = queryCompiler;
+}
+
+QueryCompilerOptions::QueryCompiler QueryCompilerOptions::getQueryCompiler() const {
+    return queryCompiler;
 }
 
 QueryCompilerOptions::CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const { return compilationStrategy; }
