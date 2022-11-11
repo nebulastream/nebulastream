@@ -167,14 +167,18 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     const Query& getQuery() const;
 
     /**
-     * @brief: this function creates an artifical key for the binary operators AND and SEQ
+     * @brief: this function creates an artificial key for the binary operators AND and SEQ
      * @return the unique name of the key
      */
     std::string keyAssignment(std::string keyName);
 
+    /**
+     * @brief: this function adds a binary operator to the query plan
+     * @param string the operater name
+     * @param iterator the list of nodes from the ANTLR AST Tree
+     * @return the unique name of the key
+     */
     void addBinaryOperatorToQueryPlan(std::string string, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
-
-
 
   private:
     int32_t sourceCounter = 0;
@@ -184,12 +188,11 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     int32_t nodeId = 0;
     int32_t currentElementPointer = -1;
     NES::Query query = NES::Query(NULL);
-    NES::QueryPlanPtr queryPlan;
+    NES::QueryPlanPtr queryPlan = NES::QueryPlan::create();
     bool inWhere = false;
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
-
 };
 
 }// namespace NES::Parsers
