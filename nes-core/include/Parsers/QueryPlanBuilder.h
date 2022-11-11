@@ -36,6 +36,13 @@ class QueryPlanBuilder {
     static NES::QueryPlanPtr createQueryPlan(std::string sourceName);
 
     /**
+      * @brief this call projects out the attributes in the parameter list
+      * @param attribute list
+      * @return the updated queryplanptr
+      */
+    static NES::QueryPlanPtr addProjectNode(std::vector<NES::ExpressionNodePtr> expressions, NES::QueryPlanPtr qplan);
+
+    /**
      * @brief: Filter records according to the predicate. An
      * examplary usage would be: filter(Attribute("f1" < 10))
      * @param predicate as expression node
