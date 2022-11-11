@@ -27,8 +27,6 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
 #include <Parsers/QueryPlanBuilder.h>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -52,7 +50,6 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
     this->lastSeenSourcePtr = sourceCounter;
     sourceCounter++;
     NES_DEBUG("NesCEPQueryPlanCreator : exitEventElem: inserted " + cxt->getStart()->getText() + " to sources");
-
     this->currentElementPointer = this->nodeId;
     this->nodeId++;
     NesCEPBaseListener::exitEventElem(cxt);
@@ -246,21 +243,17 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
         // iterate over OperatorList, create and add LogicalOperatorNodes
         for (auto it = pattern.getOperatorList().begin(); it != pattern.getOperatorList().end(); ++it) {
             auto opName = it->second.getEventName();
-            // check binary operators
+            // add binary operators
             if (opName == "OR" || opName == "SEQ" || opName == "AND") {
-
                 addBinaryOperatorToQueryPlan(opName, it);
-
-            } else if (opName == "TIMES") {
+            } else if (opName == "TIMES") { //add times operator
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add unary operator " + opName)
-
                 auto sourceName = pattern.getSources().at(it->second.getLeftChildId());
                 this->queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: created subquery from "
                           + pattern.getSources().at(it->second.getLeftChildId()))
 
-                OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(Attribute("Count") = 1);
-                this->queryPlan->appendOperatorAsNewRoot(op);
+                this->queryPlan = QueryPlanBuilder::addMapNode(Attribute("Count") = 1, this-> queryPlan);
 
                 //create window
                 auto window = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -271,14 +264,18 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
                     //we use a on time trigger as default that triggers on each change of the watermark
                     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
 
+                    //TimeBasedwindowType
+                    auto timeBasedWindow = WindowType::asTimeBasedWindowType(windowType);
+
                     // check if query contain watermark assigner, and add if missing (as default behaviour)
                     if (this->queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+
                         // we only consider Event time in CEP
                         this->queryPlan->appendOperatorAsNewRoot(
                             LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                                Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                                Attribute(timeBasedWindow->getTimeCharacteristic()->getField()->getName()),
                                 API::Milliseconds(0),
-                                windowType->getTimeCharacteristic()->getTimeUnit())));
+                                timeBasedWindow->getTimeCharacteristic()->getTimeUnit())));
                     }
 
                     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
@@ -287,7 +284,8 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
 
                     std::vector<WindowAggregationPtr> windowAggs;
                     std::shared_ptr<WindowAggregationDescriptor> windowAgg = API::Sum(Attribute("Count"));
-                    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+
+                    auto timestamp = timeBasedWindow->getTimeCharacteristic()->getField()->getName();
                     std::shared_ptr<WindowAggregationDescriptor> windowTs = API::Max(Attribute(timestamp));
                     windowAggs.push_back(windowAgg);
                     windowAggs.push_back(windowTs);
@@ -318,8 +316,7 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
                             predicate = Attribute("Count") >= min && Attribute("Count") <= max;
                         }
 
-                        OperatorNodePtr filterOp = LogicalOperatorFactory::createFilterOperator(predicate);
-                        this->queryPlan->appendOperatorAsNewRoot(filterOp);
+                        this->queryPlan = QueryPlanBuilder::addFilterNode(predicate, this->queryPlan);
                     }
                 } else{
                     NES_ERROR("The Iteration operator requires a time window.")
@@ -335,14 +332,12 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
     if (!pattern.getProjectionFields().empty()) {
         addProjections();
     }
-
     return Query(this->queryPlan);
 }
 
 void NesCEPQueryPlanCreator::addFilters() {
     for (auto it = pattern.getExpressions().begin(); it != pattern.getExpressions().end(); ++it) {
-        OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(*it);
-        this->queryPlan->appendOperatorAsNewRoot(op);
+        this->queryPlan = QueryPlanBuilder::addFilterNode(*it, this->queryPlan);
     }
 }
 
@@ -390,13 +385,12 @@ std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) {
 void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, std::map<int, NebulaPSLOperatorNode>::const_iterator it) {
     NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: add binary operator " + opName)
     // find left (query) and right branch (subquery) of binary operator
-    //left
+    //left query plan
     NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryLeft from "
               + pattern.getSources().at(it->second.getLeftChildId()))
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
     auto leftQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
-
-    // right
+    // right queryplan
     NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from "
               + pattern.getSources().at(it->second.getRightChildId()))
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
@@ -405,7 +399,6 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
     if (opName == "OR") {
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: addUnionOperator")
         this->queryPlan = QueryPlanBuilder::addUnionOperatorNode(leftQueryPlan, rightQueryPlan, this->queryPlan);
-
     } else {
         // Seq and And require a window, so first we create and check the window operator
         auto window = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -420,10 +413,8 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
             std::string cepRightKey = keyAssignment("cep_rightkey");
 
             //next: add Map operator that maps the attributes with value 1 to the left and right source
-            OperatorNodePtr opLeft = LogicalOperatorFactory::createMapOperator(Attribute(cepLeftKey) = 1);
-            leftQueryPlan->appendOperatorAsNewRoot(opLeft);
-            OperatorNodePtr opRight = LogicalOperatorFactory::createMapOperator(Attribute(cepRightKey) = 1);
-            rightQueryPlan->appendOperatorAsNewRoot(opRight);
+           leftQueryPlan = QueryPlanBuilder::addMapNode(Attribute(cepLeftKey) = 1, leftQueryPlan);
+           rightQueryPlan = QueryPlanBuilder::addMapNode(Attribute(cepRightKey) = 1, rightQueryPlan);
 
             //then, define the artificial attributes as key attributes
             NES_DEBUG("Query: add name cepLeftKey " << cepLeftKey << "and name cepRightKey" << cepRightKey);
@@ -436,7 +427,8 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
 
             if (opName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
-                auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+                auto timeBasedWindow = WindowType::asTimeBasedWindowType(windowType);
+                auto timestamp = timeBasedWindow->getTimeCharacteristic()->getField()->getName();
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
                 auto sourceNameRight = rightQueryPlan->getSourceConsumed();
@@ -460,9 +452,8 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string opName, st
                     sourceNameLeft = sourceNameLeft + "$" + timestamp;
                 }
                 NES_DEBUG("ExpressionItem for Left Source " << sourceNameLeft << "and ExpressionItem for Right Source " << sourceNameRight);
-                //create Filter
-                OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(Attribute(sourceNameLeft) < Attribute(sourceNameRight));
-                this->queryPlan->appendOperatorAsNewRoot(op);
+                //create filter expression and add it to queryplan
+                this->queryPlan = QueryPlanBuilder::addFilterNode(Attribute(sourceNameLeft) < Attribute(sourceNameRight), this->queryPlan);
             }
         } else {
             NES_ERROR("NesCEPQueryPlanCreater: createQueryFromPatternList: Cannot create " + opName
