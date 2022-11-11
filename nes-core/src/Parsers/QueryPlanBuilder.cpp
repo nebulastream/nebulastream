@@ -46,6 +46,13 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
     return queryPlan;
 }
 
+QueryPlanPtr QueryPlanBuilder::addProjectNode(std::vector<NES::ExpressionNodePtr> expressions, NES::QueryPlanPtr qplan) {
+    NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
+    OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
+    qplan->appendOperatorAsNewRoot(op);
+    return qplan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addFilterNode(NES::ExpressionNodePtr const& filterExpression, NES::QueryPlanPtr qplan) {
     NES_DEBUG("QueryPlanBuilder: add filter operator to query plan");
     if (!filterExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
