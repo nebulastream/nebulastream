@@ -38,7 +38,7 @@ class PowerExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(PowerExpressionTest, evaluateModExpressionInteger) {
+TEST_F(PowerExpressionTest, evaluatePowerExpressionInteger) {
     auto expression = BinaryExpressionWrapper<PowerExpression>();
     // Int8
     {
