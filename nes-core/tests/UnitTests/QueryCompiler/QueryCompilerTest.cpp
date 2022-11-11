@@ -34,11 +34,13 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/Phases/NautilusPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -572,6 +574,53 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto externalOperator = PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
     filterOperator->insertBetweenThisAndParentNodes(externalOperator);
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
+    auto result = queryCompiler->compileQuery(request);
+
+    ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| -- |Filter| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, nautilusFilterQuery) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("F1", INT32);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    sourceCatalog->addLogicalSource(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = std::make_unique<Phases::NautilusPhaseFactory>();
+    auto queryCompiler = NautilusQueryCompiler::create(compilerOptions, phaseFactory);
+
+    auto query = Query::from(logicalSourceName).filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
