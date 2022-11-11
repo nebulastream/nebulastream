@@ -37,6 +37,7 @@ namespace NES::Benchmark {
         query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
         dataProviderMode = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
         dataGenerator = ConfigurationOption<std::string>::create("dataGenerator", "Default", "The source that provides the data");
+        connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
         logicalStreamName = ConfigurationOption<std::string>::create("logicalStreamName", "input", "Source stream name");
 
 
@@ -58,6 +59,7 @@ namespace NES::Benchmark {
             << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
             << "- dataGenerator: " << dataGenerator->getValue() << std::endl
+            << "- connectionString: " << connectionString->getValue() << std::endl
             << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl;
             << "- dataGenerations: " << getDataGeneratorsAsString() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl;
@@ -75,6 +77,7 @@ namespace NES::Benchmark {
         configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
         configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
         configOverAllRuns.dataGenerator->setValue(yamlConfig["dataGenerator"].As<std::string>());
+        configOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
         configOverAllRuns.logicalStreamName->setValue(yamlConfig["logicalStreamName"].As<std::string>());
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
         configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());

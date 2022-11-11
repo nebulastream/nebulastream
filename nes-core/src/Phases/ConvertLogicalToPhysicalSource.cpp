@@ -127,6 +127,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         return createKafkaSource(kafkaSourceDescriptor->getSchema(),
                                  bufferManager,
                                  queryManager,
+                                 kafkaSourceDescriptor->getNumberOfToProcessBuffers(),
                                  kafkaSourceDescriptor->getBrokers(),
                                  kafkaSourceDescriptor->getTopic(),
                                  kafkaSourceDescriptor->getGroupId(),
@@ -134,7 +135,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  kafkaSourceDescriptor->getKafkaConnectTimeout(),
                                  operatorId,
                                  originId,
-                                 numSourceLocalBuffers);
+                                 numSourceLocalBuffers,
+                                 successors);
 #endif
 #ifdef ENABLE_MQTT_BUILD
     } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {

@@ -85,6 +85,10 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
         && yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {
         connectionTimeout->setValue(yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<uint32_t>());
     }
+    if (!yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<std::string>().empty()
+        && yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<std::string>() != "\n") {
+        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<uint32_t>());
+    }
 }
 
 KafkaSourceType::KafkaSourceType()
@@ -104,7 +108,12 @@ KafkaSourceType::KafkaSourceType()
       connectionTimeout(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::CONNECTION_TIMEOUT_CONFIG,
                                                                 10,
-                                                                "connection time out for source, needed for: KafkaSource")) {
+                                                                "connection time out for source, needed for: KafkaSource")),
+      numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
+                                                                                     1,
+                                                                                     "Numbers of events pulled from the queue"))
+
+{
     NES_INFO("KafkaSourceType: Init source config object with default values.");
 }
 
@@ -116,6 +125,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::GROUP_ID_CONFIG + ":" + groupId->toStringNameCurrentValue();
     ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
+    ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << "\n}";
     return ss.str();
 }
@@ -129,7 +139,8 @@ bool KafkaSourceType::equal(const PhysicalSourceTypePtr& other) {
         && autoCommit->getValue() == otherSourceConfig->autoCommit->getValue()
         && groupId->getValue() == otherSourceConfig->groupId->getValue()
         && topic->getValue() == otherSourceConfig->topic->getValue()
-        && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue();
+        && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue()
+        && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue();
 }
 
 Configurations::StringConfigOption KafkaSourceType::getBrokers() const { return brokers; }
@@ -141,6 +152,8 @@ Configurations::StringConfigOption KafkaSourceType::getGroupId() const { return 
 Configurations::StringConfigOption KafkaSourceType::getTopic() const { return topic; }
 
 Configurations::IntConfigOption KafkaSourceType::getConnectionTimeout() const { return connectionTimeout; }
+
+Configurations::IntConfigOption KafkaSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
 void KafkaSourceType::setBrokers(std::string brokersValue) { brokers->setValue(std::move(brokersValue)); }
 
@@ -154,11 +167,16 @@ void KafkaSourceType::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
 }
 
+void KafkaSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
+    numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
+}
+
 void KafkaSourceType::reset() {
     setBrokers(brokers->getDefaultValue());
     setAutoCommit(autoCommit->getDefaultValue());
     setGroupId(groupId->getDefaultValue());
     setTopic(topic->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
+    setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
 }
 }// namespace NES

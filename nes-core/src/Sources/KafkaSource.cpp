@@ -25,6 +25,7 @@ namespace NES {
 KafkaSource::KafkaSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
+                         uint64_t numbersOfBufferToProduce,
                          const std::string brokers,
                          const std::string topic,
                          const std::string groupId,
@@ -32,14 +33,16 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          uint64_t kafkaConsumerTimeout,
                          OperatorId operatorId,
                          OriginId originId,
-                         size_t numSourceLocalBuffers)
+                         size_t numSourceLocalBuffers,
+                         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE),
+                 GatheringMode::INTERVAL_MODE,
+                 std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)) {
 
@@ -47,6 +50,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
               {"group.id", "123"},
               {"enable.auto.commit", autoCommit},
               {"auto.offset.reset", "earliest"}};
+    this->numBuffersToProcess = numbersOfBufferToProduce;
 }
 
 KafkaSource::~KafkaSource() {}
@@ -57,6 +61,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     }
     bool pollSuccessFull = false;
     uint64_t maxPollCnt = 64;
+    uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
     while (!pollSuccessFull) {
         cppkafka::Message msg = consumer->poll();
@@ -75,7 +80,8 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
 
                 NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize
                                                      << " payloadSize=" << payloadSize
-                                                     << ", msg: " << msg.get_payload());
+//                                                     << ", msg: " << msg.get_payload()
+                          );
 
                 std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
@@ -86,9 +92,15 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 return buffer;
             }
         } else {
-            NES_DEBUG("Poll successfull for cnt=" << maxPollCnt);
+            NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt << " maxPollCnt=" << maxPollCnt);
         }
-        maxPollCnt++;
+
+        currentPollCnt++;
+        if(currentPollCnt == maxPollCnt)
+        {
+            NES_DEBUG("Poll reached max poll count=" << maxPollCnt);
+            pollSuccessFull = true;
+        }
     }
 
     return std::nullopt;
