@@ -1,0 +1,39 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1
+numberOfSources: 1
+#sourcePinList: 0,1,2,3
+#workerPinList: 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32
+
+# engine configuration parameter
+#numberOfBuffersInGlobalBufferManager: 32768
+numberOfBuffersInGlobalBufferManager: 2048
+numberOfBuffersPerPipeline: 128
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 131072
+
+##benchmark parameter for the entire run
+dataGenerator: YSBKafka
+##broker,topic,group
+connectionString: "localhost:9092,nesKafka,0"
+numberOfPreAllocatedBuffer: 100
+logicalStreamName: ysb
+dataProvider: Internal
+#dataProviderMode: ZeroCopy
+dataProviderMode: Kafka
+outputFile: YSBQuery.csv
+benchmarkName: YSBQuery
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(PrintSinkDescriptor::create());'
+query: 'Query::from("ysb").filter(Attribute("event_type") < 1).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+#numberOfBuffersToProduce: 5000000
+numberOfBuffersToProduce: 5000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 1
