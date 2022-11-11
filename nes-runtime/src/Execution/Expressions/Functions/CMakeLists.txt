@@ -28,4 +28,5 @@
          FactorialExpression.cpp
          GammaExpression.cpp
          LGammaExpression.cpp
+         PowerExpression.cpp
          )
