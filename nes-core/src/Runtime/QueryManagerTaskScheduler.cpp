@@ -41,7 +41,8 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
         : Execution::PipelineExecutionContext(
             -1,// this is a dummy pipelineID
             queryExecutionPlanId,
-            std::move(queryManager),
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
             [](TupleBuffer&, NES::Runtime::WorkerContext&) {
             },
             [](TupleBuffer&) {
@@ -60,11 +61,10 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     }
 
     ExecutionResult
-    execute(TupleBuffer& buffer, Execution::PipelineExecutionContext& pipelineContext, WorkerContextRef workerContext) {
+    execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
         NES_TRACE(
             "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
             << workerContext.getId());
-        auto queryManager = pipelineContext.getQueryManager();
         auto* task = buffer.getBuffer<ReconfigurationMessage>();
         NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
                   "on thread "
@@ -376,6 +376,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
     auto pipeline = Execution::ExecutablePipeline::create(-1,
                                                           queryId,
                                                           queryExecutionPlanId,
+                                                          inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           reconfigurationExecutable,
                                                           1,
@@ -411,6 +412,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
     auto pipeline = Execution::ExecutablePipeline::create(-1,
                                                           queryId,
                                                           queryExecutionPlanId,
+                                                          inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           reconfigurationExecutable,
                                                           1,
@@ -456,6 +458,7 @@ void DynamicQueryManager::poisonWorkers() {
     auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                           -1,// any sub query plan
                                                           -1,
+                                                          inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
                                                           1,
@@ -476,6 +479,7 @@ void MultiQueueQueryManager::poisonWorkers() {
     auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                           -1,// any sub query plan
                                                           -1,
+                                                          inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
                                                           1,

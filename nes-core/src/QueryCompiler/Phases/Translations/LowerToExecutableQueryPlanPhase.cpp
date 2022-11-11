@@ -241,6 +241,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
+    auto queryManager = nodeEngine->getQueryManager();
+
     auto emitToSuccessorFunctionHandler = [executableSuccessorPipelines](Runtime::TupleBuffer& buffer,
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
@@ -255,17 +257,18 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, nodeEngine](Runtime::TupleBuffer& buffer) {
+    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             NES_DEBUG("Emit buffer to query manager");
-            nodeEngine->getQueryManager()->addWorkForNextPipeline(buffer, executableSuccessor);
+            queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
 
     auto executionContext =
         std::make_shared<Runtime::Execution::PipelineExecutionContext>(pipeline->getPipelineId(),
                                                                        pipelineQueryPlan->getQuerySubPlanId(),
-                                                                       nodeEngine->getQueryManager(),
+                                                                       queryManager->getBufferManager(),
+                                                                       queryManager->getNumberOfWorkerThreads(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
                                                                        executableOperator->getOperatorHandlers());
@@ -273,6 +276,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
+                                                                             queryManager,
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),
                                                                              pipeline->getPredecessors().size(),

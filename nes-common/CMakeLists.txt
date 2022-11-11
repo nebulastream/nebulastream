@@ -31,6 +31,10 @@ set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
 
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/ExecutableType Common/ExecutableType)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/PhysicalTypes Common/PhysicalTypes)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

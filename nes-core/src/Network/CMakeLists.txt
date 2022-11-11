@@ -14,10 +14,6 @@
 add_source_files(nes-core
         ZmqServer.cpp
         NetworkManager.cpp
-        NetworkChannel.cpp
-        PartitionManager.cpp
         NetworkSink.cpp
         NetworkSource.cpp
-        ExchangeProtocol.cpp
-        detail/BaseNetworkChannel.cpp
 )

@@ -13,3 +13,6 @@
 
 add_subdirectory(Nautilus)
 add_subdirectory(Execution)
+add_subdirectory(Runtime)
+add_subdirectory(Network)
+#add_subdirectory(QueryCompiler)

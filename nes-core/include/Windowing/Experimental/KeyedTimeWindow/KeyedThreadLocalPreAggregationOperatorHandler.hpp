@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <vector>
 namespace NES::Experimental {
