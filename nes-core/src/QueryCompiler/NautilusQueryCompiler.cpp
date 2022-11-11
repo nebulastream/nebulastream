@@ -8,6 +8,7 @@
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
+#include <QueryCompiler/Phases/NautilusPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
@@ -21,7 +22,7 @@
 #include <Util/Timer.hpp>
 #include <utility>
 
-namespace NES::Runtime::QueryCompiler {
+namespace NES::QueryCompilation {
 
 NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompilerOptionsPtr& options,
                                              const std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
@@ -30,11 +31,15 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
-
+QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
+                                               std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
+                                               bool sourceSharing) {
+    return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
+}
 QueryCompilation::QueryCompilationResultPtr
-NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr) {
+NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
     NES_THROW_RUNTIME_ERROR("test");
-   /* try {
+    try {
         Timer timer("DefaultQueryCompiler");
 
         auto queryId = request->getQueryPlan()->getQueryId();
@@ -61,22 +66,12 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
 
-        lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
-        timer.snapshot("GeneratableOperators");
-
-        codeGenerationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
-        timer.snapshot("ExecutableOperatorPlan");
-        timer.pause();
-        NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
-
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();
         return QueryCompilationResult::create(currentException);
-    }*/
+    }
 }
 
-}// namespace NES::Runtime::QueryCompiler
+}// namespace NES::QueryCompilation

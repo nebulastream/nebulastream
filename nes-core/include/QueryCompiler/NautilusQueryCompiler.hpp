@@ -1,18 +1,30 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/NautilusPhaseFactory.hpp>
-namespace NES::Runtime::QueryCompiler {
 
+namespace NES::QueryCompilation {
+namespace Phases {
+class NautilusPhaseFactory;
+}
 class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
   public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
+    /**
+     * @brief Creates a new instance of the DefaultQueryCompiler, with a set of options and phases.
+     * @param options QueryCompilationOptions.
+     * @param phaseFactory Factory which allows the injection of query optimization phases.
+     * @param sourceSharing
+     * @param useCompilationCache
+     * @return QueryCompilerPtr
+     */
+    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
+                                   std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
+                                   bool sourceSharing = false);
 
   protected:
     NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options,
                           std::unique_ptr<Phases::NautilusPhaseFactory> const& phaseFactory,
                           bool sourceSharing);
-
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     QueryCompilation::LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
@@ -21,6 +33,6 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
     bool sourceSharing;
 };
 
-}// namespace NES::Runtime::QueryCompiler
+}// namespace NES::QueryCompilation
 
 #endif//NES_NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_

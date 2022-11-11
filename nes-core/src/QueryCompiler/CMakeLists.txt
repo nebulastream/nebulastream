@@ -19,7 +19,8 @@ add_source_files(nes-core
         DefaultQueryCompiler.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp
-)
+        NautilusQueryCompiler.cpp
+        )
 add_subdirectory(CodeGenerator)
 add_subdirectory(Operators)
 add_subdirectory(Compiler)
