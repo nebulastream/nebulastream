@@ -475,7 +475,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
-            std::move(queryManager),
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
             [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
@@ -597,6 +598,7 @@ class SourceTest : public Testing::NESBaseTest {
         return Runtime::Execution::ExecutablePipeline::create(0,
                                                               this->queryId,
                                                               this->queryId,
+                                                              this->nodeEngine->getQueryManager(),
                                                               context,
                                                               executableStage,
                                                               1,

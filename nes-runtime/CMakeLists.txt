@@ -47,7 +47,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
         message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
         message(STATUS "mlir_libs: ${mlir_libs}")
-        target_link_libraries(nes-runtime PUBLIC ${mlir_libs} ${dialect_libs}
+        target_link_libraries(nes-runtime PRIVATE ${mlir_libs} ${dialect_libs}
                 ${conversion_libs}
                 MLIRReconcileUnrealizedCasts
                 MLIRMemRefToLLVM
@@ -55,7 +55,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     else ()
         message(FATAL_ERROR "Cannot find mlir")
     endif (MLIR_FOUND)
-    target_compile_definitions(nes-runtime PUBLIC USE_MLIR)
+    target_compile_definitions(nes-runtime PRIVATE USE_MLIR)
 
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
