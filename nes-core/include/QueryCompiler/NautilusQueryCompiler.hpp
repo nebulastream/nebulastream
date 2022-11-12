@@ -6,6 +6,11 @@ namespace NES::QueryCompilation {
 namespace Phases {
 class NautilusPhaseFactory;
 }
+
+class LowerPhysicalToNautilusOperators;
+using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
+class NautilusCompilationPhase;
+using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
 class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
   public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
@@ -17,16 +22,16 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
      * @param useCompilationCache
      * @return QueryCompilerPtr
      */
-    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
-                                   std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
-                                   bool sourceSharing = false);
+    static QueryCompilerPtr
+    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing = false);
 
   protected:
     NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options,
-                          std::unique_ptr<Phases::NautilusPhaseFactory> const& phaseFactory,
+                          Phases::PhaseFactoryPtr const& phaseFactory,
                           bool sourceSharing);
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
-    QueryCompilation::LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
+    QueryCompilation::LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;
+    QueryCompilation::NautilusCompilationPhasePtr compileNautilusPlanPhase;
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
     QueryCompilation::PipeliningPhasePtr pipeliningPhase;
     QueryCompilation::AddScanAndEmitPhasePtr addScanAndEmitPhase;
