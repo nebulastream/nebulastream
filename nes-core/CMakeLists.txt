@@ -65,7 +65,7 @@ add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler nes-runtime)
+target_link_libraries(nes PUBLIC nes-grpc nes-compiler nes-runtime)
 
 if(NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
