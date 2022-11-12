@@ -6,14 +6,12 @@
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
-#include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/NautilusPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
-#include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
-#include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -25,20 +23,21 @@
 namespace NES::QueryCompilation {
 
 NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompilerOptionsPtr& options,
-                                             const std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
+                                             const Phases::PhaseFactoryPtr& phaseFactory,
                                              bool sourceSharing)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
-      lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
+      lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>()),
+      compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options->getCompilationStrategy())),
+      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
 QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
-                                               std::unique_ptr<Phases::NautilusPhaseFactory>& phaseFactory,
+                                               Phases::PhaseFactoryPtr const& phaseFactory,
                                                bool sourceSharing) {
     return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
 }
 QueryCompilation::QueryCompilationResultPtr
 NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
-    NES_THROW_RUNTIME_ERROR("test");
     try {
         Timer timer("DefaultQueryCompiler");
 
@@ -65,6 +64,12 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
+
+        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan);
+        timer.snapshot("AfterToNautilusPlanPhase");
+
+        pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
+        timer.snapshot("AfterNautilusCompilationPhase");
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));

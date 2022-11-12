@@ -16,6 +16,7 @@ add_source_files(nes-core
         PipelineQueryPlan.cpp
         ExecutableOperator.cpp
         PipelineQueryPlanIterator.cpp
+        NautilusPipelineOperator.cpp
 )
 
 add_subdirectory(GeneratableOperators)
