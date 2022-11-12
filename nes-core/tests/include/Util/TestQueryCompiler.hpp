@@ -16,6 +16,8 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
@@ -131,6 +133,7 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
+    //return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
 }
 
 }// namespace TestUtils
