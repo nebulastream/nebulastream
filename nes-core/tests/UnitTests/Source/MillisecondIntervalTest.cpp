@@ -131,7 +131,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
-            std::move(queryManager),
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
             [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
@@ -181,7 +182,8 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     auto sink = createCSVFileSink(schema, queryId, queryId, this->nodeEngine, 1, "qep1.txt", false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, queryId, context, executableStage, 1, {sink});
+    auto pipeline =
+        ExecutablePipeline::create(0, queryId, queryId, this->nodeEngine->getQueryManager(), context, executableStage, 1, {sink});
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(this->path_to_file);

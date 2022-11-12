@@ -90,7 +90,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
-            std::move(queryManager),
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
