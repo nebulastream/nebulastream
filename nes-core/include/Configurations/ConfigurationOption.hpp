@@ -229,6 +229,7 @@ const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
+const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrategy";
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";

@@ -658,6 +658,8 @@ if (NES_USE_S2)
     target_link_libraries(location-integration-tests nes-tests)
 endif ()
 
+add_subdirectory(UnitTests/QueryExecution)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")

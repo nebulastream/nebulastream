@@ -15,6 +15,8 @@
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
 #include <Execution/Operators/Operator.hpp>
+#include <Execution/Expressions/Expression.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -67,6 +69,10 @@ class LowerPhysicalToNautilusOperators {
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
+
+
+    std::shared_ptr<Runtime::Execution::Expressions::Expression>
+    lowerExpression(ExpressionNodePtr expressionNode);
 };
 }// namespace QueryCompilation
 }// namespace NES

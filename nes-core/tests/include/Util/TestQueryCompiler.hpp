@@ -132,8 +132,8 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
-    //return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
+    //return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
+    return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
 }
 
 }// namespace TestUtils
