@@ -606,7 +606,7 @@ TEST_F(QueryCompilerTest, nautilusFilterQuery) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = std::make_unique<Phases::NautilusPhaseFactory>();
+    auto phaseFactory = std::make_shared<Phases::NautilusPhaseFactory>();
     auto queryCompiler = NautilusQueryCompiler::create(compilerOptions, phaseFactory);
 
     auto query = Query::from(logicalSourceName).filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
