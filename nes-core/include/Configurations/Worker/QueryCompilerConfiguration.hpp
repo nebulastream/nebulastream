@@ -40,6 +40,14 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
      */
+    EnumOption<QueryCompilation::QueryCompilerOptions::QueryCompiler> queryCompilerType = {
+        QUERY_COMPILER_TYPE_CONFIG,
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
+        "Indicates the type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
+
+    /**
+     * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
+     */
     EnumOption<QueryCompilation::QueryCompilerOptions::CompilationStrategy> compilationStrategy = {
         QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
         QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE,
@@ -80,7 +88,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&compilationStrategy,
+        return {&queryCompilerType,
+                &compilationStrategy,
                 &pipeliningStrategy,
                 &outputBufferOptimizationLevel,
                 &windowingStrategy,

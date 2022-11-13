@@ -41,6 +41,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
     try {
         Timer timer("DefaultQueryCompiler");
 
+
         auto queryId = request->getQueryPlan()->getQueryId();
         auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
 
