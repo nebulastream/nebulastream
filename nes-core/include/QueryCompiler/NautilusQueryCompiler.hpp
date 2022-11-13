@@ -16,9 +16,6 @@
 #include <QueryCompiler/QueryCompiler.hpp>
 
 namespace NES::QueryCompilation {
-namespace Phases {
-class NautilusPhaseFactory;
-}
 
 class LowerPhysicalToNautilusOperators;
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
