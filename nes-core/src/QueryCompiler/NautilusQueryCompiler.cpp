@@ -7,7 +7,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
-#include <QueryCompiler/Phases/NautilusPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
