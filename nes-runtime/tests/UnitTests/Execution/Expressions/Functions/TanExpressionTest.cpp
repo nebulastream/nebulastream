@@ -20,15 +20,13 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-
-    class TanExpressionTest : public testing::Test {
+class TanExpressionTest : public testing::Test {
     public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("TanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
             std::cout << "Setup TanExpressionTest test class." << std::endl;
         }
-
 
         /* Will be called before a test is executed. */
         void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
@@ -42,67 +40,52 @@ namespace NES::Runtime::Execution::Expressions {
         static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
     };
 
-
-    TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
+TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
     auto expression = UnaryExpressionWrapper<TanExpression>();
     // Int8
-{
-    auto resultValue = expression.eval(Value<Int8>((int8_t) 0));
-    ASSERT_EQ(resultValue, (float) 0);
-    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-}
+    {
+        auto resultValue = expression.eval(Value<Int8>((int8_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 
+    // Int32
+    {
+        auto resultValue = expression.eval(Value<Int32>((int32_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 
-// Int32
-{
-auto resultValue = expression.eval(Value<Int32>((int32_t) 0));
-ASSERT_EQ(resultValue, (float) 0);
-ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    // Int64
+    {
+        auto resultValue = expression.eval(Value<Int64>((int64_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
-
-// Int64
-{
-auto resultValue = expression.eval(Value<Int64>((int64_t) 0));
-ASSERT_EQ(resultValue, (float) 0);
-ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-}
-}
-
 
 TEST_F(TanExpressionTest, evaluateTanExpressionFloat) {
-auto expression = UnaryExpressionWrapper<TanExpression>();
-// Float
-{
-auto resultValue = expression.eval(Value<Float>((float) 90));
-ASSERT_EQ(resultValue, (double) -1.995200412208242);
-ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    auto expression = UnaryExpressionWrapper<TanExpression>();
+    // Float
+    {
+        auto resultValue = expression.eval(Value<Float>((float) 90));
+        ASSERT_EQ(resultValue, (double) -1.995200412208242);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // Double
+    {
+        auto resultValue = expression.eval(Value<Double>((double) 90));
+        ASSERT_EQ(resultValue, (double) -1.995200412208242);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
-// Double
-{
-auto resultValue = expression.eval(Value<Double>((double) 90));
-ASSERT_EQ(resultValue, (double) -1.995200412208242);
-ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-}
-// Double
-
-}
-
 
 /**
  * @brief If we execute the expression on a boolean it should throw an exception.
  */
 TEST_F(TanExpressionTest, evaluateTanExpressionOnWrongType) {
-auto expression = UnaryExpressionWrapper<TanExpression>();
-ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    auto expression = UnaryExpressionWrapper<TanExpression>();
+    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-
 }// namespace NES::Runtime::Execution::Expressions
-
-
-
-
-
-
-
-
