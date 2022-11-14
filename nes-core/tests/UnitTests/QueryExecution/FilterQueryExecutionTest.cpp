@@ -47,6 +47,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestExecutionEngine.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
@@ -55,6 +56,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
@@ -63,7 +65,8 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -73,125 +76,27 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         // create test input buffer
-        windowSchema = Schema::create()
-                           ->addField("test$key", BasicType::INT64)
-                           ->addField("test$value", BasicType::INT64)
-                           ->addField("test$ts", BasicType::UINT64);
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->physicalSources.add(sourceConf);
-
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                         .build();
-        // enable distributed window optimization
-        auto optimizerConfiguration = Configurations::OptimizerConfiguration();
-        optimizerConfiguration.performDistributedWindowOptimization = true;
-        optimizerConfiguration.distributedWindowChildThreshold = 2;
-        optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-        distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
-        originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-
-        // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryParsingService = QueryParsingService::create(jitCompiler);
-        Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
-        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        auto queryCompiler = this->GetParam();
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
-        ASSERT_TRUE(nodeEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
-    Runtime::Execution::ExecutableQueryPlanPtr prepareExecutableQueryPlan(
-        QueryPlanPtr queryPlan,
-        QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
-        queryPlan = typeInferencePhase->execute(queryPlan);
-        queryPlan = distributeWindowRule->apply(queryPlan);
-        queryPlan = originIdInferencePhase->execute(queryPlan);
-        queryPlan = typeInferencePhase->execute(queryPlan);
-        auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-        auto queryCompiler = TestUtils::createTestQueryCompiler(options);
-        auto result = queryCompiler->compileQuery(request);
-        return result->getExecutableQueryPlan();
-    }
-
+    std::shared_ptr<TestExecutionEngine> executionEngine;
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
-    Runtime::NodeEnginePtr nodeEngine;
-    Optimizer::DistributeWindowRulePtr distributeWindowRule;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
 };
-
-class NonRunnableDataSource : public NES::DefaultSource {
-  public:
-    explicit NonRunnableDataSource(const SchemaPtr& schema,
-                                   const Runtime::BufferManagerPtr& bufferManager,
-                                   const Runtime::QueryManagerPtr& queryManager,
-                                   uint64_t numbersOfBufferToProduce,
-                                   uint64_t gatheringInterval,
-                                   OperatorId operatorId,
-                                   OriginId originId,
-                                   size_t numSourceLocalBuffers,
-                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
-        : DefaultSource(schema,
-                        bufferManager,
-                        queryManager,
-                        numbersOfBufferToProduce,
-                        gatheringInterval,
-                        operatorId,
-                        originId,
-                        numSourceLocalBuffers,
-                        successors) {
-        wasGracefullyStopped = NES::Runtime::QueryTerminationType::HardStop;
-    }
-
-    void runningRoutine() override {
-        open();
-        completedPromise.set_value(canTerminate.get_future().get());
-        close();
-    }
-
-    bool stop(Runtime::QueryTerminationType termination) override {
-        canTerminate.set_value(true);
-        return NES::DefaultSource::stop(termination);
-    }
-
-  private:
-    std::promise<bool> canTerminate;
-};
-
-DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager,
-                                      const Runtime::QueryManagerPtr& queryManager,
-                                      OperatorId operatorId,
-                                      OriginId originId,
-                                      size_t numSourceLocalBuffers,
-                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
-    return std::make_shared<NonRunnableDataSource>(schema,
-                                                   bufferManager,
-                                                   queryManager,
-                                                   /*bufferCnt*/ 1,
-                                                   /*frequency*/ 1000,
-                                                   operatorId,
-                                                   originId,
-                                                   numSourceLocalBuffers,
-                                                   successors);
-}
 
 void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
 
@@ -207,73 +112,46 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
     buf.setNumberOfTuples(10);
 }
 
-TEST_F(FilterQueryExecutionTest, filterQuery) {
-
-    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-        testSchema,
-        [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
-
+TEST_P(FilterQueryExecutionTest, filterQuery) {
     auto outputSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(outputSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(testSchema);
 
     // now, test the query for all possible combinations
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     // two filter operators to validate correct behaviour of (multiple) branchless predicated filters
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
-    // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1u);
-    ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
-    ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    //ASSERT_EQ(Runtime::WorkerContext::getBufferProvider(), nullptr);
-    Runtime::WorkerContext workerContext(1, nodeEngine->getBufferManager(), 4);
-    ASSERT_NE(Runtime::WorkerContext::getBufferProviderTLS(), nullptr);
-    if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-        fillBuffer(inputBuffer, memoryLayout);
-        nodeEngine->getQueryManager()->addWorkForNextPipeline(inputBuffer, plan->getPipelines()[0]);
-     //   auto res = nodeEngine->getQueryManager()->stopQuery(plan, Runtime::QueryTerminationType::Graceful);
 
-       ASSERT_EQ(plan->getPipelines()[0]->execute(inputBuffer, workerContext), ExecutionResult::Ok);
-        // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-        auto resultBuffer = testSink->get(0);
-        // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 6u);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
 
-        auto resultRecordIndexField =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        auto resultRecordOneField = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, resultBuffer);
+    auto inputBuffer = executionEngine->getBuffer();
+    //  if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
+    fillBuffer(inputBuffer, memoryLayout);
 
-        for (uint32_t recordIndex = 0u; recordIndex < 4u; ++recordIndex) {
-            // id
-            EXPECT_EQ(resultRecordIndexField[recordIndex], recordIndex);
-            // one
-            EXPECT_EQ(resultRecordOneField[recordIndex], 1LL);
-        }
+    executionEngine->emitBuffer(plan, inputBuffer);
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->get(0);
+    // The output buffer should contain 5 tuple;
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 6u);
 
-    } else {
-        FAIL();
+    auto resultRecordIndexField = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
+    auto resultRecordOneField = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, resultBuffer);
+
+    for (uint32_t recordIndex = 0u; recordIndex < 4u; ++recordIndex) {
+        EXPECT_EQ(resultRecordIndexField[recordIndex], recordIndex);
+        EXPECT_EQ(resultRecordOneField[recordIndex], 1LL);
     }
-
-    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
-
-    // wont be called by runtime as no runtime support in this test
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
+
+INSTANTIATE_TEST_CASE_P(testFilterQueries,
+                        FilterQueryExecutionTest,
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
+                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        [](const testing::TestParamInfo<FilterQueryExecutionTest::ParamType>& info) {
+                            return magic_enum::enum_flags_name(info.param);
+                        });
