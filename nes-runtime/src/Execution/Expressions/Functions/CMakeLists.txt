@@ -33,4 +33,5 @@
          BitcounterExpression.cpp
          Log2Expression.cpp
          LnExpression.cpp
+         TanExpression.cpp
          )
