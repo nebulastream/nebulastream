@@ -53,10 +53,10 @@
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
@@ -75,11 +75,6 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        // create test input buffer
-        testSchema = Schema::create()
-                         ->addField("test$id", BasicType::INT64)
-                         ->addField("test$one", BasicType::INT64)
-                         ->addField("test$value", BasicType::INT64);
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
     }
@@ -94,53 +89,37 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
-    SchemaPtr testSchema;
-    SchemaPtr windowSchema;
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
-
-    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
-    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
-    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
-
+void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        recordIndexFields[recordIndex] = recordIndex;
-        fields01[recordIndex] = 1;
-        fields02[recordIndex] = recordIndex % 2;
+        buf[recordIndex][0].write<int64_t>(recordIndex);
+        buf[recordIndex][1].write<int64_t>(1);
     }
     buf.setNumberOfTuples(10);
 }
 
 TEST_P(FilterQueryExecutionTest, filterQuery) {
-    auto outputSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(outputSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(testSchema);
+    auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(schema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     // now, test the query for all possible combinations
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
-
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
-
-    auto inputBuffer = executionEngine->getBuffer();
-    //  if (auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!inputBuffer) {
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
-    fillBuffer(inputBuffer, memoryLayout);
-
-    executionEngine->emitBuffer(plan, inputBuffer);
-    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = source->getBuffer();
+    fillBuffer(inputBuffer);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
+    auto resultBuffer = testSink->getResultBuffer(0);
+
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 6u);
-
-    auto resultRecordIndexField = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-    auto resultRecordOneField = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, resultBuffer);
-
-    for (uint32_t recordIndex = 0u; recordIndex < 4u; ++recordIndex) {
-        EXPECT_EQ(resultRecordIndexField[recordIndex], recordIndex);
-        EXPECT_EQ(resultRecordOneField[recordIndex], 1LL);
+    for (uint32_t recordIndex = 0u; recordIndex < 6u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
+        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
