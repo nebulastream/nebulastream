@@ -15,6 +15,10 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Common/ValueTypes/ValueType.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantInteger32Expression.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -24,14 +28,20 @@
 #include <Execution/Expressions/LogicalExpressions/NegateExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/OrExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -147,11 +157,14 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
-                                           PhysicalOperators::PhysicalOperatorPtr) {
-    auto c1 = std::make_shared<Runtime::Execution::Expressions::ConstantIntegerExpression>(12);
-    auto c2 = std::make_shared<Runtime::Execution::Expressions::ConstantIntegerExpression>(12);
-    auto equals = std::make_shared<Runtime::Execution::Expressions::EqualsExpression>(c1, c2);
-    return std::make_shared<Runtime::Execution::Operators::Selection>(equals);
+                                           PhysicalOperators::PhysicalOperatorPtr operatorPtr) {
+    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
+    auto assignmentField = mapOperator->getMapExpression()->getField();
+    auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
+    auto expression = lowerExpression(assignmentExpression);
+    auto writeField =
+        std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
+    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
 LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNode) {
@@ -181,6 +194,22 @@ LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNo
     } else if (auto negateNode = expressionNode->as_if<NegateExpressionNode>()) {
         auto child = lowerExpression(negateNode->getChildren()[0]->as<ExpressionNode>());
         return std::make_shared<Runtime::Execution::Expressions::NegateExpression>(child);
+    } else if (auto mulNode = expressionNode->as_if<MulExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(mulNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(mulNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::MulExpression>(leftNautilusExpression, rightNautilusExpression);
+    } else if (auto addNode = expressionNode->as_if<AddExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(addNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(addNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::AddExpression>(leftNautilusExpression, rightNautilusExpression);
+    } else if (auto subNode = expressionNode->as_if<SubExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(subNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(subNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::SubExpression>(leftNautilusExpression, rightNautilusExpression);
+    } else if (auto divNode = expressionNode->as_if<DivExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(divNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(divNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::DivExpression>(leftNautilusExpression, rightNautilusExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {
         auto value = constantValue->getConstantValue();
         if (constantValue->getStamp()->isInteger()) {
