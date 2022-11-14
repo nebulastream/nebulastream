@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Windowing/Runtime/ThresholdWindowState.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <sstream>
@@ -20,8 +21,14 @@ namespace NES::Windowing {
 
 ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate)) {}
 
+ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount) : ContentBasedWindowType(), predicate(std::move(predicate)), miniumCount(std::move(minCount)) {}
+
 WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate) {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
+}
+
+WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate, uint64_t miniumCount) {
+    return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), std::move(miniumCount))));
 }
 
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
@@ -32,6 +39,12 @@ bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
     }
 }
 
+bool ThresholdWindow::isThresholdWindow() { return true; }
+
+const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicate; }
+
+uint64_t ThresholdWindow::getMiniumCount() {return miniumCount;}
+
 std::string ThresholdWindow::toString() {
     std::stringstream ss;
     ss << "Threshold Window: ";
@@ -39,8 +52,5 @@ std::string ThresholdWindow::toString() {
     ss << std::endl;
     return ss.str();
 }
-
-bool ThresholdWindow::isThresholdWindow() { return true; }
-const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicate; }
 
 }// namespace NES::Windowing
