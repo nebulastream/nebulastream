@@ -33,7 +33,7 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
     auto terminatorOp = thenBlock->getOperations().back();
     if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-        if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
+        if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
             return branchOp->getNextBlockInvocation().getBlock();
         } else {
             return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlockInvocation().getBlock(), ifParentBlockLevel);
@@ -42,18 +42,20 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
         auto loopOp = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
         auto loopIfOp =
             std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
-        if (loopIfOp->getTrueBlockInvocation().getBlock()->getScopeLevel() <= ifParentBlockLevel) {
+        if (loopIfOp->getTrueBlockInvocation().getBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
             return loopIfOp->getTrueBlockInvocation().getBlock();
         } else {
             return getNextLowerOrEqualLevelBasicBlock(loopIfOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         }
-    } else {
+    } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
         if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
             return getNextLowerOrEqualLevelBasicBlock(ifOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         } else {
             return getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getBlock(), ifParentBlockLevel);
         }
+    } else { //ReturnOp todo changed
+        return nullptr;
     }
 }
 
@@ -78,10 +80,12 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
                                                    ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1);
             dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
             if (ifOp->getFalseBlockInvocation().getBlock()
-                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= scopeLevel) {
+                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= (uint32_t) scopeLevel) {
                 dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             }
-            dumpHelper(lastTerminatorOp);
+            if(lastTerminatorOp) {
+                dumpHelper(lastTerminatorOp);
+            }
             break;
         }
         case Operations::Operation::OperationType::ReturnOp: break;

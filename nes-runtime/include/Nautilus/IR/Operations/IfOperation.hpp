@@ -27,9 +27,11 @@ class IfOperation : public Operation {
     OperationPtr getValue();
 
     BasicBlockInvocation& getTrueBlockInvocation();
-    BasicBlockInvocation& getFalseBlockInvocation();
     BasicBlockPtr getMergeBlock();
     void setMergeBlock(BasicBlockPtr mergeBlock);
+    BasicBlockInvocation& getFalseBlockInvocation();
+    void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
+    void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
     bool hasFalseCase();
 
     std::string toString() override;

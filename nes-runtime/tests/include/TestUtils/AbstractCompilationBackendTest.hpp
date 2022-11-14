@@ -19,6 +19,7 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 
@@ -30,11 +31,13 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Nautilus::Tracing::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         std::cout << *executionTrace.get() << std::endl;
         auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
+        ir = removeBrOnlyBlocksPhase.apply(ir);
+        // std::cout << ir->toString() << std::endl;
         auto param = this->GetParam();
         auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
         return compiler->compile(ir);
