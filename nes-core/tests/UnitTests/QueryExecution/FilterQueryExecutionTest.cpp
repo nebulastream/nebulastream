@@ -248,9 +248,9 @@ TEST_F(FilterQueryExecutionTest, filterQuery) {
             Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
         fillBuffer(inputBuffer, memoryLayout);
         nodeEngine->getQueryManager()->addWorkForNextPipeline(inputBuffer, plan->getPipelines()[0]);
-        auto res = nodeEngine->getQueryManager()->stopQuery(plan, Runtime::QueryTerminationType::Graceful);
+     //   auto res = nodeEngine->getQueryManager()->stopQuery(plan, Runtime::QueryTerminationType::Graceful);
 
-        //ASSERT_EQ(plan->getPipelines()[0]->execute(inputBuffer, workerContext), ExecutionResult::Ok);
+       ASSERT_EQ(plan->getPipelines()[0]->execute(inputBuffer, workerContext), ExecutionResult::Ok);
         // This plan should produce one output buffer
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
         auto resultBuffer = testSink->get(0);
