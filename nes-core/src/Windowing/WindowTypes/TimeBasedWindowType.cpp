@@ -40,5 +40,6 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
     }
     return true;
 }
+
 TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const { return timeCharacteristic; }
 }// namespace NES::Windowing

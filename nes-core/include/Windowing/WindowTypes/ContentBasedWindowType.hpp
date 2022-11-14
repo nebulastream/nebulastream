@@ -18,6 +18,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
+
 namespace NES::Windowing {
 class ContentBasedWindowType : public WindowType {
   public:
