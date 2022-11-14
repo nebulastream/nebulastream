@@ -54,6 +54,9 @@ class NetworkCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
+    //TODO: Beschreibung
+    void setSchema(SchemaPtr schema) override;
+
   private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;

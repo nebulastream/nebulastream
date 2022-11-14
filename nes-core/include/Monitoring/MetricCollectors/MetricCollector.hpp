@@ -81,6 +81,9 @@ class MetricCollector {
      */
     void setNodeId(const TopologyNodeId nodeId);
 
+    //TODO: Beschreibung
+    virtual void setSchema(SchemaPtr schema) = 0;
+
   private:
     TopologyNodeId nodeId;
 };

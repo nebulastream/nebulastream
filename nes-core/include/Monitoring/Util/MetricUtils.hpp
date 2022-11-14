@@ -102,6 +102,9 @@ class MetricUtils {
     static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric,
                                                                                          int numberOfAttributes);
 
+    //TODO:
+    static MetricType metricTypeFromCollectorType(MetricCollectorType type);
+
     //TODO: Beschreibung
     static MetricType metricTypeFromSourceName(std::string sourceName);
 

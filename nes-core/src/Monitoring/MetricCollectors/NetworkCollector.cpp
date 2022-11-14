@@ -61,4 +61,6 @@ const MetricPtr NetworkCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
 }
 
+void NetworkCollector::setSchema(NES::SchemaPtr schema) { this->schema = schema; }
+
 }// namespace NES::Monitoring

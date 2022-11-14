@@ -58,4 +58,5 @@ const MetricPtr MemoryCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }
 
+void MemoryCollector::setSchema(NES::SchemaPtr schema) { this->schema = schema; }
 }// namespace NES::Monitoring

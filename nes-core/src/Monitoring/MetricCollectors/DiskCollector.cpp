@@ -60,4 +60,6 @@ const MetricPtr DiskCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
+void DiskCollector::setSchema(NES::SchemaPtr schema) { this->schema = schema; }
+
 }// namespace NES::Monitoring

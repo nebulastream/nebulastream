@@ -635,8 +635,8 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourcePtr>& phy
 }
 
 Monitoring::MonitoringManagerPtr NodeEngine::getMonitoringManager() { return monitoringManager; }
-void NodeEngine::setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager){
-    NES_ASSERT(monitoringManager != nullptr, "NodeEngine: MonitoringManager is null.");
-    this->monitoringManager = monitoringManager;
-}
+void NodeEngine::setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager){ this->monitoringManager = monitoringManager; }
+
+Monitoring::MonitoringAgentPtr NodeEngine::getMonitoringAgent() { return monitoringAgent; }
+void NodeEngine::setMonitoringAgent(Monitoring::MonitoringAgentPtr monitoringAgent) { this->monitoringAgent = monitoringAgent; }
 }// namespace NES::Runtime

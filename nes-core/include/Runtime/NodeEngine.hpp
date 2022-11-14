@@ -336,6 +336,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     //TODO: Beschreiben
     void setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager);
 
+    // TODO: Beschreiben
+    Monitoring::MonitoringAgentPtr getMonitoringAgent();
+
+    //TODO: Beschreiben
+    void setMonitoringAgent(Monitoring::MonitoringAgentPtr monitoringAgent);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -381,6 +387,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     Monitoring::MonitoringManagerPtr monitoringManager;
+    Monitoring::MonitoringAgentPtr monitoringAgent;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

@@ -143,6 +143,17 @@ std::string MetricUtils::listToString(const std::string& separator, const std::l
     return string;
 }
 
+MetricType MetricUtils::metricTypeFromCollectorType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return WrappedCpuMetrics;
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetric;
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetric;
+        case MetricCollectorType::NETWORK_COLLECTOR: return WrappedNetworkMetrics;
+        default: NES_FATAL_ERROR("MetricUtils: Not supported collector type " << toString(type));
+    }
+    return UnknownMetric;
+}
+
 std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::randomAttributes(std::string metric, int numberOfAttributes) {
     std::vector<std::string> attributesVector;
 

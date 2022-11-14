@@ -51,6 +51,8 @@ class MemoryCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
+    void setSchema(SchemaPtr schema) override;
+
   private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;

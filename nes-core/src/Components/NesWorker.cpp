@@ -140,15 +140,18 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
-
-        if ((workerConfig->monitoringConfiguration.getValue().empty())) {
+        monitoringAgent = nullptr;
+        if ((workerConfig->monitoringConfiguration.getValue().empty()) && (workerConfig->enableMonitoring)) {
+//        if ((workerConfig->monitoringConfiguration.getValue().empty())) {
             Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
             Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
             monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
                                                       workerConfig->enableMonitoring);
             //         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
             NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
-        } else {
+        }
+        else if (workerConfig->enableMonitoring) {
+//        else {
             web::json::value configurationMonitoringJson =
                 Monitoring::MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
 
@@ -164,6 +167,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
+        if (monitoringAgent != nullptr) {
+            NES_DEBUG("NesWorker: Set monitoringAgent for nodeEngine!")
+            nodeEngine->setMonitoringAgent(monitoringAgent);
+        }
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }

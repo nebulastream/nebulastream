@@ -114,10 +114,12 @@ web::json::value CpuMetricsWrapper::toJson() const {
     SchemaPtr schemaTemp = this->schema;
     web::json::value metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
-        if (i == 0) {
+        auto coreNum = cpuMetrics[i].getValue("coreNum");
+        NES_DEBUG("CpuMetricsWrapper: CORE_NUM is" + std::to_string(coreNum));
+        if (coreNum == 0) {
             metricsJson["TOTAL"] = cpuMetrics[i].toJson();
         } else {
-            metricsJson["CORE_" + std::to_string(i)] = cpuMetrics[i].toJson();
+            metricsJson["CORE_" + std::to_string(coreNum)] = cpuMetrics[i].toJson();
         }
     }
     metricsJsonWrapper["values"] = metricsJson;

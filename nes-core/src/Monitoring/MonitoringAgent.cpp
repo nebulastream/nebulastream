@@ -133,4 +133,8 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 
+MetricCollectorPtr MonitoringAgent::getCollector(MetricType metricType) {
+    auto metricCollector = catalog->getMetricCollector(metricType);
+    return metricCollector;
+};
 }// namespace NES::Monitoring

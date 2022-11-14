@@ -74,4 +74,6 @@ const MetricPtr CpuCollector::readMetric() const {
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);
 }
 
+void CpuCollector::setSchema(NES::SchemaPtr schema) { this->schema = schema; }
+
 }// namespace NES::Monitoring

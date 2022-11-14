@@ -90,6 +90,9 @@ class MonitoringAgent {
      */
     void setNodeId(TopologyNodeId nodeId);
 
+    //TODO:
+    MetricCollectorPtr getCollector(MetricType metricType);
+
   private:
     TopologyNodeId nodeId;
     MonitoringPlanPtr monitoringPlan;
