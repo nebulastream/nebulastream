@@ -133,41 +133,23 @@ class BasePlacementStrategy {
 
     static int getDepth(const ExecutionNodePtr& executionNode);
     static std::vector<ExecutionNodePtr> getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth);
-    //static float calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcLinkWeight(const TopologyPtr& topology, ExecutionNodePtr upstreamNode, const ExecutionNodePtr& downstreamNode);
-    static float getNetworkConnectivity(const TopologyPtr& topology, const ExecutionNodePtr& upstreamNode, ExecutionNodePtr downstreamNode);
-    static float calcOutputQueue(const TopologyPtr& topology, const ExecutionNodePtr& executionNode);
-    /*static void calcEffectiveValues(const TopologyPtr& topology,
-                                    GlobalExecutionPlanPtr globalExecutionPlan,
-                                    std::vector<TopologyNodePtr> topologyNodes,
-                                    QueryId queryId);*/
-    static std::vector<TopologyNodePtr> getDownstreamTree(const TopologyNodePtr& topNode, bool reversed);
-    static std::vector<TopologyNodePtr> getUpstreamTree(const TopologyNodePtr& topNode, bool reversed);
-    static void initAdjustedCosts(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr rootNode, QueryId queryId);
+    static float getNetworkConnectivity(const TopologyPtr& topology, const ExecutionNodePtr& upstreamNode, const ExecutionNodePtr& downstreamNode);
+    static void initAdjustedCosts(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan, const ExecutionNodePtr& rootNode, QueryId queryId);
     static void initNetworkConnectivities(const TopologyPtr& topology,
                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    QueryId queryId);
-    static std::tuple<float, float, float> calcActiveStandby(TopologyPtr topology, const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                             const ExecutionNodePtr& executionNode, int replicas, QueryId queryId,
-                                                             FaultToleranceConfigurationPtr ftConfig);
-    static std::tuple<float,float,float> calcUpstreamBackup(const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId,
-                                                              FaultToleranceConfigurationPtr ftConfig);
-    static std::tuple<float, float, float> calcCheckpointing(TopologyPtr topology,
-                                                      const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                      ExecutionNodePtr executionNode,
-                                                      QueryId queryId, FaultToleranceConfigurationPtr ftConfig);
     static FaultToleranceType bestApproach(std::vector<float> activeStandbyCosts,
                       std::vector<float> checkpointingCosts,
                       std::vector<float> upstreamBackupCosts);
-    static int getDelayToRoot(ExecutionNodePtr executionNode, TopologyPtr topology, int delay);
+    static int getDelayToRoot(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, int delay);
 
     static float calcUpstreamBackupProcessing(ExecutionNodePtr executionNode, QueryId queryId);
 
-    static float calcUpstreamBackupNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
+    static float calcUpstreamBackupNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig);
 
-    static int calcUpstreamBackupMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
+    static int calcUpstreamBackupMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
 
-    static float calcExecutionNodeNormalizedFTCost(int processingCost,
+    static double calcExecutionNodeNormalizedFTCost(int processingCost,
                                             float networkingCost,
                                             float memoryCost,
                                             int maxProc,
@@ -177,23 +159,23 @@ class BasePlacementStrategy {
                                             float maxMem,
                                             float minMem);
 
-    static std::vector<ExecutionNodePtr> getSortedListForFirstFit(std::vector<ExecutionNodePtr> executionNodes,
+    static std::vector<ExecutionNodePtr> getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes,
                                                            FaultToleranceConfigurationPtr ftConfig,
-                                                           TopologyPtr topology,
-                                                            GlobalExecutionPlanPtr globalExecutionPlan);
+                                                           const TopologyPtr& topology,
+                                                            const GlobalExecutionPlanPtr& globalExecutionPlan);
 
-    static FaultToleranceType firstFitPlacement(ExecutionNodePtr executionNode,
-                                                FaultToleranceConfigurationPtr ftConfig,
-                                                TopologyPtr topology,
+    static FaultToleranceType firstFitPlacement(const ExecutionNodePtr& executionNode,
+                                                const FaultToleranceConfigurationPtr& ftConfig,
+                                                const TopologyPtr& topology,
                                                 GlobalExecutionPlanPtr globalExecutionPlan);
 
-    static std::pair<FaultToleranceType,float> getBestApproachForNode(ExecutionNodePtr executionNode,
-                                                                       std::vector<ExecutionNodePtr> executionNodes,
-                                                                       FaultToleranceConfigurationPtr ftConfig,
+    static std::pair<FaultToleranceType,double> getBestApproachForNode(const ExecutionNodePtr& executionNode,
+                                                                       const std::vector<ExecutionNodePtr>& executionNodes,
+                                                                       const FaultToleranceConfigurationPtr& ftConfig,
                                                                        TopologyPtr topology);
 
-    static void firstFitRecursivePlacement(std::vector<ExecutionNodePtr> sortedList,
-                                           FaultToleranceConfigurationPtr ftConfig,
+    static void firstFitRecursivePlacement(const std::vector<ExecutionNodePtr>& sortedList,
+                                           const FaultToleranceConfigurationPtr& ftConfig,
                                            TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
 
     static FaultToleranceType firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes,
@@ -203,13 +185,13 @@ class BasePlacementStrategy {
 
     static ExecutionNodePtr getExecutionNodeRootNode(ExecutionNodePtr executionNode);
 
-    static std::vector<FaultToleranceType> getSortedApproachList(std::vector<ExecutionNodePtr> sourceNodes,
-                                                                 std::vector<ExecutionNodePtr> restNodes,
-                                                                 FaultToleranceConfigurationPtr ftConfig,
-                                                                 TopologyPtr topology);
+    static std::vector<FaultToleranceType> getSortedApproachList(const std::vector<ExecutionNodePtr>& sourceNodes,
+                                                                 const std::vector<ExecutionNodePtr>& restNodes,
+                                                                 const FaultToleranceConfigurationPtr& ftConfig,
+                                                                 const TopologyPtr& topology);
 
-    static FaultToleranceType getStricterProcessingGuarantee(FaultToleranceConfigurationPtr ftConfig1,
-                                                             FaultToleranceConfigurationPtr ftConfig2);
+    static FaultToleranceType getStricterProcessingGuarantee(const FaultToleranceConfigurationPtr& ftConfig1,
+                                                             const FaultToleranceConfigurationPtr& ftConfig2);
 
   protected:
     /**
@@ -332,55 +314,45 @@ class BasePlacementStrategy {
      * @return true if operators connected otherwise false
      */
     bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
-
-    std::tuple<float, float, float> calcCheckpointingOld(TopologyPtr topology,
-                                                         const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                         ExecutionNodePtr executionNode,
-                                                         QueryId queryId,
-                                                         FaultToleranceConfigurationPtr ftConfig);
-    static ExecutionNodePtr getExecutionNodeParent(ExecutionNodePtr executionNode);
-    static int getOperatorCostsRecursively(LogicalOperatorNodePtr operatorNode);
-    static int getExecutionNodeOperatorCosts(ExecutionNodePtr executionNode, QueryId queryId);
-    static int getStatefulOperatorCostsRecursively(LogicalOperatorNodePtr operatorNode);
-    static int getExecutionNodeStatefulOperatorCosts(ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcUpstreamBackupCost(ExecutionNodePtr executionNode,
+    static ExecutionNodePtr getExecutionNodeParent(const ExecutionNodePtr& executionNode);
+    static int getOperatorCostsRecursively(const LogicalOperatorNodePtr& operatorNode);
+    static int getExecutionNodeOperatorCosts(const ExecutionNodePtr& executionNode, QueryId queryId);
+    static int getStatefulOperatorCostsRecursively(const LogicalOperatorNodePtr& operatorNode);
+    static int getExecutionNodeStatefulOperatorCosts(const ExecutionNodePtr& executionNode, QueryId queryId);
+    static double calcUpstreamBackupCost(const ExecutionNodePtr& executionNode,
                                  std::vector<ExecutionNodePtr> executionNodes,
-                                 FaultToleranceConfigurationPtr ftConfig,
-                                 TopologyPtr topology);
-    static float calcActiveStandbyProcessing(ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcActiveStandbyNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
-    static int calcActiveStandbyMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
-    static float calcActiveStandbyCost(ExecutionNodePtr executionNode,
+                                 const FaultToleranceConfigurationPtr& ftConfig,
+                                 const TopologyPtr& topology);
+    static float calcActiveStandbyProcessing(const ExecutionNodePtr& executionNode, QueryId queryId);
+    static float calcActiveStandbyNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig);
+    static int calcActiveStandbyMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
+    static double calcActiveStandbyCost(const ExecutionNodePtr& executionNode,
                                 std::vector<ExecutionNodePtr> executionNodes,
-                                FaultToleranceConfigurationPtr ftConfig,
-                                TopologyPtr topology);
-    static float calcCheckpointingProcessing(ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcCheckpointingNetworking(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig);
-    static int calcCheckpointingMemory(ExecutionNodePtr executionNode, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig);
-    static float calcCheckpointingCost(ExecutionNodePtr executionNode,
+                                const FaultToleranceConfigurationPtr& ftConfig,
+                                const TopologyPtr& topology);
+    static float calcCheckpointingProcessing(const ExecutionNodePtr& executionNode, QueryId queryId);
+    static float calcCheckpointingNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig);
+    static int calcCheckpointingMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
+    static double calcCheckpointingCost(const ExecutionNodePtr& executionNode,
                                 std::vector<ExecutionNodePtr> executionNodes,
-                                FaultToleranceConfigurationPtr ftConfig,
-                                TopologyPtr topology);
-    static int getNumberOfStatefulOperatorsRecursively(LogicalOperatorNodePtr operatorNode);
-    static int getNumberOfStatefulOperatorsOnExecutionNodeRecursively(ExecutionNodePtr executionNode, QueryId queryId);
-    static std::tuple<ExecutionNodePtr, FaultToleranceType, float> getFirstFitResultTuple(std::vector<ExecutionNodePtr> sortedList,
-                                             FaultToleranceConfigurationPtr ftConfig,
-                                             TopologyPtr topology);
-    static bool checkActiveStandbyConstraints(ExecutionNodePtr executionNode,
-                                       FaultToleranceConfigurationPtr ftConfig,
+                                const FaultToleranceConfigurationPtr& ftConfig,
+                                const TopologyPtr& topology);
+    static int getNumberOfStatefulOperatorsRecursively(const LogicalOperatorNodePtr& operatorNode);
+    static bool checkActiveStandbyConstraints(const ExecutionNodePtr& executionNode,
+                                       const FaultToleranceConfigurationPtr& ftConfig,
                                        std::vector<ExecutionNodePtr> downstreamNeighbors,
-                                       TopologyPtr topology);
-    static bool checkCheckpointingConstraints(ExecutionNodePtr executionNode,
-                                       FaultToleranceConfigurationPtr ftConfig,
+                                       const TopologyPtr& topology);
+    static bool checkCheckpointingConstraints(const ExecutionNodePtr& executionNode,
+                                       const FaultToleranceConfigurationPtr& ftConfig,
                                        std::vector<ExecutionNodePtr> downstreamNeighbors,
-                                       TopologyPtr topology);
+                                       const TopologyPtr& topology);
     static bool
-    checkUpstreamBackupConstraints(ExecutionNodePtr executionNode, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology);
-    static bool checkIfOperatorIsArbitraryRecursively(LogicalOperatorNodePtr operatorNode);
-    static bool checkIfSubPlanIsArbitrary(ExecutionNodePtr executionNode, QueryId queryId);
-    static float calcUpstreamBackupMemorySingleNode(ExecutionNodePtr executionNode,
-                                             TopologyPtr topology,
-                                             FaultToleranceConfigurationPtr ftConfig);
+    checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, TopologyPtr topology);
+    static bool checkIfOperatorIsArbitraryRecursively(const LogicalOperatorNodePtr& operatorNode);
+    static bool checkIfSubPlanIsArbitrary(const ExecutionNodePtr& executionNode, QueryId queryId);
+    static float calcUpstreamBackupMemorySingleNode(const ExecutionNodePtr& executionNode,
+                                             const TopologyPtr& topology,
+                                             const FaultToleranceConfigurationPtr& ftConfig);
 
 
 };
