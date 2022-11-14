@@ -13,5 +13,5 @@
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
-        ThresholdWindow.cpp
+        ../ThresholdWindow/ThresholdWindow.cpp
         )

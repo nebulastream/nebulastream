@@ -12,31 +12,32 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SUMAGGREGATION_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SUMAGGREGATION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <utility>
 namespace NES::Runtime::Execution::Operators {
-
 /**
- * @brief Threshold window operator that compute aggregation of tuples satisfying the threshold.
+ * @brief An operator to compute sum aggregation over a window.
  */
-class ThresholdWindow : public ExecutableOperator {
+class SumAggregation : public ExecutableOperator {
   public:
     /**
      * @brief Creates a selection operator with a expression.
      * @param expression boolean predicate expression
      */
-    explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr expression)
+    explicit SumAggregation(Runtime::Execution::Expressions::ExpressionPtr expression)
         : sum(0), expression(std::move(expression)){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
     mutable int32_t sum;
+
   private:
     const Runtime::Execution::Expressions::ExpressionPtr expression;
-
 };
-}// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
+}// namespace NES::Runtime::Execution::Operators
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SUMAGGREGATION_HPP_

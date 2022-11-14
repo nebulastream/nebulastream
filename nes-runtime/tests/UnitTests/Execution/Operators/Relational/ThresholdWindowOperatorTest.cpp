@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Execution/Operators/ThresholdWindow/ThresholdWindow.hpp"
+#include "Execution/Operators/ThresholdWindow/SumAggregation.hpp"
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/ThresholdWindow.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -47,19 +48,25 @@ class ThresholdWindowOperatorTest : public testing::Test {
  */
 TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    auto thresholdWindowOperator = ThresholdWindow(greaterThanExpression);
+    auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression);
+
+    auto sumAggregation = std::make_shared<SumAggregation>(readF2);
+    thresholdWindowOperator->setChild(sumAggregation);
+
     auto collector = std::make_shared<CollectOperator>();
-    thresholdWindowOperator.setChild(collector); // TODO 3138: the child should be an aggregation operator
+    sumAggregation->setChild(collector);
+
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
 
     auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});
     auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
-    thresholdWindowOperator.execute(ctx, recordTen);
-    thresholdWindowOperator.execute(ctx, recordFifty);
-    thresholdWindowOperator.execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTen);
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
 
     // TODO: the collector should collect from an aggregation operator, which only has one field, i.e., the aggregated value
     ASSERT_EQ(collector->records.size(), 2);
@@ -68,6 +75,6 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     ASSERT_EQ(collector->records[1].numberOfFields(), 2);
     ASSERT_EQ(collector->records[1].read("f1"), 90);
 
-    ASSERT_EQ(thresholdWindowOperator.sum, 5);
+    ASSERT_EQ(sumAggregation->sum, 5);
 }
 }// namespace NES::Runtime::Execution::Operators

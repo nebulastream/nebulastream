@@ -12,27 +12,21 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/ThresholdWindow/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Relational/ThresholdWindow.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    NES_DEBUG("record count");
-    const Expressions::ExpressionPtr subExpression;
+void NES::Runtime::Execution::Operators::SumAggregation::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate the predicate
-    if (expression->execute(record)) {
-        if (child != nullptr) {
-            // TODO 3138 this should be part of the aggregation operator, which should be the child of this threshold window operator
-            auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2"); // TODO 3138: f2 should be taken from the aggregation operator
-            auto res = readF2->execute(record);
+    if (child != nullptr) {
+        auto aggregatedValue = expression->execute(record);
 
-            sum = sum + res.as<Int32>()->getRawInt();
-            child->execute(ctx, record);
-        }
+        // TODO 3138: think on how to better manage this state variable
+        sum = sum + aggregatedValue.as<Int32>()->getRawInt(); // TODO 3138: properly handle the data type
+        child->execute(ctx, record); // This should happen once, i.e., when we trigger the window
     }
 }
 
