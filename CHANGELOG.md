@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.47](https://github.com/nebulastream/nebulastream/tree/v0.3.47) (2022-11-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.46...v0.3.47)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add power\(x,y\) expression [\#3055](https://github.com/nebulastream/nebulastream/issues/3055)
+
 ## [v0.3.46](https://github.com/nebulastream/nebulastream/tree/v0.3.46) (2022-11-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.45...v0.3.46)
