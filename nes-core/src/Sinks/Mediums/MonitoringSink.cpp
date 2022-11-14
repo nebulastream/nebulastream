@@ -29,6 +29,29 @@
 namespace NES {
 MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                Monitoring::MetricStorePtr metricStore,
+                               Monitoring::MetricCollectorType collectorType,
+                               Runtime::NodeEnginePtr nodeEngine,
+                               uint32_t numOfProducers,
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               FaultToleranceType::Value faultToleranceType,
+                               uint64_t numberOfOrigins)
+    : SinkMedium(std::move(sinkFormat),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+      metricStore(metricStore), collectorType(collectorType) {
+    monitoringManager = nullptr;
+    NES_DEBUG("MonitoringSink: Descriptor started!")
+    NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
+}
+
+MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
+                               Monitoring::MetricStorePtr metricStore,
                                Monitoring::MonitoringManagerPtr monitoringManager,
                                Monitoring::MetricCollectorType collectorType,
                                Runtime::NodeEnginePtr nodeEngine,

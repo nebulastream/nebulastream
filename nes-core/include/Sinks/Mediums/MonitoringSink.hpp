@@ -46,6 +46,17 @@ class MonitoringSink : public SinkMedium {
      */
     explicit MonitoringSink(SinkFormatPtr sinkFormat,
                             Monitoring::MetricStorePtr metricStore,
+                            Monitoring::MetricCollectorType collectorType,
+                            Runtime::NodeEnginePtr nodeEngine,
+                            uint32_t numOfProducers,
+                            QueryId queryId,
+                            QuerySubPlanId querySubPlanId,
+                            FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                            uint64_t numberOfOrigins = 1);
+
+    //TODO: Beschreibung
+    explicit MonitoringSink(SinkFormatPtr sinkFormat,
+                            Monitoring::MetricStorePtr metricStore,
                             Monitoring::MonitoringManagerPtr monitoringManager,
                             Monitoring::MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
