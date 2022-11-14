@@ -119,8 +119,6 @@ TEST_P(FilterQueryExecutionTest, filterQuery) {
 
     // now, test the query for all possible combinations
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    // two filter operators to validate correct behaviour of (multiple) branchless predicated filters
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
