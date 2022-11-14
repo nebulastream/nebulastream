@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-message("---Building benchmarks...")
+message(STATUS "Building benchmarks...")
 
 
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
@@ -36,7 +36,7 @@ target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr 
 # Add E2E benchmark runner with custom e2e test config
 add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp")
 add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml --logPath=e2eRunner.log)
-
+message(STATUS "Added test e2e-benchmark-runner")
 
 
 #-------------------------------##################------------------------------
@@ -54,4 +54,4 @@ add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/Incremen
 add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
 
 
-message("---Done building benchmarks")
+message(STATUS "Done building benchmarks")
