@@ -97,6 +97,13 @@ class NonRunnableDataSource : public NES::DefaultSource {
         return NES::DefaultSource::stop(termination);
     }
 
+    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer() { return allocateBuffer(); }
+
+    void emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+        auto buf = buffer.getBuffer();
+        DataSource::emitWorkFromSource(buf);
+    }
+
   private:
     std::promise<bool> canTerminate;
 };
@@ -178,8 +185,13 @@ class TestExecutionEngine {
         queryPlan = originIdInferencePhase->execute(queryPlan);
         NES_ASSERT(nodeEngine->registerQueryInNodeEngine(queryPlan), "query plan could not be started.");
         NES_ASSERT(nodeEngine->startQuery(queryPlan->getQueryId()), "query plan could not be started.");
-        //ASSERT_EQ(nodeEngine->getQueryStatus(queryPlan->getQueryId()), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
         return nodeEngine->getQueryManager()->getQueryExecutionPlan(queryPlan->getQueryId());
+    }
+
+    std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                                                         uint32_t source) {
+        return std::dynamic_pointer_cast<NonRunnableDataSource>(plan->getSources()[source]);
     }
 
     void emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer) {
