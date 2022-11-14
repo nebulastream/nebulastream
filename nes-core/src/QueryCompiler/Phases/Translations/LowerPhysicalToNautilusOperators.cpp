@@ -15,8 +15,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Common/ValueTypes/ValueType.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/ConstantInteger32Expression.hpp>
+#include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -168,6 +168,11 @@ LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNo
         auto rightNautilusExpression = lowerExpression(lessNode->getRight());
         return std::make_shared<Runtime::Execution::Expressions::LessThanExpression>(leftNautilusExpression,
                                                                                      rightNautilusExpression);
+    } else if (auto equalsNode = expressionNode->as_if<EqualsExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(equalsNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(equalsNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::EqualsExpression>(leftNautilusExpression,
+                                                                                   rightNautilusExpression);
     } else if (auto greaterNode = expressionNode->as_if<GreaterExpressionNode>()) {
         auto leftNautilusExpression = lowerExpression(greaterNode->getLeft());
         auto rightNautilusExpression = lowerExpression(greaterNode->getRight());
