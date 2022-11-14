@@ -40,7 +40,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     explicit PipelineExecutionContext(uint64_t pipelineId,
                                       QuerySubPlanId queryId,
-                                      const Runtime::BufferManagerPtr& bufferProvider,
+                                      Runtime::BufferManagerPtr bufferProvider,
                                       size_t numberOfWorkerThreads,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
@@ -128,7 +128,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
-    const Runtime::BufferManagerPtr& bufferProvider;
+    const Runtime::BufferManagerPtr bufferProvider;
     size_t numberOfWorkerThreads;
 
     std::vector<PredecessorExecutablePipeline> predecessors;
