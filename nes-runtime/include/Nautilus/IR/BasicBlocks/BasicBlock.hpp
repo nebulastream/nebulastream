@@ -35,7 +35,10 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
                         std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
-    [[nodiscard]] int32_t getScopeLevel();
+    [[nodiscard]] uint32_t getScopeLevel();
+    void setScopeLevel(uint32_t scopeLevel);
+    [[nodiscard]] int32_t getIsLoopHeadBlock();
+    void setIsLoopHeadBlock(bool isLoopHeadBlock);
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
@@ -56,7 +59,8 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 
   private:
     std::string identifier;
-    int32_t scopeLevel;
+    uint32_t scopeLevel;//todo remove?
+    bool isLoopHeadBlock;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
     std::vector<std::weak_ptr<BasicBlock>> predecessors;

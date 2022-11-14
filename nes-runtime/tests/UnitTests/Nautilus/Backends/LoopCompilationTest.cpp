@@ -42,177 +42,184 @@ class LoopCompilationTest : public testing::Test, public AbstractCompilationBack
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-Value<> sumLoop(int upperLimit) {
-    Value agg = Value(1);
-    for (Value start = 0; start < upperLimit; start = start + 1) {
-        agg = agg + 10;
-    }
-    return agg;
-}
+// Value<> sumLoop(int upperLimit) {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < upperLimit; start = start + 1) {
+//         agg = agg + 10;
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, sumLoopTestSCF) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return sumLoop(10);
-    });
+// TEST_P(LoopCompilationTest, sumLoopTestSCF) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return sumLoop(10);
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 101);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 101);
+// }
 
-Value<> nestedSumLoop(int upperLimit) {
-    Value agg = Value(1);
-    for (Value start = 0; start < upperLimit; start = start + 1) {
-        for (Value start2 = 0; start2 < upperLimit; start2 = start2 + 1) {
-            agg = agg + 10;
-        }
-    }
-    return agg;
-}
+// Value<> nestedSumLoop(int upperLimit) {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < upperLimit; start = start + 1) {
+//         for (Value start2 = 0; start2 < upperLimit; start2 = start2 + 1) {
+//             agg = agg + 10;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, nestedLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return nestedSumLoop(10);
-    });
+// TEST_P(LoopCompilationTest, nestedLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return nestedSumLoop(10);
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1001);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 1001);
+// }
 
-TEST_P(LoopCompilationTest, sumLoopTestCF) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return sumLoop(10);
-    });
+// TEST_P(LoopCompilationTest, sumLoopTestCF) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return sumLoop(10);
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 101);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 101);
+// }
 
-Value<> ifSumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            agg = agg + 10;
-        }
-    }
-    return agg;
-}
+// Value<> ifSumLoop() {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < 10; start = start + 1) {
+//         if (agg < 50) {
+//             agg = agg + 10;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, ifSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return ifSumLoop();
-    });
+// TEST_P(LoopCompilationTest, ifSumLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return ifSumLoop();
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 51);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 51);
+// }
 
-Value<> ifElseSumLoop() {
-    Value agg = Value(1);
-    for (Value<Int32> start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            agg = agg + 10;
-        } else {
-            agg = agg + 1;
-        }
-    }
-    return agg;
-}
+// Value<> ifElseSumLoop() {
+//     Value agg = Value(1);
+//     for (Value<Int32> start = 0; start < 10; start = start + 1) {
+//         if (agg < 50) {
+//             agg = agg + 10;
+//         } else {
+//             agg = agg + 1;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, ifElseSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return ifElseSumLoop();
-    });
+// TEST_P(LoopCompilationTest, ifElseSumLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return ifElseSumLoop();
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 56);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 56);
+// }
 
-Value<> elseOnlySumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-        } else {
-            agg = agg + 1;
-        }
-    }
-    return agg;
-}
+// Value<> elseOnlySumLoop() {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < 10; start = start + 1) {
+//         if (agg < 50) {
+//         } else {
+//             agg = agg + 1;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, elseOnlySumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return elseOnlySumLoop();
-    });
+// TEST_P(LoopCompilationTest, elseOnlySumLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return elseOnlySumLoop();
+//     });
 
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1);
-}
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 1);
+// }
 
-Value<> nestedIfSumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            if (agg < 40) {
-                agg = agg + 10;
-            }
-        } else {
-            agg = agg + 1;
-        }
-    }
-    return agg;
-}
+// Value<> nestedIfSumLoop() {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < 10; start = start + 1) {
+//         if (agg < 50) {
+//             if (agg < 40) {
+//                 agg = agg + 10;
+//             }
+//         } else {
+//             agg = agg + 1;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, nestedIfSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return nestedIfSumLoop();
-    });
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 41);
-}
+// TEST_P(LoopCompilationTest, nestedIfSumLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return nestedIfSumLoop();
+//     });
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 41);
+// }
 
-Value<> nestedIfElseSumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            if (agg < 40) {
-                agg = agg + 10;
-            } else {
-                agg = agg + 100;
-            }
-        } else {
-            agg = agg + 1;
-        }
-    }
-    return agg;
-}
+// Value<> nestedIfElseSumLoop() {
+//     Value agg = Value(1);
+//     for (Value start = 0; start < 10; start = start + 1) {
+//         if (agg < 50) {
+//             if (agg < 40) {
+//                 agg = agg + 10;
+//             } else {
+//                 agg = agg + 100;
+//             }
+//         } else {
+//             agg = agg + 1;
+//         }
+//     }
+//     return agg;
+// }
 
-TEST_P(LoopCompilationTest, nestedIfElseSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-        return nestedIfElseSumLoop();
-    });
-    auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 146);
-}
+// TEST_P(LoopCompilationTest, nestedIfElseSumLoopTest) {
+//     auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+//         return nestedIfElseSumLoop();
+//     });
+//     auto engine = prepare(execution);
+//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+//     ASSERT_EQ(function(), 146);
+// }
 
 Value<> nestedElseOnlySumLoop() {
-    Value agg = Value(1);
-    for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            if (agg < 40) {
-            } else {
-                agg = agg + 100;
-            }
-        } else {
-            agg = agg + 1;
-        }
+    // Todo -> causes false loop header to be found (8)
+    Value agg = Value(0);
+    if (agg < 40) {
+        agg = agg + 10;
+    } else {
+        agg = agg + 100;
     }
+    if (agg < 50) {
+        if (agg > 60) {
+            agg = agg + 1000;
+        } else {
+            agg = agg + 10000;
+        }
+        agg = agg + 1;
+    } else {
+        agg = agg + 100000;
+    }
+    agg = agg + 1;
     return agg;
 }
 

@@ -29,9 +29,6 @@ IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOpe
 
 std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation() { return rootOperation; }
 
-bool IRGraph::getIsSCF() { return isSCF; }
-void IRGraph::setIsSCF(bool isSCF) { this->isSCF = isSCF; }
-
 std::string IRGraph::toString() {
     std::stringstream ss;
     ss << "NESIR {\n";

@@ -24,6 +24,14 @@ OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
 BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockInvocation; }
 BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
 
+void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) { 
+    //Todo might need to adapt invocation arguments // Todo remove?
+    this->trueBlockInvocation.setBlock(trueBlockInvocation); 
+}
+void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) { 
+    this->falseBlockInvocation.setBlock(falseBlockInvocation); 
+}
+
 BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
 void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
 
