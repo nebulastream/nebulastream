@@ -92,6 +92,10 @@ DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType, s
         return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
     }
 
+    if (fieldNodeType == "TEXT") {
+        return DataTypeFactory::createText();
+    }
+
     if (fieldNodeType == "BOOLEAN") {
         return DataTypeFactory::createBoolean();
     }
