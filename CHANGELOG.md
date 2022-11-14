@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.48](https://github.com/nebulastream/nebulastream/tree/v0.3.48) (2022-11-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.47...v0.3.48)
+
+**Implemented enhancements:**
+
+- \[Feature\] Benchmark Test [\#3077](https://github.com/nebulastream/nebulastream/issues/3077)
+
 ## [v0.3.47](https://github.com/nebulastream/nebulastream/tree/v0.3.47) (2022-11-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.46...v0.3.47)
