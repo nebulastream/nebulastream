@@ -25,11 +25,14 @@ BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)),
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), isLoopHeadBlock(false), operations(std::move(operations)),
       arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
-int32_t BasicBlock::getScopeLevel() { return scopeLevel; }
+uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
+void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLevel; }
+int32_t BasicBlock::getIsLoopHeadBlock() { return isLoopHeadBlock; }
+void BasicBlock::setIsLoopHeadBlock(bool isLoopHeadBlock) { this->isLoopHeadBlock = isLoopHeadBlock; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
@@ -76,7 +79,7 @@ void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector
     }
     addOperation(branchOp);
     // add this block as a predecessor to the next block
-    nextBlock->addPredecessor(shared_from_this());
+    // nextBlock->addPredecessor(shared_from_this());
 }
 void BasicBlock::removeOperation(Operations::OperationPtr operation) {
     operations.erase(std::find(operations.begin(), operations.end(), operation));
