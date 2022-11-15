@@ -204,6 +204,7 @@ class TestExecutionEngine {
     }
 
     Runtime::TupleBuffer getBuffer() { return nodeEngine->getBufferManager()->getBufferBlocking(); }
+    bool stop() { return nodeEngine->stop(); }
 
   private:
     Runtime::NodeEnginePtr nodeEngine;
