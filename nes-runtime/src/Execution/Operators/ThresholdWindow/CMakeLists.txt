@@ -12,5 +12,4 @@
 
 add_source_files(nes-runtime
         ThresholdWindow.cpp
-        SumAggregation.cpp
         )

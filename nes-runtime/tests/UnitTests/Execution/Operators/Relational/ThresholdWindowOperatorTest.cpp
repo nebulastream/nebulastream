@@ -11,12 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Execution/Operators/ThresholdWindow/ThresholdWindow.hpp"
-#include "Execution/Operators/ThresholdWindow/SumAggregation.hpp"
+#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,28 +51,25 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
     auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression);
 
-    auto sumAggregation = std::make_shared<SumAggregation>(readF2);
-    thresholdWindowOperator->setChild(sumAggregation);
-
     auto collector = std::make_shared<CollectOperator>();
-    sumAggregation->setChild(collector);
+    thresholdWindowOperator->setChild(collector);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
 
     auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});
+    thresholdWindowOperator->execute(ctx, recordTen);
+    EXPECT_EQ(collector->records.size(), 1);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collector->records[0].read("sum"), 0);
+
     auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
-    thresholdWindowOperator->execute(ctx, recordTen);
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}}); // closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
-
-    // TODO: the collector should collect from an aggregation operator, which only has one field, i.e., the aggregated value
-    ASSERT_EQ(collector->records.size(), 2);
-    ASSERT_EQ(collector->records[0].numberOfFields(), 2);
-    ASSERT_EQ(collector->records[0].read("f1"), 50);
-    ASSERT_EQ(collector->records[1].numberOfFields(), 2);
-    ASSERT_EQ(collector->records[1].read("f1"), 90);
-
-    ASSERT_EQ(sumAggregation->sum, 5);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 2);
+    EXPECT_EQ(collector->records[1].numberOfFields(), 1);
+    EXPECT_EQ(collector->records[1].read("sum"), 5);
 }
 }// namespace NES::Runtime::Execution::Operators

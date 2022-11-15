@@ -29,12 +29,13 @@ class ThresholdWindow : public ExecutableOperator {
      * @param expression boolean predicate expression
      */
     explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr expression)
-        : expression(std::move(expression)){};
+        : expression(std::move(expression)), sum(0){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
     const Runtime::Execution::Expressions::ExpressionPtr expression;
+    mutable int32_t sum; // move to global state
 
 };
 }// namespace NES::Runtime::Execution::Operators
