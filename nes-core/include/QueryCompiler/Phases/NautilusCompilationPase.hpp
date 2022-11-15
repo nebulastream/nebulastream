@@ -17,19 +17,18 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <functional>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
- * @brief Code generation phase, which generates executable machine code for pipelines, that consist of generatable operators.
+ * @brief Compilation phase, which generates executable machine code for pipelines of nautilus operators.
  */
 class NautilusCompilationPhase {
   public:
     NautilusCompilationPhase(QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
     /**
-     * @brief Creates the code generation phase.
-     * @return CodeGenerationPhasePtr
+     * @brief Creates the compilation phase for nautilus pipelines.
+     * @return CompilationStrategy
      */
     static std::shared_ptr<NautilusCompilationPhase> create(QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
@@ -50,7 +49,6 @@ class NautilusCompilationPhase {
   private:
     [[maybe_unused]]QueryCompilerOptions::CompilationStrategy compilationStrategy;
 };
-}// namespace QueryCompilation
 };// namespace NES
 
 #endif// NES_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPHASE_HPP_
