@@ -15,7 +15,7 @@
 #ifndef NES_BENCHMARKUTILS_HPP
 #define NES_BENCHMARKUTILS_HPP
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Services/QueryService.hpp>
