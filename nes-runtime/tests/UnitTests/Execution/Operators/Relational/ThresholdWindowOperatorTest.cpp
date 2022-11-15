@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -49,7 +49,7 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression);
+    auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression, readF2);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -64,7 +64,7 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
 
     auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}}); // closes the window
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);

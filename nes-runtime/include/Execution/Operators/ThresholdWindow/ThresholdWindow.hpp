@@ -28,15 +28,17 @@ class ThresholdWindow : public ExecutableOperator {
      * @brief Creates a selection operator with a expression.
      * @param expression boolean predicate expression
      */
-    explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr expression)
-        : expression(std::move(expression)), sum(0){};
+    explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+                             Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression)
+        : predicateExpression(std::move(predicateExpression)),
+          aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)), sum(0){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
-    const Runtime::Execution::Expressions::ExpressionPtr expression;
-    mutable int32_t sum; // move to global state
-
+    const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
+    const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
+    mutable int32_t sum;// move to global state
 };
 }// namespace NES::Runtime::Execution::Operators
 
