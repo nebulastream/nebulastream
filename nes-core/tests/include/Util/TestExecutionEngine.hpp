@@ -191,6 +191,7 @@ class TestExecutionEngine {
 
     std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
                                                          uint32_t source) {
+        NES_ASSERT(!plan->getSources().empty(), "Query plan has no sources ");
         return std::dynamic_pointer_cast<NonRunnableDataSource>(plan->getSources()[source]);
     }
 
