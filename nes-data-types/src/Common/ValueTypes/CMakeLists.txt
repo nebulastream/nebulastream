@@ -11,16 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        Char.cpp
-        ArrayType.cpp
-        Boolean.cpp
-        Undefined.cpp
-        DataType.cpp
-        Numeric.cpp
-        Integer.cpp
-        Float.cpp
-        DataTypeFactory.cpp
-        FixedChar.cpp
-        Text.cpp
-        )
+add_source_files(nes-data-types
+        ArrayValue.cpp
+        BasicValue.cpp
+)

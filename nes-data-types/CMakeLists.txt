@@ -15,22 +15,14 @@
 # Set Sources and Headers
 add_subdirectory(src)
 
-get_source(nes-common NES_COMMON_SOURCE_FILES)
+get_source(nes-data-types NES_COMPILER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
-target_link_libraries(nes-common PUBLIC ${LIBRARIES})
-target_include_directories(nes-common PUBLIC
+add_library(nes-data-types SHARED ${NES_COMPILER_SOURCE_FILES})
+target_link_libraries(nes-data-types PUBLIC nes-common)
+target_include_directories(nes-data-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
-        $<BUILD_INTERFACE:${LIBRARIES}>
-        $<INSTALL_INTERFACE:>)
-
-
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -40,8 +32,13 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
+register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/ExecutableType Common/ExecutableType)
+register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/PhysicalTypes Common/PhysicalTypes)
+register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
+
 #Add the nes common and headers to cpack
-install(TARGETS nes-common
+install(TARGETS nes-data-types
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
