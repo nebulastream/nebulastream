@@ -62,7 +62,6 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
-
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
 

@@ -17,8 +17,8 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
-#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>

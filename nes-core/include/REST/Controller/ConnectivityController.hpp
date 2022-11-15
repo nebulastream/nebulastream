@@ -15,12 +15,11 @@
 #define NES_NES_CORE_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
 
 #include <REST/Controller/BaseRouterPrefix.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <nlohmann/json.hpp>
-#include <REST/Handlers/ErrorHandler.hpp>
-#include <REST/Controller/BaseRouterPrefix.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
