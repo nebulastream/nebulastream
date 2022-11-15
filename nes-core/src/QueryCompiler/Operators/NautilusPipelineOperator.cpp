@@ -27,5 +27,9 @@ std::string NautilusPipelineOperator::toString() const { return "NautilusPipelin
 
 OperatorNodePtr NautilusPipelineOperator::copy() { return create(nautilusPipeline); }
 
+std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline() {
+    return nautilusPipeline;
+}
+
 }// namespace QueryCompilation
 }// namespace NES

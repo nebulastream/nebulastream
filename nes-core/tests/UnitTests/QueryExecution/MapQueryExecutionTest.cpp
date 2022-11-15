@@ -71,6 +71,7 @@ TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto query = TestQuery::from(testSourceDescriptor).map(Attribute("id") = Attribute("id") * 2).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
     auto inputBuffer = source->getBuffer();
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
