@@ -16,51 +16,13 @@
 // clang-format: on
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <NesBaseTest.hpp>
-#include <Network/NetworkChannel.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
-#include <Sources/DefaultSource.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Util/TestQuery.hpp>
-#include <Util/TestQueryCompiler.hpp>
-#include <Util/TestSink.hpp>
-#include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
-#endif
+
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -104,7 +66,6 @@ TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     auto testSink = executionEngine->createDateSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    // now, test the query for all possible combinations
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -130,7 +91,6 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
     auto testSink = executionEngine->createDateSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    // now, test the query for all possible combinations
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("one") == 1).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
