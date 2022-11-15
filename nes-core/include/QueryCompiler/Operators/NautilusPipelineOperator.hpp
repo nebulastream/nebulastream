@@ -32,7 +32,7 @@ class NautilusPipelineOperator : public UnaryOperatorNode {
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline() { return nautilusPipeline; }
+    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
   private:
     NautilusPipelineOperator(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline);
