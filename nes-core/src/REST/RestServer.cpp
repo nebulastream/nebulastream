@@ -162,16 +162,9 @@ void RestServer::run() {
 
     /* Run server */
     server.run([this]() -> bool {
-        bool run = true;
-        {
             NES_DEBUG("checking if stop request has arrived for rest server");
             std::unique_lock lock(mutex);
-            if (stopRequested) {
-                run = false;
-            }
-        }
-        NES_DEBUG("Should server continue running: " << run);
-        return run;
+            return !stopRequested;
     });
 }
 
