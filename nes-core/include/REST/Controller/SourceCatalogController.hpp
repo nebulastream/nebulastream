@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_Controller_SOURCECATALOGCONTROLLER_HPP_
-#define NES_NES_CORE_INCLUDE_REST_Controller_SOURCECATALOGCONTROLLER_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
+#define NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
@@ -336,4 +336,4 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalogController>;
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif//NES_NES_CORE_INCLUDE_REST_Controller_SOURCECATALOGCONTROLLER_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_

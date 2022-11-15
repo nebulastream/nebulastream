@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
-#define NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
+#ifndef NEBULASTREAM_NES_CORE_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
+#define NEBULASTREAM_NES_CORE_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
@@ -171,4 +171,4 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
 }// namespace REST
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif//NEBULASTREAM_NES_CORE_INCLUDE_REST_Controller_MONITORINGCONTROLLER_HPP_
+#endif//NEBULASTREAM_NES_CORE_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_

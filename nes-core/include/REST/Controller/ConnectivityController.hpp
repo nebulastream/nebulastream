@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
-#define NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
+#define NES_NES_CORE_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
 
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -63,4 +63,4 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif//NES_NES_CORE_INCLUDE_REST_Controller_CONNECTIVITYCONTROLLER_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
