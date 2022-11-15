@@ -15,8 +15,8 @@
 #define NES_NES_CORE_INCLUDE_REST_CONTROLLER_MAINTENANCECONTROLLER_HPP_
 
 #include <Phases/MigrationType.hpp>
-#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>

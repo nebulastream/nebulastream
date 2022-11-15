@@ -18,8 +18,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <REST/Handlers/ErrorHandler.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
 #include <SerializableOperator.pb.h>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>

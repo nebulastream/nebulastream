@@ -120,7 +120,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     nlohmann::json getExecutionPlanJsonReturn;
 
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
-                           cpr::Parameters{{"queryId", std::to_string(queryId)}});
+                                cpr::Parameters{{"queryId", std::to_string(queryId)}});
     future.wait();
     auto result = future.get();
     EXPECT_EQ(result.status_code, 200l);
@@ -160,8 +160,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
 
     nlohmann::json postJsonReturn;
 
-    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"},
-                                 cpr::Body{msg});
+    auto future =
+        cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"}, cpr::Body{msg});
     future.wait();
     auto result = future.get();
     postJsonReturn = nlohmann::json::parse(result.text);
@@ -209,8 +209,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
 
     nlohmann::json postJsonReturn;
 
-    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan-ex"},
-                                 cpr::Body{msg});
+    auto future =
+        cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan-ex"}, cpr::Body{msg});
     future.wait();
     auto result = future.get();
     postJsonReturn = nlohmann::json::parse(result.text);
@@ -243,8 +243,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
     nlohmann::json postJsonReturn;
     int statusCode = 0;
 
-    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"},
-                                 cpr::Body{msg});
+    auto future =
+        cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query-ex"}, cpr::Body{msg});
     future.wait();
     auto result = future.get();
     postJsonReturn = nlohmann::json::parse(result.text);
@@ -307,12 +307,12 @@ TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
 
     ASSERT_FALSE(child->containAsParent(parent));
 
-    nlohmann::json request {};
+    nlohmann::json request{};
     request["parentId"] = parentId;
     request["childId"] = childId;
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
-                              cpr::Header{{"Content-Type", "application/json"}},
-                              cpr::Body{request.dump()});
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{request.dump()});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
@@ -346,8 +346,8 @@ TEST_F(RESTEndpointTest, DISABLED_testAddLogicalSourceEx) {
     request.release_schema();
 
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/addLogicalSource-ex"},
-                              cpr::Header{{"Content-Type", "application/json"}},
-                              cpr::Body{msg});
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{msg});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
