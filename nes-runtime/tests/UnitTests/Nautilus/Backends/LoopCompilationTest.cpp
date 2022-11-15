@@ -202,20 +202,17 @@ class LoopCompilationTest : public testing::Test, public AbstractCompilationBack
 // }
 
 Value<> nestedElseOnlySumLoop() {
-    // Todo -> causes false loop header to be found (8)
     Value agg = Value(0);
-    if (agg < 40) {
-        agg = agg + 10;
-    } else {
-        agg = agg + 100;
-    }
     if (agg < 50) {
         if (agg > 60) {
             agg = agg + 1000;
         } else {
-            agg = agg + 10000;
+            if (agg < 40) {
+                agg = agg + 10;
+            } else {
+                agg = agg + 100;
+            }
         }
-        agg = agg + 1;
     } else {
         agg = agg + 100000;
     }
