@@ -16,8 +16,8 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief A nautilus pipeline, that can be stored in a query plan.
@@ -25,8 +25,8 @@ namespace QueryCompilation {
 class NautilusPipelineOperator : public UnaryOperatorNode {
   public:
     /**
-     * @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers.
-     * @return OperatorNodePtr
+     * @brief Creates a new nautilus pipeline operator, which captures a pipeline stage and a set of operators.
+     * @return PhysicalOperatorPipeline for nautilus.
      */
     static OperatorNodePtr create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline);
 
@@ -39,7 +39,6 @@ class NautilusPipelineOperator : public UnaryOperatorNode {
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
 };
 
-}// namespace QueryCompilation
 }// namespace NES
 
 #endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

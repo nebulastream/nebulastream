@@ -14,13 +14,11 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/ValueTypes/ValueType.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantInteger32Expression.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -29,7 +27,6 @@
 #include <Execution/Expressions/LogicalExpressions/OrExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
@@ -44,15 +41,11 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
@@ -60,12 +53,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -76,22 +67,24 @@ std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperato
 
 LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators() {}
 
-PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
+PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan,
+                                                             Runtime::NodeEnginePtr nodeEngine) {
+    auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
-            apply(pipeline);
+            apply(pipeline, bufferSize);
         }
     }
     return pipelinedQueryPlan;
 }
 
-OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline) {
+OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize) {
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
     for (const auto& node : nodes) {
-        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>());
+        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize);
     }
     for (auto& root : queryPlan->getRootOperators()) {
         queryPlan->removeAsRootOperator(root);
@@ -103,13 +96,14 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
-                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+                                        PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                        size_t bufferSize) {
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
-        auto scan = lowerScan(pipeline, operatorNode);
+        auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
         return scan;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalEmitOperator>()) {
-        auto emit = lowerEmit(pipeline, operatorNode);
+        auto emit = lowerEmit(pipeline, operatorNode, bufferSize);
         parentOperator->setChild(emit);
         return emit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFilterOperator>()) {
@@ -125,11 +119,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 }
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperatorPipeline&,
-                                            PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+                                            PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                            size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, 410000);
+    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
         std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
@@ -137,11 +132,12 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperatorPipeline&,
-                                            PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+                                            PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                            size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, 420000);
+    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
         std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));

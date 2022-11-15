@@ -208,7 +208,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 ? Compiler::JITCompilerBuilder()
                       .registerLanguageCompiler(cppCompiler)
                       .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache.getValue())
-
                       .build()
                 : this->jitCompiler;
             compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions,
@@ -221,7 +220,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                        phaseFactory,
                                                                        workerConfiguration->enableSourceSharing.getValue());
         }
-
         if (!compiler) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",
