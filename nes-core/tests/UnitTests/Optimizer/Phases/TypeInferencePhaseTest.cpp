@@ -23,7 +23,9 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -44,6 +46,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <string>
 
 using namespace NES::API;
 using namespace NES::Windowing;
@@ -1472,6 +1475,92 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$velocity"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
+}
+
+/**
+ * @brief In this test we infer schema for a query with mapudf defined
+ */
+TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
+    Catalogs::Source::SourceCatalogPtr streamCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalSource("logicalSource", inputSchema);
+
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
+
+    auto javaUdfDescriptor = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
+        "some_class",
+        "some_method",
+        Catalogs::UDF::JavaSerializedInstance{1},
+        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
+        std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()));
+    auto mapUdfLogicalOperatorNode =
+        std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+
+    auto descriptor = LogicalSourceDescriptor::create("logicalSource");
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+
+    sinkOperator->addChild(mapUdfLogicalOperatorNode);
+    mapUdfLogicalOperatorNode->addChild(sourceOperator);
+    auto queryPlan = QueryPlan::create(sinkOperator);
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
+    auto resultPlan = phase->execute(queryPlan);
+
+    auto actualSinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = actualSinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << actualSinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("logicalSource$outputAttribute"));
+}
+
+
+/**
+ * @brief In this test we infer schema for a query with mapudf defined
+ */
+TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
+    Catalogs::Source::SourceCatalogPtr streamCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalSource("logicalSource1", inputSchema);
+    streamCatalog->addLogicalSource("logicalSource2", inputSchema);
+
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
+
+    auto javaUdfDescriptor = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
+        "some_class",
+        "some_method",
+        Catalogs::UDF::JavaSerializedInstance{1},
+        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
+        std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()));
+    auto mapUdfLogicalOperatorNode =
+        std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+
+    auto descriptor = LogicalSourceDescriptor::create("logicalSource");
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+
+    sinkOperator->addChild(mapUdfLogicalOperatorNode);
+    mapUdfLogicalOperatorNode->addChild(sourceOperator);
+    auto queryPlan = QueryPlan::create(sinkOperator);
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
+    auto resultPlan = phase->execute(queryPlan);
+
+    auto actualSinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = actualSinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << actualSinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("logicalSource$outputAttribute"));
 }
 
 }// namespace NES

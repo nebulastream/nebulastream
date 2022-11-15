@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <numeric>
@@ -19,8 +20,8 @@
 
 namespace NES {
 
-MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(OperatorId id,
-                                                             const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
+MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                                             OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUdfDescriptor(javaUdfDescriptor) {}
 
 Catalogs::UDF::JavaUdfDescriptorPtr MapJavaUdfLogicalOperatorNode::getJavaUdfDescriptor() const { return javaUdfDescriptor; }
@@ -32,6 +33,14 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     }
     // The output schema of this operation is determined by the Java UDF.
     outputSchema = javaUdfDescriptor->getOutputSchema();
+    //Update output schema by changing the qualifier and corresponding attribute names
+    auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    for (auto& field : outputSchema->fields) {
+        //Extract field name without qualifier
+        auto fieldName = field->getName();
+        //Add new qualifier name to the field and update the field name
+        field->setName(newQualifierName + fieldName);
+    }
     return true;
 }
 
