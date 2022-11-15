@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_
 
-#include <Windowing/Runtime/ThresholdWindowState.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 
@@ -41,19 +40,12 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     uint64_t getMiniumCount();
 
-    /**
-     * @brief Triggers windows if they marked as closed
-     * @param windows vector of windows
-     */
-    void triggerWindows(std::vector<ThresholdWindowState>& windows);
-
   private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
 
     ExpressionNodePtr predicate;
     uint64_t miniumCount = 0;
-    bool isClosed = false;
 };
 
 }// namespace NES::Windowing
