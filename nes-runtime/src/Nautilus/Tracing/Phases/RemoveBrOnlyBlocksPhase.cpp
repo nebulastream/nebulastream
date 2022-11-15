@@ -218,214 +218,71 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findLoopHeadBlocks
     } while(!ifBlocks.empty());
 }
 
-std::vector<std::shared_ptr<IfOperation>> 
-inline findMergeBlock(IR::BasicBlockPtr currentBlock, std::stack<IR::BasicBlockPtr>& trueBranchCandidates,
-                        std::stack<IR::BasicBlockPtr>& falseBranchCandidates, bool isTrueBranch,
-                        std::unordered_map<std::string, uint32_t>& candidateEdgeCounter) {
-    // todo
-    // find if operations -> add to tasks -> (Need tasks in class :()) -> could also return stack with new tasks and manage adding them in parent function
-    // -> additionally, take 'isTrueBranch' as parameter -> used to add mergeBlocks to candidates
-    // DFS until merge-block found
-    // - then behavior depends on task type (isTrueBranch)
-    //      - true:
-    //          1. add merge-block to trueBranchCandidates
-    //          2. -> return? -> then manage getting new task in parent function?
-    //      - false:
-    //          1. add merge-block to falseBranchCandidates
-    //          2. -> return
+IR::BasicBlockPtr 
+RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findMergeBlock(IR::BasicBlockPtr currentBlock, 
+                                std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
+                                const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter) {
+    uint32_t openEdges = currentBlock->getPredecessors().size() - 
+            ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
+              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
+    bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
     
-    std::vector<std::shared_ptr<IfOperation>> candidates;
-    uint32_t openEdges = currentBlock->getPredecessors().size() - ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-                                                                    candidateEdgeCounter[currentBlock->getIdentifier()] : 0);
-    bool openMergeBlockFound = ((currentBlock->getPredecessors().size() > 1 && !currentBlock->getIsLoopHeadBlock()) 
-                            || currentBlock->getPredecessors().size() > 3) && (openEdges > 0);
-    // change to do while
     while(!openMergeBlockFound) {
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
             currentBlock = branchOp->getNextBlockInvocation().getBlock();
-            
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-            candidates.emplace_back(ifOp);
+            tasks.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
-        openEdges = currentBlock->getPredecessors().size() - ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-                                                                candidateEdgeCounter[currentBlock->getIdentifier()] : 0);
-        openMergeBlockFound = ((currentBlock->getPredecessors().size() > 1 && !currentBlock->getIsLoopHeadBlock()) 
-                            || currentBlock->getPredecessors().size() > 3) && (openEdges > 0);
+        uint32_t openEdges = currentBlock->getPredecessors().size() - 
+            ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
+              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
+        openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
     }
-    if(isTrueBranch || !candidates.empty()) {
-        trueBranchCandidates.emplace(currentBlock);
-    } else {
-        falseBranchCandidates.emplace(currentBlock);
-    }
-    return candidates;
+    return currentBlock;
 }
 
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations(IR::BasicBlockPtr currentBlock) {
-    // std::vector<IR::BasicBlockPtr> ifBlocks;
-    struct Task {
-        std::shared_ptr<IfOperation> ifOp;
-        bool trueBranch; // rename to isTrueBranch or isTrueBranchTask?
-    };
-    std::stack<std::unique_ptr<Task>> tasks;
-    std::stack<IR::BasicBlockPtr> trueBranchCandidates; //candidates -> mergeBlock?
-    std::stack<IR::BasicBlockPtr> falseBranchCandidates;
+    std::stack<std::unique_ptr<IfOpCandidate>> IfOperations;
+    std::stack<IR::BasicBlockPtr> mergeBlocks;
     std::unordered_map<std::string, uint32_t> candidateEdgeCounter;
-    // IR::BasicBlockPtr currentBlock;
     
-     
-
-    // Work on blocks in 'processTasks'?
-    // -> manage popping tasks here
-    bool followBranch = false;
-    //could use returnBlock as stop condition (currentBlock.getTerminatorOperation.getOperationType != Operation::ReturnOp)
     while(currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
-        if(tasks.empty()) {
-            auto newCandidates = findMergeBlock(currentBlock, trueBranchCandidates, falseBranchCandidates, true, candidateEdgeCounter);
-            for(auto& candidate : newCandidates) {
-                tasks.emplace(std::make_unique<Task>(Task{candidate, true})); // is correct order!
-            }
-        }
-        auto currentTask = std::move(tasks.top());
-        tasks.pop();
+        currentBlock = findMergeBlock(currentBlock, IfOperations, candidateEdgeCounter);
+        auto currentIfCandidate = std::move(IfOperations.top());
+        IfOperations.pop();
 
-        // Loop Return Check:
-        //todo support loops!
-
-        // todo  update currentBlock when taking new branch
-        if(currentTask->trueBranch) {
-            currentTask->trueBranch = false;
-            // tasks.emplace(std::move(currentTask));
-            // mark merge block as visited by one edge
-            auto candidate = trueBranchCandidates.top();
-            if(candidateEdgeCounter.contains(candidate->getIdentifier())) {
-                candidateEdgeCounter[candidate->getIdentifier()] = candidateEdgeCounter[candidate->getIdentifier()] + 1;
+        if(currentIfCandidate->isTrueBranch) {//loop blocks can only occur in their true-branches
+            if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+                candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             } else {
-                candidateEdgeCounter.emplace(std::pair{candidate->getIdentifier(), 1});
+                candidateEdgeCounter.emplace(std::pair{currentBlock->getIdentifier(), 1});
             }
+            currentIfCandidate->isTrueBranch = false; 
+            mergeBlocks.emplace(currentBlock);
+            currentBlock = currentIfCandidate->ifOp->getFalseBlockInvocation().getBlock();
+            IfOperations.emplace(std::move(currentIfCandidate));
         } else {
-            // we went down else case of a block, we did NOT find a new candidate, but we found a merge block
-            // -> MUST be match for if-candidate
-            assert(trueBranchCandidates.top()->getIdentifier() == falseBranchCandidates.top()->getIdentifier());
-            // tasks.pop(); -> already popped before -> reinsert if necessary
-            auto candidate = falseBranchCandidates.top();
-            // must have been visited before
-            candidateEdgeCounter[candidate->getIdentifier()] = candidateEdgeCounter[candidate->getIdentifier()] + 1; 
-
-            // Prepare parent task:
-            if(tasks.empty()) {
-                currentBlock = trueBranchCandidates.top();
-                trueBranchCandidates.pop();
-                falseBranchCandidates.pop();
-                //update current block
-                continue;
+            assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
+            candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
+            mergeBlocks.pop();
+            while(!mergeBlocks.empty() && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) {
+                mergeBlocks.pop();
+                IfOperations.pop();
             }
-            currentTask = std::move(tasks.top());
-            tasks.pop();
-            if(currentTask->trueBranch) {
-                falseBranchCandidates.pop(); //candidate of previous task that match was found for
-                uint32_t numOpenPredecessors = trueBranchCandidates.top()->getPredecessors().size() - candidateEdgeCounter[trueBranchCandidates.top()->getIdentifier()];
-                if(numOpenPredecessors > 0) {
-                    currentTask->trueBranch = false;
-                    // continue;
-                } else {
-                    // current trueBranch candidate has no open predecessors
-                    // -> we want to continue digging down
-                    // Pop old candidate that we found a match for and simply continue with parent task
-                    // trueBranchCandidates.pop(); 
-                    currentBlock = trueBranchCandidates.top();
-                    trueBranchCandidates.pop(); // merge block fully met -> drop it
-                    followBranch = true;
-                    // todo is trueBranchCandidate correct?
-                }
-            } else { // false branch
-                trueBranchCandidates.pop();
-                uint32_t numOpenPredecessors = falseBranchCandidates.top()->getPredecessors().size() - candidateEdgeCounter[falseBranchCandidates.top()->getIdentifier()];
-                if(numOpenPredecessors > 0) {
-                    //todo can this happen -> what to do then?
-                    assert(trueBranchCandidates.top()->getIdentifier() == falseBranchCandidates.top()->getIdentifier());
-                    // continue;
-                } else {
-                    if(trueBranchCandidates.top()->getIdentifier() == falseBranchCandidates.top()->getIdentifier()) {
-                        NES_DEBUG("Found if - merge");
-                        currentBlock = falseBranchCandidates.top();
-                        trueBranchCandidates.pop();
-                        falseBranchCandidates.pop();
-                        continue;
-                        // auto mergeBlockTerminator = trueBranchCandidates.top()->getTerminatorOp();
-                        // if(mergeBlockTerminator->getOperationType() == Operation::ReturnOp) {
-                        //     break;
-                        // } else {
-                        //     if(mergeBlockTerminator->getOperationType() == )
-                        // }
-                    } else {
-                        currentBlock = falseBranchCandidates.top();
-                        followBranch = true;
-                    }
-                }
+            uint32_t openEdges = currentBlock->getPredecessors().size() - 
+                    ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
+                    candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
+            bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
+            if(openMergeBlockFound) {
+                mergeBlocks.emplace(currentBlock);
+                IfOperations.top()->isTrueBranch = false;
+                currentBlock = IfOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
             }
-    //         if(!followBranch) {
-    //             currentBlock = (currentTask->trueBranch) ?  currentTask->ifOp->getTrueBlockInvocation().getBlock() : 
-    //                                                         currentTask->ifOp->getFalseBlockInvocation().getBlock();
-    //         }
-    //         auto newCandidates = findMergeBlock(currentBlock, trueBranchCandidates, falseBranchCandidates, currentTask->trueBranch, candidateEdgeCounter);
-    //         //todo check if currentBlock is LoopHeader
-    //         // merge block found -> how to proceed?
-    //         tasks.emplace(currentTask);
-    //         for(auto& candidate : newCandidates) {
-    //             tasks.emplace(std::make_unique<Task>(Task{candidate, true})); // is correct order!
-    //         }
         }
-        if(!followBranch) {
-            currentBlock = (currentTask->trueBranch) ?  currentTask->ifOp->getTrueBlockInvocation().getBlock() : 
-                                                        currentTask->ifOp->getFalseBlockInvocation().getBlock();
-        }
-        followBranch = false;
-        auto newCandidates = findMergeBlock(currentBlock, trueBranchCandidates, falseBranchCandidates, currentTask->trueBranch, candidateEdgeCounter);
-        //todo check if currentBlock is LoopHeader
-        // merge block found -> how to proceed?
-        // tasks.emplace(currentTask);
-        tasks.emplace(std::move(currentTask));
-        for(auto& candidate : newCandidates) {
-            tasks.emplace(std::make_unique<Task>(Task{candidate, true})); // is correct order!
-        }
-        // add new tasks!
-        // check if current task is true or false type
-        // true:
-        //  1. flip task type
-        //  2. get merge-block(candidate) from trueBranchCandidates
-        //  3. mark merge-block as visited by one edge
-        // -> continue with flipped task (false-branch) of current ifOp
-        // false(matching case):
-        //  1. check for match (must be true -> throw error if not)
-        //  2. increase edgeCounter of falseBranchCandidates.top()
-        //  3. pop task from tasks
-        //  4. get parentTask
-        //      3.1 check if parentTask is trueBranch
-        //      trueBranch:
-        //          - pop candidate from falseBranchCandidates
-        //          - check if current trueBranchCandidate has open predecessors
-        //          hasOpenPredecessors:
-        //              - keep as candidate
-        //              - flip task type
-        //              - new iteration
-        //          !hasOpenPredecessor:
-        //              - pop candidate from trueBranchCandidates
-        //              -  call findMergeBlock with unchanged task and next block as entry
-        //      falseBranch:
-        //          - pop candidate from trueBranchCandidates
-        //          - check if current falseBranchCandidate has open predecessors
-        //              hasOpenPredecessors:
-        //                  - check if it matches if-candidate -> if not error!
-        //                      MATCH FOUND:
-        //                          - return to 1.
-        //              !hasOpenPredecessors
-        //                  - pop candidate from falseBranchCandidates
-        //                  - call findMergeBlock with unchanged task, and next block as entry
-    // }
     }
 }
 
