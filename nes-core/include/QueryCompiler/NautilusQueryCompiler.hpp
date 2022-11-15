@@ -21,6 +21,10 @@ class LowerPhysicalToNautilusOperators;
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
 class NautilusCompilationPhase;
 using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
+
+/**
+ * @brief A QueryCompiler which uses the nautilus operators for code generations.
+ */
 class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
   public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
@@ -28,8 +32,7 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
      * @brief Creates a new instance of the NautilusQueryCompiler, with a set of options and phases.
      * @param options QueryCompilationOptions.
      * @param phaseFactory Factory which allows the injection of query optimization phases.
-     * @param sourceSharing
-     * @param useCompilationCache
+     * @param sourceSharing indicates if source sharing should be used
      * @return QueryCompilerPtr
      */
     static QueryCompilerPtr
