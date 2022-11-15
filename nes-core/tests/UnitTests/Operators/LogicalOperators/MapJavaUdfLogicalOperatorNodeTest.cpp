@@ -43,7 +43,7 @@ TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferSchema) {
                                                            Catalogs::UDF::JavaUdfByteCodeList{{"some_class"s, {1}}},
                                                            outputSchema);
     // Create a MapUdfLogicalOperatorNode with the JavaUdfDescriptor.
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUdfLogicalOperatorNode>(1, javaUdfDescriptor);
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, 1);
     // Create a SourceLogicalOperatorNode with a source schema
     // and add it as a child to the MapUdfLogicalOperatorNode to infer the input schema.
     auto inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
@@ -67,7 +67,7 @@ TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferStringSignature) {
         Catalogs::UDF::JavaSerializedInstance{1},
         Catalogs::UDF::JavaUdfByteCodeList{{"some_class"s, {1}}},
         std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()));
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUdfLogicalOperatorNode>(1, javaUdfDescriptor);
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, 1);
     auto child = std::make_shared<SourceLogicalOperatorNode>(
         std::make_shared<SchemaSourceDescriptor>(
             std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
