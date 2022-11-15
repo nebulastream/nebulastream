@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.49](https://github.com/nebulastream/nebulastream/tree/v0.3.49) (2022-11-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.48...v0.3.49)
+
+#### Complex Event Processing
+
+- \[BUG\] CEP requires logical operators  [\#2986](https://github.com/nebulastream/nebulastream/issues/2986)
+
+#### REST API 
+
+- Remove all occurences of CppRestSdk from NebulaStream [\#3028](https://github.com/nebulastream/nebulastream/issues/3028)
+
 ## [v0.3.48](https://github.com/nebulastream/nebulastream/tree/v0.3.48) (2022-11-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.47...v0.3.48)
