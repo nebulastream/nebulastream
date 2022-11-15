@@ -43,16 +43,17 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
+
 QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                                Phases::PhaseFactoryPtr const& phaseFactory,
                                                bool sourceSharing) {
     return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
 }
+
 QueryCompilation::QueryCompilationResultPtr
 NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
     try {
         Timer timer("DefaultQueryCompiler");
-
 
         auto queryId = request->getQueryPlan()->getQueryId();
         auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
@@ -78,7 +79,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
 
-        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan);
+        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         timer.snapshot("AfterToNautilusPlanPhase");
 
         pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);

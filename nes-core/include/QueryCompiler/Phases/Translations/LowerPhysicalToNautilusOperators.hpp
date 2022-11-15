@@ -14,10 +14,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Expressions/Expression.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Execution/Operators/Operator.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -47,32 +47,34 @@ class LowerPhysicalToNautilusOperators {
      * @param pipelined query plan
      * @return PipelineQueryPlanPtr
      */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
      * @param pipeline
      * @return OperatorPipelinePtr
      */
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
   private:
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
-          PhysicalOperators::PhysicalOperatorPtr operatorPtr);
+          PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+          size_t bufferSize);
     std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                                       PhysicalOperators::PhysicalOperatorPtr sharedPtr);
+                                                                       PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+                                                                       size_t bufferSize);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerEmit(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
+    lowerEmit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+              PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+              size_t bufferSize);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
 
-
-    std::shared_ptr<Runtime::Execution::Expressions::Expression>
-    lowerExpression(ExpressionNodePtr expressionNode);
+    std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(ExpressionNodePtr expressionNode);
 };
 }// namespace QueryCompilation
 }// namespace NES

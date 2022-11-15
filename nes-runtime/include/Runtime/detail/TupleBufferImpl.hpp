@@ -179,7 +179,6 @@ class alignas(64) BufferControlBlock {
     WatermarkTs watermark = 0;
     SequenceNumber sequenceNumber = 0;
     int64_t creationTimestamp{};
-    //TODO FIX constant
     OriginId originId = 0;
     std::vector<MemorySegment*> children;
 
