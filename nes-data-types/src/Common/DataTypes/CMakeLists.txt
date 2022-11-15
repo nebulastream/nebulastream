@@ -1,4 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        AttributeField.cpp
-        Schema.cpp
+add_source_files(nes-data-types
+        Char.cpp
+        ArrayType.cpp
+        Boolean.cpp
+        Undefined.cpp
+        DataType.cpp
+        Numeric.cpp
+        Integer.cpp
+        Float.cpp
+        DataTypeFactory.cpp
+        FixedChar.cpp
 )
-
