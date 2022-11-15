@@ -14,10 +14,13 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
 
-#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
+#include <stack>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace NES::Nautilus::Tracing {
@@ -34,6 +37,10 @@ class Block;
  */
 class RemoveBrOnlyBlocksPhase {
   public:
+    struct Task {
+        std::shared_ptr<IR::Operations::IfOperation> ifOp;
+        bool trueBranch; // rename to isTrueBranch or isTrueBranchTask?
+    };
     /**
      * @brief Applies the phase on a execution trace
      * @param trace
@@ -47,6 +54,11 @@ class RemoveBrOnlyBlocksPhase {
      */
     class RemoveBrOnlyBlocksPhaseContext {
       public:
+        // using IfCandidate = std::unique_ptr<std::pair<std::shared_ptr<IR::Operations::IfOperation>, bool>>;
+        struct IfOpCandidate {
+            std::shared_ptr<IR::Operations::IfOperation> ifOp;
+            bool isTrueBranch;
+        };
         RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         std::shared_ptr<IR::IRGraph> process();
 
@@ -55,6 +67,9 @@ class RemoveBrOnlyBlocksPhase {
         void processBrOnlyBlocks(IR::BasicBlockPtr parentBlock);
         void findLoopHeadBlocks(IR::BasicBlockPtr parentBlock);
         void createIfOperations(IR::BasicBlockPtr parentBlock);
+        IR::BasicBlockPtr inline findMergeBlock(IR::BasicBlockPtr currentBlock, 
+                              std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
+                              const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
         // void addScopeLevels(IR::BasicBlockPtr parentBlock);
         // void processBranch(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentBlock, bool conditionalBranch, bool isElse);
         // void processBlock(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentChildBlock);
