@@ -68,9 +68,13 @@ class WASMCompiler {
      */
     RelooperBlocks relooperBlocks;
     /**
-     * Remove?
+     * Save variable s
      */
     Mapping<std::string, BinaryenType> localVariables;
+    /**
+     * Local variables mapped to BinaryenIndex
+     */
+     Mapping<std::string, BinaryenExpressionRef> localVarMapping;
     /**
      * Contains all expressions that have been already added. That way we prevent adding duplicate
      * expressions.
@@ -133,8 +137,6 @@ class WASMCompiler {
     void genBody(BinaryenExpressions expressions);
     BinaryenExpressionRef generateBody();
     void convertConstToLocal(std::string& key, BinaryenExpressions expressions);
-    //BinaryenExpressionRef WASMCompiler::generateLocalGet(std::string& key);
-    void tmp();
 };
 }// namespace NES::Nautilus::Backends::WASM
 
