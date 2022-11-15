@@ -23,7 +23,7 @@ std::string Iterator::dataJson() {
     // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
     // values as the corresponding values
     // Adding the first tuple before the loop avoids checking if last tuple is processed in order to omit "," after json value
-    auto jsonObject = nlohmann::json {};
+    auto jsonObject = nlohmann::json{};
     try {
         for (uint32_t currentField = 0; currentField < fieldNames.size(); currentField++) {
             auto currentFieldOffset = fieldOffsets[currentField];

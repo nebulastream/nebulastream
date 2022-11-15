@@ -42,9 +42,8 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
  */
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO(" start coordinator");
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug()});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -112,8 +111,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -192,8 +190,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -290,8 +287,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;

@@ -252,8 +252,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
 
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(*restPort));
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
@@ -553,9 +552,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -574,9 +572,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -612,9 +609,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -653,9 +649,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     remove("nesWorkerStarter.log");
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
@@ -700,9 +695,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     remove("nesWorkerStarter.log");
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 

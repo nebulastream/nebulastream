@@ -79,8 +79,8 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
 }
 
 void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
-                                            std::vector<nlohmann::json>& nodes,
-                                            std::vector<nlohmann::json>& edges) {
+                                    std::vector<nlohmann::json>& nodes,
+                                    std::vector<nlohmann::json>& edges) {
 
     std::vector<nlohmann::json> childrenNode;
 
@@ -137,8 +137,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
-nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                 QueryId queryId) {
+nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};

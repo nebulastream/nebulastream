@@ -35,7 +35,6 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class PlanJsonGenerator {
 
   public:
-
     static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
     /**
@@ -45,7 +44,7 @@ class PlanJsonGenerator {
      * @return a JSON object representing the execution plan
      */
     static nlohmann::json getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                         QueryId queryId = INVALID_QUERY_ID);
+                                                 QueryId queryId = INVALID_QUERY_ID);
 
   private:
     /**
@@ -54,8 +53,7 @@ class PlanJsonGenerator {
      * @param nodes JSON array to store the traversed node
      * @param edges JSON array to store the traversed edge
      */
-    static void
-    getChildren(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
+    static void getChildren(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
 
     /**
      * @param an operator node
