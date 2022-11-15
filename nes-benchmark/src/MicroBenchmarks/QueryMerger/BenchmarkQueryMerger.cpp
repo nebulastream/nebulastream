@@ -352,7 +352,7 @@ int main(int argc, const char* argv[]) {
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryStatus() != QueryStatus::Running) {
                     //Sleep for 100 milliseconds
-                    sleep(static_cast<unsigned int>(.1));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
