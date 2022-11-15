@@ -11,7 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        ArrayValue.cpp
-        BasicValue.cpp
+add_source_files(nes-data-types
+        PhysicalType.cpp
+        ArrayPhysicalType.cpp
+        BasicPhysicalType.cpp
+        PhysicalTypeFactory.cpp
+        DefaultPhysicalTypeFactory.cpp
+        PhysicalTypeUtil.cpp
 )

@@ -611,6 +611,8 @@ endif ()
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
+# Add target for all data types
+add_subdirectory(nes-data-types)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
 # Add target for the runtime
