@@ -11,26 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "QueryCompiler/Operators/ExecutableOperator.hpp"
-#include "QueryCompiler/Operators/NautilusPipelineOperator.hpp"
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#endif
 namespace NES::QueryCompilation {
 
 NautilusCompilationPhase::NautilusCompilationPhase(QueryCompilerOptions::CompilationStrategy compilationStrategy)
