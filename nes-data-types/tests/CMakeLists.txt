@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        AttributeField.cpp
-        Schema.cpp
-)
+# Google Testing Framework ----------------------------------------------------
+include(ExternalProject)
+
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
