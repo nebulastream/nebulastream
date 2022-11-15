@@ -31,8 +31,8 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
                                  public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
+        NES::Logger::setupLogging("FilterQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("QueryExecutionTest: Setup FilterQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -43,13 +43,13 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
+        NES_DEBUG("QueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };
