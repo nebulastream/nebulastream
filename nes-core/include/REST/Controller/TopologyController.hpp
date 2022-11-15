@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_REST_Controller_TOPOLOGYCONTROLLER_HPP_
-#define NES_NES_CORE_INCLUDE_REST_Controller_TOPOLOGYCONTROLLER_HPP_
+#ifndef NES_NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
+#define NES_NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
@@ -259,4 +259,4 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 }// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)
-#endif//NES_NES_CORE_INCLUDE_REST_Controller_TOPOLOGYCONTROLLER_HPP_
+#endif//NES_NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_

@@ -101,14 +101,14 @@ class RestServer {
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 
     /**
-   * @brief method to start the rest server
+   * @brief method to start the rest server, calls run() internally
    * @return bool indicating success
    */
     bool start();
 
     /**
-   * @brief method called within startWithOatpp
-   * starts the server with oatpp after initializing controllers, endpoints and necessary components like  connection handler, router.
+   * @brief method called within start()
+   * starts the server after initializing controllers, endpoints and necessary components like connection handler, router.
    */
     void run();
 
@@ -136,7 +136,6 @@ class RestServer {
     std::condition_variable cvar;
     std::mutex mutex;
     bool stopRequested{false};
-    std::promise<bool> shutdownPromise;
 };
 }// namespace NES
 
