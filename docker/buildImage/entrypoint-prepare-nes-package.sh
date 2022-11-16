@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #quit if command returns non-zero code
-set -e
+#set -e
 
 if ! [  -f "/nebulastream/CMakeLists.txt" ]; then
   echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]"
@@ -22,20 +22,13 @@ fi
 
 if [ $# -eq 0 ]
 then
+    # Build NES
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
-    make version
+    python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_ENABLES_TESTS=OFF -DNES_USE_MQTT=1 -DNES_USE_TF=1 -DNES_BUILD_BENCHMARKS=0 ..
     make -j4
     cpack
-    cd ..
-    if test -f docker/executableImage/resources/*.deb; then
-        rm docker/executableImage/resources/*.deb
-    fi
-    cp build/*.deb docker/executableImage/resources
-    result=$?
-    rm -rf /nebulastream/build
-    exit $result
 else
     exec $@
 fi

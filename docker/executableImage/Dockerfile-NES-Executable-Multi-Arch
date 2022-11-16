@@ -21,7 +21,6 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -qq  ./nes.deb &&  rm nes.deb
 
 COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
-COPY ./docker/executableImage/entrypoint-prepare-nes-package.sh /entrypoint-prepare-nes-package.sh
 COPY ./docker/executableImage/entrypoint-containernet.sh /entrypoint-containernet.sh
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 #

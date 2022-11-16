@@ -88,7 +88,7 @@ jobs:
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: "Build Multi Arch Packages"
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_package_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nes_package_${{ matrix.osversion }}
       - name: "Fetch Debian Files"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
