@@ -11,15 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Runtime/Execution/PipelineExecutionContext.hpp"
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <memory>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -41,6 +46,27 @@ class ThresholdWindowOperatorTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ThresholdWindowOperatorTest test class." << std::endl; }
 };
 
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    explicit MockedPipelineExecutionContext(OperatorHandlerPtr handler)
+        : PipelineExecutionContext(
+            -1,// mock pipeline id
+            0, // mock query id
+            nullptr,
+            1,
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            [this](TupleBuffer& buffer) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            {std::move(handler)}){
+            // nop
+        };
+
+    std::vector<TupleBuffer> buffers;
+};
+
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
@@ -54,7 +80,11 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+
     thresholdWindowOperator->setup(ctx);
 
     auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});

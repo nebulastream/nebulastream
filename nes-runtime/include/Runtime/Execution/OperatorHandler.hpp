@@ -14,8 +14,9 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#include "../../../../nes-core/include/Runtime/Reconfigurable.hpp"
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/Reconfigurable.hpp>
+//#include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
@@ -43,6 +44,8 @@ class OperatorHandler : public Reconfigurable {
      * @param pipelineExecutionContext
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+
+    virtual ~OperatorHandler() = default;
 };
 
 }// namespace Execution

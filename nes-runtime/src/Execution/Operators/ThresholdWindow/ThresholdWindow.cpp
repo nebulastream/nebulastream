@@ -13,47 +13,42 @@
 */
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 extern "C" void addToSumAggregate(void* state, int64_t valueToAdd) {
-    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
-    thresholdWindowAggregationState->sum = thresholdWindowAggregationState->sum + valueToAdd;
+    auto handler = (ThresholdWindowOperatorHandler*) state;
+    handler->sum = handler->sum + valueToAdd;
 }
 
 extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
-    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
-    thresholdWindowAggregationState->sum = valueToSet;
+    auto handler = (ThresholdWindowOperatorHandler*) state;
+    handler->sum = valueToSet;
 }
 
 extern "C" int64_t getSumAggregate(void* state) {
-    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
-    auto sum = thresholdWindowAggregationState->sum.as<Nautilus::Int64>();
-    return sum.getValue().getValue();
-}
-
-void ThresholdWindow::setup(ExecutionContext& executionCtx) const {
-    auto globalState = std::make_unique<ThresholdWindowAggregationState>((uint64_t) 0);
-    executionCtx.setGlobalOperatorState(this, std::move(globalState));
-    Operator::setup(executionCtx);
+    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto sum = handler->sum;
+    return sum;
 }
 
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    auto globalAggregationState = ctx.getGlobalState(this);
-
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
+    auto handler = ctx.getGlobalOperatorHandler(0);
     if (val) {
         auto aggregatedValue = aggregatedFieldAccessExpression->execute(record);
-        addToSumAggregate(globalAggregationState,  aggregatedValue.as<Int64>()->getRawInt());
+        FunctionCall("addToSumAggregate", addToSumAggregate, handler, aggregatedValue.as<Int64>());
     } else {
-        auto sumAggregation = getSumAggregate(globalAggregationState);
+        auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
         auto aggregationResult = Record({{"sum", sumAggregation}});
         child->execute(ctx, aggregationResult);
-        setSumAggregate(globalAggregationState, 0);
+
+        FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>(0L));
     }
 }
 
