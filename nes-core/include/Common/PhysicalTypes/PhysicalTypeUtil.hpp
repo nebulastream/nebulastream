@@ -28,6 +28,13 @@ namespace NES::PhysicalTypes {
 bool isChar(PhysicalTypePtr physicalType);
 
 /**
+ * @brief Function to check if the physical type is text
+ * @param physicalType
+ * @return true if the physical type is text
+ */
+bool isText(PhysicalTypePtr physicalType);
+
+/**
  * @brief Function to check if the physical type is a bool
  * @param physicalType
  * @return true if the physical type is a bool
@@ -129,6 +136,8 @@ template<class Type>
 bool isSamePhysicalType(PhysicalTypePtr physicalType) {
     if constexpr (IsChar<Type>) {
         return isChar(std::move(physicalType));
+    } else if constexpr (IsText<Type>) {
+        return isText(std::move(physicalType));
     } else if constexpr (IsUInt8<Type>) {
         return isUInt8(std::move(physicalType));
     } else if constexpr (IsBool<Type>) {
