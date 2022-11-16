@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 #define NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <Common/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <list>
 #include <map>
 #include <memory>

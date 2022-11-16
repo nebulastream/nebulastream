@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 #define NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/Identifiers.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <algorithm>
 #include <any>

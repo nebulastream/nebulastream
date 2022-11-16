@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
 #include <Common/Identifiers.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>

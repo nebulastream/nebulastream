@@ -13,10 +13,10 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Common/Identifiers.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Common/Identifiers.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>

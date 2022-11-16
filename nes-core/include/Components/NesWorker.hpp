@@ -15,10 +15,10 @@
 #ifndef NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Listeners/QueryStatusListener.hpp>
-#include <Common/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/ReplicationService.hpp>
 #include <future>

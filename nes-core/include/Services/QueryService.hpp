@@ -16,8 +16,8 @@
 #define NES_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
 #include <API/Query.hpp>
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Common/Identifiers.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <future>
 
 namespace NES::Optimizer {

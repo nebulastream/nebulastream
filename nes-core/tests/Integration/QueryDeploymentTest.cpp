@@ -16,6 +16,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -23,7 +24,6 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Common/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>

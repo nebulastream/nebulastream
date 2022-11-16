@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 #define NES_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 
-#include <memory>
 #include <Common/Identifiers.hpp>
+#include <memory>
 
 #define FORWARD_DECLARE_CLASS_UP(T)                                                                                              \
     class T;                                                                                                                     \

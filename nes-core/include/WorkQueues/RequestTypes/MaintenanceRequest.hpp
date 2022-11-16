@@ -14,8 +14,8 @@
 
 #ifndef NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
 #define NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
-#include <Phases/MigrationType.hpp>
 #include <Common/Identifiers.hpp>
+#include <Phases/MigrationType.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <memory>
 #include <string>

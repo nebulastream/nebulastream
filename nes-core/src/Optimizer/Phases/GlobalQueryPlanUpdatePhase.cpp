@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -25,7 +26,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Common/Identifiers.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>

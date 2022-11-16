@@ -16,10 +16,10 @@
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Common/Identifiers.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>

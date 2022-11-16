@@ -16,10 +16,10 @@
 #define NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
+#include <Common/Identifiers.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include <Common/Identifiers.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
