@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_GRPC_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 #define NES_INCLUDE_GRPC_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Common/Identifiers.hpp>
 
 #include <memory>
 

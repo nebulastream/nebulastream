@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 #define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Common/Identifiers.hpp>
+#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>

@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-namespace NES{
+namespace NES {
 
 using NodeId = uint64_t;
 using SubpartitionId = uint64_t;

@@ -15,7 +15,6 @@
 #ifndef NES_QUERYCATALOGSERVICE_HPP
 #define NES_QUERYCATALOGSERVICE_HPP
 
-
 #include <Common/Identifiers.hpp>
 #include <Util/QueryStatus.hpp>
 #include <mutex>

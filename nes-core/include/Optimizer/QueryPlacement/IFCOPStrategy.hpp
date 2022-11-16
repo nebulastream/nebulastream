@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 
-
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <stack>
 
