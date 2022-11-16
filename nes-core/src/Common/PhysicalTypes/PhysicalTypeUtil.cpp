@@ -22,6 +22,11 @@ bool isChar(PhysicalTypePtr physicalType) {
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::CHAR;
 }
 
+bool isText(PhysicalTypePtr physicalType) {
+    return physicalType->isBasicType()
+        && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::TEXT;
+}
+
 bool isBool(PhysicalTypePtr physicalType) {
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::BOOLEAN;
