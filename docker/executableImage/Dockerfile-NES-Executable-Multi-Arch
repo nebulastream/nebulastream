@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS execimg
+FROM ubuntu:22.04 AS execimg
 ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
 
@@ -20,10 +20,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     ifupdown  \
     net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -qq  ./nes.deb &&  rm nes.deb
 
-COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
-COPY ./docker/executableImage/entrypoint-containernet.sh /entrypoint-containernet.sh
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
-#
+
 ENV coordinatorCLIConf="--coordinatorIp=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
 ENV workerCLIConf="--coordinatorPort=12346 --logLevel=LOG_INFO --physicalSources.type=CSVSource --physicalSources.filePath=/opt/local/nebula-stream/exdra.csv --physicalSources.numberOfBuffersToProduce=100 --physicalSources.sourceGatheringInterval=1 --physicalSources.physicalSourceName=exdra_worker_1 --physicalSources.logicalSourceName=exdra --physicalSources.skipHeader=false --physicalSources.delimiter=,"
 
