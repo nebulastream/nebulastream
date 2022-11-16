@@ -718,7 +718,7 @@ class JoinPipelineStage : public Runtime::Execution::ExecutablePipelineStage, pu
                 } else {
                     NES_INFO("Got 0 timestamp -> trigger window key " << record->key << " " << record->timestamp);
                     for (auto a = 0; a < NUM_PARTITIONS; ++a) {
-                        sharedState.ght[i].append(*ht[a]);
+                        sharedState.ght[a].append(*ht[a]);
                     }
                     if (joinControlBlock.fetch_sub(1) == 1) {
                         // let's trigger
