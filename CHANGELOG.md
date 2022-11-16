@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.50](https://github.com/nebulastream/nebulastream/tree/v0.3.50) (2022-11-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.49...v0.3.50)
+
+### Miscellaneous Issues ✌️
+
+- Unify Identifiiers among network, runtime, and coordinator components [\#2370](https://github.com/nebulastream/nebulastream/issues/2370)
+
 ## [v0.3.49](https://github.com/nebulastream/nebulastream/tree/v0.3.49) (2022-11-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.48...v0.3.49)
