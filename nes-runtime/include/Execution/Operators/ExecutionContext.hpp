@@ -52,18 +52,17 @@ class ExecutionContext final {
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
 
     /**
-     * @brief Sets the global operator state.
-     * @param op  reference to the operator to identify the state.
-     * @param state  operator state.
-     */
-    void setGlobalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
-
-    /**
      * @brief Get the operator state by the operator reference.
      * @param op operator reference
      * @return operator state.
      */
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
+
+    /**
+     * @brief Get the global operator state.
+     * @param handlerIndex reference to the operator to identify the state.
+     */
+    Value<MemRef> getGlobalOperatorHandler(uint64_t handlerIndex);
 
     /**
      * @brief Get worker id of the current execution.
@@ -85,7 +84,6 @@ class ExecutionContext final {
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> globalStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
 };
