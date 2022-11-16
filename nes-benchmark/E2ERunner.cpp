@@ -49,7 +49,7 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
+         NES_FATAL_ERROR(fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };

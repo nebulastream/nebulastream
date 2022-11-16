@@ -37,7 +37,8 @@
 
 //#include <cppkafka/cppkafka.h>
 //#include "/home/zeuchste/git/cppkafka/build/include/cppkafka/cppkafka.h"
-#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h>
+//#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h>
+#include <cppkafka/cppkafka.h>
 
 #ifndef OPERATORID
 #define OPERATORID 1
