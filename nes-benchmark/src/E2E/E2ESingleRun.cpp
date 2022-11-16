@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h"
+//#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h"
 #include <E2E/E2ESingleRun.hpp>
-
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
@@ -26,6 +25,7 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <algorithm>
+#include <cppkafka/cppkafka.h>
 #include <fstream>
 
 namespace NES::Benchmark {
@@ -108,9 +108,23 @@ void E2ESingleRun::createSources() {
                 char* buffer = createdBuffers[cnt].getBuffer<char>();
                 size_t len = createdBuffers[cnt].getBufferSize();
                 std::vector<uint8_t> bytes(buffer, buffer + len);
-                producer.produce(cppkafka::MessageBuilder(connectionStringVec[1]).partition(0).payload(bytes));
+                try {
+//                    std::cout << "produce message to topic=" << connectionStringVec[1] << std::endl;
+                    producer.produce(cppkafka::MessageBuilder(connectionStringVec[1]).partition(0).payload(bytes));
+                    producer.flush(std::chrono::seconds(100));
+                } catch (const std::exception& ex) {
+                    std::cout << ex.what() << std::endl;
+                } catch (const std::string& ex) {
+                    std::cout << ex << std::endl;
+                } catch (...) {
+                }
+                if(cnt % 1000 == 0)
+                {
+                    std::cout << "number of buffers prod=" << cnt << std::endl;
+                }
+
             }
-            producer.flush(std::chrono::seconds (100));
+            producer.flush(std::chrono::seconds(100));
 
             auto kafkaSourceType = KafkaSourceType::create();
             kafkaSourceType->setBrokers(connectionStringVec[0]);
@@ -275,7 +289,7 @@ void E2ESingleRun::stopQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
-//    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+    //    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     queryService->validateAndQueueStopQueryRequest(queryId);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {

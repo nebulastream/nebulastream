@@ -17,7 +17,7 @@ bufferSizeInBytes: 131072
 dataGenerator: YSBKafka
 ##broker,topic,group
 connectionString: "localhost:9092,nesKafka,0"
-numberOfPreAllocatedBuffer: 100
+numberOfPreAllocatedBuffer: 50000
 logicalStreamName: ysb
 dataProvider: Internal
 #dataProviderMode: ZeroCopy
@@ -31,9 +31,9 @@ query: 'Query::from("ysb").filter(Attribute("event_type") < 1).sink(NullOutputSi
 
 #benchmark internal parameter
 #numberOfBuffersToProduce: 5000000
-numberOfBuffersToProduce: 5000
+numberOfBuffersToProduce: 50000
 scalability: scale-up
 logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 1
+startupSleepIntervalInSeconds: 0
+numberOfMeasurementsToCollect: 3
