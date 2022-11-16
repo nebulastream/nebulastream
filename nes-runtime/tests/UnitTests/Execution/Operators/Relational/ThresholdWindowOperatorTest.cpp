@@ -44,7 +44,7 @@ class ThresholdWindowOperatorTest : public testing::Test {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
@@ -55,6 +55,7 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     thresholdWindowOperator->setChild(collector);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    thresholdWindowOperator->setup(ctx);
 
     auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});
     thresholdWindowOperator->execute(ctx, recordTen);
@@ -71,5 +72,7 @@ TEST_F(ThresholdWindowOperatorTest, hresholdWindowWithSumAggTest) {
     EXPECT_EQ(collector->records.size(), 2);
     EXPECT_EQ(collector->records[1].numberOfFields(), 1);
     EXPECT_EQ(collector->records[1].read("sum"), 5);
+
+    thresholdWindowOperator->terminate(ctx);
 }
 }// namespace NES::Runtime::Execution::Operators

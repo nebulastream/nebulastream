@@ -75,7 +75,7 @@ Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Opera
 
 void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state) {
     if (localStateMap.contains(op)) {
-        NES_THROW_RUNTIME_ERROR("Operators state already registered for operator: " << op);
+        NES_THROW_RUNTIME_ERROR("Local operators state already registered for operator: " << op);
     }
     localStateMap.emplace(op, std::move(state));
 }

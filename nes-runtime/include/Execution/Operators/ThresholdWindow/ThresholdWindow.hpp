@@ -19,6 +19,13 @@
 #include <utility>
 namespace NES::Runtime::Execution::Operators {
 
+class ThresholdWindowAggregationState : public OperatorState {
+  public:
+    ThresholdWindowAggregationState()
+        : sum(0) {}
+    int64_t sum;
+};
+
 /**
  * @brief Threshold window operator that compute aggregation of tuples satisfying the threshold.
  */
@@ -31,14 +38,15 @@ class ThresholdWindow : public ExecutableOperator {
     explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                              Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression)
         : predicateExpression(std::move(predicateExpression)),
-          aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)), sum(0){};
+          aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)){};
+
+    void setup(ExecutionContext& executionCtx) const override;
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
     const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
     const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
-    mutable int32_t sum;// move to global state
 };
 }// namespace NES::Runtime::Execution::Operators
 

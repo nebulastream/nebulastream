@@ -18,18 +18,40 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+extern "C" void addToSumAggregate(void* state, int64_t valueToAdd) {
+    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
+    thresholdWindowAggregationState->sum = thresholdWindowAggregationState->sum + valueToAdd;
+}
+
+extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
+    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
+    thresholdWindowAggregationState->sum = valueToSet;
+}
+
+extern "C" int64_t getSumAggregate(void* state) {
+    auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
+    return thresholdWindowAggregationState->sum;
+}
+
+void ThresholdWindow::setup(ExecutionContext& executionCtx) const {
+    auto globalState = std::make_unique<ThresholdWindowAggregationState>();
+    executionCtx.setGlobalOperatorState(this, std::move(globalState));
+    Operator::setup(executionCtx);
+}
+
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    assert(child != nullptr);// must have an aggregation operator as a child
+    auto globalAggregationState = ctx.getGlobalState(this);
+
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     if (val) {
         auto aggregatedValue = aggregatedFieldAccessExpression->execute(record);
-
-        sum = sum + aggregatedValue.as<Int32>()->getRawInt(); // TODO 3138: properly handle the data type, should just a type of Value
+        addToSumAggregate(globalAggregationState,  aggregatedValue.as<Int64>()->getRawInt());
     } else {
-        auto aggregationResult = Record({{"sum", sum}});
+        auto sumAggregation = getSumAggregate(globalAggregationState);
+        auto aggregationResult = Record({{"sum", sumAggregation}});
         child->execute(ctx, aggregationResult);
-        sum = 0;
+        setSumAggregate(globalAggregationState, 0);
     }
 }
 
