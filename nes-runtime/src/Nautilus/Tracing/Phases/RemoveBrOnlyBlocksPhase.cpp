@@ -40,7 +40,7 @@ std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseCon
     addPredecessors(rootOperation->getFunctionBasicBlock());
     processBrOnlyBlocks(rootOperation->getFunctionBasicBlock());
     NES_DEBUG(ir->toString());
-    // findLoopHeadBlocks(rootOperation->getFunctionBasicBlock()); // todo -> found error case
+    findLoopHeadBlocks(rootOperation->getFunctionBasicBlock()); // todo -> found error case
     createIfOperations(rootOperation->getFunctionBasicBlock());
     // addScopeLevels(rootOperation->getFunctionBasicBlock());
     NES_DEBUG(ir->toString());
@@ -179,52 +179,59 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processBrOnlyBlock
     }
 }
 
-//==------------------------------------------------------------------==//
-//==---------------------- Scope Level Pass --------------------------==//
-//==------------------------------------------------------------------==//
-
-
-void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::vector<IR::BasicBlockPtr>& candidates, 
+void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::stack<IR::BasicBlockPtr>& candidates, 
                         std::unordered_set<std::string>& visitedBlocks, std::unordered_set<std::string>& loopHeadCandidates) {
     while(!visitedBlocks.contains(currentBlock->getIdentifier()) && 
             currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
-            auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-            if(loopHeadCandidates.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-                branchOp->getNextBlockInvocation().getBlock()->setIsLoopHeadBlock(true);
+            auto nextBlock = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp)->getNextBlockInvocation().getBlock();
+            if(!nextBlock->isIfBlock() && loopHeadCandidates.contains(nextBlock->getIdentifier())) {
+                nextBlock->setBlockType(IR::BasicBlock::LoopBlock);
             }
             visitedBlocks.emplace(currentBlock->getIdentifier());
-            currentBlock = branchOp->getNextBlockInvocation().getBlock();
+            currentBlock = nextBlock;
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
             loopHeadCandidates.emplace(currentBlock->getIdentifier());
-            candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
+            candidates.emplace(currentBlock);
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
     }
 }
 
+//todo, as soon as we walk down the false path of a loopCandidate, the candidate itself, and all candidates that we 
+//      found in the if path are not valid loopCandidates anymore
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findLoopHeadBlocks(IR::BasicBlockPtr currentBlock) {
-    std::vector<IR::BasicBlockPtr> ifBlocks;
+    std::stack<IR::BasicBlockPtr> ifBlocks; //todo use stack
     std::unordered_set<std::string> loopHeadCandidates;
     std::unordered_set<std::string> visitedBlocks;
 
+    // remember candidate blocks with branchID, if on another branchID, block is not a candidate anymore
+    // ALTERNATIVE: if we jump back to a loopCandidate it CANNOT be a loop block anymore
+    //  -> we already followed its true-branch, otherwise we would not be jumping in its false-branch
+    //  -> if it was a loop-header, we would have encountered it again following its true-branch
+    //  -> since we did not encounter it again following its true-branch it cannot be a loop-header
     do {
         checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeadCandidates);
-        currentBlock = ifBlocks.back();
-        ifBlocks.pop_back();
+        // an ifBlock that we pop from the ifBlock list CANNOT be a loop-header block anymore
+        // since we traverse loopCandidates in reverse order, and since we can only encounter it coming from 'above, 
+        // we can only re-encounter a loopCandidate that is not a loop-header if we already followed its else-branch
+        if(ifBlocks.top()->getBlockType() == IR::BasicBlock::BlockType::None) { 
+            ifBlocks.top()->setBlockType(IR::BasicBlock::IfBlock); //todo could avoid below by changing iteration in 'checkBranchForLoopHeadBlocks'
+        }
+        currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())->getFalseBlockInvocation().getBlock();
+        ifBlocks.pop();
     } while(!ifBlocks.empty());
 }
 
-IR::BasicBlockPtr 
-RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findMergeBlock(IR::BasicBlockPtr currentBlock, 
-                                std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
+void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
+                                std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations, 
                                 const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter) {
     uint32_t openEdges = currentBlock->getPredecessors().size() - 
             ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
+              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 0);
     bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
     
     while(!openMergeBlockFound) {
@@ -232,30 +239,42 @@ RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findMergeBlock(IR::Basi
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
             currentBlock = branchOp->getNextBlockInvocation().getBlock();
+            // check for loops:
+            // if current if-candidate is the same as the one that we are currently searching a merge block for, we found a loop
+            // -> because all control flow within a loop must be closed (merge-block or loop-return) before the loop returns
+            //    the if-operation that we search for when we loop back to the loop-header, must be the loop-header itself!
+            // could maybe use operation pointer comparison?
+            // Compare shared pointers (compares underlying pointers). If not possible compare 'toString()'
+            if(!ifOperations.empty() && (ifOperations.top()->ifOp->getValue() == currentBlock->getTerminatorOp())) {
+                // branch leads to loop -> remove loop-header from ifOperations && follow its false path.
+                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
+                ifOperations.pop();
+            }
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-            tasks.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
+            ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
         uint32_t openEdges = currentBlock->getPredecessors().size() - 
             ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
-        openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
+              currentBlock->getPredecessors().size() - candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 
+              currentBlock->isLoopHeadBlock());
+        openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 1); //todo change: currently we increment edgeCounter too late
     }
-    return currentBlock;
 }
 
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations(IR::BasicBlockPtr currentBlock) {
-    std::stack<std::unique_ptr<IfOpCandidate>> IfOperations;
+    std::stack<std::unique_ptr<IfOpCandidate>> ifOperations;
     std::stack<IR::BasicBlockPtr> mergeBlocks;
     std::unordered_map<std::string, uint32_t> candidateEdgeCounter;
     
     while(currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
-        currentBlock = findMergeBlock(currentBlock, IfOperations, candidateEdgeCounter);
-        auto currentIfCandidate = std::move(IfOperations.top());
-        IfOperations.pop();
+        findControlFlowMerge(currentBlock, ifOperations, candidateEdgeCounter);
+        auto currentIfCandidate = std::move(ifOperations.top());
+        ifOperations.pop();
 
         if(currentIfCandidate->isTrueBranch) {//loop blocks can only occur in their true-branches
+            //todo handle loop returns or already do so above
             if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
                 candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             } else {
@@ -264,23 +283,23 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations
             currentIfCandidate->isTrueBranch = false; 
             mergeBlocks.emplace(currentBlock);
             currentBlock = currentIfCandidate->ifOp->getFalseBlockInvocation().getBlock();
-            IfOperations.emplace(std::move(currentIfCandidate));
+            ifOperations.emplace(std::move(currentIfCandidate));
         } else {
             assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
             candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             mergeBlocks.pop();
             while(!mergeBlocks.empty() && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) {
                 mergeBlocks.pop();
-                IfOperations.pop();
+                ifOperations.pop();
             }
             uint32_t openEdges = currentBlock->getPredecessors().size() - 
                     ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-                    candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->getIsLoopHeadBlock() : 0);
+                    candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 0);
             bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
             if(openMergeBlockFound) {
                 mergeBlocks.emplace(currentBlock);
-                IfOperations.top()->isTrueBranch = false;
-                currentBlock = IfOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
+                ifOperations.top()->isTrueBranch = false;
+                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
             }
         }
     }
