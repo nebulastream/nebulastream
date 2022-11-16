@@ -15,8 +15,8 @@
 #ifndef NES_MAINTENANCESERVICE_HPP
 #define NES_MAINTENANCESERVICE_HPP
 
-#include <Phases/MigrationType.hpp>
 #include <Common/Identifiers.hpp>
+#include <Phases/MigrationType.hpp>
 #include <memory>
 #include <optional>
 #include <string>

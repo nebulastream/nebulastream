@@ -27,7 +27,6 @@
 #include <sstream>
 #include <string>
 
-
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>

@@ -14,9 +14,9 @@
 
 #ifndef NES_INCLUDE_NETWORK_NESPARTITION_HPP_
 #define NES_INCLUDE_NETWORK_NESPARTITION_HPP_
+#include <Common/Identifiers.hpp>
 #include <cstdint>
 #include <string>
-#include <Common/Identifiers.hpp>
 
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;

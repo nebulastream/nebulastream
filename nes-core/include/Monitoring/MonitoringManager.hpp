@@ -15,10 +15,10 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Common/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <chrono>
