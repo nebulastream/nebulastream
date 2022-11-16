@@ -104,39 +104,40 @@ class WASMCompiler {
     int index;
     int argIndex;
 
-    void generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions);
+    void generateWASM(const IR::BasicBlockPtr& basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> funcOp);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AddOperation> addOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::SubOperation> subOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::DivOperation> divOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::LoadOperation> loadOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AddressOperation> addressOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::FunctionOperation>& funcOp);
+    void generateWASM(const std::shared_ptr<IR::Operations::ConstIntOperation>& constIntOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::ConstFloatOperation>& constFloatOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::ConstBooleanOperation>& constBooleanOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::AddOperation>& addOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::SubOperation>& subOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::DivOperation>& divOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::AddressOperation>& addressOp, BinaryenExpressions& module);
     void generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::CompareOperation> compareOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::BranchOperation> branchOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& module);
-    BinaryenType getType(IR::Types::StampPtr stampPtr);
-    BinaryenOp convertToInt32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
-    BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
-    BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
-    BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    void generateWASM(const std::shared_ptr<IR::Operations::CompareOperation>& compareOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::BranchOperation>& branchOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::ReturnOperation>& returnOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::ProxyCallOperation>& proxyCallOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::OrOperation>& yieldOperation, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::AndOperation>& yieldOperation, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::NegateOperation>& yieldOperation, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::CastOperation>& castOperation, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::LoopOperation>& loopOp, BinaryenExpressions& module);
+
+    static BinaryenOp convertToInt32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    static BinaryenOp convertToInt64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    static BinaryenOp convertToFloat32Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+    static BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
+
     void generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
                                              BinaryenExpressions blockArgs);
     void genBody(BinaryenExpressions expressions);
     BinaryenExpressionRef generateBody();
-    void convertConstToLocal(std::string& key, BinaryenExpressions expressions);
+    static BinaryenType getBinaryenType(const IR::Types::StampPtr& stampPtr);
 };
 }// namespace NES::Nautilus::Backends::WASM
 

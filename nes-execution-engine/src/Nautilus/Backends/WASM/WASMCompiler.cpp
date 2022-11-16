@@ -34,27 +34,19 @@ BinaryenModuleRef WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     consumed.clear();
     index = 0;
     argIndex = 0;
-    ir->toString();
+
     generateWASM(ir->getRootOperation());
-    //tmp();
+
     BinaryenModuleAutoDrop(wasm);
     if (!BinaryenModuleValidate(wasm)) {
         std::cout << "Generated pre-optimized wasm is incorrect!" << std::endl;
     }
-
-
     BinaryenModuleOptimize(wasm);
-    /*
-    if (!BinaryenModuleValidate(wasm)) {
-        std::cout << "Generated post-optimized wasm is incorrect!" << std::endl;
-    }
-    */
     BinaryenModulePrintStackIR(wasm, false);
     return wasm;
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperation> functionOp) {
-    //std::cout << "Handling FunctionOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOperation>& functionOp) {
     BinaryenExpressions bodyList;
     std::vector<BinaryenType> args;
     for (const auto& inputArg : functionOp->getFunctionBasicBlock()->getArguments()) {
@@ -88,7 +80,6 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperatio
     //Add function args
     auto argsArray = std::make_unique<BinaryenType[]>(args.size());
     int j = 0;
-
     for (const auto& x : args) {
         argsArray[j] = x;
         j++;
@@ -103,29 +94,22 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperatio
     }
 
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), j);
-    //BinaryenExpressionRef body = BinaryenBlock(wasm, "body", bodyArray.get(), i, BinaryenTypeAuto());
     BinaryenExpressionRef body = generateBody();
-    //BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, relooperBlocks[0].second, 0);
-    //BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments, getType(functionOp->getOutputArg()),
-    //                    varArray.get(), localVariables.size(), body);
-    BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments, getType(functionOp->getOutputArg()),
+    BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments,
+                        getBinaryenType(functionOp->getOutputArg()),
                         varArray.get(), index, body);
     BinaryenAddFunctionExport(wasm, functionOp->getName().c_str(), functionOp->getName().c_str());
     //TODO Add memory
 }
 
-void WASMCompiler::generateWASM(IR::BasicBlockPtr basicBlock, BinaryenExpressions& expressions) {
-    //std::cout << "Handling BasicBlock: " << basicBlock->getIdentifier() << std::endl;
+void WASMCompiler::generateWASM(const IR::BasicBlockPtr& basicBlock, BinaryenExpressions& expressions) {
     currentBlock = basicBlock;
-    currentExpressions.clear();
-    //std::cout << basicBlock->getIdentifier() << " - PRED: " << basicBlock->getPredecessors().size() << std::endl;
     for (const auto& operation : basicBlock->getOperations()) {
         generateWASM(operation, expressions);
     }
 }
 
 void WASMCompiler::generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& expressions) {
-    //std::cout << operation->toString() << "         USAGE: " << operation->getUsages().size() << std::endl;
     switch (operation->getOperationType()) {
         case IR::Operations::Operation::OperationType::FunctionOp:
             generateWASM(std::static_pointer_cast<IR::Operations::FunctionOperation>(operation), expressions);
@@ -194,14 +178,13 @@ void WASMCompiler::generateWASM(const IR::Operations::OperationPtr& operation, B
     }
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::NegateOperation> negateOperation, BinaryenExpressions& expressions) {
-    //std::cout << "Handling NegateOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::NegateOperation>& negateOperation, BinaryenExpressions& expressions) {
     auto input = expressions.getValue(negateOperation->getInput()->getIdentifier());
     auto x = negateOperation->toString();
     auto y = expressions.size();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::OrOperation> orOperation, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::OrOperation>& orOperation, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(orOperation->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(orOperation->getRightInput()->getIdentifier());
     BinaryenExpressionRef orOp = BinaryenBinary(wasm, BinaryenOrInt32(), left, right);
@@ -209,10 +192,9 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::OrOperation> orO
     consumed.emplace(orOperation->getLeftInput()->getIdentifier(), left);
     consumed.emplace(orOperation->getRightInput()->getIdentifier(), right);
     expressions.setValue(orOperation->getIdentifier(), orOp);
-    currentExpressions.setValue(orOperation->getIdentifier(), orOp);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AndOperation> andOperation, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AndOperation>& andOperation, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(andOperation->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(andOperation->getRightInput()->getIdentifier());
     BinaryenExpressionRef andOp = BinaryenBinary(wasm, BinaryenAndInt32(), left, right);
@@ -220,91 +202,50 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AndOperation> an
     consumed.emplace(andOperation->getLeftInput()->getIdentifier(), left);
     consumed.emplace(andOperation->getRightInput()->getIdentifier(), right);
     expressions.setValue(andOperation->getIdentifier(), andOp);
-    currentExpressions.setValue(andOperation->getIdentifier(), andOp);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::LoopOperation> loopOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling LoopOp!" << std::endl;
-    //auto loopExpression = BinaryenLoop(wasm, );
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoopOperation>& loopOp, BinaryenExpressions& expressions) {
     auto x = loopOp->toString();
     auto y = expressions.size();
 }
 
-//==--------------------------==//
-//==-- MEMORY (LOAD, STORE) --==//
-//==--------------------------==//
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AddressOperation> addressOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling AddressOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddressOperation>& addressOp, BinaryenExpressions& expressions) {
     auto x = addressOp->toString();
     auto y = expressions.size();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::LoadOperation> loadOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling LoadOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp, BinaryenExpressions& expressions) {
     auto x = loadOp->toString();
     auto y = expressions.size();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling ConstIntOp!" << std::endl;
-    //TODO: Check if var already exists
-    //std::cout << "VAR: " << constIntOp->toString() << " USAGE: " << constIntOp.get()->getUsages().size() << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstIntOperation>& constIntOp, BinaryenExpressions& expressions) {
     if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(constIntOp->getStamp().get())) {
         if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
-            localVariables.setUniqueValue(constIntOp->getIdentifier(), BinaryenTypeInt64());
-            auto x = BinaryenLocalSet(wasm, argIndex + index, BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
-            expressions.setValue("set_" + constIntOp->getIdentifier(), x);
-            auto y = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt64());
-            expressions.setValue(constIntOp->getIdentifier(), y);
-            consumed.emplace(constIntOp->getIdentifier(), y);
-            index++;
-            //expressions.setValue(constIntOp->getIdentifier(),
-            //                     BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
-            //currentExpressions.setValue(constIntOp->getIdentifier(),
-            //                     BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
-        } else {
-            /*
-            localVariables.setUniqueValue(constIntOp->getIdentifier(), BinaryenTypeInt32());
-            auto x = BinaryenLocalSet(wasm, argIndex + index, BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
-            expressions.setValue("set_" + constIntOp->getIdentifier(), x);
-            auto y = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt32());
-            expressions.setValue(constIntOp->getIdentifier(), y);
-            consumed.emplace(constIntOp->getIdentifier(), y);
-            index++;
-            */
             expressions.setValue(constIntOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
-            consumed.emplace(constIntOp->getIdentifier(), expressions.getValue(constIntOp->getIdentifier()));
-            //currentExpressions.setValue(constIntOp->getIdentifier(),
-            //                     BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
+                                 BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
+        } else {
+            expressions.setValue(constIntOp->getIdentifier(),
+                                 BinaryenConst(wasm, BinaryenLiteralInt32((int32_t)constIntOp->getConstantIntValue())));
         }
+        consumed.emplace(constIntOp->getIdentifier(), expressions.getValue(constIntOp->getIdentifier()));
     }
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling ConstFloatOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstFloatOperation>& constFloatOp, BinaryenExpressions& expressions) {
     if (auto floatStamp = cast_if<IR::Types::FloatStamp>(constFloatOp->getStamp().get())) {
         if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
-            //localVariables.emplace_back(BinaryenTypeFloat64());
             expressions.setValue(constFloatOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralFloat64(constFloatOp->getConstantFloatValue())));
-            currentExpressions.setValue(constFloatOp->getIdentifier(),
                                  BinaryenConst(wasm, BinaryenLiteralFloat64(constFloatOp->getConstantFloatValue())));
         } else {
-            //localVariables.emplace_back(BinaryenTypeFloat32());
             expressions.setValue(constFloatOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralFloat32(constFloatOp->getConstantFloatValue())));
-            currentExpressions.setValue(constFloatOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralFloat32(constFloatOp->getConstantFloatValue())));
+                                 BinaryenConst(wasm, BinaryenLiteralFloat32((float)constFloatOp->getConstantFloatValue())));
         }
+        consumed.emplace(constFloatOp->getIdentifier(), expressions.getValue(constFloatOp->getIdentifier()));
     }
 }
 
-//==---------------------------==//
-//==-- ARITHMETIC OPERATIONS --==//
-//==---------------------------==//
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AddOperation> addOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling AddOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddOperation>& addOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(addOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(addOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
@@ -323,11 +264,9 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::AddOperation> ad
     consumed.emplace(addOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(addOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(addOp->getIdentifier(), add);
-    currentExpressions.setValue(addOp->getIdentifier(), add);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::SubOperation> subOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling SubOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::SubOperation>& subOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(subOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(subOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
@@ -344,11 +283,9 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::SubOperation> su
     consumed.emplace(subOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(subOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(subOp->getIdentifier(), sub);
-    currentExpressions.setValue(subOp->getIdentifier(), sub);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::MulOperation> mulOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling MulOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(mulOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(mulOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
@@ -365,10 +302,9 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::MulOperation> mu
     consumed.emplace(mulOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(mulOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(mulOp->getIdentifier(), mul);
-    currentExpressions.setValue(mulOp->getIdentifier(), mul);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::DivOperation> divOp, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::DivOperation>& divOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(divOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(divOp->getRightInput()->getIdentifier());
     if (divOp->getStamp()->isFloat()) {
@@ -378,25 +314,22 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::DivOperation> di
     consumed.emplace(divOp->getRightInput()->getIdentifier(), right);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::StoreOperation> storeOp, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp, BinaryenExpressions& expressions) {
     //std::cout << "Handling StoreOp!" << std::endl;
     auto y = expressions.size();
     auto x = storeOp->toString();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ProxyCallOperation>& proxyCallOp, BinaryenExpressions& expressions) {
     //std::cout << "Handling ProxyCallOp!" << std::endl;
     auto y = expressions.size();
     auto x = proxyCallOp->toString();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::CompareOperation> compareOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling CompareOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::CompareOperation>& compareOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(compareOp->getLeftInput()->getIdentifier());
-    //std::cout << "LEFT USAGES: " << compareOp->getLeftInput()->getUsages().size() << std::endl;
     auto right = expressions.getValue(compareOp->getRightInput()->getIdentifier());
-    //std::cout << "RIGHT USAGES: " << compareOp->getRightInput()->getUsages().size() << std::endl;
-    auto leftType = getType(compareOp->getLeftInput()->getStamp());
+    auto leftType = getBinaryenType(compareOp->getLeftInput()->getStamp());
     BinaryenExpressionRef compExpression;
     if (compareOp->getComparator() < 10) {
         if (leftType == BinaryenTypeInt32()) {
@@ -411,47 +344,23 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::CompareOperation
             compExpression = BinaryenBinary(wasm, convertToFloat64Comparison(compareOp->getComparator()), left, right);
         }
     }
-    //consumed.emplace(compareOp->getLeftInput()->getIdentifier(), left);
-    //consumed.emplace(compareOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(compareOp->getIdentifier(), compExpression);
-    currentExpressions.setValue(compareOp->getIdentifier(), compExpression);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::CastOperation> castOperation,
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::CastOperation>& castOperation,
                                         BinaryenExpressions& expressions) {
-    //std::cout << "Handling CastOp!" << std::endl;
     auto y = expressions.size();
     auto x = castOperation->toString();
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp,
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstBooleanOperation>& constBooleanOp,
                                         BinaryenExpressions& expressions) {
-    //std::cout << "Handling ConstBooleanOp!" << std::endl;
     if (constBooleanOp->getValue()) {
         expressions.setValue(constBooleanOp->getIdentifier(),
                              BinaryenConst(wasm, BinaryenLiteralInt32(1)));
     } else {
         expressions.setValue(constBooleanOp->getIdentifier(),
                              BinaryenConst(wasm, BinaryenLiteralInt32(0)));
-    }
-}
-
-BinaryenType WASMCompiler::getType(IR::Types::StampPtr stampPtr) {
-    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stampPtr.get())) {
-        if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
-            return BinaryenTypeInt64();
-        } else {
-            return BinaryenTypeInt32();
-        }
-    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stampPtr.get())) {
-        if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
-            return BinaryenTypeFloat64();
-        } else {
-            return BinaryenTypeFloat32();
-        }
-    } else {
-        //Return Boolean as Int32
-        return BinaryenTypeInt32();
     }
 }
 
@@ -509,8 +418,7 @@ BinaryenOp WASMCompiler::convertToFloat64Comparison(IR::Operations::CompareOpera
     }
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling ReturnOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ReturnOperation>& returnOp, BinaryenExpressions& expressions) {
     BinaryenExpressionRef ret;
     if (!returnOp->hasReturnValue()) {
         ret = BinaryenReturn(wasm, nullptr);
@@ -520,25 +428,16 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ReturnOperation>
         consumed.emplace(returnOp->getReturnValue()->getIdentifier(), returnExp);
     }
     expressions.setValue(returnOp->getIdentifier(), ret);
-    currentExpressions.setValue(returnOp->getIdentifier(), ret);
     genBody(expressions);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::BranchOperation> branchOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling branchOp!" << std::endl;
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOperation>& branchOp, BinaryenExpressions& expressions) {
     BinaryenExpressions blockArgs;
-    /*
-    for (const auto& targetBlockArgument : branchOp->getNextBlockInvocation().getArguments()) {
-        blockArgs.setValue(targetBlockArgument->getIdentifier(), expressions.getValue(targetBlockArgument->getIdentifier()));
-    }
-    */
-    std::cout << "BLOCK: " << currentBlock->getIdentifier() << std::endl;
-    auto currentTrue = branchOp->getNextBlockInvocation().getArguments();
-    auto nextTrue = branchOp->getNextBlockInvocation().getBlock()->getArguments();
+    auto currentTrueArguments = branchOp->getNextBlockInvocation().getArguments();
+    auto nextTrueArguments = branchOp->getNextBlockInvocation().getBlock()->getArguments();
     for(int i = 0; i < (int)branchOp->getNextBlockInvocation().getArguments().size(); i++) {
-        //std::cout << "BRANCH ARGS: " << currentTrue[i]->getIdentifier() << " - " << nextTrue[i]->getIdentifier() << std::endl;
         BinaryenExpressionRef localGet;
-        auto currVar = expressions.getValue(currentTrue[i]->getIdentifier());
+        auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
 
         /**
          * local.get corresponds to BinaryenExpressionGetId(expression) == 8
@@ -549,74 +448,58 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::BranchOperation>
         /**
          * The local variable for the next block already exists
          */
-            if (localVarMapping.contains("set_" + nextTrue[i]->getIdentifier())) {
-                //std::cout << "Got it! " << nextTrue[i]->getIdentifier() << std::endl;
+            if (localVarMapping.contains("set_" + nextTrueArguments[i]->getIdentifier())) {
                 auto u =
                     BinaryenLocalSet(wasm,
-                                     BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextTrue[i]->getIdentifier())),
-                                     expressions.getValue(currentTrue[i]->getIdentifier()));
-                expressions.setValue("set_" + nextTrue[i]->getIdentifier(), u);
-                localGet = localVarMapping.getValue(nextTrue[i]->getIdentifier());
+                                     BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextTrueArguments[i]->getIdentifier())),
+                                     expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+                expressions.setValue("set_" + nextTrueArguments[i]->getIdentifier(), u);
+                localGet = localVarMapping.getValue(nextTrueArguments[i]->getIdentifier());
             }
             /**
             * Create a new local variable which will be passed into the next block as a block argument
             */
             else {
-                localVariables.setUniqueValue(nextTrue[i]->getIdentifier(), BinaryenTypeInt32());
-                auto x = BinaryenLocalSet(wasm, argIndex + index, expressions.getValue(currentTrue[i]->getIdentifier()));
-                expressions.setValue("set_" + nextTrue[i]->getIdentifier(), x);
-                localVarMapping.setValue("set_" + nextTrue[i]->getIdentifier(), x);
+                localVariables.setUniqueValue(nextTrueArguments[i]->getIdentifier(), BinaryenTypeInt32());
+                auto x = BinaryenLocalSet(wasm, argIndex + index, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+                expressions.setValue("set_" + nextTrueArguments[i]->getIdentifier(), x);
+                localVarMapping.setValue("set_" + nextTrueArguments[i]->getIdentifier(), x);
                 localGet = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt32());
-                expressions.setValue(nextTrue[i]->getIdentifier(), localGet);
-                localVarMapping.setValue(nextTrue[i]->getIdentifier(), localGet);
-                consumed.emplace(nextTrue[i]->getIdentifier(), localGet);
+                expressions.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
+                localVarMapping.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
+                consumed.emplace(nextTrueArguments[i]->getIdentifier(), localGet);
                 index++;
             }
         }
-
-        blockArgs.setValue(nextTrue[i]->getIdentifier(), localGet);
-        //expressions.setValue(blockArg->getIdentifier(), expressions.getValue(blockArg->getIdentifier()));
+        blockArgs.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
     }
-
-    //blockLinking.setValue(currentBlock->getIdentifier(), branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
     blockLinking.emplace_back(std::make_tuple(currentBlock->getIdentifier(),
                                               branchOp->getNextBlockInvocation().getBlock()->getIdentifier(),
                                               nullptr));
     genBody(expressions);
-
     generateBasicBlock(branchOp->getNextBlockInvocation(), blockArgs);
-    //expressions.setValue(branchOp->getIdentifier(), tmp);
-    //currentExpressions.setValue(branchOp->getIdentifier(), tmp);
-
 }
 
 void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressions& expressions) {
-    //std::cout << "Handling ifOp!" << std::endl;
-    std::cout << currentBlock->getIdentifier() << " - MergeBlock: " << ifOp->getMergeBlock()->getIdentifier() << std::endl;
-    std::cout << ifOp->getMergeBlock()->getPredecessors()[0].lock()->getIdentifier()
-              << " - " << ifOp->getMergeBlock()->getPredecessors()[1].lock()->getIdentifier() << std::endl;
-    BinaryenExpressionRef trueBlock, falseBlock;
     BinaryenExpressions trueBlockArgs, falseBlockArgs;
 
-    //blockLinking.setValue(currentBlock->getIdentifier(), ifOp->getFalseBlockInvocation().getBlock()->getIdentifier());
     blockLinking.emplace_back(std::make_tuple(currentBlock->getIdentifier(),
                                               ifOp->getFalseBlockInvocation().getBlock()->getIdentifier(),
                                               nullptr));
-    //blockLinking.setValue(currentBlock->getIdentifier(), ifOp->getTrueBlockInvocation().getBlock()->getIdentifier());
     /**
      * We link to the true block which needs to satisfy the condition. Therefore, save the condition
-     * for creating the branch later on
+     * for creating the branch later on in generateBody()
      */
     blockLinking.emplace_back(std::make_tuple(currentBlock->getIdentifier(),
                                               ifOp->getTrueBlockInvocation().getBlock()->getIdentifier(),
                                               expressions.getValue(ifOp->getValue()->getIdentifier())));
     consumed.emplace(ifOp->getValue()->getIdentifier(), expressions.getValue(ifOp->getValue()->getIdentifier()));
 
-    auto currentTrue = ifOp->getTrueBlockInvocation().getArguments();
+    auto currentTrueArguments = ifOp->getTrueBlockInvocation().getArguments();
     auto nextTrue = ifOp->getTrueBlockInvocation().getBlock()->getArguments();
     for(int i = 0; i < (int)ifOp->getTrueBlockInvocation().getArguments().size(); i++) {
         BinaryenExpressionRef localGet;
-        auto currVar = expressions.getValue(currentTrue[i]->getIdentifier());
+        auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {
             localGet = currVar;
         } else {
@@ -624,12 +507,13 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
                 auto u =
                     BinaryenLocalSet(wasm,
                                      BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextTrue[i]->getIdentifier())),
-                                     expressions.getValue(currentTrue[i]->getIdentifier()));
+                                     expressions.getValue(currentTrueArguments[i]->getIdentifier()));
                 expressions.setValue("set_" + nextTrue[i]->getIdentifier(), u);
                 localGet = localVarMapping.getValue(nextTrue[i]->getIdentifier());
             } else {
+                //TODO: Retrieve type!
                 localVariables.setUniqueValue(nextTrue[i]->getIdentifier(), BinaryenTypeInt32());
-                auto x = BinaryenLocalSet(wasm, argIndex + index, expressions.getValue(currentTrue[i]->getIdentifier()));
+                auto x = BinaryenLocalSet(wasm, argIndex + index, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
                 expressions.setValue("set_" + nextTrue[i]->getIdentifier(), x);
                 localVarMapping.setValue("set_" + nextTrue[i]->getIdentifier(), x);
                 localGet = BinaryenLocalGet(wasm, argIndex + index, BinaryenTypeInt32());
@@ -639,9 +523,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
                 index++;
             }
         }
-
         trueBlockArgs.setValue(nextTrue[i]->getIdentifier(), localGet);
-        //expressions.setValue(blockArg->getIdentifier(), expressions.getValue(blockArg->getIdentifier()));
     }
 
     auto currentFalse = ifOp->getFalseBlockInvocation().getArguments();
@@ -650,8 +532,6 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
         BinaryenExpressionRef localGet;
         auto currVar = expressions.getValue(currentFalse[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {
-            std::cout << currentFalse[i]->getIdentifier() << "-----" << nextFalse[i]->getIdentifier() << std::endl;
-            BinaryenExpressionPrint(localVarMapping.getValue(currentFalse[i]->getIdentifier()));
             localGet = currVar;
         } else {
             if (localVarMapping.contains("set_" + nextFalse[i]->getIdentifier())) {
@@ -673,19 +553,11 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
                 index++;
             }
         }
-
         falseBlockArgs.setValue(nextFalse[i]->getIdentifier(), localGet);
     }
-    std::cout << "YOLO " << falseBlockArgs.size() << "   ";
-    BinaryenExpressionPrint(falseBlockArgs[0].second);
     genBody(expressions);
     generateBasicBlock(ifOp->getTrueBlockInvocation(), trueBlockArgs);
     generateBasicBlock(ifOp->getFalseBlockInvocation(), falseBlockArgs);
-
-    //auto ifOperation = BinaryenIf(wasm, expressions.getValue(ifOp->getValue()->getIdentifier()), trueBlock, falseBlock);
-    //expressions.setValue(ifOp->getIdentifier(), ifOperation);
-    //currentExpressions.setValue(ifOp->getIdentifier(), ifOperation);
-    //consumed.emplace(ifOp->getValue()->getIdentifier(), expressions.getValue(ifOp->getValue()->getIdentifier()));
 }
 
 void WASMCompiler::genBody(BinaryenExpressions expressions) {
@@ -695,94 +567,54 @@ void WASMCompiler::genBody(BinaryenExpressions expressions) {
         if (!consumed.contains(exp.first)) {
             bodyArray[i] = exp.second;
             i++;
-            //consumed.emplace(exp.first, exp.second);
         }
     }
-    /*
-    std::cout << "Current Block: " << currentBlock->getIdentifier() << std::endl;
-    for (int j = 0; j < i; ++j) {
-        BinaryenExpressionPrint(bodyArray[j]);
-    }
-    */
     auto x = BinaryenBlock(wasm, currentBlock->getIdentifier().c_str(), bodyArray.get(), i, BinaryenTypeAuto());
     blocks.setUniqueValue(currentBlock->getIdentifier(), x);
 }
 
 void WASMCompiler::generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation,
                                                        BinaryenExpressions expressions) {
-    //std::cout << "Handling generateBasicBlock!" << std::endl;
     auto targetBlock = blockInvocation.getBlock();
-
     if (!blocks.contains(targetBlock->getIdentifier())) {
-        /*
-        auto targetBlockArguments = targetBlock->getArguments();
-        // Add attributes as arguments to block.
-        BinaryenExpressions nextExpressions;
-        int i = 0;
-        for (const auto& headBlockHeadTypes : targetBlockArguments) {
-            //expressions.setValue(headBlockHeadTypes->getIdentifier(), expressions[i].second);
-            //consumed.emplace(headBlockHeadTypes->getIdentifier(), expressions[i].second);
-            expressions.setValue(headBlockHeadTypes->getIdentifier(), expressions[i].second);
-            consumed.emplace(headBlockHeadTypes->getIdentifier(), expressions[i].second);
-            i++;
-        }
-        */
         generateWASM(targetBlock, expressions);
     }
-    /*
-    auto bodyArray = std::make_unique<BinaryenExpressionRef[]>(expressions.size());
-    int j = 0;
-    for (const auto& exp : expressions.getMapping()) {
-        if (!consumed.contains(exp.first)) {
-            bodyArray[j] = exp.second;
-            j++;
-        }
-    }
+}
 
-    BinaryenExpressionRef basicBlock = BinaryenBlock(wasm, targetBlock->getIdentifier().c_str(),
-                                                     bodyArray.get(), j, BinaryenTypeAuto());
-    //blocks.setUniqueValue(targetBlock->getIdentifier(), basicBlock);
-    return basicBlock;
-    */
+BinaryenType WASMCompiler::getBinaryenType(const IR::Types::StampPtr& stampPtr) {
+    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stampPtr.get())) {
+        if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
+            return BinaryenTypeInt64();
+        } else {
+            return BinaryenTypeInt32();
+        }
+    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stampPtr.get())) {
+        if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
+            return BinaryenTypeFloat64();
+        } else {
+            return BinaryenTypeFloat32();
+        }
+    } else {
+        //Return Boolean as Int32
+        return BinaryenTypeInt32();
+    }
 }
 
 BinaryenExpressionRef WASMCompiler::generateBody() {
-
     for (const auto& block : blocks.getMapping()) {
         relooperBlocks.setValue(block.first, RelooperAddBlock(relooper, block.second));
-        std::cout << block.first << "=";
-        BinaryenExpressionPrint(block.second);
     }
-
-    //std::cout << "HERE: Size " << blockLinking.size() << ": "<< blockLinking[1].first << " - " << blockLinking[1].second << std::endl;
     for (const auto& link : blockLinking) {
         auto fromBlock = std::get<0>(link);
         auto toBlock = std::get<1>(link);
         auto condition = std::get<2>(link);
-        //std::cout << fromBlock << " -> " << toBlock << std::endl;
-        //if (fromBlock != "2" && toBlock != "2") {
-            if (condition != nullptr) {
-                RelooperAddBranch(relooperBlocks.getValue(fromBlock), relooperBlocks.getValue(toBlock), condition, nullptr);
-            } else {
-                RelooperAddBranch(relooperBlocks.getValue(fromBlock), relooperBlocks.getValue(toBlock), nullptr, nullptr);
-            }
-        //}
+        if (condition != nullptr) {
+            RelooperAddBranch(relooperBlocks.getValue(fromBlock), relooperBlocks.getValue(toBlock), condition, nullptr);
+        } else {
+            RelooperAddBranch(relooperBlocks.getValue(fromBlock), relooperBlocks.getValue(toBlock), nullptr, nullptr);
+        }
     }
     return RelooperRenderAndDispose(relooper, relooperBlocks[0].second, 0);
 }
 
-void WASMCompiler::convertConstToLocal(std::string& key, BinaryenExpressions expressions) {
-    auto constValue = expressions.getValue(key);
-    localVariables.setValue(key, BinaryenExpressionGetType(constValue));
-    BinaryenExpressionRef x = BinaryenLocalSet(wasm, argIndex + index, constValue);
-    index++;
-    //Remove Const since we are adding it as a local
-    expressions.remove(key);
-    expressions.setValue(key, x);
-}
-/*
-BinaryenExpressionRef WASMCompiler::generateLocalGet(std::string& key) {
-    return BinaryenLocalGet(wasm, localVariables.getIndex(key), localVariables.getValue(key));
-}
-*/
 }// namespace NES::Nautilus::Backends::WASM
