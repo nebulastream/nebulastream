@@ -25,14 +25,16 @@ BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel), isLoopHeadBlock(false), operations(std::move(operations)),
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), blockType(BlockType::None), operations(std::move(operations)),
       arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLevel; }
-int32_t BasicBlock::getIsLoopHeadBlock() { return isLoopHeadBlock; }
-void BasicBlock::setIsLoopHeadBlock(bool isLoopHeadBlock) { this->isLoopHeadBlock = isLoopHeadBlock; }
+bool BasicBlock::isLoopHeadBlock() { return blockType == BlockType::LoopBlock; }
+bool BasicBlock::isIfBlock() { return blockType == BlockType::IfBlock; }
+void BasicBlock::setBlockType(BlockType blockType) { this->blockType = blockType; }
+BasicBlock::BlockType BasicBlock::getBlockType() { return this->blockType; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
