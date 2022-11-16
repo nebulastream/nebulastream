@@ -77,6 +77,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::FunctionOperatio
                 argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt32());
             }
         }
+        localVarMapping.setValue(inputArg->getIdentifier(), argExpression);
         bodyList.setValue(inputArg->getIdentifier(), argExpression);
         consumed.emplace(inputArg->getIdentifier(), argExpression);
         argIndex++;
@@ -273,6 +274,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::ConstIntOperatio
             */
             expressions.setValue(constIntOp->getIdentifier(),
                                  BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
+            consumed.emplace(constIntOp->getIdentifier(), expressions.getValue(constIntOp->getIdentifier()));
             //currentExpressions.setValue(constIntOp->getIdentifier(),
             //                     BinaryenConst(wasm, BinaryenLiteralInt32(constIntOp->getConstantIntValue())));
         }
@@ -646,8 +648,10 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
     auto nextFalse = ifOp->getFalseBlockInvocation().getBlock()->getArguments();
     for(int i = 0; i < (int)ifOp->getFalseBlockInvocation().getArguments().size(); i++) {
         BinaryenExpressionRef localGet;
-        auto currVar = expressions.getValue(currentTrue[i]->getIdentifier());
+        auto currVar = expressions.getValue(currentFalse[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {
+            std::cout << currentFalse[i]->getIdentifier() << "-----" << nextFalse[i]->getIdentifier() << std::endl;
+            BinaryenExpressionPrint(localVarMapping.getValue(currentFalse[i]->getIdentifier()));
             localGet = currVar;
         } else {
             if (localVarMapping.contains("set_" + nextFalse[i]->getIdentifier())) {
@@ -672,7 +676,8 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
 
         falseBlockArgs.setValue(nextFalse[i]->getIdentifier(), localGet);
     }
-
+    std::cout << "YOLO " << falseBlockArgs.size() << "   ";
+    BinaryenExpressionPrint(falseBlockArgs[0].second);
     genBody(expressions);
     generateBasicBlock(ifOp->getTrueBlockInvocation(), trueBlockArgs);
     generateBasicBlock(ifOp->getFalseBlockInvocation(), falseBlockArgs);
@@ -707,7 +712,7 @@ void WASMCompiler::generateBasicBlock(IR::Operations::BasicBlockInvocation& bloc
                                                        BinaryenExpressions expressions) {
     //std::cout << "Handling generateBasicBlock!" << std::endl;
     auto targetBlock = blockInvocation.getBlock();
-    // TODO Check if the block already exists. If yes -> phi node?
+
     if (!blocks.contains(targetBlock->getIdentifier())) {
         /*
         auto targetBlockArguments = targetBlock->getArguments();
