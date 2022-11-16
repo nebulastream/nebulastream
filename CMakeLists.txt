@@ -568,6 +568,9 @@ if (NES_USE_TF)
         set(LIBRARIES ${LIBRARIES} tensorflowlite_c::tensorflowlite_c)
         message(INFO "${LIBRARIES}")
     endif ()
+
+    # Include tensorflow library in the deb package and install it in the lib folder
+    install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION lib)
     add_compile_definitions(TFDEF)
 endif ()
 
