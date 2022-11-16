@@ -61,7 +61,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
         uint64_t type;
         std::string data;
     };
-    static_assert(sizeof(Record) == 72);
+    ASSERT_EQ(sizeof(Record), 72);
 
     auto schema = Schema::create()
                       ->addField("cameraId", DataTypeFactory::createUInt64())
