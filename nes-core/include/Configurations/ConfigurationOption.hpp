@@ -273,6 +273,7 @@ const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 const std::string TCP_SOURCE_CONFIG = "TCPSource";
+const std::string LORAWAN_PROXY_SOURCE_CONFIG = "LoRaWANProxySource";
 
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
@@ -322,7 +323,11 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
-//Runtine configuration
+//LoRaWANProxySourceType configs
+const std::string LORAWAN_NETWORK_STACK_CONFIG = "networkStack";
+const std::string LORAWAN_APP_ID_CONFIG = "appId";
+
+//Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
 const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";

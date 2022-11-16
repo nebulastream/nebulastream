@@ -27,4 +27,5 @@ add_source_files(nes-core
         MaterializedViewSourceType.cpp
         StaticDataSourceType.cpp
         TCPSourceType.cpp
+        LoRaWANProxySourceType.cpp
 )

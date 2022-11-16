@@ -41,7 +41,8 @@ enum SourceType {
     BENCHMARK_SOURCE,
     MATERIALIZEDVIEW_SOURCE,
     STATIC_DATA_SOURCE,
-    TCP_SOURCE
+    TCP_SOURCE,
+    LORAWAN_SOURCE
 };
 
 /**
@@ -56,6 +57,7 @@ static std::map<std::string, SourceType> stringToSourceType{
     {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
     {Configurations::OPC_SOURCE_CONFIG, OPC_SOURCE},
     {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, MATERIALIZEDVIEW_SOURCE},
+    {Configurations::LORAWAN_PROXY_SOURCE_CONFIG, LORAWAN_SOURCE},
     {Configurations::DEFAULT_SOURCE_CONFIG, DEFAULT_SOURCE}};
 
 /**
@@ -70,7 +72,8 @@ static std::map<SourceType, std::string> sourceTypeToString{
     {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
     {OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
     {MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
-    {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG}};
+    {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG},
+    {LORAWAN_SOURCE, Configurations::LORAWAN_PROXY_SOURCE_CONFIG}};
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
