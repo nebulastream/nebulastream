@@ -21,9 +21,8 @@ namespace NES::Runtime::Execution::Operators {
 
 class ThresholdWindowAggregationState : public OperatorState {
   public:
-    ThresholdWindowAggregationState()
-        : sum(0) {}
-    int64_t sum;
+    explicit ThresholdWindowAggregationState(const Value<>& value) : sum(value) {}
+    Value<> sum;
 };
 
 /**

@@ -15,6 +15,7 @@
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -30,11 +31,12 @@ extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
 
 extern "C" int64_t getSumAggregate(void* state) {
     auto thresholdWindowAggregationState = (ThresholdWindowAggregationState*) state;
-    return thresholdWindowAggregationState->sum;
+    auto sum = thresholdWindowAggregationState->sum.as<Nautilus::Int64>();
+    return sum.getValue().getValue();
 }
 
 void ThresholdWindow::setup(ExecutionContext& executionCtx) const {
-    auto globalState = std::make_unique<ThresholdWindowAggregationState>();
+    auto globalState = std::make_unique<ThresholdWindowAggregationState>((uint64_t) 0);
     executionCtx.setGlobalOperatorState(this, std::move(globalState));
     Operator::setup(executionCtx);
 }
