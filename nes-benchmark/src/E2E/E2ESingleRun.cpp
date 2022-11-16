@@ -63,7 +63,8 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::DEFAULT;
+//    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::DEFAULT;
+    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
