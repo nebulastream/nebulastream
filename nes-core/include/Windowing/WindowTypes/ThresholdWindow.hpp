@@ -24,7 +24,7 @@ class ThresholdWindow : public ContentBasedWindowType {
   public:
     static WindowTypePtr of(ExpressionNodePtr predicate);
 
-    static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t miniumCount);
+    static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t minimumCount);
 
     /**
     * @brief Returns true, because this a threshold window
@@ -38,14 +38,14 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     [[nodiscard]] const ExpressionNodePtr& getPredicate() const;
 
-    uint64_t getMiniumCount();
+    uint64_t getMinimumCount();
 
   private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
 
     ExpressionNodePtr predicate;
-    uint64_t miniumCount = 0;
+    uint64_t minimumCount = 0;
 };
 
 }// namespace NES::Windowing
