@@ -13,6 +13,7 @@ limitations under the License.
 */
 
 
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoin.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -33,6 +34,44 @@ BloomFilter::BloomFilter(uint64_t entries, double falsePositiveRate) {
         bytes += 1;
     }
 
-    
+    noHashes = (uint16_t) std::ceil(std::log(2) * bitsPerEntry);
+    bitField = NES::Runtime::Execution::detail::allocAligned<uint8_t>(bytes, 64);
+    std::memset(bitField, 0, bytes);
 }
+
+void BloomFilter::add(uint64_t hash) {
+    uint32_t lower32Bits = hash & ((1UL << 32) - 1);
+    uint32_t upper32Bits = hash >> 32;
+
+    for (uint16_t i = 0; i < noHashes; ++i) {
+        uint32_t x = (lower32Bits + i * upper32Bits) % noBits;
+        *(bitField + (x >> 3)) |= (1 << (x & 7));
+    }
+}
+
+bool BloomFilter::contains(uint64_t key) {
+    uint16_t hits = 0;
+
+    auto hash = LazyJoin::hash(key);
+    uint32_t lower32Bits = hash & ((1UL << 32) - 1);
+    uint32_t upper32Bits = hash >> 32;
+
+    for (uint16_t i = 0; i < noHashes; ++i) {
+        uint32_t x = (lower32Bits + i * upper32Bits) % noBits;
+        if (*(bitField + (x >> 3)) & (1 << (x & 7))) {
+            ++hits;
+        } else {
+            return false;
+        }
+    }
+
+    return (hits == noHashes);
+}
+
+BloomFilter::~BloomFilter() {
+    if (bitField) {
+        delete[] bitField;
+    }
+}
+
 } // namespace NES::Runtime::Execution::Operators

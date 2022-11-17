@@ -11,24 +11,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#ifndef NES_LAZYJOINOPERATORHANDLER_HPP
+#define NES_LAZYJOINOPERATORHANDLER_HPP
 
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoin.hpp>
-
-namespace NES::Runtime::Execution::Operators {
-
-void LazyJoin::execute(ExecutionContext& ctx, Record& record) const {
-
-}
-uint64_t LazyJoin::hash(uint64_t key) {
-    uint64_t hash = key;
-
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xff51afd7ed558ccd);
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-    hash ^= hash >> 33;
-
-    return hash;
-}
+namespace NES::Runtime::Execution {
+class LazyJoinOperatorHandler {};
 
 } // namespace NES::Runtime::Execution::Operators
+#endif//NES_LAZYJOINOPERATORHANDLER_HPP

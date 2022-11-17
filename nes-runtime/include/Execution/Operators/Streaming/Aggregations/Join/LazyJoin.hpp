@@ -19,8 +19,15 @@ namespace NES::Runtime::Execution::Operators {
 
 class LazyJoin : public ExecutableOperator {
 
-
+  public:
     void execute(ExecutionContext& ctx, Record& record) const override;
+
+    /**
+     * @brief hashes the key with murmur hash
+     * @param key
+     * @return calculated hash
+     */
+    static uint64_t hash(uint64_t key);
 };
 
 
