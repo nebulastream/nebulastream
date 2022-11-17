@@ -61,10 +61,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     try {
         // Checking the syntactic validity and compiling the query string to an object
         NES_INFO("QueryService: check validation of a query.");
-        QueryPtr query = syntacticQueryValidation->validate(queryString);
+        QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
-        //Assign additional configurations
-        QueryPlanPtr queryPlan = query->getQueryPlan();
         queryPlan->setQueryId(queryId);
         queryPlan->setFaultToleranceType(faultTolerance);
         queryPlan->setLineageType(lineage);

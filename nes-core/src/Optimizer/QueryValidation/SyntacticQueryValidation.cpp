@@ -29,18 +29,24 @@ SyntacticQueryValidationPtr SyntacticQueryValidation::create(QueryParsingService
     return std::make_shared<SyntacticQueryValidation>(queryParsingService);
 }
 
-NES::QueryPtr SyntacticQueryValidation::validate(const std::string& inputQuery) {
-    NES::QueryPtr query = nullptr;
+NES::QueryPlanPtr SyntacticQueryValidation::validate(const std::string& inputQuery) {
+    NES::QueryPlanPtr queryPlan = nullptr;
     try {
         // Compiling the query string to an object
+        //first check which ParsingService (C++,PSL,SQL) is required, than try to create object
+        if (inputQuery.starts_with("PATTERN")) {
+            NES_DEBUG("SyntacticQueryValidation: parse pattern query from declarative PSL.");
+            queryPlan = queryParsingService->createPatternFromCodeString(inputQuery);
+        }else{
+            NES_DEBUG("SyntacticQueryValidation: parse C++ query from query string.");
+            queryPlan = queryParsingService->createQueryFromCodeString(inputQuery);
+        }
         // If it's unsuccessful, the validity check fails
-        // If it's successful, we return the created object
-        query = queryParsingService->createQueryFromCodeString(inputQuery);
-        return query;
     } catch (const std::exception& ex) {
         handleException(ex);
     }
-    return query;
+    // If it's successful, we return the created object
+    return queryPlan;
 }
 
 void SyntacticQueryValidation::handleException(const std::exception& ex) {
