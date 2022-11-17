@@ -32,8 +32,7 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <iostream>
-#include <numeric>
-
+#include <Plans/Query/QueryPlanBuilder.h>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
 #include <utility>
@@ -397,6 +396,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+    //QueryPlanBuilder::addJoinOperatorNode(this->queryPlan, subQueryRhs.getQueryPlan(), onLeftKey, onRightKey, windowType, joinType );
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
