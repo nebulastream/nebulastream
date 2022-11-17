@@ -11,18 +11,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef NES_LAZYJOINOPERATORHANDLER_HPP
-#define NES_LAZYJOINOPERATORHANDLER_HPP
+#ifndef NES_SHAREDJOINHASHTABLE_HPP
+#define NES_SHAREDJOINHASHTABLE_HPP
 
-#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
+namespace NES::Runtime::Execution::Operators {
 
-namespace NES::Runtime::Execution {
-class LazyJoinOperatorHandler {
+/**
+ * @brief This class implements a shared hash table for one of the join sides
+ *
+ */
+class SharedJoinHashTable {
 
 
   private:
 
 };
-
 } // namespace NES::Runtime::Execution::Operators
-#endif//NES_LAZYJOINOPERATORHANDLER_HPP
+#endif//NES_SHAREDJOINHASHTABLE_HPP
