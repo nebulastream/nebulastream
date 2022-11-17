@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/KafkaSource.hpp>
@@ -82,7 +82,8 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
                 const uint64_t payloadSize = msg.get_payload().get_size();
 
-                NES_INFO("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
+                NES_ASSERT(msg.get_payload().get_size() < buffer.getBuffer().size(), "The buffer is not large enough");
+                NES_TRACE("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
                                                     << ", msg: " << msg.get_payload());
 
                 std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
@@ -158,5 +159,5 @@ std::string KafkaSource::getGroupId() const { return groupId; }
 bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
-
+#endif
 }// namespace NES

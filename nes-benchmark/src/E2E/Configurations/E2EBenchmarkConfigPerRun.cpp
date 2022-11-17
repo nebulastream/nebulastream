@@ -22,7 +22,6 @@ namespace NES::Benchmark {
         numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "No. Worker Threads");
         numBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
         bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
-
         numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Overall buffer count");
         numberOfBuffersPerPipeline = ConfigurationOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Buffer per pipeline");
         numberOfBuffersInSourceLocalBufferPool = ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 128, "Buffer per source");

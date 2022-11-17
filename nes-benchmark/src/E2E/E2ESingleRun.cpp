@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-//#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h"
-#include <E2E/E2ESingleRun.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
@@ -63,7 +61,6 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-//    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::DEFAULT;
     coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
@@ -76,13 +73,13 @@ void E2ESingleRun::createSources() {
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
     for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                           configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+                                                                      configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
 
         auto dataGenerator =
             DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), bufferManager);
 
-        auto createdBuffers =
-            dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(), configPerRun.bufferSizeInBytes->getValue());
+        auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
+                                                        configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
         auto logicalStreamName = configOverAllRuns.logicalStreamName->getValue();
@@ -104,7 +101,6 @@ void E2ESingleRun::createSources() {
                 size_t len = createdBuffers[cnt].getBufferSize();
                 std::vector<uint8_t> bytes(buffer, buffer + len);
                 try {
-//                    std::cout << "produce message to topic=" << connectionStringVec[1] << std::endl;
                     producer.produce(cppkafka::MessageBuilder(connectionStringVec[1]).partition(0).payload(bytes));
                     producer.flush(std::chrono::seconds(100));
                 } catch (const std::exception& ex) {
@@ -113,11 +109,9 @@ void E2ESingleRun::createSources() {
                     std::cout << ex << std::endl;
                 } catch (...) {
                 }
-                if(cnt % 1000 == 0)
-                {
+                if (cnt % 1000 == 0) {
                     std::cout << "number of buffers prod=" << cnt << std::endl;
                 }
-
             }
             producer.flush(std::chrono::seconds(100));
 
@@ -264,7 +258,7 @@ void E2ESingleRun::stopQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
-    //    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     queryService->validateAndQueueStopQueryRequest(queryId);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {

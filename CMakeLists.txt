@@ -420,7 +420,7 @@ endif ()
 if (NES_USE_KAFKA)
     include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
-       add_compile_definitions(ENABLE_KAFKA_BUILD)
+    add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 
 # Library containing OPC client

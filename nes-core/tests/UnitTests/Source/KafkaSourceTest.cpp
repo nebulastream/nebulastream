@@ -35,9 +35,6 @@
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 
-//#include <cppkafka/cppkafka.h>
-//#include "/home/zeuchste/git/cppkafka/build/include/cppkafka/cppkafka.h"
-//#include "/home/zeuchste/git/cppkafka/include/cppkafka/cppkafka.h>
 #include <cppkafka/cppkafka.h>
 
 #ifndef OPERATORID
@@ -51,7 +48,11 @@
 const std::string KAFKA_BROKER = "localhost:9092";
 
 namespace NES {
+#ifdef ENABLE_KAFKA_BUILD
 
+/**
+ * NOTE: this test requires a running kafka instance
+ */
 class KafkaSourceTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
@@ -89,9 +90,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
 
     const std::string brokers = std::string(KAFKA_BROKER);
     const std::string topic = std::string("nes");
-    //    const std::string topic = std::string("benchmark_old");
     const std::string groupId = std::string("nes");
-    //    const std::string groupId = std::string("group1");
 };
 
 /**
@@ -139,7 +138,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
 
     EXPECT_EQ(kafkaSource->toString(), expected);
 
-    std::cout << kafkaSource->toString() << std::endl;
+    NES_DEBUG("kafka string=" << kafkaSource->toString());
 
     SUCCEED();
 }
@@ -165,18 +164,18 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
 
     // Print the assigned partitions on assignment
     consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-        cout << "Got assigned: " << partitions << endl;
+        NES_DEBUG("Got assigned: " << partitions);
     });
 
     // Print the revoked partitions on revocation
     consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-        cout << "Got revoked: " << partitions << endl;
+        NES_DEBUG("Got revoked: " << partitions);
     });
 
     // Subscribe to the topic
     consumer.subscribe({topic});
 
-    cout << "Consuming messages from topic " << topic << endl;
+    NES_DEBUG("Consuming messages from topic " << topic);
     //    ##################################
 
     // Create a message builder for this topic
@@ -194,7 +193,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     // Create the producer
     cppkafka::Producer producer(configProd);
 
-    cout << "Producing messages into topic " << topic << endl;
+    NES_DEBUG("Producing messages into topic " << topic);
 
     // Produce a message!
     string message = "32";
@@ -206,7 +205,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     bool pollSuccessFull = false;
     size_t cnt = 0;
     while (!pollSuccessFull) {
-        std::cout << "run =" << cnt++ << std::endl;
+        NES_DEBUG(<< "run =" << cnt++);
         if (cnt > 10) {
             break;
         }
@@ -216,15 +215,15 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
             if (msg.get_error()) {
                 // Ignore EOF notifications from rdkafka
                 if (!msg.is_eof()) {
-                    cout << "[+] Received error notification: " << msg.get_error() << endl;
+                    NES_DEBUG("[+] Received error notification: " << msg.get_error());
                 }
             } else {
                 // Print the key (if any)
                 if (msg.get_key()) {
-                    cout << msg.get_key() << " -> ";
+                    NES_DEBUG(msg.get_key() << " -> ");
                 }
                 // Print the payload
-                cout << msg.get_payload() << endl;
+                NES_DEBUG(msg.get_payload());
                 // Now commit the message
                 consumer.commit(msg);
                 pollSuccessFull = true;
@@ -270,7 +269,6 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     string message = "32";
     producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
     producer.flush();
-    //    rd_kafka_destroy(producer.get_handle());
 
     auto tuple_buffer = kafkaSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
@@ -280,8 +278,6 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: " << expected
                                                                                                << ". Received value is: " << str);
     EXPECT_EQ(str, expected);
-    //    bool stop= nodeEngine->stop(true);
-    //    std::cout << stop << std::endl;
 }
 
 // Disabled, because it requires a manually set up Kafka broker
@@ -351,4 +347,5 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
+#endif
 }// namespace NES

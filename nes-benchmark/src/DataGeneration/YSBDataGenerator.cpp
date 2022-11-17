@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <DataGeneration/YSBDataGenerator.h>
+#include <DataGeneration/YSBDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
