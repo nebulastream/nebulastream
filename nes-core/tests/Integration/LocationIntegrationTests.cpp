@@ -60,7 +60,6 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
-
     //wrapper function so allow the util function to call the member function of LocationProvider
     static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromTopologyNode(std::shared_ptr<void> node) {
         auto casted = std::static_pointer_cast<TopologyNode>(node);
@@ -339,12 +338,18 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     EXPECT_TRUE(retStart1);
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -379,12 +384,18 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     EXPECT_TRUE(retStart1);
     auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -424,12 +435,18 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     EXPECT_TRUE(retStart1);
     auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -469,12 +486,18 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     EXPECT_TRUE(retStart1);
     auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
