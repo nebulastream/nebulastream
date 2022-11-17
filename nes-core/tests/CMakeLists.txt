@@ -249,7 +249,7 @@ add_nes_unit_test(operator-properties-tests "UnitTests/Operators/OperatorPropert
 
 
 # QueryTest
-add_nes_unit_test(query-tests "UnitTests/API/QueryTest.cpp")
+add_nes_unit_test(query-tests "UnitTests/API/QueryAPITest.cpp")
 
 
 # SpatialQueryTest

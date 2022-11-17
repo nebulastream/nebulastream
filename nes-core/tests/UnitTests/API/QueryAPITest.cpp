@@ -54,7 +54,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class QueryTest : public Testing::NESBaseTest {
+class QueryAPITest : public Testing::NESBaseTest {
   public:
     PhysicalSourcePtr physicalSource;
     LogicalSourcePtr logicalSource;
@@ -77,16 +77,7 @@ class QueryTest : public Testing::NESBaseTest {
     void TearDown() override {}
 };
 
-TEST_F(QueryTest, testQueryFilter) {
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, testQueryFilter) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -107,15 +98,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryTest, testQueryProjection) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, testQueryProjection) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -136,15 +119,7 @@ TEST_F(QueryTest, testQueryProjection) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryTest, testQueryTumblingWindow) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, testQueryTumblingWindow) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -169,14 +144,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     EXPECT_TRUE(sinkOptr->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
 }
 
-TEST_F(QueryTest, testQuerySlidingWindow) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, testQuerySlidingWindow) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -204,15 +172,10 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
 /**
  * Merge two input source: one with filter and one without filter.
  */
-TEST_F(QueryTest, testQueryMerge) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+TEST_F(QueryAPITest, testQueryMerge) {
 
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto subQuery = Query::from("default_logical").filter(lessExpression);
@@ -231,13 +194,8 @@ TEST_F(QueryTest, testQueryMerge) {
 /**
  * Join two input source: one with filter and one without filter.
  */
-TEST_F(QueryTest, testQueryJoin) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, testQueryJoin) {
+
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -261,7 +219,7 @@ TEST_F(QueryTest, testQueryJoin) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryTest, testQueryExpression) {
+TEST_F(QueryAPITest, testQueryExpression) {
     auto andExpression = Attribute("f1") && 10;
     EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());
 
@@ -296,13 +254,15 @@ TEST_F(QueryTest, testQueryExpression) {
 /**
  * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
  */
-TEST_F(QueryTest, windowAggregationWithAs) {
+TEST_F(QueryAPITest, windowAggregationWithAs) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->addPhysicalSource("default_logical", sce);
+
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     // create a query with "as" in the aggregation
@@ -328,14 +288,7 @@ TEST_F(QueryTest, windowAggregationWithAs) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator
  */
-TEST_F(QueryTest, ThresholdWindowQueryTest) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -385,14 +338,7 @@ TEST_F(QueryTest, ThresholdWindowQueryTest) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator with minuium count
  */
-TEST_F(QueryTest, ThresholdWindowQueryTestWithMinSupport) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -442,14 +388,7 @@ TEST_F(QueryTest, ThresholdWindowQueryTestWithMinSupport) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator and minium count
  */
-TEST_F(QueryTest, ThresholdWindowQueryTestwithKeyAndMincount) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
