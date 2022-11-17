@@ -85,7 +85,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
-    size_t numRecords = 40; //memAreaSize / recordSize;
+    size_t numRecords = 40;//memAreaSize / recordSize;
     for (uint64_t i = 0U; i < numRecords; ++i) {
         records[i].cameraId = i;
         records[i].timestamp = i;
@@ -133,7 +133,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     std::string line;
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
-        if (lineCnt > 0 && lineCnt<numRecords) {
+        if (lineCnt > 0 && lineCnt < numRecords) {
             std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
                 + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
                 + "12345678";
