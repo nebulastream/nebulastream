@@ -99,6 +99,16 @@ class KafkaSourceType : public PhysicalSourceType {
     void setTopic(std::string topic);
 
     /**
+     * @brief Get offsetMode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getOffsetMode() const;
+
+    /**
+     * @brief Set offsetMode
+     */
+    void setOffsetMode(std::string offsetMode);
+
+    /**
      * @brief Get connection time out for source, needed for: KafkaSource
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getConnectionTimeout() const;
@@ -138,6 +148,7 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption autoCommit;
     Configurations::StringConfigOption groupId;
     Configurations::StringConfigOption topic;
+    Configurations::StringConfigOption offsetMode;
     Configurations::IntConfigOption connectionTimeout;
     Configurations::IntConfigOption numberOfBuffersToProduce;
 };

@@ -33,7 +33,7 @@ add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
 
 # Add E2E benchmark runner with custom e2e test config
-add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp" include/DataGeneration/YSBDataGenerator.h)
+add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp")
 add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml --logPath=e2eRunner.log)
 message(STATUS "Added test e2e-benchmark-runner")
 

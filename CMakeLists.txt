@@ -174,7 +174,7 @@ endif ()
 get_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
-#set(NES_WARNINGS "-Wall -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
+set(NES_WARNINGS "-Wall -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
@@ -415,51 +415,11 @@ if (NES_USE_S2)
 else ()
     message(STATUS "s2 is disabled")
 endif ()
-#
+
 # Library containing Kafka client
 if (NES_USE_KAFKA)
-#    find_package(RdKafka REQUIRED)
-#    if (RdKafka_FOUND)
-#        message(STATUS "Found valid RdKafka version")
-#    else()
-##        message(FATAL_ERROR "Failed to find valid RdKafka version")
-#    endif()
-
-#    include(FindPackageHandleStandardArgs)
-#    include(SelectLibraryConfigurations)
-#
-#    find_path(CPPKAFKA_INCLUDES NAMES cppkafka.h HINTS ${CURRENT_INSTALLED_DIR} PATH_SUFFIXES cppkafka)
-#
-#    find_library(CPPKAFKA_LIBRARY_DEBUG NAMES cppkafka PATH_SUFFIXES lib PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" NO_DEFAULT_PATH REQUIRED)
-#    find_library(CPPKAFKA_LIBRARY_RELEASE NAMES cppkafka PATH_SUFFIXES lib PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug" NO_DEFAULT_PATH REQUIRED)
-#
-#    select_library_configurations(CPPKAFKA)
-#
-#    include_directories(${CPPKAFKA_INCLUDES}/..)
-##    set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka++)
-#    set(LIBRARIES ${LIBRARIES} CppKafka::cppkafka)
-#    target_include_directories(main PRIVATE ${CPPKAFKA_INCLUDES}/..)
-#    target_link_libraries(main PRIVATE ${CPPKAFKA_LIBRARY} RdKafka::rdkafka++)
-
     include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
-#    #    include_directories(/home/zeuchste/git/cppkafka/build/include/cppkafka)
-#    set(LIBRARIES ${LIBRARIES} /home/zeuchste/git/cppkafka/build/src/lib/libcppkafka.so)
-#
-#    #    include_directories(/tmp/cppkafka)
-#    #    set(LIBRARIES ${LIBRARIES} /tmp/cppkafka/libcppkafka.so)
-##    find_package(CppKafka REQUIRED)
-#    if (NOT ${CppKafka_FOUND})
-#        message(FATAL_ERROR "Unable to find CppKafka")
-#    endif ()
-#
-#    #    set(LIBRARIES ${LIBRARIES} CppKafka::cppkafka)
-#    if (NOT APPLE)
-#        message(STATUS CPPKAFKA ${NES_DEPENDENCIES_BINARY_ROOT})
-#        #        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
-#        #        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/librdkafka.a)
-#        #        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/librdkafka++.a)
-#    endif ()
        add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 

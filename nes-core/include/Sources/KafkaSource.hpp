@@ -37,6 +37,7 @@ class KafkaSource : public DataSource {
                 std::string groupId,
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout,
+                std::string offsetMode,
                 OriginId originId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
@@ -64,6 +65,12 @@ class KafkaSource : public DataSource {
      * @brief Get kafka topic
      */
     std::string getTopic() const;
+
+
+    /**
+     * @brief Get kafka offset
+     */
+    std::string getOffsetMode() const;
 
     /**
      * @brief Get kafka group id
@@ -95,6 +102,7 @@ class KafkaSource : public DataSource {
     std::unique_ptr<cppkafka::Configuration> config;
     bool connected{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
+    std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
 };
 

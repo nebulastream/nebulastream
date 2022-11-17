@@ -8,13 +8,11 @@ class YSBDataGenerator : public DataGenerator {
     explicit YSBDataGenerator(Runtime::BufferManagerPtr bufferManager);
 
     std::string getName() override;
+
     std::vector<Runtime::TupleBuffer> createData(uint64_t numberOfBuffers, uint64_t bufferSize) override;
+
     SchemaPtr getSchema() override;
 
-    /**
-         * @brief overrides the string representation of the parent class
-         * @return
-         */
     std::string toString() override;
 };
 
