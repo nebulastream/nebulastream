@@ -54,7 +54,7 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
     if (sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG) != sourceConfigMap.end()) {
         offsetMode->setValue(sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG)->second);
     } else {
-        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no offset defined! Please define offset.");
     }
     if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
@@ -90,7 +90,7 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
         && yamlConfig[Configurations::OFFSET_MODE_CONFIG].As<std::string>() != "\n") {
         offsetMode->setValue(yamlConfig[Configurations::OFFSET_MODE_CONFIG].As<std::string>());
     } else {
-        NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no topic defined! Please define topic.");
+        NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no offset defined! Please define offset.");
     }
     if (!yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {

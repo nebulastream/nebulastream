@@ -91,6 +91,7 @@ void E2ESingleRun::createSources() {
         size_t taskQueueId = sourceCnt;
 
         if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
+#ifdef ENABLE_KAFKA_BUILD
             auto connectionStringVec = split(configOverAllRuns.connectionString->getValue(), ',');
             //push data to kafka topic
             cppkafka::Configuration config = {{"metadata.broker.list", connectionStringVec[0]}};
@@ -126,7 +127,9 @@ void E2ESingleRun::createSources() {
 
             allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
-
+#elif
+            NES_ASSERT(false, "Please add kafka compiler flag.")
+#endif
         } else {
             auto dataProvider =
                 DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
