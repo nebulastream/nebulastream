@@ -19,16 +19,5 @@ namespace NES::Runtime::Execution::Operators {
 void LazyJoin::execute(ExecutionContext& ctx, Record& record) const {
 
 }
-uint64_t LazyJoin::hash(uint64_t key) {
-    uint64_t hash = key;
-
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xff51afd7ed558ccd);
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-    hash ^= hash >> 33;
-
-    return hash;
-}
 
 } // namespace NES::Runtime::Execution::Operators
