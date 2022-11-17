@@ -62,21 +62,19 @@ class QueryPlanBuilder {
 
     /**
     * @brief: UnionOperator to combine two query plans
-    * @param: left is the left query plan
-    * @param: right is the right query plan
     * @param currentPlan the query plan to add the operator
+    * @param: right is the right query plan
     * @return the updated queryplanptr
     */
-    static NES::QueryPlanPtr addUnionOperatorNode(NES::QueryPlanPtr left, NES::QueryPlanPtr right, NES::QueryPlanPtr currentPlan);
+    static NES::QueryPlanPtr addUnionOperatorNode(NES::QueryPlanPtr currentPlan, NES::QueryPlanPtr right);
 
     /**
     * @brief: JoinOperator to combine two query plans
-    * @param: left is the left query plan
+    * @param: currentPlan the query plan to add the operator
     * @param: right is the right query plan
-    * @param currentPlan the query plan to add the operator
     * @return the updated queryplanptr
     */
-    static NES::QueryPlanPtr addJoinOperatorNode(NES::QueryPlanPtr left, NES::QueryPlanPtr right, NES::QueryPlanPtr currentPlan,
+    static NES::QueryPlanPtr addJoinOperatorNode(NES::QueryPlanPtr currentPlan, NES::QueryPlanPtr right,
                                                        NES::ExpressionItem onLeftKey,
                                                        NES::ExpressionItem onRightKey,
                                                        const NES::Windowing::WindowTypePtr& windowType,
@@ -92,15 +90,13 @@ class QueryPlanBuilder {
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources
-    * @param: left is the left query plan
+    * @param: currentPlan the query plan to add the operator
     * @param: right is the right query plan
-    * @param currentPlan the query plan to add the operator
     * @return the updated queryplanptr
     */
     static NES::QueryPlanPtr addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr op1,
-                                                              NES::QueryPlanPtr left,
-                                                              NES::QueryPlanPtr right,
-                                                              NES::QueryPlanPtr currentPlan);
+                                                              NES::QueryPlanPtr currentPlan,
+                                                              NES::QueryPlanPtr right);
 };
 
 #endif//NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_H_

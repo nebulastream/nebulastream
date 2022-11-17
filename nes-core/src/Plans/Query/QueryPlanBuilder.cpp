@@ -75,15 +75,15 @@ QueryPlanPtr QueryPlanBuilder::addMapNode(NES::FieldAssignmentExpressionNodePtr 
     return qplan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addUnionOperatorNode(NES::QueryPlanPtr left, NES::QueryPlanPtr right, NES::QueryPlanPtr currentPlan) {
+QueryPlanPtr QueryPlanBuilder::addUnionOperatorNode(NES::QueryPlanPtr currentPlan, NES::QueryPlanPtr right) {
     NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query plan");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-    currentPlan = addBinaryOperatorAndUpdateSource(op, left, right, currentPlan);
+    currentPlan = addBinaryOperatorAndUpdateSource(op, currentPlan, right);
 
     return currentPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addJoinOperatorNode(NES::QueryPlanPtr left, NES::QueryPlanPtr right, NES::QueryPlanPtr currentPlan,
+QueryPlanPtr QueryPlanBuilder::addJoinOperatorNode(NES::QueryPlanPtr currentPlan, NES::QueryPlanPtr right,
      ExpressionItem onLeftKey,
      ExpressionItem onRightKey,
      const Windowing::WindowTypePtr& windowType,
@@ -115,11 +115,11 @@ QueryPlanPtr QueryPlanBuilder::addJoinOperatorNode(NES::QueryPlanPtr left, NES::
 
     NES_ASSERT(right && !right->getRootOperators().empty(), "invalid right query plan");
     auto rootOperatorRhs = right->getRootOperators()[0];
-    auto leftJoinType = left->getRootOperators()[0]->getOutputSchema();
+    auto leftJoinType = currentPlan->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
-    left = checkAndAddWatermarkAssignment(left, windowType);
+    currentPlan = checkAndAddWatermarkAssignment(currentPlan, windowType);
     right = checkAndAddWatermarkAssignment(right, windowType);
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
@@ -136,7 +136,7 @@ QueryPlanPtr QueryPlanBuilder::addJoinOperatorNode(NES::QueryPlanPtr left, NES::
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-    currentPlan = addBinaryOperatorAndUpdateSource(op, left, right, currentPlan);
+    currentPlan = addBinaryOperatorAndUpdateSource(op, currentPlan, right);
 
     return currentPlan;
 }
@@ -163,26 +163,16 @@ NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPla
 }
 
 NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr op,
-                                                                     NES::QueryPlanPtr left,
-                                                                     NES::QueryPlanPtr right,
-                                                                     NES::QueryPlanPtr currentPlan) {
-    if(currentPlan){
-        NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: if current query plan is not empty");
-        currentPlan->addRootOperator(left->getRootOperators()[0]);
-        currentPlan->addRootOperator(right->getRootOperators()[0]);
-        currentPlan->appendOperatorAsNewRoot(op);
-    }else {
-        NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: if current query plan is empty");
-        currentPlan = left;
-        currentPlan->addRootOperator(right->getRootOperators()[0]);
-        currentPlan->appendOperatorAsNewRoot(op);
-    }
+                                                                     NES::QueryPlanPtr currentPlan,
+                                                                     NES::QueryPlanPtr right) {
+
+    currentPlan->addRootOperator(right->getRootOperators()[0]);
+    currentPlan->appendOperatorAsNewRoot(op);
 
     NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
-    auto sourceNameLeft = left->getSourceConsumed();
+    auto sourceNameLeft = currentPlan->getSourceConsumed();
     auto sourceNameRight = right->getSourceConsumed();
     auto newSourceName = Util::updateSourceName(sourceNameLeft, sourceNameRight);
-    newSourceName = Util::updateSourceName(newSourceName, right->getSourceConsumed());
     currentPlan->setSourceConsumed(newSourceName);
 
     return currentPlan;
