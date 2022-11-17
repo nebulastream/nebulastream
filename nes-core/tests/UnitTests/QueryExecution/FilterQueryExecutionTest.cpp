@@ -71,7 +71,7 @@ TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    auto inputBuffer = source->getBuffer();
+    auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
@@ -96,7 +96,7 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("one") == 1).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    auto inputBuffer = source->getBuffer();
+    auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
