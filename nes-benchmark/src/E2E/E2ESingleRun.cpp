@@ -25,19 +25,9 @@
 #include <algorithm>
 #include <cppkafka/cppkafka.h>
 #include <fstream>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Benchmark {
-
-std::vector<std::string> split(const std::string& str, char delim) {
-    std::stringstream ss(str);
-    std::string item;
-    std::vector<std::string> elems;
-    while (std::getline(ss, item, delim)) {
-        //split element by delim and push it to a vector
-        elems.push_back(item);
-    }
-    return elems;
-};
 
 void E2ESingleRun::setupCoordinatorConfig() {
     NES_INFO("Creating coordinator and worker configuration...");
@@ -92,7 +82,7 @@ void E2ESingleRun::createSources() {
 
         if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
-            auto connectionStringVec = split(configOverAllRuns.connectionString->getValue(), ',');
+            auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue()configOverAllRuns.connectionString->getValue(), ",");
             //push data to kafka topic
             cppkafka::Configuration config = {{"metadata.broker.list", connectionStringVec[0]}};
             cppkafka::Producer producer(config);
@@ -127,7 +117,7 @@ void E2ESingleRun::createSources() {
 
             allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
-#elif
+#else
             NES_ASSERT(false, "Please add kafka compiler flag.")
 #endif
         } else {
