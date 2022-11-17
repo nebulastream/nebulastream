@@ -72,7 +72,7 @@ TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);
-    auto inputBuffer = source->getBuffer();
+    auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();

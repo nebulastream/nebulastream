@@ -204,7 +204,12 @@ class TestExecutionEngine {
         return nodeEngine->stopQuery(plan->getQueryId());
     }
 
-    Runtime::TupleBuffer getBuffer() { return nodeEngine->getBufferManager()->getBufferBlocking(); }
+    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer(const SchemaPtr& schema) {
+        auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+        // add support for columnar layout
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    }
     bool stop() { return nodeEngine->stop(); }
 
   private:
