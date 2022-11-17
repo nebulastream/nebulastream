@@ -31,6 +31,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
+                                      std::string offsetMode,
                                       uint64_t numbersOfBufferToProduce);
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
@@ -39,6 +40,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
+                                      std::string offsetMode,
                                       uint64_t numbersOfBufferToProduce);
 
     /**
@@ -50,6 +52,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @brief Get the kafka topic name
      */
     const std::string& getTopic() const;
+
+    /**
+     * @brief Get the kafka offset mode
+     */
+    const std::string& getOffsetMode() const;
 
     /**
      * @brief Get the number of buffers to process
@@ -84,6 +91,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string groupId,
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
+                                   std::string offsetMode,
                                    uint64_t numbersOfBufferToProduce);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
                                    std::string logicalSourceName,
@@ -92,12 +100,14 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string groupId,
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
+                                   std::string offsetMode,
                                    uint64_t numbersOfBufferToProduce);
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
     uint64_t kafkaConnectTimeout;
+    std::string offsetMode;
     uint64_t numbersOfBufferToProduce;
 };
 

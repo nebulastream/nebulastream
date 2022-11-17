@@ -107,6 +107,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          groupId,
                                          true,
                                          100,
+                                         "earliest",
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
@@ -128,12 +129,13 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          groupId,
                                          true,
                                          100,
+                                         "earliest",
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(nes). ";
+    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(nes). OFFSETMODE(earliest). ";
 
     EXPECT_EQ(kafkaSource->toString(), expected);
 
@@ -249,6 +251,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          group,
                                          true,
                                          100,
+                                         "earliest",
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
