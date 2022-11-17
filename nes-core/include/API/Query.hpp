@@ -436,9 +436,8 @@ class Query {
     Query& filter(ExpressionNodePtr const& filterExpression);
 
     /**
-     * @brief: Create watermark assihner operator.
-     * @param onField filed to retrieve the timestamp for watermark.
-     * @param delay timestamp delay of tanuraghazrahe watermark.
+     * @brief: Create watermark assigner operator.
+     * @param watermarkStrategyDescriptor
      * @return query.
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
@@ -538,32 +537,6 @@ class Query {
                    ExpressionItem onRightKey,
                    Windowing::WindowTypePtr const& windowType);
 
-    /**
-     * We call it only internal as a last step during the Join/AND operation
-     * @brief This methods add the join operator to a query
-     * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left source
-     * @param onLeftKey key attribute of the right source
-     * @param windowType Window definition.
-     * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
-     * @return the query
-     */
-    Query& join(const Query& subQueryRhs,
-                ExpressionItem onLeftKey,
-                ExpressionItem onRightKey,
-                Windowing::WindowTypePtr const& windowType,
-                Join::LogicalJoinDefinition::JoinType joinType);
-
-    /**
-     * We call it only internal as a last step during the batchJoin operation
-     * @brief This methods add the join operator to a query
-     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-     * @param subQueryRhs subQuery to be joined
-     * @param onProbeKey key attribute of the left stream
-     * @param onBuildKey key attribute of the right stream
-     * @return the query
-     */
-    Query& batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
