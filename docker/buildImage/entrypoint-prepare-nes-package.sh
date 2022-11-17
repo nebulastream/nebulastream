@@ -26,7 +26,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_ENABLES_TESTS=OFF -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_ENABLES_TESTS=0 -DNES_BUILD_BENCHMARKS=0 -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=1 -DNES_USE_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_TF=1 ..
     make -j4
     cpack
 else

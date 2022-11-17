@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 COPY toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
 COPY toolchain-aarch64-gcc.cmake toolchain-aarch64-gcc.cmake
