@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.3.52](https://github.com/nebulastream/nebulastream/tree/v0.3.52) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.51...v0.3.52)
+
+**Implemented enhancements:**
+
+- \[Feature\] Add CORS to Oatpp [\#3141](https://github.com/nebulastream/nebulastream/issues/3141)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Compiler warning in benchmark code [\#3198](https://github.com/nebulastream/nebulastream/issues/3198)
+- \[BUG\] Fix tests which use locationproviderCSV [\#3170](https://github.com/nebulastream/nebulastream/issues/3170)
+- \[BUG\] Union only uses one logical stream name for output [\#2956](https://github.com/nebulastream/nebulastream/issues/2956)
+
 ## [v0.3.51](https://github.com/nebulastream/nebulastream/tree/v0.3.51) (2022-11-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.50...v0.3.51)
