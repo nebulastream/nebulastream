@@ -39,6 +39,6 @@ class NautilusPipelineOperator : public UnaryOperatorNode {
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

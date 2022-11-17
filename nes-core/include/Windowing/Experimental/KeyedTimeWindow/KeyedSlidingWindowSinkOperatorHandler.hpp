@@ -14,8 +14,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDSLIDINGWINDOWSINKOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDSLIDINGWINDOWSINKOPERATORHANDLER_HPP_
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Experimental {
 class HashMapFactory;
