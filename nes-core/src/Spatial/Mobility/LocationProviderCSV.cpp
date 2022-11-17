@@ -131,7 +131,7 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
     NES_TRACE("S2 not used, returning most recently passed waypoint from csv")
     NES_TRACE("Location: " << getWaypointAt(prevWaypoint).first->toString() << "; Time: " << getWaypointAt(prevWaypoint).second)
-    return *prevWaypoint;
+    return getWaypointAt(prevWaypoint);
 #endif
 }
 
