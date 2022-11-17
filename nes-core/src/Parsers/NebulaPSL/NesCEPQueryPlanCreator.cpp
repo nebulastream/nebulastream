@@ -12,14 +12,10 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <API/QueryAPI.hpp>
+#include <Plans/Query/QueryPlanBuilder.h>
 #include <API/AttributeField.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <API/QueryAPI.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -27,11 +23,14 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
-#include <Parsers/QueryPlanBuilder.h>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
 namespace NES::Parsers {
 
@@ -139,17 +138,16 @@ void NesCEPQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
 }
 
 void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) {
-    // create the queryPlan
-    query = createQueryFromPatternList();
-    const QueryPlanPtr& queryPlan = query.getQueryPlan();
-    const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
+    // add AST elements to this queryPlan
+    createQueryFromPatternList();
+    const std::vector<NES::OperatorNodePtr>& rootOperators = this->queryPlan->getRootOperators();
     // add the sinks to the query plan
     for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()) {
         auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
         for (auto& rootOperator : rootOperators) {
             sinkOperator->addChild(rootOperator);
-            queryPlan->removeAsRootOperator(rootOperator);
-            queryPlan->addRootOperator(sinkOperator);
+            this->queryPlan->removeAsRootOperator(rootOperator);
+            this->queryPlan->addRootOperator(sinkOperator);
         }
     }
     NesCEPBaseListener::exitSinkList(context);
@@ -231,7 +229,7 @@ void NesCEPQueryPlanCreator::enterAttribute(NesCEPParser::AttributeContext* cxt)
     }
 }
 
-NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
+void NesCEPQueryPlanCreator::createQueryFromPatternList() {
     NES_DEBUG("NesCEPQueryPlanCreator: createQueryFromPatternList: create query from AST elements")
     // if for simple patterns without binary CEP operators
     if (this->pattern.getOperatorList().empty() && this->pattern.getSources().size() == 1) {
@@ -332,7 +330,6 @@ NES::Query NesCEPQueryPlanCreator::createQueryFromPatternList() {
     if (!pattern.getProjectionFields().empty()) {
         addProjections();
     }
-    return Query(this->queryPlan);
 }
 
 void NesCEPQueryPlanCreator::addFilters() {
@@ -371,7 +368,7 @@ void NesCEPQueryPlanCreator::addProjections() {
     this->queryPlan = QueryPlanBuilder::addProjectNode(pattern.getProjectionFields(),this->queryPlan);
    }
 
-const Query& NesCEPQueryPlanCreator::getQuery() const { return this->query; }
+QueryPlanPtr NesCEPQueryPlanCreator::getQueryPlan() const { return this->queryPlan; }
 
 std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) {
     //first, get unique ids for the key attributes

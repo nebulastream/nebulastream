@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Services/PatternParsingService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <NesBaseTest.hpp>
@@ -59,9 +59,8 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
         "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -82,9 +81,8 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString = "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed && A.value > "
                                 "A.random INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -109,9 +107,8 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
         "PATTERN test:= (A) FROM default_logical AS A INTO Print :: testSink, File :: testSink2, NullOutput :: testSink3  ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected results
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -134,9 +131,8 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern){
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
         "PATTERN test:= (A OR B) FROM default_logical AS A, default_logical_b AS B  INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -161,9 +157,8 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     //pattern string as received from the NES UI
     std::string patternString =
         "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical_b AS B WITHIN [3 MINUTE] INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr pattern = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = pattern->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -189,9 +184,8 @@ TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical_b AS B  WHERE "
                                 "A.currentSpeed < A.allowedSpeed WITHIN [3 MINUTE] INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr pattern = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = pattern->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -221,9 +215,8 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     //pattern string as received from the NES UI
     std::string patternString =
         "PATTERN test:= (A SEQ B) FROM default_logical AS A, default_logical_b AS B WITHIN [3 MINUTE] INTO Print :: testSink";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -249,9 +242,8 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [id=TU] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -274,9 +266,8 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
     std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, "
                                 "department=DIMA ] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
@@ -299,9 +290,8 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
 TEST_F(PatternParsingServiceTest, TimesOperator) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A[2:10]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -320,9 +310,8 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
 TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A[2]) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -341,9 +330,8 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
 TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A+) FROM default_logical AS A WITHIN [3 MINUTE] INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -362,9 +350,8 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
 TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
-    std::shared_ptr<PatternParsingService> patternParsingService;
-    QueryPtr query = patternParsingService->createPatternFromCodeString(patternString);
-    const QueryPlanPtr patternPlan = query->getQueryPlan();
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));

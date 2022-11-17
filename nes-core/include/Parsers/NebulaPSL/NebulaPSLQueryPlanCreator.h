@@ -143,7 +143,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     /**
      * @brief this method creates the query from the NesPattern
      */
-    NES::Query createQueryFromPatternList();
+    void createQueryFromPatternList();
 
     /**
      * @brief this methods add all filter to the query
@@ -162,9 +162,9 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     void addProjections();
 
     /**
-     * @brief returns the parsed query
+     * @brief returns the parsed queryPlan
      */
-    const Query& getQuery() const;
+    QueryPlanPtr getQueryPlan() const;
 
     /**
      * @brief: this function creates an artificial key for the binary operators AND and SEQ
@@ -187,7 +187,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     NebulaPSLPattern pattern;
     int32_t nodeId = 0;
     int32_t currentElementPointer = -1;
-    NES::Query query = NES::Query(NULL);
     NES::QueryPlanPtr queryPlan = NES::QueryPlan::create();
     bool inWhere = false;
     bool leftFilter = true;
