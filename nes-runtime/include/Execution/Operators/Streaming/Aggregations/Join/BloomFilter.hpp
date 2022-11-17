@@ -14,9 +14,41 @@ limitations under the License.
 #ifndef NES_BLOOMFILTER_HPP
 #define NES_BLOOMFILTER_HPP
 
+#include <Util/Logger/Logger.hpp>
+#include <cstddef>
 #include <cstdint>
-namespace NES::Runtime::Execution::Operators {
+#include <cstdlib>
+#include <cstring>
+#include <sys/mman.h>
 
+namespace NES::Runtime::Execution {
+namespace detail {
+    template<typename T = void>
+    T* allocAligned(size_t size, size_t alignment = 16) {
+        void* tmp = nullptr;
+        NES_ASSERT2_FMT(0 == posix_memalign(&tmp, alignment, sizeof(T) * size),
+                        "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
+        return reinterpret_cast<T*>(tmp);
+    }
+
+    template<typename T = void, size_t huge_page_size = 1 << 21>
+    T* allocHugePages(size_t size) {
+        void* tmp = nullptr;
+        NES_ASSERT2_FMT(0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
+                        "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
+        madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
+        NES_ASSERT2_FMT(tmp != nullptr, "Cannot remap as huge pages");
+        mlock(tmp, size * sizeof(T));
+        //    uint8_t* ptr = reinterpret_cast<uint8_t*>(tmp);
+        //    for (size_t i = 0, len = size * sizeof(T); i < len; i += huge_page_size) {
+        //        *(ptr + i) = i;
+        //    }
+        return reinterpret_cast<T*>(tmp);
+    }
+} // namespace detail
+
+
+namespace Operators {
 
 /**
  * @brief A bloom filter that works with 64-bit keys
@@ -30,7 +62,6 @@ class alignas(64) BloomFilter {
      * @param falsePositiveRate
      */
     explicit BloomFilter(uint64_t entries, double falsePositiveRate);
-
 
     /**
      * @brief adds a hash to the bloom filter
@@ -50,12 +81,12 @@ class alignas(64) BloomFilter {
      */
     ~BloomFilter();
 
-
   private:
     uint32_t noBits;
     uint16_t noHashes;
-    uint8_t* bf;
+    uint8_t* bitField;
 };
 
-}
+} // namespace NES::Runtime::Execution::Operator
+} // namespace NES::Runtime::Execution
 #endif//NES_BLOOMFILTER_HPP
