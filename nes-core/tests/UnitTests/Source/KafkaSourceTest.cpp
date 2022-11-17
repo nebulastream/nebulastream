@@ -205,7 +205,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     bool pollSuccessFull = false;
     size_t cnt = 0;
     while (!pollSuccessFull) {
-        NES_DEBUG(<< "run =" << cnt++);
+        NES_DEBUG("run =" << cnt++);
         if (cnt > 10) {
             break;
         }
