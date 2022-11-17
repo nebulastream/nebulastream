@@ -47,6 +47,13 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(uint64_t numberOf
     NES_INFO("Created all buffers!");
     return createdBuffers;
 }
+std::string YSBDataGenerator::toString() {
+    std::ostringstream oss;
+
+    oss << getName();
+    return oss.str();
+}
+
 SchemaPtr YSBDataGenerator::getSchema() {
     return Schema::create()
         ->addField("user_id", UINT64)

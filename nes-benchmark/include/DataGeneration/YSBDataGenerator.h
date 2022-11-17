@@ -10,8 +10,14 @@ class YSBDataGenerator : public DataGenerator {
     std::string getName() override;
     std::vector<Runtime::TupleBuffer> createData(uint64_t numberOfBuffers, uint64_t bufferSize) override;
     SchemaPtr getSchema() override;
+
+    /**
+         * @brief overrides the string representation of the parent class
+         * @return
+         */
+    std::string toString() override;
 };
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration
 
 #endif// NES_INCLUDE_DATAGENERATORS_LIGHTSABER_YSBDATAGENERATOR_HPP_

@@ -13,8 +13,10 @@
 */
 
 #include <Runtime/QueryManager.hpp>
+#include <Sources/DataSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cppkafka/cppkafka.h>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -46,10 +48,11 @@ KafkaSource::KafkaSource(SchemaPtr schema,
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)) {
 
-    config = {{"metadata.broker.list", brokers.c_str()},
-              {"group.id", "123"},
-              {"enable.auto.commit", autoCommit},
-              {"auto.offset.reset", "earliest"}};
+    config = std::make_unique<cppkafka::Configuration>();
+    config->set("metadata.broker.list", brokers.c_str());
+    config->set("group.id", 0);
+    config->set("enable.auto.commit", autoCommit == true ? "true" : "false");
+    config->set("auto.offset.reset", "earliest");
     this->numBuffersToProcess = numbersOfBufferToProduce;
 }
 
@@ -78,10 +81,9 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
                 const uint64_t payloadSize = msg.get_payload().get_size();
 
-                NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize
-                                                     << " payloadSize=" << payloadSize
-//                                                     << ", msg: " << msg.get_payload()
-                          );
+                NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
+                          //                                                     << ", msg: " << msg.get_payload()
+                );
 
                 std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
@@ -96,8 +98,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
         }
 
         currentPollCnt++;
-        if(currentPollCnt == maxPollCnt)
-        {
+        if (currentPollCnt == maxPollCnt) {
             NES_DEBUG("Poll reached max poll count=" << maxPollCnt);
             pollSuccessFull = true;
         }
@@ -158,10 +159,6 @@ std::string KafkaSource::getGroupId() const { return groupId; }
 
 bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
-const cppkafka::Configuration& KafkaSource::getConfig() const { return config; }
-
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
-
-const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const { return consumer; }
 
 }// namespace NES
