@@ -19,11 +19,25 @@
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 
 namespace NES::Windowing {
-
+/*
+ * Threshold window creates a window whenever an event attribute exceeds a threshold (predicate), and close the window if it is below the threshold (or the other way around)
+ * Threshold windows are content based, non-overlapping windows with gaps
+ */
 class ThresholdWindow : public ContentBasedWindowType {
   public:
+    /**
+    * @brief Constructor for ThresholdWindow
+    * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
+    * @return WindowTypePtr
+    */
     static WindowTypePtr of(ExpressionNodePtr predicate);
 
+    /**
+    * @brief Constructor for ThresholdWindow
+    * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
+    * @param minimumCount specifies the minimum amount of tuples to occur within the window
+    * @return WindowTypePtr
+    */
     static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t minimumCount);
 
     /**
