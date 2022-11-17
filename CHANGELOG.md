@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.53](https://github.com/nebulastream/nebulastream/tree/v0.3.53) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.52...v0.3.53)
+
+### Miscellaneous Issues ✌️
+
+- Integrate QueryCompiler backend that uses Nautilus [\#3089](https://github.com/nebulastream/nebulastream/issues/3089)
+
 ## [v0.3.52](https://github.com/nebulastream/nebulastream/tree/v0.3.52) (2022-11-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.51...v0.3.52)
