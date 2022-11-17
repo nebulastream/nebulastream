@@ -89,7 +89,6 @@ class QueryCompilerOptions {
 
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
-
     [[nodiscard]] QueryCompiler getQueryCompiler() const;
 
     void setQueryCompiler(QueryCompiler pipeliningStrategy);

@@ -23,7 +23,6 @@
 #include <iostream>
 #include <utility>
 
-
 using namespace NES;
 using Runtime::TupleBuffer;
 
@@ -111,7 +110,6 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
 
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
                         FilterQueryExecutionTest,

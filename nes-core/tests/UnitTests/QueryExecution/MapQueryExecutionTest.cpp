@@ -45,7 +45,6 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
         NES_DEBUG("QueryExecutionTest: Tear down MapQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
-
     }
 
     /* Will be called after all tests in this class are finished. */

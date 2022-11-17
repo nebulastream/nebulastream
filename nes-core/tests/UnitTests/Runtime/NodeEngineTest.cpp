@@ -630,7 +630,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     auto sink1 = createTextFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep3.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(),  context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();

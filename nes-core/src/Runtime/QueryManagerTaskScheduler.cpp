@@ -60,8 +60,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
         // nop
     }
 
-    ExecutionResult
-    execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
+    ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
         NES_TRACE(
             "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
             << workerContext.getId());
