@@ -294,7 +294,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
-                                                  "logicalSourceName=default"});
+                                                  "logicalSourceName=default",
+                                                  "offsetMode=earliest"});
 
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
@@ -312,7 +313,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                    "topic=newTopic",
                                                    "connectionTimeout=100",
                                                    "brokers=testBroker",
-                                                   "groupId=testId"});
+                                                   "groupId=testId",
+                                                   "offsetMode=earliest"});
 
     PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
