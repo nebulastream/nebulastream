@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "ANTLRInputStream.h"
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -19,13 +20,16 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <Services/PatternParsingService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <log4cxx/helpers/exception.h>
 #include <sstream>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
+#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
+#include <antlr4-runtime/ANTLRInputStream.h>
 
 namespace NES {
 
@@ -48,7 +52,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         code << "}" << std::endl;
         code << "}" << std::endl;
 
-        NES_DEBUG("generated code=" << code.str());
+        NES_DEBUG("QueryParsingService : generated code=" << code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, false);
         auto result = jitCompiler->compile(std::move(request));
@@ -58,31 +62,25 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         auto func = compiled_code->getInvocableMember<CreateSchemaFunctionPtr>(
             "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
-            NES_ERROR("Error retrieving function! Symbol not found!");
+            NES_ERROR("QueryParsingService : Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Schema query((*func)());
         return std::make_shared<Schema>(query);
 
     } catch (std::exception& exc) {
-        NES_ERROR("Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet);
         throw;
     } catch (...) {
-        NES_ERROR("Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("QueryParsingService : Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
 
-QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
-
-    if (queryCodeSnippet.starts_with("PATTERN")) {
-        NES::PatternParsingService patternParsingService;
-        NES_DEBUG("QueryCatalog: parse pattern query from declarative PSL.");
-        return patternParsingService.createPatternFromCodeString(queryCodeSnippet);
-    }
+QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
 
     if (queryCodeSnippet.find("Source(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
-        NES_ERROR("QueryCatalog: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");
+        NES_ERROR("QueryParsingService: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
 
@@ -95,17 +93,17 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
 
         std::string sourceName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
         sourceName = sourceName.substr(7, sourceName.find(')') - 7);
-        NES_DEBUG(" Util: source name = " << sourceName);
+        NES_DEBUG(" QueryParsingService: source name = " << sourceName);
 
         std::string newQuery = queryCodeSnippet;
         // add return statement in front of input query
         newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
 
-        NES_DEBUG("Util: parsed query = " << newQuery);
+        NES_DEBUG("QueryParsingService: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG("Util: query code \n" << code.str());
+        NES_DEBUG("QueryParsingService: query code \n" << code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", true, false, false, false);
         auto result = jitCompiler->compile(std::move(request));
@@ -117,18 +115,38 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         using CreateQueryFunctionPtr = Query (*)();
         auto func = compiled_code->getInvocableMember<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
         if (!func) {
-            NES_ERROR("Util: Error retrieving function! Symbol not found!");
+            NES_ERROR("QueryParsingService: Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Query query((*func)());
 
-        return std::make_shared<Query>(query);
+        return query.getQueryPlan();
     } catch (std::exception& exc) {
-        NES_ERROR("Util: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
+        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
         throw;
     } catch (...) {
-        NES_ERROR("Util: Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet);
         throw log4cxx::helpers::Exception("Failed to create the query from input code string");
     }
 }
+
+QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string& queryCodeSnippet) {
+    NES_DEBUG("QueryParsingService: received the following pattern string" + queryCodeSnippet);
+    // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
+    antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
+    Parsers::NesCEPLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    Parsers::NesCEPParser parser(&tokens);
+    Parsers::NesCEPParser::QueryContext* tree = parser.query();
+    NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
+
+    NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
+    Parsers::NesCEPQueryPlanCreator queryPlanCreator;
+    //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
+    auto queryPlan = queryPlanCreator.getQueryPlan();
+    NES_DEBUG("PatternParsingService: created the query from AST " + queryPlan->toString());
+    return queryPlan;
+}
+
 }// namespace NES
