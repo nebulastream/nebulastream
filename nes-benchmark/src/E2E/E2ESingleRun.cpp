@@ -118,7 +118,7 @@ void E2ESingleRun::createSources() {
             allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
 #else
-            NES_ASSERT(false, "Please add kafka compiler flag.")
+            NES_ASSERT(false, "Please add kafka compiler flag.");
 #endif
         } else {
             auto dataProvider =
