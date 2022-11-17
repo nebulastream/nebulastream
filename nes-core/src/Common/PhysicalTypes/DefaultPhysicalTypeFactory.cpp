@@ -14,11 +14,11 @@
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Char.hpp>
-#include <Common/DataTypes/Text.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Text.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

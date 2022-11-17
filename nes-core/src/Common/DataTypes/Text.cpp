@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/Text.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Text.hpp>
 
 namespace NES {
 
