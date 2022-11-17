@@ -14,6 +14,7 @@
 
 #ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#ifdef ENABLE_KAFKA_BUILD
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -26,7 +27,6 @@ class Consumer;
 namespace NES {
 
 class KafkaSource : public DataSource {
-
   public:
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
@@ -108,4 +108,5 @@ class KafkaSource : public DataSource {
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
+#endif
 #endif// NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
