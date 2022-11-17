@@ -11,12 +11,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include <cmath>
 
-
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoin.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -52,7 +51,7 @@ void BloomFilter::add(uint64_t hash) {
 bool BloomFilter::contains(uint64_t key) {
     uint16_t hits = 0;
 
-    auto hash = LazyJoin::hash(key);
+    auto hash = Util::murmurHash(key);
     uint32_t lower32Bits = hash & ((1UL << 32) - 1);
     uint32_t upper32Bits = hash >> 32;
 
