@@ -32,7 +32,7 @@ query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWi
 #numberOfBuffersToProduce: 5000000
 numberOfBuffersToProduce: 50000
 scalability: scale-up
-logLevel: LOG_NONE
+logLevel: LOG_DEBUG
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 3

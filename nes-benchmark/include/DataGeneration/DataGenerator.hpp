@@ -27,6 +27,9 @@ namespace NES::Benchmark::DataGeneration {
     class DataGenerator {
       public:
         DataGenerator();
+
+        DataGenerator(Runtime::BufferManagerPtr bufferManager);
+
         virtual ~DataGenerator() = default;
 
         /**
@@ -68,6 +71,9 @@ namespace NES::Benchmark::DataGeneration {
          */
         static DataGeneratorPtr createGeneratorByName(std::string name,
                                                       Yaml::Node generatorNode);
+
+
+        static DataGeneratorPtr createGeneratorByName(std::string name, Runtime::BufferManagerPtr bufferManager);
 
 
 

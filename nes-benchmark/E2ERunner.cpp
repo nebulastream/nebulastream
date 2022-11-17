@@ -80,7 +80,7 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    if (argMap.size() < 2) {
+    if (argMap.size() < 1) {
         std::cerr << "Error: Missing --configPath or --logPath could not been found in arguments!" << std::endl;
         return -1;
     }
