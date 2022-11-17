@@ -65,7 +65,7 @@ class LocationProviderCSV : public LocationProvider {
   private:
     /**
      * @brief get the waypoint at the position of the iterator
-     * @param it: the iterator which marks the position in the vector of waypoints
+     * @param index: the iterator which marks the position in the vector of waypoints
      * @return the waypoint
      */
     Waypoint getWaypointAt(size_t index);
