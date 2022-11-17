@@ -47,8 +47,8 @@ class NautilusCompilationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    [[maybe_unused]]QueryCompilerOptions::CompilationStrategy compilationStrategy;
+    [[maybe_unused]] QueryCompilerOptions::CompilationStrategy compilationStrategy;
 };
-};// namespace NES
+};// namespace NES::QueryCompilation
 
 #endif// NES_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPHASE_HPP_

@@ -48,9 +48,7 @@ void QueryCompilerOptions::setQueryCompiler(NES::QueryCompilation::QueryCompiler
     this->queryCompiler = queryCompiler;
 }
 
-QueryCompilerOptions::QueryCompiler QueryCompilerOptions::getQueryCompiler() const {
-    return queryCompiler;
-}
+QueryCompilerOptions::QueryCompiler QueryCompilerOptions::getQueryCompiler() const { return queryCompiler; }
 
 QueryCompilerOptions::CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const { return compilationStrategy; }
 
