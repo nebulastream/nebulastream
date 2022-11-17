@@ -111,7 +111,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             //Prepare the response
             nlohmann::json response;
             response["success"] = added;
-            return createResponse(Status::CODE_200, response);
+            return createResponse(Status::CODE_200, response.dump());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
