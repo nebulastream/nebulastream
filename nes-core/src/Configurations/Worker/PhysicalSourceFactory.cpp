@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/OPCSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -106,6 +107,7 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
         case OPC_SOURCE: return OPCSourceType::create(commandLineParams);
         case BINARY_SOURCE: return BinarySourceType::create(commandLineParams);
         case SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
+        case LORAWAN_SOURCE: return LoRaWANProxySourceType::create(commandLineParams);
         case DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
         case MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
@@ -125,6 +127,7 @@ PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::strin
         case OPC_SOURCE: return OPCSourceType::create(yamlConfig);
         case BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
         case SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
+        case LORAWAN_SOURCE: return LoRaWANProxySourceType::create(yamlConfig);
         case DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
