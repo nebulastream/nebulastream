@@ -14,7 +14,8 @@
 
 #ifndef NES_INCLUDE_DATAGENERATORS_YSBDATAGENERATOR_HPP_
 #define NES_INCLUDE_DATAGENERATORS_YSBDATAGENERATOR_HPP_
-#include <DataGenerator.hpp>
+#include <DataGeneration/DataGenerator.hpp>
+
 namespace NES::Benchmark::DataGeneration {
 
 class YSBDataGenerator : public DataGenerator {
