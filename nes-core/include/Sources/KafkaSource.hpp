@@ -14,11 +14,14 @@
 
 #ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#include <Sources/DataSource.hpp>
-#include <cppkafka/cppkafka.h>
 #include <cstdint>
 #include <memory>
 #include <string>
+namespace cppkafka
+{
+class Configuration;
+class Consumer;
+}
 
 namespace NES {
 
@@ -73,15 +76,9 @@ class KafkaSource : public DataSource {
     bool isAutoCommit() const;
 
     /**
-     * @brief Get kafka configuration
-     */
-    const cppkafka::Configuration& getConfig() const;
-
-    /**
      * @brief Get kafka connection timeout
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
-    const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
 
   private:
     /**
@@ -95,7 +92,7 @@ class KafkaSource : public DataSource {
     std::string topic;
     std::string groupId;
     bool autoCommit;
-    cppkafka::Configuration config;
+    std::unique_ptr<cppkafka::Configuration> config;
     bool connected{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::unique_ptr<cppkafka::Consumer> consumer;

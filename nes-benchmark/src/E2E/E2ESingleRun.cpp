@@ -72,30 +72,24 @@ void E2ESingleRun::setupCoordinatorConfig() {
 }
 
 void E2ESingleRun::createSources() {
+    size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
     for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                      configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+                                                                           configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+
         auto dataGenerator =
             DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), bufferManager);
-        auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
-                                                        configPerRun.bufferSizeInBytes->getValue());
-//    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
-    size_t sourceCnt = 0;
-    for (auto& item : configOverAllRuns.dataGenerators) {
-        auto sourceName = item.first;
-        auto dataGenerator = item.second;
-        auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                           configPerRun.numBuffersToProduce->getValue());
 
-        dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers =
-            dataGenerator->createData(configPerRun.numBuffersToProduce->getValue(), configPerRun.bufferSizeInBytes->getValue());
+            dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(), configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
         auto logicalStreamName = configOverAllRuns.logicalStreamName->getValue();
         auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
         auto logicalSource = LogicalSource::create(logicalStreamName, schema);
+        coordinatorConf->logicalSources.add(logicalSource);
+
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         size_t taskQueueId = sourceCnt;
 
@@ -162,26 +156,6 @@ void E2ESingleRun::createSources() {
             auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
             coordinatorConf->worker.physicalSources.add(physicalSource);
         }
-        size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
-        size_t taskQueueId = sourceCnt;
-        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
-                                                                    configPerRun.numBuffersToProduce->getValue(),
-                                                                    /* gatheringValue */ 0,
-                                                                    GatheringMode::INTERVAL_MODE,
-                                                                    sourceAffinity,
-                                                                    taskQueueId);
-        auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = configOverAllRuns.logicalStreamName->getValue();
-        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
-        auto logicalStreamName = sourceName;
-        auto physicalStreamName = "physical_" + sourceName;
-        auto logicalSource = LogicalSource::create(logicalStreamName, schema);
-        auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
-
-        // Adding the physical and logical source to the coordinator
-        coordinatorConf->logicalSources.add(logicalSource);
-        coordinatorConf->worker.physicalSources.add(physicalSource);
-
         sourceCnt += 1;
     }
     NES_INFO("Created sources and the accommodating data generation and data providing!");

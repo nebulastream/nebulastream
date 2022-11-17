@@ -40,11 +40,6 @@ namespace NES::Benchmark {
         connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
         logicalStreamName = ConfigurationOption<std::string>::create("logicalStreamName", "input", "Source stream name");
 
-
-        for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
-            std::string name = "input" + std::to_string(sourceCnt+1);
-            dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
-        }
     }
     std::string E2EBenchmarkConfigOverAllRuns::toString() {
         std::stringstream oss;
@@ -60,8 +55,8 @@ namespace NES::Benchmark {
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
             << "- dataGenerator: " << dataGenerator->getValue() << std::endl
             << "- connectionString: " << connectionString->getValue() << std::endl
-            << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl;
-            << "- dataGenerations: " << getDataGeneratorsAsString() << std::endl
+            << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl
+            << "- dataGenerations: " << dataGenerator->getValue() << std::endl
             << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl;
 
         return oss.str();
@@ -82,45 +77,6 @@ namespace NES::Benchmark {
         configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
         configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
 
-        if (yamlConfig["dataGenerators"].Size() > 0) {
-            /* Iterating through the node
-             * Afterwards, we insert either the parsed values or Default, if we require another generator
-             */
-            configOverAllRuns.dataGenerators.clear();
-            configOverAllRuns.dataGenerators.reserve(configOverAllRuns.numSources->getValue());
-
-            NES_INFO("Creating new data generators as specified in the config!");
-
-            auto dataGenerators = yamlConfig["dataGenerators"];
-            for (auto it = dataGenerators.Begin(); it != dataGenerators.End(); it++) {
-                std::string name = (*it).first;
-                Yaml::Node node = (*it).second;
-
-                std::string generatorName = node["type"].As<std::string>();
-                configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName(generatorName, node);
-            }
-        }
-
-        // Padding the data generators to fit the number of sources. Creating a default data generator
-        for (auto sourceCnt = configOverAllRuns.dataGenerators.size(); sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
-            std::string name = "input" + std::to_string(sourceCnt+1);
-            configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
-        }
-
         return configOverAllRuns;
-    }
-    std::string E2EBenchmarkConfigOverAllRuns::getDataGeneratorsAsString() {
-        std::ostringstream oss;
-
-        auto cnt = 0;
-        for (auto& item : dataGenerators) {
-            if (cnt != 0) {
-                oss << ", ";
-            }
-            oss << item.second->toString();
-            cnt += 1;
-        }
-
-        return oss.str();
     }
 }

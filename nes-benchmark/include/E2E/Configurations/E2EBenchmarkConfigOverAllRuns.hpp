@@ -51,7 +51,6 @@ namespace NES::Benchmark {
         Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
         Configurations::IntConfigOption numSources;
         Configurations::IntConfigOption numberOfPreAllocatedBuffer;
-        std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
         Configurations::StringConfigOption outputFile;
         Configurations::StringConfigOption benchmarkName;
         Configurations::StringConfigOption inputType;
@@ -59,10 +58,6 @@ namespace NES::Benchmark {
         Configurations::StringConfigOption dataProviderMode;
         Configurations::StringConfigOption logicalStreamName;
         Configurations::StringConfigOption dataGenerator;
-
-
-      private:
-        std::string getDataGeneratorsAsString();
         Configurations::StringConfigOption connectionString;
     };
 }
