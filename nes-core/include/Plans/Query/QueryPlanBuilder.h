@@ -15,9 +15,9 @@
 #ifndef NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_H_
 #define NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_H_
 
-#include "API/Expressions/Expressions.hpp"
-#include "QueryPlan.hpp"
-#include "Windowing/LogicalJoinDefinition.hpp"
+#include <API/Expressions/Expressions.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <string>
 
 /**

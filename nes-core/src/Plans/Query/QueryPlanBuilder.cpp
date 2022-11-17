@@ -11,26 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Plans/Query/QueryPlanBuilder.h"
-#include "API/AttributeField.hpp"
-#include "API/Query.hpp"
-#include "API/WindowedQuery.hpp"
-#include "Nodes/Expressions/FieldAssignmentExpressionNode.hpp"
-#include "Nodes/Expressions/FieldRenameExpressionNode.hpp"
-#include "Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp"
-#include "Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp"
-#include "Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp"
-#include "Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp"
-#include "Windowing/DistributionCharacteristic.hpp"
-#include "Windowing/LogicalWindowDefinition.hpp"
-#include "Windowing/TimeCharacteristic.hpp"
-#include "Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp"
-#include "Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp"
-#include "Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp"
-#include "Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp"
-#include "Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp"
-#include "Windowing/WindowTypes/TimeBasedWindowType.hpp"
-#include "Windowing/WindowTypes/WindowType.hpp"
+#include <Plans/Query/QueryPlanBuilder.h>
+#include <API/AttributeField.hpp>
+#include <API/Query.hpp>
+#include <API/WindowedQuery.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <iostream>
 #include <utility>
 
