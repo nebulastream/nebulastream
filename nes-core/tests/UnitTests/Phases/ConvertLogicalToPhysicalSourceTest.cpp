@@ -110,7 +110,9 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalS
                                                                          "topic",
                                                                          /**group Id**/ "groupId",
                                                                          /**auto commit*/ true,
-                                                                         /**timeout*/ 1000);
+                                                                         /**timeout*/ 1000,
+                                                                         "earliest",
+                                                                         10);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }
