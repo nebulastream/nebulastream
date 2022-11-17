@@ -161,9 +161,6 @@ add_nes_unit_test(state-manager-tests "UnitTests/State/StateTest.cpp")
 ### ZMQ Data Source Sink Tests ###
 add_nes_unit_test(zmq-tests "UnitTests/Source/ZMQTest.cpp")
 
-### Kafka Data Source Sink Tests ###
-#add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaSourceTest.cpp")
-
 ### Source Tests ###
 add_nes_integration_test(source-tests "UnitTests/Source/SourceTest.cpp")
 

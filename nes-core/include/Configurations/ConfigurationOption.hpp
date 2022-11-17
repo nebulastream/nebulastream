@@ -295,6 +295,7 @@ const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";
 const std::string USER_NAME_CONFIG = "userName";
 const std::string TOPIC_CONFIG = "topic";
+const std::string OFFSET_MODE_CONFIG = "offsetMode";
 const std::string QOS_CONFIG = "qos";
 const std::string CLEAN_SESSION_CONFIG = "cleanSession";
 const std::string FLUSH_INTERVAL_MS_CONFIG = "flushIntervalMS";

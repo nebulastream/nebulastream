@@ -33,6 +33,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          const std::string groupId,
                          bool autoCommit,
                          uint64_t kafkaConsumerTimeout,
+                         std::string offsetMode,
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
@@ -46,13 +47,14 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  GatheringMode::INTERVAL_MODE,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
-      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)) {
+      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)),
+      offsetMode(offsetMode) {
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
     config->set("group.id", 0);
     config->set("enable.auto.commit", autoCommit == true ? "true" : "false");
-    config->set("auto.offset.reset", "earliest");
+    config->set("auto.offset.reset", offsetMode);
     this->numBuffersToProcess = numbersOfBufferToProduce;
 }
 
@@ -63,7 +65,6 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
         NES_DEBUG("Connect Kafa Source");
     }
     bool pollSuccessFull = false;
-    uint64_t maxPollCnt = 64;
     uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
     while (!pollSuccessFull) {
@@ -81,26 +82,20 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
                 const uint64_t payloadSize = msg.get_payload().get_size();
 
-                NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
-                          //                                                     << ", msg: " << msg.get_payload()
-                );
+                NES_INFO("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
+                                                    << ", msg: " << msg.get_payload());
 
                 std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
 
                 // XXX: maybe commit message every N times
-                if (!autoCommit)
+                if (!autoCommit) {
                     consumer->commit(msg);
+                }
                 return buffer;
             }
         } else {
-            NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt << " maxPollCnt=" << maxPollCnt);
-        }
-
-        currentPollCnt++;
-        if (currentPollCnt == maxPollCnt) {
-            NES_DEBUG("Poll reached max poll count=" << maxPollCnt);
-            pollSuccessFull = true;
+            NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
         }
     }
 
@@ -113,6 +108,7 @@ std::string KafkaSource::toString() const {
     ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "BROKER(" << brokers << "), ";
     ss << "TOPIC(" << topic << "). ";
+    ss << "OFFSETMODE(" << offsetMode << "). ";
     return ss.str();
 }
 
@@ -154,6 +150,8 @@ SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 std::string KafkaSource::getBrokers() const { return brokers; }
 
 std::string KafkaSource::getTopic() const { return topic; }
+
+std::string KafkaSource::getOffsetMode() const { return offsetMode; }
 
 std::string KafkaSource::getGroupId() const { return groupId; }
 

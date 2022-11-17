@@ -51,6 +51,11 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
     }
+    if (sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG) != sourceConfigMap.end()) {
+        offsetMode->setValue(sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
+    }
     if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
     }
@@ -81,6 +86,12 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no topic defined! Please define topic.");
     }
+    if (!yamlConfig[Configurations::OFFSET_MODE_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::OFFSET_MODE_CONFIG].As<std::string>() != "\n") {
+        offsetMode->setValue(yamlConfig[Configurations::OFFSET_MODE_CONFIG].As<std::string>());
+    } else {
+        NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no topic defined! Please define topic.");
+    }
     if (!yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {
         connectionTimeout->setValue(yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<uint32_t>());
@@ -94,17 +105,23 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
 KafkaSourceType::KafkaSourceType()
     : PhysicalSourceType(KAFKA_SOURCE),
       brokers(Configurations::ConfigurationOption<std::string>::create(Configurations::BROKERS_CONFIG, "", "brokers")),
+
       autoCommit(Configurations::ConfigurationOption<uint32_t>::create(
           Configurations::AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
+
       groupId(Configurations::ConfigurationOption<std::string>::create(
           Configurations::GROUP_ID_CONFIG,
           "testGroup",
           "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
+
       topic(Configurations::ConfigurationOption<std::string>::create(Configurations::TOPIC_CONFIG,
                                                                      "testTopic",
                                                                      "topic to listen to")),
+      offsetMode(Configurations::ConfigurationOption<std::string>::create(Configurations::OFFSET_MODE_CONFIG,
+                                                                     "earliest",
+                                                                     "Reading mode default earliest")),
       connectionTimeout(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::CONNECTION_TIMEOUT_CONFIG,
                                                                 10,
@@ -124,6 +141,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::AUTO_COMMIT_CONFIG + ":" + autoCommit->toStringNameCurrentValue();
     ss << Configurations::GROUP_ID_CONFIG + ":" + groupId->toStringNameCurrentValue();
     ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
+    ss << Configurations::OFFSET_MODE_CONFIG + ":" + offsetMode->toStringNameCurrentValue();
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << "\n}";
@@ -139,6 +157,7 @@ bool KafkaSourceType::equal(const PhysicalSourceTypePtr& other) {
         && autoCommit->getValue() == otherSourceConfig->autoCommit->getValue()
         && groupId->getValue() == otherSourceConfig->groupId->getValue()
         && topic->getValue() == otherSourceConfig->topic->getValue()
+        && offsetMode->getValue() == otherSourceConfig->offsetMode->getValue()
         && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue();
 }
@@ -151,6 +170,8 @@ Configurations::StringConfigOption KafkaSourceType::getGroupId() const { return 
 
 Configurations::StringConfigOption KafkaSourceType::getTopic() const { return topic; }
 
+Configurations::StringConfigOption KafkaSourceType::getOffsetMode() const { return offsetMode; }
+
 Configurations::IntConfigOption KafkaSourceType::getConnectionTimeout() const { return connectionTimeout; }
 
 Configurations::IntConfigOption KafkaSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
@@ -162,6 +183,8 @@ void KafkaSourceType::setAutoCommit(uint32_t autoCommitValue) { autoCommit->setV
 void KafkaSourceType::setGroupId(std::string groupIdValue) { groupId->setValue(std::move(groupIdValue)); }
 
 void KafkaSourceType::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
+
+void KafkaSourceType::setOffsetMode(std::string offsetModeValue) { offsetMode->setValue(std::move(offsetModeValue)); }
 
 void KafkaSourceType::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
@@ -176,6 +199,7 @@ void KafkaSourceType::reset() {
     setAutoCommit(autoCommit->getDefaultValue());
     setGroupId(groupId->getDefaultValue());
     setTopic(topic->getDefaultValue());
+    setOffsetMode(offsetMode->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
 }
