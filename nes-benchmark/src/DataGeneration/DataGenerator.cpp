@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
-#include <DataGeneration/YSBDataGenerator.h>
+#include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>

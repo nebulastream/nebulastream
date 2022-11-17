@@ -81,7 +81,6 @@ namespace NES::Benchmark::DataProviding {
 
       protected:
         uint64_t id;
-
         DataProviderMode providerMode;
         cuckoohash_map<uintptr_t, TupleBufferHolder> collector;
     };

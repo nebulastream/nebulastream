@@ -59,7 +59,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     const std::string& getOffsetMode() const;
 
     /**
-     * @brief Get the number of buffers to process
+     * @brief Get the number of buffers to produce
      */
     std::uint64_t getNumberOfToProcessBuffers() const;
 
