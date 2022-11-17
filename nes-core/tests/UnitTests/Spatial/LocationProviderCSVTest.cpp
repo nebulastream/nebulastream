@@ -19,12 +19,12 @@
 #include <Util/TimeMeasurement.hpp>
 #include <chrono>
 #include <thread>
-#include <Util/TestUtils.hpp>
 
 namespace NES {
 
 class LocationProviderCSVTest : public testing::Test {
-  using Waypoint = std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>;
+    using Waypoint = std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>;
+
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoSourceCSV.log", NES::LogLevel::LOG_DEBUG);
@@ -47,7 +47,13 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
     auto startTime = locationProvider->getStartTime();
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromProvider,
+                        std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
@@ -55,11 +61,18 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     auto currTime = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     Timestamp simulatedStartTime = currTime + offset;
-    auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
+    auto locationProvider =
+        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromProvider,
+                        std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
@@ -67,10 +80,17 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     auto currTime = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     Timestamp simulatedStartTime = currTime + offset;
-    auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
+    auto locationProvider =
+        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath, startTime, 4, 10000000, 1000000, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromProvider,
+                        std::static_pointer_cast<void>(locationProvider));
 }
 }// namespace NES

@@ -26,15 +26,15 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <gtest/gtest.h>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -933,9 +933,10 @@ std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp 
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(std::make_shared<NES::Spatial::Index::Experimental::Location>(
-                               NES::Spatial::Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString))),
-                           time);
+        std::pair waypoint(
+            std::make_shared<NES::Spatial::Index::Experimental::Location>(
+                NES::Spatial::Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString))),
+            time);
         waypoints.push_back(waypoint);
     }
     return waypoints;
@@ -951,7 +952,13 @@ std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp 
  * @param getLocation function to get the devices location (eg. wrapper around LocationProvider or TopologyNode object)
  * @param functionParameters parameter to be passed to the getLocation function (eg. the LocationProvider object from which the wrapper obtains the location)
  */
-void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesToCheckEndLocation, Timestamp sleepTime, Timestamp timeError, std::shared_ptr<NES::Spatial::Index::Experimental::Location>(*getLocation)(std::shared_ptr<void>), std::shared_ptr<void> functionParameters) {
+void checkDeviceMovement(std::string csvPath,
+                         Timestamp startTime,
+                         size_t timesToCheckEndLocation,
+                         Timestamp sleepTime,
+                         Timestamp timeError,
+                         std::shared_ptr<NES::Spatial::Index::Experimental::Location> (*getLocation)(std::shared_ptr<void>),
+                         std::shared_ptr<void> functionParameters) {
     std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, startTime);
     NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
 
@@ -991,14 +998,13 @@ void checkDeviceMovement(std::string csvPath, Timestamp startTime, size_t timesT
                 //if we are looking at waypoint at index 1, we do not need to check the time, because the position at index 0 is
                 //the first waypoint
                 if (beforeQuery > previousWaypointTime + timeError || waypointNumber == 1) {
-                    NES_DEBUG("run checks for path from waypoint " <<  waypointNumber - 1 << " to " << waypointNumber)
-                    EXPECT_TRUE((prevLat <= deviceLat && deviceLat < nextLat) ||
-                                prevLat >= deviceLat && deviceLat > nextLat);
-                    EXPECT_TRUE((prevLng <= deviceLng && deviceLng < nextLng) ||
-                                prevLng >= deviceLng && deviceLng > nextLng);
+                    NES_DEBUG("run checks for path from waypoint " << waypointNumber - 1 << " to " << waypointNumber)
+                    EXPECT_TRUE((prevLat <= deviceLat && deviceLat < nextLat) || prevLat >= deviceLat && deviceLat > nextLat);
+                    EXPECT_TRUE((prevLng <= deviceLng && deviceLng < nextLng) || prevLng >= deviceLng && deviceLng > nextLng);
                 } else {
                     NES_DEBUG("run check if device is either on path from " << waypointNumber - 2 << " to " << waypointNumber - 1
-                              << " or " << waypointNumber - 1 << " to " << waypointNumber);
+                                                                            << " or " << waypointNumber - 1 << " to "
+                                                                            << waypointNumber);
                     auto [prevPrevLocation, prevPrevTime] = *std::prev(std::prev(it));
                     auto prevPrevLat = prevPrevLocation->getLatitude();
                     auto prevPrevLng = prevPrevLocation->getLongitude();
