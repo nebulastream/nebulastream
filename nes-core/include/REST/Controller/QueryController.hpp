@@ -132,7 +132,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             return createResponse(Status::CODE_200, response.dump());
         } catch (QueryNotFoundException e) {
-            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
