@@ -244,10 +244,10 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     currentIrBlock->addOperation(ifOperation);
 
     // find control-flow merge block for if
-    auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
-    auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
-    NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
-    ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
+    // auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
+    // auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
+    // NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
+    // ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
 NES::Nautilus::IR::BasicBlockPtr

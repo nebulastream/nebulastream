@@ -41,6 +41,10 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     [[nodiscard]] bool isLoopHeadBlock();
     [[nodiscard]] bool isIfBlock();
     [[nodiscard]] BlockType getBlockType();
+    [[nodiscard]] uint32_t getBackLinks();
+    void incrementBackLinks();
+    [[nodiscard]] bool hasBeenPassed();
+    void setPassed();
     void setBlockType(BlockType blockType);
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
@@ -64,6 +68,8 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::string identifier;
     uint32_t scopeLevel;//todo remove?
     BlockType blockType;
+    uint32_t backLinks; //todo could replace blockType? -> not really, need three states for finding loop blocks
+    bool passed;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
     std::vector<std::weak_ptr<BasicBlock>> predecessors;
