@@ -180,6 +180,14 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      */
     void addBinaryOperatorToQueryPlan(std::string string, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
 
+    /**
+     * @brief: checks if one of the sources for a binary operator is already in the queryPlan
+     * @param leftsource as string
+     * @param rightsource as string
+     * @return the right queryPlan
+     */
+    QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftsource, std::basic_string<char> rightsource);
+
   private:
     int32_t sourceCounter = 0;
     int32_t currentOperatorPointer = -1;
@@ -192,6 +200,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
+
 };
 
 }// namespace NES::Parsers
