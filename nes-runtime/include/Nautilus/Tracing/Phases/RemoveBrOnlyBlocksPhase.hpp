@@ -67,9 +67,12 @@ class RemoveBrOnlyBlocksPhase {
         void processBrOnlyBlocks(IR::BasicBlockPtr parentBlock);
         void findLoopHeadBlocks(IR::BasicBlockPtr parentBlock);
         void createIfOperations(IR::BasicBlockPtr parentBlock);
-        void inline findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
+        bool inline findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
                               std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
-                              const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
+                              std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
+        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
+                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
+                    const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
         // void addScopeLevels(IR::BasicBlockPtr parentBlock);
         // void processBranch(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentBlock, bool conditionalBranch, bool isElse);
         // void processBlock(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentChildBlock);

@@ -186,9 +186,6 @@ void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::st
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
             auto nextBlock = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp)->getNextBlockInvocation().getBlock();
-            if(!nextBlock->isIfBlock() && loopHeadCandidates.contains(nextBlock->getIdentifier())) {
-                nextBlock->setBlockType(IR::BasicBlock::LoopBlock);
-            }
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = nextBlock;
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
@@ -198,6 +195,12 @@ void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::st
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
+    }
+    //todo: when if-branch directly points to loop-header, we exit the loop and do not register the backlink
+    // -> does this trigger double increase? Yes!
+    if(!currentBlock->isIfBlock() && loopHeadCandidates.contains(currentBlock->getIdentifier())) {
+        currentBlock->setBlockType(IR::BasicBlock::LoopBlock);
+        currentBlock->incrementBackLinks();
     }
 }
 
@@ -216,25 +219,66 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findLoopHeadBlocks
     do {
         checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeadCandidates);
         // an ifBlock that we pop from the ifBlock list CANNOT be a loop-header block anymore
-        // since we traverse loopCandidates in reverse order, and since we can only encounter it coming from 'above, 
-        // we can only re-encounter a loopCandidate that is not a loop-header if we already followed its else-branch
-        if(ifBlocks.top()->getBlockType() == IR::BasicBlock::BlockType::None) { 
-            ifBlocks.top()->setBlockType(IR::BasicBlock::IfBlock); //todo could avoid below by changing iteration in 'checkBranchForLoopHeadBlocks'
+        // -> it means that we already followed the ifBlock's true-branch until the end and did not re-encounter the ifBlock
+        if(ifBlocks.top()->getBlockType() == IR::BasicBlock::BlockType::None) {//todo use backlinks 
+            ifBlocks.top()->setBlockType(IR::BasicBlock::IfBlock);
         }
         currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())->getFalseBlockInvocation().getBlock();
         ifBlocks.pop();
-    } while(!ifBlocks.empty());
+    } while(!ifBlocks.empty() || currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp); //todo negate: !(ifBlocks.empty && current == ReturnOp)
 }
 
-void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
-                                std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations, 
+bool RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
+                                std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
                                 const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter) {
-    uint32_t openEdges = currentBlock->getPredecessors().size() - 
-            ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-              candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 0);
-    bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
+    // Check if currentBlock is a loop header. If it is, also check whether it has been passed already.
+    if(!currentBlock->isLoopHeadBlock()) {
+        uint32_t openEdges = currentBlock->getPredecessors().size();
+        if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+            openEdges -= candidateEdgeCounter.at(currentBlock->getIdentifier()) - 1;
+        }
+        return openEdges > 1;
+    } else {
+        // Todo how to handle re-encountering a loop-header (hasBeenPassed==true) that has no more open edges?
+        // -> go down its false-path, and pop its if-operation from ifOperations
+        if(!currentBlock->hasBeenPassed()) {
+            // Loop-Header has not been passed yet. Disregard all backLinks for merge-block considerations.
+            // When the Loop-Header is a merge-block for CF above, it will be added to the candidateEdgeCounter and 
+            // in-edges will be counted down.
+            uint32_t openEdges = currentBlock->getPredecessors().size() - currentBlock->getBackLinks();
+            if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+                openEdges -= candidateEdgeCounter.at(currentBlock->getIdentifier()) - 1;
+            }
+            return openEdges > 1;
+        } else {
+            // We are in the body of the Loop-Header (true-branch). All potential in-edges from 'above' have been counted
+            // already. We now count down potential in-edges from 'below' (backLinks).
+            // WHAT IF: loop is no merge-block for above edges but for below? -> candidateEdgeCounter not set.
+            // -> Loop will be returned as 'new' merge-block and added to list of candidateEdgeCounter blocks.
+            //todo Alternative: only look at backLinks and countdown those? -> would require to reset candidateEdgeCounter (not 0 but RESET!)
+            uint32_t openEdges = currentBlock->getBackLinks(); //if a loop-block has more than one backLink, there MUST be control flow in the loop-body and the loop-body is a merge-block
+            if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+                openEdges -= candidateEdgeCounter.at(currentBlock->getIdentifier()) - 1;
+            }
+            if(openEdges > 1) {
+                return true;
+            } else {    
+                // branch leads to loop -> remove loop-header from ifOperations && follow its false path.
+                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
+                ifOperations.pop();
+                return false;
+            }
+
+        }
+    }
+}
+
+bool RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
+                                std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations, 
+                                std::unordered_map<std::string, uint32_t>& candidateEdgeCounter) {
+    bool openMergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter);
     
-    while(!openMergeBlockFound) {
+    while(!openMergeBlockFound && (currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp)) {
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
@@ -245,36 +289,39 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findControlFlowMer
             //    the if-operation that we search for when we loop back to the loop-header, must be the loop-header itself!
             // could maybe use operation pointer comparison?
             // Compare shared pointers (compares underlying pointers). If not possible compare 'toString()'
-            if(!ifOperations.empty() && (ifOperations.top()->ifOp->getValue() == currentBlock->getTerminatorOp())) {
-                // branch leads to loop -> remove loop-header from ifOperations && follow its false path.
-                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
-                ifOperations.pop();
-            }
+            // auto firstPotentialLoopIf = ifOperations.top()->ifOp->getValue();
+            // auto secondPotentialLoopIf = currentBlock->getTerminatorOp();
+            // if(!ifOperations.empty() && (firstPotentialLoopIf == secondPotentialLoopIf)) {
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
             ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
+            if(currentBlock->isLoopHeadBlock()) {
+                // We processed everything 'above' the loop-header and now dig down its body.
+                currentBlock->setPassed();
+                if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+                    // Erase value from candidate edge counter. If the Loop-Header acts as a merge block for if-ops below,
+                    // we start counting down again using its backLinks.
+                    candidateEdgeCounter.erase(currentBlock->getIdentifier()); //requires map to be non-const!
+                }
+            }
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
-        uint32_t openEdges = currentBlock->getPredecessors().size() - 
-            ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-              currentBlock->getPredecessors().size() - candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 
-              currentBlock->isLoopHeadBlock());
-        openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 1); //todo change: currently we increment edgeCounter too late
+        // check if block qualifies as merge block
+        openMergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter);
     }
+    return !ifOperations.empty(); //todo could it happen that there are no ifOperations, but we still potentially want to continue?
 }
 
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations(IR::BasicBlockPtr currentBlock) {
     std::stack<std::unique_ptr<IfOpCandidate>> ifOperations;
     std::stack<IR::BasicBlockPtr> mergeBlocks;
-    std::unordered_map<std::string, uint32_t> candidateEdgeCounter;
+    std::unordered_map<std::string, uint32_t> candidateEdgeCounter; //rename
     
-    while(currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
-        findControlFlowMerge(currentBlock, ifOperations, candidateEdgeCounter);
+    // while(currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) { 
+    while(findControlFlowMerge(currentBlock, ifOperations, candidateEdgeCounter)) {
         auto currentIfCandidate = std::move(ifOperations.top());
-        ifOperations.pop();
-
-        if(currentIfCandidate->isTrueBranch) {//loop blocks can only occur in their true-branches
-            //todo handle loop returns or already do so above
+        ifOperations.pop(); //could skip popping? -> do we actually not re-add it in some case?
+        if(currentIfCandidate->isTrueBranch) {
             if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
                 candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             } else {
@@ -288,14 +335,15 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations
             assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
             candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             mergeBlocks.pop();
-            while(!mergeBlocks.empty() && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) {
+            while(!ifOperations.top()->isTrueBranch && !mergeBlocks.empty() && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) { //assumption: merge block candidate must be the one of the next-if-operation (in stack) -> in principle we need to know whether the merge-block actually belongs to the current ifOperation!!!!
                 mergeBlocks.pop();
                 ifOperations.pop();
             }
-            uint32_t openEdges = currentBlock->getPredecessors().size() - 
-                    ((candidateEdgeCounter.contains(currentBlock->getIdentifier())) ? 
-                    candidateEdgeCounter.at(currentBlock->getIdentifier()) - currentBlock->isLoopHeadBlock() : 0);
-            bool openMergeBlockFound = (currentBlock->getPredecessors().size() > 1) && (openEdges > 0);
+            // uint32_t openEdges = currentBlock->getPredecessors().size() - currentBlock->isLoopHeadBlock();
+            // if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
+            //     openEdges -= candidateEdgeCounter.at(currentBlock->getIdentifier()) - 1;
+            // }
+            bool openMergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter); //often leads to double check. Can we combine with while condition?
             if(openMergeBlockFound) {
                 mergeBlocks.emplace(currentBlock);
                 ifOperations.top()->isTrueBranch = false;
@@ -304,208 +352,4 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations
         }
     }
 }
-
-
-// IF if-block in loop-head
-// -> do not add to if-stack, but keep for exploring after-loop-block
-
-// Possible algorithm:
-// High level idea:
-// - iterate branch aware:
-//  - we always need to know whether we are in the true- or false-branch for all active/opened if-blocks
-//  - when we hit a merge block, we 'remember' it for all active true- or false-branches
-//  - when we hit a merge-block with an active false-branch of an IfOperation, 
-//    and we have hit that merge-block with the active true-branch of that same IfOperation, we have found its merge-block
-//  -> could happen for multiple IfOperations for the same merge-block
-// Implementation:
-// - iterate over graph until we hit if-block
-// -> add if-block-true-case to stack/list
-// -> follow true-branch
-// -> store if-block-false-case
-//  -> follow false-branch when true-branch has been explored fully
-// - when we hit a merge block:
-//  -> mark all active true-cases of open IfOperations with the identity of that merge-block
-//  -> for all false-cases of open IfOperations, check if merge-block was marked before by ifOperation
-//      -> if so, add merge-block to IfOperation
-
-
-// void inline applyScopeLevels(IR::BasicBlockPtr currentBlock, std::vector<IR::BasicBlockPtr>& candidates) {
-//     // while(!visitedBlocks.contains(currentBlock->getIdentifier()) && 
-//     //         currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
-
-//     auto terminatorOp = currentBlock->getTerminatorOp();
-
-//     if(terminatorOp->getOperationType() == Operation::BranchOp) {
-//         // visitedBlocks.emplace(currentBlock->getIdentifier());
-//         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-//         auto nextBlock = branchOp->getNextBlockInvocation().getBlock();
-//         // todo merge block check as function
-//         // uint32_t isMergeBlock = 1 - ((ifOp->getFalseBlockInvocation().getBlock()->getPredecessors().size() > 1) && 
-//         //                                  !ifOp->getFalseBlockInvocation().getBlock()->getIsLoopHeadBlock());
-//         // Problem: Loop Header Case: How to detect whether branch comes from within loop or from initiating block
-//         // -> check if loopHeader has been visited already (UINT32_T_MAX)
-//         // -> can a loop header be accessed by two different blocks that are not within the loop?
-//         // -> if-else case merge block that is a loop header -> but then the loop header is an actual merge block
-
-//         // When we br to a loop-header-block, when do we lower, and when do we keep the scope level?
-//         // -> Idea: when we visited it before, we lower the scope level, because we branch from within the loop
-//         // -> PROBLEM: it is possible to branch to a loop twice from outside (if- and else cases to a while(1) loop)
-//         // -> SOLUTION: We decrease scope level by one if we have visited the loop before
-//         //              -> either, we come from within the loop (easy)
-//         //              -> or, we branch to a merge-block, which is a loop header at the same time (also requires decrease)
-//         // -> PROBLEM_2: we branch from an if-branch to a loop-head-block that is a merge block
-//         //      -> How to differentiate:
-//         //          -> a) it is a loop head block encapsuled within the if-block (keep scope level)
-//         //              -> SOLUTION: It has 2 predecessors (the branching block, and the loop-end-block)
-//         //                          -> CF CANNOT come from another branch, before the merge-block of the current if-operation is closed
-//         //          -> b) it is the merge block of the if-block (decrease scope level)
-//         //              -> SOLUTION: It has > 2 predecessors
-//         // Algorithm:
-//         //  (visited?)
-//         //      true(loop-end-block or if-merge transition): scope level -= 1
-//         //      false: (predecessors > 2):
-//         //          true(merge-block): scope level -= 1
-//         //          false(nested-loop-header): keep scope level
-        
-//         if(nextBlock->getIsLoopHeadBlock()) {
-//             if(nextBlock->getScopeLevel() != UINT32_MAX) { //visited
-//                 uint32_t isMergeBlock = nextBlock->getPredecessors().size() > 2; //not sufficient need to check if back-link or simple branch
-//                 // If we backlink to a loop header, we never set a lower scope level, and never find a new candidate
-//                 // The only relevant cases are: 
-//                 //  a) br on the same level (!isMergeBlock -> same level transfer)
-//                 //  b) br to merge-block (isMergeBlock -> level - 1 transfer)
-//                 if((nextBlock->getScopeLevel() > (currentBlock->getScopeLevel() - isMergeBlock))) {
-//                     nextBlock->setScopeLevel(currentBlock->getScopeLevel() - isMergeBlock);
-//                     candidates.emplace_back(nextBlock);
-//                 }
-//             } else {
-//                 if(nextBlock->getPredecessors().size() > 2) { // not visited && merge-block && CANNOT be a nested-loop
-//                     if((nextBlock->getScopeLevel() > (currentBlock->getScopeLevel() - 1))) {
-//                         nextBlock->setScopeLevel(currentBlock->getScopeLevel() - 1);
-//                         candidates.emplace_back(nextBlock);
-//                     }
-//                     //todo PROBLEM: what if predecessors.size() == 2 -> merge-block -> decrease scope level!
-//                 } else { // not visited && nested-loop-header
-//                     if((nextBlock->getScopeLevel() > (currentBlock->getScopeLevel()))) {
-//                         nextBlock->setScopeLevel(currentBlock->getScopeLevel());
-//                         candidates.emplace_back(nextBlock);
-//                     }
-//                 }
-//             }
-//         } else {
-//             uint32_t isMergeBlock = nextBlock->getPredecessors().size() > 1;
-//             if((nextBlock->getScopeLevel() > (currentBlock->getScopeLevel()) - isMergeBlock)) { //not a loop head block!
-//                 nextBlock->setScopeLevel(currentBlock->getScopeLevel() - isMergeBlock);
-//                 candidates.emplace_back(nextBlock);
-//             }
-//         }
-
-//         // if((nextBlock->getScopeLevel() > (currentBlock->getScopeLevel() - isMergeBlock))) {
-//         //     branchOp->getNextBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel());
-//         //     candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
-//         // } //else, block has already been visited and scopeLevel as already smaller
-//     } else if (terminatorOp->getOperationType() == Operation::IfOp) {
-//         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-//         // todo check if next block is already merge block, if so do not lower scope level
-//         // -> idea: if next block of if-block-branch is merge block already
-//         // -> BUT: we do that check already, but not for loopHead blocks
-//         // -> SOLUTION: loop body blocks MUST ALWAYS be one scope level lower!
-//         if(currentBlock->getIsLoopHeadBlock()) {
-//             ifOp->getFalseBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel());
-//             ifOp->getTrueBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel() + 1);
-//             candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
-//             candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
-//         } else {
-//             // Set False Block Scope
-//             if((ifOp->getFalseBlockInvocation().getBlock()->getPredecessors().size() > 1) && 
-//                     !(ifOp->getFalseBlockInvocation().getBlock()->getPredecessors().size() == 2 && 
-//                     ifOp->getFalseBlockInvocation().getBlock()->getIsLoopHeadBlock())) {
-//                 if(ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() > (currentBlock->getScopeLevel())) {
-//                     ifOp->getFalseBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel());
-//                     candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
-//                 }
-//             } else { // simple block or nested loop-header
-//                 if(ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() > (currentBlock->getScopeLevel() + 1)) {
-//                     ifOp->getFalseBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel() + 1);
-//                     candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
-//                 }
-//             }
-//             if((ifOp->getTrueBlockInvocation().getBlock()->getPredecessors().size() > 1) && 
-//                     !(ifOp->getTrueBlockInvocation().getBlock()->getPredecessors().size() == 2 && 
-//                     ifOp->getTrueBlockInvocation().getBlock()->getIsLoopHeadBlock())) {
-//                 if(ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() > (currentBlock->getScopeLevel())) {
-//                     ifOp->getTrueBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel());
-//                     candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
-//                 }
-//             } else { // simple block or nested loop-header
-//                 if(ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() > (currentBlock->getScopeLevel() + 1)) {
-//                     ifOp->getTrueBlockInvocation().getBlock()->setScopeLevel(currentBlock->getScopeLevel() + 1);
-//                     candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::addScopeLevels(IR::BasicBlockPtr currentBlock) {
-//     std::vector<IR::BasicBlockPtr> ifBlocks;
-//     currentBlock->setScopeLevel(0);
-     
-//     applyScopeLevels(currentBlock, ifBlocks);
-//     while(!ifBlocks.empty()) {
-//         visitedBlocks.emplace(currentBlock->getIdentifier());
-//         currentBlock = ifBlocks.back();
-//         ifBlocks.pop_back();
-//         applyScopeLevels(currentBlock, ifBlocks);
-//     };
-// }
-
-
 }//namespace NES::Nautilus::Tracing
-
-
-
-// Assumption A1: a nested loop is always returned to before an enclosing loop
-// Assumption A2: it must be possible to reach a loop-head, starting from the loop-head and only taking true-branches
-// -> thus, if we hit return, all if-blocks that we already hit are ordinary if-blocks
-// Iterate through IRGraph
-// - go down one branch
-// - when hitting an if-block -> add it to hash table
-// - also go down the true-branch of that if-block
-// - also^2 add that if-block to candidate list
-// - whenever a branch operation is parsed, check if target is in hash table already
-// - if a block was already visited, mark that block/IfOperation as a loopHead
-//  -> all if-blocks that were encountered between this loop-end-block and the loop-head-block are regular if-operations
-//  -> also mark them (TODO can probably skip that! -> hitting return guarantees ifOps)
-//  -> go down until return is encountered
-//  -> go through else-branches of candidates to check for potential loops
-// ------------------------------------------------------------------------------------
-
-//  Ideas:
-//  - assign scope levels starting with 0
-//  - hitting an IfOperation CAN lead to a scope level increase
-//      - an IfOperation with a defined true AND else case leads to an increase in both branches
-//      - an IfOperation without a true case only leads to an increase in the false case
-//      - an IfOperation without a false case only leads to an increase in the true case
-//      1. if one of the branches of an IfOperation is not defined
-//      -> the undefined branch keeps the current scope level
-//      2. if the IfOperation marks a loop (WHICH OPERATION MARKS A LOOP?)
-//        -> the scope level of the 'false' branch is not lowered
-//  - CHALLENGE:
-//      - how to find out when to increase scope level after IfOperation and when not to?
-//      1.) if true/false branch directly lead to 'merge-block'(has several predecessors) then no increase
-//      2.) BUT WHAT IF ITS A LOOP HEAD BLOCK?
-//      -> true-case-block must be loop body block that at some point passes CF to block with br back to LOOP HEAD
-//      -> QUESTION: Can the false-case-block contain a merge block before an If Operation appears?
-//          -> yes: if(x) {loop{x+1}; x+5;} -> merge block would be after loop
-//      -> problem: if-only is solved, BUT:
-//          - WE CANNOT simply increase the scope level when taking the true/false branch, because it might be a loop
-//      -> Naive solution: 
-//          - always go down true-cases first, and check whether IfOperation is closed by merge block OR by loop-end-block
-//          -> PROBLEM: if we cannot assign scope level yet -> how to find out when IfOperation is closed by merge block?
-//              -> SOLUTION:
-//                  - go down branch by branch (depth-first && true-case first)
-//                  - when hitting an IfOperation -> add to ifOpStack && add false-case-branch to candidates
-//                  - when hitting a merge-block -> pop last ifOperation && mark that if-operation with scope level
-//                  - keep following until return is met
-//                  - then follow false-case-branch of most recent if operation
