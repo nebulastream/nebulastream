@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.51](https://github.com/nebulastream/nebulastream/tree/v0.3.51) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.50...v0.3.51)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add support for variable-sized image data for ELEGANT use case [\#3157](https://github.com/nebulastream/nebulastream/issues/3157)
+
 ## [v0.3.50](https://github.com/nebulastream/nebulastream/tree/v0.3.50) (2022-11-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.49...v0.3.50)
