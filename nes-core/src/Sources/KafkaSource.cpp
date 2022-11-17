@@ -159,5 +159,5 @@ std::string KafkaSource::getGroupId() const { return groupId; }
 bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
-#endif
 }// namespace NES
+#endif
