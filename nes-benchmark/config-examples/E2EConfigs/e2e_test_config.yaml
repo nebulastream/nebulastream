@@ -1,41 +1,30 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1
-bufferSizeInBytes: 5120
-numberOfBuffersToProduce: 100000
+numberOfSources: 1
 
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 1024
+numberOfBuffersPerPipeline: 128
+numberOfBuffersInSourceLocalBufferPool: 128
+bufferSizeInBytes: 131072
 
-# Benchmark parameter for the entire run
-logLevel: LOG_INFO
+##benchmark parameter for the entire run
+dataGenerator: YSB
+numberOfPreAllocatedBuffer: 1000
+logicalStreamName: ysb
+dataProvider: Internal
+dataProviderMode: ZeroCopy
+outputFile: YSBQuery.csv
+benchmarkName: YSBQuery
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 1000
+scalability: scale-up
+logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1
-
-numberOfSources: 3
-dataGenerators:
-  input1:
-    type: Default
-  input2:
-    type: Uniform
-    minValue: 0
-    maxValue: 250
-  input3:
-    type: Zipfian
-    alpha: 0.99
-    minValue: 0
-    maxValue: 1000
-
-inputType: MemoryMode
-dataProviderMode: MemCopy
-outputFile: E2ETestConfig.csv
-benchmarkName: E2ETestConfig
-query: 'Query::from("input1").joinWith(Query::from("input2"))
-                                  .where(Attribute("value")).equalsTo(Attribute("value"))
-                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
-                             .joinWith(Query::from("input3"))
-                                  .where(Attribute("value")).equalsTo(Attribute("value"))
-                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
-                             .filter(Attribute("id") > 100)
-                             .project(Attribute("id"), Attribute("value"), Attribute("timestamp"))
-                             .map(Attribute("sum_id_value") = Attribute("id") + Attribute("value"))
-                             .as("new_name")
-                             .sink(NullOutputSinkDescriptor::create());'

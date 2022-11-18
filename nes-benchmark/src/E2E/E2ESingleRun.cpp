@@ -251,8 +251,8 @@ void E2ESingleRun::stopQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
-    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     queryService->validateAndQueueStopQueryRequest(queryId);
+//    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
