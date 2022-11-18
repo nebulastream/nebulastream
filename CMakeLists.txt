@@ -421,6 +421,7 @@ if (NES_USE_KAFKA)
     include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
+    message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
 endif (NES_USE_KAFKA)
 
 # Library containing OPC client

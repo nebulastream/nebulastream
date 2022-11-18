@@ -52,7 +52,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
-    config->set("group.id", 0);
+    config->set("group.id", groupId);
     config->set("enable.auto.commit", autoCommit == true ? "true" : "false");
     config->set("auto.offset.reset", offsetMode);
     this->numBuffersToProcess = numbersOfBufferToProduce;
@@ -64,10 +64,9 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     if (!connect()) {
         NES_DEBUG("Connect Kafa Source");
     }
-    bool pollSuccessFull = false;
     uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
-    while (!pollSuccessFull) {
+    while (true) {
         cppkafka::Message msg = consumer->poll();
         if (msg) {
             if (msg.get_error()) {
