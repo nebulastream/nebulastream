@@ -67,7 +67,8 @@ find_program(CLANG_FORMAT_EXE clang-format)
 
 macro(project_enable_clang_format)
     string(CONCAT FORMAT_DIRS
-            "${CMAKE_CURRENT_SOURCE_DIR}/benchmark,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/src,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/include,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/tests,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include,"
@@ -79,7 +80,13 @@ macro(project_enable_clang_format)
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/include,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/include")
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/src,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/tests,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/src,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/tests,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/include")
     if (NOT ${CLANG_FORMAT_EXE} STREQUAL "CLANG_FORMAT_EXE-NOTFOUND")
         message(STATUS "clang-format found, whole source formatting enabled through 'format' target.")
         add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py clang-format --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} --fix USES_TERMINAL)
