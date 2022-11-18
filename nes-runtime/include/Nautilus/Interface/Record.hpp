@@ -36,7 +36,6 @@ class Record {
     void write(RecordFieldIdentifier fieldName, Value<>& value);
     uint64_t numberOfFields();
     bool hasField(RecordFieldIdentifier fieldName);
-    size_t getSizeOfRecord() const;
 
   private:
     std::map<RecordFieldIdentifier, Value<>> fields;
