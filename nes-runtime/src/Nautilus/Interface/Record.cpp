@@ -34,13 +34,4 @@ uint64_t Record::numberOfFields() { return fields.size(); }
 void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
 
 bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
-size_t Record::getSizeOfRecord() const {
-    size_t size = 0;
-    for (auto& [fieldIdentifier, value] : fields) {
-        somehow get here the size of each field
-    }
-
-    return size;
-}
-
 }// namespace NES::Nautilus
