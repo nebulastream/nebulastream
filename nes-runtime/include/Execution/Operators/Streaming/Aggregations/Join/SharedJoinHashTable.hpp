@@ -27,10 +27,22 @@ namespace NES::Runtime::Execution::Operators {
 class SharedJoinHashTable {
   private:
     /**
-     * @brief class that stores the pages for a single bucket
+     * @brief class that stores the tuples on a page.
+     * It also contains a bloom filter to have a quick check if a tuple is not on the page
+     */
+    class ImmutableFixedPage{
+
+
+      private:
+        uint8_t const * dataBase;
+    };
+
+
+    /**
+     * @brief class that stores all pages for a single bucket
      */
     class InternalNode {
-        ImmutableFixedPage data;
+        ImmutableFixedPage dataPage;
         std::atomic<InternalNode*> next;
 
       private:
