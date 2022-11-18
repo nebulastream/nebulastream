@@ -23,7 +23,9 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <algorithm>
+#ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/cppkafka.h>
+#endif
 #include <fstream>
 #include <Util/UtilityFunctions.hpp>
 
