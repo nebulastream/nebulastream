@@ -27,7 +27,7 @@ YSBDataGenerator::YSBDataGenerator(Runtime::BufferManagerPtr bufferManager)
 
 std::string YSBDataGenerator::getName() { return "YSB"; }
 
-std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(uint64_t numberOfBuffers, uint64_t bufferSize) {
+std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::cout << "YSB Mode source mode" << std::endl;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
