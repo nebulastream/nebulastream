@@ -18,11 +18,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-namespace cppkafka
-{
+namespace cppkafka {
 class Configuration;
 class Consumer;
-}
+}// namespace cppkafka
 
 namespace NES {
 
@@ -65,7 +64,6 @@ class KafkaSource : public DataSource {
      * @brief Get kafka topic
      */
     std::string getTopic() const;
-
 
     /**
      * @brief Get kafka offset

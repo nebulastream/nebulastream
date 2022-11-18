@@ -120,8 +120,8 @@ KafkaSourceType::KafkaSourceType()
                                                                      "testTopic",
                                                                      "topic to listen to")),
       offsetMode(Configurations::ConfigurationOption<std::string>::create(Configurations::OFFSET_MODE_CONFIG,
-                                                                     "earliest",
-                                                                     "Reading mode default earliest")),
+                                                                          "earliest",
+                                                                          "Reading mode default earliest")),
       connectionTimeout(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::CONNECTION_TIMEOUT_CONFIG,
                                                                 10,

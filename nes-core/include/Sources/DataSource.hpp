@@ -18,12 +18,12 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
