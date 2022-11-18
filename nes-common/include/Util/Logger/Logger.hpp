@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+
 namespace NES {
 
 /**
