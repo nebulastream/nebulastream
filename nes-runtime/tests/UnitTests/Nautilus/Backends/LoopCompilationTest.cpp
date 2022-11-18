@@ -203,22 +203,55 @@ class LoopCompilationTest : public testing::Test, public AbstractCompilationBack
 
 Value<> nestedElseOnlySumLoop() {
     Value agg = Value(0);
-    Value limit = Value(10);
-    // if(agg < 350) {
-    //     agg = agg + 1;
-    // } else {
-    if(agg < 350) {
-        agg = agg + 1;
+    Value limit = Value(1000000);
+    if(agg < 150) {
+            agg = agg + 1;
     } else {
-        agg = agg + 3;
+        if(agg < 150) {
+            agg = agg + 1;
+        } else {
+            agg = agg + 1;
+        }
     }
-    // }
-    while (agg < limit) {
-        agg = agg + 4;
+    for (Value start = 0; start < 10; start = start + 1) {
+        if (agg < 50) {
+            while (agg < limit) {
+                agg = agg + 1;
+            }
+        } else {
+            for (Value start = 0; start < 10; start = start + 1) {
+                agg = agg + 1;
+            }
+        }
+        if(agg < 150) {
+
+        } else {//11
+            if(agg < 250) {
+                while (agg < limit) {
+                    if(agg < 350) {
+                        agg = agg + 1;
+                    }
+                }
+                for (Value start = 0; start < 10; start = start + 1) {
+                    agg = agg + 1;
+                }
+            }
+            if(agg < 450) {
+                agg = agg + 1;
+            } else {
+                agg = agg + 2;
+            }
+            if(agg < 550) {
+                agg = agg + 1;
+            } else {
+                while (agg < limit) {
+                    if(agg < 350) {
+                        agg = agg + 1;
+                    }
+                }
+            }
+        }
     }
-    // while (agg < limit) {
-    //     agg = agg + 4;
-    // }
     return agg;
 }
 

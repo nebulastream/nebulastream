@@ -31,7 +31,7 @@ BasicBlock::BasicBlock(std::string identifier,
 std::string BasicBlock::getIdentifier() { return identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLevel; }
-bool BasicBlock::isLoopHeadBlock() { return blockType == BlockType::LoopBlock; }
+bool BasicBlock::isLoopHeadBlock() { return (backLinks > 0); }
 bool BasicBlock::isIfBlock() { return blockType == BlockType::IfBlock; }
 void BasicBlock::setBlockType(BlockType blockType) { this->blockType = blockType; }
 BasicBlock::BlockType BasicBlock::getBlockType() { return this->blockType; }
