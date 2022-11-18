@@ -13,4 +13,8 @@
 
 add_source_files(nes-runtime
         LazyJoin.cpp
-        BloomFilter.cpp)
+        BloomFilter.cpp
+        LazyJoinOperatorHandler.cpp
+        LocalHashTable.cpp
+        SharedJoinHashTable.cpp
+        FixedPage.cpp)
