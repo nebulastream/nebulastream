@@ -21,7 +21,7 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
 fi
 
 # Install guard once
-pip install guardonce
+pip3 install guardonce
 
 # Build NES
 mkdir -p /nebulastream/build
