@@ -12,39 +12,31 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCALHASHTABLE_HPP
-#define NES_LOCALHASHTABLE_HPP
+#include <atomic>
 
-#include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-class LocalHashTable {
-  private:
-    class FixedPagesLinkedList{
-        static constexpr auto PREALLOCATED_SIZE = 16 * 1024;
-        static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / FixedPage::CHUNK_SIZE;
+
+FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord) {
+    auto ptr = tail.fetch_add(CHUNK_SIZE);
+    NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+    data = reinterpret_cast<Nautilus::Record*>(ptr);
+
+    capacity = CHUNK_SIZE / sizeOfRecord;
+    bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+}
 
 
-        void append(const uint64_t hash, const Nautilus::Record& record);
+bool FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
+    data[pos++] = record;
+    bloomFilter->add(hash);
+    return pos < capacity;
+}
 
-      private:
-        std::atomic<uint64_t>& tail;
-        FixedPage* curPage;
-        size_t pos;
-        // TODO do we really need this overrunAddress
-        uint64_t overrunAddress;
-        std::vector<FixedPage*> pages;
-    };
+bool FixedPage::bloomFilterCheck(uint64_t key) const  { return bloomFilter->checkContains(key); }
 
+Nautilus::Record& FixedPage::operator[](size_t index) const  { return data[index]; }
 
-
-  private:
-    std::vector<FixedPagesLinkedList*> buckets;
-    SchemaPtr schema;
-
-
-};
 } // namespace NES::Runtime::Execution::Operators
-#endif//NES_LOCALHASHTABLE_HPP

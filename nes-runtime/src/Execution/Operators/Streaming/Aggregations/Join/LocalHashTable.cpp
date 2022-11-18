@@ -11,23 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_LAZYJOINOPERATORHANDLER_HPP
-#define NES_LAZYJOINOPERATORHANDLER_HPP
 
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
 
-namespace NES::Runtime::Execution {
-class LazyJoinOperatorHandler {
+namespace NES::Runtime::Execution::Operators {
 
+void LocalHashTable::FixedPagesLinkedList::append(const uint64_t hash, const Nautilus::Record& record) {
+    if (!curPage->append(hash, record)) {
+        if (++pos < pages.size()) {
+            curPage = pages[pos];
+        } else {
+            size_t recordSize = record.getSizeOfRecord();
+            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, recordSize));
+        }
 
-  private:
-    // TODO this vector of hash tables has to be resized to the number of worker threads during runtime
-    std::vector<Operators::LocalHashTable> localHashTables;
+    }
+}
 
-    Operators::SharedJoinHashTable leftSide;
-    Operators::SharedJoinHashTable rightSide;
-};
 
 } // namespace NES::Runtime::Execution::Operators
-#endif//NES_LAZYJOINOPERATORHANDLER_HPP
