@@ -16,11 +16,10 @@
 
 namespace NES::Benchmark::DataProviding {
 
-InternalProvider::InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode,
+InternalProvider::InternalProvider(uint64_t id,
+                                   DataProvider::DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
-                                    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers) {}
-
-
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers) {}
 
 std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId) {
     // For now we only have a single source
@@ -42,7 +41,6 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
     return std::nullopt;
 }
 
-
 void InternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
 void InternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
 
@@ -50,4 +48,4 @@ void InternalProvider::start() {}
 void InternalProvider::stop() { preAllocatedBuffers.clear(); }
 InternalProvider::~InternalProvider() { preAllocatedBuffers.clear(); }
 
-}
+}// namespace NES::Benchmark::DataProviding

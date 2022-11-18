@@ -30,9 +30,10 @@ class LoopInferencePhase {
         void processBlock(BasicBlockPtr block);
         void processLoop(BasicBlockPtr block);
         std::optional<std::shared_ptr<Operations::CountedLoopInfo>> isCountedLoop(BasicBlockPtr block);
+
       private:
         std::shared_ptr<IRGraph> ir;
     };
 };
-}// namespace NES::Nautilus::IR::Operations
+}// namespace NES::Nautilus::IR
 #endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_

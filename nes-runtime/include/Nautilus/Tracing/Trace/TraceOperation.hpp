@@ -37,7 +37,7 @@ class TraceOperation {
     TraceOperation(const TraceOperation&& other);
     TraceOperation& operator=(const TraceOperation& other);
     TraceOperation& operator=(const TraceOperation&& other);
-    ~TraceOperation()=default;
+    ~TraceOperation() = default;
     OpCode op;
     InputVariant result;
     std::vector<InputVariant> input;

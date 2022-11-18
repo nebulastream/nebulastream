@@ -62,7 +62,7 @@ TEST_F(LGammaExpressionTest, lGammaIntegers) {
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 2));
         ASSERT_EQ(resultValue, (double) 0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double >());
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 

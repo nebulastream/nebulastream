@@ -31,8 +31,6 @@ class TraceOperation;
 class OperationRef;
 class Tag;
 
-
-
 /**
  * @brief Represents the thread local trace context.
  */
@@ -58,7 +56,6 @@ TraceContext* getThreadLocalTraceContext();
 void initThreadLocalTraceContext();
 void disableThreadLocalTraceContext();
 
-
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     initThreadLocalTraceContext();
@@ -68,8 +65,6 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     tracer->trace(result);
     return tracer->getExecutionTrace();
 }
-
-
 
 }// namespace NES::Nautilus::Tracing
 

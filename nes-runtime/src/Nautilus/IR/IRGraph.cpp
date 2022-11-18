@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Nautilus/Util/IRDumpHandler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/Util/IRDumpHandler.hpp>
 #include <sstream>
 #include <utility>
 

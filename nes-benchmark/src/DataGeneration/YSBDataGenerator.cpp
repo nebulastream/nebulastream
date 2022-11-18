@@ -22,8 +22,7 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-YSBDataGenerator::YSBDataGenerator(Runtime::BufferManagerPtr bufferManager)
-    : DataGenerator(std::move(bufferManager)) {}
+YSBDataGenerator::YSBDataGenerator(Runtime::BufferManagerPtr bufferManager) : DataGenerator(std::move(bufferManager)) {}
 
 std::string YSBDataGenerator::getName() { return "YSB"; }
 

@@ -21,7 +21,8 @@ namespace NES::Nautilus {
  */
 class InterpreterException : public Exceptions::RuntimeException {
   public:
-    explicit InterpreterException(const std::string& message, const std::source_location location = std::source_location::current());
+    explicit InterpreterException(const std::string& message,
+                                  const std::source_location location = std::source_location::current());
 };
-}
+}// namespace NES::Nautilus
 #endif//NES_NAUTILUS_EXCEPTION_HPP_

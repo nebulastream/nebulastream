@@ -13,8 +13,8 @@
 */
 #ifndef NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
 #define NES_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
-#include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
 namespace NES::Nautilus {
 
 /**

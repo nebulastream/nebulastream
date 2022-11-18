@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/Selection.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -40,11 +40,11 @@ class OperatorTest : public testing::Test {
 };
 
 TEST_F(OperatorTest, FilterOperatorTest) {
-   // setup operator
-   auto readField1 =  std::make_shared<ReadFieldExpression>("0");
-   auto readField2 =  std::make_shared<ReadFieldExpression>("1");
-   auto equalsExpression =  std::make_shared<EqualsExpression>(readField1, readField2);
-   auto selection = std::make_shared<Selection>(equalsExpression);
+    // setup operator
+    auto readField1 = std::make_shared<ReadFieldExpression>("0");
+    auto readField2 = std::make_shared<ReadFieldExpression>("1");
+    auto equalsExpression = std::make_shared<EqualsExpression>(readField1, readField2);
+    auto selection = std::make_shared<Selection>(equalsExpression);
 }
 
 }// namespace NES::Nautilus

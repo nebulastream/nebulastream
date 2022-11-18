@@ -14,8 +14,8 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <vector>
 
 namespace NES::Nautilus {
@@ -35,6 +35,7 @@ class Aggregation : public ExecutableOperator {
     void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
+
   private:
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     mutable uint32_t tag;

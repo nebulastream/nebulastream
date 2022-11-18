@@ -14,8 +14,8 @@
 #ifndef NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
 #define NES_NUATILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
-#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/PluginRegistry.hpp>
 #include <optional>
 namespace NES::Nautilus {
 

@@ -23,8 +23,9 @@ class RadiansExpression : public Expression {
   public:
     RadiansExpression(const ExpressionPtr& SubExpression);
     Value<> execute(NES::Nautilus::Record& record) const override;
+
   private:
-    const  ExpressionPtr SubExpression;
+    const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 #endif//NES_RADIANS_H

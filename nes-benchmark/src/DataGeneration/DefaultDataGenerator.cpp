@@ -19,85 +19,77 @@
 #include <random>
 
 namespace NES::Benchmark::DataGeneration {
-    DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue,
-                                               uint64_t maxValue)  : DataGenerator(),
-                                                                     minValue(minValue), maxValue(maxValue) {}
+DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue, uint64_t maxValue)
+    : DataGenerator(), minValue(minValue), maxValue(maxValue) {}
 
-    std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
-        std::vector<Runtime::TupleBuffer> createdBuffers;
-        createdBuffers.reserve(numberOfBuffers);
+std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+    std::vector<Runtime::TupleBuffer> createdBuffers;
+    createdBuffers.reserve(numberOfBuffers);
 
-        auto memoryLayout = this->getMemoryLayout(bufferSize);
-        NES_INFO("Default source mode");
+    auto memoryLayout = this->getMemoryLayout(bufferSize);
+    NES_INFO("Default source mode");
 
-        // Prints every five percent the current progress
-        uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
-        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    // Prints every five percent the current progress
+    uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
-            Runtime::TupleBuffer bufferRef = allocateBuffer();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+        Runtime::TupleBuffer bufferRef = allocateBuffer();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-            std::random_device randDev;
-            std::mt19937 generator(randDev());
-            std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
+        std::random_device randDev;
+        std::mt19937 generator(randDev());
+        std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
-            /* This branch is solely for performance reasons.
+        /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
-            if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
-                auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
-                auto rowLayoutBuffer = rowLayout->bind(bufferRef);
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+            auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
+            auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 
-                for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    uint64_t value = uniformIntDistribution(generator);
-                    rowLayoutBuffer->pushRecord<false>(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(
-                        curRecord,
-                        value,
-                        curRecord,
-                        curRecord));
-                }
-
-            } else {
-                for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                    auto value = uniformIntDistribution(generator);
-                    dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                    dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
-                    dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                    dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
-                }
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                uint64_t value = uniformIntDistribution(generator);
+                rowLayoutBuffer->pushRecord<false>(
+                    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
 
-            if (curBuffer % noTuplesInFivePercent == 0) {
-                NES_INFO("DefaultDataGenerator: currently at " << (((double)curBuffer / numberOfBuffers) * 100) << "%");
+        } else {
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                auto value = uniformIntDistribution(generator);
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
-
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
-            createdBuffers.emplace_back(bufferRef);
         }
 
+        if (curBuffer % noTuplesInFivePercent == 0) {
+            NES_INFO("DefaultDataGenerator: currently at " << (((double) curBuffer / numberOfBuffers) * 100) << "%");
+        }
 
-        NES_INFO("Created all buffers!");
-        return createdBuffers;
+        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        createdBuffers.emplace_back(bufferRef);
     }
 
-    NES::SchemaPtr DefaultDataGenerator::getSchema() {
-        return Schema::create()->addField(createField("id", NES::UINT64))
-                               ->addField(createField("value", NES::UINT64))
-                               ->addField(createField("payload", NES::UINT64))
-                               ->addField(createField("timestamp", NES::UINT64));
-    }
+    NES_INFO("Created all buffers!");
+    return createdBuffers;
+}
 
-    std::string DefaultDataGenerator::getName() {
-        return "Uniform";
-    }
+NES::SchemaPtr DefaultDataGenerator::getSchema() {
+    return Schema::create()
+        ->addField(createField("id", NES::UINT64))
+        ->addField(createField("value", NES::UINT64))
+        ->addField(createField("payload", NES::UINT64))
+        ->addField(createField("timestamp", NES::UINT64));
+}
 
-    std::string DefaultDataGenerator::toString() {
-        std::ostringstream oss;
+std::string DefaultDataGenerator::getName() { return "Uniform"; }
 
-        oss << getName()
-            << " (" << minValue << ", "
-            << maxValue << ")";
+std::string DefaultDataGenerator::toString() {
+    std::ostringstream oss;
 
-        return oss.str();
-    }
+    oss << getName() << " (" << minValue << ", " << maxValue << ")";
 
-    } // namespace NES::Benchmark::DataGeneration
+    return oss.str();
+}
+
+}// namespace NES::Benchmark::DataGeneration

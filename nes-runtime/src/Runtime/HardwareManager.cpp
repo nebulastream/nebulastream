@@ -32,7 +32,7 @@ namespace NES::Runtime {
 namespace detail {
 
 // TODO REMOVE TRIM FUNCTION HERE AFTER REFACTORING
-std::string trim(std::string str){
+std::string trim(std::string str) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
     };

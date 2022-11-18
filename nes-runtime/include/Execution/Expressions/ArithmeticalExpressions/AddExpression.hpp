@@ -28,8 +28,8 @@ class AddExpression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr leftSubExpression;
-    const  ExpressionPtr rightSubExpression;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions

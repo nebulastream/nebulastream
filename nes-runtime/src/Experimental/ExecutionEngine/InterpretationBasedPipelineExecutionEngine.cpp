@@ -15,12 +15,12 @@
 #include <Experimental/ExecutionEngine/InterpretationBasedExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/BufferManager.hpp>

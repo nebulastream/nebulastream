@@ -15,10 +15,10 @@
 #ifndef NES_LOOPOPERATION_HPP
 #define NES_LOOPOPERATION_HPP
 
-#include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {
@@ -28,7 +28,7 @@ namespace NES::Nautilus::IR::Operations {
  */
 class LoopOperation : public Operation {
   public:
-    enum LoopType{ForLoop};
+    enum LoopType { ForLoop };
     LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 
@@ -44,5 +44,5 @@ class LoopOperation : public Operation {
     BasicBlockInvocation loopHeadBlock;
     std::shared_ptr<LoopInfo> loopInfo;
 };
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_LoopOperation_HPP

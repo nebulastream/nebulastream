@@ -18,7 +18,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 Atan2Expression::Atan2Expression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                             const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
 /**

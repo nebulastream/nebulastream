@@ -16,9 +16,9 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/ProxyFunctions.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -148,7 +148,8 @@ void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLay
     }
 }
 
-bool RecordBuffer::includeField(const std::vector<Record::RecordFieldIdentifier>& projections, Record::RecordFieldIdentifier fieldIndex) {
+bool RecordBuffer::includeField(const std::vector<Record::RecordFieldIdentifier>& projections,
+                                Record::RecordFieldIdentifier fieldIndex) {
     if (projections.empty())
         return true;
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();

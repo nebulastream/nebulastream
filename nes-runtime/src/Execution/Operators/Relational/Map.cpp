@@ -16,7 +16,6 @@
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-
 void Map::execute(ExecutionContext& ctx, Record& record) const {
     // assume that map expression performs a field write
     mapExpression->execute(record);
@@ -24,4 +23,4 @@ void Map::execute(ExecutionContext& ctx, Record& record) const {
     child->execute(ctx, record);
 }
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators

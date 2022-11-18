@@ -26,6 +26,7 @@ class NegateOperation : public Operation {
     OperationPtr getInput();
     std::string toString() override;
     bool classof(const Operation* Op);
+
   private:
     OperationWPtr input;
 };

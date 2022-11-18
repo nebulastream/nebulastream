@@ -13,7 +13,6 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
-#include <Nautilus/Util/Frame.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -28,6 +27,7 @@
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <Nautilus/Util/Frame.hpp>
 namespace NES::Nautilus::Tracing {
 
 /**

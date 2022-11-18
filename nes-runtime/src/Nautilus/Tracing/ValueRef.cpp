@@ -56,5 +56,4 @@ std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {
 bool ValueRef::operator==(const ValueRef& rhs) const { return blockId == rhs.blockId && operationId == rhs.operationId; }
 bool ValueRef::operator!=(const ValueRef& rhs) const { return !(rhs == *this); }
 
-
 }// namespace NES::Nautilus::Tracing

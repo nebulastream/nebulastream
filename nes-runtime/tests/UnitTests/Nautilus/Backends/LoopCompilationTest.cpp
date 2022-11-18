@@ -40,7 +40,6 @@ class LoopCompilationTest : public testing::Test, public AbstractCompilationBack
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-
 };
 
 Value<> sumLoop(int upperLimit) {

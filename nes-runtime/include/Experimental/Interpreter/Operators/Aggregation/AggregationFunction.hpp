@@ -87,6 +87,5 @@ class CountFunction : public AggregationFunction {
     uint64_t getStateSize() const override;
 };
 
-
 }// namespace NES::Nautilus
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_FUNCTION_HPP_

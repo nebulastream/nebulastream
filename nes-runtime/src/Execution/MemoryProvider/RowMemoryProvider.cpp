@@ -14,21 +14,19 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
-RowMemoryProvider::RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr) : 
-    rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
+RowMemoryProvider::RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr)
+    : rowMemoryLayoutPtr(rowMemoryLayoutPtr){};
 
-MemoryLayouts::MemoryLayoutPtr RowMemoryProvider::getMemoryLayoutPtr() {
-    return rowMemoryLayoutPtr;
-}
+MemoryLayouts::MemoryLayoutPtr RowMemoryProvider::getMemoryLayoutPtr() { return rowMemoryLayoutPtr; }
 
 Nautilus::Record RowMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                    Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                    Nautilus::Value<Nautilus::UInt64> recordIndex) {
+                                         Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                                         Nautilus::Value<Nautilus::UInt64> recordIndex) {
     // read all fields
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(rowMemoryLayoutPtr);
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
@@ -50,9 +48,9 @@ Nautilus::Record RowMemoryProvider::read(const std::vector<Nautilus::Record::Rec
     return record;
 }
 
-void RowMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
-                                 Nautilus::Value<Nautilus::MemRef> bufferAddress, 
-                                 NES::Nautilus::Record& rec) {
+void RowMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
+                              Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                              NES::Nautilus::Record& rec) {
     auto fieldSizes = rowMemoryLayoutPtr->getFieldSizes();
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
@@ -66,4 +64,4 @@ void RowMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex
     }
 }
 
-} //namespace
+}// namespace NES::Runtime::Execution::MemoryProvider

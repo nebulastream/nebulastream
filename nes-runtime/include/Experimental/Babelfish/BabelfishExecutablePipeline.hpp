@@ -26,14 +26,15 @@ class BabelfishExecutablePipeline : public ExecutablePipeline {
   public:
     BabelfishExecutablePipeline(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                 std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                graal_isolatethread_t* isolate, void* pipelineContext);
+                                graal_isolatethread_t* isolate,
+                                void* pipelineContext);
     void setup() override;
     void execute(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& buffer) override;
     ~BabelfishExecutablePipeline() override;
 
   private:
-   graal_isolatethread_t* isolate;
-   void* pipelineContext;
+    graal_isolatethread_t* isolate;
+    void* pipelineContext;
 };
 
 }// namespace NES::ExecutionEngine::Experimental

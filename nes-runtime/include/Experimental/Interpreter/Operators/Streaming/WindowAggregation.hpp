@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_WINDOW_AGGREGATION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_WINDOW_AGGREGATION_HPP_
-#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Util/Experimental/HashMap.hpp>

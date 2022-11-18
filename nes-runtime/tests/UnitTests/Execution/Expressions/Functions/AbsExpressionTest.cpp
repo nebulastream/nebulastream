@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-
-
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
 
 #include <TestUtils/ExpressionWrapper.hpp>
@@ -24,16 +22,11 @@
 
 #include <memory>
 
-
-
 namespace NES::Runtime::Execution::Expressions {
-
-
 
 class AbsExpressionTest : public testing::Test {
 
   public:
-
     /* Will be called before any test in this class are executed. */
 
     static void SetUpTestCase() {
@@ -41,27 +34,19 @@ class AbsExpressionTest : public testing::Test {
         NES::Logger::setupLogging("AbsExpressionTest.log", NES::LogLevel::LOG_DEBUG);
 
         std::cout << "Setup AbsExpressionTest test class." << std::endl;
-
     }
-
-
 
     /* Will be called before a test is executed. */
 
     void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
 
-
-
     /* Will be called before a test is executed. */
 
     void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
 
-
-
     /* Will be called after all tests in this class are finished. */
 
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-
 };
 
 TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat) {
@@ -77,7 +62,6 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat) {
         ASSERT_EQ(resultValue, (float) 17.4);
 
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
 
     // Double
@@ -89,12 +73,8 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat) {
         ASSERT_EQ(resultValue, (double) 17.4);
 
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-
     }
-
 }
-
-
 
 /**
   * @brief If we execute the expression on a boolean it should throw an exception.
@@ -105,9 +85,6 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<AbsExpression>();
 
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-
 }
-
-
 
 }// namespace NES::Runtime::Execution::Expressions

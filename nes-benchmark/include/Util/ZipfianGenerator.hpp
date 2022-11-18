@@ -12,12 +12,10 @@
     limitations under the License.
 */
 
-
 #ifndef NES_ZIPFIANGENERATOR_HPP
 #define NES_ZIPFIANGENERATOR_HPP
 
 #include <random>
-
 
 // Inspired by https://github.com/brianfrankcooper/YCSB/blob/master/core/src/main/java/site/ycsb/generator/ZipfianGenerator.java
 class ZipfianGenerator {
@@ -76,12 +74,11 @@ class ZipfianGenerator {
             return min + 1;
         }
 
-        uint64_t ret = min + (long)((numItems) * std::pow(eta * u - eta + 1, alpha));
+        uint64_t ret = min + (long) ((numItems) *std::pow(eta * u - eta + 1, alpha));
         return ret;
     }
 
   private:
-
     /**
      * @brief this function calculates the zeta constant needed for the distribution
      * @param st

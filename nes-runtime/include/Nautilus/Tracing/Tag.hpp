@@ -55,6 +55,7 @@ class Tag {
     static TagAddress createCurrentAddress();
     bool operator==(const Tag& other) const;
     friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
+
   private:
     /**
      * @brief Constructor to create a new tag.

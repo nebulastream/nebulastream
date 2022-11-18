@@ -30,9 +30,10 @@ class BranchOperation : public Operation {
 
     BasicBlockInvocation& getNextBlockInvocation();
     std::string toString() override;
-    static bool classof(const Operation *Op);
+    static bool classof(const Operation* Op);
+
   private:
     BasicBlockInvocation basicBlock;
 };
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_BRANCHOPERATION_HPP

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Nautilus {
 

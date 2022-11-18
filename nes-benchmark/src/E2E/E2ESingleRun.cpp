@@ -26,8 +26,8 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/cppkafka.h>
 #endif
-#include <fstream>
 #include <Util/UtilityFunctions.hpp>
+#include <fstream>
 
 namespace NES::Benchmark {
 
@@ -84,7 +84,9 @@ void E2ESingleRun::createSources() {
 
         if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
-            auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue()configOverAllRuns.connectionString->getValue(), ",");
+            auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(
+                configOverAllRuns.connectionString->getValue() configOverAllRuns.connectionString->getValue(),
+                ",");
             //push data to kafka topic
             cppkafka::Configuration config = {{"metadata.broker.list", connectionStringVec[0]}};
             cppkafka::Producer producer(config);
@@ -254,7 +256,7 @@ void E2ESingleRun::stopQuery() {
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
     queryService->validateAndQueueStopQueryRequest(queryId);
-//    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+    //    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);

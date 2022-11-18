@@ -32,7 +32,6 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -40,7 +39,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/UDFCallExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -52,6 +51,7 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #ifdef USE_MLIR
 #include <Nautilus/Backends/MLIR/MLIRPipelineCompilerBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>

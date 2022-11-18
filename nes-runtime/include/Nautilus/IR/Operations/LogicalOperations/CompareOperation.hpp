@@ -41,7 +41,7 @@ class CompareOperation : public Operation {
         FOEQ = 14,
         FONE = 15
     };
-    CompareOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
+    CompareOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
     ~CompareOperation() override = default;
 
     OperationPtr getLeftInput();

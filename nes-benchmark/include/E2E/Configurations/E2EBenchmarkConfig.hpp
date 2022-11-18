@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_E2EBENCHMARKCONFIG_HPP
 #define NES_E2EBENCHMARKCONFIG_HPP
 
@@ -24,41 +23,40 @@
 
 namespace NES::Benchmark {
 
-    /**
+/**
      * @brief this class saves all the configuration parameters and
      * creates benchmarks from a provided yaml file
      */
-    class E2EBenchmarkConfig {
+class E2EBenchmarkConfig {
 
-      public:
-        /**
+  public:
+    /**
          * @brief creates benchmarks from the yaml file. Expects that yamlConfigFile exists
          * @param configPath
          * @return
          */
-        static E2EBenchmarkConfig createBenchmarks(const std::string& yamlConfigFile);
+    static E2EBenchmarkConfig createBenchmarks(const std::string& yamlConfigFile);
 
-        /**
+    /**
          * @brief reads the logging level from the config file. Expects that yamlConfigFile exists
          * @param yamlConfigFile
          * @return loglevel
          */
-        static NES::LogLevel getLogLevel(const std::string& yamlConfigFile,
-                                         NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_DEBUG);
+    static NES::LogLevel getLogLevel(const std::string& yamlConfigFile, NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_DEBUG);
 
-        /**
+    /**
          * @brief creates a string representation of this object
          * @return the string representation
          */
-        std::string toString();
+    std::string toString();
 
-        const std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() const { return allConfigPerRuns; }
-        const E2EBenchmarkConfigOverAllRuns& getConfigOverAllRuns() const { return configOverAllRuns; }
+    const std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() const { return allConfigPerRuns; }
+    const E2EBenchmarkConfigOverAllRuns& getConfigOverAllRuns() const { return configOverAllRuns; }
 
-      private:
-        std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
-        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-    };
+  private:
+    std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
+    E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+};
 }// namespace NES::Benchmark
 
 #endif//NES_E2EBENCHMARKCONFIG_HPP

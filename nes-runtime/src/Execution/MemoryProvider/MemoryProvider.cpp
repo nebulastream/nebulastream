@@ -61,7 +61,7 @@ Nautilus::Value<> MemoryProvider::load(PhysicalTypePtr type, Nautilus::Value<Nau
 }
 
 bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                            Nautilus::Record::RecordFieldIdentifier fieldIndex) {
+                                   Nautilus::Record::RecordFieldIdentifier fieldIndex) {
     if (projections.empty()) {
         return true;
     }
@@ -70,4 +70,4 @@ bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFie
 
 MemoryProvider::~MemoryProvider() {}
 
-} //namespace
+}// namespace NES::Runtime::Execution::MemoryProvider

@@ -37,7 +37,6 @@ class MemRef : public TraceableType {
 
     void* getValue() { return value; }
 
-
     template<class ResultType>
     std::shared_ptr<ResultType> load() {
         auto rawValue = (int64_t*) value;

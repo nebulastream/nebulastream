@@ -13,8 +13,8 @@
 */
 #ifndef NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_
 #define NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_
-#include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Nautilus/Tracing/Tag.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
 #include <memory>
 #include <unordered_map>
 namespace NES::Nautilus::Tracing {
@@ -54,12 +54,13 @@ class ExecutionTrace {
 
     std::shared_ptr<OperationRef> returnRef;
     std::vector<ValueRef> getArguments();
+
   private:
     uint32_t currentBlock;
     std::vector<Block> blocks;
     std::vector<ValueRef> arguments;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Nautilus::Tracing
 
 #endif//NES_NAUTILUS_TRACING_EXECUTIONTRACE_HPP_

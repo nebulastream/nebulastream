@@ -17,6 +17,26 @@ namespace NES::Nautilus::Tracing {
 /**
  * @brief The OpCode enum defines the different traceable primitive operations.
  */
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, GREATER_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE, CALL, CAST };
-}
+enum OpCode {
+    ADD,
+    SUB,
+    DIV,
+    MUL,
+    EQUALS,
+    LESS_THAN,
+    GREATER_THAN,
+    NEGATE,
+    AND,
+    OR,
+    CMP,
+    JMP,
+    CONST,
+    ASSIGN,
+    RETURN,
+    LOAD,
+    STORE,
+    CALL,
+    CAST
+};
+}// namespace NES::Nautilus::Tracing
 #endif//NES_NAUTILUS_TRACING_OPCODE_HPP_

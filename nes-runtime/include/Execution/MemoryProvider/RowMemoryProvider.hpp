@@ -36,8 +36,9 @@ class RowMemoryProvider : public MemoryProvider {
                           Nautilus::Value<Nautilus::MemRef> bufferAddress,
                           Nautilus::Value<Nautilus::UInt64> recordIndex) override;
 
-    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
-               Nautilus::Value<Nautilus::MemRef> bufferAddress, NES::Nautilus::Record& rec) override;
+    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
+               Nautilus::Value<Nautilus::MemRef> bufferAddress,
+               NES::Nautilus::Record& rec) override;
 
   private:
     const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;

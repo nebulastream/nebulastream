@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Nautilus/Util/IRDumpHandler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/Util/IRDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
@@ -62,7 +62,7 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
             //if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
-                dumpHelper(branchOp->getNextBlockInvocation().getBlock());
+            dumpHelper(branchOp->getNextBlockInvocation().getBlock());
             //}
             break;
         }
