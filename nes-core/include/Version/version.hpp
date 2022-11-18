@@ -13,12 +13,12 @@
 */
 
 // clang-format off
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
+#ifndef NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
+#define NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 3
 #define NES_VERSION_PATCH 55
 #define NES_VERSION_POST_FIX -SNAPSHOT
 constexpr char const* NES_VERSION      = "0.3.55-SNAPSHOT";
-#endif
+#endif //NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 // clang-format on
