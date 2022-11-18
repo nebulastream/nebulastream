@@ -20,6 +20,8 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
   exit 1
 fi
 
+# Install pip
+apt update && apt install python3-pip
 # Install guard once
 pip3 install guardonce
 
@@ -33,3 +35,11 @@ make fix-guards ../nes-compiler/include
 make fix-guards ../nes-core/include
 make fix-guards ../nes-data-types/include
 make fix-guards ../nes-runtime/include
+
+clean=$(git status | grep "nothing to commit (working directory clean)")
+if [ -z "$clean" ]; then
+    echo Please run fix-guards target locally before shipping your changes on remote
+    exit 1
+else
+    echo No change detected.
+fi
