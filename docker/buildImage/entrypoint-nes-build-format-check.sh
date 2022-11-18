@@ -28,6 +28,8 @@ cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING
 # Perform format
 make format
 
+git status
+
 clean=$(git status | grep "nothing to commit (working directory clean)")
 if [ -z "$clean" ]; then
     echo "Please run format target locally before shipping your changes on remote"
