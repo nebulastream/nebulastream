@@ -93,3 +93,7 @@ add_test(NAME runtime-log2-expression-test COMMAND runtime-log2-expression-test)
 add_executable(runtime-ln-expression-test "LnExpressionTest.cpp")
 target_link_libraries(runtime-ln-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-ln-expression-test COMMAND runtime-ln-expression-test)
+
+add_executable(runtime-bitcounter-expression-test "BitcounterExpressionTest.cpp")
+target_link_libraries(runtime-bitcounter-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-bitcounter-expression-test COMMAND runtime-bitcounter-expression-test)
