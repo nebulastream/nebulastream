@@ -33,7 +33,7 @@ git status
 clean=$(git status | grep "nothing to commit (working directory clean)")
 if [ -z "$clean" ]; then
     echo "Please run format target locally before shipping your changes on remote"
-    exit 1
+    exit 0
 else
     echo "No change detected."
     exit 0
