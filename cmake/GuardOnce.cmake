@@ -18,8 +18,18 @@ macro(project_enable_fixguards)
     set(ENV{PYTHONPATH} "${guardonce_SOURCE_DIR}/guardonce")
 
     add_custom_target(fix-guards
-            COMMAND python3 -m guardonce.guard2once -r include/
-            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' include/
+            COMMAND python3 -m guardonce.guard2once -r nes-client/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-client/include/
+            COMMAND python3 -m guardonce.guard2once -r nes-common/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-common/include/
+            COMMAND python3 -m guardonce.guard2once -r nes-compiler/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-compiler/include/
+            COMMAND python3 -m guardonce.guard2once -r nes-core/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-core/include/
+            COMMAND python3 -m guardonce.guard2once -r nes-data-types/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-data-types/include/
+            COMMAND python3 -m guardonce.guard2once -r nes-runtime/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | prepend nes_ | append _ | upper' -s '\#endif  // %\\n' nes-runtime/include/
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             )
     message(" -- guardonce utility to fix ifdefs is available via the 'fix-guards' target")
