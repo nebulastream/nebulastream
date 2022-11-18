@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.54](https://github.com/nebulastream/nebulastream/tree/v0.3.54) (2022-11-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.53...v0.3.54)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Improve Kafka support [\#2942](https://github.com/nebulastream/nebulastream/issues/2942)
+
 ## [v0.3.53](https://github.com/nebulastream/nebulastream/tree/v0.3.53) (2022-11-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.52...v0.3.53)
