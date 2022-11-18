@@ -27,7 +27,7 @@ WASMCompiler::WASMCompiler() = default;
  * @param ir
  * @return
  */
-BinaryenModuleRef WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
+char* WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     BinaryenSetColorsEnabled(true);
     wasm = BinaryenModuleCreate();
     relooper = RelooperCreate(wasm);
@@ -41,9 +41,14 @@ BinaryenModuleRef WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     if (!BinaryenModuleValidate(wasm)) {
         std::cout << "Generated pre-optimized wasm is incorrect!" << std::endl;
     }
+    BinaryenModulePrintStackIR(wasm, false);
+    std::cout << "---- Optimized WASM ----" << std::endl;
     BinaryenModuleOptimize(wasm);
     BinaryenModulePrintStackIR(wasm, false);
-    return wasm;
+    static char result[1024];
+    BinaryenModuleWriteText(wasm, result, 1024);
+    //BinaryenModuleWriteText(wasm, result, 100);
+    return result;
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOperation>& functionOp) {
@@ -93,12 +98,20 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
         k++;
     }
 
+    //CPython import
+    BinaryenAddFunctionImport(wasm, "_start", "cpython", "_start", BinaryenTypeNone(), BinaryenTypeNone());
+    /**
+     * Memory stuff here, extract it later on
+     */
+    BinaryenSetMemory(wasm, 1, 8, "mem", nullptr, nullptr, nullptr, nullptr, 0, false, false, "0");
+
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), j);
     BinaryenExpressionRef body = generateBody();
-    BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments,
+    BinaryenFunctionRef function = BinaryenAddFunction(wasm, functionOp->getName().c_str(), arguments,
                         getBinaryenType(functionOp->getOutputArg()),
                         varArray.get(), index, body);
     BinaryenAddFunctionExport(wasm, functionOp->getName().c_str(), functionOp->getName().c_str());
+    //BinaryenSetStart(wasm, function);
     //TODO Add memory
 }
 
@@ -107,6 +120,10 @@ void WASMCompiler::generateWASM(const IR::BasicBlockPtr& basicBlock, BinaryenExp
     for (const auto& operation : basicBlock->getOperations()) {
         generateWASM(operation, expressions);
     }
+}
+
+BinaryenExpressionRef WASMCompiler::makeInt32(BinaryenModuleRef module, int x) {
+    return BinaryenConst(module, BinaryenLiteralInt32(x));
 }
 
 void WASMCompiler::generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& expressions) {
@@ -226,7 +243,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstIntOp
                                  BinaryenConst(wasm, BinaryenLiteralInt64(constIntOp->getConstantIntValue())));
         } else {
             expressions.setValue(constIntOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralInt32((int32_t)constIntOp->getConstantIntValue())));
+                                 BinaryenConst(wasm, BinaryenLiteralInt32((int32_t) constIntOp->getConstantIntValue())));
         }
         consumed.emplace(constIntOp->getIdentifier(), expressions.getValue(constIntOp->getIdentifier()));
     }
@@ -239,7 +256,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstFloat
                                  BinaryenConst(wasm, BinaryenLiteralFloat64(constFloatOp->getConstantFloatValue())));
         } else {
             expressions.setValue(constFloatOp->getIdentifier(),
-                                 BinaryenConst(wasm, BinaryenLiteralFloat32((float)constFloatOp->getConstantFloatValue())));
+                                 BinaryenConst(wasm, BinaryenLiteralFloat32((float) constFloatOp->getConstantFloatValue())));
         }
         consumed.emplace(constFloatOp->getIdentifier(), expressions.getValue(constFloatOp->getIdentifier()));
     }
@@ -435,7 +452,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOper
     BinaryenExpressions blockArgs;
     auto currentTrueArguments = branchOp->getNextBlockInvocation().getArguments();
     auto nextTrueArguments = branchOp->getNextBlockInvocation().getBlock()->getArguments();
-    for(int i = 0; i < (int)branchOp->getNextBlockInvocation().getArguments().size(); i++) {
+    for(int i = 0; i < (int) branchOp->getNextBlockInvocation().getArguments().size(); i++) {
         BinaryenExpressionRef localGet;
         auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
 
@@ -480,7 +497,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOper
     generateBasicBlock(branchOp->getNextBlockInvocation(), blockArgs);
 }
 
-void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressions& expressions) {
+void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::IfOperation>& ifOp, BinaryenExpressions& expressions) {
     BinaryenExpressions trueBlockArgs, falseBlockArgs;
 
     blockLinking.emplace_back(std::make_tuple(currentBlock->getIdentifier(),
@@ -497,7 +514,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
 
     auto currentTrueArguments = ifOp->getTrueBlockInvocation().getArguments();
     auto nextTrue = ifOp->getTrueBlockInvocation().getBlock()->getArguments();
-    for(int i = 0; i < (int)ifOp->getTrueBlockInvocation().getArguments().size(); i++) {
+    for(int i = 0; i < (int) ifOp->getTrueBlockInvocation().getArguments().size(); i++) {
         BinaryenExpressionRef localGet;
         auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {
@@ -528,7 +545,7 @@ void WASMCompiler::generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifO
 
     auto currentFalse = ifOp->getFalseBlockInvocation().getArguments();
     auto nextFalse = ifOp->getFalseBlockInvocation().getBlock()->getArguments();
-    for(int i = 0; i < (int)ifOp->getFalseBlockInvocation().getArguments().size(); i++) {
+    for(int i = 0; i < (int) ifOp->getFalseBlockInvocation().getArguments().size(); i++) {
         BinaryenExpressionRef localGet;
         auto currVar = expressions.getValue(currentFalse[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-// #include "/home/victor/binaryen/src/binaryen-c.h"
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Backends/WASM/WASMExecutablePipeline.hpp>
+//#include <wasmtime.hh>
 
 namespace NES::Nautilus::Backends::WASM {
 
@@ -24,6 +24,7 @@ WASMExecutablePipeline::WASMExecutablePipeline(std::shared_ptr<Runtime::Executio
     : ExecutionEngine::Experimental::ExecutablePipeline(executionContext, physicalOperatorPipeline), engine(std::move(engine)) {}
 
 void WASMExecutablePipeline::setup() {
+    //wasm_engine_t *engine = wasm_engine_new();
 }
 
 void WASMExecutablePipeline::execute(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& buffer) {

@@ -153,6 +153,14 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
+    message(STATUS "Building WebAssembly")
+    # Wasmtime
+    add_library(wasmtime SHARED IMPORTED)
+    set_target_properties(wasmtime PROPERTIES IMPORTED_LOCATION /home/victor/wasmtime-c-api/lib/libwasmtime.so)
+    set_target_properties(wasmtime PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/victor/wasmtime-c-api/lib)
+    target_include_directories(nes-execution-engine PUBLIC /home/victor/wasmtime-c-api/include)
+    target_link_libraries(nes-execution-engine PUBLIC wasmtime)
+
     # Binaryen
     add_library(binaryen SHARED IMPORTED)
     set_target_properties(binaryen PROPERTIES IMPORTED_LOCATION /home/victor/binaryen/lib/libbinaryen.so)
@@ -162,9 +170,11 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
             $<INSTALL_INTERFACE:/home/victor/binaryen/src/>)
     target_link_libraries(nes-execution-engine PUBLIC binaryen)
 
-    # Wasmtime
-    target_include_directories(nes-execution-engine PUBLIC /home/victor/wasmtime/target/release/)
-    target_link_libraries(nes-execution-engine PUBLIC /home/victor/wasmtime/target/release/libwasmtime.so)
+
+    #find_library(BINARYEN NAMES binaryen PATHS /home/victor/wanes-engine/lib/libbinaryen.a)
+    #target_include_directories(nes-execution-engine PUBLIC /home/victor/wanes-engine/include/)
+    #target_link_libraries(nes-execution-engine PUBLIC BINARYEN)
+
 endif()
 
 if (NES_ENABLES_TESTS)

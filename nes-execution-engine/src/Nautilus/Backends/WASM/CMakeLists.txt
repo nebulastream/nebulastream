@@ -13,4 +13,6 @@
 add_source_files(nes-execution-engine
         WASMExecutablePipeline.cpp
         WASMCompiler.cpp
+        WASMPipelineCompilerBackend.cpp
+        WASMRuntime.cpp
         )

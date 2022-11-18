@@ -59,7 +59,11 @@ TEST_F(WASMExpressionTest, addIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    //BinaryenModulePrint(wasm);
+
+
+    std::cout << wasm << std::endl;
+    //BinaryenModuleInterpret(wasm);
+    //BinaryenModuleDispose(wasm);
 }
 
 Value<> int32SubExpression() {

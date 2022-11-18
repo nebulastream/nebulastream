@@ -48,7 +48,7 @@ namespace NES::Nautilus::Backends::WASM {
 class WASMCompiler {
   public:
     WASMCompiler();
-    BinaryenModuleRef lower(const std::shared_ptr<IR::IRGraph>& ir);
+    char* lower(const std::shared_ptr<IR::IRGraph>& ir);
 
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
@@ -117,7 +117,7 @@ class WASMCompiler {
     void generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp, BinaryenExpressions& module);
     void generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp, BinaryenExpressions& module);
     void generateWASM(const std::shared_ptr<IR::Operations::AddressOperation>& addressOp, BinaryenExpressions& module);
-    void generateWASM(std::shared_ptr<IR::Operations::IfOperation> ifOp, BinaryenExpressions& module);
+    void generateWASM(const std::shared_ptr<IR::Operations::IfOperation>& ifOp, BinaryenExpressions& module);
     void generateWASM(const std::shared_ptr<IR::Operations::CompareOperation>& compareOp, BinaryenExpressions& module);
     void generateWASM(const std::shared_ptr<IR::Operations::BranchOperation>& branchOp, BinaryenExpressions& module);
     void generateWASM(const std::shared_ptr<IR::Operations::ReturnOperation>& returnOp, BinaryenExpressions& module);
@@ -138,6 +138,7 @@ class WASMCompiler {
     void genBody(BinaryenExpressions expressions);
     BinaryenExpressionRef generateBody();
     static BinaryenType getBinaryenType(const IR::Types::StampPtr& stampPtr);
+    BinaryenExpressionRef makeInt32(BinaryenModuleRef module, int x);
 };
 }// namespace NES::Nautilus::Backends::WASM
 
