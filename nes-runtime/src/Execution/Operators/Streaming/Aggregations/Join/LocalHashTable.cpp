@@ -21,7 +21,7 @@ void LocalHashTable::FixedPagesLinkedList::append(const uint64_t hash, const Nau
         if (++pos < pages.size()) {
             curPage = pages[pos];
         } else {
-            size_t recordSize = record.getSizeOfRecord();
+            size_t recordSize = sizeof(record);
             pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, recordSize));
         }
 
