@@ -28,16 +28,9 @@ pip3 install guardonce
 # Build NES
 mkdir -p /nebulastream/build
 cd /nebulastream/build
-cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MLIR=1 -DNES_USE_MQTT=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-make fix-guards ../nes-client/include
-make fix-guards ../nes-common/include
-make fix-guards ../nes-compiler/include
-make fix-guards ../nes-core/include
-make fix-guards ../nes-data-types/include
-make fix-guards ../nes-runtime/include
+cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
 
-git status
-
+make fix-guards
 clean=$(git status | grep "nothing to commit (working directory clean)")
 if [ -z "$clean" ]; then
     echo "Please run fix-guards target locally before shipping your changes on remote"
