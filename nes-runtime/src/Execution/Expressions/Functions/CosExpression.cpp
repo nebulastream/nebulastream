@@ -56,4 +56,4 @@ Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
     }
 }
 
-}
+}// namespace NES::Runtime::Execution::Expressions

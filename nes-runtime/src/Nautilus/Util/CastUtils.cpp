@@ -21,5 +21,4 @@ const std::type_info& TypeIdentifier::getTypeInfo() { return typeInfo; }
 
 Typed::Typed(const TypeIdentifier* typeIdentifier) : typeIdentifier(typeIdentifier) {}
 
-
-}// namespace NES
+}// namespace NES::Nautilus

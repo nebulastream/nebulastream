@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::IR {
@@ -74,7 +74,8 @@ LoopInferencePhase::Context::isCountedLoop(BasicBlockPtr preLoopBlock) {
     }
 
     auto upperBound = compareOperation->getRightInput();
-    if (upperBound->getOperationType() != Operations::Operation::ConstIntOp && upperBound->getOperationType() != Operations::Operation::BasicBlockArgument) {
+    if (upperBound->getOperationType() != Operations::Operation::ConstIntOp
+        && upperBound->getOperationType() != Operations::Operation::BasicBlockArgument) {
         return nullptr;
     }
 

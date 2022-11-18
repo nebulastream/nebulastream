@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Operations {
 
 class MulOperation : public Operation {
   public:
-    MulOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput);
+    MulOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~MulOperation() override = default;
 
     OperationPtr getLeftInput();

@@ -13,10 +13,10 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
-#include <Nautilus/Tracing/ValueRef.hpp>
-#include <Nautilus/Tracing/Tag.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
+#include <Nautilus/Tracing/Tag.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
 #include <functional>
 #include <list>
 #include <unordered_map>
@@ -47,6 +47,7 @@ class SymbolicExecutionContext {
      * @return the return value of this branch
      */
     bool executeCMP();
+
   private:
     /**
      * @brief Symbolic execution mode.

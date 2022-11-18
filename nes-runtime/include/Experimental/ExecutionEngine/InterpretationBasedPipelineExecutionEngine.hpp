@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_INTERPRETATIONBASEDEXECUTIONENGINE_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_INTERPRETATIONBASEDEXECUTIONENGINE_HPP_
-#include <Experimental/ExecutionEngine/PipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
+#include <Experimental/ExecutionEngine/PipelineExecutionEngine.hpp>
 namespace NES::ExecutionEngine::Experimental {
 
 class InterpretationBasedPipelineExecutionEngine : public PipelineExecutionEngine {

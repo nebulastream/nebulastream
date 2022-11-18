@@ -13,8 +13,8 @@
 */
 
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/IR/Types/VoidStamp.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/Types/VoidStamp.hpp>
 
 namespace NES::Nautilus::IR::Operations {
 

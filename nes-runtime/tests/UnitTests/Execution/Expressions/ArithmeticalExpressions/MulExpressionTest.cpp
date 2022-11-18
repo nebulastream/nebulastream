@@ -103,8 +103,6 @@ TEST_F(MulExpressionTest, addFloat) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
 
-
-
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 4), Value<Double>((double) 4));

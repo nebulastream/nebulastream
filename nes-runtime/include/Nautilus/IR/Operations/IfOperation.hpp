@@ -40,5 +40,5 @@ class IfOperation : public Operation {
     BasicBlockInvocation falseBlockInvocation;
     std::weak_ptr<BasicBlock> mergeBlock;
 };
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_IFOPERATION_HPP

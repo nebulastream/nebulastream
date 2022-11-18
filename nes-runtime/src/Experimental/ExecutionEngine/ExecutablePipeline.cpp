@@ -14,8 +14,8 @@
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 
 namespace NES::ExecutionEngine::Experimental {
 

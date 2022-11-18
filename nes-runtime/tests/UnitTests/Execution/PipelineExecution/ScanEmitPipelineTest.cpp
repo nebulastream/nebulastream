@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <API/Schema.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>

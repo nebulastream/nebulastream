@@ -51,8 +51,7 @@ template<class T>
 concept IsValueType = std::is_base_of<BaseValue, T>::value;
 
 template<class T>
-concept IsNotValueType = !
-std::is_base_of<BaseValue, T>::value;
+concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
 
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherents from Any.
@@ -233,7 +232,9 @@ class Value : BaseValue {
 
     ValueIndexReference inline operator[](uint32_t index);
     template<class T>
-    ValueIndexReference inline operator[](Value<T>& index) { return ValueIndexReference(index, *this); };
+    ValueIndexReference inline operator[](Value<T>& index) {
+        return ValueIndexReference(index, *this);
+    };
 
     Value<> castTo(const TypeIdentifier* toStamp) const;
 

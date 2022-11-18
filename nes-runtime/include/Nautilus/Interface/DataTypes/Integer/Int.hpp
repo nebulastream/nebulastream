@@ -181,6 +181,7 @@ class UInt16 : public Int {
     uint16_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint16_t value;
 };
@@ -205,6 +206,7 @@ class UInt32 : public Int {
     uint32_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint32_t value;
 };
@@ -229,6 +231,7 @@ class UInt64 : public Int {
     uint64_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint64_t value;
 };

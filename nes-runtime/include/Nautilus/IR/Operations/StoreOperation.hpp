@@ -19,19 +19,19 @@
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {
-class StoreOperation : public Operation{
+class StoreOperation : public Operation {
   public:
     explicit StoreOperation(OperationPtr value, OperationPtr address);
     ~StoreOperation() override = default;
 
     OperationPtr getValue();
     OperationPtr getAddress();
-    
+
     std::string toString() override;
 
   private:
     OperationWPtr value;
     OperationWPtr address;
 };
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_STOREOPERATION_HPP

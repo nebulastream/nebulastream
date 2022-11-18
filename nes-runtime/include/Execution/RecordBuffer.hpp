@@ -59,7 +59,7 @@ class RecordBuffer {
      * @return Value<MemRef>
      */
     const Value<MemRef>& getReference() const;
-    
+
     ~RecordBuffer() = default;
 
     /**

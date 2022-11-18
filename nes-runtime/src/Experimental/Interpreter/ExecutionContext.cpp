@@ -13,10 +13,10 @@
 */
 
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Experimental/Interpreter/PipelineContext.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -63,8 +63,6 @@ PipelineContext RuntimeExecutionContext::getPipelineContext() {
     return PipelineContext(pipelineContextRef);
 }
 
-const Value<MemRef>& RuntimeExecutionContext::getReference() {
-    return this->executionContext;
-}
+const Value<MemRef>& RuntimeExecutionContext::getReference() { return this->executionContext; }
 
 }// namespace NES::Nautilus

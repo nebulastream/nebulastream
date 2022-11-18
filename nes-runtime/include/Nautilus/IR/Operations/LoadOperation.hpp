@@ -20,10 +20,11 @@
 namespace NES::Nautilus::IR::Operations {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address, Types::StampPtr stamp);
+    explicit LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr stamp);
     ~LoadOperation() override = default;
     OperationPtr getAddress();
     std::string toString() override;
+
   private:
     OperationWPtr address;
 };

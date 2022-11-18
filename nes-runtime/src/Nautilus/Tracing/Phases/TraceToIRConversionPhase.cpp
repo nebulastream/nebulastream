@@ -14,9 +14,6 @@
 
 #include "Nautilus/IR/Operations/ConstBooleanOperation.hpp"
 #include "Nautilus/IR/Types/IntegerStamp.hpp"
-#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
-#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
@@ -30,6 +27,9 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
@@ -48,11 +48,11 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversi
     auto& returnOperation = trace->getBlock(trace->returnRef->blockId).operations.back();
     auto returnType = std::get<ValueRef>(returnOperation.result).type;
     auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(returnType);
-    auto functionOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>("execute",
-                                                            /*argumentTypes*/ std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp>{},
-                                                            /*arguments*/ std::vector<std::string>{},
-                                                            returnType);
+    auto functionOperation = std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>(
+        "execute",
+        /*argumentTypes*/ std::vector<NES::Nautilus::IR::Operations::PrimitiveStamp>{},
+        /*arguments*/ std::vector<std::string>{},
+        returnType);
     functionOperation->addFunctionBasicBlock(rootIrBlock);
     ir->addRootOperation(functionOperation);
     ir->setIsSCF(isSCF);
@@ -70,10 +70,11 @@ NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::
         blockFrame.setValue(argumentIdentifier, blockArgument);
     }
 
-    NES::Nautilus::IR::BasicBlockPtr irBasicBlock = std::make_shared<NES::Nautilus::IR::BasicBlock>(std::to_string(block.blockId),
-                                                                      scope,
-                                                                      /*operations*/ std::vector<NES::Nautilus::IR::Operations::OperationPtr>{},
-                                                                      /*arguments*/ blockArguments);
+    NES::Nautilus::IR::BasicBlockPtr irBasicBlock =
+        std::make_shared<NES::Nautilus::IR::BasicBlock>(std::to_string(block.blockId),
+                                                        scope,
+                                                        /*operations*/ std::vector<NES::Nautilus::IR::Operations::OperationPtr>{},
+                                                        /*arguments*/ blockArguments);
     blockMap[block.blockId] = irBasicBlock;
     for (auto& operation : block.operations) {
         processOperation(scope, blockFrame, block, irBasicBlock, operation);
@@ -194,7 +195,8 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
 #ifdef USE_BABELFISH
         if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
             NES_DEBUG("1. found loop");
-            auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
+            auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(
+                NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<NES::Nautilus::IR::Operations::DefaultLoopInfo>());
             auto loopHeadBlock = processBlock(scope + 1, trace->getBlock(blockRef.block));
             loopOperator->getLoopHeadBlock().setBlock(loopHeadBlock);
@@ -255,8 +257,9 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
-NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
-                                                                                      int32_t targetScope) {
+NES::Nautilus::IR::BasicBlockPtr
+TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
+                                                                    int32_t targetScope) {
     if (currentBlock->getScopeLevel() <= targetScope) {
         return currentBlock;
     }
@@ -292,9 +295,10 @@ std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBl
     return blockArgumentIdentifiers;
 }
 
-void TraceToIRConversionPhase::IRConversionContext::createBlockArguments(ValueFrame& frame,
-                                                                         NES::Nautilus::IR::Operations::BasicBlockInvocation& blockInvocation,
-                                                                         BlockRef val) {
+void TraceToIRConversionPhase::IRConversionContext::createBlockArguments(
+    ValueFrame& frame,
+    NES::Nautilus::IR::Operations::BasicBlockInvocation& blockInvocation,
+    BlockRef val) {
     for (auto& arg : val.arguments) {
         auto valueIdentifier = createValueIdentifier(arg);
         blockInvocation.addArgument(frame.getValue(valueIdentifier));
@@ -371,26 +375,26 @@ void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
-                                                           leftInput,
-                                                           rightInput,
-                                                           NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT);
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
+        resultIdentifier,
+        leftInput,
+        rightInput,
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
-                                                                    ValueFrame& frame,
-                                                                    NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                       ValueFrame& frame,
+                                                                       NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                        TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
-                                                           leftInput,
-                                                           rightInput,
-                                                           NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT);
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
+        resultIdentifier,
+        leftInput,
+        rightInput,
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -401,10 +405,11 @@ void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier,
-                                                                               leftInput,
-                                                                               rightInput,
-                                                                               NES::Nautilus::IR::Operations::CompareOperation::Comparator::IEQ);
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
+        resultIdentifier,
+        leftInput,
+        rightInput,
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::IEQ);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -472,13 +477,13 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     auto resultType = std::holds_alternative<None>(operation.result) ? NES::Nautilus::IR::Types::StampFactory::createVoidStamp()
                                                                      : std::get<ValueRef>(operation.result).type;
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto proxyCallOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::ProxyCallOperation>(NES::Nautilus::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
-                                                             functionCallTarget.mangledName,
-                                                             functionCallTarget.functionPtr,
-                                                             resultIdentifier,
-                                                             inputArguments,
-                                                             resultType);
+    auto proxyCallOperation = std::make_shared<NES::Nautilus::IR::Operations::ProxyCallOperation>(
+        NES::Nautilus::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
+        functionCallTarget.mangledName,
+        functionCallTarget.functionPtr,
+        resultIdentifier,
+        inputArguments,
+        resultType);
     if (!resultType->isVoid()) {
         frame.setValue(resultIdentifier, proxyCallOperation);
     }
@@ -531,13 +536,16 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
     } else if (auto* ui64 = cast_if<UInt64>(valueRef.value.get())) {
         constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier, ui64->getValue(), ui64->getType());
     } else if (auto* float32 = cast_if<Float>(valueRef.value.get())) {
-        constOperation =
-            std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float32->getValue(), float32->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier,
+                                                                                              float32->getValue(),
+                                                                                              float32->getType());
     } else if (auto* float64 = cast_if<Double>(valueRef.value.get())) {
-        constOperation =
-            std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier, float64->getValue(), float64->getType());
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstFloatOperation>(resultIdentifier,
+                                                                                              float64->getValue(),
+                                                                                              float64->getType());
     } else if (auto* boolean = cast_if<Boolean>(valueRef.value.get())) {
-        constOperation = std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
+        constOperation =
+            std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }

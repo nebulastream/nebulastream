@@ -34,7 +34,7 @@
 #include <flounder/compiler.h>
 #include <set>
 
-namespace flounder{
+namespace flounder {
 class Executable;
 }
 namespace NES::ExecutionEngine::Experimental::Flounder {
@@ -79,7 +79,8 @@ class FlounderLoweringProvider {
         void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
         void processAnd(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
-        void processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
+        void
+        processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
     };
 };
 

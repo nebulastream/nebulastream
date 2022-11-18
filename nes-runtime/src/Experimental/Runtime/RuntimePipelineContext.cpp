@@ -24,16 +24,13 @@ void RuntimePipelineContext::dispatchBuffer(Runtime::WorkerContext& workerContex
         successors[0]->execute(workerContext, buffer);
 }
 
-RuntimePipelineContext::OperatorStateTag RuntimePipelineContext::registerGlobalOperatorState(
-    int64_t op,
-    std::unique_ptr<Nautilus::OperatorState> operatorState) {
+RuntimePipelineContext::OperatorStateTag
+RuntimePipelineContext::registerGlobalOperatorState(int64_t op, std::unique_ptr<Nautilus::OperatorState> operatorState) {
     operatorStates.insert(std::make_pair(op, std::move(operatorState)));
     return operatorStates.size() - 1;
 }
 
-Nautilus::OperatorState* RuntimePipelineContext::getGlobalOperatorState(int64_t tag) {
-    return operatorStates[tag].get();
-}
+Nautilus::OperatorState* RuntimePipelineContext::getGlobalOperatorState(int64_t tag) { return operatorStates[tag].get(); }
 
 void RuntimePipelineContext::addSuccessorPipeline(std::shared_ptr<ExecutionEngine::Experimental::ExecutablePipeline> pipeline) {
     successors.emplace_back(pipeline);

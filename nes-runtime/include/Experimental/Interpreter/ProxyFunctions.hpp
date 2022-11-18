@@ -29,9 +29,10 @@ uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
 //     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
 //     return thisPtr_->setNumberOfTuples(numberOfTuples);
 // };
-extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void *thisPtr, uint64_t numberOfTuples) {
-   NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
-   tupleBuffer->setNumberOfTuples(numberOfTuples);
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr,
+                                                                                            uint64_t numberOfTuples) {
+    NES::Runtime::TupleBuffer* tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+    tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
@@ -57,6 +58,5 @@ void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t val
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestamp(value);
 }
-
 
 }// namespace NES::Runtime::ProxyFunctions

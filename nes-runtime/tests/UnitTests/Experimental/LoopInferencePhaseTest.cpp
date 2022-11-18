@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/IR/Phases/LoopInferencePhase.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -56,7 +56,7 @@ void sumLoop() {
 
 TEST_F(LoopInferencePhaseTest, sumLoopTest) {
 
-    auto execution =  Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>

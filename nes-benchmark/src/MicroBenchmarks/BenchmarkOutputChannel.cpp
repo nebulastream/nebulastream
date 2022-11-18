@@ -20,10 +20,10 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -180,9 +180,9 @@ int main(int argc, char** argv) {
     NES::Benchmark::Util::createRangeVector<uint64_t>(allSenderThreads, 4, 8, 2);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allServerThreads, 4, 8, 2);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allDataSizesToBeSent,
-                                                                   (uint64_t) 1 * 1024 * 1024 * 1024,
-                                                                   (uint64_t) 4 * 1024 * 1024 * 1024,
-                                                                   (uint64_t) 1 * 1024 * 1024 * 1024);
+                                                      (uint64_t) 1 * 1024 * 1024 * 1024,
+                                                      (uint64_t) 4 * 1024 * 1024 * 1024,
+                                                      (uint64_t) 1 * 1024 * 1024 * 1024);
 
     std::string benchmarkName = "DataChannel";
     std::string benchmarkFolderName = "DataChannel";
@@ -212,12 +212,12 @@ int main(int argc, char** argv) {
                     int32_t port = startPort;// + curComb;
                     for (uint64_t i = 0; i < NUM_REPS; ++i) {
                         double throughput = NES::Benchmark::BM_TestMassiveSending(bufferSize,
-                                                                                     buffersManaged,
-                                                                                     numSenderThreads,
-                                                                                     numServerThreads,
-                                                                                     dataSize,
-                                                                                     port,
-                                                                                     curComb);
+                                                                                  buffersManaged,
+                                                                                  numSenderThreads,
+                                                                                  numServerThreads,
+                                                                                  dataSize,
+                                                                                  port,
+                                                                                  curComb);
                         throughputVec.emplace_back(throughput);
                     }
                     // Writing whole throughput vector to csv to csv file

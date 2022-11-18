@@ -72,7 +72,6 @@ class Block {
      * @brief Indicates successors of this block.
      */
     std::vector<uint32_t> predecessors;
-
 };
 
 }// namespace NES::Nautilus::Tracing

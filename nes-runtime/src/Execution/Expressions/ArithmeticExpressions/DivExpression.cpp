@@ -23,4 +23,4 @@ Value<> DivExpression::execute(Record& record) const {
 DivExpression::DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

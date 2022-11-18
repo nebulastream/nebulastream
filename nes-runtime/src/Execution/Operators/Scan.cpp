@@ -29,9 +29,9 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-        auto record = memoryProvider->read(projections, bufferAddress, i); 
+        auto record = memoryProvider->read(projections, bufferAddress, i);
         child->execute(ctx, record);
     }
 }
 
-}// namespace NES::Runtime::Execution::Scan
+}// namespace NES::Runtime::Execution::Operators

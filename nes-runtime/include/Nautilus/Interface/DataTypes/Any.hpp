@@ -54,8 +54,7 @@ class TraceableType : public Any {
 };
 
 template<class X, class Y>
-    requires(std::is_same<Any, X>::value)
-inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
+requires(std::is_same<Any, X>::value) inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
     // copy value value
     return value->copy();
 }

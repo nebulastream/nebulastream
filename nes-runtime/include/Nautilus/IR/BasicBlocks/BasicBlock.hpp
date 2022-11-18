@@ -15,8 +15,8 @@
 #ifndef NES_BASICBLOCK_HPP
 #define NES_BASICBLOCK_HPP
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <vector>
 

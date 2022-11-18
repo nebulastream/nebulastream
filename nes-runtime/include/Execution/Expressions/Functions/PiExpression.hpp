@@ -23,8 +23,9 @@ class PiExpression : public Expression {
   public:
     PiExpression(const ExpressionPtr& SubExpression);
     Value<> execute(NES::Nautilus::Record& record) const override;
+
   private:
-    const  ExpressionPtr SubExpression;
+    const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 #endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_DEGREESEXPRESSION_HPP_

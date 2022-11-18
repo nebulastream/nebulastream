@@ -40,8 +40,8 @@ class MemoryProvider {
      * @return Nautilus::Record: A Nautilus record constructed using the given projections.
      */
     virtual Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                          Nautilus::Value<Nautilus::UInt64> recordIndex) = 0;
+                                  Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                                  Nautilus::Value<Nautilus::UInt64> recordIndex) = 0;
 
     /**
      * @brief Read fields from a record using projections.
@@ -50,8 +50,9 @@ class MemoryProvider {
      * @param recordIndex: Index of the specific value that is accessed by 'read'.
      * @return Nautilus::Record: A Nautilus record constructed using the given projections.
      */
-    virtual void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
-                       Nautilus::Value<Nautilus::MemRef> bufferAddress, NES::Nautilus::Record& rec) = 0;
+    virtual void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
+                       Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                       NES::Nautilus::Record& rec) = 0;
 
     /**
      * @brief load a scalar value of type 'type' from memory using a memory reference 'memRef'
@@ -68,7 +69,7 @@ class MemoryProvider {
      * @return true if no projections (entire record accessed) or if field is in projections, else return false.
      */
     bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                            Nautilus::Record::RecordFieldIdentifier fieldIndex);
+                       Nautilus::Record::RecordFieldIdentifier fieldIndex);
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

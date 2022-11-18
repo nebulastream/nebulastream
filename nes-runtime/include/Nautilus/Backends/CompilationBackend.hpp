@@ -35,7 +35,6 @@ class CompilationBackend {
 
 using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>;
 
-
 }// namespace NES::Nautilus::Backends
 
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_

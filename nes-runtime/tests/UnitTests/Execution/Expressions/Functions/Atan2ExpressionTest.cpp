@@ -60,8 +60,7 @@ TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionDouble) {
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionOnWrongType) {
     auto expression = BinaryExpressionWrapper<Atan2Expression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
-    ASSERT_ANY_THROW(expression.eval(Value<Double>(0.5), Value<Int8>((Int8)1)););
-
+    ASSERT_ANY_THROW(expression.eval(Value<Double>(0.5), Value<Int8>((Int8) 1)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

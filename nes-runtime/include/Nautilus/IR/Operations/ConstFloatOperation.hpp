@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Operations {
 
 class ConstFloatOperation : public Operation {
   public:
-    explicit ConstFloatOperation(OperationIdentifier identifier,  double constantValue, Types::StampPtr stamp);
+    explicit ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp);
     ~ConstFloatOperation() override = default;
 
     double getConstantFloatValue();
@@ -31,9 +31,10 @@ class ConstFloatOperation : public Operation {
 
     std::string toString() override;
     static bool classof(const Operation* Op);
+
   private:
     double constantValue;
 };
 
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_CONSTFLOATOPERATION_HPP

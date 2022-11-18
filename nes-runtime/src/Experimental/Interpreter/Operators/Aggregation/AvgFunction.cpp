@@ -64,7 +64,8 @@ std::unique_ptr<AggregationState> AvgFunction::createState() {
     NES_THROW_RUNTIME_ERROR("Sum state on " << stamp->toString() << " is not supported.");
 }
 
-AvgFunction::AvgFunction(Runtime::Execution::Expressions::ExpressionPtr expression, Nautilus::IR::Types::StampPtr stamp) : expression(expression), stamp(stamp) {}
+AvgFunction::AvgFunction(Runtime::Execution::Expressions::ExpressionPtr expression, Nautilus::IR::Types::StampPtr stamp)
+    : expression(expression), stamp(stamp) {}
 
 void AvgFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& record) {
     auto sumState = (AvgState*) state.get();

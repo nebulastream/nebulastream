@@ -29,7 +29,8 @@ extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__ge
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getNumberOfTuples();
 };
-extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples) {
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr,
+                                                                                            uint64_t numberOfTuples) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setNumberOfTuples(numberOfTuples);
 };
@@ -61,6 +62,5 @@ void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t val
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestamp(value);
 }
-
 
 }// namespace NES::Runtime::ProxyFunctions

@@ -14,8 +14,8 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,7 +26,7 @@ class UnaryExpressionWrapper {
         auto input = std::make_shared<ReadFieldExpression>("value");
         expression = std::make_shared<ExpressionType>(input);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> value){
+    Nautilus::Value<> eval(Nautilus::Value<> value) {
         auto record = Record({{"value", value}});
         return expression->execute(record);
     }
@@ -42,7 +42,7 @@ class BinaryExpressionWrapper {
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, rightExpression);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right){
+    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right) {
         auto record = Record({{"left", left}, {"right", right}});
         return expression->execute(record);
     }

@@ -73,19 +73,19 @@ TEST_F(AcosExpressionTest, evaluateAcosExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue,  std::acos(0.5));
+        ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 0.5));
-        ASSERT_EQ(resultValue,  std::acos(0.5));
+        ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 0.5));
-        ASSERT_EQ(resultValue,  std::acos(0.5));
+        ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

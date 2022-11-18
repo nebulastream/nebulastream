@@ -33,5 +33,5 @@ class ReturnOperation : public Operation {
   private:
     OperationWPtr returnValue;
 };
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations
 #endif//NES_RETURNOPERATION_HPP

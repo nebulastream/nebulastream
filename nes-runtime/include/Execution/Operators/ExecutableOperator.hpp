@@ -31,6 +31,6 @@ class ExecutableOperator : public Operator {
     virtual ~ExecutableOperator() = default;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EXECUTEOPERATOR_HPP_

@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/ArrayStamp.hpp>
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
-#include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
 namespace NES::Nautilus::IR::Types {
@@ -28,7 +28,7 @@ bool Stamp::isInteger() { return isa<IntegerStamp>(*this); }
 bool Stamp::isFloat() { return isa<FloatStamp>(*this); }
 
 bool Stamp::isArray() { return isa<ArrayStamp>(*this); }
-bool Stamp::isAddress(){ return isa<AddressStamp>(*this); }
+bool Stamp::isAddress() { return isa<AddressStamp>(*this); }
 
 bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
 

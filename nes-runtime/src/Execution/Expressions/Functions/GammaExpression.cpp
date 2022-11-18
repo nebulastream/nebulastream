@@ -25,13 +25,13 @@ GammaExpression::GammaExpression(const NES::Runtime::Execution::Expressions::Exp
  * @param x double
  * @return double
  */
-double calculateGamma(double x) { return std::tgamma(x);}
+double calculateGamma(double x) { return std::tgamma(x); }
 
 Value<> GammaExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 
-    if (leftValue->isType<Int8>()){
+    if (leftValue->isType<Int8>()) {
         return FunctionCall<>("calculateGamma", calculateGamma, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("calculateGamma", calculateGamma, leftValue.as<Int16>());
@@ -56,4 +56,4 @@ Value<> GammaExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

@@ -35,8 +35,7 @@ LogLevel Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfi
             retLogLevel = logLevelMagicEnum.value();
         }
     } catch (std::exception& e) {
-        std::cerr << "Error while reading the log level. Setting the loglevel to " << getLogName(defaultLogLevel)
-                  << std::endl;
+        std::cerr << "Error while reading the log level. Setting the loglevel to " << getLogName(defaultLogLevel) << std::endl;
         retLogLevel = defaultLogLevel;
     }
 
@@ -82,4 +81,4 @@ std::string Benchmark::E2EBenchmarkConfig::toString() {
 
     return oss.str();
 }
-}
+}// namespace NES::Benchmark
