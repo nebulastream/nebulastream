@@ -21,7 +21,7 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
 fi
 
 # Install pip
-apt update && apt install python3-pip
+apt update && apt install -y python3-pip
 # Install guard once
 pip3 install guardonce
 
