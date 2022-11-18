@@ -36,6 +36,8 @@ make fix-guards ../nes-core/include
 make fix-guards ../nes-data-types/include
 make fix-guards ../nes-runtime/include
 
+git status
+
 clean=$(git status | grep "nothing to commit (working directory clean)")
 if [ -z "$clean" ]; then
     echo "Please run fix-guards target locally before shipping your changes on remote"
