@@ -198,8 +198,9 @@ void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::st
     }
     //todo: when if-branch directly points to loop-header, we exit the loop and do not register the backlink
     // -> does this trigger double increase? Yes!
+    // isIfBlock check should prevent double increment
     if(!currentBlock->isIfBlock() && loopHeadCandidates.contains(currentBlock->getIdentifier())) {
-        currentBlock->setBlockType(IR::BasicBlock::LoopBlock);
+        // currentBlock->setBlockType(IR::BasicBlock::LoopBlock);
         currentBlock->incrementBackLinks();
     }
 }
@@ -207,7 +208,7 @@ void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock, std::st
 //todo, as soon as we walk down the false path of a loopCandidate, the candidate itself, and all candidates that we 
 //      found in the if path are not valid loopCandidates anymore
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findLoopHeadBlocks(IR::BasicBlockPtr currentBlock) {
-    std::stack<IR::BasicBlockPtr> ifBlocks; //todo use stack
+    std::stack<IR::BasicBlockPtr> ifBlocks;
     std::unordered_set<std::string> loopHeadCandidates;
     std::unordered_set<std::string> visitedBlocks;
 
@@ -216,16 +217,25 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::findLoopHeadBlocks
     //  -> we already followed its true-branch, otherwise we would not be jumping in its false-branch
     //  -> if it was a loop-header, we would have encountered it again following its true-branch
     //  -> since we did not encounter it again following its true-branch it cannot be a loop-header
+    // Todo stop condition: return visited AND empty if blocks
+    // Todo prohibit double loop backLink increments: mark loop block is visited when taking else-branch
+    bool returnBlockVisited = false;
+    bool noMoreIfBlocks = true;
     do {
+        // todo handle IR without IfOperations!
         checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeadCandidates);
         // an ifBlock that we pop from the ifBlock list CANNOT be a loop-header block anymore
         // -> it means that we already followed the ifBlock's true-branch until the end and did not re-encounter the ifBlock
-        if(ifBlocks.top()->getBlockType() == IR::BasicBlock::BlockType::None) {//todo use backlinks 
-            ifBlocks.top()->setBlockType(IR::BasicBlock::IfBlock);
+        noMoreIfBlocks = ifBlocks.empty();
+        if(!noMoreIfBlocks) {
+            if(ifBlocks.top()->getBlockType() == IR::BasicBlock::BlockType::None) {
+                ifBlocks.top()->setBlockType(IR::BasicBlock::IfBlock);
+            }
+            currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())->getFalseBlockInvocation().getBlock();
+            ifBlocks.pop();
         }
-        currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())->getFalseBlockInvocation().getBlock();
-        ifBlocks.pop();
-    } while(!ifBlocks.empty() || currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp); //todo negate: !(ifBlocks.empty && current == ReturnOp)
+        returnBlockVisited = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp);
+    } while(!(noMoreIfBlocks && returnBlockVisited));
 }
 
 bool RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
@@ -264,9 +274,10 @@ bool RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::mergeBlockCheck(IR
                 return true;
             } else {    
                 // branch leads to loop -> remove loop-header from ifOperations && follow its false path.
+                // todo we skip the check of the child block!
                 currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
                 ifOperations.pop();
-                return false;
+                return mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter); //todo cannot recurse n-times (only 2) because it would require multiple loops to be stacked in an impossible way?
             }
 
         }
@@ -335,7 +346,9 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations
             assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
             candidateEdgeCounter[currentBlock->getIdentifier()] = candidateEdgeCounter[currentBlock->getIdentifier()] + 1;
             mergeBlocks.pop();
-            while(!ifOperations.top()->isTrueBranch && !mergeBlocks.empty() && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) { //assumption: merge block candidate must be the one of the next-if-operation (in stack) -> in principle we need to know whether the merge-block actually belongs to the current ifOperation!!!!
+            //assumption: merge block candidate must be the one of the next-if-operation (in stack) -> in principle we need to know whether the merge-block actually belongs to the current ifOperation!!!!
+            while(!ifOperations.empty() && !ifOperations.top()->isTrueBranch && !mergeBlocks.empty() && 
+                    mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier()) {
                 mergeBlocks.pop();
                 ifOperations.pop();
             }
@@ -343,12 +356,13 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::createIfOperations
             // if(candidateEdgeCounter.contains(currentBlock->getIdentifier())) {
             //     openEdges -= candidateEdgeCounter.at(currentBlock->getIdentifier()) - 1;
             // }
-            bool openMergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter); //often leads to double check. Can we combine with while condition?
-            if(openMergeBlockFound) {
-                mergeBlocks.emplace(currentBlock);
-                ifOperations.top()->isTrueBranch = false;
-                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
-            }
+            // bool openMergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, candidateEdgeCounter); //often leads to double check. Can we combine with while condition?
+            // if(openMergeBlockFound) {
+            //     if()
+            //     mergeBlocks.emplace(currentBlock);
+            //     ifOperations.top()->isTrueBranch = false;
+            //     currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
+            // }
         }
     }
 }
