@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+// clang-format off
 #ifndef __VERSION_HPP__
 #define __VERSION_HPP__
 #define NES_VERSION_MAJOR 0
@@ -20,3 +21,4 @@
 #define NES_VERSION_POST_FIX -SNAPSHOT
 constexpr char const* NES_VERSION      = "0.3.55-SNAPSHOT";
 #endif
+// clang-format on
