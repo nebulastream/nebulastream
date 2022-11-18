@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_KAFKA_BUILD
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <NesBaseTest.hpp>
@@ -48,7 +49,6 @@
 const std::string KAFKA_BROKER = "localhost:9092";
 
 namespace NES {
-#ifdef ENABLE_KAFKA_BUILD
 
 /**
  * NOTE: this test requires a running kafka instance
@@ -347,5 +347,5 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-#endif
 }// namespace NES
+#endif
