@@ -48,7 +48,7 @@ void BloomFilter::add(uint64_t hash) {
     }
 }
 
-bool BloomFilter::contains(uint64_t key) {
+bool BloomFilter::checkContains(uint64_t key) {
     uint16_t hits = 0;
 
     auto hash = Util::murmurHash(key);
