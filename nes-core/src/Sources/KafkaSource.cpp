@@ -47,8 +47,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  GatheringMode::INTERVAL_MODE,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
-      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)),
-      offsetMode(offsetMode) {
+      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode) {
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
@@ -83,7 +82,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
 
                 NES_ASSERT(msg.get_payload().get_size() < buffer.getBufferSize(), "The buffer is not large enough");
                 NES_TRACE("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
-                                                    << ", msg: " << msg.get_payload());
+                                                     << ", msg: " << msg.get_payload());
 
                 std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);

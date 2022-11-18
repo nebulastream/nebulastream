@@ -27,7 +27,8 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string offsetMode,
                                              uint64_t numbersOfBufferToProduce)
     : SourceDescriptor(std::move(schema)), brokers(std::move(brokers)), topic(std::move(topic)), groupId(std::move(groupId)),
-      autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce) {}
+      autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode),
+      numbersOfBufferToProduce(numbersOfBufferToProduce) {}
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string logicalSourceName,
