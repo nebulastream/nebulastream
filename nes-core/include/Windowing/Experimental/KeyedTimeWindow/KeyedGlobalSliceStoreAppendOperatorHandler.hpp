@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTOREWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTOREWINDOWHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Experimental {
 class HashMapFactory;
