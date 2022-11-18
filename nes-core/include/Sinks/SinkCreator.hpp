@@ -325,8 +325,16 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
  * @param kafkaProducerTimeout: kafka producer timeout
  * @return a data sink pointer
  */
-DataSinkPtr
-createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout);
+DataSinkPtr createTextKafkaSink(SchemaPtr schema,
+                                QueryId queryId,
+                                QuerySubPlanId querySubPlanId,
+                                const Runtime::NodeEnginePtr& nodeEngine,
+                                uint32_t activeProducers,
+                                const std::string& brokers,
+                                const std::string& topic,
+                                uint64_t kafkaProducerTimeout,
+                                FaultToleranceType::Value faultToleranceType,
+                                uint64_t numberOfOrigins);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD

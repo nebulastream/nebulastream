@@ -18,6 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -80,16 +81,16 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
 }
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifdef ENABLE_KAFKA_BUILD
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("test", "localhost:9092", 1000);
+    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("TEXT_FORMAT", "test", "localhost:9092", 1000);
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
-    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(testSink);
-    EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
+    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
+    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK");
 }
 #endif
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {

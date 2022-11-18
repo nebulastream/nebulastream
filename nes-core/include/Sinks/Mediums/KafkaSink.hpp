@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#ifdef ENABLE_KAFKA_BUILD
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -29,11 +29,16 @@ class KafkaSink : public SinkMedium {
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
   public:
-    KafkaSink();
-    KafkaSink(SchemaPtr schema,
+    KafkaSink(SinkFormatPtr format,
+              Runtime::NodeEnginePtr nodeEngine,
+              uint32_t numOfProducers,
               const std::string& brokers,
               const std::string& topic,
-              const uint64_t kafkaProducerTimeout = 10 * 1000);
+              QueryId queryId,
+              QuerySubPlanId querySubPlanId,
+              const uint64_t kafkaProducerTimeout = 10 * 1000,
+              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+              uint64_t numberOfOrigins = 1);
 
     ~KafkaSink() override;
 
@@ -64,7 +69,7 @@ class KafkaSink : public SinkMedium {
     std::string toString() const override;
 
   private:
-    void _connect();
+    void connect();
 
     std::string brokers;
     std::string topic;
@@ -80,4 +85,4 @@ class KafkaSink : public SinkMedium {
 typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
 #endif
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

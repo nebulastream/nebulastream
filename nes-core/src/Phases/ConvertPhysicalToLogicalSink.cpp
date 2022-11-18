@@ -34,7 +34,6 @@
 namespace NES {
 
 SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataSinkPtr& dataSink) {
-
     std::string sinkType = dataSink->toString();
 
     if (sinkType == "PRINT_SINK") {
@@ -46,11 +45,14 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
         ZmqSinkPtr zmqSink = std::dynamic_pointer_cast<ZmqSink>(dataSink);
         return ZmqSinkDescriptor::create(zmqSink->getHost(), zmqSink->getPort());
     }
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifdef ENABLE_KAFKA_BUILD
     else if (sinkType == "KAFKA_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
         KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
-        return KafkaSinkDescriptor::create(kafkaSink->getTopic(), kafkaSink->getBrokers(), kafkaSink->getKafkaProducerTimeout());
+        return KafkaSinkDescriptor::create(kafkaSink->getSinkFormat(),
+                                           kafkaSink->getTopic(),
+                                           kafkaSink->getBrokers(),
+                                           kafkaSink->getKafkaProducerTimeout());
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
