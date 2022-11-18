@@ -90,15 +90,27 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     monitoringSinkDescriptor->getFaultToleranceType(),
                                     monitoringSinkDescriptor->getNumberOfOrigins());
     }
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
-        return createKafkaSinkWithSchema(schema,
-                                         querySubPlan->getQuerySubPlanId(),
-                                         kafkaSinkDescriptor->getBrokers(),
-                                         kafkaSinkDescriptor->getTopic(),
-                                         kafkaSinkDescriptor->getTimeout());
+
+        if (kafkaSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
+            return createTextKafkaSink(schema,
+                                       querySubPlan->getQueryId(),
+                                       querySubPlan->getQuerySubPlanId(),
+                                       nodeEngine,
+                                       numOfProducers,
+                                       kafkaSinkDescriptor->getBrokers(),
+                                       kafkaSinkDescriptor->getTopic(),
+                                       kafkaSinkDescriptor->getTimeout(),
+                                       kafkaSinkDescriptor->getFaultToleranceType(),
+                                       kafkaSinkDescriptor->getNumberOfOrigins());
+        } else {
+            NES_THROW_RUNTIME_ERROR("Sinkformat " << kafkaSinkDescriptor->getSinkFormatAsString()
+                                                  << " currently not supported for Kafka");
+        }
+
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
