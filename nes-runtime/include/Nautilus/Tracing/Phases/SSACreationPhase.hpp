@@ -50,7 +50,6 @@ class SSACreationPhase {
         std::shared_ptr<ExecutionTrace> process();
 
       private:
-
         /**
          * @brief Converts a single basic block to SSA form
          * @param block reference to the basic block

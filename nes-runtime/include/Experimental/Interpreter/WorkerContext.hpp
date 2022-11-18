@@ -23,8 +23,9 @@ class WorkerContext {
     Value<UInt64> getWorkerId();
     Value<MemRef> allocateBuffer();
     Value<MemRef> getWorkerContextRef() const;
+
   private:
-   mutable Value<MemRef> workerContextRef;
+    mutable Value<MemRef> workerContextRef;
 };
 
 }// namespace NES::Nautilus

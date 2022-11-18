@@ -23,8 +23,9 @@ class DegreesExpression : public Expression {
   public:
     DegreesExpression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
+
   private:
-    const  ExpressionPtr SubExpression;
+    const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_

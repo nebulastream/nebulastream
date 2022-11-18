@@ -19,7 +19,6 @@ namespace NES::Nautilus::IR::Types {
 
 class BooleanStamp : public Stamp {
   public:
-
     static const inline auto type = TypeIdentifier::create<BooleanStamp>();
     /**
      * @brief Constructor to create a boolean stamp.

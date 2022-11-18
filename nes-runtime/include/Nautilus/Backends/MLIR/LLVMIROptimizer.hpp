@@ -28,9 +28,8 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class LLVMIROptimizer {
   public:
-
-    LLVMIROptimizer();  // Disable default constructor
-    ~LLVMIROptimizer(); // Disable default destructor
+    LLVMIROptimizer(); // Disable default constructor
+    ~LLVMIROptimizer();// Disable default destructor
 
     static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions);
 };

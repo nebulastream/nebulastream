@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_
-#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Util/HashMap.hpp>
 #include <vector>

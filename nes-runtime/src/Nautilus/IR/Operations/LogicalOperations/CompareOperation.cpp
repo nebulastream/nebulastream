@@ -19,8 +19,8 @@ CompareOperation::CompareOperation(OperationIdentifier identifier,
                                    OperationPtr leftInput,
                                    OperationPtr rightInput,
                                    Comparator comparator)
-    : Operation(Operation::CompareOp, identifier,  Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)), rightInput(std::move(rightInput)),
-      comparator(comparator) {
+    : Operation(Operation::CompareOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)), comparator(comparator) {
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }

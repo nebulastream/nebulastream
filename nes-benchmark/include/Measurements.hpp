@@ -15,8 +15,8 @@
 #ifndef NES_MEASUREMENTS_HPP
 #define NES_MEASUREMENTS_HPP
 
-#include <string>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace NES::Benchmark::Measurements {
@@ -25,8 +25,6 @@ namespace NES::Benchmark::Measurements {
  */
 class Measurements {
   public:
-
-
     /**
      * @brief adds a new measurement
      * @param processedTasks
@@ -37,9 +35,14 @@ class Measurements {
      * @param availGlobalBufferSum
      * @param availFixedBufferSum
      */
-    void addNewMeasurement(size_t processedTasks, size_t processedBuffers, size_t processedTuples,
-                           size_t latencySum, size_t queueSizeSum, size_t availGlobalBufferSum,
-                           size_t availFixedBufferSum, uint64_t timeStamp) {
+    void addNewMeasurement(size_t processedTasks,
+                           size_t processedBuffers,
+                           size_t processedTuples,
+                           size_t latencySum,
+                           size_t queueSizeSum,
+                           size_t availGlobalBufferSum,
+                           size_t availFixedBufferSum,
+                           uint64_t timeStamp) {
         addNewProcessedTasks(processedTasks);
         addNewProcessedBuffers(processedBuffers);
         addNewProcessedTuples(processedTuples);
@@ -95,7 +98,6 @@ class Measurements {
      */
     void addNewAvailGlobalBufferSum(size_t availGlobalBufferSum) { allAvailGlobalBufferSum.push_back(availGlobalBufferSum); }
 
-
     /**
      * @brief adds availFixedBufferSum
      * @param availFixedBufferSum
@@ -117,7 +119,6 @@ class Measurements {
     std::vector<size_t> allQueueSizeSums;
     std::vector<size_t> allAvailGlobalBufferSum;
     std::vector<size_t> allAvailFixedBufferSum;
-
 };
-}
+}// namespace NES::Benchmark::Measurements
 #endif//NES_MEASUREMENTS_HPP

@@ -17,67 +17,74 @@
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
-    E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun()  {
-        using namespace Configurations;
-        numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "No. Worker Threads");
-        numBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
-        bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
-        numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Overall buffer count");
-        numberOfBuffersPerPipeline = ConfigurationOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Buffer per pipeline");
-        numberOfBuffersInSourceLocalBufferPool = ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 128, "Buffer per source");
-    }
-
-    std::string E2EBenchmarkConfigPerRun::toString()  {
-        std::stringstream oss;
-        oss << "- numWorkerThreads: " << numWorkerThreads->getValueAsString() << std::endl
-            << "- numBuffersToProduce: " << numBuffersToProduce->getValueAsString() << std::endl
-            << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl
-            << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
-            << "- numberOfBuffersPerPipeline: " << numberOfBuffersPerPipeline->getValueAsString() << std::endl
-            << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString() << std::endl;
-
-        return oss.str();
-    }
-
-    std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(Yaml::Node yamlConfig) {
-        std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
-
-        /* Getting all parameters per experiment run in vectors */
-        auto numWorkerThreads = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(), ",");
-        auto numBuffersToProduce = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersToProduce"].As<std::string>(), ",");
-        auto bufferSizeInBytes = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(), ",");
-
-        auto numberOfBuffersInGlobalBufferManager = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(), ",");
-        auto numberOfBuffersPerPipeline = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersPerPipeline"].As<std::string>(), ",");
-        auto numberOfBuffersInSourceLocalBufferPool = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(), ",");
-
-        size_t totalBenchmarkRuns = numWorkerThreads.size();
-        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numBuffersToProduce.size());
-        totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
-
-        Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
-        Util::padVectorToSize<uint32_t>(numBuffersToProduce, totalBenchmarkRuns, numBuffersToProduce.back());
-        Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
-
-        Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager, totalBenchmarkRuns, bufferSizeInBytes.back());
-        Util::padVectorToSize<uint32_t>(numberOfBuffersPerPipeline, totalBenchmarkRuns, bufferSizeInBytes.back());
-        Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool, totalBenchmarkRuns, bufferSizeInBytes.back());
-
-        allConfigPerRuns.reserve(totalBenchmarkRuns);
-
-        for (size_t i = 0; i < numBuffersToProduce.size(); ++i) {
-            E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
-            e2EBenchmarkConfigPerRun.numWorkerThreads->setValue(numWorkerThreads[i]);
-            e2EBenchmarkConfigPerRun.numBuffersToProduce->setValue(numBuffersToProduce[i]);
-            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
-
-            e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
-            e2EBenchmarkConfigPerRun.numberOfBuffersPerPipeline->setValue(numberOfBuffersPerPipeline[i]);
-            e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
-
-            allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
-        }
-
-        return allConfigPerRuns;
-    }
+E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
+    using namespace Configurations;
+    numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "No. Worker Threads");
+    numBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
+    bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
+    numberOfBuffersInGlobalBufferManager =
+        ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Overall buffer count");
+    numberOfBuffersPerPipeline = ConfigurationOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Buffer per pipeline");
+    numberOfBuffersInSourceLocalBufferPool =
+        ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 128, "Buffer per source");
 }
+
+std::string E2EBenchmarkConfigPerRun::toString() {
+    std::stringstream oss;
+    oss << "- numWorkerThreads: " << numWorkerThreads->getValueAsString() << std::endl
+        << "- numBuffersToProduce: " << numBuffersToProduce->getValueAsString() << std::endl
+        << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl
+        << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
+        << "- numberOfBuffersPerPipeline: " << numberOfBuffersPerPipeline->getValueAsString() << std::endl
+        << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString()
+        << std::endl;
+
+    return oss.str();
+}
+
+std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(Yaml::Node yamlConfig) {
+    std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
+
+    /* Getting all parameters per experiment run in vectors */
+    auto numWorkerThreads = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(), ",");
+    auto numBuffersToProduce =
+        Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersToProduce"].As<std::string>(), ",");
+    auto bufferSizeInBytes = Util::splitWithStringDelimiter<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(), ",");
+
+    auto numberOfBuffersInGlobalBufferManager =
+        Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(), ",");
+    auto numberOfBuffersPerPipeline =
+        Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersPerPipeline"].As<std::string>(), ",");
+    auto numberOfBuffersInSourceLocalBufferPool =
+        Util::splitWithStringDelimiter<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(), ",");
+
+    size_t totalBenchmarkRuns = numWorkerThreads.size();
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, numBuffersToProduce.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
+
+    Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
+    Util::padVectorToSize<uint32_t>(numBuffersToProduce, totalBenchmarkRuns, numBuffersToProduce.back());
+    Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
+
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager, totalBenchmarkRuns, bufferSizeInBytes.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersPerPipeline, totalBenchmarkRuns, bufferSizeInBytes.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool, totalBenchmarkRuns, bufferSizeInBytes.back());
+
+    allConfigPerRuns.reserve(totalBenchmarkRuns);
+
+    for (size_t i = 0; i < numBuffersToProduce.size(); ++i) {
+        E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
+        e2EBenchmarkConfigPerRun.numWorkerThreads->setValue(numWorkerThreads[i]);
+        e2EBenchmarkConfigPerRun.numBuffersToProduce->setValue(numBuffersToProduce[i]);
+        e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
+
+        e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
+        e2EBenchmarkConfigPerRun.numberOfBuffersPerPipeline->setValue(numberOfBuffersPerPipeline[i]);
+        e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
+
+        allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
+    }
+
+    return allConfigPerRuns;
+}
+}// namespace NES::Benchmark

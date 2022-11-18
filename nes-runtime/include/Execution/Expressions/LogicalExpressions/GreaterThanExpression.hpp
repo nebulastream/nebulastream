@@ -14,8 +14,8 @@
 
 #ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_
 #define NES_RUNTIME_EXECUTION_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 /**
@@ -31,6 +31,6 @@ class GreaterThanExpression : public Expression {
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_GREATERTHANEXPRESSION_HPP_

@@ -22,12 +22,12 @@ namespace NES::Nautilus::Tracing {
  */
 class FunctionCallTarget {
   public:
-    FunctionCallTarget(const std::string& mangledFunctionName,  void* functionPtr);
-     std::string mangledName;
-     void* functionPtr;
+    FunctionCallTarget(const std::string& mangledFunctionName, void* functionPtr);
+    std::string mangledName;
+    void* functionPtr;
     friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
 };
 
-}
+}// namespace NES::Nautilus::Tracing
 
 #endif//NES_NAUTILUS_TRACING_FUNCTIONCALLTARGET_HPP_

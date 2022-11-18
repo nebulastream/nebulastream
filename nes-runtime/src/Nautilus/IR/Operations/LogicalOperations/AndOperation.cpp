@@ -16,7 +16,7 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-AndOperation::AndOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput)
+AndOperation::AndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
     : Operation(OperationType::AndOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
     leftInput->addUsage(this);

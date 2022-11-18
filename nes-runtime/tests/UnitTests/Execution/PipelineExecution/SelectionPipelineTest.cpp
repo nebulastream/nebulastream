@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -96,7 +96,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto executablePipeline = provider->create(pipeline);
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    executablePipeline->setup(pipelineContext); 
+    executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 

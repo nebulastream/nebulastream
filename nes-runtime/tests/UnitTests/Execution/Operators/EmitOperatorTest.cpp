@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <API/Schema.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -99,7 +99,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowMemoryLayout, buffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
-        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
+        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
 
@@ -160,7 +160,7 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
-        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i );
+        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
 

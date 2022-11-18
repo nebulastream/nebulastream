@@ -124,6 +124,7 @@ class TypedList final : public List {
     void write(Value<UInt32>& index, const Value<>& value) override;
 
     AnyPtr copy() override;
+
   private:
     const TypedRef<RawType> rawReference;
 };

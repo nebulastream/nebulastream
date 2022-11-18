@@ -52,8 +52,6 @@ std::string ProxyCallOperation::toString() {
 }
 std::string ProxyCallOperation::getFunctionSymbol() { return mangedFunctionSymbol; }
 
-void* ProxyCallOperation::getFunctionPtr(){
-    return functionPtr;
-}
+void* ProxyCallOperation::getFunctionPtr() { return functionPtr; }
 
 }// namespace NES::Nautilus::IR::Operations

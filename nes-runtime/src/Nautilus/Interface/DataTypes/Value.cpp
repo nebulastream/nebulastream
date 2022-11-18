@@ -293,7 +293,6 @@ Value<Text>::Value(const char* s) {
     this->ref = createNextValueReference(value->getType());
 }
 
-
 template<>
 template<typename T, typename>
 Value<>::Value(const char* s) {

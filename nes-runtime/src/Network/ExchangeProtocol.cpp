@@ -14,8 +14,8 @@
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 
 namespace NES::Network {
 

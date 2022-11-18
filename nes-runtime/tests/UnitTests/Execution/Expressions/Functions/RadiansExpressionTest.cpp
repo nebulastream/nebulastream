@@ -14,9 +14,9 @@
 #include <Execution/Expressions/Functions/RadiansExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <memory>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -52,7 +52,7 @@ TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger) {
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) 360));
-        ASSERT_EQ(resultValue, 2*M_PI);
+        ASSERT_EQ(resultValue, 2 * M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
@@ -77,4 +77,4 @@ TEST_F(RadiansExpressionTest, evaluateRadiansExpressionFloat) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-}
+}// namespace NES::Runtime::Execution::Expressions

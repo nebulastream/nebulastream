@@ -703,5 +703,4 @@ TEST_F(SymbolicTracingTest, nestedFunctionCall) {
     ASSERT_EQ(basicBlocks.size(), 4);
 }
 
-
 }// namespace NES::Nautilus::Tracing

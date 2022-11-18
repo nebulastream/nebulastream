@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
+#include <Nautilus/Backends/MLIR/JITCompiler.hpp>
+#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
-#include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
-#include <Nautilus/Backends/MLIR/JITCompiler.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <mlir/Parser.h>
-
 
 namespace NES::Nautilus::Backends::MLIR {
 
-void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath) {    
+void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath) {
     std::string mlirString;
     llvm::raw_string_ostream llvmStringStream(mlirString);
     auto* basicError = new std::error_code();
@@ -42,7 +41,7 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
     module = mlir::parseSourceString(mlirString, &context);
 
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if(!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+    if (!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
@@ -51,19 +50,18 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
-    if(!engine->invoke(moduleString)) {
+    if (!engine->invoke(moduleString)) {
         return -1;
-    }
-    else return 0;
+    } else
+        return 0;
 }
 
-std::unique_ptr<mlir::ExecutionEngine> 
-MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir) {
+std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir) {
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto module = loweringProvider->generateModuleFromIR(ir);
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if(MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+    if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
@@ -71,7 +69,9 @@ MLIRUtility::compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGrap
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
-    return MLIR::JITCompiler::jitCompileModule(module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), 
-                                                loweringProvider->getJitProxyTargetAddresses());
+    return MLIR::JITCompiler::jitCompileModule(module,
+                                               optPipeline,
+                                               loweringProvider->getJitProxyFunctionSymbols(),
+                                               loweringProvider->getJitProxyTargetAddresses());
 }
 }// namespace NES::Nautilus::Backends::MLIR

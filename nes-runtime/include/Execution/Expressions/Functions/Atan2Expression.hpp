@@ -20,17 +20,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-
 class Atan2Expression : public Expression {
   public:
     Atan2Expression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr leftSubExpression;
-    const  ExpressionPtr rightSubExpression;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
-}
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_

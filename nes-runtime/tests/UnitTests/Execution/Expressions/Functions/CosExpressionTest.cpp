@@ -71,19 +71,19 @@ TEST_F(CosExpressionTest, evaluateCosExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 90));
-        ASSERT_EQ(resultValue,(double)  -0.4480736161291701);
+        ASSERT_EQ(resultValue, (double) -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 90));
-        ASSERT_EQ(resultValue,(double) -0.4480736161291701);
+        ASSERT_EQ(resultValue, (double) -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 90));
-        ASSERT_EQ(resultValue,(double)  -0.4480736161291701);
+        ASSERT_EQ(resultValue, (double) -0.4480736161291701);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

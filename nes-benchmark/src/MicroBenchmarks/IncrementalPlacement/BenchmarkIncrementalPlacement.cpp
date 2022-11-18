@@ -34,9 +34,9 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
 #include <iostream>

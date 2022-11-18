@@ -12,30 +12,30 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
+#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/FileCollector.h>
-#include <llvm/Transforms/IPO/SCCP.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/FileCollector.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Transforms/IPO/SCCP.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
 
 namespace NES::Nautilus::Backends::MLIR {
 
-
-std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
-    mlir::OwningOpRef<mlir::ModuleOp> &module, llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline, 
-    const std::vector<std::string> &jitProxyFunctionSymbols, 
-    const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses) {
+std::unique_ptr<mlir::ExecutionEngine>
+JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
+                              llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                              const std::vector<std::string>& jitProxyFunctionSymbols,
+                              const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses) {
 
     // Initialize information about the local machine in LLVM.
     llvm::InitializeNativeTarget();
@@ -45,8 +45,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     // Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
-    auto maybeEngine =
-        mlir::ExecutionEngine::create(*module, nullptr, optPipeline, llvm::CodeGenOpt::Level::Aggressive);
+    auto maybeEngine = mlir::ExecutionEngine::create(*module, nullptr, optPipeline, llvm::CodeGenOpt::Level::Aggressive);
 
     assert(maybeEngine && "failed to construct an execution engine");
     auto& engine = maybeEngine.get();
@@ -62,6 +61,5 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     engine->registerSymbols(runtimeSymbolMap);
 
     return std::move(engine);
-    
 }
 }// namespace NES::Nautilus::Backends::MLIR

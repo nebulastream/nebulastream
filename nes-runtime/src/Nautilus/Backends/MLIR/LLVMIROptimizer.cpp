@@ -17,29 +17,25 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/FileCollector.h>
-#include <llvm/Transforms/IPO/SCCP.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/FileCollector.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Transforms/IPO/SCCP.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 
-
 namespace NES::Nautilus::Backends::MLIR {
 
-llvm::function_ref<llvm::Error(llvm::Module*)> 
-LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {    
+llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {
     // Return LLVM optimizer pipeline.
-    if(linkProxyFunctions) {
-        return [] (llvm::Module* llvmIRModule) mutable {
+    if (linkProxyFunctions) {
+        return [](llvm::Module* llvmIRModule) mutable {
             llvm::SMDiagnostic Err;
-            auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR),
-                                                      Err, llvmIRModule->getContext());
+            auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR), Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
-
 
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
@@ -54,7 +50,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {
             return optimizedModule;
         };
     } else {
-        return [] (llvm::Module* llvmIRModule) mutable {
+        return [](llvm::Module* llvmIRModule) mutable {
             auto optPipeline = mlir::makeOptimizingTransformer(0, 0, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
             llvmIRModule->print(llvm::outs(), nullptr);

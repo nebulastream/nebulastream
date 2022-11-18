@@ -26,7 +26,7 @@
 #include <Measurements.hpp>
 #include <vector>
 
-namespace NES::Benchmark{
+namespace NES::Benchmark {
 
 /*
  * @brief this class encapsulates a single benchmark run
@@ -44,8 +44,8 @@ class E2ESingleRun {
      * @param portOffSet
      */
     explicit E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
-                 const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                 int portOffSet);
+                          const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                          int portOffSet);
 
     /**
      * @brief destroying this object and taking care of
@@ -59,37 +59,30 @@ class E2ESingleRun {
     void run();
 
   private:
-
     /**
      * @brief sets up the coordinator config and worker config
      */
     void setupCoordinatorConfig();
-
 
     /**
      * @brief creates all sources and the data generator and provider for each
      */
     void createSources();
 
-
     /**
      * @brief starts all everything necessary for running the query and measures for a single query
      */
     void runQuery();
-
 
     /**
      * @brief stops the query and everything else, such as coordinator
      */
     void stopQuery();
 
-
     /**
      * @brief writes the measurement to the csv file
      */
     void writeMeasurementsToCsv();
-
-
 
   private:
     E2EBenchmarkConfigPerRun configPerRun;
@@ -102,9 +95,7 @@ class E2ESingleRun {
     std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
     QueryId queryId;
     Measurements::Measurements measurements;
-
 };
-}
-
+}// namespace NES::Benchmark
 
 #endif//NES_E2ESINGLERUN_HPP

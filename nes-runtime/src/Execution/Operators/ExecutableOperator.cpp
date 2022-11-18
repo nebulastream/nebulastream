@@ -13,6 +13,4 @@
 */
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-namespace NES::Runtime::Execution::Operators {
-
-}// namespace NES::Runtime::Execution::Operators
+namespace NES::Runtime::Execution::Operators {}// namespace NES::Runtime::Execution::Operators

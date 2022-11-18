@@ -14,9 +14,9 @@
 #include <Execution/Expressions/Functions/PiExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <memory>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -78,4 +78,4 @@ TEST_F(PiExpressionTest, evaluatePiExpressionFloat) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-}
+}// namespace NES::Runtime::Execution::Expressions

@@ -29,7 +29,7 @@ class GammaExpression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr SubExpression;
+    const ExpressionPtr SubExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
