@@ -14,6 +14,10 @@ limitations under the License.
 #ifndef NES_SHAREDJOINHASHTABLE_HPP
 #define NES_SHAREDJOINHASHTABLE_HPP
 
+#include <API/Schema.hpp>
+#include <atomic>
+#include <vector>
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -21,10 +25,29 @@ namespace NES::Runtime::Execution::Operators {
  *
  */
 class SharedJoinHashTable {
+  private:
+    /**
+     * @brief class that stores the pages for a single bucket
+     */
+    class InternalNode {
+        ImmutableFixedPage data;
+        std::atomic<InternalNode*> next;
+
+      private:
+
+    };
 
 
   private:
-
+    std::vector<std::atomic<InternalNode*>> bucketHeads;
+    std::vector<std::atomic<size_t>> bucketNumItems;
+    std::vector<std::atomic<size_t>> bucketNumPages;
+    SchemaPtr schema;
 };
+
+
+
+
+
 } // namespace NES::Runtime::Execution::Operators
 #endif//NES_SHAREDJOINHASHTABLE_HPP
