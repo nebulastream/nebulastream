@@ -21,10 +21,39 @@ namespace NES::Runtime::Execution::Expressions {
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
-double bitcounter(double number) { return std::log2(number) + 1; }
+int bitcounter(int number) {
+    unsigned int count = 0;
+    while (number) {
+        count += number & 1;
+        number >>= 1;
+    }
+    return count;
+    }
 
 Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = SubExpression->execute(record);
+
+    if (leftValue->isType<Int8>()){
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<Int8>());
+    } else if (leftValue->isType<Int16>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<Int16>());
+    } else if (leftValue->isType<Int32>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<Int32>());
+    } else if (leftValue->isType<Int64>()) {
+        return FunctionCall<>("calculateGamma", bitcounter, leftValue.as<Int64>());
+    } else if (leftValue->isType<UInt8>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt8>());
+    } else if (leftValue->isType<UInt16>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt16>());
+    } else if (leftValue->isType<UInt32>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt32>());
+    } else if (leftValue->isType<UInt64>()) {
+        return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt64>());
+    } else {
+        // If no type was applicable we throw an exception.
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+    }
+
     Value<> result = FunctionCall<>("bitcounter", bitcounter, leftValue.as<Double>());
     return result;
 }
