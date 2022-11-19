@@ -153,7 +153,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
-    message(STATUS "Building WebAssembly")
+    #message(STATUS "Building WebAssembly")
     # Wasmtime
     add_library(wasmtime SHARED IMPORTED)
     set_target_properties(wasmtime PROPERTIES IMPORTED_LOCATION /home/victor/wasmtime-c-api/lib/libwasmtime.so)

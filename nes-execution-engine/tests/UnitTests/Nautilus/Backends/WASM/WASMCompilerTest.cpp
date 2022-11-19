@@ -20,6 +20,7 @@
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 
 namespace NES::Nautilus {
 
@@ -61,7 +62,7 @@ TEST_F(WASMExpressionTest, addIntFunctionTest) {
     auto wasm = wasmCompiler.lower(ir);
 
 
-    std::cout << wasm << std::endl;
+    std::cout << wasm.second << std::endl;
     //BinaryenModuleInterpret(wasm);
     //BinaryenModuleDispose(wasm);
 }
@@ -317,7 +318,6 @@ TEST_F(WASMExpressionTest, ifElseIfFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    //BinaryenModulePrint(wasm);
 }
 
 Value<> loopExpression(Value<Int32> x) {
@@ -340,7 +340,11 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
-    //BinaryenModulePrint(wasm);
+
+    Backends::WASM::WASMRuntime engine;
+    engine.run(wasm.first, wasm.second);
 }
+
+
 
 }// namespace NES::Nautilus

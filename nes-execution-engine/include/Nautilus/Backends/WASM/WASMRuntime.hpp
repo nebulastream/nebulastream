@@ -14,7 +14,8 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_WASM_WASMRUNTIME_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_WASM_WASMRUNTIME_HPP_
 
-#include <wasmtime.h>
+#include <wasmtime.hh>
+#include <wasm.h>
 
 namespace NES::Nautilus::Backends::WASM {
 
@@ -22,13 +23,22 @@ class WASMRuntime {
   public:
     WASMRuntime();
     void setup();
+    void run(size_t binaryLength, char *queryBinary);
 
   private:
-    wasm_engine_t* engine;
+    /*
+    wasm_engine_t *engine;
+    wasmtime_store_t *store;
+    wasmtime_context_t *context;
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-
+    wasmtime_instance_t queryInstance;
+    wasmtime_error_t *error;
+    wasm_trap_t *trap;
+    wasmtime_linker_t *linker;
+*/
     void initWASI(wasi_config_t* wasiConfig);
     void parseWASMFile(wasm_byte_vec_t* bytes, const char* filename);
+    void prepareCPython();
 };
 
 }// namespace NES::Nautilus::Backends::WASM

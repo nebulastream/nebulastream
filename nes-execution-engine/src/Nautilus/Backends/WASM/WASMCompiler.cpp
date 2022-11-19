@@ -22,12 +22,7 @@ namespace NES::Nautilus::Backends::WASM {
 
 WASMCompiler::WASMCompiler() = default;
 
-/**
- * Entry point for lowering Nautilus IR to WebAssembly (WASM) binary code
- * @param ir
- * @return
- */
-char* WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
+std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     BinaryenSetColorsEnabled(true);
     wasm = BinaryenModuleCreate();
     relooper = RelooperCreate(wasm);
@@ -46,9 +41,8 @@ char* WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     BinaryenModuleOptimize(wasm);
     BinaryenModulePrintStackIR(wasm, false);
     static char result[1024];
-    BinaryenModuleWriteText(wasm, result, 1024);
-    //BinaryenModuleWriteText(wasm, result, 100);
-    return result;
+    auto l = BinaryenModuleWrite(wasm, result, 1024);
+    return std::make_pair(l, result);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOperation>& functionOp) {

@@ -48,7 +48,7 @@ namespace NES::Nautilus::Backends::WASM {
 class WASMCompiler {
   public:
     WASMCompiler();
-    char* lower(const std::shared_ptr<IR::IRGraph>& ir);
+    std::pair<size_t, char*> lower(const std::shared_ptr<IR::IRGraph>& ir);
 
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;

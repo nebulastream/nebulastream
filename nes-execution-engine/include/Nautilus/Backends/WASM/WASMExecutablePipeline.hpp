@@ -17,6 +17,7 @@
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 
 namespace NES::Nautilus::Backends::WASM {
@@ -32,6 +33,7 @@ class WASMExecutablePipeline : public ExecutionEngine::Experimental::ExecutableP
   private:
     //TODO: include wasmtime engine here
     std::unique_ptr<mlir::ExecutionEngine> engine;
+    std::unique_ptr<WASMRuntime> engine2;
 };
 }// namespace NES::Nautilus::Backends::WASM
 
