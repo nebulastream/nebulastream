@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.55](https://github.com/nebulastream/nebulastream/tree/v0.3.55) (2022-11-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.54...v0.3.55)
+
+### Bug Fixes 🐛
+
+- \[BUG\] TF Lite Model Loading Issue [\#3197](https://github.com/nebulastream/nebulastream/issues/3197)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add substring expression [\#3184](https://github.com/nebulastream/nebulastream/issues/3184)
+
 ## [v0.3.54](https://github.com/nebulastream/nebulastream/tree/v0.3.54) (2022-11-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.53...v0.3.54)
