@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_CHANNELID_HPP_
-#define NES_INCLUDE_NETWORK_CHANNELID_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
 
@@ -40,4 +40,4 @@ class ChannelId {
 };
 }// namespace Network
 }// namespace NES
-#endif// NES_INCLUDE_NETWORK_CHANNELID_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_
-#define NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -74,4 +74,4 @@ class QueryConfig {
 };
 }// namespace NES::Client
 
-#endif//NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#endif // NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_OPCSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_OPCSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_OPCSOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_OPCSOURCE_HPP_
 #ifdef ENABLE_OPC_BUILD
 
 #include <Sources/DataSource.hpp>
@@ -136,4 +136,4 @@ using OPCSourcePtr = std::shared_ptr<OPCSource>;
 }// namespace NES
 
 #endif
-#endif// NES_INCLUDE_SOURCES_OPCSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_OPCSOURCE_HPP_

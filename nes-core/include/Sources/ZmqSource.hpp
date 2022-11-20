@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_ZMQSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_ZMQSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_ZMQSOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_ZMQSOURCE_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -120,4 +120,4 @@ class ZmqSource : public DataSource {
 
 using ZmqSourcePtr = std::shared_ptr<ZmqSource>;
 }// namespace NES
-#endif// NES_INCLUDE_SOURCES_ZMQSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_ZMQSOURCE_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 namespace NES {
@@ -49,4 +49,4 @@ class TPCHUtil {
 };
 
 }// namespace NES
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_UTILITY_TPCHUTIL_HPP_

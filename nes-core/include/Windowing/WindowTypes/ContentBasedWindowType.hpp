@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONTENTBASEDWINDOWTYPE_HPP
-#define NES_CONTENTBASEDWINDOWTYPE_HPP
+#ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_CONTENTBASEDWINDOWTYPE_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_CONTENTBASEDWINDOWTYPE_HPP_
 
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -27,4 +27,4 @@ class ContentBasedWindowType : public WindowType {
 };
 }// namespace NES::Windowing
 
-#endif//NES_CONTENTBASEDWINDOWTYPE_HPP
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_CONTENTBASEDWINDOWTYPE_HPP_

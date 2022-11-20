@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TRAJECTORYPREDICTOR_HPP
-#define NES_TRAJECTORYPREDICTOR_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
@@ -242,4 +242,4 @@ class TrajectoryPredictor {
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif//NES_TRAJECTORYPREDICTOR_HPP
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_

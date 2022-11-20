@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
-#define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
@@ -56,4 +56,4 @@ class MLIRUtility {
 };
 
 }// namespace NES::Nautilus::Backends::MLIR
-#endif//NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

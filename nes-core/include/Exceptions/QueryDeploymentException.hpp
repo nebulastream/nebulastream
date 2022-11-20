@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
-#define NES_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <stdexcept>
@@ -40,4 +40,4 @@ class QueryDeploymentException : public std::runtime_error {
     SharedQueryId sharedQueryId;
 };
 }// namespace NES
-#endif// NES_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

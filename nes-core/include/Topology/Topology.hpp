@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
-#define NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 
 #include <any>
 #include <map>
@@ -223,4 +223,4 @@ class Topology {
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 };
 }// namespace NES
-#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#endif // NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

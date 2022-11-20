@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
-#define NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
+#ifndef NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -44,4 +44,4 @@ class PythonUdfDescriptor : public UdfDescriptor {
     const DataTypePtr returnType;
 };
 }// namespace NES::Catalogs::UDF
-#endif// NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NEGATE_OPERATION_HPP
-#define NES_NEGATE_OPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -31,4 +31,4 @@ class NegateOperation : public Operation {
     OperationWPtr input;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_AND_OPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_

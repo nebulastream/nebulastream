@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_HANDLER_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_HANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
@@ -88,4 +88,4 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
     HashTablePtr<KeyType, InputTypeBuild> hashTable;
 };
 }// namespace NES::Join::Experimental
-#endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_HANDLER_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishPipelineCompilerBackend_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishPipelineCompilerBackend_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHPIPELINECOMPILERBACKEND_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHPIPELINECOMPILERBACKEND_HPP_
 #include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
 namespace NES::ExecutionEngine::Experimental {
 class BabelfishPipelineCompilerBackend : public PipelineCompilerBackend {
@@ -24,4 +24,4 @@ class BabelfishPipelineCompilerBackend : public PipelineCompilerBackend {
 
 }// namespace NES::ExecutionEngine::Experimental
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishPipelineCompilerBackend_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHPIPELINECOMPILERBACKEND_HPP_

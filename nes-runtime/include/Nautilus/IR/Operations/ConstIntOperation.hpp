@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTANTINTOPERATION_HPP
-#define NES_CONSTANTINTOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -36,4 +36,4 @@ class ConstIntOperation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_CONSTANTINTOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_

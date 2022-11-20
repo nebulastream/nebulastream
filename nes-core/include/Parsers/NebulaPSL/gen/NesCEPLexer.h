@@ -1,7 +1,8 @@
 
 // Generated from IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
-#pragma once
+#ifndef NES_CORE_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
+#define NES_CORE_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
 
 #include <antlr4-runtime.h>
 
@@ -127,3 +128,4 @@ class NesCEPLexer : public antlr4::Lexer {
 };
 
 }// namespace NES::Parsers
+#endif // NES_CORE_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_

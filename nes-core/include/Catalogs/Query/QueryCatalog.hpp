@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
-#define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#ifndef NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Common/Identifiers.hpp>
@@ -129,4 +129,4 @@ class QueryCatalog {
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace NES::Catalogs::Query
 
-#endif// NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

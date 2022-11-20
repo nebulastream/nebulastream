@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
-#define NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
 
 #include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include "Nautilus/IR/IRGraph.hpp"
@@ -73,4 +73,4 @@ class NESIRDumpHandler {
 }// namespace Nautilus::IR
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_UTIL_NESIRDUMPHANDLER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

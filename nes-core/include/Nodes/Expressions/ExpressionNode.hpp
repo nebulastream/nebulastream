@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
+#ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
+#define NES_CORE_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
 #include <Nodes/Node.hpp>
 #include <memory>
 namespace NES {
@@ -85,4 +85,4 @@ class ExpressionNode : public Node {
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
-#endif// NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
+#endif // NES_CORE_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_

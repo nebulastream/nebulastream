@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CAST_OPERATION_HPP
-#define NES_CAST_OPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -33,4 +33,4 @@ class CastOperation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_CAST_OPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_

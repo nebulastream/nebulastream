@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PROXYCALLOPERATION_HPP
-#define NES_PROXYCALLOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
@@ -45,4 +45,4 @@ class ProxyCallOperation : public Operation {
     std::vector<OperationWPtr> inputArguments;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_PROXYCALLOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_

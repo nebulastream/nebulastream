@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_UTIL_EXPERIMENTAL_NODETYPE_HPP
-#define NES_UTIL_EXPERIMENTAL_NODETYPE_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_
 #include <WorkerLocation.grpc.pb.h>
 #include <string>
 
@@ -29,4 +29,4 @@ enum class NodeType {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif//NES_UTIL_EXPERIMENTAL_NODETYPE_HPP
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
-#define NES_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
 
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -72,4 +72,4 @@ class NetworkEventSender : public BaseChannelType {
 };
 }// namespace NES::Network::detail
 
-#endif// NES_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_

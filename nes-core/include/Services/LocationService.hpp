@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
-#define NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
+#ifndef NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -140,4 +140,4 @@ class LocationService {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif//NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
+#endif // NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_

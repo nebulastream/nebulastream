@@ -44,8 +44,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ROBIN_HOOD_H_INCLUDED
-#define ROBIN_HOOD_H_INCLUDED
+#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_ROBIN_HOOD_H_
+#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_ROBIN_HOOD_H_
 
 // see https://semver.org/
 #define ROBIN_HOOD_VERSION_MAJOR 3 // for incompatible API changes
@@ -2418,4 +2418,4 @@ using unordered_set = detail::Table<sizeof(Key) <= sizeof(size_t) * 6 && std::is
 
 }// namespace robin_hood
 
-#endif
+#endif // NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_ROBIN_HOOD_H_

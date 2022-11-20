@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#define NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#define NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #ifdef ENABLE_KAFKA_BUILD_SINK
 #include <chrono>
 #include <cstdint>
@@ -80,4 +80,4 @@ class KafkaSink : public SinkMedium {
 typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
 #endif
-#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

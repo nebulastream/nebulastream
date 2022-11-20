@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
-#define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
+#ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_
 
 #include <string>
 
@@ -121,4 +121,4 @@ class Location {
 
 }// namespace NES::Spatial::Index::Experimental
 
-#endif//NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
+#endif // NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_

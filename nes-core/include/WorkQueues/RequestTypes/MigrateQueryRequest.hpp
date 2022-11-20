@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
-#define NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Phases/MigrationType.hpp>
@@ -54,4 +54,4 @@ class MigrateQueryRequest : public Request {
     MigrationType::Value migrationType;
 };
 }// namespace NES::Experimental
-#endif//NES_MIGRATEQUERYREQUEST_HPP
+#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_

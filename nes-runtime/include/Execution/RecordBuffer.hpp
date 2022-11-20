@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -76,4 +76,4 @@ using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_RECORDBUFFER_HPP_

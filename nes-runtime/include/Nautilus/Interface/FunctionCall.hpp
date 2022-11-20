@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
-#define NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -181,4 +181,4 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP
-#define NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP
+#ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_
 
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
@@ -44,4 +44,4 @@ class ThresholdWindow : public ContentBasedWindowType {
 
 }// namespace NES::Windowing
 
-#endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_

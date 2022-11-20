@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
 
@@ -70,4 +70,4 @@ class MaterializedViewSource : public DataSource {
 
 };// class MaterializedViewSource
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_

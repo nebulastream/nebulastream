@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
-#define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -292,4 +292,4 @@ class WorkerConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif// NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_

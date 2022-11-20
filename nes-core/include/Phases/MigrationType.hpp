@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MIGRATIONTYPE_HPP
-#define NES_MIGRATIONTYPE_HPP
+#ifndef NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_
+#define NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -56,4 +56,4 @@ class MigrationType {
 };
 
 }//namespace NES::Experimental
-#endif//NES_MIGRATIONTYPE_HPP
+#endif // NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_

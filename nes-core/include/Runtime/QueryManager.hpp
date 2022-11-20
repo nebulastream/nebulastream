@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
@@ -659,4 +659,4 @@ using MultiQueueQueryManagerPtr = std::shared_ptr<MultiQueueQueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

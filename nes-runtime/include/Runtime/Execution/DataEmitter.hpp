@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
-#define NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 
 #include <Runtime/Events.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -48,4 +48,4 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     virtual void onEvent(Runtime::BaseEvent&) override {}
 };
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATION_HPP
-#define NES_OPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 
 #include <Nautilus/IR/Types/BasicTypes.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
@@ -78,4 +78,4 @@ using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_OPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
