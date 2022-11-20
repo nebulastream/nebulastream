@@ -45,4 +45,4 @@ class RowMemoryProvider : public MemoryProvider {
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWMEMORYPROVIDER_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWMEMORYPROVIDER_HPP_

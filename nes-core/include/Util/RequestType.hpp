@@ -50,4 +50,4 @@ class RequestType {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_

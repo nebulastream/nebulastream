@@ -70,4 +70,4 @@ class CRC32Hash : public Hash<CRC32Hash> {
 #endif
 }// namespace NES::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_

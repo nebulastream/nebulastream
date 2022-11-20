@@ -75,4 +75,4 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode, public Geogra
 using GeographyFieldsAccessExpressionNodePtr = std::shared_ptr<GeographyFieldsAccessExpressionNode>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODE_HPP_
+#endif // NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODE_HPP_

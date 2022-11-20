@@ -88,4 +88,4 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_

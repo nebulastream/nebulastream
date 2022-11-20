@@ -145,4 +145,4 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 }// namespace Network
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#endif // NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_

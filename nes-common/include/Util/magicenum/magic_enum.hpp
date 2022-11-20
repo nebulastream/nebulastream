@@ -1013,4 +1013,4 @@ constexpr E& operator^=(E& lhs, E rhs) noexcept {
 #endif
 
 #endif// NEARGYE_MAGIC_ENUM_HPP
-#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_

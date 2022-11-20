@@ -192,4 +192,4 @@ class OperatorNode : public Node {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_OPERATORS_OPERATORNODE_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_OPERATORNODE_HPP_

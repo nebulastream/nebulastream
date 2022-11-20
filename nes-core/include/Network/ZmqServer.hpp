@@ -141,4 +141,4 @@ class ZmqServer {
 
 }// namespace Network
 }// namespace NES
-#endif// NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif // NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_

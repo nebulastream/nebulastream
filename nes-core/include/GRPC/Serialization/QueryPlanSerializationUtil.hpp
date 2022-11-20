@@ -45,4 +45,4 @@ class QueryPlanSerializationUtil {
     static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_GRPC_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
+#endif // NES_CORE_INCLUDE_GRPC_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

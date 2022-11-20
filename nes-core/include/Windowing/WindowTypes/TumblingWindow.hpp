@@ -77,4 +77,4 @@ class TumblingWindow : public TimeBasedWindowType {
 
 }// namespace NES::Windowing
 
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_

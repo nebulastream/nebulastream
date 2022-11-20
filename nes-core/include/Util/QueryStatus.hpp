@@ -73,4 +73,4 @@ class QueryStatus {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_

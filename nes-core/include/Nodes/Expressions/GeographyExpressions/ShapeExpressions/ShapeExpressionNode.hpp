@@ -63,4 +63,4 @@ class ShapeExpressionNode : public Node, public GeographyExpressionNode {
 using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_SHAPEEXPRESSIONNODE_HPP_
+#endif // NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_SHAPEEXPRESSIONNODE_HPP_

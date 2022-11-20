@@ -124,4 +124,4 @@ class BlockingQueue {
     }
 };
 }// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_

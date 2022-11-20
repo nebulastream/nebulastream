@@ -89,4 +89,4 @@ class BinarySourceType : public PhysicalSourceType {
     Configurations::StringConfigOption filePath;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_

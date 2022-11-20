@@ -25,4 +25,4 @@ Timestamp getTimestamp();
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_

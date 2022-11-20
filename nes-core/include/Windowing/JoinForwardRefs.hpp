@@ -56,4 +56,4 @@ using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Experimental
 
 }// namespace NES::Join
-#endif// NES_CORE_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_

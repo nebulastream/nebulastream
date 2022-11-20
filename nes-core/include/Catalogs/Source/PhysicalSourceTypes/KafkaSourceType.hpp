@@ -153,4 +153,4 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption numberOfBuffersToProduce;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

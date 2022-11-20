@@ -41,4 +41,4 @@ class IfOperation : public Operation {
     std::weak_ptr<BasicBlock> mergeBlock;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
