@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_EVENTS_HPP_
-#define NES_INCLUDE_RUNTIME_EVENTS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -142,4 +142,4 @@ using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 }// namespace NES::Runtime
 
-#endif// NES_INCLUDE_RUNTIME_EVENTS_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_

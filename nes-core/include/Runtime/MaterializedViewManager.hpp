@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
 #include <memory>
 #include <mutex>
@@ -71,4 +71,4 @@ class MaterializedViewManager {
 
 };// class MaterializedViewManager
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_

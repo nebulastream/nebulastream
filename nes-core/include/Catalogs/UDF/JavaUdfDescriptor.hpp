@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
-#define NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
+#ifndef NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
@@ -118,4 +118,4 @@ class JavaUdfDescriptor : public UdfDescriptor {
 };
 
 }// namespace NES::Catalogs::UDF
-#endif// NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_

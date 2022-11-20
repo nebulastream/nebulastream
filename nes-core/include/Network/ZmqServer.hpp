@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_ZMQSERVER_HPP_
-#define NES_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#ifndef NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#define NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -141,4 +141,4 @@ class ZmqServer {
 
 }// namespace Network
 }// namespace NES
-#endif// NES_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif // NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_

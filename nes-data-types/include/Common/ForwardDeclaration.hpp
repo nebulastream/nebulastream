@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
-#define NES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
 #include <memory>
 // TODO ALL: use this file instead of declaring types manually in every single file!
 // TODO ALL: this is only for Runtime components
@@ -30,4 +30,4 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_

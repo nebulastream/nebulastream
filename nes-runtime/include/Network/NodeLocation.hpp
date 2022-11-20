@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NODELOCATION_HPP_
-#define NES_INCLUDE_NETWORK_NODELOCATION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_NODELOCATION_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_NODELOCATION_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -83,4 +83,4 @@ class NodeLocation {
     uint32_t port;
 };
 }// namespace NES::Network
-#endif// NES_INCLUDE_NETWORK_NODELOCATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NODELOCATION_HPP_

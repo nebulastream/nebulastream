@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
-#define INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -111,4 +111,4 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
 }// namespace NES::InferModel
 
-#endif// INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_

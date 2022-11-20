@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -38,4 +38,4 @@ class ReadFieldExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

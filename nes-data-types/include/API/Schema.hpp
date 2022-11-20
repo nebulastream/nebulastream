@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_API_SCHEMA_HPP_
-#define NES_INCLUDE_API_SCHEMA_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_
+#define NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_
 
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
@@ -226,4 +226,4 @@ class Schema {
 AttributeFieldPtr createField(std::string name, BasicType type);
 
 }// namespace NES
-#endif// NES_INCLUDE_API_SCHEMA_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_

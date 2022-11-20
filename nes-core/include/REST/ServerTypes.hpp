@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
-#define NES_NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
+#ifndef NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
+#define NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
 
 namespace NES {
 /**
@@ -21,4 +21,4 @@ namespace NES {
  */
 enum class ServerType : uint8_t { Oatpp, CPPRestSDK };
 }// namespace NES
-#endif//NES_NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
+#endif // NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_

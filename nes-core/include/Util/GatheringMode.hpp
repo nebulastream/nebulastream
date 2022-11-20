@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_GATHERINGMODE_HPP_
-#define NES_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#define NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
 
 #include <cinttypes>
 #include <stdint.h>
@@ -41,4 +41,4 @@ class GatheringMode {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_

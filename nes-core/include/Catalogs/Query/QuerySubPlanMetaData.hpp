@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYSUBPLANMETADATA_HPP
-#define NES_QUERYSUBPLANMETADATA_HPP
+#ifndef NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Util/QueryStatus.hpp>
@@ -83,4 +83,4 @@ class QuerySubPlanMetaData {
 };
 }// namespace NES
 
-#endif//NES_QUERYSUBPLANMETADATA_HPP
+#endif // NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_

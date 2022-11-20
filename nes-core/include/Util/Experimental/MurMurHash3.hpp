@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
-#define NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
 #include <Util/Experimental/Hash.hpp>
 namespace NES::Experimental {
 
@@ -142,4 +142,4 @@ class MurMurHash3 : public Hash<MurMurHash3> {
 
 }// namespace NES::Experimental
 
-#endif//NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_

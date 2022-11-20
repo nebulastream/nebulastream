@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_HPP_
-#define NES_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -100,4 +100,4 @@ class TimeStamp : public Any {
 
 }// namespace NES::Nautilus
 
-#endif//NES_NES_RUNTIME_SRC_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_H_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_

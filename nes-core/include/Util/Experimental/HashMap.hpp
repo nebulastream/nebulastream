@@ -18,8 +18,8 @@
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Experimental/MurMurHash3.hpp>
 #include <assert.h>
-#ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
-#define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASHMAP_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASHMAP_HPP_
 
 namespace NES::Experimental {
 
@@ -357,4 +357,4 @@ class HashMapFactory {
 
 }// namespace NES::Experimental
 
-#endif//NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASHMAP_HPP_

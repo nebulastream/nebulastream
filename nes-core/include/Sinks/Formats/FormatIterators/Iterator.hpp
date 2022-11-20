@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
-#define NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
+#define NES_CORE_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -119,4 +119,4 @@ class Iterator {
 };
 
 }// namespace NES
-#endif// NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
+#endif // NES_CORE_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_

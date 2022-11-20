@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef NES_INCLUDE_RUNTIME_INTERNAL_BACKWARD_HPP_
-#define NES_INCLUDE_RUNTIME_INTERNAL_BACKWARD_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_BACKWARD_BACKWARD_HPP_
+#define NES_COMMON_INCLUDE_UTIL_BACKWARD_BACKWARD_HPP_
 
 #ifndef __cplusplus
 #error "It's not going to compile without a C++ compiler..."
@@ -4471,4 +4471,4 @@ public:
 
 } // namespace backward
 
-#endif /* H_GUARD */
+#endif // NES_COMMON_INCLUDE_UTIL_BACKWARD_BACKWARD_HPP_

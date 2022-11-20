@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BATCH_JOIN_LOGICAL_OPERATOR_NODE_HPP_
-#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BATCH_JOIN_LOGICAL_OPERATOR_NODE_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
@@ -49,4 +49,4 @@ class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition;
 };
 }// namespace NES::Experimental
-#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BATCH_JOIN_LOGICAL_OPERATOR_NODE_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_

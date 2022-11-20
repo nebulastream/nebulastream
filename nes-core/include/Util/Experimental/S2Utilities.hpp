@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_S2UTILITIES_HPP
-#define NES_S2UTILITIES_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_S2UTILITIES_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_S2UTILITIES_HPP_
 
 #ifdef S2DEF
 #include <s2/s2latlng.h>
@@ -47,4 +47,4 @@ class S2Utilities {
 }// namespace Util
 }// namespace NES::Spatial
 #endif
-#endif//NES_S2UTILITIES_HPP
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_S2UTILITIES_HPP_

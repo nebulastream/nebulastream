@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
 
 #include <Runtime/AbstractLineageManager.hpp>
 #include <Util/BufferSequenceNumber.hpp>
@@ -70,4 +70,4 @@ using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
 }// namespace NES::Runtime
 
-#endif// NES_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_

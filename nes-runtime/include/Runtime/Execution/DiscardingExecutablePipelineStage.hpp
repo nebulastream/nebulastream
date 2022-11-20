@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
-#define NES_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
 
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 namespace NES::Runtime::Execution {
@@ -32,4 +32,4 @@ class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
                             WorkerContext& workerContext) override;
 };
 }// namespace NES::Runtime::Execution
-#endif// NES_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_

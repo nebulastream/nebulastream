@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
-#define NES_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
 #include <cstdint>
 namespace NES::Network {
 /**
@@ -30,4 +30,4 @@ enum class PartitionRegistrationStatus : uint8_t {
     NotFound,
 };
 }// namespace NES::Network
-#endif// NES_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_
 #include <memory>
 #include <type_traits>
 namespace NES {
@@ -60,4 +60,4 @@ inline bool instanceOf(const TypeCastable& y) {
 
 }// namespace NES
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_

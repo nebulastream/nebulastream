@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
-#define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Runtime/Events.hpp>
@@ -229,4 +229,4 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_

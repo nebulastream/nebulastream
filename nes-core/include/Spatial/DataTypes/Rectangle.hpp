@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SPATIAL_DATATYPES_RECTANGLE_HPP_
-#define NES_SPATIAL_DATATYPES_RECTANGLE_HPP_
+#ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_RECTANGLE_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_DATATYPES_RECTANGLE_HPP_
 
 #include <Spatial/DataTypes/Point.hpp>
 
@@ -137,4 +137,4 @@ class Rectangle {
 };
 
 }// namespace NES
-#endif//NES_SPATIAL_DATATYPES_RECTANGLE_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_DATATYPES_RECTANGLE_HPP_

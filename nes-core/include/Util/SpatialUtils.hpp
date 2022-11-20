@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_SPATIALUTILS_HPP
-#define NES_INCLUDE_UTIL_SPATIALUTILS_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_SPATIALUTILS_HPP_
+#define NES_CORE_INCLUDE_UTIL_SPATIALUTILS_HPP_
 
 #include <cmath>
 
@@ -61,4 +61,4 @@ double haversineDistance(double lat1, double lng1, double lat2, double lng2);
 }// namespace SpatialUtils
 }// namespace NES
 
-#endif//NES_INCLUDE_UTIL_SPATIALUTILS_HPP
+#endif // NES_CORE_INCLUDE_UTIL_SPATIALUTILS_HPP_

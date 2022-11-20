@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
-#define NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
+#ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
 
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Util/Timer.hpp>
@@ -51,4 +51,4 @@ class CompilationResult {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_

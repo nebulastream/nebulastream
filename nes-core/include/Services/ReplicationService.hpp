@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_REPLICATIONSERVICE_H
-#define NES_REPLICATIONSERVICE_H
+#ifndef NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_
 #include <Components/NesCoordinator.hpp>
 #include <mutex>
 #include <unordered_map>
@@ -75,4 +75,4 @@ class ReplicationService {
 };
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 }// namespace NES
-#endif//NES_REPLICATIONSERVICE_H
+#endif // NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_

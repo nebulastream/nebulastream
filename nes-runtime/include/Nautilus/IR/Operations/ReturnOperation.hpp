@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RETURNOPERATION_HPP
-#define NES_RETURNOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <cstdint>
@@ -34,4 +34,4 @@ class ReturnOperation : public Operation {
     OperationWPtr returnValue;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_RETURNOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_

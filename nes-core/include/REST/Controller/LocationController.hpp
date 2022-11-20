@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_LOCATIONCONTROLLER_HPP
-#define NES_LOCATIONCONTROLLER_HPP
+#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
+#define NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
@@ -93,4 +93,4 @@ class LocationController : public oatpp::web::server::api::ApiController {
 }// namespace REST
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif//NES_LOCATIONCONTROLLER_HPP
+#endif // NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_

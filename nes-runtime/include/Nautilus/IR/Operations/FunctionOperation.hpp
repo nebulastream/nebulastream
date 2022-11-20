@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FUNCTIONOPERATION_HPP
-#define NES_FUNCTIONOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -45,4 +45,4 @@ class FunctionOperation : public Operation {
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif//NES_FUNCTIONOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_

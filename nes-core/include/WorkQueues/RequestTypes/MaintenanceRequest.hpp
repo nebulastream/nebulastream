@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
-#define NES_NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
 #include <Common/Identifiers.hpp>
 #include <Phases/MigrationType.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
@@ -54,4 +54,4 @@ class MaintenanceRequest : public Request {
     MigrationType::Value migrationType;
 };
 }// namespace NES::Experimental
-#endif//NES_MIGRATEQUERYREQUEST_HPP
+#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_

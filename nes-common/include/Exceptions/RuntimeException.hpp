@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
-#define NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#define NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 
 #include <Util/SourceLocation.hpp>
 #include <Util/StacktraceLoader.hpp>
@@ -62,4 +62,4 @@ class RuntimeException : virtual public std::exception {
 
 }// namespace NES::Exceptions
 
-#endif// NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
-#define NES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
 
 #include <Common/ValueTypes/ValueType.hpp>
 #include <type_traits>
@@ -39,4 +39,4 @@ class [[nodiscard]] ArrayValue final : public ValueType {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_

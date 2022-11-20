@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
-#define NES_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
+#ifndef NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
 #include <Compiler/DynamicObject.hpp>
 #include <memory>
 namespace NES::Compiler {
@@ -59,4 +59,4 @@ class SharedLibrary : public DynamicObject {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_

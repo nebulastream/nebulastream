@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATURECOMPUTATIONEXCEPTION_H
-#define NES_SIGNATURECOMPUTATIONEXCEPTION_H
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_
 
 #include <stdexcept>
 
@@ -26,4 +26,4 @@ class SignatureComputationException : public std::runtime_error {
     explicit SignatureComputationException(const std::string& message);
 };
 }// namespace NES
-#endif//NES_SIGNATURECOMPUTATIONEXCEPTION_H
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_

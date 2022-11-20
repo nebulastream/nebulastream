@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_SRC_RUNTIME_QUERYEXECUTIONMODE_HPP_
-#define NES_NES_CORE_SRC_RUNTIME_QUERYEXECUTIONMODE_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_QUERYEXECUTIONMODE_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_QUERYEXECUTIONMODE_HPP_
 
 namespace NES::Runtime {
 enum class QueryExecutionMode : uint8_t {
@@ -27,4 +27,4 @@ enum class QueryExecutionMode : uint8_t {
 };
 }
 
-#endif//NES_NES_CORE_SRC_RUNTIME_QUERYEXECUTIONMODE_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_QUERYEXECUTIONMODE_HPP_

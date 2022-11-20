@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
@@ -155,4 +155,4 @@ class HardwareManager {
 
 }// namespace NES::Runtime
 
-#endif// NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

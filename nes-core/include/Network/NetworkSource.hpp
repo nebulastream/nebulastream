@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
-#define NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#define NES_CORE_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/NodeLocation.hpp>
@@ -135,4 +135,4 @@ class NetworkSource : public DataSource {
 
 }// namespace NES::Network
 
-#endif// NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

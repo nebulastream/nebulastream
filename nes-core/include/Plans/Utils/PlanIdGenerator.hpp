@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
-#define NES_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#define NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 
 #include <Common/Identifiers.hpp>
 
@@ -44,4 +44,4 @@ class PlanIdGenerator {
     static QueryId getNextQueryId();
 };
 }// namespace NES
-#endif// NES_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#endif // NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

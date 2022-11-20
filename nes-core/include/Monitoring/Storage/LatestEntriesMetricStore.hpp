@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_
+#define NES_CORE_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_
 
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
 #include <mutex>
@@ -68,4 +68,4 @@ class LatestEntriesMetricStore : public AbstractMetricStore {
 
 }// namespace NES::Monitoring
 
-#endif// NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_

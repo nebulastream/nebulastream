@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_UTIL_HPP_
-#define NES_UTIL_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_
+#define NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_
 #include <Util/Logger/Logger.hpp>
 #include <list>
 #include <map>
@@ -96,4 +96,4 @@ class NamedPluginRegistry {
 
 }// namespace NES::Util
 
-#endif//NES_UTIL_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_

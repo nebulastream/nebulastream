@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_REQUESTTYPE_HPP
-#define NES_REQUESTTYPE_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#define NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
 
 #include <string>
 
@@ -50,4 +50,4 @@ class RequestType {
 
 }// namespace NES
 
-#endif//NES_REQUESTTYPE_HPP
+#endif // NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_

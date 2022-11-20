@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
-#define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
+#ifndef NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
 #include <Spatial/Index/Location.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -151,4 +151,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif// NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
+#endif // NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_

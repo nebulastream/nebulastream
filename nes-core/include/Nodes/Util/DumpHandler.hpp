@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
-#define NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
+#define NES_CORE_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -62,4 +62,4 @@ using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
+#endif // NES_CORE_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_

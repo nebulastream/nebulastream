@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
-#define NES_GEOLOCATION_LOCATIONSERVICE_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 
 #include <Spatial/Index/Location.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
@@ -150,4 +150,4 @@ class LocationProvider {
     TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental
-#endif//NES_GEOLOCATION_LOCATIONSERVICE_HPP
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
-#define NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#ifndef NES_CORE_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#define NES_CORE_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
@@ -30,4 +30,4 @@ ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<Expressio
 
 }// namespace NES
 
-#endif//NES_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#endif // NES_CORE_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_

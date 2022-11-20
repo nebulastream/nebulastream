@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
-#define NES_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
 
 #include <Network/ChannelId.hpp>
 #include <Runtime/Events.hpp>
@@ -243,4 +243,4 @@ class EventBufferMessage {
 }// namespace Network
 }// namespace NES
 
-#endif// NES_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

@@ -1,5 +1,5 @@
-#ifndef NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
-#define NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
 
 //	apex_memmove written by Trevor Herselman in 2014
 
@@ -35,4 +35,4 @@ extern void*(APEXCALL* apex_memmove)(void* dst, const void* src, size_t size);
 
 #endif// __cplusplus
 
-#endif// NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
