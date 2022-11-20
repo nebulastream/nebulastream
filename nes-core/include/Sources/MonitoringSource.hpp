@@ -80,4 +80,4 @@ class MonitoringSource : public DataSource {
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
 };// namespace NES
 
-#endif // NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_

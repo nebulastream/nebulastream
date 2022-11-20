@@ -141,4 +141,4 @@ class OptimizerConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_

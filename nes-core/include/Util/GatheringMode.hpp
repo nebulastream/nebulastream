@@ -41,4 +41,4 @@ class GatheringMode {
 };
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_

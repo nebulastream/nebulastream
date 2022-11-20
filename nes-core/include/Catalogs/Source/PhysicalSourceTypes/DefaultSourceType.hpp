@@ -110,4 +110,4 @@ class DefaultSourceType : public PhysicalSourceType {
     Configurations::GatheringModeConfigOption gatheringMode;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

@@ -237,4 +237,4 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_

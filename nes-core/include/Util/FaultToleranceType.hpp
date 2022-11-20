@@ -44,4 +44,4 @@ class FaultToleranceType {
 };
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_

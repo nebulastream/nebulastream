@@ -243,4 +243,4 @@ class EventBufferMessage {
 }// namespace Network
 }// namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

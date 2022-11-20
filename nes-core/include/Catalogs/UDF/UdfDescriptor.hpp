@@ -53,4 +53,4 @@ class UdfDescriptor {
     const DataTypePtr returnType;
 };
 }// namespace NES::Catalogs::UDF
-#endif // NES_CORE_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_

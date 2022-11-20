@@ -73,4 +73,4 @@ class NESIRDumpHandler {
 }// namespace Nautilus::IR
 }// namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

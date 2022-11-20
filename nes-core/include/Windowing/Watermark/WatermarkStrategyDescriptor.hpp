@@ -70,4 +70,4 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
 };
 }// namespace NES::Windowing
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGYDESCRIPTOR_HPP_

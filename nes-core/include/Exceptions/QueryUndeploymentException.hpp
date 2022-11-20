@@ -24,4 +24,4 @@ class QueryUndeploymentException : public std::runtime_error {
     explicit QueryUndeploymentException(const std::string& message);
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

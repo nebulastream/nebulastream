@@ -50,4 +50,4 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
     AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_

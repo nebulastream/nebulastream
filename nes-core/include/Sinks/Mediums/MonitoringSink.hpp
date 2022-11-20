@@ -125,4 +125,4 @@ using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_

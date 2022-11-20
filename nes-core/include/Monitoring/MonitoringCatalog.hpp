@@ -73,4 +73,4 @@ class MonitoringCatalog {
 
 }// namespace NES::Monitoring
 
-#endif // NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

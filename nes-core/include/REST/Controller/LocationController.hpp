@@ -93,4 +93,4 @@ class LocationController : public oatpp::web::server::api::ApiController {
 }// namespace REST
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif // NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_

@@ -381,4 +381,4 @@ class QueryController : public oatpp::web::server::api::ApiController {
 }//namespace Controller
 }// namespace REST
 }// namespace NES
-#endif // NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_

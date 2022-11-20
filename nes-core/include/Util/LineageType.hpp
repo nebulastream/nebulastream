@@ -46,4 +46,4 @@ class LineageType {
     static Value getFromString(const std::string lineageType);
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_

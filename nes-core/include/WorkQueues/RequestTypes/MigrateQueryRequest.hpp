@@ -54,4 +54,4 @@ class MigrateQueryRequest : public Request {
     MigrationType::Value migrationType;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_
