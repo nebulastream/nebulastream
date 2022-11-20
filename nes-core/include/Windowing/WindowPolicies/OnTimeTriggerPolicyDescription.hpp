@@ -45,4 +45,4 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
 
 using OnTimeTriggerDescriptionPtr = std::shared_ptr<OnTimeTriggerPolicyDescription>;
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONTIMETRIGGERPOLICYDESCRIPTION_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONTIMETRIGGERPOLICYDESCRIPTION_HPP_

@@ -21,4 +21,4 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
+#endif // NES_CORE_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_

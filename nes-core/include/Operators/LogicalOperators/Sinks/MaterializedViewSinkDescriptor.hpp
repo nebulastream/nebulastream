@@ -73,4 +73,4 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MATERIALIZEDVIEWSINKDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MATERIALIZEDVIEWSINKDESCRIPTOR_HPP_

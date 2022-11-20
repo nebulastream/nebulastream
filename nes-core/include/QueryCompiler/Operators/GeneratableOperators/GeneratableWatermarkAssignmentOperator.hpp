@@ -64,4 +64,4 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEWATERMARKASSIGNMENTOPERATOR_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEWATERMARKASSIGNMENTOPERATOR_HPP_

@@ -57,4 +57,4 @@ class PointerDataType final : public GeneratableDataType {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_POINTERDATATYPE_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_POINTERDATATYPE_HPP_

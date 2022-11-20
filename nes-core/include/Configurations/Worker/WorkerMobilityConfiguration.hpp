@@ -174,4 +174,4 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 };
 }// namespace Configurations::Spatial::Mobility::Experimental
 }// namespace NES
-#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_

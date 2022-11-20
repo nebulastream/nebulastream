@@ -68,4 +68,4 @@ class NetworkCollector : public MetricCollector {
 using NetworkCollectorPtr = std::shared_ptr<NetworkCollector>;
 
 }// namespace NES::Monitoring
-#endif// NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_

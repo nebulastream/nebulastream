@@ -28,4 +28,4 @@ std::string toString(MetricStoreType type);
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_

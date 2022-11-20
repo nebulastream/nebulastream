@@ -32,4 +32,4 @@ class InvalidArgumentException : public std::exception {
     std::string message;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_

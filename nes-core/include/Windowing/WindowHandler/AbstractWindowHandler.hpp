@@ -170,4 +170,4 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
 };
 
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTWINDOWHANDLER_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTWINDOWHANDLER_HPP_

@@ -68,4 +68,4 @@ class Tag {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_HPP_

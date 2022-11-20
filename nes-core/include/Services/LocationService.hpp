@@ -140,4 +140,4 @@ class LocationService {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif// NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
+#endif // NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_

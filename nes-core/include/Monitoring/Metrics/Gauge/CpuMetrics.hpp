@@ -154,4 +154,4 @@ nlohmann::json asJson(const CpuMetrics& metrics);
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

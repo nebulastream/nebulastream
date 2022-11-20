@@ -164,4 +164,4 @@ using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace Catalogs::Query
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_

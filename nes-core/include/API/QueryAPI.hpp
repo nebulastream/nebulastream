@@ -43,4 +43,4 @@ using namespace NES;
 using namespace NES::API;
 using namespace NES::Windowing;
 
-#endif// NES_CORE_INCLUDE_API_QUERYAPI_HPP_
+#endif // NES_CORE_INCLUDE_API_QUERYAPI_HPP_

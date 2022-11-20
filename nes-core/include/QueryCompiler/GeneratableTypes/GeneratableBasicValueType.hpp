@@ -39,4 +39,4 @@ class GeneratableBasicValueType final : public GeneratableValueType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEBASICVALUETYPE_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEBASICVALUETYPE_HPP_

@@ -88,4 +88,4 @@ requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toStrin
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_
+#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_

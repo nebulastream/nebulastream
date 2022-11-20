@@ -64,4 +64,4 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
 };
 }// namespace NES::Optimizer
 
-#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
+#endif // NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_

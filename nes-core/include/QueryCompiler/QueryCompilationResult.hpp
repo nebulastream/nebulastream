@@ -66,4 +66,4 @@ class QueryCompilationResult {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_

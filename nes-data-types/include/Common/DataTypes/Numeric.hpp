@@ -43,4 +43,4 @@ class Numeric : public DataType {
 
 }// namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_

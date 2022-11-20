@@ -44,4 +44,4 @@ class PlanIdGenerator {
     static QueryId getNextQueryId();
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#endif // NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

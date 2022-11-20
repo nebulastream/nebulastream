@@ -131,4 +131,4 @@ nlohmann::json asJson(const DiskMetrics& metrics);
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_

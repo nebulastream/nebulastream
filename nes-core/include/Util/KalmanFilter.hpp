@@ -248,4 +248,4 @@ class KalmanFilter {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_KALMANFILTER_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_KALMANFILTER_HPP_

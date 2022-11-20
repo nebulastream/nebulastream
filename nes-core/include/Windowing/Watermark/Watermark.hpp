@@ -32,4 +32,4 @@ class Watermark {
 
 using WatermarkPtr = std::shared_ptr<Watermark>;
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARK_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARK_HPP_

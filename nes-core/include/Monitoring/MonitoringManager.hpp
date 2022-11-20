@@ -240,4 +240,4 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

@@ -52,4 +52,4 @@ class WhenExpressionNode final : public BinaryExpressionNode {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_NODES_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
+#endif // NES_CORE_INCLUDE_NODES_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_

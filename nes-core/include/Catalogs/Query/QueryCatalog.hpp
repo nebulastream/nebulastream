@@ -129,4 +129,4 @@ class QueryCatalog {
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace NES::Catalogs::Query
 
-#endif// NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
