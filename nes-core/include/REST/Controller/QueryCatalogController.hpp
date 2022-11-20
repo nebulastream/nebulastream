@@ -192,4 +192,4 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif // NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

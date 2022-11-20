@@ -95,4 +95,4 @@ auto createDefault() {
     return text;
 }
 }// namespace NES::Nautilus
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_

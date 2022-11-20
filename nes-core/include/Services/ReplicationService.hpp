@@ -75,4 +75,4 @@ class ReplicationService {
 };
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 }// namespace NES
-#endif // NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_
+#endif// NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_

@@ -63,4 +63,4 @@ class Z3ExprAndFieldMap {
     std::map<std::string, z3::ExprPtr> fieldMap;
 };
 }// namespace NES::Optimizer
-#endif // NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_Z3EXPRANDFIELDMAP_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_Z3EXPRANDFIELDMAP_HPP_

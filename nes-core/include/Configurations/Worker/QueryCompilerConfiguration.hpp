@@ -100,4 +100,4 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_

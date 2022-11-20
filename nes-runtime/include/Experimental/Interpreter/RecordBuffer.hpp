@@ -59,4 +59,4 @@ using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
 }// namespace NES::Nautilus
 
-#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_RECORDBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_RECORDBUFFER_HPP_

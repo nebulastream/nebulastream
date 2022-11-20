@@ -67,4 +67,4 @@ class LambdaSource : public GeneratorSource {
 using LambdaSourcePtr = std::shared_ptr<LambdaSource>;
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_LAMBDASOURCE_HPP_

@@ -26,4 +26,4 @@ class CoordinatesOutOfRangeException : public std::exception {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_

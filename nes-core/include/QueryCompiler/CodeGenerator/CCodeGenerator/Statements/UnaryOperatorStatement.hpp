@@ -56,4 +56,4 @@ UnaryOperatorStatement operator!(const ExpressionStatement& ref);
 UnaryOperatorStatement sizeOf(const ExpressionStatement& ref);
 
 }// namespace NES::QueryCompilation
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_UNARYOPERATORSTATEMENT_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_STATEMENTS_UNARYOPERATORSTATEMENT_HPP_

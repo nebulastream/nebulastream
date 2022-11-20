@@ -131,4 +131,4 @@ requires std::is_base_of_v<BaseOption, T> std::string SequenceOption<T>::toStrin
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_

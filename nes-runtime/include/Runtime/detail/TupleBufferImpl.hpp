@@ -308,4 +308,4 @@ void zmqBufferRecyclingCallback(void* ptr, void* hint);
 }// namespace Runtime
 }// namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_

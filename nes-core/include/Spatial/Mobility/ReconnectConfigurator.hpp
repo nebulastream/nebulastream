@@ -118,4 +118,4 @@ using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 }// namespace Spatial
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_

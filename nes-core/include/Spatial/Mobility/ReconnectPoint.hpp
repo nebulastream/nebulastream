@@ -28,4 +28,4 @@ struct ReconnectPoint {
     ReconnectPrediction reconnectPrediction;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_

@@ -56,4 +56,4 @@ class MigrationType {
 };
 
 }//namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_
