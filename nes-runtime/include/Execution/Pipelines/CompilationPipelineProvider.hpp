@@ -25,4 +25,4 @@ class CompilationPipelineProvider : public ExecutablePipelineProvider {
     std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;
 };
 }// namespace NES::Runtime::Execution
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

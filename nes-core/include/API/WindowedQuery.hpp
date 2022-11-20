@@ -113,4 +113,4 @@ class WindowedQuery {
 }// namespace WindowOperatorBuilder
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif// NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_

@@ -343,4 +343,4 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalogController>;
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif // NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_

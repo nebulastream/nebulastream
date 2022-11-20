@@ -69,8 +69,7 @@ class ScalarOption : public TypedBaseOption<T> {
 
   private:
     template<class X>
-    requires std::is_base_of_v<BaseOption, X>
-    friend class SequenceOption;
+    requires std::is_base_of_v<BaseOption, X> friend class SequenceOption;
     /**
      * @brief Private constructor to create an scalar option without a name and description.
      * This can only be used in SequenceOptions.
@@ -144,4 +143,4 @@ using BoolOption = ScalarOption<bool>;
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_

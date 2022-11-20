@@ -147,4 +147,4 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
 };
 
 }// namespace NES::Join
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTJOINHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTJOINHANDLER_HPP_

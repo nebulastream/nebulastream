@@ -105,4 +105,4 @@ nlohmann::json asJson(const CpuMetricsWrapper& metrics);
 
 }// namespace NES::Monitoring
 
-#endif // NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_

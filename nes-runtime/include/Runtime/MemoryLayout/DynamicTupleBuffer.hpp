@@ -53,7 +53,7 @@ class DynamicField {
      * @return Pointer type
      */
     template<class Type>
-    requires IsNesType<Type> && std::is_pointer<Type>::value inline Type read() const {
+    requires IsNesType<Type>&& std::is_pointer<Type>::value inline Type read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -296,4 +296,4 @@ class DynamicTupleBuffer {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_

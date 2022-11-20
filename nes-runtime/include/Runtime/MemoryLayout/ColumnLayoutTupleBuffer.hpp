@@ -230,4 +230,4 @@ std::tuple<Types...> ColumnLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTTUPLEBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTTUPLEBUFFER_HPP_

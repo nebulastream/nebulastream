@@ -29,4 +29,4 @@ enum class NodeType {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_

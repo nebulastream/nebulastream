@@ -26,4 +26,4 @@ class QueryCompilationError {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_
