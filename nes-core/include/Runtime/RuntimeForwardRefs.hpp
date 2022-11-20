@@ -156,4 +156,4 @@ using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

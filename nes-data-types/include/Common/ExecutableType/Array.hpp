@@ -400,4 +400,4 @@ struct std::hash<NES::ExecutableTypes::Array<T, N>> {
     }
 };
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

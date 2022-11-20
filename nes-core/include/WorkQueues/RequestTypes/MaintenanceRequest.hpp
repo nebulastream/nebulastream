@@ -54,4 +54,4 @@ class MaintenanceRequest : public Request {
     MigrationType::Value migrationType;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_

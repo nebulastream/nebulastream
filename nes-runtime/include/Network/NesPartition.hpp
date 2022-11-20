@@ -97,4 +97,4 @@ struct hash<NES::Network::NesPartition> {
 };
 
 }// namespace std
-#endif // NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_

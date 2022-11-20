@@ -95,4 +95,4 @@ class MQTTClientWrapper {
 using MQTTClientWrapperPtr = std::shared_ptr<MQTTClientWrapper>;
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_

@@ -133,4 +133,4 @@ class RequestProcessorService {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
+#endif// NES_CORE_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

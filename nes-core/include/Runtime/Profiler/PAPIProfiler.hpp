@@ -107,4 +107,4 @@ using PapiCpuProfilerPtr = std::shared_ptr<PapiCpuProfiler>;
 }// namespace Profiler
 }// namespace Runtime
 }// namespace NES
-#endif // NES_CORE_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_

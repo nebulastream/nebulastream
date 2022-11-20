@@ -60,4 +60,4 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
 };
 using MaterializedViewSourceDescriptorPtr = std::shared_ptr<MaterializedViewSourceDescriptor>;
 }// namespace NES::Experimental::MaterializedView
-#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MATERIALIZEDVIEWSOURCEDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MATERIALIZEDVIEWSOURCEDESCRIPTOR_HPP_

@@ -61,4 +61,4 @@ class LoggerDetails {
 
 }// namespace NES::detail
 
-#endif // NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGERDETAILS_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGERDETAILS_HPP_
