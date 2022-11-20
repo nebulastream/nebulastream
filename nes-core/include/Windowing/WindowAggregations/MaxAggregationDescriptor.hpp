@@ -51,4 +51,4 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_

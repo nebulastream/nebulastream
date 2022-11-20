@@ -113,4 +113,4 @@ using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_

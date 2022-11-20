@@ -331,4 +331,4 @@ class StateVariable : public detail::Destroyable {
 };
 }// namespace Runtime
 }// namespace NES
-#endif// NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_
+#endif // NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_

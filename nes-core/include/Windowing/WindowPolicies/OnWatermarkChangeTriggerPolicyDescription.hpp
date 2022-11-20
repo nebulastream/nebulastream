@@ -30,4 +30,4 @@ class OnWatermarkChangeTriggerPolicyDescription : public BaseWindowTriggerPolicy
     OnWatermarkChangeTriggerPolicyDescription();
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONWATERMARKCHANGETRIGGERPOLICYDESCRIPTION_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONWATERMARKCHANGETRIGGERPOLICYDESCRIPTION_HPP_

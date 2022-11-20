@@ -142,4 +142,4 @@ class MurMurHash3 : public Hash<MurMurHash3> {
 
 }// namespace NES::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_MURMURHASH3_HPP_

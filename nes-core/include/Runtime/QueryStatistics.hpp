@@ -231,4 +231,4 @@ class QueryStatistics {
 
 }// namespace NES::Runtime
 
-#endif// NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_

@@ -22,4 +22,4 @@ class CEPOperatorHandler;
 using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEPOperatorHandler>;
 
 }// namespace NES::CEP
-#endif// NES_CORE_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_

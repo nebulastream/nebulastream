@@ -46,4 +46,4 @@ class UdfException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_

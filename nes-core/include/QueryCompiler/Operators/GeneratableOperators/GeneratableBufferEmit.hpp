@@ -80,4 +80,4 @@ class GeneratableBufferEmit : public GeneratableOperator {
     OutputBufferAssignmentStrategy bufferAssignmentStrategy = FIELD_COPY;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_

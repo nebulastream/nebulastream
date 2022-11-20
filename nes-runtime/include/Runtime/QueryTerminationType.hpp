@@ -34,4 +34,4 @@ static O& operator<<(O& os, const QueryTerminationType& type) {
 
 }// namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

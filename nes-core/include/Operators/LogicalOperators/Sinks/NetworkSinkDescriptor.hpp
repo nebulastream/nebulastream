@@ -124,4 +124,4 @@ using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 }// namespace Network
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_

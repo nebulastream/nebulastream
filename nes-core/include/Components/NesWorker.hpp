@@ -296,4 +296,4 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#endif // NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_

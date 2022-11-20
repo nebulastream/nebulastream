@@ -76,4 +76,4 @@ requires IsFactory<Type, Factory> std::string Configurations::WrapOption<Type, F
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
+#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

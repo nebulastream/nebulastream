@@ -90,4 +90,4 @@ class ExchangeProtocol {
 }// namespace Network
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_

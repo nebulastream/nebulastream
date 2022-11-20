@@ -266,4 +266,4 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#endif // NES_CORE_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_

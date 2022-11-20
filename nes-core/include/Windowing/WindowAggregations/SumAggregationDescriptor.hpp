@@ -50,4 +50,4 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_

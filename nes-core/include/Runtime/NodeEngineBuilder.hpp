@@ -153,4 +153,4 @@ class NodeEngineBuilder {
     static uint64_t getNextNodeEngineId();
 };
 }// namespace NES::Runtime
-#endif// NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

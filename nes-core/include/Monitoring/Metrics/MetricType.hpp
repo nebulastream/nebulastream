@@ -50,4 +50,4 @@ MetricType parse(std::string metricTypeStr);
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_

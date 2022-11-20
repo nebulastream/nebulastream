@@ -52,4 +52,4 @@ class CSVParser : public Parser {
 };
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

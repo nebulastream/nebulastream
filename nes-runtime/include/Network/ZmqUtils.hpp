@@ -83,4 +83,4 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
 }// namespace Network
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_

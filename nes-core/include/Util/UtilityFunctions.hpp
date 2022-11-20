@@ -278,4 +278,4 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 };// namespace Util
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_

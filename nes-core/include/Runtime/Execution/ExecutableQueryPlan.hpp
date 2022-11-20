@@ -229,4 +229,4 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_

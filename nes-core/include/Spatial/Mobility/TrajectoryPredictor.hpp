@@ -242,4 +242,4 @@ class TrajectoryPredictor {
     std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_

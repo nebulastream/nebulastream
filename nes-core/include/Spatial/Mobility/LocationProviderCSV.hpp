@@ -76,4 +76,4 @@ class LocationProviderCSV : public LocationProvider {
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_

@@ -119,4 +119,4 @@ class OPCSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption password;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
+#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
