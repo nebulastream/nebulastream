@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
-#define NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
+#ifndef NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
+#define NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
 
@@ -25,4 +25,4 @@ class ClientException : public Exceptions::RuntimeException {
 
 }// namespace NES::Client
 
-#endif//NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
+#endif // NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_

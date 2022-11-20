@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
-#define NES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
 
 #include <Common/DataTypes/Numeric.hpp>
 
@@ -71,4 +71,4 @@ class Float final : public Numeric {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_

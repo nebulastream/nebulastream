@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
@@ -47,4 +47,4 @@ class TraceOperation {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_

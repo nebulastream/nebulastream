@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -82,4 +82,4 @@ class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLa
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_

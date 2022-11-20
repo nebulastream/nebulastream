@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
@@ -116,4 +116,4 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_

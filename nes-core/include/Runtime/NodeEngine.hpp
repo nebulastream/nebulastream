@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
-#define NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
 #include <Common/Identifiers.hpp>
@@ -422,4 +422,4 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_

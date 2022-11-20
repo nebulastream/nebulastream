@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_IDENTIFIERS_HPP
-#define NES_IDENTIFIERS_HPP
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_IDENTIFIERS_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_IDENTIFIERS_HPP_
 
 #include <cstdint>
 
@@ -37,4 +37,4 @@ static constexpr TopologyNodeId INVALID_TOPOLOGY_NODE_ID = 0;
 
 }// namespace NES
 
-#endif//NES_IDENTIFIERS_HPP
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_IDENTIFIERS_HPP_

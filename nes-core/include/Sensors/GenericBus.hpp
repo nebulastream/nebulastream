@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SENSORS_GENERICBUS_HPP_
-#define NES_INCLUDE_SENSORS_GENERICBUS_HPP_
+#ifndef NES_CORE_INCLUDE_SENSORS_GENERICBUS_HPP_
+#define NES_CORE_INCLUDE_SENSORS_GENERICBUS_HPP_
 
 #include <memory>
 #include <string>
@@ -121,4 +121,4 @@ using GenericBusPtr = std::shared_ptr<GenericBus>;
 
 }//namespace Sensors
 }//namespace NES
-#endif// NES_INCLUDE_SENSORS_GENERICBUS_HPP_
+#endif // NES_CORE_INCLUDE_SENSORS_GENERICBUS_HPP_

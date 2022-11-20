@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_AND_OPERATION_HPP
-#define NES_AND_OPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -33,4 +33,4 @@ class AndOperation : public Operation {
     OperationWPtr rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_AND_OPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_

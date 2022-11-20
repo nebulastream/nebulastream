@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_JOIN_JOINBUILD_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_JOIN_JOINBUILD_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
@@ -47,4 +47,4 @@ class JoinBuild : public ExecutableOperator {
 };
 
 }// namespace NES::Nautilus
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_JOINBUILD_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_JOIN_JOINBUILD_HPP_

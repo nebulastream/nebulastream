@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LOOPOPERATION_HPP
-#define NES_LOOPOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
@@ -45,4 +45,4 @@ class LoopOperation : public Operation {
     std::shared_ptr<LoopInfo> loopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_LoopOperation_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_

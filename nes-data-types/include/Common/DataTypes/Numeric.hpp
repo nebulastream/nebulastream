@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
-#define NES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
 #include <Common/DataTypes/DataType.hpp>
 namespace NES {
 
@@ -43,4 +43,4 @@ class Numeric : public DataType {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_

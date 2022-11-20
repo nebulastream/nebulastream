@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
-#define NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#define NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
 #include <API/Schema.hpp>
 
@@ -203,4 +203,4 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_

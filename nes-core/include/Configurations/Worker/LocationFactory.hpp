@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP
-#define NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
@@ -47,4 +47,4 @@ class LocationFactory {
     static ::NES::Spatial::Index::Experimental::Location createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Spatial::Index::Experimental
-#endif//NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_

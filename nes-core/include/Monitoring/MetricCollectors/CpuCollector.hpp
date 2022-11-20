@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
-#define NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_
+#define NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -73,4 +73,4 @@ using CpuCollectorPtr = std::shared_ptr<CpuCollector>;
 
 }// namespace NES::Monitoring
 
-#endif//NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_

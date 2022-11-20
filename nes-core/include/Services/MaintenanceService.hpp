@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MAINTENANCESERVICE_HPP
-#define NES_MAINTENANCESERVICE_HPP
+#ifndef NES_CORE_INCLUDE_SERVICES_MAINTENANCESERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_MAINTENANCESERVICE_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Phases/MigrationType.hpp>
@@ -64,4 +64,4 @@ class MaintenanceService {
 };
 
 }// namespace NES::Experimental
-#endif//NES_MAINTENANCESERVICE_HPP
+#endif // NES_CORE_INCLUDE_SERVICES_MAINTENANCESERVICE_HPP_

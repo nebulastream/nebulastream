@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COORDINATESOUTOFRANGEEXCEPTION_HPP
-#define NES_COORDINATESOUTOFRANGEEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_
 
 #include <exception>
 namespace NES::Spatial::Index::Experimental {
@@ -26,4 +26,4 @@ class CoordinatesOutOfRangeException : public std::exception {
 };
 }// namespace NES::Spatial::Index::Experimental
 
-#endif//NES_COORDINATESOUTOFRANGEEXCEPTION_HPP
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_

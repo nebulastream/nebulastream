@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
-#define NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <chrono>
@@ -112,4 +112,4 @@ class AbstractPoolProvider {
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_

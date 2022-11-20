@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
 #include <Nautilus/Tracing/Tag.hpp>
@@ -105,4 +105,4 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functo
 
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_

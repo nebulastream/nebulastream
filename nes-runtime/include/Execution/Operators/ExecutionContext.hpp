@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -90,4 +90,4 @@ class ExecutionContext final {
 
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

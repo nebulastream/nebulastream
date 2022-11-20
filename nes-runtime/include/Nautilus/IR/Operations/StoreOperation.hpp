@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STOREOPERATION_HPP
-#define NES_STOREOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
@@ -34,4 +34,4 @@ class StoreOperation : public Operation {
     OperationWPtr address;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_STOREOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

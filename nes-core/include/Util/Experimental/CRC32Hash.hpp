@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
-#define NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -70,4 +70,4 @@ class CRC32Hash : public Hash<CRC32Hash> {
 #endif
 }// namespace NES::Experimental
 
-#endif//NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_

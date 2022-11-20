@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
-#define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
 #include "LocationProvider.hpp"
 #include <vector>
 
@@ -76,4 +76,4 @@ class LocationProviderCSV : public LocationProvider {
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif//NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_

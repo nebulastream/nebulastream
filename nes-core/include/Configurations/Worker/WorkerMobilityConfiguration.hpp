@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
-#define NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -174,4 +174,4 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 };
 }// namespace Configurations::Spatial::Mobility::Experimental
 }// namespace NES
-#endif//NES_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_H
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_

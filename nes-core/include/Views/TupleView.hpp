@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
-#define NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
+#ifndef NES_CORE_INCLUDE_VIEWS_TUPLEVIEW_HPP_
+#define NES_CORE_INCLUDE_VIEWS_TUPLEVIEW_HPP_
 
 #include <Views/MaterializedView.hpp>
 #include <mutex>
@@ -61,4 +61,4 @@ class TupleView : public MaterializedView {
 
 };// class TupleView
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
+#endif // NES_CORE_INCLUDE_VIEWS_TUPLEVIEW_HPP_

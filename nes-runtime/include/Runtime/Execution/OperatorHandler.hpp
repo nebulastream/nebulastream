@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
-#define NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -49,4 +49,4 @@ class OperatorHandler : public Reconfigurable {
 }// namespace Runtime
 }// namespace NES
 
-#endif// NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

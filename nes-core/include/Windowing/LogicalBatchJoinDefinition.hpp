@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_
-#define NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_LOGICALBATCHJOINDEFINITION_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_LOGICALBATCHJOINDEFINITION_HPP_
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
@@ -104,4 +104,4 @@ class LogicalBatchJoinDefinition {// todo jm its dumb that this is in the window
 
 using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
 }// namespace NES::Join::Experimental
-#endif// NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_LOGICALBATCHJOINDEFINITION_HPP_

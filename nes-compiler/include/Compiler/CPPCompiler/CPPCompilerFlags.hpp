@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
-#define NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
+#ifndef NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
 #include <string>
 #include <vector>
 namespace NES::Compiler {
@@ -70,4 +70,4 @@ class CPPCompilerFlags {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_ENUMOPTION_HPP_
-#define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_ENUMOPTION_HPP_
+#ifndef NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_
+#define NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -88,4 +88,4 @@ requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toStrin
 
 }// namespace NES::Configurations
 
-#endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_ENUMOPTION_HPP_
+#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
-#define NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#define NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <memory>
@@ -73,4 +73,4 @@ class MonitoringCatalog {
 
 }// namespace NES::Monitoring
 
-#endif//NES_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

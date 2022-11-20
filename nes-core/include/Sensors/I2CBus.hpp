@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SENSORS_I2CBUS_HPP_
-#define NES_INCLUDE_SENSORS_I2CBUS_HPP_
+#ifndef NES_CORE_INCLUDE_SENSORS_I2CBUS_HPP_
+#define NES_CORE_INCLUDE_SENSORS_I2CBUS_HPP_
 #ifdef __linux__
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
@@ -72,4 +72,4 @@ using I2CBusPtr = std::shared_ptr<I2CBus>;
 }//namespace Sensors
 }//namespace NES
 #endif
-#endif// NES_INCLUDE_SENSORS_I2CBUS_HPP_
+#endif // NES_CORE_INCLUDE_SENSORS_I2CBUS_HPP_

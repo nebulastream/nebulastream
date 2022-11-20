@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMPILATIONCACHE_HPP
-#define NES_COMPILATIONCACHE_HPP
+#ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/SourceCode.hpp>
@@ -55,4 +55,4 @@ class CompilationCache {
 
 }// namespace NES::Compiler
 
-#endif//NES_COMPILATIONCACHE_HPP
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_

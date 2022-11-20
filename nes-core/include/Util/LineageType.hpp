@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
-#define NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#define NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
 #include <cinttypes>
 #include <stdint.h>
 #include <string>
@@ -46,4 +46,4 @@ class LineageType {
     static Value getFromString(const std::string lineageType);
 };
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP
-#define NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_
 #include "Util/TimeMeasurement.hpp"
 #include <memory>
 #include <vector>
@@ -86,4 +86,4 @@ class ReconnectSchedule {
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif//NES_INCLUDE_SPATIAL_RECONNECTSCHEDULE_HPP
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_

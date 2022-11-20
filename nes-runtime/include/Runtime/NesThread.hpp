@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_NESTHREAD_HPP_
-#define NES_INCLUDE_RUNTIME_NESTHREAD_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_
 
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
@@ -94,4 +94,4 @@ inline NesThread::ThreadId::ThreadId() : id(InvalidId) { id = NesThread::reserve
 inline NesThread::ThreadId::~ThreadId() { NesThread::releaseEntry(id); }
 
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_RUNTIME_NESTHREAD_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_

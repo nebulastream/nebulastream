@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FAILQUERYREQUEST_HPP
-#define NES_FAILQUERYREQUEST_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_FAILQUERYREQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_FAILQUERYREQUEST_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
@@ -49,4 +49,4 @@ class FailQueryRequest : public Request {
 };
 
 }// namespace NES
-#endif//NES_FAILQUERYREQUEST_HPP
+#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_FAILQUERYREQUEST_HPP_

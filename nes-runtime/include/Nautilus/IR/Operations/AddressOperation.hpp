@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDRESSOPERATION_HPP
-#define NES_ADDRESSOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
@@ -47,4 +47,4 @@ class AddressOperation : public Operation {
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif//NES_ADDRESSOPERATION_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_

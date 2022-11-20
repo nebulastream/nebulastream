@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
-#define NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#define NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 
 #include <Sources/Parsers/Parser.hpp>
 
@@ -52,4 +52,4 @@ class CSVParser : public Parser {
 };
 
 }// namespace NES
-#endif// NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
