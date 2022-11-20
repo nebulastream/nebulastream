@@ -23,7 +23,7 @@ namespace NES {
 
 class [[nodiscard]] ArrayValue final : public ValueType {
   public:
-    inline ArrayValue(DataTypePtr&& type, std::vector<std::string>&& values) noexcept
+    inline ArrayValue(DataTypePtr && type, std::vector<std::string> && values) noexcept
         : ValueType(std::move(type)), values(std::move(values)) {}
 
     virtual ~ArrayValue() = default;
@@ -39,4 +39,4 @@ class [[nodiscard]] ArrayValue final : public ValueType {
 
 }// namespace NES
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_

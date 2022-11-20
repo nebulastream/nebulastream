@@ -19,7 +19,7 @@ namespace NES {
 
 // polyfill because concepts do not exist on all platforms yet.
 template<typename _From, typename _To>
-concept convertible_to = std::is_convertible_v<_From, _To> && requires {
+concept convertible_to = std::is_convertible_v<_From, _To>&& requires {
     static_cast<_To>(std::declval<_From>());
 };
 
@@ -42,11 +42,14 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-    { T::type } -> convertible_to<TypeCastable::Kind>;
+    { T::type }
+    ->convertible_to<TypeCastable::Kind>;
 };
 
 template<class X, class Y>
-requires(std::is_base_of<Y, X>::value == false) inline constexpr bool instanceOf(const std::unique_ptr<Y>&) { return false; }
+requires(std::is_base_of<Y, X>::value == false) inline constexpr bool instanceOf(const std::unique_ptr<Y>&) {
+    return false;
+}
 
 template<GetType X, class Y>
 requires(std::is_base_of<Y, X>::value == true) inline bool instanceOf(const std::unique_ptr<Y>& y) {
@@ -60,4 +63,4 @@ inline bool instanceOf(const TypeCastable& y) {
 
 }// namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_

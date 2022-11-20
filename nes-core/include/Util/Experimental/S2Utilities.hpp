@@ -47,4 +47,4 @@ class S2Utilities {
 }// namespace Util
 }// namespace NES::Spatial
 #endif
-#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_S2UTILITIES_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_S2UTILITIES_HPP_

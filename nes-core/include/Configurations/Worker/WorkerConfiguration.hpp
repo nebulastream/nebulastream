@@ -295,4 +295,4 @@ class WorkerConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_

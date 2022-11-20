@@ -54,4 +54,4 @@ class ReferenceDataType : public GeneratableDataType {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_REFERENCEDATATYPE_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_REFERENCEDATATYPE_HPP_

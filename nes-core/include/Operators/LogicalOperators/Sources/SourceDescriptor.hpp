@@ -135,4 +135,4 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_

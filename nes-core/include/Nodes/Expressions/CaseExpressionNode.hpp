@@ -69,4 +69,4 @@ class CaseExpressionNode : public ExpressionNode {
 };
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_NODES_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_
+#endif// NES_CORE_INCLUDE_NODES_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_

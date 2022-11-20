@@ -38,4 +38,4 @@ class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
     const uint64_t entrySize;
 };
 }// namespace NES::Windowing::Experimental
-#endif // NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_

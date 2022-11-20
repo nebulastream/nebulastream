@@ -35,4 +35,4 @@ class ConfigurationException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES::Configurations
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_

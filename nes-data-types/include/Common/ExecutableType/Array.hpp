@@ -375,7 +375,7 @@ Array(T, Ts...) -> Array<T, sizeof...(Ts) + 1>;
 
 /// std::array
 template<typename J, std::size_t size>
-Array(std::array<J, size>&&) -> Array<J, size>;
+Array(std::array<J, size> &&) -> Array<J, size>;
 
 /// c-style array
 template<typename J>
@@ -400,4 +400,4 @@ struct std::hash<NES::ExecutableTypes::Array<T, N>> {
     }
 };
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

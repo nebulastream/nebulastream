@@ -54,4 +54,4 @@ class PlacementStrategy {
 };
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

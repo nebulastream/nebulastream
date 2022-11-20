@@ -659,4 +659,4 @@ using MultiQueueQueryManagerPtr = std::shared_ptr<MultiQueueQueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif // NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

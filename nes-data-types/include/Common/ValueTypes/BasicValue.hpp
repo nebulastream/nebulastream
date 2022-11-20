@@ -22,7 +22,7 @@ namespace NES {
 class [[nodiscard]] BasicValue final : public ValueType {
 
   public:
-    [[nodiscard]] inline BasicValue(DataTypePtr&& type, std::string&& value) noexcept
+    [[nodiscard]] inline BasicValue(DataTypePtr && type, std::string && value) noexcept
         : ValueType(std::move(type)), value(std::move(value)) {}
 
     ~BasicValue() final = default;
@@ -38,4 +38,4 @@ class [[nodiscard]] BasicValue final : public ValueType {
 
 }// namespace NES
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_

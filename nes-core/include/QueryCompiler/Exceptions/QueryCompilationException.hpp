@@ -30,4 +30,4 @@ class QueryCompilationException : public Exceptions::RuntimeException {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
