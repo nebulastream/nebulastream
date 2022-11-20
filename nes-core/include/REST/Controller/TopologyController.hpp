@@ -259,4 +259,4 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 }// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)
-#endif // NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_

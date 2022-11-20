@@ -144,4 +144,4 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 };
 }// namespace NES::Join::Experimental
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_

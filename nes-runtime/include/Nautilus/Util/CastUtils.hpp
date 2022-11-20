@@ -66,7 +66,8 @@ concept IsTyped = requires(T&) {
 
 template<typename T>
 concept HasTypeIdentifier = requires(T&) {
-    { std::remove_pointer<T>::type::type } -> IsSame<const TypeIdentifier&>;
+    { std::remove_pointer<T>::type::type }
+    ->IsSame<const TypeIdentifier&>;
 };
 
 /**
@@ -136,4 +137,4 @@ T* cast_if(Typed* typed) {
 
 }// namespace NES::Nautilus
 
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_

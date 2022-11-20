@@ -48,4 +48,4 @@ class SourceMode {
 };
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_UTIL_SOURCEMODE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_SOURCEMODE_HPP_

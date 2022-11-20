@@ -118,4 +118,4 @@ class JavaUdfDescriptor : public UdfDescriptor {
 };
 
 }// namespace NES::Catalogs::UDF
-#endif // NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_

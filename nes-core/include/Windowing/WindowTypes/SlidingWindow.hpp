@@ -69,4 +69,4 @@ class SlidingWindow : public TimeBasedWindowType {
 
 }// namespace NES::Windowing
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_

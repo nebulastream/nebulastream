@@ -55,8 +55,7 @@ EnumOption<EnumType>::EnumOption(const std::string& name, EnumType defaultValue,
     : TypedBaseOption<EnumType>(name, defaultValue, description){};
 
 template<class EnumType>
-requires std::is_enum<EnumType>::value EnumOption<EnumType>
-&EnumOption<EnumType>::operator=(const EnumType& value) {
+requires std::is_enum<EnumType>::value EnumOption<EnumType>& EnumOption<EnumType>::operator=(const EnumType& value) {
     this->value = value;
     return *this;
 }
@@ -84,8 +83,10 @@ EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::stri
 }
 
 template<class EnumType>
-requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toString() { return ""; }
+requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toString() {
+    return "";
+}
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_

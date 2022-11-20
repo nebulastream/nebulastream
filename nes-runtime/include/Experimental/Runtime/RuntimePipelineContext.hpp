@@ -46,4 +46,4 @@ class RuntimePipelineContext : public std::enable_shared_from_this<RuntimePipeli
 
 }// namespace NES::Runtime::Execution
 
-#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_

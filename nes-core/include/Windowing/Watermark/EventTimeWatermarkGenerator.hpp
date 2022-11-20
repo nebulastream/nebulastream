@@ -32,4 +32,4 @@ class EventTimeWatermarkGenerator : public Watermark {
     uint64_t getWatermark() override;
 };
 }// namespace NES::Windowing
-#endif // NES_CORE_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_

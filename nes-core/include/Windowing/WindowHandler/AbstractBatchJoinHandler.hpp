@@ -80,4 +80,4 @@ class AbstractBatchJoinHandler : public detail::virtual_enable_shared_from_this<
 };
 
 }// namespace NES::Join::Experimental
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTBATCHJOINHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTBATCHJOINHANDLER_HPP_

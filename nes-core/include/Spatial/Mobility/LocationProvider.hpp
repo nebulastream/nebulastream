@@ -150,4 +150,4 @@ class LocationProvider {
     TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental
-#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_

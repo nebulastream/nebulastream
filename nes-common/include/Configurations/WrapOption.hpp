@@ -35,8 +35,7 @@ concept IsFactory = requires(std::string identifier, std::map<std::string, std::
  * @tparam Factory type which implements the static create function to initialize a value of this option.
  */
 template<class Type, class Factory>
-requires IsFactory<Type, Factory>
-class WrapOption : public TypedBaseOption<Type> {
+requires IsFactory<Type, Factory> class WrapOption : public TypedBaseOption<Type> {
   public:
     /**
      * @brief Constructor to create a new option that sets a name, and description.
@@ -52,8 +51,7 @@ class WrapOption : public TypedBaseOption<Type> {
 
   private:
     template<class X>
-    requires std::is_base_of_v<BaseOption, X>
-    friend class SequenceOption;
+    requires std::is_base_of_v<BaseOption, X> friend class SequenceOption;
     WrapOption() : TypedBaseOption<Type>() {}
 };
 
@@ -62,18 +60,21 @@ requires IsFactory<Type, Factory> WrapOption<Type, Factory>::WrapOption(const st
     : TypedBaseOption<Type>(name, description) {}
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+requires IsFactory<Type, Factory> void
+WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     this->value = Factory::createFromString(identifier, inputParams);
 }
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) { this->value = Factory::createFromYaml(node); }
+requires IsFactory<Type, Factory> void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
+    this->value = Factory::createFromYaml(node);
+}
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> std::string Configurations::WrapOption<Type, Factory>::toString() { return ""; }
+requires IsFactory<Type, Factory> std::string Configurations::WrapOption<Type, Factory>::toString() {
+    return "";
+}
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

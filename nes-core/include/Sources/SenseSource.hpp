@@ -74,4 +74,4 @@ class SenseSource : public DataSource {
 using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_SOURCES_SENSESOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_SENSESOURCE_HPP_

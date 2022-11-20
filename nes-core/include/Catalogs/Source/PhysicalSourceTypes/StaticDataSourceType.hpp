@@ -82,4 +82,4 @@ class StaticDataSourceType : public PhysicalSourceType {
     const bool lateStart;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_

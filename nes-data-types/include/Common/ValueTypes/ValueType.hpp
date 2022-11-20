@@ -30,7 +30,7 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 /// @brief Representation of a user-defined constant in the NES type system.
 class [[nodiscard]] ValueType {
   public:
-    [[nodiscard]] inline explicit ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
+    [[nodiscard]] inline explicit ValueType(DataTypePtr && type) : dataType(std::move(type)) {}
 
     virtual ~ValueType() = default;
 
@@ -50,4 +50,4 @@ class [[nodiscard]] ValueType {
 
 }// namespace NES
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_

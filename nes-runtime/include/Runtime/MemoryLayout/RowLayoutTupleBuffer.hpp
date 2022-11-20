@@ -217,4 +217,4 @@ std::tuple<Types...> RowLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_

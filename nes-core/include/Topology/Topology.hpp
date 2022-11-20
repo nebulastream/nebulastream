@@ -223,4 +223,4 @@ class Topology {
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#endif// NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

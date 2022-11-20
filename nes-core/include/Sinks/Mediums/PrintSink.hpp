@@ -88,4 +88,4 @@ class PrintSink : public SinkMedium {
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
