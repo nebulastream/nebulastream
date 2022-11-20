@@ -33,6 +33,9 @@ bool FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
     data[pos++] = record;
     bloomFilter->add(hash);
     return pos < capacity;
+
+    next step is to integrate the localhashtable into the build of one stream phase
+    afterwards, think how if a second operator might be necessary that does the actual join (so comparing both buckets)
 }
 
 bool FixedPage::bloomFilterCheck(uint64_t key) const  { return bloomFilter->checkContains(key); }
