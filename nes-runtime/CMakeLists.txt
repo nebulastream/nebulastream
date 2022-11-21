@@ -38,6 +38,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # include MLIR. This is currently required
     find_package(MLIR REQUIRED CONFIG)
     if (MLIR_FOUND)
+        message(STATUS ${MLIR_INCLUDE_DIRS})
         target_include_directories(nes-runtime SYSTEM PUBLIC
                 $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
                 $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -52,6 +53,10 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 MLIRReconcileUnrealizedCasts
                 MLIRMemRefToLLVM
                 MLIRExecutionEngine)
+
+        # Include necessary mlir library in the deb package and install it in the lib folder
+        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime  DESTINATION lib)
+
     else ()
         message(FATAL_ERROR "Cannot find mlir")
     endif (MLIR_FOUND)
