@@ -169,7 +169,9 @@ add_nes_unit_test(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTe
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
-    add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaSourceTest.cpp")
+    add_nes_unit_test(kafka-source-tests "UnitTests/Source/KafkaSourceTest.cpp")
+    add_nes_unit_test(kafka-sink-tests "UnitTests/Sink/KafkaSinkTest.cpp")
+
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###

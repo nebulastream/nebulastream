@@ -27,9 +27,6 @@
 #include <Sources/MemorySource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <chrono>
-#ifdef ENABLE_KAFKA_BUILD
-#include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -332,7 +329,6 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
 }// namespace Experimental::MaterializedView
 
-#ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief Create kafka source
  * @param schema schema of the elements
@@ -358,7 +354,6 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-#endif
 
 #ifdef ENABLE_OPC_BUILD
 

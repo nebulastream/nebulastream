@@ -119,7 +119,6 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    originId,
                                    numSourceLocalBuffers,
                                    successors);
-#ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
         const KafkaSourceDescriptorPtr kafkaSourceDescriptor = sourceDescriptor->as<KafkaSourceDescriptor>();
@@ -137,7 +136,6 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  originId,
                                  numSourceLocalBuffers,
                                  successors);
-#endif
 #ifdef ENABLE_MQTT_BUILD
     } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating OPC source");
