@@ -17,7 +17,9 @@ limitations under the License.
 namespace NES::Runtime::Execution::Operators {
 
 void LazyJoin::execute(ExecutionContext& ctx, Record& record) const {
+    // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
 
+    localHashTable.app
 }
 
 } // namespace NES::Runtime::Execution::Operators

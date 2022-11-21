@@ -25,6 +25,12 @@ class LazyJoin : public ExecutableOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 
+
+  private:
+    // TODO later get both hash tables via getGlobalState() or sth along the lines
+    LocalHashTable localHashTable;
+    SharedJoinHashTable sharedJoinHashTable;
+
 };
 
 

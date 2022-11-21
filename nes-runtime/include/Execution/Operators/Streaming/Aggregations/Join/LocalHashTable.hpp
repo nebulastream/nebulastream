@@ -15,6 +15,8 @@
 #ifndef NES_LOCALHASHTABLE_HPP
 #define NES_LOCALHASHTABLE_HPP
 
+#include <atomic>
+
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
