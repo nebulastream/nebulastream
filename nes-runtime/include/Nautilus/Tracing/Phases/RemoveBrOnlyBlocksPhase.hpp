@@ -37,10 +37,6 @@ class Block;
  */
 class RemoveBrOnlyBlocksPhase {
   public:
-    struct Task {
-        std::shared_ptr<IR::Operations::IfOperation> ifOp;
-        bool trueBranch; // rename to isTrueBranch or isTrueBranchTask?
-    };
     /**
      * @brief Applies the phase on a execution trace
      * @param trace
@@ -67,12 +63,13 @@ class RemoveBrOnlyBlocksPhase {
         void processBrOnlyBlocks(IR::BasicBlockPtr parentBlock);
         void findLoopHeadBlocks(IR::BasicBlockPtr parentBlock);
         void createIfOperations(IR::BasicBlockPtr parentBlock);
-        bool inline findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
-                              std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
-                              std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
+        // bool inline findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
+        //                       std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
+        //                       std::unordered_map<std::string, uint32_t>& candidateEdgeCounter,
+        //                       const bool newVisit);
         bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
                     std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                    const std::unordered_map<std::string, uint32_t>& candidateEdgeCounter);
+                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter, const bool newVisit);
         // void addScopeLevels(IR::BasicBlockPtr parentBlock);
         // void processBranch(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentBlock, bool conditionalBranch, bool isElse);
         // void processBlock(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentChildBlock);

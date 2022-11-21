@@ -250,35 +250,34 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     // ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
-NES::Nautilus::IR::BasicBlockPtr
-TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
-                                                                    int32_t targetScope) {
-    if (currentBlock->getScopeLevel() <= targetScope) {
-        return currentBlock;
-    }
-    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::BranchOp) {
-        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
-        return findControlFlowMerge(branchOp->getNextBlockInvocation().getBlock(), targetScope);
-    }
-    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::IfOp) {
-        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-        auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
-        if (resultFromTrueBranch) {
-            return resultFromTrueBranch;
-        }
-        auto resultFromFalseBranch = findControlFlowMerge(branchOp->getFalseBlockInvocation().getBlock(), targetScope);
-        if (resultFromFalseBranch) {
-            return resultFromFalseBranch;
-        }
-    }
-    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::ReturnOp) {
-        return nullptr;
-    }
-    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::LoopOp) {
-        return currentBlock;
-    }
-    NES_NOT_IMPLEMENTED();
-}
+// NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
+//                                                                                       int32_t targetScope) {
+//     if (currentBlock->getScopeLevel() <= (uint32_t) targetScope) {
+//         return currentBlock;
+//     }
+//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::BranchOp) {
+//         auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
+//         return findControlFlowMerge(branchOp->getNextBlockInvocation().getBlock(), targetScope);
+//     }
+//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::IfOp) {
+//         auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+//         auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
+//         if (resultFromTrueBranch) {
+//             return resultFromTrueBranch;
+//         }
+//         auto resultFromFalseBranch = findControlFlowMerge(branchOp->getFalseBlockInvocation().getBlock(), targetScope);
+//         if (resultFromFalseBranch) {
+//             return resultFromFalseBranch;
+//         }
+//     }
+//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::ReturnOp) {
+//         return nullptr;
+//     }
+//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::LoopOp) {
+//         return currentBlock;
+//     }
+//     NES_NOT_IMPLEMENTED();
+// }
 
 std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBlockArguments(BlockRef val) {
     std::vector<std::string> blockArgumentIdentifiers;
