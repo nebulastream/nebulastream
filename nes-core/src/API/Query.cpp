@@ -16,12 +16,15 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
+#include <API/WindowedQuery.hpp>
+#include <API/Windowing.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -29,9 +32,6 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <iostream>
-#include <Plans/Query/QueryPlanBuilder.h>
-#include <API/WindowedQuery.hpp>
-#include <API/Windowing.hpp>
 #include <utility>
 
 namespace NES {

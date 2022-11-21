@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Plans/Query/QueryPlanBuilder.h>
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -25,6 +24,7 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
+#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

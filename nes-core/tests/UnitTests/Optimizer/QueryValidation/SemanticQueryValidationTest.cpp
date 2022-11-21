@@ -22,11 +22,11 @@
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Plans/Query/QueryPlanBuilder.h>
 
 namespace NES {
 
