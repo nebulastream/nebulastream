@@ -14,17 +14,20 @@
 #ifndef NES_LAZYJOINOPERATORHANDLER_HPP
 #define NES_LAZYJOINOPERATORHANDLER_HPP
 
+#include <vector>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution {
-class LazyJoinOperatorHandler {
+class LazyJoinOperatorHandler : public OperatorHandler {
 
 
   private:
-    // TODO this vector of hash tables has to be resized to the number of worker threads during runtime
-    std::vector<Operators::LocalHashTable> localHashTables;
 
+
+
+    std::vector<Operators::LocalHashTable> workerHashTable;
     Operators::SharedJoinHashTable leftSide;
     Operators::SharedJoinHashTable rightSide;
 };

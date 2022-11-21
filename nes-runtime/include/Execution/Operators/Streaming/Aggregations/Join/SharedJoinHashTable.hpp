@@ -14,11 +14,12 @@
 #ifndef NES_SHAREDJOINHASHTABLE_HPP
 #define NES_SHAREDJOINHASHTABLE_HPP
 
-#include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
-#include <API/Schema.hpp>
 #include <atomic>
 #include <vector>
+#include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -39,6 +40,16 @@ class SharedJoinHashTable {
         FixedPage dataPage;
         std::atomic<InternalNode*> next;
     };
+
+
+  public:
+    /**
+     * @brief inserts the pages into the bucket at the bucketPos
+     * @param bucketPos
+     * @param pagesLinkedList
+     */
+    void insertBucket(size_t bucketPos, FixedPagesLinkedList const* pagesLinkedList) const;
+
 
 
   private:

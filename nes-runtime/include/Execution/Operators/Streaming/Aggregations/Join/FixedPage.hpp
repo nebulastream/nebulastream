@@ -14,6 +14,7 @@
 #ifndef NES_FIXEDPAGE_HPP
 #define NES_FIXEDPAGE_HPP
 
+#include <atomic>
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>

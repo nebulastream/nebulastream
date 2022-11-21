@@ -1,5 +1,33 @@
-//
-// Created by nils on 17.11.22.
-//
+/*
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-#include "../../../../../../include/Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp"
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <atomic>
+#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
+
+namespace NES::Runtime::Execution::Operators {
+
+void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) const {
+    auto& head = bucketHeads[bucketPos];
+    auto& numItems = bucketNumItems[bucketPos];
+    auto& numPages = bucketNumPages[bucketPos];
+
+    for (auto* page : pagesLinkedList->getPages()) {
+        auto oldHead = head.load(std::memory_order::relaxed);
+        auto node = new InternalNode{FixedPage(page), oldHead};
+        while(!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::release)) {}
+        numItems.fetch_add(page.getSize(), std::memory_order::relaxed);
+    }
+    numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);
+}
+} // namespace NES::Runtime::Execution::Operators
