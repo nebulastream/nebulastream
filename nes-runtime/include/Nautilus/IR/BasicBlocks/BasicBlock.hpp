@@ -29,7 +29,6 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    enum BlockType {None, BranchBlock, IfBlock, LoopBlock, MergeBlock, MergeAndIfBlock, MergeAndLoopBlock, BranchAndLoopBlock};
     explicit BasicBlock(std::string identifier,
                         int32_t scopeLevel,
                         std::vector<Operations::OperationPtr> operations,
@@ -40,12 +39,10 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     void setScopeLevel(uint32_t scopeLevel);
     [[nodiscard]] bool isLoopHeadBlock();
     [[nodiscard]] bool isIfBlock();
-    [[nodiscard]] BlockType getBlockType();
     [[nodiscard]] uint32_t getBackLinks();
     void incrementBackLinks();
-    [[nodiscard]] bool hasBeenPassed();
+    [[nodiscard]] bool isLoopWithVisitedBody();
     void setPassed();
-    void setBlockType(BlockType blockType);
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
@@ -67,8 +64,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
   private:
     std::string identifier;
     uint32_t scopeLevel;//todo remove?
-    BlockType blockType;
-    uint32_t backLinks; //todo could replace blockType? -> not really, need three states for finding loop blocks
+    uint32_t backLinks;
     bool passed;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
