@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.56](https://github.com/nebulastream/nebulastream/tree/v0.3.56) (2022-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.55...v0.3.56)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Error while loading `libmlir_c_runner_utils.so.14` [\#3215](https://github.com/nebulastream/nebulastream/issues/3215)
+
 ## [v0.3.55](https://github.com/nebulastream/nebulastream/tree/v0.3.55) (2022-11-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.54...v0.3.55)
