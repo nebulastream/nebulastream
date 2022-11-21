@@ -44,7 +44,7 @@ std::string IfOperation::toString() {
         }
     }
     if (falseBlockInvocation.getBlock()) {
-        baseString += " : b" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
+        baseString += ") : b" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
         if (falseBlockInvocation.getArguments().size() > 0) {
             baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
             for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {

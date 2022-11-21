@@ -59,83 +59,83 @@ TEST_P(IfCompilationTest, ifConditionTest) {
     ASSERT_EQ(function(), 43);
 }
 
-// Value<> ifThenElseCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(1);
-//     if (value == 42) {
-//         iw = iw + 1;
-//     } else {
-//         iw = iw + 42;
-//     }
-//     return iw + 42;
-// }
+Value<> ifThenElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+        iw = iw + 1;
+    } else {
+        iw = iw + 42;
+    }
+    return iw + 42;
+}
 
-// TEST_P(IfCompilationTest, ifThenElseConditionTest) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return ifThenElseCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 85);
-// }
+TEST_P(IfCompilationTest, ifThenElseConditionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return ifThenElseCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 85);
+}
 
-// Value<> nestedIfThenElseCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(1);
-//     if (value == 42) {
-//     } else {
-//         if (iw == 8) {
-//         } else {
-//             iw = iw + 2;
-//         }
-//     }
-//     return iw = iw + 2;
-// }
+Value<> nestedIfThenElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+    } else {
+        if (iw == 8) {
+        } else {
+            iw = iw + 2;
+        }
+    }
+    return iw = iw + 2;
+}
 
-// TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return nestedIfThenElseCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 5);
-// }
+TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfThenElseCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 5);
+}
 
-// Value<> nestedIfNoElseCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(1);
-//     if (value == 42) {
-//         iw = iw + 4;
-//     } else {
-//         iw = iw + 9;
-//         if (iw == 8) {
-//             iw + 14;
-//         }
-//     }
-//     return iw = iw + 2;
-// }
+Value<> nestedIfNoElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+        iw = iw + 4;
+    } else {
+        iw = iw + 9;
+        if (iw == 8) {
+            iw + 14;
+        }
+    }
+    return iw = iw + 2;
+}
 
-// TEST_P(IfCompilationTest, nestedIFThenNoElse) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return nestedIfNoElseCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 12);
-// }
+TEST_P(IfCompilationTest, nestedIFThenNoElse) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return nestedIfNoElseCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 12);
+}
 
 // Todo leads to redundant if that can be replaced with br
-// Value<> doubleIfCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(1);
-//     if (iw == 8) {
-//         // iw = iw + 14;
-//     }
-//     if (iw == 1) {
-//         iw = iw + 20;
-//     }
-//     return iw = iw + 2;
-// }
+Value<> doubleIfCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (iw == 8) {
+        // iw = iw + 14;
+    }
+    if (iw == 1) {
+        iw = iw + 20;
+    }
+    return iw = iw + 2;
+}
 
 // TEST_P(IfCompilationTest, doubleIfCondition) {
 //     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
