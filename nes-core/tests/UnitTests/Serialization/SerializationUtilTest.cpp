@@ -627,7 +627,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     // threshold window operator with minimum count
     {
-        auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45,5);
+        auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
