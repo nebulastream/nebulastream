@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::MemoryProvider {
 /**
  * @brief Implements MemoryProvider. Provides columnar memory access.
  */
-class ColumnMemoryProvider : public MemoryProvider {
+class ColumnMemoryProvider final : public MemoryProvider {
   public:
     /**
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
@@ -33,14 +33,17 @@ class ColumnMemoryProvider : public MemoryProvider {
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                          Nautilus::Value<Nautilus::UInt64> recordIndex) override;
+                          Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                          Nautilus::Value<Nautilus::UInt64>& recordIndex) const override;
 
-    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
-               Nautilus::Value<Nautilus::MemRef> bufferAddress,
-               NES::Nautilus::Record& rec) override;
+    void write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,
+               Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+               NES::Nautilus::Record& rec) const override;
 
   private:
+    Nautilus::Value<Nautilus::MemRef> calculateFieldAddress(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                                                            Nautilus::Value<Nautilus::UInt64>& recordIndex,
+                                                            uint64_t fieldIndex) const;
     Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 

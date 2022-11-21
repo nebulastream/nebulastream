@@ -19,8 +19,8 @@
 
 namespace NES::Nautilus {
 
-template<>
-auto transformReturnValues(TextValue* value) {
+
+Value<Text> transformReturnValues(TextValue* value) {
     auto textRef = TypedRef<TextValue>(value);
     return Value<Text>(std::make_unique<Text>(textRef));
 }

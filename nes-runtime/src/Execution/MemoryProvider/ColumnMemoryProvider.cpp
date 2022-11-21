@@ -24,39 +24,43 @@ ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutP
 
 MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() { return columnMemoryLayoutPtr; }
 
+Nautilus::Value<Nautilus::MemRef> ColumnMemoryProvider::calculateFieldAddress(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                                                                              Nautilus::Value<Nautilus::UInt64>& recordIndex,
+                                                                              uint64_t fieldIndex) const {
+    auto& fieldSize = columnMemoryLayoutPtr->getFieldSizes()[fieldIndex];
+    auto& columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[fieldIndex];
+    auto fieldOffset = recordIndex * fieldSize + columnOffset;
+    auto fieldAddress = bufferAddress + fieldOffset;
+    return fieldAddress.as<Nautilus::MemRef>();
+}
+
 Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                            Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                                            Nautilus::Value<Nautilus::UInt64> recordIndex) {
+                                            Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                                            Nautilus::Value<Nautilus::UInt64>& recordIndex) const {
+    auto& schema = columnMemoryLayoutPtr->getSchema();
     // read all fields
     Nautilus::Record record;
-    for (uint64_t i = 0; i < columnMemoryLayoutPtr->getSchema()->getSize(); i++) {
-        auto fieldName = columnMemoryLayoutPtr->getSchema()->fields[i]->getName();
+    for (uint64_t i = 0; i < schema->getSize(); i++) {
+        auto fieldName = schema->fields[i]->getName();
         if (!includesField(projections, fieldName)) {
             continue;
         }
-        auto fieldSize = columnMemoryLayoutPtr->getFieldSizes()[i];
-        auto columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[i];
-        auto fieldOffset = recordIndex * fieldSize + columnOffset;
-        auto fieldAddress = bufferAddress + fieldOffset;
-        auto memRef = fieldAddress.as<Nautilus::MemRef>();
-        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[i], memRef);
-        record.write(columnMemoryLayoutPtr->getSchema()->fields[i]->getName(), value);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
+        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress);
+        record.write(fieldName, value);
     }
     return record;
 }
 
-void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
-                                 Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                                 NES::Nautilus::Record& rec) {
-    auto fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
-    auto schema = columnMemoryLayoutPtr->getSchema();
-    auto& columnOffsets = columnMemoryLayoutPtr->getColumnOffsets();
+void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,
+                                 Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                                 NES::Nautilus::Record& rec) const {
+    auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
+    auto& schema = columnMemoryLayoutPtr->getSchema();
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
-        auto fieldOffset = (recordIndex * fieldSizes[i]) + columnOffsets[i];
-        auto fieldAddress = bufferAddress + fieldOffset;
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
         auto value = rec.read(schema->fields[i]->getName());
-        auto memRef = fieldAddress.as<Nautilus::MemRef>();
-        memRef.store(value);
+        store(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
     }
 }
 

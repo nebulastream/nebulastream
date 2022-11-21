@@ -40,8 +40,8 @@ class MemoryProvider {
      * @return Nautilus::Record: A Nautilus record constructed using the given projections.
      */
     virtual Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                  Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                                  Nautilus::Value<Nautilus::UInt64> recordIndex) = 0;
+                                  Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                                  Nautilus::Value<Nautilus::UInt64>& recordIndex) const = 0;
 
     /**
      * @brief Write record.
@@ -49,17 +49,32 @@ class MemoryProvider {
      * @param bufferAddress: Address of the memory buffer that contains the record.
      * @param rec record to write.
      */
-    virtual void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
-                       Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                       NES::Nautilus::Record& rec) = 0;
+    virtual void write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,
+                       Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                       NES::Nautilus::Record& rec) const = 0;
 
     /**
      * @brief load a scalar value of type 'type' from memory using a memory reference 'memRef'
      * @param type Type of the value that is loaded from memory.
-     * @param memRef Memory reference to beginning of value that is loaded.
+     * @param bufferReference Memory reference to buffer that is accessed.
+     * @param fieldReference Memory reference to the specific field that should be loaded.
      * @return Nautilus::Value<> Loaded value casted to correct Nautilus Value of type 'type'.
      */
-    Nautilus::Value<> load(PhysicalTypePtr type, Nautilus::Value<Nautilus::MemRef> memRef);
+    Nautilus::Value<> load(const PhysicalTypePtr& type,
+                           Nautilus::Value<Nautilus::MemRef>& bufferReference,
+                           Nautilus::Value<Nautilus::MemRef>& fieldReference) const;
+    /**
+     * @brief store a scalar value of type 'type' from memory using a memory reference 'memRef'
+     * @param type Type of the value that is loaded from memory.
+     * @param bufferReference Memory reference to buffer that is accessed.
+     * @param fieldReference Memory reference to the specific field that should be loaded.
+     * @param value Memory reference to the specific field that should be stored.
+     * @return Nautilus::Value<> Loaded value casted to correct Nautilus Value of type 'type'.
+     */
+    Nautilus::Value<> store(const PhysicalTypePtr& type,
+                            Nautilus::Value<Nautilus::MemRef>& bufferReference,
+                            Nautilus::Value<Nautilus::MemRef>& fieldReference,
+                            Nautilus::Value<>& value) const;
 
     /**
      * @brief Checks if given RecordFieldIdentifier projections contains the given field index.
@@ -68,7 +83,7 @@ class MemoryProvider {
      * @return true if no projections (entire record accessed) or if field is in projections, else return false.
      */
     bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                       Nautilus::Record::RecordFieldIdentifier fieldIndex);
+                       Nautilus::Record::RecordFieldIdentifier fieldIndex) const;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
