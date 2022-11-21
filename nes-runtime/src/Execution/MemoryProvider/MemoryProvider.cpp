@@ -25,8 +25,8 @@
 namespace NES::Runtime::Execution::MemoryProvider {
 
 Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
-    auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
-    auto childBuffer = tb->loadChildBuffer(childIndex);
+    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto childBuffer = tb.loadChildBuffer(childIndex);
     return Nautilus::TextValue::load(childBuffer);
 }
 
@@ -81,14 +81,10 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
     NES_NOT_IMPLEMENTED();
 }
 
-uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* childBuffer) {
-    auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
-    auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
-    auto size = childBuffer->length() + sizeof(uint32_t);
-    auto optBuffer = provider->getUnpooledBuffer(size).value();
-    // we could avoid the memcopy if we could directly access tuple buffer
-    std::memcpy(optBuffer.getBuffer(), (void*) childBuffer, size);
-    return tb->storeChildBuffer(optBuffer);
+uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue) {
+    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*) textValue);
+    return tb.storeChildBuffer(textBuffer);
 }
 
 Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
