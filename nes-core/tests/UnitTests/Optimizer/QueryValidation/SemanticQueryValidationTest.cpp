@@ -26,6 +26,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <Plans/Query/QueryPlanBuilder.h>
 
 namespace NES {
 
@@ -62,9 +63,9 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
         auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
-        QueryPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
-        filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidation->validate(filterQuery->getQueryPlan());
+        QueryPlanPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
+        filterQuery = QueryPlanBuilder::addSinkeNode(filterQuery, FileSinkDescriptor::create(""));
+        semanticQueryValidation->validate(filterQuery);
     }
 
     void TestForException(std::string queryString) { EXPECT_THROW(CallValidation(queryString), InvalidQueryException); }
