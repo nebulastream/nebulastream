@@ -18,6 +18,13 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Runtime {
 
+TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
+    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
+    auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
+    auto memorySegment = block->getOwner();
+    return TupleBuffer(memorySegment->controlBlock, memorySegment->ptr, memorySegment->size);
+}
+
 TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
         recycler->recyclePooledBuffer(segment);
