@@ -69,9 +69,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     cpr::AsyncResponse future2 =
@@ -114,9 +113,8 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
@@ -160,9 +158,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
@@ -216,14 +213,13 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
 
     // create a query and register with coordinator
     std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());)";
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
     coordinator->getGlobalQueryPlan()->createNewSharedQueryPlan(queryPlan);
