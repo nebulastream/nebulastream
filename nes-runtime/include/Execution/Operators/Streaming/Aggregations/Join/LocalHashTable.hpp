@@ -20,27 +20,25 @@
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class LocalHashTable {
-  private:
-    class FixedPagesLinkedList{
-        static constexpr auto PREALLOCATED_SIZE = 16 * 1024;
-        static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / FixedPage::CHUNK_SIZE;
 
+  public:
+    /**
+     * @brief inserts the record into the hash table
+     * @param hash
+     * @param record
+     */
+    void insert(Nautilus::Record& record, const std::string& joinFieldName) const;
 
-        void append(const uint64_t hash, const Nautilus::Record& record);
-
-      private:
-        std::atomic<uint64_t>& tail;
-        FixedPage* curPage;
-        size_t pos;
-        // TODO do we really need this overrunAddress
-        uint64_t overrunAddress;
-        std::vector<FixedPage*> pages;
-    };
-
-
+    /**
+     * @brief
+     * @param bucketPos
+     * @return
+     */
+    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos) const;
 
   private:
     std::vector<FixedPagesLinkedList*> buckets;

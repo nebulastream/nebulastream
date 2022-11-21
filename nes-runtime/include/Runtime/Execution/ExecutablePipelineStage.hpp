@@ -17,7 +17,6 @@
 
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/Reconfigurable.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -25,7 +24,7 @@ namespace NES::Runtime::Execution {
  * @brief The executable pipeline stage represents the executable part of a an specific pipeline.
  * For instance, during code generation we generate an implementation of this class, which defines all virtual functions.
  */
-class ExecutablePipelineStage : public Reconfigurable {
+class ExecutablePipelineStage {
   public:
     virtual ~ExecutablePipelineStage() = default;
 

@@ -11,15 +11,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef NES_LAZYJOIN_HPP
-#define NES_LAZYJOIN_HPP
+#ifndef NES_LAZYJOINBUILD_HPP
+#define NES_LAZYJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
 
+
 namespace NES::Runtime::Execution::Operators {
 
-class LazyJoin : public ExecutableOperator {
+class LazyJoinBuild : public ExecutableOperator {
+
+  public:
+    // TODO think about if this is the correct way to do this
+    static constexpr auto NUM_PARTITIONS = 8 * 1024;
+    static constexpr auto MASK = NUM_PARTITIONS - 1;
 
   public:
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -27,12 +33,18 @@ class LazyJoin : public ExecutableOperator {
 
 
   private:
-    // TODO later get both hash tables via getGlobalState() or sth along the lines
+    // TODO later get all members via getGlobalState() or sth along the lines
     LocalHashTable localHashTable;
     SharedJoinHashTable sharedJoinHashTable;
+    std::atomic<uint64_t> counterFinishedBuilding;
+
+
+    // TODO later have here an own class that makes it possible to join for multiple keys
+    std::string joinFieldName;
+
 
 };
 
 
 }
-#endif//NES_LAZYJOIN_HPP
+#endif//NES_LAZYJOINBUILD_HPP
