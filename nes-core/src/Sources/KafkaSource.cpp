@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/KafkaSource.hpp>
@@ -158,4 +157,3 @@ bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
 }// namespace NES
-#endif

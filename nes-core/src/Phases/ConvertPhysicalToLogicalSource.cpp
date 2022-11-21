@@ -77,7 +77,6 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfig());
             return csvSourceDescriptor;
         }
-#ifdef ENABLE_KAFKA_BUILD
         case KAFKA_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Kafka source");
             const KafkaSourcePtr kafkaSourcePtr = std::dynamic_pointer_cast<KafkaSource>(dataSource);
@@ -92,7 +91,6 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                                               kafkaSourcePtr->getNumBuffersToProcess());
             return kafkaSourceDescriptor;
         }
-#endif
 #ifdef ENABLE_MQTT_BUILD
         case MQTT_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");

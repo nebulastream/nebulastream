@@ -417,12 +417,14 @@ else ()
 endif ()
 
 # Library containing Kafka client
-if (NES_USE_KAFKA)
+#if (NES_USE_KAFKA)
     include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
+    find_package(CppKafka REQUIRED)
+    #    find_package(cppkafka REQUIRED)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
     message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
-endif (NES_USE_KAFKA)
+#endif (NES_USE_KAFKA)
 
 # Library containing OPC client
 if (NES_USE_OPC)

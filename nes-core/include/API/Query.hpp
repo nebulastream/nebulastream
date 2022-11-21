@@ -15,9 +15,6 @@
 #ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
 
-#ifdef ENABLE_KAFKA_BUILD
-#include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>

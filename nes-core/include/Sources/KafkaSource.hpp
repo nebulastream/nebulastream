@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#ifdef ENABLE_KAFKA_BUILD
+#ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #include <cstdint>
 #include <memory>
 #include <string>
-namespace cppkafka {
+namespace cppkafka
+{
 class Configuration;
 class Consumer;
-}// namespace cppkafka
+}
 
 namespace NES {
 
@@ -65,6 +65,7 @@ class KafkaSource : public DataSource {
      */
     std::string getTopic() const;
 
+
     /**
      * @brief Get kafka offset
      */
@@ -106,5 +107,4 @@ class KafkaSource : public DataSource {
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
-#endif
-#endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
