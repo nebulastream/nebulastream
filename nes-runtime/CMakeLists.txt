@@ -38,7 +38,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # include MLIR. This is currently required
     find_package(MLIR REQUIRED CONFIG)
     if (MLIR_FOUND)
-        message(STATUS ${MLIR_INCLUDE_DIRS})
+        message(STATUS MLIR_INCLUDE_DIRS=${MLIR_INCLUDE_DIRS})
         target_include_directories(nes-runtime SYSTEM PUBLIC
                 $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
                 $<INSTALL_INTERFACE:include/nebulastream/>)
