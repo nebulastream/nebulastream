@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class EmitState : public OperatorState {
   public:
-    EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
+    EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer) {}
     Value<UInt64> outputIndex = (uint64_t) 0;
     RecordBuffer resultBuffer;
 };
@@ -38,7 +38,8 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
-    memoryProvider->write(outputIndex, resultBuffer.getBuffer(), recordBuffer);
+    auto buffer = resultBuffer.getBuffer();
+    memoryProvider->write(outputIndex, buffer, recordBuffer);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
