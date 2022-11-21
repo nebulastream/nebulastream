@@ -397,7 +397,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 
     // without by key
     auto query = Query::from("default_logical")
-                     .window(ThresholdWindow::of(Attribute("f1") < 45,5))
+                     .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                      .sink(PrintSinkDescriptor::create());
 
