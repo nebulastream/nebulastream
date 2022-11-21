@@ -43,6 +43,8 @@ class OperatorHandler : public Reconfigurable {
      * @param pipelineExecutionContext
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+
+    ~OperatorHandler() override = default;
 };
 
 }// namespace Execution
