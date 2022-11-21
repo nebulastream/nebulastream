@@ -12,6 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoin.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -19,7 +20,9 @@ namespace NES::Runtime::Execution::Operators {
 void LazyJoin::execute(ExecutionContext& ctx, Record& record) const {
     // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
 
-    localHashTable.app
+
+    // TODO how can we know for what key we do the join?
+    localHashTable.append(hashedKey, record);
 }
 
 } // namespace NES::Runtime::Execution::Operators
