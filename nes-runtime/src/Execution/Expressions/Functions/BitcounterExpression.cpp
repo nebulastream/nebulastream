@@ -21,13 +21,8 @@ namespace NES::Runtime::Execution::Expressions {
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
-int bitcounter(int number) {
-    unsigned int count = 0;
-    while (number) {
-        count += number & 1;
-        number >>= 1;
-    }
-    return count;
+int bitcounter(uint number) {
+    return std::popcount(number);
     }
 
 Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
