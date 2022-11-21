@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
 
 #include <memory>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
 
