@@ -77,10 +77,10 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
             BasicBlockPtr lastTerminatorOp =
                 getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getBlock(),
-                                                   ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1);
+                                                   ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1); //todo can lead to error
             dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
             if (ifOp->getFalseBlockInvocation().getBlock()
-                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= (uint32_t) scopeLevel) {
+                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= (uint32_t) scopeLevel) { //todo remove scopeLevel check
                 dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             }
             if(lastTerminatorOp) {
