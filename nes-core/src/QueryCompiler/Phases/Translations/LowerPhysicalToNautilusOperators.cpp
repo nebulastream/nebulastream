@@ -83,13 +83,14 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
+    // TODO 3138: vector operator_handlers
     for (const auto& node : nodes) {
         parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize);
     }
     for (auto& root : queryPlan->getRootOperators()) {
         queryPlan->removeAsRootOperator(root);
     }
-    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline);
+    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline); // TODO 3138: add list of operator handlers as a second param
     queryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
@@ -114,6 +115,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
+    }{
+        // add operator handler
+        // get index of operator handler
+        // create thresshold window
+
     }
     NES_NOT_IMPLEMENTED();
 }

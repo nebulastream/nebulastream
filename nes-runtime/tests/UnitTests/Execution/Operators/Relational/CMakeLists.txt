@@ -18,3 +18,7 @@ add_test(NAME runtime-map-operator-test COMMAND runtime-map-operator-test)
 add_executable(runtime-selection-operator-test "SelectionOperatorTest.cpp")
 target_link_libraries(runtime-selection-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-selection-operator-test COMMAND runtime-selection-operator-test)
+
+add_executable(runtime-threshold-window-operator-test "ThresholdWindowOperatorTest.cpp")
+target_link_libraries(runtime-threshold-window-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-threshold-window-operator-test COMMAND runtime-selection-operator-test)
