@@ -84,6 +84,12 @@ class TupleBuffer {
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
 
+    /**
+     * @brief Interprets the void* as a pointer to the content of tuple buffer
+     * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
+     * @param bufferPointer
+     * @return TupleBuffer
+     */
     [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
     /**
