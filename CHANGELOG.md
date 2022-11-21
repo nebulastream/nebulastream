@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.57](https://github.com/nebulastream/nebulastream/tree/v0.3.57) (2022-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.56...v0.3.57)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add a "minimum-count" support for threshold windows  [\#3135](https://github.com/nebulastream/nebulastream/issues/3135)
+
 ## [v0.3.56](https://github.com/nebulastream/nebulastream/tree/v0.3.56) (2022-11-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.55...v0.3.56)
