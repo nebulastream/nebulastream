@@ -46,7 +46,7 @@ Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt64>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Integer.");
     }
 
     Value<> result = FunctionCall<>("bitcounter", bitcounter, leftValue.as<Double>());

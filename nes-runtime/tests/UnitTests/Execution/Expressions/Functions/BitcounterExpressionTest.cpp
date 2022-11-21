@@ -52,7 +52,7 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<Int32>(31));
+        auto resultValue = expression.eval(Value<Int32>((int32_t) 31));
         ASSERT_EQ(resultValue, 5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
@@ -62,5 +62,38 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
         ASSERT_EQ(resultValue, 5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
+
+    // Int8
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 31));
+        ASSERT_EQ(resultValue, 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+    }
+    // Int16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 31));
+        ASSERT_EQ(resultValue, 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+    }// Int32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 31));
+        ASSERT_EQ(resultValue, 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+    }
+    // Int64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 31));
+        ASSERT_EQ(resultValue, 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+    }
 }
+
+/**
+* @brief If we execute the expression on a boolean it should throw an exception.
+*/
+TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType) {
+    auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+}
+
 }// namespace NES::Runtime::Execution::Expressions
