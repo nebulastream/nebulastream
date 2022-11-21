@@ -12,21 +12,22 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void LocalHashTable::FixedPagesLinkedList::append(const uint64_t hash, const Nautilus::Record& record) {
-    if (!curPage->append(hash, record)) {
-        if (++pos < pages.size()) {
-            curPage = pages[pos];
-        } else {
-            size_t recordSize = sizeof(record);
-            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, recordSize));
-        }
+void LocalHashTable::insert(Nautilus::Record& record, const std::string& joinFieldName) const {
 
-    }
+    auto hashedKey = Util::murmurHash(record.read(joinFieldName));
+    buckets[hashedKey & LazyJoinBuild::MASK]->append(hashedKey, record);
+
 }
+FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {
+    NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
 
+    return buckets[bucketPos];
+}
 
 } // namespace NES::Runtime::Execution::Operators
