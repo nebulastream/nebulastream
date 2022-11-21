@@ -13,7 +13,6 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#ifdef ENABLE_KAFKA_BUILD
 namespace NES {
 
 KafkaSinkDescriptor::KafkaSinkDescriptor(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout)
@@ -41,4 +40,3 @@ bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
 std::string KafkaSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }
 
 }// namespace NES
-#endif

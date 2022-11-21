@@ -20,9 +20,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -339,7 +337,6 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 
 }// namespace Experimental::MaterializedView
 
-#ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief create kafka sink
  * @param schema: schema of the data
@@ -358,7 +355,6 @@ DataSinkPtr createTextKafkaSink(SchemaPtr schema,
                                 uint64_t kafkaProducerTimeout,
                                 FaultToleranceType::Value faultToleranceType,
                                 uint64_t numberOfOrigins);
-#endif
 
 #ifdef ENABLE_MQTT_BUILD
 /**

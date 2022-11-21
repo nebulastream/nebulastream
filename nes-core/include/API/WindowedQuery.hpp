@@ -15,9 +15,6 @@
 #ifndef NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
 #define NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
 
-#ifdef ENABLE_KAFKA_BUILD
-#include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #include <string>
 namespace NES {
 

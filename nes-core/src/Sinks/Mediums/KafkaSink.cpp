@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -41,8 +40,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                  faultToleranceType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
-      brokers(brokers), topic(topic),
-      kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
+      brokers(brokers), topic(topic), kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()}};
 
@@ -56,12 +54,17 @@ KafkaSink::~KafkaSink() {}
 bool KafkaSink::writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) {
     NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
     try {
-        cppkafka::Buffer buffer(input_buffer.getBuffer(), input_buffer.getBufferSize());
-        msgBuilder->payload(buffer);
+        std::stringstream outputStream;
+        NES_TRACE("KafkaSink::getData: write data");
+        auto dataBuffers = sinkFormat->getData(input_buffer);
+        for (auto buffer : dataBuffers) {
+            NES_TRACE("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
+            cppkafka::Buffer cppBuffer(buffer.getBuffer(), buffer.getBufferSize());
+            msgBuilder->payload(cppBuffer);
+            producer->produce(*msgBuilder);
+        }
+        producer->flush(std::chrono::seconds(10));
 
-        NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload());
-        producer->produce(*msgBuilder);
-        producer->flush(kafkaProducerTimeout);
         NES_DEBUG("KAFKASINK " << this << ": send successfully");
     } catch (const cppkafka::HandleException& ex) {
         throw;
@@ -106,4 +109,3 @@ uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeou
 SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 
 }// namespace NES
-#endif
