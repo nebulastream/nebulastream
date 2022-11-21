@@ -16,9 +16,10 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 namespace NES::Runtime::Execution::Expressions {
-class RandomExpressionTest : public testing::Test {
-  public:
+    class RandomExpressionTest : public testing::Test {
+    public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RandomExpressionTest.log", NES::LogLevel::LOG_DEBUG);
