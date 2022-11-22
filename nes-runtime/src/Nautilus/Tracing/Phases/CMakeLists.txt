@@ -15,5 +15,4 @@
 add_source_files(nes-runtime
         SSACreationPhase.cpp
         TraceToIRConversionPhase.cpp
-        RemoveBrOnlyBlocksPhase.cpp
         )

@@ -19,7 +19,7 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 
