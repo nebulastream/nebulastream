@@ -134,6 +134,7 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     SUCCEED();
 }
 
+#ifdef RUNNING_KAFKA_INSTANCE
 /**
  * Tests if obtained value is valid.
  */
@@ -225,5 +226,5 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
 
     SUCCEED();
 }
-
+#ifdef RUNNING_KAFKA_INSTANCE
 }// namespace NES
