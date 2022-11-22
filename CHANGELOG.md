@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.59](https://github.com/nebulastream/nebulastream/tree/v0.3.59) (2022-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.58...v0.3.59)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Enable sending nested TupleBuffer [\#3147](https://github.com/nebulastream/nebulastream/issues/3147)
+
 ## [v0.3.58](https://github.com/nebulastream/nebulastream/tree/v0.3.58) (2022-11-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.57...v0.3.58)
