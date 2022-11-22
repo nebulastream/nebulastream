@@ -20,17 +20,17 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-    /**
+/**
      * @brief This expression computes the ln of the subExpression
      */
-    class LnExpression : public Expression {
-      public:
-        explicit LnExpression(const ExpressionPtr& subExpression);
-        Value<> execute(Record& record) const override;
+class LnExpression : public Expression {
+  public:
+    explicit LnExpression(const ExpressionPtr& subExpression);
+    Value<> execute(Record& record) const override;
 
-      private:
-        const ExpressionPtr subExpression;
-    };
+  private:
+    const ExpressionPtr subExpression;
+};
 
 }// namespace NES::Runtime::Execution::Expressions
 

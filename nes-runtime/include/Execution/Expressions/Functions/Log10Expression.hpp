@@ -20,18 +20,18 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-    /**
+/**
      * @brief This expression cos the Expression
      */
-    class Log10Expression : public Expression {
-      public:
-        explicit Log10Expression(const ExpressionPtr& subExpression);
-        Value<> execute(Record& record) const override;
+class Log10Expression : public Expression {
+  public:
+    explicit Log10Expression(const ExpressionPtr& subExpression);
+    Value<> execute(Record& record) const override;
 
-      private:
-        const ExpressionPtr subExpression;
-    };
+  private:
+    const ExpressionPtr subExpression;
+};
 
-}
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG10EXPRESSION_HPP_
