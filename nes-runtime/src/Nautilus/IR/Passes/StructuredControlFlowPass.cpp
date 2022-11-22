@@ -34,7 +34,6 @@ std::shared_ptr<IR::IRGraph> StructuredControlFlowPass::apply(std::shared_ptr<IR
 };
 
 std::shared_ptr<IR::IRGraph> StructuredControlFlowPass::StructuredControlFlowPassContext::process() {
-    NES_DEBUG(ir->toString());
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     findLoopHeadBlocks(rootOperation->getFunctionBasicBlock());
     createIfOperations(rootOperation->getFunctionBasicBlock());
