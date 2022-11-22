@@ -20,7 +20,6 @@ namespace NES::Benchmark::DataGeneration {
 
 class YSBDataGenerator : public DataGenerator {
   public:
-    explicit YSBDataGenerator(Runtime::BufferManagerPtr bufferManager);
 
     std::string getName() override;
 
