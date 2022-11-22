@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -40,7 +41,7 @@ class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::T
     }
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = std::make_shared<BufferManager>(4096, 128);
     }
 };
 
@@ -207,6 +208,32 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
         auto* arrayPtr = tuple[0].read<char*>();
         std::string str("Test");
         str.compare(arrayPtr);
+    }
+}
+
+TEST_F(DynamicMemoryLayoutTest, accessTextDynamicBufferTest) {
+    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createText());
+
+    ColumnLayoutPtr columnLayout;
+    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
+        //get the pointer and copy string into pointer to fill buffer with char*
+        auto textBuffer = bufferManager->getUnpooledBuffer(128).value();
+        auto textValue = Nautilus::TextValue::create(textBuffer, "test");
+        buffer[t][0].write(textValue);
+        textValue->~TextValue();
+    }
+    buffer.setNumberOfTuples(buffer.getCapacity());
+
+    for (auto tuple : buffer) {
+        auto* arrayPtr = tuple[0].read<Nautilus::TextValue>();
+        std::string str("Test");
+        str.compare(arrayPtr->c_str());
+        arrayPtr->~TextValue();
     }
 }
 

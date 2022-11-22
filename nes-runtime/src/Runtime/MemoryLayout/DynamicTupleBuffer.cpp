@@ -14,6 +14,8 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -22,14 +24,15 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-DynamicField::DynamicField(uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
+DynamicField::DynamicField(TupleBuffer& buffer, uint8_t* address, PhysicalTypePtr physicalType)
+    : buffer(buffer), address(address), physicalType(physicalType) {}
 
 DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     auto physicalType = memoryLayout->getPhysicalTypes()[fieldIndex];
-    return DynamicField{basePointer, physicalType};
+    return DynamicField{buffer, basePointer, physicalType};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) {
@@ -55,7 +58,6 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
 
 std::string DynamicField::toString() {
     std::stringstream ss;
-
     std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
     ss << currentFieldContentAsString;
     return ss.str();
