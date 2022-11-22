@@ -66,7 +66,6 @@ class NetworkDataSender : public BaseChannelType {
                                                                sequenceNumber,
                                                                numOfChildren);
 
-
         bool res = true;
         for (auto i = 0u; i < numOfChildren; ++i) {
             auto childBuffer = inputBuffer.loadChildBuffer(i);
@@ -74,16 +73,18 @@ class NetworkDataSender : public BaseChannelType {
             // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
             childBuffer.retain();
             sendMessageNoHeader<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
-                                                                   childBuffer.getBufferSize(),
-                                                                   1,
-                                                                   originId,
-                                                                   watermark,
-                                                                   creationTimestamp,
-                                                                   sequenceNumber,
-                                                                   0);
-            auto const sentBytesOpt = this->zmqSocket.send(
-                zmq::message_t(childBuffer.getBuffer(), childBuffer.getBufferSize(), &Runtime::detail::zmqBufferRecyclingCallback, childBuffer.getControlBlock()),
-                kZmqSendMore);
+                                                                           childBuffer.getBufferSize(),
+                                                                           1,
+                                                                           originId,
+                                                                           watermark,
+                                                                           creationTimestamp,
+                                                                           sequenceNumber,
+                                                                           0);
+            auto const sentBytesOpt = this->zmqSocket.send(zmq::message_t(childBuffer.getBuffer(),
+                                                                          childBuffer.getBufferSize(),
+                                                                          &Runtime::detail::zmqBufferRecyclingCallback,
+                                                                          childBuffer.getControlBlock()),
+                                                           kZmqSendMore);
             res &= !!sentBytesOpt;
             NES_TRACE("Sending child #" << i << " was" << ((!!sentBytesOpt) ? " successful " : " not successful"));
         }
