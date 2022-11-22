@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
