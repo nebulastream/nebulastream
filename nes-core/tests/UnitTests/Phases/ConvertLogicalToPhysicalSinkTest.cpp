@@ -82,14 +82,13 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
 }
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("TEXT_FORMAT", "test", "localhost:9092", 1000);
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
     DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
-    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK");
+    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK(BROKER(localhost:9092), TOPIC(test), PARTITION(94).");
 }
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
