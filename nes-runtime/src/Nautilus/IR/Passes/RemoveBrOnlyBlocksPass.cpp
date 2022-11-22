@@ -34,7 +34,6 @@ std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPass::apply(std::shared_ptr<IR::I
 };
 
 std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPass::RemoveBrOnlyBlocksPassContext::process() {
-    NES_DEBUG(ir->toString());
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     addPredecessors(rootOperation->getFunctionBasicBlock());
     removeBrOnlyBlocks(rootOperation->getFunctionBasicBlock());
