@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/ConstBooleanOperation.hpp"
-#include "Nautilus/IR/Types/IntegerStamp.hpp"
+#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
@@ -244,40 +247,40 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     currentIrBlock->addOperation(ifOperation);
 
     // find control-flow merge block for if
-    // auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
-    // auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
-    // NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
-    // ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
+    auto controlFlowMergeBlockTrueCase = findControlFlowMerge(trueCaseBlock, scope);
+    auto controlFlowMergeBlockFalseCase = findControlFlowMerge(falseCaseBlock, scope);
+    NES_DEBUG("Found control-flow merge at: " << controlFlowMergeBlockTrueCase->getIdentifier());
+    ifOperation->setMergeBlock(controlFlowMergeBlockTrueCase);
 }
 
-// NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
-//                                                                                       int32_t targetScope) {
-//     if (currentBlock->getScopeLevel() <= (uint32_t) targetScope) {
-//         return currentBlock;
-//     }
-//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::BranchOp) {
-//         auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
-//         return findControlFlowMerge(branchOp->getNextBlockInvocation().getBlock(), targetScope);
-//     }
-//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::IfOp) {
-//         auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-//         auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
-//         if (resultFromTrueBranch) {
-//             return resultFromTrueBranch;
-//         }
-//         auto resultFromFalseBranch = findControlFlowMerge(branchOp->getFalseBlockInvocation().getBlock(), targetScope);
-//         if (resultFromFalseBranch) {
-//             return resultFromFalseBranch;
-//         }
-//     }
-//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::ReturnOp) {
-//         return nullptr;
-//     }
-//     if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::LoopOp) {
-//         return currentBlock;
-//     }
-//     NES_NOT_IMPLEMENTED();
-// }
+NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::findControlFlowMerge(NES::Nautilus::IR::BasicBlockPtr currentBlock,
+                                                                                      int32_t targetScope) {
+    if (currentBlock->getScopeLevel() <= (uint32_t) targetScope) {
+        return currentBlock;
+    }
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
+        return findControlFlowMerge(branchOp->getNextBlockInvocation().getBlock(), targetScope);
+    }
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::IfOp) {
+        auto branchOp = std::static_pointer_cast<NES::Nautilus::IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+        auto resultFromTrueBranch = findControlFlowMerge(branchOp->getTrueBlockInvocation().getBlock(), targetScope);
+        if (resultFromTrueBranch) {
+            return resultFromTrueBranch;
+        }
+        auto resultFromFalseBranch = findControlFlowMerge(branchOp->getFalseBlockInvocation().getBlock(), targetScope);
+        if (resultFromFalseBranch) {
+            return resultFromFalseBranch;
+        }
+    }
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::ReturnOp) {
+        return nullptr;
+    }
+    if (currentBlock->getTerminatorOp()->getOperationType() == NES::Nautilus::IR::Operations::Operation::LoopOp) {
+        return currentBlock;
+    }
+    NES_NOT_IMPLEMENTED();
+}
 
 std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBlockArguments(BlockRef val) {
     std::vector<std::string> blockArgumentIdentifiers;

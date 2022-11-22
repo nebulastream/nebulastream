@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
