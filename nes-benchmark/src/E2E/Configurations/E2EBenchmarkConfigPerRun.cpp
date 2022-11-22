@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/BenchmarkUtils.hpp>
+
+#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
@@ -71,9 +72,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
     Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
-    Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager, totalBenchmarkRuns, bufferSizeInBytes.back());
-    Util::padVectorToSize<uint32_t>(numberOfBuffersPerPipeline, totalBenchmarkRuns, bufferSizeInBytes.back());
-    Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool, totalBenchmarkRuns, bufferSizeInBytes.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager, totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersPerPipeline, totalBenchmarkRuns, numberOfBuffersPerPipeline.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool, totalBenchmarkRuns, numberOfBuffersInSourceLocalBufferPool.back());
 
 
     allConfigPerRuns.reserve(totalBenchmarkRuns);
