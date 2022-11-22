@@ -14,38 +14,39 @@
 
 #include <atomic>
 
+#include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
+
 
 namespace NES::Runtime::Execution::Operators {
 
 void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+
+    // Get the global state
+    LazyJoinOperatorHandlerPtr operatorHandler = static_cast<LazyJoinOperatorHandlerPtr>(ctx.getGlobalOperatorHandler(handlerIndex)->getValue());
+    auto& localHashTable = operatorHandler->getWorkerHashTable(ctx.getWorkerId());
+
     // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
     if (record.read("timestamp") < 0) {
         localHashTable.insert(record, joinFieldName);
     } else {
+        auto& sharedJoinHashTable = operatorHandler->getSharedJoinHashTable(isLeftSide);
+
         for (auto a = 0; a < NUM_PARTITIONS; ++a) {
             sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
         }
 
-        if (counterFinishedBuilding.fetch_sub(1) == 1) {
-            // If the last thread/worker is done with building, then start the probing phase
-
-            // TODO ask Philipp how I can replicate this behavior
-            auto queryManager = execCtx.getQueryManager();
-            auto numOfWorkers = queryManager->getNumberOfWorkerThreads();
+        if (operatorHandler->fetch_sub(1) == 1) {
+            // If the last thread/worker is done with building, then start the second phase (comparing buckets)
             for (auto i = 0; i < NUM_PARTITIONS; ++i) {
-                auto partitionId = i + 1;
+                auto partitionId = Value<UInt64>((uint64_t) (i + 1));
                 auto buffer = ctx.allocateBuffer();
-                buffer.store(ValuepartitionId);
-
-                                  und dann emitBuffer() für addWorkForNextPipelineO
-
+                buffer.store(partitionId);
+                ctx.emitBuffer(RecordBuffer(buffer));
             }
         }
-
-
     }
 }
 

@@ -15,21 +15,35 @@
 #define NES_LAZYJOINOPERATORHANDLER_HPP
 
 #include <vector>
+#include <API/Schema.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution {
+
+class LazyJoinOperatorHandler;
+using LazyJoinOperatorHandlerPtr = LazyJoinOperatorHandler const*;
+
 class LazyJoinOperatorHandler : public OperatorHandler {
 
 
+  public:
+    const Operators::LocalHashTable& getWorkerHashTable(size_t index) const;
+
+    const Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide) const;
+
+    uint64_t fetch_sub(uint64_t sub) const;
+
+    SchemaPtr getJoinSchema() const;
+
   private:
 
-
-
+    SchemaPtr joinSchema;
     std::vector<Operators::LocalHashTable> workerHashTable;
-    Operators::SharedJoinHashTable leftSide;
-    Operators::SharedJoinHashTable rightSide;
+    Operators::SharedJoinHashTable leftSideHashTable;
+    Operators::SharedJoinHashTable rightSideHashTable;
+    std::atomic<uint64_t> counterFinishedBuilding;
 };
 
 } // namespace NES::Runtime::Execution::Operators
