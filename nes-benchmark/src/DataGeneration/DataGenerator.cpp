@@ -25,8 +25,6 @@ namespace NES::Benchmark::DataGeneration {
 
 DataGenerator::DataGenerator() {}
 
-DataGenerator::DataGenerator(Runtime::BufferManagerPtr bufferManager) : bufferManager(bufferManager) {}
-
 Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
 
     auto schema = this->getSchema();
@@ -62,22 +60,15 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
         auto minValue = generatorNode["minValue"].As<uint64_t>();
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+
+    } else if (name == "YSB" || name == "YSBKafka") {
+        return std::make_shared<YSBDataGenerator>();
+
     } else {
-        // For now we only support a single data generator
         NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
     }
 }
 
-DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Runtime::BufferManagerPtr bufferManager) {
-    if (name == "Default") {
-        return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
-    } else if (name == "YSB" || name == "YSBKafka") {
-        return std::make_shared<YSBDataGenerator>(bufferManager);
-    } else {
-        // For now we only support a single data generator
-        NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
-    }
-}
 void DataGenerator::setBufferManager(Runtime::BufferManagerPtr newBufferManager) {
     DataGenerator::bufferManager = newBufferManager;
 }

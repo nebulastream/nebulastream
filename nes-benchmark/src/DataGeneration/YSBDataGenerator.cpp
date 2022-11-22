@@ -22,8 +22,6 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-YSBDataGenerator::YSBDataGenerator(Runtime::BufferManagerPtr bufferManager) : DataGenerator(std::move(bufferManager)) {}
-
 std::string YSBDataGenerator::getName() { return "YSB"; }
 
 std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
