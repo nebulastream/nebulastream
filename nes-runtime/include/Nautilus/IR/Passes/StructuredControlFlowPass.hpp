@@ -36,7 +36,7 @@ class StructuredControlFlowPass {
      * @param Trace.
      * @return The modified execution trace.
      */
-    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> trace);
+    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir);
 
     private:
     /**
