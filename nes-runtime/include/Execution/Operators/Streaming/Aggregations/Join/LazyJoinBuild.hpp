@@ -25,24 +25,24 @@ class LazyJoinBuild : public ExecutableOperator {
   public:
     // TODO think about if this is the correct way to do this
     static constexpr auto NUM_PARTITIONS = 8 * 1024;
+
+    // To use bitwise-and instead of a modulo, the mask should be (2^n) - 1
     static constexpr auto MASK = NUM_PARTITIONS - 1;
 
-  public:
+
+    /**
+     * @brief builds a hash table with the record
+     * @param ctx
+     * @param record
+     */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 
 
   private:
-    // TODO later get all members via getGlobalState() or sth along the lines
-    LocalHashTable localHashTable;
-    SharedJoinHashTable sharedJoinHashTable;
-    std::atomic<uint64_t> counterFinishedBuilding;
-
-
-    // TODO later have here an own class that makes it possible to join for multiple keys
     std::string joinFieldName;
-
-
+    uint64_t handlerIndex;
+    bool isLeftSide;
 };
 
 

@@ -54,6 +54,12 @@ class FixedPage{
      */
     bool bloomFilterCheck(uint64_t key) const;
 
+    /**
+     * @brief returns the number of items on this page
+     * @return no. items
+     */
+    size_t size() const;
+
   private:
     Nautilus::Record* data;
     size_t pos;

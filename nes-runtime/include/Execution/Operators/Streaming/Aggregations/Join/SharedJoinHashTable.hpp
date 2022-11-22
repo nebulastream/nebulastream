@@ -50,6 +50,19 @@ class SharedJoinHashTable {
      */
     void insertBucket(size_t bucketPos, FixedPagesLinkedList const* pagesLinkedList) const;
 
+    /**
+     * @brief returns all fixed pages
+     * @param bucket
+     * @return vector of fixed pages
+     */
+    std::vector<FixedPage> getPagesForBucket(size_t bucketPos) const;
+
+    /**
+     * @brief retrieves the number of items in the bucket
+     * @param bucketPos
+     * @return no. items of the bucket
+     */
+    size_t getNumItems(size_t bucketPos) const;
 
 
   private:
