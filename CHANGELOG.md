@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.58](https://github.com/nebulastream/nebulastream/tree/v0.3.58) (2022-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.57...v0.3.58)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add log2\(x\) expression [\#3048](https://github.com/nebulastream/nebulastream/issues/3048)
+- \[DBPRO\] Add log10\(x\) expression [\#3047](https://github.com/nebulastream/nebulastream/issues/3047)
+- \[DBPRO\] Add ln\(x\) expression [\#3046](https://github.com/nebulastream/nebulastream/issues/3046)
+
 ## [v0.3.57](https://github.com/nebulastream/nebulastream/tree/v0.3.57) (2022-11-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.56...v0.3.57)
