@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/Functions/SqrtExpression.hpp>
+#include <Execution/Expressions/Functions/CbrtExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
-SqrtExpression::SqrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+CbrtExpression::CbrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
 /**
