@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <cppkafka/cppkafka.h>
+
 
 namespace NES {
 

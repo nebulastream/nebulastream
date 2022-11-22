@@ -18,6 +18,8 @@
 #include <chrono>
 #include <sstream>
 #include <string>
+#include <cppkafka/cppkafka.h>
+
 using namespace std::chrono_literals;
 
 namespace NES {
@@ -42,7 +44,8 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       brokers(brokers), topic(topic), kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
-    config = {{"metadata.broker.list", brokers.c_str()}};
+    config = std::make_unique<cppkafka::Configuration>();
+    config->set("metadata.broker.list", brokers.c_str());
 
     connect();
     NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic << ", partition "
@@ -95,7 +98,7 @@ void KafkaSink::shutdown() {
 
 void KafkaSink::connect() {
     NES_DEBUG("KAFKASINK connecting...");
-    producer = std::make_unique<cppkafka::Producer>(config);
+    producer = std::make_unique<cppkafka::Producer>(*config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
     // FIXME: should we provide user to access partition ?
     // if (partition != INVALID_PARTITION_NUMBER) {

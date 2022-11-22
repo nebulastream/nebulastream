@@ -20,8 +20,13 @@
 #include <string>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <cppkafka/cppkafka.h>
 
+namespace cppkafka
+{
+class Configuration;
+class Producer;
+class  MessageBuilder;
+}
 namespace NES {
 
 class KafkaSink : public SinkMedium {
@@ -74,8 +79,7 @@ class KafkaSink : public SinkMedium {
     std::string topic;
     int partition;
 
-    cppkafka::Configuration config;
-
+    std::unique_ptr<cppkafka::Configuration> config;
     std::unique_ptr<cppkafka::Producer> producer;
     std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
 
