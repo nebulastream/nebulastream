@@ -56,7 +56,7 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger) {
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 9));
-        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_EQ(resultValue, (float) 3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -66,18 +66,6 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 9));
-        ASSERT_EQ(resultValue, (float) 3);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 9));
-        ASSERT_EQ(resultValue, (float) 3);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 9));
         ASSERT_EQ(resultValue, (float) 3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
