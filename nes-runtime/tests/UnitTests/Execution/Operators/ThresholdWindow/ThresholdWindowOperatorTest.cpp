@@ -11,16 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Execution/Expressions/ConstantIntegerExpression.hpp"
+#include "Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp"
+#include "Execution/Expressions/ReadFieldExpression.hpp"
+#include "Execution/Operators/ExecutionContext.hpp"
+#include "Execution/Operators/ThresholdWindow/ThresholdWindow.hpp"
+#include "Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp"
+#include "Runtime/Execution/PipelineExecutionContext.hpp"
+#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "TestUtils/RecordCollectOperator.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <gtest/gtest.h>
 
 #include <memory>
