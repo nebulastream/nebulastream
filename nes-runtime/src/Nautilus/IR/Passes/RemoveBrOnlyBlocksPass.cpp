@@ -17,23 +17,23 @@
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/IR/Passes/RemoveBrOnlyBlocksPass.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <memory>
 #include <stack>
-#include <unordered_map>
+#include <unordered_map>        
 
 using namespace NES::Nautilus::IR::Operations;
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::IR {
 
-std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
-    auto phaseContext = RemoveBrOnlyBlocksPhaseContext(std::move(ir));
+std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPass::apply(std::shared_ptr<IR::IRGraph> ir) {
+    auto phaseContext = RemoveBrOnlyBlocksPassContext(std::move(ir));
     return phaseContext.process();
 };
 
-std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::process() {
+std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPass::RemoveBrOnlyBlocksPassContext::process() {
     NES_DEBUG(ir->toString());
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     addPredecessors(rootOperation->getFunctionBasicBlock());
@@ -65,7 +65,7 @@ void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,
     }
 }
 
-void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::addPredecessors(IR::BasicBlockPtr currentBlock) {
+void RemoveBrOnlyBlocksPass::RemoveBrOnlyBlocksPassContext::addPredecessors(IR::BasicBlockPtr currentBlock) {
     std::vector<IR::BasicBlockPtr> candidates;
     std::unordered_set<std::string> visitedBlocks;
     addPredecessorToBlock(currentBlock, candidates, visitedBlocks);
@@ -129,7 +129,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
     }
 }
 
-void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBrOnlyBlock(
+void RemoveBrOnlyBlocksPass::RemoveBrOnlyBlocksPassContext::processPotentialBrOnlyBlock(
         IR::BasicBlockPtr currentBlock,
         std::vector<IR::BasicBlockPtr>& candidates,
         std::unordered_set<std::string> visitedBlocks) {
@@ -167,7 +167,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBr
     }
 }
 
-void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::removeBrOnlyBlocks(IR::BasicBlockPtr currentBlock) {
+void RemoveBrOnlyBlocksPass::RemoveBrOnlyBlocksPassContext::removeBrOnlyBlocks(IR::BasicBlockPtr currentBlock) {
     std::vector<IR::BasicBlockPtr> candidates;
     std::unordered_set<std::string> visitedBlocks;
     processPotentialBrOnlyBlock(currentBlock, candidates, visitedBlocks);
