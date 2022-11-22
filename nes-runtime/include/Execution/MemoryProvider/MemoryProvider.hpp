@@ -82,7 +82,7 @@ class MemoryProvider {
      * @param fieldIndex Field index that is possibly accessed.
      * @return true if no projections (entire record accessed) or if field is in projections, else return false.
      */
-    bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    [[nodiscard]] bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                        Nautilus::Record::RecordFieldIdentifier fieldIndex) const;
 };
 
