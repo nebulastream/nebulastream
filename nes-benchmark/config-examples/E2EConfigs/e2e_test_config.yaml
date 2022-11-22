@@ -8,10 +8,9 @@ numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
-dataGenerator:
+dataGenerators:
   ysb:
     type: YSB
-
 
 numberOfSources: 1
 numberOfPreAllocatedBuffer: 1000
@@ -25,7 +24,7 @@ query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWi
 #benchmark internal parameter
 numberOfBuffersToProduce: 1000
 scalability: scale-up
-logLevel: LOG_NONE
+logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1

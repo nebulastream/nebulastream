@@ -220,9 +220,6 @@ void E2ESingleRun::runQuery() {
                 availFixedBufferSum +=
                     (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
             }
-            std::cout << "measure_out=" << processedTasks << "," << processedBuffers << "," << processedTuples << ","
-                      << latencySum << "," << queueSizeSum << "," << availGlobalBufferSum << "," << availFixedBufferSum << ","
-                      << timeStamp << std::endl;
 
             measurements.addNewMeasurement(processedTasks,
                                            processedBuffers,

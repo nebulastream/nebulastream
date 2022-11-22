@@ -1,7 +1,7 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 numberOfWorkerThreads: 1
 bufferSizeInBytes: 512, 1024, 2048
-numberOfBuffersToProduce: 10000000
+numberOfPreAllocatedBuffer: 10000
 
 
 # Benchmark parameter for the entire run
