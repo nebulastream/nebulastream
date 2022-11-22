@@ -37,12 +37,6 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] uint32_t getScopeLevel();
     void setScopeLevel(uint32_t scopeLevel);
-    [[nodiscard]] bool isLoopHeadBlock();
-    [[nodiscard]] bool isIfBlock();
-    [[nodiscard]] uint32_t getBackLinks();
-    void incrementBackLinks();
-    [[nodiscard]] bool isLoopWithVisitedBody();
-    void setPassed();
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
@@ -52,8 +46,8 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
     void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
-    std::shared_ptr<BasicBlock> addThenBlock(std::shared_ptr<BasicBlock> thenBlock);
-    std::shared_ptr<BasicBlock> addElseBlock(std::shared_ptr<BasicBlock> elseBlock);
+    std::shared_ptr<BasicBlock> addTrueBlock(std::shared_ptr<BasicBlock> thenBlock);
+    std::shared_ptr<BasicBlock> addFalseBlock(std::shared_ptr<BasicBlock> elseBlock);
     void removeOperation(Operations::OperationPtr operation);
     void addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation);
     void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
@@ -63,9 +57,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 
   private:
     std::string identifier;
-    uint32_t scopeLevel;//todo remove?
-    uint32_t backLinks;
-    bool passed;
+    uint32_t scopeLevel;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
     std::vector<std::weak_ptr<BasicBlock>> predecessors;
