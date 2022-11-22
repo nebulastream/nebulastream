@@ -83,6 +83,7 @@ include(cmake/semver/GetSemanticVersion.cmake)
 
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
+message("CMAKE_MODULE_PATH=" ${CMAKE_MODULE_PATH})
 include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
