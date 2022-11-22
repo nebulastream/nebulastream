@@ -15,9 +15,11 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 
+#include <Common/ExecutableType/BaseVariableSizeType.hpp>
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
@@ -44,7 +46,7 @@ class DynamicField {
      * @brief Constructor to create a DynamicField
      * @param address for the field
      */
-    explicit DynamicField(uint8_t* address, PhysicalTypePtr physicalType);
+    explicit DynamicField(TupleBuffer& buffer, uint8_t* address, PhysicalTypePtr physicalType);
 
     /**
      * @brief Read a pointer type and return the value as a pointer.
@@ -53,7 +55,27 @@ class DynamicField {
      * @return Pointer type
      */
     template<class Type>
-    requires IsNesType<Type>&& std::is_pointer<Type>::value inline Type read() const {
+        requires(not IsNesType<Type> && IsVariableSizeType<Type>)
+    inline auto read() const {
+        if (PhysicalTypes::isText(physicalType)) {
+            auto childIndex = *reinterpret_cast<uint32_t*>(address);
+            auto childBuffer = buffer.loadChildBuffer(childIndex);
+            return Type::load(childBuffer);
+        } else {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+    };
+
+    /**
+     * @brief Read a pointer type and return the value as a pointer.
+     * @tparam Type of the field requires to be a NesType and a pointer type.
+     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+     * @return Pointer type
+     */
+    template<class Type>
+        requires IsNesType<typename std::remove_pointer<Type>::type> && std::is_pointer<Type>::value
+    inline Type read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -68,12 +90,28 @@ class DynamicField {
      * @return Value of the field.
      */
     template<class Type>
-    requires(IsNesType<Type> && not std::is_pointer<Type>::value) inline Type& read() const {
+        requires(IsNesType<Type> && not std::is_pointer<Type>::value)
+    inline Type& read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
         }
         return *reinterpret_cast<Type*>(address);
+    };
+
+    template<class Type>
+        requires(not IsNesType<Type> && IsVariableSizeType<Type>)
+    inline void write(Type value) {
+        if (PhysicalTypes::isText(physicalType)) {
+            // derive the underling tuple buffer and store it as a child buffer.
+            auto tb = value->getBuffer();
+            auto childBuffer = buffer.storeChildBuffer(tb);
+            // write the index as the field position.
+            *reinterpret_cast<uint32_t*>(address) = childBuffer;
+        } else {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
     };
 
     /**
@@ -83,7 +121,8 @@ class DynamicField {
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      */
     template<class Type>
-    requires(IsNesType<Type>) inline void write(Type value) {
+        requires(IsNesType<Type>)
+    inline void write(Type value) {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -98,6 +137,7 @@ class DynamicField {
     std::string toString();
 
   private:
+    mutable TupleBuffer buffer;
     uint8_t* address;
     const PhysicalTypePtr physicalType;
 };

@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Common/ExecutableType/BaseVariableSizeType.hpp>
 #include <string>
 namespace NES::Nautilus {
 
@@ -24,7 +25,7 @@ namespace NES::Nautilus {
  * Physical layout:
  * | ----- size 4 byte ----- | ----- variable length char*
  */
-class TextValue final {
+class TextValue final : public BaseVariableSizeType {
   public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     /**
@@ -40,6 +41,10 @@ class TextValue final {
      * @return TextValue*
      */
     static TextValue* create(const std::string& string);
+
+    static TextValue* create(Runtime::TupleBuffer buffer, uint32_t size);
+    static TextValue* create(Runtime::TupleBuffer buffer, const std::string& string);
+
 
     /**
      * @brief Loads a text value from a tuple buffer.
@@ -67,12 +72,15 @@ class TextValue final {
      */
     const char* c_str() const;
 
+    Runtime::TupleBuffer getBuffer() const;
+
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.
      */
     ~TextValue();
 
   private:
+    static Runtime::TupleBuffer allocateBuffer(uint32_t size);
     /**
      * @brief Private constructor to initialize a new text
      * @param size
