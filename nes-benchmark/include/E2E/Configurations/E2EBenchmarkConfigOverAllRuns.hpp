@@ -24,40 +24,47 @@ class E2EBenchmarkConfigOverAllRuns {
 
   public:
     /**
-         * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
-         */
+     * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
+     */
     explicit E2EBenchmarkConfigOverAllRuns();
 
     /**
-         * @brief creates a string representation of this object
-         * @return the string representation
-         */
+     * @brief creates a string representation of this object
+     * @return the string representation
+     */
     std::string toString();
 
     /**
-         * @brief parses and generates the config for the parameters constant over all
-         * runs by parsing the yamlConfig
-         * @param yamlConfig
-         * @return
-         */
+     * @brief parses and generates the config for the parameters constant over all
+     * runs by parsing the yamlConfig
+     * @param yamlConfig
+     * @return
+     */
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
-         * @brief all configurations that are constant over all runs
-         */
+     * @brief returns the data generators for this e2e benchmark in a csv
+     * @return string representation of the data generators
+     */
+    std::string getDataGeneratorsAsString();
+
+    /**
+     * @brief all configurations that are constant over all runs
+     */
   public:
     Configurations::IntConfigOption startupSleepIntervalInSeconds;
     Configurations::IntConfigOption numMeasurementsToCollect;
     Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
     Configurations::IntConfigOption numSources;
     Configurations::IntConfigOption numberOfPreAllocatedBuffer;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
     Configurations::StringConfigOption logicalStreamName;
-    Configurations::StringConfigOption dataGenerator;
+    std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

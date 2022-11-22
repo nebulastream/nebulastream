@@ -26,7 +26,6 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/cppkafka.h>
 #endif
-#include <Util/UtilityFunctions.hpp>
 #include <fstream>
 
 namespace NES::Benchmark {
@@ -63,18 +62,16 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+    for (auto& [sourceName, dataGenerator] : configOverAllRuns.dataGenerators) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                       configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
 
-        auto dataGenerator =
-            DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), bufferManager);
-
+        dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                         configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = configOverAllRuns.logicalStreamName->getValue();
+        auto logicalStreamName = sourceName;
         auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
         auto logicalSource = LogicalSource::create(logicalStreamName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
@@ -82,7 +79,7 @@ void E2ESingleRun::createSources() {
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         size_t taskQueueId = sourceCnt;
 
-        if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
+        if (dataGenerator->getName() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
             auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(
                 configOverAllRuns.connectionString->getValue() configOverAllRuns.connectionString->getValue(),
@@ -114,7 +111,7 @@ void E2ESingleRun::createSources() {
             kafkaSourceType->setBrokers(connectionStringVec[0]);
             kafkaSourceType->setTopic(connectionStringVec[1]);
             kafkaSourceType->setGroupId(connectionStringVec[2]);
-            kafkaSourceType->setNumberOfBuffersToProduce(configPerRun.numBuffersToProduce->getValue());
+            kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
 
             auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, kafkaSourceType);
             coordinatorConf->worker.physicalSources.add(physicalSource);
@@ -138,7 +135,7 @@ void E2ESingleRun::createSources() {
             };
 
             LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
-                                                                        configPerRun.numBuffersToProduce->getValue(),
+                                                                        configOverAllRuns.numberOfBuffersToProduce->getValue(),
                                                                         /* gatheringValue */ 0,
                                                                         GatheringMode::INTERVAL_MODE,
                                                                         sourceAffinity,
@@ -162,7 +159,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = Benchmark::Util::waitForQueryToStart(queryId, queryCatalog);
+    bool queryResult = Benchmark::Util::waitForQueryToStartBenchmark(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }

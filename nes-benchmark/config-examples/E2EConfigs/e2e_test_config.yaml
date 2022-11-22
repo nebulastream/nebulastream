@@ -2,18 +2,19 @@
 
 # Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1
-numberOfSources: 1
-
-# engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 1024
 numberOfBuffersPerPipeline: 128
 numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
-dataGenerator: YSB
+dataGenerator:
+  ysb:
+    type: YSB
+
+
+numberOfSources: 1
 numberOfPreAllocatedBuffer: 1000
-logicalStreamName: ysb
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv
