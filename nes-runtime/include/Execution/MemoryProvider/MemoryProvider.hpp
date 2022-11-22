@@ -43,6 +43,7 @@ class MemoryProvider {
                                   Nautilus::Value<Nautilus::MemRef> bufferAddress,
                                   Nautilus::Value<Nautilus::UInt64> recordIndex) = 0;
 
+    // TODO 3138: Update documentation
     /**
      * @brief Read fields from a record using projections.
      * @param projections: Defines which fields of the record are accessed. Empty projections means all fields.
