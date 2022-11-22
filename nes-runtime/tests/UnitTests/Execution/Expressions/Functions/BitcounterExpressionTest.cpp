@@ -42,49 +42,53 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
+}
 
-    // Int8
+TEST_F(BitcounterExpressionTest, divUIntegers) {
+        auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+
+    // UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>((uint8_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // Int16
+    // UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>((uint16_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
-    }// Int32
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+    }// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>((uint32_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // Int64
+    // UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 31));
-        ASSERT_EQ(resultValue, 5);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
+        ASSERT_EQ(resultValue, (uint32_t) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
 }
 
