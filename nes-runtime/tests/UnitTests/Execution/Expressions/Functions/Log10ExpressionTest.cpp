@@ -21,75 +21,75 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-    class Log10ExpressionTest : public testing::Test {
+class Log10ExpressionTest : public testing::Test {
 
-        public:
-            /* Will be called before any test in this class are executed. */
-            static void SetUpTestCase() {
-                NES::Logger::setupLogging("Log10ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-                std::cout << "Setup CotExpressionTest test class." << std::endl;
-            }
-
-            /* Will be called before a test is executed. */
-            void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-            /* Will be called before a test is executed. */
-            void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
-            /* Will be called after all tests in this class are finished. */
-            static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
-    };
-
-    TEST_F(Log10ExpressionTest, evaluateLog10ExpressionInteger) {
-        auto expression = UnaryExpressionWrapper<Log10Expression>();
-        // Int8
-        {
-            auto resultValue = expression.eval(Value<Int8>((int8_t) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
-        // Int16
-        {
-            auto resultValue = expression.eval(Value<Int16>((int16_t) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
-        // Int32
-        {
-            auto resultValue = expression.eval(Value<Int32>((int32_t) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
-        // Int64
-        {
-            auto resultValue = expression.eval(Value<Int64>((int64_t) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("Log10ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup CotExpressionTest test class." << std::endl;
     }
 
-    TEST_F(Log10ExpressionTest, evaluateLog10ExpressionFloat) {
-        auto expression = UnaryExpressionWrapper<Log10Expression>();
-        // Float
-        {
-            auto resultValue = expression.eval(Value<Float>((float) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
-        // Double
-        {
-            auto resultValue = expression.eval(Value<Double>((double) 100));
-            ASSERT_EQ(resultValue, (double) 2.0);
-            ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-        }
-    }
+    /* Will be called before a test is executed. */
+    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
 
-    /**
+    /* Will be called before a test is executed. */
+    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+};
+
+TEST_F(Log10ExpressionTest, evaluateLog10ExpressionInteger) {
+    auto expression = UnaryExpressionWrapper<Log10Expression>();
+    // Int8
+    {
+        auto resultValue = expression.eval(Value<Int8>((int8_t) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // Int16
+    {
+        auto resultValue = expression.eval(Value<Int16>((int16_t) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // Int32
+    {
+        auto resultValue = expression.eval(Value<Int32>((int32_t) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // Int64
+    {
+        auto resultValue = expression.eval(Value<Int64>((int64_t) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+}
+
+TEST_F(Log10ExpressionTest, evaluateLog10ExpressionFloat) {
+    auto expression = UnaryExpressionWrapper<Log10Expression>();
+    // Float
+    {
+        auto resultValue = expression.eval(Value<Float>((float) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // Double
+    {
+        auto resultValue = expression.eval(Value<Double>((double) 100));
+        ASSERT_EQ(resultValue, (double) 2.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+}
+
+/**
     * @brief If we execute the expression on a boolean it should throw an exception.
     */
-    TEST_F(Log10ExpressionTest, evaluateLog10ExpressionOnWrongType) {
-        auto expression = UnaryExpressionWrapper<Log10Expression>();
-        ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-    }
+TEST_F(Log10ExpressionTest, evaluateLog10ExpressionOnWrongType) {
+    auto expression = UnaryExpressionWrapper<Log10Expression>();
+    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+}
 
 }// namespace NES::Runtime::Execution::Expressions

@@ -19,17 +19,17 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-    /**
+/**
     * @brief This expression computes the log2 value of the subExpression.
     */
-    class Log2Expression : public Expression {
-        public:
-            Log2Expression(const ExpressionPtr& subExpression);
-            Value<> execute(Record& record) const override;
+class Log2Expression : public Expression {
+  public:
+    Log2Expression(const ExpressionPtr& subExpression);
+    Value<> execute(Record& record) const override;
 
-        private:
-            const  ExpressionPtr subExpression;
-        };
-    }// namespace NES::Runtime::Execution::Expressions
+  private:
+    const ExpressionPtr subExpression;
+};
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_NES_LOG2EXPRESSION_HPP_
