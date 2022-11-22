@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -23,13 +23,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::IR {
 
 /**
  * @brief This phase converts a execution trace to SSA form.
  * This implies that, each value is only assigned and that all parameters to a basic block are passed by block arguments.
  */
-class RemoveBrOnlyBlocksPhase {
+class RemoveBrOnlyBlocksPass {
   public:
     /**
      * @brief Applies the phase on a execution trace.
@@ -42,14 +42,14 @@ class RemoveBrOnlyBlocksPhase {
     /**
      * @brief Internal context object, which maintains statue during IR creation.
      */
-    class RemoveBrOnlyBlocksPhaseContext {
+    class RemoveBrOnlyBlocksPassContext {
       public:
         /**
          * @brief Constructor for the context of the remove br-only-blocks phase.
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        RemoveBrOnlyBlocksPassContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
          * 
@@ -90,4 +90,4 @@ class RemoveBrOnlyBlocksPhase {
 };
 
 }// namespace NES::Nautilus::Tracing
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
