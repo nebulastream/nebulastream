@@ -31,13 +31,11 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
     createdBuffers.reserve(numberOfBuffers);
 
     auto memoryLayout = getMemoryLayout(bufferSize);
+    auto ts = 0UL;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
-            auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::high_resolution_clock::now().time_since_epoch())
-                          .count();
+        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++, ts++) {
             auto campaign_id = rand() % 1000;
             auto event_type = currentRecord % 3;
             dynamicBuffer[currentRecord]["user_id"].write<uint64_t>(1);
