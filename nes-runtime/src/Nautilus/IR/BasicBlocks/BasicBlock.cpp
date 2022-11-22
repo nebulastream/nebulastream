@@ -25,12 +25,15 @@ BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)),
-      arguments(std::move(arguments)) {}
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), numLoopBackEdges(0),
+      operations(std::move(operations)), arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLevel; }
+uint32_t BasicBlock::getNumLoopBackEdges() { return numLoopBackEdges; }
+void BasicBlock::incrementNumLoopBackEdge() { ++this->numLoopBackEdges; }
+bool BasicBlock::isLoopHeaderBlock() { return numLoopBackEdges > 0; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
