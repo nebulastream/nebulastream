@@ -141,6 +141,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
     SUCCEED();
 }
 
+#ifdef RUNNING_KAFKA_INSTANCE
 /**
  * Tests if obtained value is valid.
  */
@@ -344,4 +345,5 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
+#endif
 }// namespace NES
