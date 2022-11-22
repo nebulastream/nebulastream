@@ -55,7 +55,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 MLIRExecutionEngine)
 
         # Include necessary mlir library in the deb package and install it in the lib folder
-#        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime  DESTINATION lib)
+        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime  DESTINATION lib)
 
     else ()
         message(FATAL_ERROR "Cannot find mlir")
