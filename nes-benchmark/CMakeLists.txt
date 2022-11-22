@@ -31,11 +31,8 @@ get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 # Add nes-benchmark library
 add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+add_nes_benchmarks(e2e-benchmark-runner "test/E2ERunner.cpp")
 
-# Add E2E benchmark runner with custom e2e test config
-add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp")
-add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml)
-message(STATUS "Added test e2e-benchmark-runner")
 
 #-------------------------------##################------------------------------
 #-------------------------------#Micro Benchmarks#------------------------------
@@ -51,5 +48,9 @@ add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/Incremen
 ### Output Channel Benchmark ###
 add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
 
+
+
+# Adding benchmark tests
+add_subdirectory(test)
 
 message(STATUS "Done building benchmarks")
