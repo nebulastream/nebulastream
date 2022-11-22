@@ -263,14 +263,15 @@ class TupleBuffer {
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) noexcept;
 
-    [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept { return controlBlock->getNumberOfChildrenBuffer(); }
+    [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept {
+        return controlBlock->getNumberOfChildrenBuffer();
+    }
 
   private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
     [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
-
 
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
