@@ -15,6 +15,7 @@
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
+#include <bit>
 
 namespace NES::Runtime::Execution::Expressions {
 
