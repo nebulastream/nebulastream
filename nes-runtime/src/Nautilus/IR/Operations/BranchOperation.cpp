@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
