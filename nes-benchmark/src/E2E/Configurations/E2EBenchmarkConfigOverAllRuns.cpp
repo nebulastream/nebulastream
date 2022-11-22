@@ -61,7 +61,6 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
         << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl
-        << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- dataGenerators: " << getDataGeneratorsAsString() << std::endl;
 
     return oss.str();
