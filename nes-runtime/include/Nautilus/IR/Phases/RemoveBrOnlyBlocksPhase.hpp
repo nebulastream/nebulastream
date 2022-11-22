@@ -25,12 +25,6 @@
 
 namespace NES::Nautilus::Tracing {
 
-class ExecutionTrace;
-// class Frame;
-class Block;
-// class ValueRef;
-// class BlockRef;
-
 /**
  * @brief This phase converts a execution trace to SSA form.
  * This implies that, each value is only assigned and that all parameters to a basic block are passed by block arguments.
@@ -38,9 +32,9 @@ class Block;
 class RemoveBrOnlyBlocksPhase {
   public:
     /**
-     * @brief Applies the phase on a execution trace
-     * @param trace
-     * @return the modified execution trace.
+     * @brief Applies the phase on a execution trace.
+     * @param Trace.
+     * @return The modified execution trace.
      */
     std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> trace);
 
@@ -50,29 +44,44 @@ class RemoveBrOnlyBlocksPhase {
      */
     class RemoveBrOnlyBlocksPhaseContext {
       public:
-        // using IfCandidate = std::unique_ptr<std::pair<std::shared_ptr<IR::Operations::IfOperation>, bool>>;
-        struct IfOpCandidate {
-            std::shared_ptr<IR::Operations::IfOperation> ifOp;
-            bool isTrueBranch;
-        };
+        /**
+         * @brief Constructor for the context of the remove br-only-blocks phase.
+         * 
+         * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
+         */
         RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        /**
+         * @brief Actually applies the remove br-only-blocks phase to the IR.
+         * 
+         * @return std::shared_ptr<IR::IRGraph> The IR without br-only-blocks.
+         */
         std::shared_ptr<IR::IRGraph> process();
 
       private:
-        void addPredecessors(IR::BasicBlockPtr parentBlock);
-        void processBrOnlyBlocks(IR::BasicBlockPtr parentBlock);
-        void findLoopHeadBlocks(IR::BasicBlockPtr parentBlock);
-        void createIfOperations(IR::BasicBlockPtr parentBlock);
-        // bool inline findControlFlowMerge(IR::BasicBlockPtr& currentBlock, 
-        //                       std::stack<std::unique_ptr<IfOpCandidate>>& tasks, 
-        //                       std::unordered_map<std::string, uint32_t>& candidateEdgeCounter,
-        //                       const bool newVisit);
-        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
-                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter, const bool newVisit);
-        // void addScopeLevels(IR::BasicBlockPtr parentBlock);
-        // void processBranch(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentBlock, bool conditionalBranch, bool isElse);
-        // void processBlock(IR::BasicBlockPtr parentBlock, IR::BasicBlockPtr currentChildBlock);
+        /**
+         * @brief Adds predecessor information for all blocks in the IR.
+         * 
+         * @param currentBlock: Initially will be the body-block of the root operation.
+         */
+        void addPredecessors(IR::BasicBlockPtr currentBlock);
+        /**
+         * @brief Removes all br-only blocks from the IR without influencing its control- and data flow.
+         * 
+         * @param currentBlock: Initially will be the body-block of the root operation.
+         */
+        void removeBrOnlyBlocks(IR::BasicBlockPtr currentBlock);
+
+        /**
+         * @brief Checks if the current block is a br-only-block and check whether subsequent blocks are also br-only-blocks.
+         *        When a sequence of size 1-n br-only-blocks was found, updatePredecessorBlocks() is called.
+         * 
+         * @param currentBlock: Current block that might be a br-only-block.
+         * @param candidates: Blocks that still need to be processed.
+         * @param visitedBlocks: Blocks that have already been processed and can be disregarded.
+         */
+        void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock, 
+                               std::vector<IR::BasicBlockPtr>& candidates, 
+                               std::unordered_set<std::string> visitedBlocks);
 
       private:
         std::shared_ptr<IR::IRGraph> ir;
