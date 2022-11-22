@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <E2E/E2ESingleRun.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <algorithm>
 #ifdef ENABLE_KAFKA_BUILD
@@ -159,7 +159,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = Benchmark::Util::waitForQueryToStartBenchmark(queryId, queryCatalog);
+    bool queryResult = waitForQueryToStartBenchmark(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }
@@ -381,6 +381,47 @@ void E2ESingleRun::run() {
     runQuery();
     stopQuery();
     writeMeasurementsToCsv();
+}
+
+bool E2ESingleRun::waitForQueryToStartBenchmark(QueryId queryId,
+                                         const QueryCatalogServicePtr& queryCatalogService,
+                                         std::chrono::seconds timeoutInSec) {
+    NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
+    auto start_timestamp = std::chrono::system_clock::now();
+
+    NES_TRACE("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+        if (!queryCatalogEntry) {
+            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+            return false;
+        }
+        NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+        QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
+
+        switch (queryCatalogEntry->getQueryStatus()) {
+            case QueryStatus::MarkedForHardStop:
+            case QueryStatus::MarkedForSoftStop:
+            case QueryStatus::SoftStopCompleted:
+            case QueryStatus::SoftStopTriggered:
+            case QueryStatus::Stopped:
+            case QueryStatus::Running: {
+                return true;
+            }
+            case QueryStatus::Failed: {
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
+                return false;
+            }
+            default: {
+                NES_WARNING("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                break;
+            }
+        }
+
+        std::this_thread::sleep_for(E2ESingleRun::sleepDuration);
+    }
+    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+    return false;
 }
 
 }// namespace NES::Benchmark
