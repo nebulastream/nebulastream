@@ -28,7 +28,6 @@ query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWi
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 50000
-scalability: scale-up
 logLevel: LOG_DEBUG
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
