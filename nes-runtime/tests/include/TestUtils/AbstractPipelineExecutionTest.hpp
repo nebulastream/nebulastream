@@ -33,7 +33,7 @@ class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(Execution::OperatorHandlerPtr handler)
+    explicit MockedPipelineExecutionContext(std::vector<Execution::OperatorHandlerPtr> handlers = {})
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
@@ -45,7 +45,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            {std::move(handler)}){
+            handlers){
             // nop
         };
 
