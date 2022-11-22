@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Expressions {
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
-int bitcounter(uint number) {
+uint32_t bitcounter(uint64_t number) {
     return std::popcount(number);
     }
 
