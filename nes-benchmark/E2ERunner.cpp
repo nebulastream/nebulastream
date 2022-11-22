@@ -115,16 +115,16 @@ int main(int argc, const char* argv[]) {
         << "\n";
     ofs.close();
 
-//    int portOffset = 0;
-//    auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
-//    for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-//        portOffset += 23;
-//        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), portOffset);
-//
-//        singleRun.run();
-//
-//        NES_INFO("Done with single experiment run!");
-//    }
+    int portOffset = 0;
+    auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
+    for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
+        portOffset += 23;
+        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), portOffset);
+
+        singleRun.run();
+
+        NES_INFO("Done with single experiment run!");
+    }
 
     return 0;
 }
