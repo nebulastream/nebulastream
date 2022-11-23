@@ -99,10 +99,50 @@ class Text final : public Nautilus::Any {
     const Value<UInt32> length() const;
 
     /**
-     * @brief Converts this text to uppercase
+     * @brief Returns the number of bits of this text value.
+     * @return Value<Int32>
+     */
+    const Value<UInt32> bitLength() const;
+
+    /**
+     * @brief Converts this text to uppercase.
      * @return Value<Text>
      */
     const Value<Text> upper() const;
+
+    /**
+     * @brief Converts this text to lowercase.
+     * @return Value<Text>
+     */
+    const Value<Text> lower() const;
+
+    /**
+     * @brief Reads index characters from the left side of the text value.
+     * @param index as Value<Int32>
+     * @return Value<Text>
+     */
+    const Value<Text> left(Value<UInt32> index);
+
+    /**
+     * @brief Reads index characters from the right side of the text value.
+     * @param index as Value<Int32>
+     * @return Value<Text>
+     */
+    const Value<Text> right(Value<UInt32> index);
+
+    /**
+     * @brief Pads the string with the character from the right until it has count characters.
+     * @param index as Value<Int32>, value as Value<Int8>
+     * @return Value<Text>
+     */
+    const Value<Text> rpad(Value<UInt32> index, Value<Int8> value);
+
+    /**
+     * @brief Pads the string with the character from the left until it has count characters.
+     * @param index as Value<Int32>, value as Value<Int8>
+     * @return Value<Text>
+     */
+    const Value<Text> lpad(Value<UInt32> index, Value<Int8> value);
 
     /**
      * @brief Reads one character from the text value at a specific index.
@@ -118,6 +158,27 @@ class Text final : public Nautilus::Any {
      * @return Value<Int8> as character
      */
     void write(Value<UInt32> index, Value<Int8> value);
+
+    /**
+     * @brief Removes any spaces from the left side of the string
+     * @param
+     * @return Value<Text>
+     */
+    const Value<Text> ltrim(Value<Text>& other) const;
+
+    /**
+     * @brief Removes any spaces from the left side of the string
+     * @param
+     * @return Value<Text>
+     */
+    const Value<Text> rtrim(Value<Text>& other) const;
+
+    /**
+     * @brief Removes any spaces from the left and right side of the string
+     * @param
+     * @return Value<Text>
+     */
+    const Value<Text> trim() const;
 
     /**
      * @brief Returns the stamp of this type
