@@ -1,14 +1,14 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1, 2, 4
-bufferSizeInBytes: 5120, 5120, 5120
-numberOfPreAllocatedBuffer: 1000000
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 5120
+numberOfPreAllocatedBuffer: 1000
 
 
 # ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 3
+startupSleepIntervalInSeconds: 0
+numberOfMeasurementsToCollect: 1
 
 numberOfSources: 3
 dataGenerators:
