@@ -23,39 +23,46 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getWorkerHashTableFunctionCall(void* ptr, size_t index) {
-    LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptr);
+void* getWorkerHashTableFunctionCall(void* ptrOpHandler, size_t index) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
     return static_cast<void*>(&opHandler->getWorkerHashTable(index));
 }
 
-void* insertFunctionCall(void* ptr, uint64_t key) {
-    LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptr);
+void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
+    NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
+
+    LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
     return localHashTable->insert(key);
 }
 
 
 void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, size_t workerIdIndex, bool isLeftSide) {
-    LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
-    WorkerContext* wcCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
-    PipelineExecutionContext* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+    NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+
+
+    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     auto& sharedJoinHashTable = opHandler->getSharedJoinHashTable(isLeftSide);
     auto& localHashTable = opHandler->getWorkerHashTable(workerIdIndex);
 
 
-
-    for (auto a = 0; a < NUM_PARTITIONS; ++a) {
+    for (auto a = 0; a < LazyJoinOperatorHandler::NUM_PARTITIONS; ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
     }
 
-    if (operatorHandler->fetch_sub(1) == 1) {
+    if (opHandler->fetch_sub(1) == 1) {
         // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-        for (auto i = 0; i < NUM_PARTITIONS; ++i) {
+        for (auto i = 0; i < LazyJoinOperatorHandler::NUM_PARTITIONS; ++i) {
             auto partitionId = i + 1;
-            auto buffer = wcCtx->allocateTupleBuffer();
+            auto buffer = workerCtx->allocateTupleBuffer();
             buffer.store(partitionId);
-            pipelineCtxemitBuffer(buffer)
+            pipelineCtxemitBuffer(buffer);
         }
     }
 }
@@ -70,10 +77,8 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                        operatorHandlerMemRef, ctx.getWorkerId());
 
 
-
     // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
     if (record.read("timestamp") < 0) {
-//        localHashTable.insert(record, joinFieldName);
          auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall,
                                           localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
 
@@ -82,7 +87,7 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
          }
     } else {
         Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
-                               ctx.getWorkerContext(), ctx.getWorkerId());
+                               ctx.getWorkerContext(), ctx.getWorkerId(), isLeftSide);
     }
 }
 LazyJoinBuild::LazyJoinBuild(const std::string& joinFieldName, uint64_t handlerIndex, bool isLeftSide)
