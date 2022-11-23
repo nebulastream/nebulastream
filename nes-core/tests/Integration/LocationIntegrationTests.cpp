@@ -771,7 +771,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         auto newPredictedReconnect = wrk1->getTrajectoryPredictor()->getNextPredictedReconnect();
                         auto updatedLastReconnect = wrk1->getTrajectoryPredictor()->getLastReconnectLocationAndTime();
                         auto newSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
-                        //todo: test other functions here
                         //the path covered the waypoint, but the new schedule is not necessarily computed yet, therefore we need to keep querying for the prediction
                         EXPECT_TRUE(lastReconnectPositionAndTime.first);
                         EXPECT_TRUE(updatedLastReconnect.first);
@@ -831,9 +830,10 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
                     firstPrediction = std::nullopt;
-                    reconnectCounter++;
 
                     //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
+                    reconnectCounter++;
+                    lastReconnectPositionAndTime = updatedLastReconnect;
                     bool predictedAtCoord = false;
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin();
                          prediction != checkVectorForCoordinatorPrediction.end();
@@ -857,7 +857,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                 } else {
                     NES_DEBUG("no prediction!");
                 }
-                lastReconnectPositionAndTime = updatedLastReconnect;
             }
         }
 
