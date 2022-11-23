@@ -48,8 +48,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
     config->set("metadata.broker.list", brokers.c_str());
 
     connect();
-    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic << ", partition "
-                            << partition);
+    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic);
 }
 
 KafkaSink::~KafkaSink() {}
@@ -83,8 +82,7 @@ std::string KafkaSink::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SINK(";
     ss << "BROKER(" << brokers << "), ";
-    ss << "TOPIC(" << topic << "), ";
-    ss << "PARTITION(" << partition << ").";
+    ss << "TOPIC(" << topic << ").";
     return ss.str();
 }
 

@@ -88,7 +88,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
     DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
-    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK(BROKER(localhost:9092), TOPIC(test), PARTITION(94).");
+    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK(BROKER(localhost:9092), TOPIC(test).");
 }
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
