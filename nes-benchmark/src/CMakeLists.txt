@@ -17,6 +17,7 @@ add_source_files(nes-benchmark  E2E/Configurations/E2EBenchmarkConfig.cpp
                                 DataGeneration/DataGenerator.cpp
                                 DataGeneration/DefaultDataGenerator.cpp
                                 DataGeneration/ZipfianDataGenerator.cpp
+                                DataGeneration/YSBKafkaDataGenerator.cpp
                                 DataProvider/DataProvider.cpp
                                 DataProvider/InternalProvider.cpp
                                 DataGeneration/YSBDataGenerator.cpp
