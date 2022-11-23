@@ -59,7 +59,7 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
-            auto& lhsRecord = lhsPage[i];
+            auto lhsRecord = lhsPage[i];
             auto lhsKey = lhsRecord.read(joinFieldName);
             for(auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
@@ -68,7 +68,7 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
                 }
 
                 for (auto j = 0UL; j < rhsLen; ++j) {
-                    auto& rhsRecord = rhsPage[j];
+                    auto rhsRecord = rhsPage[j];
                     if (rhsRecord.read(joinFieldName) == lhsKey) {
                         // TODO ask Philipp if it makes more sense to store the records and then emit a full buffer
                         ++joinedTuples;

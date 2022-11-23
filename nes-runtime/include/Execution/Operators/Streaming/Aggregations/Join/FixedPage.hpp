@@ -32,6 +32,14 @@ class FixedPage{
 
     explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
 
+    FixedPage(const FixedPage& that);
+
+    FixedPage(FixedPage&& that);
+
+    FixedPage& operator=(FixedPage&& that);
+
+
+
     /**
      * @brief returns a pointer to the record at the given index
      * @param index
@@ -58,6 +66,9 @@ class FixedPage{
      * @return no. items
      */
     size_t size() const;
+
+  private:
+    void swap(FixedPage& lhs, FixedPage& rhs);
 
   private:
     size_t sizeOfRecord;
