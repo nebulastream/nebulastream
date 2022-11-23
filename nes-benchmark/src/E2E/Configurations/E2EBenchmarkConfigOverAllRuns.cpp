@@ -37,7 +37,6 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     dataProviderMode =
         ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
-    logicalStreamName = ConfigurationOption<std::string>::create("logicalStreamName", "input", "Source stream name");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
 
     for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
@@ -60,7 +59,6 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- numberOfBuffersToProduce: " << numberOfBuffersToProduce->getValueAsString() << std::endl
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
-        << "- logicalStreamName: " << logicalStreamName->getValue() << std::endl
         << "- dataGenerators: " << getDataGeneratorsAsString() << std::endl;
 
     return oss.str();
@@ -77,11 +75,10 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
     configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
     configOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
-    configOverAllRuns.logicalStreamName->setValue(yamlConfig["logicalStreamName"].As<std::string>());
     configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
     configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
 
-    if (yamlConfig["dataGenerators"].Size() > 0) {
+    if (yamlConfig["logicalStreamNames"].Size() > 0) {
         /* Iterating through the node
          * Afterwards, we insert either the parsed values or Default, if we require another generator
          */
@@ -90,7 +87,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
 
         NES_INFO("Creating new data generators as specified in the config!");
 
-        auto dataGenerators = yamlConfig["dataGenerators"];
+        auto dataGenerators = yamlConfig["logicalStreamNames"];
         for (auto it = dataGenerators.Begin(); it != dataGenerators.End(); it++) {
             std::string name = (*it).first;
             Yaml::Node dataGeneratorNode = (*it).second;
