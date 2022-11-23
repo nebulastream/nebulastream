@@ -63,7 +63,6 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption inputType;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    Configurations::StringConfigOption logicalStreamName;
     std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
     Configurations::StringConfigOption connectionString;
 };

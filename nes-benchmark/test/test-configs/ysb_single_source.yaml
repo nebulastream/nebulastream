@@ -8,7 +8,7 @@ numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
-dataGenerators:
+logicalStreamNames:
   ysb:
     type: YSB
 

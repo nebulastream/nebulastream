@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
-#include <Exceptions/ErrorListener.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "E2E/Configurations/E2EBenchmarkConfig.hpp"
+#include "Exceptions/ErrorListener.hpp"
+#include "Util/Logger/Logger.hpp"
 
-#include <E2E/E2ESingleRun.hpp>
+#include "E2E/E2ESingleRun.hpp"
 #include <cstring>
 #include <filesystem>
 #include <fstream>
