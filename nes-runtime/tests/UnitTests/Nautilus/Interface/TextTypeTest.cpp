@@ -69,6 +69,65 @@ TEST_F(TextTypeTest, createTextTest) {
     }
     auto textValue4 = Value<Text>("zzzz");
     ASSERT_EQ(textValue, textValue4);
+
+    auto bitLength = textValue->bitLength();
+    ASSERT_EQ(bitLength, (uint32_t) 32);
+
+
+}
+
+TEST_F(TextTypeTest, LowerUpperTest) {
+    auto LowerUpperTest1 = Value<Text>("test");
+    auto LowerUpperTest2 = LowerUpperTest1->upper();
+    auto LowerUpperTest3 = Value<Text>("TEST");
+    ASSERT_EQ(LowerUpperTest2, LowerUpperTest3);
+
+    auto LowerUpperTest4 = LowerUpperTest3->lower();
+    ASSERT_EQ(LowerUpperTest4, LowerUpperTest1);
+}
+
+TEST_F(TextTypeTest, LeftRightTest) {
+
+    auto LeftRightTest1 = Value<Text>("Test");
+    auto LeftRightTest2 = Value<Text>("Te");
+    auto LeftRightTest3 = LeftRightTest2->left((uint32_t) 2);
+    ASSERT_EQ(LeftRightTest3, LeftRightTest2);
+
+    auto LeftRightTest4 = Value<Text>("st");
+    auto LeftRightTest5 = LeftRightTest1->right((uint32_t) 2);
+    ASSERT_EQ(LeftRightTest5, LeftRightTest4);
+}
+
+TEST_F(TextTypeTest, PadTest) {
+    auto PadTest1 = Value<Text>("Test");
+    auto PadTest2 = Value<Text>("Testoo");
+    auto PadTest3 = PadTest1->rpad((uint32_t) 6, (int8_t) 'o');
+    ASSERT_EQ(PadTest2, PadTest3);
+    auto PadTest4 = Value<Text>("ooTest");
+    auto PadTest5 = PadTest1->lpad((uint32_t) 6, (int8_t) 'o');
+    ASSERT_EQ(PadTest4, PadTest5);
+}
+
+TEST_F(TextTypeTest, TrimTest) {
+    auto TrimSpaceTest = Value<Text>("  Test"  );
+    auto TrimTest0 = Value<Text>("Test");
+    auto TrimTest1 = Value<Text>("  Test");
+    auto TrimTest2 = TrimTest1->ltrim(TrimTest0);
+    ASSERT_EQ(TrimTest0, TrimTest2);
+
+    auto TrimTest3 = Value<Text>("Test  ");
+    auto TrimTest4 = TrimTest3->rtrim(TrimTest0);
+    ASSERT_EQ(TrimTest4, TrimTest0);
+
+    auto Trimtest5 = Value<Text>("  Test  ");
+    auto TrimTest6 = Trimtest5->trim();
+    ASSERT_EQ(TrimTest6, TrimTest0);
+
+    auto TrimTest7 = TrimSpaceTest->ltrim(TrimTest0);
+    TrimTest7 = TrimTest7->rtrim(TrimTest0);
+    ASSERT_EQ(TrimTest7, TrimTest0);
+
+
 }
 
 TEST_F(TextTypeTest, prefixTest) {
