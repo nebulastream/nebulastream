@@ -27,9 +27,19 @@ class LazyJoinOperatorHandler;
 using LazyJoinOperatorHandlerPtr = LazyJoinOperatorHandler const*;
 
 class LazyJoinOperatorHandler : public OperatorHandler {
+    static constexpr auto NUM_PARTITIONS = 8 * 1024;
+    static constexpr auto MASK = NUM_PARTITIONS - 1;
 
 
   public:
+    explicit LazyJoinOperatorHandler(SchemaPtr joinSchema,
+                                     size_t maxNoWorkerThreads,
+                                     uint64_t counterFinishedBuildingStart,
+                                     size_t totalSizeForDataStructures);
+
+    ~LazyJoinOperatorHandler();
+
+
     const Operators::LocalHashTable& getWorkerHashTable(size_t index) const;
 
     const Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide) const;
@@ -41,10 +51,14 @@ class LazyJoinOperatorHandler : public OperatorHandler {
   private:
 
     SchemaPtr joinSchema;
-    std::vector<Operators::LocalHashTable> workerHashTable;
+    std::vector<Operators::LocalHashTable> workerThreadsHashTable;
     Operators::SharedJoinHashTable leftSideHashTable;
     Operators::SharedJoinHashTable rightSideHashTable;
     std::atomic<uint64_t> counterFinishedBuilding;
+
+    uint8_t* head;
+    std::atomic<uint64_t> tail;
+    uint64_t overrunAddress;
 };
 
 } // namespace NES::Runtime::Execution::Operators

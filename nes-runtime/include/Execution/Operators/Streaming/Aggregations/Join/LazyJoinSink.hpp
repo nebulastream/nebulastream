@@ -22,6 +22,8 @@ namespace NES::Runtime::Execution::Operators {
 class LazyJoinSink : public Operator {
 
   public:
+    LazyJoinSink(uint64_t handlerIndex, const std::string& joinFieldName);
+
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket
      * @param executionCtx

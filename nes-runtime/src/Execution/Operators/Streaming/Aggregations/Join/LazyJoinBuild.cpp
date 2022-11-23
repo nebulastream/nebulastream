@@ -49,5 +49,7 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         }
     }
 }
+LazyJoinBuild::LazyJoinBuild(const std::string& joinFieldName, uint64_t handlerIndex, bool isLeftSide)
+    : joinFieldName(joinFieldName), handlerIndex(handlerIndex), isLeftSide(isLeftSide) {}
 
 } // namespace NES::Runtime::Execution::Operators

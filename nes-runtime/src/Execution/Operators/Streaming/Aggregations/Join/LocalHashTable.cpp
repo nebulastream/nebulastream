@@ -29,5 +29,14 @@ FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) cons
 
     return buckets[bucketPos];
 }
+LocalHashTable::LocalHashTable(SchemaPtr schema,
+                               size_t numPartitions,
+                               std::atomic<uint64_t>& tail,
+                               size_t overrunAddress) : schema(schema) {
+    buckets.reserve(numPartitions);
+    for (auto i = 0UL; i < numPartitions; ++i) {
+        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, schema->getSchemaSizeInBytes()));
+    }
+}
 
 } // namespace NES::Runtime::Execution::Operators

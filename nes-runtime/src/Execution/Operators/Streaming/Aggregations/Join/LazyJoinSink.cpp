@@ -86,5 +86,7 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
 
     return joinedTuples;
 }
+LazyJoinSink::LazyJoinSink(uint64_t handlerIndex, const std::string& joinFieldName)
+    : handlerIndex(handlerIndex), joinFieldName(joinFieldName) {}
 
 } //namespace NES::Runtime::Execution::Operators
