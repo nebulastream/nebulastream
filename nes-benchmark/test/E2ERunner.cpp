@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include "E2E/Configurations/E2EBenchmarkConfig.hpp"
-#include "Exceptions/ErrorListener.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
+#include <Exceptions/ErrorListener.hpp>
+#include <Util/Logger/Logger.hpp>
 
-#include "E2E/E2ESingleRun.hpp"
+#include <E2E/E2ESingleRun.hpp>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -80,7 +80,7 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    if (argMap.size() < 1) {
+    if (argMap.size() < 2) {
         std::cerr << "Error: Missing --configPath or --logPath could not been found in arguments!" << std::endl;
         return -1;
     }
