@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.60](https://github.com/nebulastream/nebulastream/tree/v0.3.60) (2022-11-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.59...v0.3.60)
+
+### Bug Fixes 🐛
+
+- \[BUG\] IMPORTED\_RUNTIME\_ARTIFACTS unsupported on CMAKE 3.20 [\#3229](https://github.com/nebulastream/nebulastream/issues/3229)
+- \[BUG\] Issue with location service  [\#3208](https://github.com/nebulastream/nebulastream/issues/3208)
+
 ## [v0.3.59](https://github.com/nebulastream/nebulastream/tree/v0.3.59) (2022-11-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.58...v0.3.59)
