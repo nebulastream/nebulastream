@@ -668,7 +668,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime =
         std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
     std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
-    std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> oldPredictedReconnect;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;
     std::vector<NES::Spatial::Mobility::Experimental::ReconnectPrediction> checkVectorForCoordinatorPrediction;
@@ -778,20 +777,12 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                             && ((lastReconnectPositionAndTime.first->isValid()
                                  && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first)
                                 || !lastReconnectPositionAndTime.first->isValid())) {
-                            if ((/*we are still connected to first node*/ !oldPredictedReconnect
-                                 || /*we are reconnected to a new node*/ (
-                                     newPredictedReconnect->predictedReconnectLocation
-                                         != oldPredictedReconnect->predictedReconnectLocation
-                                     &&
-                                     //prevent omitting reconnect check
-                                     oldPredictedReconnect->reconnectPrediction.expectedNewParentId
-                                         == updatedLastReconnect.second))) {
                                 NES_TRACE("path stabilized after reconnect")
                                 NES_TRACE(
                                     "new predicted parent = " << newPredictedReconnect->reconnectPrediction.expectedNewParentId);
                                 predictedReconnect = newPredictedReconnect;
                                 firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
-                            }
+
                             if (predictedReconnect
                                 && predictedReconnect->predictedReconnectLocation
                                     == newPredictedReconnect->predictedReconnectLocation
@@ -855,7 +846,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                                   currentPredictionAtCoordinator.value().expectedNewParentId);
                     }
                     predictedReconnect.reset();
-                    oldPredictedReconnect = predictedReconnect;
                 } else {
                     NES_DEBUG("no prediction!");
                 }
