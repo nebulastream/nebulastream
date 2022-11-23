@@ -30,6 +30,7 @@ FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_
 
 
 bool FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
+    // TODO think about if this is the correct way here...
     data[pos++] = record;
     bloomFilter->add(hash);
     return pos < capacity;

@@ -28,6 +28,10 @@ class FixedPagesLinkedList{
     static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / FixedPage::CHUNK_SIZE;
 
   public:
+    FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
+
+    ~FixedPagesLinkedList();
+
     void append(const uint64_t hash, Nautilus::Record& record);
 
     const std::vector<FixedPage*>& getPages() const;
@@ -36,7 +40,6 @@ class FixedPagesLinkedList{
     std::atomic<uint64_t>& tail;
     FixedPage* curPage;
     size_t pos;
-    // TODO do we really need this overrunAddress
     uint64_t overrunAddress;
     std::vector<FixedPage*> pages;
 };

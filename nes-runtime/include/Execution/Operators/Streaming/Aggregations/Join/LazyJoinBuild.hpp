@@ -23,12 +23,8 @@ namespace NES::Runtime::Execution::Operators {
 class LazyJoinBuild : public ExecutableOperator {
 
   public:
-    // TODO think about if this is the correct way to do this
-    static constexpr auto NUM_PARTITIONS = 8 * 1024;
 
-    // To use bitwise-and instead of a modulo, the mask should be (2^n) - 1
-    static constexpr auto MASK = NUM_PARTITIONS - 1;
-
+    LazyJoinBuild(const std::string& joinFieldName, uint64_t handlerIndex, bool isLeftSide);
 
     /**
      * @brief builds a hash table with the record
