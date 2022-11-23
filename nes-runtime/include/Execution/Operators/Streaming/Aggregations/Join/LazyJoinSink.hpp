@@ -43,6 +43,7 @@ class LazyJoinSink : public Operator {
 
 
   private:
+    SchemaPtr joinSchema;
     uint64_t handlerIndex;
     std::string joinFieldName;
 
