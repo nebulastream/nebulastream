@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
 #include <Nautilus/Interface/Record.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution {
 class ExecutionContext;
 class RecordBuffer;
-}
+}// namespace NES::Runtime::Execution
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
 class ExecutableOperator;
@@ -76,4 +76,4 @@ class Operator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_OPERATOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_

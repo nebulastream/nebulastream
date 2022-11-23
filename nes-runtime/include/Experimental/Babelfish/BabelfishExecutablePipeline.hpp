@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishExecutablePipeline_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishExecutablePipeline_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHEXECUTABLEPIPELINE_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHEXECUTABLEPIPELINE_HPP_
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -26,16 +26,17 @@ class BabelfishExecutablePipeline : public ExecutablePipeline {
   public:
     BabelfishExecutablePipeline(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
                                 std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                graal_isolatethread_t* isolate, void* pipelineContext);
+                                graal_isolatethread_t* isolate,
+                                void* pipelineContext);
     void setup() override;
     void execute(Runtime::WorkerContext& workerContext, Runtime::TupleBuffer& buffer) override;
     ~BabelfishExecutablePipeline() override;
 
   private:
-   graal_isolatethread_t* isolate;
-   void* pipelineContext;
+    graal_isolatethread_t* isolate;
+    void* pipelineContext;
 };
 
 }// namespace NES::ExecutionEngine::Experimental
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_BabelfishExecutablePipeline_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHEXECUTABLEPIPELINE_HPP_

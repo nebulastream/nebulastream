@@ -11,12 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_TRACING_OPCODE_HPP_
-#define NES_NAUTILUS_TRACING_OPCODE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
 namespace NES::Nautilus::Tracing {
 /**
  * @brief The OpCode enum defines the different traceable primitive operations.
  */
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, GREATER_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE, CALL, CAST };
-}
-#endif//NES_NAUTILUS_TRACING_OPCODE_HPP_
+enum OpCode {
+    ADD,
+    SUB,
+    DIV,
+    MUL,
+    EQUALS,
+    LESS_THAN,
+    GREATER_THAN,
+    NEGATE,
+    AND,
+    OR,
+    CMP,
+    JMP,
+    CONST,
+    ASSIGN,
+    RETURN,
+    LOAD,
+    STORE,
+    CALL,
+    CAST
+};
+}// namespace NES::Nautilus::Tracing
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_

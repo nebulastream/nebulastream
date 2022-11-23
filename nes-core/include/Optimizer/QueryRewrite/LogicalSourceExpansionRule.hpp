@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
-#define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 
-#include <Operators/OperatorId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
@@ -134,4 +134,4 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     bool isBlockingOperator(const NodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
-#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

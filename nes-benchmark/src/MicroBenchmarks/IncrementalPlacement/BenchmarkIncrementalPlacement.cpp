@@ -34,9 +34,9 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
@@ -220,7 +220,7 @@ void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources) {
  * @param delim : delimiter
  * @return  vector of split string
  */
-std::vector<std::string> split(std::string input, char delim) {
+std::vector<std::string> split(const std::string input, char delim) {
     std::vector<std::string> result;
     std::stringstream ss(input);
     std::string item;
@@ -289,20 +289,20 @@ int main(int argc, const char* argv[]) {
     Yaml::Node configs;
     //Load the configuration file
     if (configPath != commandLineParams.end()) {
-        configs = loadConfigFromYAMLFile(configPath->second.c_str());
+        configs = loadConfigFromYAMLFile(configPath->second);
     } else {
         NES_ERROR("Configuration file is not provided");
         return -1;
     }
 
     //Fetch base benchmark configurations
-    std::string logLevel = configs["LogLevel"].As<std::string>();
-    uint16_t numberOfRun = configs["NumOfRuns"].As<uint16_t>();
-    uint16_t startupSleepInterval = configs["StartupSleepIntervalInSeconds"].As<uint16_t>();
+    auto logLevel = configs["LogLevel"].As<std::string>();
+    auto numberOfRun = configs["NumOfRuns"].As<uint16_t>();
+    auto startupSleepInterval = configs["StartupSleepIntervalInSeconds"].As<uint16_t>();
     NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
 
     //Load queries from the query set location and run the benchmark
-    std::string querySetLocation = configs["QuerySetLocation"].As<std::string>();
+    auto querySetLocation = configs["QuerySetLocation"].As<std::string>();
     std::vector<std::string> queries;
     //Read the input query set and load the query string in the queries vector
     std::ifstream infile(querySetLocation);
@@ -318,7 +318,7 @@ int main(int argc, const char* argv[]) {
 
     //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
     const uint32_t numOfQueries = queries.size();
-    QueryPtr queryObjects[numOfQueries];
+    std::vector<QueryPtr> queryObjects;
 
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

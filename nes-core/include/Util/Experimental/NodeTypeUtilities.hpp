@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NODETYPEUTILITIES_HPP
-#define NES_NODETYPEUTILITIES_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_
 #include <Util/Experimental/NodeType.hpp>
 
 namespace NES::Spatial::Util {
@@ -35,4 +35,4 @@ class NodeTypeUtilities {
 
 }// namespace NES::Spatial::Util
 
-#endif//NES_NODETYPEUTILITIES_HPP
+#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_

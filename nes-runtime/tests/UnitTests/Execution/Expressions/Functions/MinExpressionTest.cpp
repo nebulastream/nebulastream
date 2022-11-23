@@ -99,14 +99,13 @@ TEST_F(MinExpressionTest, evaluateModExpressionFloat) {
         ASSERT_EQ(resultValue, (float) 4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-
 }
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-        TEST_F(MinExpressionTest, evaluateModExpressionOnWrongType) {
-            auto expression = BinaryExpressionWrapper<MinExpression>();
-            ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
-        }
+TEST_F(MinExpressionTest, evaluateModExpressionOnWrongType) {
+    auto expression = BinaryExpressionWrapper<MinExpression>();
+    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+}
 
-    }// namespace NES::Runtime::Execution::Expressions
+}// namespace NES::Runtime::Execution::Expressions

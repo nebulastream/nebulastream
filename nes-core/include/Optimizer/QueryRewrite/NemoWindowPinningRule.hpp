@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_
-#define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
@@ -139,4 +139,4 @@ class NemoWindowPinningRule : public DistributedWindowRule {
     bool enableNemoPlacement;
 };
 }// namespace NES::Optimizer
-#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_NemoWindowPinningRule_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_

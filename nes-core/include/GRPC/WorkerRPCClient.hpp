@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
-#define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#ifndef NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#define NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
@@ -242,4 +242,4 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif// NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

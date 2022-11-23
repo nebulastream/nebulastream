@@ -11,17 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_
 #include <memory>
 #include <type_traits>
 namespace NES {
 
 // polyfill because concepts do not exist on all platforms yet.
 template<typename _From, typename _To>
-concept convertible_to = std::is_convertible_v<_From, _To>
-    && requires { static_cast<_To>(std::declval<_From>()); };
-
+concept convertible_to = std::is_convertible_v<_From, _To>&& requires {
+    static_cast<_To>(std::declval<_From>());
+};
 
 class TypeCastable {
   public:
@@ -42,20 +42,25 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-    { T::type } -> convertible_to<TypeCastable::Kind>;
+    { T::type }
+    ->convertible_to<TypeCastable::Kind>;
 };
 
 template<class X, class Y>
-requires(std::is_base_of<Y, X>::value == false) inline constexpr bool instanceOf(const std::unique_ptr<Y>&) { return false; }
+requires(std::is_base_of<Y, X>::value == false) inline constexpr bool instanceOf(const std::unique_ptr<Y>&) {
+    return false;
+}
 
 template<GetType X, class Y>
-requires(std::is_base_of<Y, X>::value == true) inline bool instanceOf(const std::unique_ptr<Y>& y) { return X::type == y->getKind(); }
+requires(std::is_base_of<Y, X>::value == true) inline bool instanceOf(const std::unique_ptr<Y>& y) {
+    return X::type == y->getKind();
+}
 
 template<GetType X>
-inline bool instanceOf(const TypeCastable& y) { return X::type == y.getKind(); }
-
-
+inline bool instanceOf(const TypeCastable& y) {
+    return X::type == y.getKind();
+}
 
 }// namespace NES
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_UTIL_CASTING_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_CASTING_HPP_

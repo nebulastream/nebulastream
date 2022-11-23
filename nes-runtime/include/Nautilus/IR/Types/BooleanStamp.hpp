@@ -11,15 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_BOLEANSTAMP_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_BOLEANSTAMP_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
 namespace NES::Nautilus::IR::Types {
 
 class BooleanStamp : public Stamp {
   public:
-
     static const inline auto type = TypeIdentifier::create<BooleanStamp>();
     /**
      * @brief Constructor to create a boolean stamp.
@@ -30,4 +29,4 @@ class BooleanStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_TYPES_BOLEANSTAMP_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_

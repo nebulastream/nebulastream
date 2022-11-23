@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
-#define NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#ifndef NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
@@ -46,4 +46,4 @@ using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckS
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#endif// NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_

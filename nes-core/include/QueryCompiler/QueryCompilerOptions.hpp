@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <cstdint>
@@ -24,6 +24,12 @@ namespace QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
+    enum QueryCompiler {
+        // Uses the default query compiler
+        DEFAULT_QUERY_COMPILER,
+        // Uses the nautilus query compiler
+        NAUTILUS_QUERY_COMPILER
+    };
     enum FilterProcessingStrategy {
         // Uses a branches to process filter expressions
         BRANCHED,
@@ -83,6 +89,10 @@ class QueryCompilerOptions {
 
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
+    [[nodiscard]] QueryCompiler getQueryCompiler() const;
+
+    void setQueryCompiler(QueryCompiler pipeliningStrategy);
+
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
 
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
@@ -123,8 +133,9 @@ class QueryCompilerOptions {
     CompilationStrategy compilationStrategy;
     FilterProcessingStrategy filterProcessingStrategy;
     WindowingStrategy windowingStrategy;
+    QueryCompiler queryCompiler;
 };
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

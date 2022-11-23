@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
-#define NES_NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -36,6 +36,14 @@ class QueryCompilerConfiguration : public BaseConfiguration {
   public:
     QueryCompilerConfiguration() : BaseConfiguration(){};
     QueryCompilerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
+
+    /**
+     * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
+     */
+    EnumOption<QueryCompilation::QueryCompilerOptions::QueryCompiler> queryCompilerType = {
+        QUERY_COMPILER_TYPE_CONFIG,
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
+        "Indicates the type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
 
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
@@ -80,7 +88,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&compilationStrategy,
+        return {&queryCompilerType,
+                &compilationStrategy,
                 &pipeliningStrategy,
                 &outputBufferOptimizationLevel,
                 &windowingStrategy,
@@ -91,4 +100,4 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_

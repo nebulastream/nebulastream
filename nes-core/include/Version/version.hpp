@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
+// clang-format off
+#ifndef NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
+#define NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 3
-#define NES_VERSION_PATCH 50
+#define NES_VERSION_PATCH 60
 #define NES_VERSION_POST_FIX -SNAPSHOT
-constexpr char const* NES_VERSION      = "0.3.50-SNAPSHOT";
-#endif
+constexpr char const* NES_VERSION      = "0.3.60-SNAPSHOT";
+#endif // NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
+// clang-format on

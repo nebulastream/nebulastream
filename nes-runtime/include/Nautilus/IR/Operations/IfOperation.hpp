@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_IFOPERATION_HPP
-#define NES_IFOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
@@ -40,5 +40,5 @@ class IfOperation : public Operation {
     BasicBlockInvocation falseBlockInvocation;
     std::weak_ptr<BasicBlock> mergeBlock;
 };
-}// namespace NES
-#endif//NES_IFOPERATION_HPP
+}// namespace NES::Nautilus::IR::Operations
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_

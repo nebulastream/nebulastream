@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        BufferAccessException.cpp
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
         GlobalQueryPlanUpdateException.cpp

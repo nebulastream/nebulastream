@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTFLOATOPERATION_HPP
-#define NES_CONSTFLOATOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Operations {
 
 class ConstFloatOperation : public Operation {
   public:
-    explicit ConstFloatOperation(OperationIdentifier identifier,  double constantValue, Types::StampPtr stamp);
+    explicit ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp);
     ~ConstFloatOperation() override = default;
 
     double getConstantFloatValue();
@@ -31,9 +31,10 @@ class ConstFloatOperation : public Operation {
 
     std::string toString() override;
     static bool classof(const Operation* Op);
+
   private:
     double constantValue;
 };
 
-}// namespace NES
-#endif//NES_CONSTFLOATOPERATION_HPP
+}// namespace NES::Nautilus::IR::Operations
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_

@@ -32,7 +32,6 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -40,6 +39,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/UDFCallExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -230,7 +230,11 @@ TEST_P(Query3Test, tpchQ3) {
     //  sum(l_extendedprice * (1 - l_discount)) as revenue,
     std::vector<ExpressionPtr> lineitemProbeValues = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
                                                       std::make_shared<ReadFieldExpression>("l_discount")};
-    std::vector<Record::RecordFieldIdentifier> lineItemjoinProbeResults = {"l_orderkey", "leftv1", "leftv2","l_extendedprice", "l_discount"};
+    std::vector<Record::RecordFieldIdentifier> lineItemjoinProbeResults = {"l_orderkey",
+                                                                           "leftv1",
+                                                                           "leftv2",
+                                                                           "l_extendedprice",
+                                                                           "l_discount"};
     auto lineitemJoinProbe = std::make_shared<JoinProbe>(order_customersHashMap,
                                                          lineItemjoinProbeResults,
                                                          lineitemProbeKeys,

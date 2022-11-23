@@ -13,8 +13,8 @@
 */
 #include <Nautilus/Tracing/Tag.hpp>
 #include <ostream>
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
 
 namespace NES::Nautilus::Tracing {
 
@@ -28,10 +28,11 @@ class SymbolicExecutionPath {
     uint64_t getSize();
     friend std::ostream& operator<<(std::ostream& os, const SymbolicExecutionPath& path);
     [[maybe_unused]] std::vector<std::tuple<bool, Tag>>& getPath();
+
   private:
     std::vector<std::tuple<bool, Tag>> path;
 };
 
-}
+}// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_

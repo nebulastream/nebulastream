@@ -11,20 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDEXECUTIONENGINE_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDEXECUTIONENGINE_HPP_
-#include <Experimental/ExecutionEngine/PipelineExecutionEngine.hpp>
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDPIPELINEEXECUTIONENGINE_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDPIPELINEEXECUTIONENGINE_HPP_
 #include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
+#include <Experimental/ExecutionEngine/PipelineExecutionEngine.hpp>
 namespace NES::ExecutionEngine::Experimental {
 
 class CompilationBasedPipelineExecutionEngine : public PipelineExecutionEngine {
   public:
     CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend);
     std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;
+
   private:
     std::shared_ptr<PipelineCompilerBackend> backend;
 };
 
 }// namespace NES::ExecutionEngine::Experimental
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDEXECUTIONENGINE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_EXECUTIONENGINE_COMPILATIONBASEDPIPELINEEXECUTIONENGINE_HPP_

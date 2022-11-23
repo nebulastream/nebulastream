@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
-#define NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
+#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
+#define NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
@@ -85,6 +85,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(getPhysicalSource)
     ENDPOINT("GET", "/allPhysicalSource", getPhysicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
             const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource =
@@ -110,6 +111,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(getSchema)
     ENDPOINT("GET", "/schema", getSchema, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
             SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
@@ -126,6 +128,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(addLogicalSource)
     ENDPOINT("POST", "/addLogicalSource", addLogicalSource, BODY_STRING(String, request)) {
 
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
@@ -167,6 +170,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(addLogicalSourceEx)
     ENDPOINT("POST", "/addLogicalSource-ex", addLogicalSourceEx, BODY_STRING(String, request)) {
 
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
@@ -211,6 +215,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(updateLogicalSource)
     ENDPOINT("POST", "/updateLogicalSource", updateLogicalSource, BODY_STRING(String, request)) {
 
         NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
@@ -253,6 +258,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(updateLogicalSourceEx)
     ENDPOINT("POST", "/updateLogicalSource-ex", updateLogicalSourceEx, BODY_STRING(String, request)) {
 
         NES_DEBUG("SourceCatalogController: updateLogicalSource: REST received request to update the given Logical Source.");
@@ -300,6 +306,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(deleteLogicalSource)
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
@@ -336,4 +343,4 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalogController>;
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif//NES_NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_

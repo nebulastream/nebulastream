@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
-#define NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
@@ -51,8 +51,7 @@ template<class T>
 concept IsValueType = std::is_base_of<BaseValue, T>::value;
 
 template<class T>
-concept IsNotValueType = !
-std::is_base_of<BaseValue, T>::value;
+concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
 
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherents from Any.
@@ -233,7 +232,9 @@ class Value : BaseValue {
 
     ValueIndexReference inline operator[](uint32_t index);
     template<class T>
-    ValueIndexReference inline operator[](Value<T>& index) { return ValueIndexReference(index, *this); };
+    ValueIndexReference inline operator[](Value<T>& index) {
+        return ValueIndexReference(index, *this);
+    };
 
     Value<> castTo(const TypeIdentifier* toStamp) const;
 
@@ -525,4 +526,4 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

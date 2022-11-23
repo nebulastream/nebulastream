@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
@@ -337,4 +337,4 @@ class JoinHandler : public AbstractJoinHandler {
     Runtime::StateManagerPtr stateManager;
 };
 }// namespace NES::Join
-#endif// NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_

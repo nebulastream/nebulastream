@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_EXCEPTIONS_PIPELINEEXECUTIONEXCEPTION_HPP_
-#define NES_NES_CORE_INCLUDE_EXCEPTIONS_PIPELINEEXECUTIONEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -39,4 +39,4 @@ class TaskExecutionException : public Exceptions::RuntimeException {
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
 }// namespace NES
-#endif//NES_NES_CORE_INCLUDE_EXCEPTIONS_PIPELINEEXECUTIONEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

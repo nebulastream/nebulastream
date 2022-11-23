@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_DATAGENERATOR_HPP
 #define NES_DATAGENERATOR_HPP
 
@@ -21,73 +20,75 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-    class DataGenerator;
-    using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
+class DataGenerator;
+using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
 
-    class DataGenerator {
-      public:
-        DataGenerator();
-        virtual ~DataGenerator() = default;
+class DataGenerator {
+  public:
+    DataGenerator();
 
-        /**
+    DataGenerator(Runtime::BufferManagerPtr bufferManager);
+
+    virtual ~DataGenerator() = default;
+
+    /**
          * @brief creates the data that will be used by a DataProvider
          * @param numberOfBuffers
          * @param bufferSize
          * @return
          */
-        virtual std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) = 0;
+    virtual std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) = 0;
 
-        /**
+    /**
          * @brief returns the schema that belongs to this data generation
          * @return schema
          */
-        virtual SchemaPtr getSchema() = 0;
+    virtual SchemaPtr getSchema() = 0;
 
-        /**
+    /**
          * @brief returns the name of the data generator
          * @return name of the data generator
          */
-        virtual std::string getName() = 0;
+    virtual std::string getName() = 0;
 
-        /**
+    /**
          * @brief creates a string representation of this data generator
          * @return the string representation
          */
-        virtual std::string toString() = 0;
+    virtual std::string toString() = 0;
 
-        /**
+    /**
          * @brief adds a bufferManager to this dataGenerator
          * @param bufferManager
          */
-        void setBufferManager(Runtime::BufferManagerPtr bufferManager);
+    void setBufferManager(Runtime::BufferManagerPtr bufferManager);
 
-        /**
+    /**
          * @brief creates a data generator depending on the name
          * @param name
          * @return
          */
-        static DataGeneratorPtr createGeneratorByName(std::string name,
-                                                      Yaml::Node generatorNode);
+    static DataGeneratorPtr createGeneratorByName(std::string name, Yaml::Node generatorNode);
 
+    static DataGeneratorPtr createGeneratorByName(std::string name, Runtime::BufferManagerPtr bufferManager);
 
-
-      protected:
-        /**
+  protected:
+    /**
          * @brief allocates a buffer from the bufferManager
          * @return TupleBuffer
          */
-        Runtime::TupleBuffer allocateBuffer();
+    Runtime::TupleBuffer allocateBuffer();
 
-        /**
+    /**
          * @brief
          * @param bufferSize
          * @return
          */
-        Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
+    Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
-      private:
-        Runtime::BufferManagerPtr bufferManager;
-    };
-}
+  private:
+    Runtime::BufferManagerPtr bufferManager;
+};
+}// namespace NES::Benchmark::DataGeneration
 
 #endif//NES_DATAGENERATOR_HPP

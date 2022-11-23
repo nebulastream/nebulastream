@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RECONNECTPOINT_HPP
-#define NES_RECONNECTPOINT_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 
@@ -28,4 +28,4 @@ struct ReconnectPoint {
     ReconnectPrediction reconnectPrediction;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif//NES_RECONNECTPOINT_HPP
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_

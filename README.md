@@ -25,5 +25,19 @@ The codebase is structured in the following components:
 |------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | [nes-common](nes-common)     | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions. |
 | [nes-compiler](nes-compiler) | This component contains functionalities to compile source code or intermediate representations to executable binaries.      |
+| [nes-runtime](nes-runtime)   | This component contains all runtime components for the network stack and the memory managment                               |
 | [nes-core](nes-core)         | This component contains the main aspects of the overall system.                                                             |
 | [nes-client](nes-client)     | This component contains the C++ client to interact with NebulaStream from C++ applications.                                 |
+
+
+### Dependencies:
+
+```mermaid
+graph TD;
+  common-->compiler;
+  common-->runtime;
+  compiler-->core;
+  runtime-->core;
+  common-->core;
+  core-->client;
+```

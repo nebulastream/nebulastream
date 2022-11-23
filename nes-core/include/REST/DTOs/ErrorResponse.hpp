@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ERRORRESPONSE_HPP
-#define NES_ERRORRESPONSE_HPP
+#ifndef NES_CORE_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_
+#define NES_CORE_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_
 
 #include <oatpp/core/Types.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -44,4 +44,4 @@ class ErrorResponse : public oatpp::DTO {
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif//NES_ERRORRESPONSE_HPP
+#endif// NES_CORE_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_

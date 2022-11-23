@@ -27,23 +27,24 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         measurementsCsv << "," << allProcessedTuples[measurementIdx];
         measurementsCsv << "," << allLatencySum[measurementIdx];
         measurementsCsv << "," << allQueueSizeSums[measurementIdx];
+        measurementsCsv << "," << allAvailGlobalBufferSum[measurementIdx];
+        measurementsCsv << "," << allAvailFixedBufferSum[measurementIdx];
 
-        double timeDeltaSeconds = (allTimeStamps[measurementIdx+1] - allTimeStamps[measurementIdx]) / 1000;
-        double tuplesPerSecond = (allProcessedTuples[measurementIdx+1] - allProcessedTuples[measurementIdx]) /
-                                 (timeDeltaSeconds);
-        double tasksPerSecond =  (allProcessedTuples[measurementIdx+1] - allProcessedTuples[measurementIdx]) /
-                                 (timeDeltaSeconds);
-        double bufferPerSecond = (allProcessedBuffers[measurementIdx+1] - allProcessedBuffers[measurementIdx]) /
-                                 (timeDeltaSeconds);
-        double mebiBPerSecond =  (tuplesPerSecond * schemaSizeInByte) / (1024 * 1024);
+        double timeDeltaSeconds = (allTimeStamps[measurementIdx + 1] - allTimeStamps[measurementIdx]) / 1000;
+        uint64_t tuplesPerSecond =
+            (allProcessedTuples[measurementIdx + 1] - allProcessedTuples[measurementIdx]) / (timeDeltaSeconds);
+        uint64_t tasksPerSecond =
+            (allProcessedTasks[measurementIdx + 1] - allProcessedTasks[measurementIdx]) / (timeDeltaSeconds);
+        uint64_t bufferPerSecond =
+            (allProcessedBuffers[measurementIdx + 1] - allProcessedBuffers[measurementIdx]) / (timeDeltaSeconds);
+        uint64_t mebiBPerSecond = (tuplesPerSecond * schemaSizeInByte) / (1024 * 1024);
 
         measurementsCsv << "," << tuplesPerSecond << "," << tasksPerSecond;
         measurementsCsv << "," << bufferPerSecond << "," << mebiBPerSecond;
-
 
         vecCsvStrings.push_back(measurementsCsv.str());
     }
 
     return vecCsvStrings;
 }
-}
+}// namespace NES::Benchmark::Measurements

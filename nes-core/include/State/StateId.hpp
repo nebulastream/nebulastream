@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_STATE_STATEID_HPP_
-#define NES_INCLUDE_STATE_STATEID_HPP_
+#ifndef NES_CORE_INCLUDE_STATE_STATEID_HPP_
+#define NES_CORE_INCLUDE_STATE_STATEID_HPP_
 
 #include <cstdint>
 #include <functional>
@@ -44,4 +44,4 @@ struct hash<NES::StateId> {
 };
 }// namespace std
 
-#endif// NES_INCLUDE_STATE_STATEID_HPP_
+#endif// NES_CORE_INCLUDE_STATE_STATEID_HPP_

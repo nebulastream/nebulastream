@@ -19,7 +19,7 @@
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-    
+
 class EmitState : public OperatorState {
   public:
     EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
@@ -58,8 +58,7 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.emitBuffer(resultBuffer);
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider) : 
-    maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), 
-    memoryProvider(std::move(memoryProvider)) {}
+Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
+    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -622,7 +622,25 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(thresholdWindow->equal(thresholdWindow));
+        EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));
+    }
+
+    // threshold window operator with minimum count
+    {
+        auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
+        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
+        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+        auto windowDefinition =
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                       windowType,
+                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                       triggerPolicy,
+                                                       triggerAction,
+                                                       0);
+        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));
     }
 }
 

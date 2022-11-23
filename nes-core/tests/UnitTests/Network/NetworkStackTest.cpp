@@ -79,6 +79,7 @@ class NetworkStackTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_INFO("Setup NetworkStackTest");
         freeDataPort = getAvailablePort();
     }
@@ -87,6 +88,7 @@ class NetworkStackTest : public Testing::NESBaseTest {
     void TearDown() override {
         freeDataPort.reset();
         NES_INFO("TearDown NetworkStackTest");
+        Testing::NESBaseTest::TearDown();
     }
 
   protected:
@@ -503,6 +505,111 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
                 senderChannel->sendBuffer(buffer, sizeof(uint64_t));
+            }
+            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            senderChannel.reset();
+            netManager->unregisterSubpartitionProducer(nesPartition);
+        }
+        netManager->unregisterSubpartitionProducer(nesPartition);
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(bufferReceived, totalNumBuffer);
+}
+
+TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
+    std::promise<bool> completedProm;
+    static const char* ctrl = "nebula";
+    struct Record {
+        uint64_t val;
+        uint32_t logical;
+    };
+    uint64_t totalNumBuffer = 10;
+    std::atomic<std::uint64_t> bufferReceived = 0;
+    auto nesPartition = NesPartition(1, 22, 333, 444);
+    try {
+        class ExchangeListener : public ExchangeProtocolListener {
+
+          public:
+            std::promise<bool>& completedProm;
+            std::atomic<std::uint64_t>& bufferReceived;
+
+            ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
+                : completedProm(completedProm), bufferReceived(bufferReceived) {}
+
+            void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
+
+                ASSERT_TRUE(buffer.getBufferSize() == bufferSize);
+                (volatile void) id.getQueryId();
+                (volatile void) id.getOperatorId();
+                (volatile void) id.getPartitionId();
+                (volatile void) id.getSubpartitionId();
+                auto* bufferContent = buffer.getBuffer<Record>();
+                for (uint64_t j = 0; j < buffer.getNumberOfTuples(); ++j) {
+                    ASSERT_EQ(bufferContent[j].val, j);
+                    auto idx = bufferContent[j].logical;
+                    ASSERT_NE(idx, uint32_t(-1));
+                    auto child = buffer.loadChildBuffer(idx);
+                    ASSERT_EQ(0, strcmp(ctrl, child.getBuffer<char>()));
+                }
+
+                bufferReceived++;
+            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+        auto netManager =
+            NetworkManager::create(0,
+                                   "127.0.0.1",
+                                   *freeDataPort,
+                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+                                   buffMgr);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+        std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer, nodeLocation] {
+            // register the incoming channel
+            netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
+            auto startTime = std::chrono::steady_clock::now().time_since_epoch();
+            EXPECT_TRUE(completedProm.get_future().get());
+            auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
+            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
+            double bytes = totalNumBuffer * bufferSize;
+            double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
+            NES_DEBUG("Sent " << bytes << " bytes :: throughput " << throughput << std::endl);
+            netManager->unregisterSubpartitionConsumer(nesPartition);
+        });
+
+        auto senderChannel =
+            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
+
+        if (senderChannel == nullptr) {
+            NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
+            completedProm.set_value(false);
+        } else {
+            for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                auto buffer = buffMgr->getBufferBlocking();
+                auto content = buffer.getBuffer<Record>();
+                for (uint64_t j = 0; j < bufferSize / sizeof(Record); ++j) {
+                    content[j].val = j;
+                    auto optBuf = buffMgr->getUnpooledBuffer(7);
+                    ASSERT_TRUE(!!optBuf);
+                    memcpy((*optBuf).getBuffer<char>(), "nebula", 7);
+                    optBuf->setNumberOfTuples(7);
+                    auto idx = buffer.storeChildBuffer(*optBuf);
+                    content[j].logical = idx;
+                }
+                buffer.setNumberOfTuples(bufferSize / sizeof(Record));
+                ASSERT_EQ(buffer.getNumberOfChildrenBuffer(), bufferSize / sizeof(Record));
+                senderChannel->sendBuffer(buffer, sizeof(Record));
             }
             senderChannel->close(Runtime::QueryTerminationType::Graceful);
             senderChannel.reset();

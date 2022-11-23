@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_ORIGINID_HPP_
-#define NES_INCLUDE_OPERATORS_ORIGINID_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_ORIGINID_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_ORIGINID_HPP_
 
 #include <cstdint>
 
@@ -29,4 +29,4 @@ using OriginId = uint64_t;
 static constexpr OriginId INVALID_ORIGIN_ID = 0;
 }// namespace NES
 
-#endif// NES_INCLUDE_OPERATORS_ORIGINID_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_ORIGINID_HPP_

@@ -11,26 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Runtime/RuntimeExecutionContext.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Util/Timer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/Timer.hpp>
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental {
 
-CompilationBasedPipelineExecutionEngine::CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend): PipelineExecutionEngine(), backend(backend) {}
+CompilationBasedPipelineExecutionEngine::CompilationBasedPipelineExecutionEngine(std::shared_ptr<PipelineCompilerBackend> backend)
+    : PipelineExecutionEngine(), backend(backend) {}
 
 std::shared_ptr<ExecutablePipeline>
 CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) {
@@ -42,7 +43,8 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     auto runtimeExecutionContext = Runtime::Execution::RuntimeExecutionContext(nullptr, pipelineContext.get());
     auto runtimeExecutionContextRef = Nautilus::Value<Nautilus::MemRef>(
         std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &runtimeExecutionContext)));
-    runtimeExecutionContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, Nautilus::IR::Types::StampFactory::createAddressStamp());
+    runtimeExecutionContextRef.ref =
+        Nautilus::Tracing::ValueRef(INT32_MAX, 3, Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto executionContext = Nautilus::RuntimeExecutionContext(runtimeExecutionContextRef);
 
     auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
@@ -63,7 +65,7 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("NESIRGeneration");
     std::cout << ir->toString() << std::endl;
-    std::cout <<timer << std::endl;
+    std::cout << timer << std::endl;
     //ir = loopInferencePhase.apply(ir);
 
     return backend->compile(pipelineContext, physicalOperatorPipeline, ir);

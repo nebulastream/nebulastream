@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOLOCATION_LOCATIONINDEX_HPP
-#define NES_GEOLOCATION_LOCATIONINDEX_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -161,4 +161,4 @@ class LocationIndex {
 };
 }//namespace Spatial::Index::Experimental
 }//namespace NES
-#endif//NES_GEOLOCATION_LOCATIONINDEX_HPP
+#endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_

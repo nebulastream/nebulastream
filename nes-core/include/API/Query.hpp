@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_API_QUERY_HPP_
-#define NES_INCLUDE_API_QUERY_HPP_
+#ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
+#define NES_CORE_INCLUDE_API_QUERY_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -595,4 +595,4 @@ using QueryPtr = std::shared_ptr<Query>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_API_QUERY_HPP_
+#endif// NES_CORE_INCLUDE_API_QUERY_HPP_

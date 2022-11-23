@@ -1,5 +1,97 @@
 # Changelog
 
+## [v0.3.59](https://github.com/nebulastream/nebulastream/tree/v0.3.59) (2022-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.58...v0.3.59)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Enable sending nested TupleBuffer [\#3147](https://github.com/nebulastream/nebulastream/issues/3147)
+
+## [v0.3.58](https://github.com/nebulastream/nebulastream/tree/v0.3.58) (2022-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.57...v0.3.58)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add log2\(x\) expression [\#3048](https://github.com/nebulastream/nebulastream/issues/3048)
+- \[DBPRO\] Add log10\(x\) expression [\#3047](https://github.com/nebulastream/nebulastream/issues/3047)
+- \[DBPRO\] Add ln\(x\) expression [\#3046](https://github.com/nebulastream/nebulastream/issues/3046)
+
+## [v0.3.57](https://github.com/nebulastream/nebulastream/tree/v0.3.57) (2022-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.56...v0.3.57)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add a "minimum-count" support for threshold windows  [\#3135](https://github.com/nebulastream/nebulastream/issues/3135)
+
+## [v0.3.56](https://github.com/nebulastream/nebulastream/tree/v0.3.56) (2022-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.55...v0.3.56)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Error while loading `libmlir_c_runner_utils.so.14` [\#3215](https://github.com/nebulastream/nebulastream/issues/3215)
+
+## [v0.3.55](https://github.com/nebulastream/nebulastream/tree/v0.3.55) (2022-11-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.54...v0.3.55)
+
+### Bug Fixes 🐛
+
+- \[BUG\] TF Lite Model Loading Issue [\#3197](https://github.com/nebulastream/nebulastream/issues/3197)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add substring expression [\#3184](https://github.com/nebulastream/nebulastream/issues/3184)
+
+## [v0.3.54](https://github.com/nebulastream/nebulastream/tree/v0.3.54) (2022-11-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.53...v0.3.54)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Improve Kafka support [\#2942](https://github.com/nebulastream/nebulastream/issues/2942)
+
+## [v0.3.53](https://github.com/nebulastream/nebulastream/tree/v0.3.53) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.52...v0.3.53)
+
+### Miscellaneous Issues ✌️
+
+- Integrate QueryCompiler backend that uses Nautilus [\#3089](https://github.com/nebulastream/nebulastream/issues/3089)
+
+## [v0.3.52](https://github.com/nebulastream/nebulastream/tree/v0.3.52) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.51...v0.3.52)
+
+**Implemented enhancements:**
+
+- \[Feature\] Add CORS to Oatpp [\#3141](https://github.com/nebulastream/nebulastream/issues/3141)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Compiler warning in benchmark code [\#3198](https://github.com/nebulastream/nebulastream/issues/3198)
+- \[BUG\] Fix tests which use locationproviderCSV [\#3170](https://github.com/nebulastream/nebulastream/issues/3170)
+- \[BUG\] Union only uses one logical stream name for output [\#2956](https://github.com/nebulastream/nebulastream/issues/2956)
+
+## [v0.3.51](https://github.com/nebulastream/nebulastream/tree/v0.3.51) (2022-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.50...v0.3.51)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add support for variable-sized image data for ELEGANT use case [\#3157](https://github.com/nebulastream/nebulastream/issues/3157)
+
+## [v0.3.50](https://github.com/nebulastream/nebulastream/tree/v0.3.50) (2022-11-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.49...v0.3.50)
+
+### Miscellaneous Issues ✌️
+
+- Unify Identifiiers among network, runtime, and coordinator components [\#2370](https://github.com/nebulastream/nebulastream/issues/2370)
+
 ## [v0.3.49](https://github.com/nebulastream/nebulastream/tree/v0.3.49) (2022-11-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.48...v0.3.49)

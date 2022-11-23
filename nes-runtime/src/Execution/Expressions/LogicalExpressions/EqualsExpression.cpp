@@ -25,4 +25,4 @@ Value<> EqualsExpression::execute(Record& record) const {
     return leftValue == rightValue;
 }
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

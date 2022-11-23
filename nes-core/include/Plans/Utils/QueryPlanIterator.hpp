@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
-#define NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#define NES_CORE_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 #include <Plans/Query/QueryPlan.hpp>
 #include <iterator>
 #include <stack>
@@ -96,4 +96,4 @@ class QueryPlanIterator {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#endif// NES_CORE_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_

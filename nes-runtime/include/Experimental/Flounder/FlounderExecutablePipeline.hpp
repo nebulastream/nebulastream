@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_FlounderExecutablePipeline_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_FlounderExecutablePipeline_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDEREXECUTABLEPIPELINE_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDEREXECUTABLEPIPELINE_HPP_
 #include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Runtime/RuntimePipelineContext.hpp>
@@ -34,4 +34,4 @@ class FlounderExecutablePipeline : public ExecutablePipeline {
 
 }// namespace NES::ExecutionEngine::Experimental
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_FlounderExecutablePipeline_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDEREXECUTABLEPIPELINE_HPP_

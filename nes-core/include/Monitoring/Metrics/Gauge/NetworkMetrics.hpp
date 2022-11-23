@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
+#define NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -113,4 +113,4 @@ nlohmann::json asJson(const NetworkMetrics& metrics);
 
 }// namespace NES::Monitoring
 
-#endif// NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_

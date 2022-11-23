@@ -21,15 +21,13 @@ std::tuple<bool, Tag> SymbolicExecutionPath::operator[](uint64_t size) { return 
 uint64_t SymbolicExecutionPath::getSize() { return path.size(); }
 std::ostream& operator<<(std::ostream& os, const SymbolicExecutionPath& path) {
     os << "[";
-    for(auto p:path.path){
-       os << std::get<0>(p) << ",";
+    for (auto p : path.path) {
+        os << std::get<0>(p) << ",";
     }
     os << "]";
     return os;
 };
 
-std::vector<std::tuple<bool, Tag>>& SymbolicExecutionPath::getPath() {
-    return path;
-}
+std::vector<std::tuple<bool, Tag>>& SymbolicExecutionPath::getPath() { return path; }
 
 }// namespace NES::Nautilus::Tracing

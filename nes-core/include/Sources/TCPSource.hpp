@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_TCPSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -125,4 +125,4 @@ class TCPSource : public DataSource {
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES
-#endif//NES_INCLUDE_SOURCES_TCPSOURCE_HPP
+#endif// NES_CORE_INCLUDE_SOURCES_TCPSOURCE_HPP_

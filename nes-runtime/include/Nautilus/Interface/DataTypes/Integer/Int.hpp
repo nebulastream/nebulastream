@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_INT_HPP_
-#define NES_NAUTILUS_INTERFACE_DATATYPES_INT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
@@ -181,6 +181,7 @@ class UInt16 : public Int {
     uint16_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint16_t value;
 };
@@ -205,6 +206,7 @@ class UInt32 : public Int {
     uint32_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint32_t value;
 };
@@ -229,10 +231,11 @@ class UInt64 : public Int {
     uint64_t getValue() const;
     int64_t getRawInt() const override;
     std::string toString() override;
+
   private:
     uint64_t value;
 };
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_DATATYPES_INT_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_

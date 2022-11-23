@@ -12,31 +12,35 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #ifdef ENABLE_KAFKA_BUILD
 #include <cstdint>
 #include <memory>
 #include <string>
-
-#include <Sources/DataSource.hpp>
-#include <cppkafka/cppkafka.h>
+namespace cppkafka {
+class Configuration;
+class Consumer;
+}// namespace cppkafka
 
 namespace NES {
 
 class KafkaSource : public DataSource {
-
   public:
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
                 Runtime::QueryManagerPtr queryManager,
+                uint64_t numbersOfBufferToProduce,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout,
+                std::string offsetMode,
+                OriginId originId,
                 OperatorId operatorId,
-                size_t numSourceLocalBuffers);
+                size_t numSourceLocalBuffers,
+                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**
      * @brief Get source type
@@ -62,6 +66,11 @@ class KafkaSource : public DataSource {
     std::string getTopic() const;
 
     /**
+     * @brief Get kafka offset
+     */
+    std::string getOffsetMode() const;
+
+    /**
      * @brief Get kafka group id
      */
     std::string getGroupId() const;
@@ -72,29 +81,30 @@ class KafkaSource : public DataSource {
     bool isAutoCommit() const;
 
     /**
-     * @brief Get kafka configuration
-     */
-    const cppkafka::Configuration& getConfig() const;
-
-    /**
      * @brief Get kafka connection timeout
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
-    const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
 
   private:
-    void _connect();
+    /**
+     * @brief method to connect kafka using the host and port specified before
+     * check if already connected, if not connect try to connect, if already connected return
+     * @return bool indicating if connection could be established
+     */
+    bool connect();
 
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
-    cppkafka::Configuration config;
+    std::unique_ptr<cppkafka::Configuration> config;
+    bool connected{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
+    std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
 #endif
-#endif// NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_

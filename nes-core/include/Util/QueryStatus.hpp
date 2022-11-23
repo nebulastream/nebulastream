@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYSTATUS_HPP
-#define NES_QUERYSTATUS_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_
+#define NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_
 
 #include <cinttypes>
 #include <stdint.h>
@@ -73,4 +73,4 @@ class QueryStatus {
 
 }// namespace NES
 
-#endif//NES_QUERYSTATUS_HPP
+#endif// NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_

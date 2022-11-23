@@ -12,13 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYCATALOGSERVICE_HPP
-#define NES_QUERYCATALOGSERVICE_HPP
+#ifndef NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_
 
-#include <Operators/OperatorId.hpp>
-#include <Plans/Global/Query/SharedQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/QueryStatus.hpp>
 #include <mutex>
 
@@ -186,4 +183,4 @@ class QueryCatalogService {
 };
 }// namespace NES
 
-#endif//NES_QUERYCATALOGSERVICE_HPP
+#endif// NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_

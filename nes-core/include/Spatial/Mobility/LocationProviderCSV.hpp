@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
-#define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
 #include "LocationProvider.hpp"
 #include <vector>
 
@@ -65,15 +65,15 @@ class LocationProviderCSV : public LocationProvider {
   private:
     /**
      * @brief get the waypoint at the position of the iterator
-     * @param it: the iterator which marks the position in the vector of waypoints
+     * @param index: the iterator which marks the position in the vector of waypoints
      * @return the waypoint
      */
-    Waypoint getWaypointAt(std::vector<Waypoint>::iterator it);
+    Waypoint getWaypointAt(size_t index);
 
     Timestamp startTime;
     std::vector<Waypoint> waypoints;
-    std::vector<Waypoint>::iterator nextWaypoint;
+    size_t nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif//NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_

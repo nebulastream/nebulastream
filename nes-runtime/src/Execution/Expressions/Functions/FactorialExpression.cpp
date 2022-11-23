@@ -13,8 +13,8 @@
 */
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <stdio.h>
 #include <cmath>
+#include <stdio.h>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,14 +26,13 @@ FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressi
  * @param x double
  * @return double
  */
-double calculateFactorial(double x) {return std::tgamma(x+1);}
-
+double calculateFactorial(double x) { return std::tgamma(x + 1); }
 
 Value<> FactorialExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 
-    if (leftValue->isType<Int8>()){
+    if (leftValue->isType<Int8>()) {
         return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int16>());
@@ -59,4 +58,4 @@ Value<> FactorialExpression::execute(NES::Nautilus::Record& record) const {
     }
 }
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

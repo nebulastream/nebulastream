@@ -11,13 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #ifdef ENABLE_KAFKA_BUILD
-
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sources/DataSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cppkafka/cppkafka.h>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -28,54 +27,74 @@ namespace NES {
 KafkaSource::KafkaSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
+                         uint64_t numbersOfBufferToProduce,
                          const std::string brokers,
                          const std::string topic,
                          const std::string groupId,
                          bool autoCommit,
                          uint64_t kafkaConsumerTimeout,
+                         std::string offsetMode,
                          OperatorId operatorId,
                          OriginId originId,
-                         size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, originId, numSourceLocalBuffers), brokers(brokers),
-      topic(topic), groupId(groupId), autoCommit(autoCommit),
-      kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
+                         size_t numSourceLocalBuffers,
+                         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+    : DataSource(std::move(schema),
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 operatorId,
+                 originId,
+                 numSourceLocalBuffers,
+                 GatheringMode::INTERVAL_MODE,
+                 std::move(successors)),
+      brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
+      kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode) {
 
-    config = {{"metadata.broker.list", brokers.c_str()},
-              {"group.id", groupId},
-              {"enable.auto.commit", autoCommit},
-              {"auto.offset.reset", "latest"}};
-    _connect();
-    NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers << ", topic " << topic);
+    config = std::make_unique<cppkafka::Configuration>();
+    config->set("metadata.broker.list", brokers.c_str());
+    config->set("group.id", groupId);
+    config->set("enable.auto.commit", autoCommit == true ? "true" : "false");
+    config->set("auto.offset.reset", offsetMode);
+    this->numBuffersToProcess = numbersOfBufferToProduce;
 }
 
 KafkaSource::~KafkaSource() {}
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
+    if (!connect()) {
+        NES_DEBUG("Connect Kafa Source");
+    }
+    uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
+    while (true) {
+        cppkafka::Message msg = consumer->poll();
+        if (msg) {
+            if (msg.get_error()) {
+                if (!msg.is_eof()) {
+                    NES_WARNING("KAFKASOURCE received error notification: " << msg.get_error());
+                }
+                return std::nullopt;
+            } else {
+                Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
 
-    cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
+                const uint64_t tupleSize = schema->getSchemaSizeInBytes();
+                const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
+                const uint64_t payloadSize = msg.get_payload().get_size();
 
-    if (msg) {
-        if (msg.get_error()) {
-            if (!msg.is_eof()) {
-                NES_WARNING("KAFKASOURCE received error notification: " << msg.get_error());
+                NES_ASSERT(msg.get_payload().get_size() < buffer.getBufferSize(), "The buffer is not large enough");
+                NES_TRACE("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
+                                                     << ", msg: " << msg.get_payload());
+
+                std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
+                buffer.setNumberOfTuples(tupleCnt);
+
+                // XXX: maybe commit message every N times
+                if (!autoCommit) {
+                    consumer->commit(msg);
+                }
+                return buffer;
             }
-            return std::nullopt;
         } else {
-            Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
-
-            const uint64_t tupleSize = schema->getSchemaSizeInBytes();
-            const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
-
-            NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload());
-
-            std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
-            buffer.setNumberOfTuples(tupleCnt);
-
-            // XXX: maybe commit message every N times
-            if (!autoCommit)
-                consumer->commit(msg);
-            return buffer;
+            NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
         }
     }
 
@@ -88,31 +107,41 @@ std::string KafkaSource::toString() const {
     ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "BROKER(" << brokers << "), ";
     ss << "TOPIC(" << topic << "). ";
+    ss << "OFFSETMODE(" << offsetMode << "). ";
     return ss.str();
 }
 
-void KafkaSource::_connect() {
-    consumer = std::make_unique<cppkafka::Consumer>(config);
-    // set the assignment callback
-    consumer->set_assignment_callback([&](cppkafka::TopicPartitionList& topicPartitions) {
-        for (auto&& tpp : topicPartitions) {
-            if (tpp.get_offset() == cppkafka::TopicPartition::Offset::OFFSET_INVALID) {
-                NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition() << " get invalid offset "
-                                     << tpp.get_offset());
-                // TODO: enforce to set offset to -1 or abort ?
-                auto tuple = consumer->query_offsets(tpp);
-                uint64_t high = std::get<1>(tuple);
-                tpp.set_offset(high - 1);
-            }
-        }
-        NES_DEBUG("Got assigned " << topicPartitions.size() << " partitions");
-    });
-    // set the revocation callback
-    consumer->set_revocation_callback([&](const cppkafka::TopicPartitionList& topicPartitions) {
-        NES_DEBUG(topicPartitions.size() << " partitions revoked");
-    });
+bool KafkaSource::connect() {
+    if (!connected) {
+        DataSource::open();
+        // Construct the configuration
+        cppkafka::Configuration config = {{"metadata.broker.list", brokers},
+                                          {"group.id", groupId},
+                                          {"auto.offset.reset", "earliest"},
+                                          // Disable auto commit
+                                          {"enable.auto.commit", false}};
 
-    consumer->subscribe({topic});
+        // Create the consumer
+        consumer = std::make_unique<cppkafka::Consumer>(config);
+
+        // Print the assigned partitions on assignment
+        consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
+            NES_DEBUG("Got assigned: " << partitions);
+        });
+
+        // Print the revoked partitions on revocation
+        consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
+            NES_DEBUG("Got revoked: " << partitions);
+        });
+
+        // Subscribe to the topic
+        consumer->subscribe({topic});
+
+        NES_DEBUG("Consuming messages from topic " << topic << " brocker=" << brokers << " groupid=" << groupId);
+
+        connected = true;
+    }
+    return connected;
 }
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
@@ -121,15 +150,12 @@ std::string KafkaSource::getBrokers() const { return brokers; }
 
 std::string KafkaSource::getTopic() const { return topic; }
 
+std::string KafkaSource::getOffsetMode() const { return offsetMode; }
+
 std::string KafkaSource::getGroupId() const { return groupId; }
 
 bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
-const cppkafka::Configuration& KafkaSource::getConfig() const { return config; }
-
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
-
-const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const { return consumer; }
-
 }// namespace NES
 #endif

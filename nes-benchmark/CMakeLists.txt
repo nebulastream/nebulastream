@@ -12,7 +12,6 @@
 
 message(STATUS "Building benchmarks...")
 
-
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
     target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
@@ -35,9 +34,8 @@ target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr 
 
 # Add E2E benchmark runner with custom e2e test config
 add_nes_benchmarks(e2e-benchmark-runner "E2ERunner.cpp")
-add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml --logPath=e2eRunner.log)
+add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner --configPath=../../nes-benchmark/config-examples/E2EConfigs/e2e_test_config.yaml)
 message(STATUS "Added test e2e-benchmark-runner")
-
 
 #-------------------------------##################------------------------------
 #-------------------------------#Micro Benchmarks#------------------------------

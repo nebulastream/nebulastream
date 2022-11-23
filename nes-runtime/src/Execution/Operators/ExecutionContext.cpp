@@ -80,6 +80,19 @@ void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std:
     localStateMap.emplace(op, std::move(state));
 }
 
-void ExecutionContext::setGlobalOperatorState(const Operators::Operator*, std::unique_ptr<Operators::OperatorState>) {}
+void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
+    auto handlers = pipelineCtx->getOperatorHandlers();
+    auto size = handlers.size();
+    if (index >= size) {
+        NES_THROW_RUNTIME_ERROR("operator handler at index " + std::to_string(index) + " is not registered");
+    }
+    return handlers[index].get();
+}
+
+Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) {
+    Value<UInt64> handlerIndexValue = Value<UInt64>(handlerIndex);
+    return FunctionCall<>("getGlobalOperatorHandlerProxy", getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
+}
 
 }// namespace NES::Runtime::Execution

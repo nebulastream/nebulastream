@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
-#define NES_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
+#ifndef NES_CORE_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
+#define NES_CORE_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
 
 #include <Services/AbstractHealthCheckService.hpp>
 
@@ -42,4 +42,4 @@ using WorkerHealthCheckServicePtr = std::shared_ptr<WorkerHealthCheckService>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SERVICES_WorkerHealthCheckService_HPP_
+#endif// NES_CORE_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_

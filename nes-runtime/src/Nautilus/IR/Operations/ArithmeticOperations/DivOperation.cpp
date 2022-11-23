@@ -22,7 +22,6 @@ DivOperation::DivOperation(OperationIdentifier identifier, OperationPtr leftInpu
     rightInput->addUsage(this);
 }
 
-
 std::string DivOperation::toString() {
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " / " + getRightInput()->getIdentifier();
 }
@@ -30,4 +29,4 @@ bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES
+}// namespace NES::Nautilus::IR::Operations

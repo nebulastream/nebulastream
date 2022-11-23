@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
-#define NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #include <Nautilus/Tracing/Tag.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
@@ -30,8 +30,6 @@ class ExecutionTrace;
 class TraceOperation;
 class OperationRef;
 class Tag;
-
-
 
 /**
  * @brief Represents the thread local trace context.
@@ -58,7 +56,6 @@ TraceContext* getThreadLocalTraceContext();
 void initThreadLocalTraceContext();
 void disableThreadLocalTraceContext();
 
-
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     initThreadLocalTraceContext();
@@ -69,8 +66,6 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     return tracer->getExecutionTrace();
 }
 
-
-
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

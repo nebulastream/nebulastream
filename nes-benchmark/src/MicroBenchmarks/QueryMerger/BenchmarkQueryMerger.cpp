@@ -128,7 +128,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
+void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     OptimizerConfiguration optimizerConfiguration;
@@ -244,7 +244,7 @@ int main(int argc, const char* argv[]) {
 
     //Load the configuration file
     if (configPath != commandLineParams.end()) {
-        loadConfigFromYAMLFile(configPath->second.c_str());
+        loadConfigFromYAMLFile(configPath->second);
     } else {
         NES_ERROR("Configuration file is not provided");
         return -1;
@@ -266,7 +266,7 @@ int main(int argc, const char* argv[]) {
 
         //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
         const uint32_t numOfQueries = queries.size();
-        QueryPtr queryObjects[numOfQueries];
+        std::vector<QueryPtr> queryObjects;
 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -352,7 +352,7 @@ int main(int argc, const char* argv[]) {
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryStatus() != QueryStatus::Running) {
                     //Sleep for 100 milliseconds
-                    sleep(.1);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())

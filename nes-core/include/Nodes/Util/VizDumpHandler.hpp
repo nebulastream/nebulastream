@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
-#define NES_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
+#define NES_CORE_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
 
 #include <Nodes/Util/DumpHandler.hpp>
 #include <memory>
@@ -154,4 +154,4 @@ class VizDumpHandler : public DumpHandler {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_

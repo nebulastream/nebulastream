@@ -58,7 +58,7 @@ Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
 
 TagAddress Tag::createCurrentAddress() {
 #pragma GCC diagnostic ignored "-Wframe-address"
-    return (uint64_t) (__builtin_return_address(3));
+    return (uint64_t)(__builtin_return_address(3));
 }
 
 std::size_t Tag::TagHasher::operator()(const Tag& k) const {

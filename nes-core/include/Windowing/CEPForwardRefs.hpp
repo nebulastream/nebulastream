@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
-#define NES_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
 #include <memory>
 
 namespace NES::CEP {
@@ -22,4 +22,4 @@ class CEPOperatorHandler;
 using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEPOperatorHandler>;
 
 }// namespace NES::CEP
-#endif// NES_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_CEPFORWARDREFS_HPP_

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
-#define NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <memory>
 #include <vector>
@@ -121,4 +121,4 @@ class QueryPlacementPhase {
     bool queryReconfiguration;
 };
 }// namespace NES::Optimizer
-#endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

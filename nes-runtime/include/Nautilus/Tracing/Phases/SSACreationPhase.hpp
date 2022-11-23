@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_SSACREATIONPHASE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_SSACREATIONPHASE_HPP_
 
 #include <memory>
 #include <set>
@@ -50,7 +50,6 @@ class SSACreationPhase {
         std::shared_ptr<ExecutionTrace> process();
 
       private:
-
         /**
          * @brief Converts a single basic block to SSA form
          * @param block reference to the basic block
@@ -86,4 +85,4 @@ class SSACreationPhase {
 };
 
 }// namespace NES::Nautilus::Tracing
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_SSACREATIONPHASE_HPP_

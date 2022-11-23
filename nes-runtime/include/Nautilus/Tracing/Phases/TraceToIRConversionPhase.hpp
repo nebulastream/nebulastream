@@ -11,9 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
-#include <Nautilus/Util/Frame.hpp>
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -28,6 +27,7 @@
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <Nautilus/Util/Frame.hpp>
 namespace NES::Nautilus::Tracing {
 
 /**
@@ -97,4 +97,4 @@ class TraceToIRConversionPhase {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_

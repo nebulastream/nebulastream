@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDFLOATOPERATION_HPP
-#define NES_ADDFLOATOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_ADDOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_ADDOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -28,9 +28,10 @@ class AddOperation : public Operation {
     OperationPtr getRightInput();
     std::string toString() override;
     bool classof(const Operation* Op);
+
   private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_ADDFLOATOPERATION_HPP
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_ADDOPERATION_HPP_

@@ -1,5 +1,5 @@
-#ifndef NES_NES_CORE_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
-#define NES_NES_CORE_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
+#define NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
 
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
@@ -1013,4 +1013,4 @@ constexpr E& operator^=(E& lhs, E rhs) noexcept {
 #endif
 
 #endif// NEARGYE_MAGIC_ENUM_HPP
-#endif//NES_NES_CORE_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_

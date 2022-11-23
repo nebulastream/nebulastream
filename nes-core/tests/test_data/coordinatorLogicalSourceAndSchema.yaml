@@ -25,3 +25,7 @@ logicalSources:
       - name: "csv_id_4"
         type: "CHAR"
         length: 25
+  - logicalSourceName: "lsn3"
+    fields:
+      - name: "csv_id_5"
+        type: "TEXT"

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_EQUALSEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_EQUALSEXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 /**
@@ -31,6 +31,6 @@ class EqualsExpression : public Expression {
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_EQUALSEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_

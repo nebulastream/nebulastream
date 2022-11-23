@@ -1,0 +1,35 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 8
+numberOfSources: 1
+
+# engine configuration parameter
+#numberOfBuffersInGlobalBufferManager: 32768
+numberOfBuffersInGlobalBufferManager: 32768
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 131072
+
+##benchmark parameter for the entire run
+dataGenerator: YSBKafka
+##broker,topic,group
+connectionString: "localhost:9092,nesKafka,0"
+numberOfPreAllocatedBuffer: 100
+logicalStreamName: ysb
+dataProvider: Internal
+#dataProviderMode: ZeroCopy
+dataProviderMode: Kafka
+outputFile: YSBQuery.csv
+benchmarkName: YSBQuery
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 50000
+scalability: scale-up
+logLevel: LOG_DEBUG
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 0
+numberOfMeasurementsToCollect: 3

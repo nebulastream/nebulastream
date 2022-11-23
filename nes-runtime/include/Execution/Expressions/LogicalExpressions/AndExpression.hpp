@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_ANDEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_ANDEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
@@ -33,4 +33,4 @@ class AndExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_EQUALSEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSION_HPP_

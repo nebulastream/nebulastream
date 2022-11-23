@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_EXCEPTION_HPP_
-#define NES_NAUTILUS_EXCEPTION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Nautilus {
 /**
@@ -21,7 +21,8 @@ namespace NES::Nautilus {
  */
 class InterpreterException : public Exceptions::RuntimeException {
   public:
-    explicit InterpreterException(const std::string& message, const std::source_location location = std::source_location::current());
+    explicit InterpreterException(const std::string& message,
+                                  const std::source_location location = std::source_location::current());
 };
-}
-#endif//NES_NAUTILUS_EXCEPTION_HPP_
+}// namespace NES::Nautilus
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_

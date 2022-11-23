@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASH_HPP_
-#define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASH_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASH_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASH_HPP_
 
 #include <cstdint>
 #include <functional>
@@ -129,4 +129,4 @@ class Hash {
 
 }// namespace NES::Experimental
 
-#endif// NES_INCLUDE_RUNTIME_TUPLE_BUFFER_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASH_HPP_

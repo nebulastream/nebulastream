@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BRANCHOPERATION_HPP
-#define NES_BRANCHOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
@@ -30,9 +30,10 @@ class BranchOperation : public Operation {
 
     BasicBlockInvocation& getNextBlockInvocation();
     std::string toString() override;
-    static bool classof(const Operation *Op);
+    static bool classof(const Operation* Op);
+
   private:
     BasicBlockInvocation basicBlock;
 };
-}// namespace NES
-#endif//NES_BRANCHOPERATION_HPP
+}// namespace NES::Nautilus::IR::Operations
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_

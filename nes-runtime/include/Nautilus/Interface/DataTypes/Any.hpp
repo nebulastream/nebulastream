@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
-#define NES_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Util/CastUtils.hpp>
@@ -54,8 +54,7 @@ class TraceableType : public Any {
 };
 
 template<class X, class Y>
-    requires(std::is_same<Any, X>::value)
-inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
+requires(std::is_same<Any, X>::value) inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
     // copy value value
     return value->copy();
 }
@@ -95,4 +94,4 @@ SPECIALIZE_RAW_TO_NAUTILUS_TYPE(bool, Boolean);
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_

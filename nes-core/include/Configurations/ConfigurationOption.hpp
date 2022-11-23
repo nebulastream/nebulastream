@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
-#define NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -229,6 +229,7 @@ const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
+const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrategy";
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";
@@ -295,6 +296,7 @@ const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";
 const std::string USER_NAME_CONFIG = "userName";
 const std::string TOPIC_CONFIG = "topic";
+const std::string OFFSET_MODE_CONFIG = "offsetMode";
 const std::string QOS_CONFIG = "qos";
 const std::string CLEAN_SESSION_CONFIG = "cleanSession";
 const std::string FLUSH_INTERVAL_MS_CONFIG = "flushIntervalMS";
@@ -303,6 +305,7 @@ const std::string BROKERS_CONFIG = "brokers";
 const std::string AUTO_COMMIT_CONFIG = "autoCommit";
 const std::string GROUP_ID_CONFIG = "groupId";
 const std::string CONNECTION_TIMEOUT_CONFIG = "connectionTimeout";
+const std::string NUMBER_OF_BUFFER_TO_PRODUCE = "numberOfBuffersToProduce";
 const std::string NAME_SPACE_INDEX_CONFIG = "namespaceIndex";
 
 const std::string NODE_IDENTIFIER_CONFIG = "nodeIdentifier";
@@ -342,4 +345,4 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 }// namespace Configurations
 }// namespace NES
 
-#endif// NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

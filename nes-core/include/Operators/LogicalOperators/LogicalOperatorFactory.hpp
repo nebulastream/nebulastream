@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
-#define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Operators/OperatorId.hpp>
-#include <Operators/OriginId.hpp>
+
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
@@ -206,4 +205,4 @@ class LogicalOperatorFactory {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_

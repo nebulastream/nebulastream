@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SPATIAL_DATATYPES_CIRCLE_HPP_
-#define NES_SPATIAL_DATATYPES_CIRCLE_HPP_
+#ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_CIRCLE_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_DATATYPES_CIRCLE_HPP_
 
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
@@ -122,4 +122,4 @@ class Circle {
 };
 
 }// namespace NES
-#endif//NES_SPATIAL_DATATYPES_RECTANGLE_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_CIRCLE_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
-#define NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -105,17 +105,14 @@ auto transformReturnValues(Arg argument) {
 
 class TextValue;
 template<typename T>
-    requires std::is_same_v<TextValue*, T>
-auto createDefault();
+requires std::is_same_v<TextValue*, T> auto createDefault();
 
 class BaseListValue;
 template<typename T>
-    requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
-auto createDefault();
+requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value auto createDefault();
 
 template<typename R>
-    requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
-auto createDefault() {
+    requires std::is_fundamental_v<R> || std::is_same_v<void*, R> auto createDefault() {
     if constexpr (std::is_same<R, int8_t>::value) {
         return Value<Int8>(std::make_unique<Int8>((int8_t) 0));
     } else if constexpr (std::is_same<R, int16_t>::value) {
@@ -182,4 +179,4 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_COLLECTORS_DISKCOLLECTOR_HPP_
-#define NES_INCLUDE_MONITORING_COLLECTORS_DISKCOLLECTOR_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_
+#define NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -61,4 +61,4 @@ using DiskCollectorPtr = std::shared_ptr<DiskCollector>;
 
 }// namespace NES::Monitoring
 
-#endif//NES_INCLUDE_MONITORING_COLLECTORS_DISKCOLLECTOR_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_

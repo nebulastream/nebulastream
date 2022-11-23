@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_UTIL_SOURCELOCATION_HPP_
-#define NES_NES_CORE_INCLUDE_UTIL_SOURCELOCATION_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
+#define NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
 
 // The following provides a polyfill for the source location standard. On not supported platforms it will return a empty result.
 #if __cplusplus > 201703L && __has_builtin(__builtin_source_location) && __has_include(<source_location>)
@@ -55,4 +55,4 @@ struct source_location {
 }// namespace std
 #endif
 
-#endif//NES_NES_CORE_INCLUDE_UTIL_SOURCELOCATION_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_

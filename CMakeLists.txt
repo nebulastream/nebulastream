@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v22)
+set(VCPKG_BINARY_VERSION v23)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -418,9 +418,10 @@ endif ()
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
-    find_package(CppKafka CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} ${CppKafka_LIBRARIES})
+    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
+    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
+    message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
 endif (NES_USE_KAFKA)
 
 # Library containing OPC client
@@ -567,6 +568,9 @@ if (NES_USE_TF)
         set(LIBRARIES ${LIBRARIES} tensorflowlite_c::tensorflowlite_c)
         message(INFO "${LIBRARIES}")
     endif ()
+
+    # Include tensorflow library in the deb package and install it in the lib folder
+    install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION lib)
     add_compile_definitions(TFDEF)
 endif ()
 
@@ -611,12 +615,14 @@ endif ()
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
+# Add target for all data types
+add_subdirectory(nes-data-types)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
+# Add target for the runtime
+add_subdirectory(nes-runtime)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
-# Add target for execution engines
-add_subdirectory(nes-runtime)
 # Add target for client
 add_subdirectory(nes-client)
 

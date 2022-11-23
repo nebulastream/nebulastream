@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -28,8 +28,8 @@ class AbsExpression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr subExpression;
+    const ExpressionPtr subExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_

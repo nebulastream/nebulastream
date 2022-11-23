@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
-#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -99,6 +99,16 @@ class KafkaSourceType : public PhysicalSourceType {
     void setTopic(std::string topic);
 
     /**
+     * @brief Get offsetMode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getOffsetMode() const;
+
+    /**
+     * @brief Set offsetMode
+     */
+    void setOffsetMode(std::string offsetMode);
+
+    /**
      * @brief Get connection time out for source, needed for: KafkaSource
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getConnectionTimeout() const;
@@ -107,6 +117,16 @@ class KafkaSourceType : public PhysicalSourceType {
      * @brief Set connection time out for source, needed for: KafkaSource
      */
     void setConnectionTimeout(uint32_t connectionTimeout);
+
+    /**
+     * @brief Get number of buffers to pool
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief Set connection time out for source, needed for: KafkaSource
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
   private:
     /**
@@ -128,7 +148,9 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption autoCommit;
     Configurations::StringConfigOption groupId;
     Configurations::StringConfigOption topic;
+    Configurations::StringConfigOption offsetMode;
     Configurations::IntConfigOption connectionTimeout;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
 };
 }// namespace NES
-#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

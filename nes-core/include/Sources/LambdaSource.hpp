@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
-#define NES_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
@@ -67,4 +67,4 @@ class LambdaSource : public GeneratorSource {
 using LambdaSourcePtr = std::shared_ptr<LambdaSource>;
 
 }// namespace NES
-#endif// NES_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_LAMBDASOURCE_HPP_

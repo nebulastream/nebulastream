@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
 
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution {
@@ -26,4 +26,4 @@ class InterpreterPipelineProvider : public ExecutablePipelineProvider {
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_

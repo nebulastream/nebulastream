@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
-
 
 class Atan2Expression : public Expression {
   public:
@@ -27,10 +26,10 @@ class Atan2Expression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr leftSubExpression;
-    const  ExpressionPtr rightSubExpression;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
-}
+}// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_

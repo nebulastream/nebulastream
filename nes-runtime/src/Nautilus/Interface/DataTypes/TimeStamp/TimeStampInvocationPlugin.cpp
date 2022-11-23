@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 
 namespace NES::Nautilus {
 
@@ -53,10 +53,10 @@ class TimeStampInvocationPlugin : public InvocationPlugin {
 
     std::optional<Value<>> LessThan(const Value<>& left, const Value<>& right) const override {
         return performBinaryOperationAndCast(left, right, [](const TimeStamp& left, const TimeStamp& right) {
-                auto result = left.lessThan(right);
-                return Value<>(std::move(result));
-            });
-        }
+            auto result = left.lessThan(right);
+            return Value<>(std::move(result));
+        });
+    }
 
     std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const override {
         return performBinaryOperationAndCast(left, right, [](const TimeStamp& left, const TimeStamp& right) {
@@ -68,4 +68,4 @@ class TimeStampInvocationPlugin : public InvocationPlugin {
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<TimeStampInvocationPlugin> cPlugin;
 
-}
+}// namespace NES::Nautilus

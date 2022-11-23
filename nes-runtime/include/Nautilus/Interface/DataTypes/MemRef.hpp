@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
-#define NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 namespace NES::Nautilus {
@@ -37,7 +37,6 @@ class MemRef : public TraceableType {
 
     void* getValue() { return value; }
 
-
     template<class ResultType>
     std::shared_ptr<ResultType> load() {
         auto rawValue = (int64_t*) value;
@@ -55,4 +54,4 @@ class MemRef : public TraceableType {
 
 }// namespace NES::Nautilus
 
-#endif//NES_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_

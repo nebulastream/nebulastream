@@ -21,35 +21,35 @@
 
 namespace NES::Benchmark {
 
+class E2EBenchmarkConfigPerRun {
 
-    class E2EBenchmarkConfigPerRun {
-
-      public:
-        /**
+  public:
+    /**
          * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
          */
-        explicit E2EBenchmarkConfigPerRun();
+    explicit E2EBenchmarkConfigPerRun();
 
-        /**
+    /**
          * @brief creates a string representation of this object
          * @return the string representation
          */
-        std::string toString();
+    std::string toString();
 
-        /**
+    /**
          * @brief parses and generates the config for the parameters changing per run
          * runs by parsing the yamlConfig
          * @param yamlConfig
          * @return
          */
-        static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
+    static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
 
-
-      public:
-        Configurations::IntConfigOption numWorkerThreads;
-        Configurations::IntConfigOption numBuffersToProduce;
-        Configurations::IntConfigOption bufferSizeInBytes;
-    };
-}
+    Configurations::IntConfigOption numWorkerThreads;
+    Configurations::IntConfigOption numBuffersToProduce;
+    Configurations::IntConfigOption bufferSizeInBytes;
+    Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;
+    Configurations::IntConfigOption numberOfBuffersPerPipeline;
+    Configurations::IntConfigOption numberOfBuffersInSourceLocalBufferPool;
+};
+}// namespace NES::Benchmark
 
 #endif//NES_E2EBENCHMARKCONFIGPERRUN_HPP

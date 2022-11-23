@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_FUNCTION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_FUNCTION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_AGGREGATIONFUNCTION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
@@ -87,6 +87,5 @@ class CountFunction : public AggregationFunction {
     uint64_t getStateSize() const override;
 };
 
-
 }// namespace NES::Nautilus
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_FUNCTION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_AGGREGATIONFUNCTION_HPP_

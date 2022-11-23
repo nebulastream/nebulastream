@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <babelfish.h>
 #include <boost/preprocessor/stringize.hpp>
 #include <cxxabi.h>
 #include <dlfcn.h>
@@ -23,7 +24,6 @@
 #include <flounder/executable.h>
 #include <flounder/program.h>
 #include <flounder/statement.h>
-#include <babelfish.h>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -48,7 +48,7 @@ class FlounderTest : public testing::Test {
 };
 
 TEST_F(FlounderTest, BFSimpleTest) {
-    graal_isolatethread_t *thread = NULL;
+    graal_isolatethread_t* thread = NULL;
     ASSERT_TRUE(graal_create_isolate(NULL, NULL, &thread) == 0);
     std::string sourceCode = "SourceCodeOfPipeline";
     auto* pipeline = init(thread, sourceCode.data());
@@ -138,7 +138,6 @@ TEST_F(FlounderTest, flounderGenTestBlocks) {
     program << program.add(result, arg0);
     program << program.jmp(falseCaseL);
     program << program.section(falseCaseL);
-
 
     /// When arg0 is > 10, calculate result = result * arg0.
     /// Code in the scope will be executed when the flounder::If{}-condition applies.

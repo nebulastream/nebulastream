@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NODEENGINEBUILDER_HPP
-#define NES_NODEENGINEBUILDER_HPP
+#ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 #include <Compiler/LanguageCompiler.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
@@ -153,4 +153,4 @@ class NodeEngineBuilder {
     static uint64_t getNextNodeEngineId();
 };
 }// namespace NES::Runtime
-#endif//NES_NODEENGINEBUILDER_HPP
+#endif// NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
@@ -23,8 +23,9 @@ class PiExpression : public Expression {
   public:
     PiExpression(const ExpressionPtr& SubExpression);
     Value<> execute(NES::Nautilus::Record& record) const override;
+
   private:
-    const  ExpressionPtr SubExpression;
+    const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_DEGREESEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_

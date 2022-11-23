@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/MLIR/MLIRExecutable.hpp>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
+#include <Nautilus/Backends/MLIR/MLIRExecutable.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,7 +25,6 @@
 namespace NES::Nautilus::Backends::MLIR {
 
 [[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
-
 
 std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir) {
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
@@ -55,8 +54,6 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     timer.snapshot("MLIRGeneration");
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }
-MLIRCompilationBackend::~MLIRCompilationBackend() {
-    std::cout << "Shutdown MLIRCompilationBackend" << std::endl;
-}
+MLIRCompilationBackend::~MLIRCompilationBackend() { std::cout << "Shutdown MLIRCompilationBackend" << std::endl; }
 
 }// namespace NES::Nautilus::Backends::MLIR

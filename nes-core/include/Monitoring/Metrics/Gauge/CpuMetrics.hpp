@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
+#define NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -116,4 +116,4 @@ nlohmann::json asJson(const CpuMetrics& metrics);
 
 }// namespace NES::Monitoring
 
-#endif// NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

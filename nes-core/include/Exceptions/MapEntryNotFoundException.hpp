@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_MAPENTRYNOTFOUNDEXCEPTION_HPP
-#define NES_MAPENTRYNOTFOUNDEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
@@ -27,4 +27,4 @@ class MapEntryNotFoundException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif//NES_MAPENTRYNOTFOUNDEXCEPTION_HPP
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_

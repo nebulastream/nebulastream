@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MULINTOPERATION_HPP
-#define NES_MULINTOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_MULOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_MULOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Operations {
 
 class MulOperation : public Operation {
   public:
-    MulOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput);
+    MulOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~MulOperation() override = default;
 
     OperationPtr getLeftInput();
@@ -35,4 +35,4 @@ class MulOperation : public Operation {
     OperationWPtr rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_MULINTOPERATION_HPP
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_MULOPERATION_HPP_

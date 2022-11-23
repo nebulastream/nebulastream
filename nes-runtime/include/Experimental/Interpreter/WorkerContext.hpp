@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Nautilus {
 
@@ -23,9 +23,10 @@ class WorkerContext {
     Value<UInt64> getWorkerId();
     Value<MemRef> allocateBuffer();
     Value<MemRef> getWorkerContextRef() const;
+
   private:
-   mutable Value<MemRef> workerContextRef;
+    mutable Value<MemRef> workerContextRef;
 };
 
 }// namespace NES::Nautilus
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_WORKERCONTEXT_HPP_

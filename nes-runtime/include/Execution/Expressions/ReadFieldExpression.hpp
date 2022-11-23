@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -31,10 +31,11 @@ class ReadFieldExpression : public Expression {
      */
     ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
     Value<> execute(Record& record) const override;
+
   private:
     const Nautilus::Record::RecordFieldIdentifier field;
 };
 
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 
 #include <llvm/IR/Module.h>
 #include <mlir/IR/BuiltinOps.h>
@@ -28,11 +28,10 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class LLVMIROptimizer {
   public:
-
-    LLVMIROptimizer();  // Disable default constructor
-    ~LLVMIROptimizer(); // Disable default destructor
+    LLVMIROptimizer(); // Disable default constructor
+    ~LLVMIROptimizer();// Disable default destructor
 
     static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions);
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_LLVMIROPTIMIZER_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

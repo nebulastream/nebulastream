@@ -19,16 +19,14 @@
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
-ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr) : 
-    columnMemoryLayoutPtr(columnMemoryLayoutPtr) {};
+ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
+    : columnMemoryLayoutPtr(columnMemoryLayoutPtr){};
 
-MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() {
-    return columnMemoryLayoutPtr;
-}
+MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() { return columnMemoryLayoutPtr; }
 
 Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                        Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                        Nautilus::Value<Nautilus::UInt64> recordIndex) {
+                                            Nautilus::Value<Nautilus::MemRef> bufferAddress,
+                                            Nautilus::Value<Nautilus::UInt64> recordIndex) {
     // read all fields
     Nautilus::Record record;
     for (uint64_t i = 0; i < columnMemoryLayoutPtr->getSchema()->getSize(); i++) {
@@ -47,8 +45,8 @@ Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::
     return record;
 }
 
-void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
-                                 Nautilus::Value<Nautilus::MemRef> bufferAddress, 
+void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
+                                 Nautilus::Value<Nautilus::MemRef> bufferAddress,
                                  NES::Nautilus::Record& rec) {
     auto fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
     auto schema = columnMemoryLayoutPtr->getSchema();
@@ -62,4 +60,4 @@ void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64> recordIn
     }
 }
 
-} //namespace
+}// namespace NES::Runtime::Execution::MemoryProvider

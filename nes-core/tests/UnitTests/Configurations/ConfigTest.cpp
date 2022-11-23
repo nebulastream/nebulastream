@@ -99,18 +99,21 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY)
                                                            + "coordinatorLogicalSourceAndSchema.yaml");
     EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
-    EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 2);
+    EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 3);
     auto logicalSources = coordinatorConfigPtr->logicalSources.getValues();
     EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
     EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
+    EXPECT_EQ(logicalSources[2].getValue()->getLogicalSourceName(), "lsn3");
     auto firstSourceSchema = logicalSources[0].getValue()->getSchema();
     auto secondSourceSchema = logicalSources[1].getValue()->getSchema();
+    auto thirdSourceSchema = logicalSources[2].getValue()->getSchema();
     EXPECT_EQ(firstSourceSchema->getSize(), 3);
     EXPECT_EQ(secondSourceSchema->getSize(), 1);
     EXPECT_TRUE(firstSourceSchema->contains("csv_id"));
     EXPECT_TRUE(firstSourceSchema->contains("csv_id_2"));
     EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
     EXPECT_TRUE(secondSourceSchema->contains("csv_id_4"));
+    EXPECT_TRUE(thirdSourceSchema->contains("csv_id_5"));
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
@@ -291,7 +294,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
-                                                  "logicalSourceName=default"});
+                                                  "logicalSourceName=default",
+                                                  "offsetMode=earliest"});
 
     PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
@@ -309,7 +313,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                    "topic=newTopic",
                                                    "connectionTimeout=100",
                                                    "brokers=testBroker",
-                                                   "groupId=testId"});
+                                                   "groupId=testId",
+                                                   "offsetMode=earliest"});
 
     PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");

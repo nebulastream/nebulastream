@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
-#define NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
 
-#include <Operators/OriginId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
 
@@ -217,4 +217,4 @@ class LogicalWindowDefinition {
 
 }// namespace NES::Windowing
 
-#endif// NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_

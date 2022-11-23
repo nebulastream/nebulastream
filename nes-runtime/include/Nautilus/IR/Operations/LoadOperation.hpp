@@ -12,20 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_LOADOPERATION_HPP
-#define NES_LOADOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address, Types::StampPtr stamp);
+    explicit LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr stamp);
     ~LoadOperation() override = default;
     OperationPtr getAddress();
     std::string toString() override;
+
   private:
     OperationWPtr address;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif//NES_LOADOPERATION_HPP
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_

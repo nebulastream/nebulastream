@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
-#define NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
+#define NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Topology/TopologyNodeId.hpp>
 #include <memory>
 
 namespace NES::Monitoring {
@@ -89,4 +89,4 @@ using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
 }// namespace NES::Monitoring
 
-#endif//NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_

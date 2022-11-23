@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
-#define NES_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
+#ifndef NES_CORE_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
+#define NES_CORE_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <iostream>
 #include <memory>
@@ -86,4 +86,4 @@ class QueryUndeploymentPhase {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_

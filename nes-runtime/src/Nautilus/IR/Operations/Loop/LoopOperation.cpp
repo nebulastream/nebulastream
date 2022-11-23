@@ -21,7 +21,6 @@ LoopOperation::LoopOperation(LoopType loopType)
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
 
-
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
 
 void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loopInfo = loopInfo; }

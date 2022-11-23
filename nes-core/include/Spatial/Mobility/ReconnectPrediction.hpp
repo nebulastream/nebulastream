@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RECONNECTPREDICTION_HPP
-#define NES_RECONNECTPREDICTION_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
 #include <Spatial/Index/Location.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <cstdint>
@@ -27,4 +27,4 @@ struct ReconnectPrediction {
     Timestamp expectedTime;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif//NES_RECONNECTPREDICTION_HPP
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_

@@ -15,12 +15,11 @@
 #ifndef NES_BENCHMARKUTILS_HPP
 #define NES_BENCHMARKUTILS_HPP
 
-#include <Plans/Query/QueryId.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Common/Identifiers.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
-
 
 #include <chrono>
 
@@ -96,8 +95,6 @@ static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop)
         vector.push_back(i);
     }
 }
-
-
 
 }// namespace NES::Benchmark::Util
 

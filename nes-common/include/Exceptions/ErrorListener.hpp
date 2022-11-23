@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_ERRORLISTENER_HPP_
-#define NES_INCLUDE_RUNTIME_ERRORLISTENER_HPP_
+#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
+#define NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
 
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <memory>
@@ -41,4 +41,4 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
 
 }// namespace NES::Exceptions
 
-#endif// NES_INCLUDE_RUNTIME_ERRORLISTENER_HPP_
+#endif// NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_

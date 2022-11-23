@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
-#define NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+#define NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
 #include <Exceptions/NotImplementedException.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/StacktraceLoader.hpp>
@@ -239,4 +239,4 @@ class Logger {
 
 }// namespace NES
 
-#endif//NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_

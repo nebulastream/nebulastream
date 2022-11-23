@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_
-#define NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#define NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
 #include <cinttypes>
 #include <stdint.h>
 #include <string>
@@ -54,4 +54,4 @@ class PlacementStrategy {
 };
 
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

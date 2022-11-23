@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <vector>
 
 namespace NES::Nautilus {
@@ -35,10 +35,11 @@ class Aggregation : public ExecutableOperator {
     void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(RuntimeExecutionContext& ctx, Record& record) const override;
+
   private:
     const std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     mutable uint32_t tag;
 };
 
 }// namespace NES::Nautilus
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_AGGREGATION_HPP_

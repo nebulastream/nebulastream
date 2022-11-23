@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
-#define NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
 #include <Windowing/Watermark/Watermark.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <cstdint>
@@ -32,4 +32,4 @@ class EventTimeWatermarkGenerator : public Watermark {
     uint64_t getWatermark() override;
 };
 }// namespace NES::Windowing
-#endif// NES_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_EVENTTIMEWATERMARKGENERATOR_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_RESTSERVER_HPP_
-#define NES_INCLUDE_REST_RESTSERVER_HPP_
+#ifndef NES_CORE_INCLUDE_REST_RESTSERVER_HPP_
+#define NES_CORE_INCLUDE_REST_RESTSERVER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <condition_variable>
@@ -139,4 +139,4 @@ class RestServer {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_REST_RESTSERVER_HPP_
+#endif// NES_CORE_INCLUDE_REST_RESTSERVER_HPP_

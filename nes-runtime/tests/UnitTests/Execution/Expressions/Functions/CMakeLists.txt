@@ -78,6 +78,18 @@ add_executable(runtime-gamma-expression-test "GammaExpressionTest.cpp")
 target_link_libraries(runtime-gamma-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-gamma-expression-test COMMAND runtime-gamma-expression-test)
 
+add_executable(runtime-log10-expression-test "Log10ExpressionTest.cpp")
+target_link_libraries(runtime-log10-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-log10-expression-test COMMAND runtime-log10-expression-test)
+
 add_executable(runtime-power-expression-test "PowerExpressionTest.cpp")
 target_link_libraries(runtime-power-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-power-expression-test COMMAND runtime-power-expression-test)
+
+add_executable(runtime-log2-expression-test "Log2ExpressionTest.cpp")
+target_link_libraries(runtime-log2-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-log2-expression-test COMMAND runtime-log2-expression-test)
+
+add_executable(runtime-ln-expression-test "LnExpressionTest.cpp")
+target_link_libraries(runtime-ln-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-ln-expression-test COMMAND runtime-ln-expression-test)

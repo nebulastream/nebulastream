@@ -60,6 +60,12 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
+    //wrapper function so allow the util function to call the member function of LocationProvider
+    static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromTopologyNode(std::shared_ptr<void> node) {
+        auto casted = std::static_pointer_cast<TopologyNode>(node);
+        return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
+    }
+
     static void TearDownTestCase() { NES_INFO("Tear down LocationIntegrationTests class."); }
 };
 
@@ -325,90 +331,25 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    double pos1lat = 52.55227464714949;
-    double pos1lng = 13.351743136322877;
-
-    double pos2lat = 52.574709862890394;
-    double pos2lng = 13.419206057808077;
-
-    double pos3lat = 52.61756571840606;
-    double pos3lng = 13.505980882863446;
-
-    double pos4lat = 52.67219559419452;
-    double pos4lng = 13.591124924963108;
-
-    TopologyPtr topology = crd->getTopology();
-    NES::Spatial::Index::Experimental::LocationIndexPtr geoTopology = topology->getLocationIndex();
-    Timestamp beforeQuery = getTimestamp();
-    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
-    NES::Spatial::Index::Experimental::Location currentLocation = wrk1Node->getCoordinates();
-    Timestamp afterQuery = getTimestamp();
-
     auto sourceCsv =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStartTime();
-    auto timefirstLoc = startTime;
-    auto timesecloc = startTime + 100000000;
-    auto timethirdloc = startTime + 200000000;
-    auto timefourthloc = startTime + 300000000;
-    auto loopTime = startTime + 400000000;
-
+    TopologyPtr topology = crd->getTopology();
+    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos1lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos1lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos2lng);
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos2lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos3lng);
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos3lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos4lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos4lng);
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ((currentLocation), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        beforeQuery = getTimestamp();
-        currentLocation = wrk1Node->getCoordinates();
-        afterQuery = getTimestamp();
-    }
-
-#else
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        beforeQuery = getTimestamp();
-        currentLocation = sourceCsv.getCurrentLocation();
-        afterQuery = getTimestamp();
-    }
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -436,86 +377,25 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "moveAfterStanding.csv");
+    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    double pos2lat = 52.574709862890394;
-    double pos2lng = 13.419206057808077;
-
-    NES::Spatial::Index::Experimental::Location startLocation(pos2lat, pos2lng);
-
-    double pos3lat = 52.61756571840606;
-    double pos3lng = 13.505980882863446;
-
-    double pos4lat = 52.67219559419452;
-    double pos4lng = 13.591124924963108;
-
-    TopologyPtr topology = crd->getTopology();
-    NES::Spatial::Index::Experimental::LocationIndexPtr geoTopology = topology->getLocationIndex();
-    Timestamp beforeQuery = getTimestamp();
-    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
-    NES::Spatial::Index::Experimental::Location currentLocation = wrk1Node->getCoordinates();
-    Timestamp afterQuery = getTimestamp();
-
-    auto sourceCsv =
+    auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStartTime();
-    auto timefirstLoc = startTime;
-    auto timesecloc = startTime + 100000000;
-    auto timethirdloc = startTime + 200000000;
-    auto timefourthloc = startTime + 300000000;
-    auto loopTime = startTime + 4000000000;
-
+    auto startTime = locationProvider->getStartTime();
+    TopologyPtr topology = crd->getTopology();
+    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_EQ(currentLocation, startLocation);
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos2lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos3lng);
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos3lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos4lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos4lng);
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ((currentLocation), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        beforeQuery = getTimestamp();
-        currentLocation = wrk1Node->getCoordinates();
-        afterQuery = getTimestamp();
-    }
-
-#else
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        beforeQuery = getTimestamp();
-        currentLocation = sourceCsv.getCurrentLocation();
-        afterQuery = getTimestamp();
-    }
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -544,7 +424,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     Timestamp offset = 400000000;
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
@@ -552,87 +433,20 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    double pos1lat = 52.55227464714949;
-    double pos1lng = 13.351743136322877;
-
-    double pos2lat = 52.574709862890394;
-    double pos2lng = 13.419206057808077;
-
-    double pos3lat = 52.61756571840606;
-    double pos3lng = 13.505980882863446;
-
-    double pos4lat = 52.67219559419452;
-    double pos4lng = 13.591124924963108;
-
-    TopologyPtr topology = crd->getTopology();
-    NES::Spatial::Index::Experimental::LocationIndexPtr geoTopology = topology->getLocationIndex();
-    Timestamp beforeQuery = getTimestamp();
-    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
-    NES::Spatial::Index::Experimental::Location currentLocation = wrk1Node->getCoordinates();
-    Timestamp afterQuery = getTimestamp();
-
-    auto sourceCsv =
+    auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStartTime();
-    EXPECT_EQ(startTime, simulatedStartTime);
-    auto timefirstLoc = startTime;
-    auto timesecloc = startTime + 100000000;
-    auto timethirdloc = startTime + 200000000;
-    auto timefourthloc = startTime + 300000000;
-    auto loopTime = startTime + 400000000;
-
+    auto startTime = locationProvider->getStartTime();
+    TopologyPtr topology = crd->getTopology();
+    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos1lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos1lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos2lng);
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos2lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos3lng);
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos3lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos4lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos4lng);
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ((currentLocation), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        beforeQuery = getTimestamp();
-        currentLocation = wrk1Node->getCoordinates();
-        afterQuery = getTimestamp();
-    }
-
-#else
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        beforeQuery = getTimestamp();
-        currentLocation = sourceCsv.getCurrentLocation();
-        afterQuery = getTimestamp();
-    }
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -661,7 +475,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     Timestamp offset = -100000000;
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
@@ -669,87 +484,20 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    double pos1lat = 52.55227464714949;
-    double pos1lng = 13.351743136322877;
-
-    double pos2lat = 52.574709862890394;
-    double pos2lng = 13.419206057808077;
-
-    double pos3lat = 52.61756571840606;
-    double pos3lng = 13.505980882863446;
-
-    double pos4lat = 52.67219559419452;
-    double pos4lng = 13.591124924963108;
-
-    TopologyPtr topology = crd->getTopology();
-    NES::Spatial::Index::Experimental::LocationIndexPtr geoTopology = topology->getLocationIndex();
-    Timestamp beforeQuery = getTimestamp();
-    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
-    NES::Spatial::Index::Experimental::Location currentLocation = wrk1Node->getCoordinates();
-    Timestamp afterQuery = getTimestamp();
-
-    auto sourceCsv =
+    auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = sourceCsv->getStartTime();
-    EXPECT_EQ(startTime, simulatedStartTime);
-    auto timefirstLoc = startTime;
-    auto timesecloc = startTime + 100000000;
-    auto timethirdloc = startTime + 200000000;
-    auto timefourthloc = startTime + 300000000;
-    auto loopTime = startTime + 400000000;
-
+    auto startTime = locationProvider->getStartTime();
+    TopologyPtr topology = crd->getTopology();
+    TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos1lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos1lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos2lng);
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos2lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos2lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos3lng);
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_GE(currentLocation.getLatitude(), pos3lat);
-            EXPECT_GE(currentLocation.getLongitude(), pos3lng);
-            EXPECT_LE(currentLocation.getLatitude(), pos4lat);
-            EXPECT_LE(currentLocation.getLongitude(), pos4lng);
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ((currentLocation), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        beforeQuery = getTimestamp();
-        currentLocation = wrk1Node->getCoordinates();
-        afterQuery = getTimestamp();
-    }
-
-#else
-    while (afterQuery < loopTime) {
-        if (afterQuery < timesecloc) {
-            NES_DEBUG("checking first loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos1lat, pos1lng));
-        } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
-            NES_DEBUG("checking second loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos2lat, pos2lng));
-        } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
-            NES_DEBUG("checking third loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos3lat, pos3lng));
-        } else if (beforeQuery > timefourthloc) {
-            NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(*(currentLocation.first), NES::Spatial::Index::Experimental::Location(pos4lat, pos4lng));
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        beforeQuery = getTimestamp();
-        currentLocation = sourceCsv.getCurrentLocation();
-        afterQuery = getTimestamp();
-    }
+    checkDeviceMovement(csvPath,
+                        startTime,
+                        4,
+                        10000000,
+                        1000000,
+                        getLocationFromTopologyNode,
+                        std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);

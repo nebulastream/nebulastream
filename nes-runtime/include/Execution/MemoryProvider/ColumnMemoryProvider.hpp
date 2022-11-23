@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMOMRYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 
@@ -36,12 +36,13 @@ class ColumnMemoryProvider : public MemoryProvider {
                           Nautilus::Value<Nautilus::MemRef> bufferAddress,
                           Nautilus::Value<Nautilus::UInt64> recordIndex) override;
 
-    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex, 
-               Nautilus::Value<Nautilus::MemRef> bufferAddress, NES::Nautilus::Record& rec) override;
+    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
+               Nautilus::Value<Nautilus::MemRef> bufferAddress,
+               NES::Nautilus::Record& rec) override;
 
   private:
     Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_

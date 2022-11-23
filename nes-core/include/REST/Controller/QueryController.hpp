@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
-#define NES_NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
 
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
@@ -132,7 +132,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             return createResponse(Status::CODE_200, response.dump());
         } catch (QueryNotFoundException e) {
-            return errorHandler->handleError(Status::CODE_204, "No query with given ID: " + std::to_string(queryId));
+            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
@@ -160,6 +160,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(submitQuery)
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
             //nlohmann::json library has trouble parsing Oatpp String type
@@ -227,6 +228,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(submitQueryProtobuf)
     ENDPOINT("POST", "/execute-query-ex", submitQueryProtobuf, BODY_STRING(String, request)) {
         try {
             std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
@@ -282,6 +284,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ADD_CORS(stopQuery)
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
@@ -378,4 +381,4 @@ class QueryController : public oatpp::web::server::api::ApiController {
 }//namespace Controller
 }// namespace REST
 }// namespace NES
-#endif//NES_NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#endif// NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_

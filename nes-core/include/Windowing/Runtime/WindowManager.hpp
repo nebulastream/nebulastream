@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
-#define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
@@ -171,4 +171,4 @@ class WindowManager {
 
 }// namespace NES::Windowing
 
-#endif// NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_

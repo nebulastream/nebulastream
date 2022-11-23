@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
-#define NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#define NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Operators/OperatorId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <algorithm>
 #include <any>
@@ -278,4 +278,4 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 };// namespace Util
 }// namespace NES
 
-#endif// NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_

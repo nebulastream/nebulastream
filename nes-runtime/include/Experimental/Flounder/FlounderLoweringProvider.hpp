@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Frame.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -34,7 +34,7 @@
 #include <flounder/compiler.h>
 #include <set>
 
-namespace flounder{
+namespace flounder {
 class Executable;
 }
 namespace NES::ExecutionEngine::Experimental::Flounder {
@@ -79,10 +79,11 @@ class FlounderLoweringProvider {
         void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
         void processAnd(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
-        void processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
+        void
+        processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
     };
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Flounder
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_

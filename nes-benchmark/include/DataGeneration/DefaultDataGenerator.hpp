@@ -18,18 +18,16 @@
 #include <DataGeneration/DataGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
-    class DefaultDataGenerator : public DataGenerator {
-      public:
-        /**
+class DefaultDataGenerator : public DataGenerator {
+  public:
+    /**
          * @brief creates a DefaultDataGenerator
          * @param minValue
          * @param maxValue
          */
-        explicit DefaultDataGenerator(uint64_t minValue,
-                                      uint64_t maxValue);
+    explicit DefaultDataGenerator(uint64_t minValue, uint64_t maxValue);
 
-
-        /**
+    /**
          * @brief creates uniformed data with the schema "id, value, payload, timestamp"
          * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
          * randomly from a uniform distribution in the range [minValue, maxValue]
@@ -37,29 +35,29 @@ namespace NES::Benchmark::DataGeneration {
          * @param bufferSize
          * @return success
          */
-        std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
+    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
 
-        /**
+    /**
          * @brief overrides the schema from the abstract parent class
          * @return schema from a DefaultDataGenerator
          */
-        SchemaPtr getSchema() override;
+    SchemaPtr getSchema() override;
 
-        /**
+    /**
          * @brief overrides the name from the abstract parent class
          * @return name
          */
-        std::string getName() override;
+    std::string getName() override;
 
-        /**
+    /**
          * @brief overrides the string representation of the parent class
          * @return
          */
-        std::string toString() override;
+    std::string toString() override;
 
-      private:
-        uint64_t minValue;
-        uint64_t maxValue;
-    };
-}
+  private:
+    uint64_t minValue;
+    uint64_t maxValue;
+};
+}// namespace NES::Benchmark::DataGeneration
 #endif//NES_DEFAULTDATAGENERATOR_HPP

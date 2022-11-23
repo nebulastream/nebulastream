@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
-#define NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
 
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -59,4 +59,4 @@ class Request : public std::enable_shared_from_this<Request> {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_

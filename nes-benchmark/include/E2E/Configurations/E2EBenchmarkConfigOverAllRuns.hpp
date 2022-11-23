@@ -20,47 +20,46 @@
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
-    class E2EBenchmarkConfigOverAllRuns {
+class E2EBenchmarkConfigOverAllRuns {
 
-      public:
-        /**
+  public:
+    /**
          * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
          */
-        explicit E2EBenchmarkConfigOverAllRuns();
+    explicit E2EBenchmarkConfigOverAllRuns();
 
-        /**
+    /**
          * @brief creates a string representation of this object
          * @return the string representation
          */
-        std::string toString();
+    std::string toString();
 
-        /**
+    /**
          * @brief parses and generates the config for the parameters constant over all
          * runs by parsing the yamlConfig
          * @param yamlConfig
          * @return
          */
-        static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
+    static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
-        /**
+    /**
          * @brief all configurations that are constant over all runs
          */
-      public:
-        Configurations::IntConfigOption startupSleepIntervalInSeconds;
-        Configurations::IntConfigOption numMeasurementsToCollect;
-        Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
-        Configurations::IntConfigOption numSources;
-        std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
-        Configurations::StringConfigOption outputFile;
-        Configurations::StringConfigOption benchmarkName;
-        Configurations::StringConfigOption inputType;
-        Configurations::StringConfigOption query;
-        Configurations::StringConfigOption dataProviderMode;
-
-
-      private:
-        std::string getDataGeneratorsAsString();
-    };
-}
+  public:
+    Configurations::IntConfigOption startupSleepIntervalInSeconds;
+    Configurations::IntConfigOption numMeasurementsToCollect;
+    Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
+    Configurations::IntConfigOption numSources;
+    Configurations::IntConfigOption numberOfPreAllocatedBuffer;
+    Configurations::StringConfigOption outputFile;
+    Configurations::StringConfigOption benchmarkName;
+    Configurations::StringConfigOption inputType;
+    Configurations::StringConfigOption query;
+    Configurations::StringConfigOption dataProviderMode;
+    Configurations::StringConfigOption logicalStreamName;
+    Configurations::StringConfigOption dataGenerator;
+    Configurations::StringConfigOption connectionString;
+};
+}// namespace NES::Benchmark
 
 #endif//NES_E2EBENCHMARKCONFIGOVERALLRUNS_HPP

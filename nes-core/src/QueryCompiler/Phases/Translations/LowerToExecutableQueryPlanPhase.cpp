@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
@@ -27,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
@@ -241,6 +243,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
+    auto queryManager = nodeEngine->getQueryManager();
+
     auto emitToSuccessorFunctionHandler = [executableSuccessorPipelines](Runtime::TupleBuffer& buffer,
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
@@ -255,17 +259,18 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, nodeEngine](Runtime::TupleBuffer& buffer) {
+    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             NES_DEBUG("Emit buffer to query manager");
-            nodeEngine->getQueryManager()->addWorkForNextPipeline(buffer, executableSuccessor);
+            queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
 
     auto executionContext =
         std::make_shared<Runtime::Execution::PipelineExecutionContext>(pipeline->getPipelineId(),
                                                                        pipelineQueryPlan->getQuerySubPlanId(),
-                                                                       nodeEngine->getQueryManager(),
+                                                                       queryManager->getBufferManager(),
+                                                                       queryManager->getNumberOfWorkerThreads(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
                                                                        executableOperator->getOperatorHandlers());
@@ -273,6 +278,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
+                                                                             queryManager,
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),
                                                                              pipeline->getPredecessors().size(),
@@ -385,6 +391,18 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         case TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
+        }
+        case KAFKA_SOURCE: {
+            auto kafkaSourceType = physicalSourceType->as<KafkaSourceType>();
+            return KafkaSourceDescriptor::create(schema,
+                                                 kafkaSourceType->getBrokers()->getValue(),
+                                                 logicalSourceName,
+                                                 kafkaSourceType->getTopic()->getValue(),
+                                                 kafkaSourceType->getGroupId()->getValue(),
+                                                 kafkaSourceType->getAutoCommit()->getValue(),
+                                                 kafkaSourceType->getConnectionTimeout()->getValue(),
+                                                 kafkaSourceType->getOffsetMode()->getValue(),
+                                                 kafkaSourceType->getNumberOfBuffersToProduce()->getValue());
         }
         default:
             throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()

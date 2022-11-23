@@ -23,8 +23,7 @@ auto transformReturnValues(ListValue<T>* value) {
 }
 
 template<typename T>
-    requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
-auto createDefault() {
+requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value auto createDefault() {
     using RawType = typename std::remove_pointer<T>::type::RawType;
     auto textRef = TypedRef<ListValue<RawType>>(nullptr);
     using ComponentType = typename RawTypeToNautilusType<RawType>::type;

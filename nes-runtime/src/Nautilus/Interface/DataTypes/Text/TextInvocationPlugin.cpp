@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 namespace NES::Nautilus {
 
 class TextInvocationPlugin : public InvocationPlugin {
@@ -35,7 +35,7 @@ class TextInvocationPlugin : public InvocationPlugin {
 
     std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override {
         if (array->isType<Text>() && value->isType<Int8>()) {
-             array.as<Text>()->write(index, value.as<Int8>());
+            array.as<Text>()->write(index, value.as<Int8>());
             return array;
         }
         return std::nullopt;

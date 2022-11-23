@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
-#define NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#ifndef NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Compiler {
 
@@ -26,4 +26,4 @@ class CompilerException : public Exceptions::RuntimeException {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#endif// NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
-#define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
@@ -29,7 +29,6 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class MLIRUtility {
   public:
-
     MLIRUtility();
     ~MLIRUtility();
 
@@ -53,9 +52,8 @@ class MLIRUtility {
      * @param ir: NESIR that is lowered to MLIR, and JIT compiled.
      * @return std::unique_ptr<mlir::ExecutionEngine> Provides a function pointer to executable function.
      */
-    static std::unique_ptr<mlir::ExecutionEngine> 
-    compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
+    static std::unique_ptr<mlir::ExecutionEngine> compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
 }// namespace NES::Nautilus::Backends::MLIR
-#endif//NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

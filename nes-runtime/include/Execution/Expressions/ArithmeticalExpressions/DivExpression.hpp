@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 /**
@@ -24,13 +24,13 @@ namespace NES::Runtime::Execution::Expressions {
 class DivExpression : public Expression {
   public:
     DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record)const override;
+    Value<> execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES
+}// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_DIVEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_

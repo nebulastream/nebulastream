@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_API_WINDOWING_HPP_
-#define NES_INCLUDE_API_WINDOWING_HPP_
+#ifndef NES_CORE_INCLUDE_API_WINDOWING_HPP_
+#define NES_CORE_INCLUDE_API_WINDOWING_HPP_
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 
 namespace NES {
@@ -168,4 +168,4 @@ Windowing::TimeMeasure Days(uint64_t days);
 
 }// namespace NES::API
 
-#endif// NES_INCLUDE_API_WINDOWING_HPP_
+#endif// NES_CORE_INCLUDE_API_WINDOWING_HPP_

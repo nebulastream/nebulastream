@@ -43,6 +43,7 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     std::string latitudeString;
     std::string longitudeString;
     std::string timeString;
+    nextWaypoint = 0;
 
     NES_DEBUG("Started csv location source at " << startTime)
 
@@ -72,7 +73,6 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
     //set first csv entry as the next wypoint
-    nextWaypoint = waypoints.begin();
 }
 
 std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getCurrentLocation() {
@@ -81,22 +81,22 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
 
     //find the waypoint with the smallest timestamp greater than requestTime
     //this point is the next waypoint on the way ahead of us
-    while (nextWaypoint != waypoints.end() && getWaypointAt(nextWaypoint).second < requestTime) {
-        nextWaypoint = std::next(nextWaypoint);
+    while (nextWaypoint < waypoints.size() && getWaypointAt(nextWaypoint).second < requestTime) {
+        nextWaypoint++;
     }
 
     //if the first waypoint is still in the future, simulate the device to be resting at that position until the specified timestamp
-    if (nextWaypoint == waypoints.begin()) {
+    if (nextWaypoint == 0) {
         return {getWaypointAt(nextWaypoint).first, requestTime};
     }
 
     //find the last point behind us on the way
-    auto prevWaypoint = std::prev(nextWaypoint);
+    auto prevWaypoint = nextWaypoint - 1;
 
 #ifdef S2DEF
     //if we already reached the last position in the file, we assume that the device stays in that location and does not move further
     //we therefore keep returning the location of the last timestamp, without looking at the request time
-    if (nextWaypoint == waypoints.end()) {
+    if (nextWaypoint == waypoints.size()) {
         NES_DEBUG("Last waypoint reached, do not interpolate, node will stay in this position for the rest of the simulation");
         return {getWaypointAt(prevWaypoint).first, requestTime};
     }
@@ -131,7 +131,7 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
     NES_TRACE("S2 not used, returning most recently passed waypoint from csv")
     NES_TRACE("Location: " << getWaypointAt(prevWaypoint).first->toString() << "; Time: " << getWaypointAt(prevWaypoint).second)
-    return *prevWaypoint;
+    return getWaypointAt(prevWaypoint);
 #endif
 }
 
@@ -140,8 +140,5 @@ Timestamp LocationProviderCSV::getStartTime() const { return startTime; }
 const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& LocationProviderCSV::getWaypoints() const {
     return waypoints;
 }
-Waypoint LocationProviderCSV::getWaypointAt(std::vector<Waypoint>::iterator it) {
-    auto index = std::distance(waypoints.begin(), it);
-    return waypoints.at(index);
-}
+Waypoint LocationProviderCSV::getWaypointAt(size_t index) { return waypoints.at(index); }
 }// namespace NES::Spatial::Mobility::Experimental

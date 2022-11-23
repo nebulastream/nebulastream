@@ -16,59 +16,58 @@
 #define NES_INTERNALPROVIDER_HPP
 
 #include <DataProvider/DataProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Benchmark::DataProviding {
-    class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
+class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
 
-      public:
-        /**
+  public:
+    /**
          * @brief creates an InternalProvider
          * @param id
          * @param providerMode
          * @param preAllocatedBuffers
          */
-        InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode,
-                         std::vector<Runtime::TupleBuffer> buffers);
-        /**
+    InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode, std::vector<Runtime::TupleBuffer> buffers);
+    /**
          * @brief
          */
-        ~InternalProvider();
+    ~InternalProvider();
 
-        /**
+    /**
          * @brief overrides readNextBuffer by poviding the next buffer to be added to NES
          * @param sourceId
          * @return
          */
-        std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
+    std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
 
-        /**
+    /**
          * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
          * @param buffer
          */
-        void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
-        /**
+    /**
          * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
          * @param buffer
          */
-        void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
-        /**
+    /**
          * @brief overrides the start function. We have nothing to add in this class
          */
-        void start() override;
+    void start() override;
 
-        /**
+    /**
          * @brief overrides the stop function, we clear all the preAllocatedBuffers
          */
-        void stop() override;
+    void stop() override;
 
-      private:
-        std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
-        uint64_t currentlyEmittedBuffer = 0;
-    };
-}
+  private:
+    std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
+    uint64_t currentlyEmittedBuffer = 0;
+};
+}// namespace NES::Benchmark::DataProviding
 
 #endif//NES_INTERNALPROVIDER_HPP

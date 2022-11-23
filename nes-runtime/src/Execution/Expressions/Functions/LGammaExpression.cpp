@@ -32,7 +32,7 @@ Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = SubExpression->execute(record);
 
     // call the calculateLGamma function with the correct type
-    if (leftValue->isType<Int8>()){
+    if (leftValue->isType<Int8>()) {
         return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int16>());
@@ -53,8 +53,8 @@ Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
     } else if (leftValue->isType<Double>()) {
         return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Double>());
     } else {
-             // If no type was applicable we throw an exception.
-            NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
-        }
+        // If no type was applicable we throw an exception.
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+    }
 }
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Expressions

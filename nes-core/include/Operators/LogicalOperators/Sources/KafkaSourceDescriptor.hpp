@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
-#define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
@@ -30,14 +30,18 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
-                                      uint64_t kafkaConnectTimeout);
+                                      uint64_t kafkaConnectTimeout,
+                                      std::string offsetMode,
+                                      uint64_t numbersOfBufferToProduce);
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
                                       std::string logicalSourceName,
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
-                                      uint64_t kafkaConnectTimeout);
+                                      uint64_t kafkaConnectTimeout,
+                                      std::string offsetMode,
+                                      uint64_t numbersOfBufferToProduce);
 
     /**
      * @brief Get the list of kafka brokers
@@ -48,6 +52,16 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @brief Get the kafka topic name
      */
     const std::string& getTopic() const;
+
+    /**
+     * @brief Get the kafka offset mode
+     */
+    const std::string& getOffsetMode() const;
+
+    /**
+     * @brief Get the number of buffers to produce
+     */
+    std::uint64_t getNumberOfToProcessBuffers() const;
 
     /**
      * @brief Get the kafka consumer group id
@@ -76,23 +90,29 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string topic,
                                    std::string groupId,
                                    bool autoCommit,
-                                   uint64_t kafkaConnectTimeout);
+                                   uint64_t kafkaConnectTimeout,
+                                   std::string offsetMode,
+                                   uint64_t numbersOfBufferToProduce);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
                                    std::string logicalSourceName,
                                    std::string brokers,
                                    std::string topic,
                                    std::string groupId,
                                    bool autoCommit,
-                                   uint64_t kafkaConnectTimeout);
+                                   uint64_t kafkaConnectTimeout,
+                                   std::string offsetMode,
+                                   uint64_t numbersOfBufferToProduce);
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
     uint64_t kafkaConnectTimeout;
+    std::string offsetMode;
+    uint64_t numbersOfBufferToProduce;
 };
 
 using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_

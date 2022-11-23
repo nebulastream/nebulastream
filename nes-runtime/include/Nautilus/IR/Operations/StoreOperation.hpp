@@ -12,26 +12,26 @@
     limitations under the License.
 */
 
-#ifndef NES_STOREOPERATION_HPP
-#define NES_STOREOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {
-class StoreOperation : public Operation{
+class StoreOperation : public Operation {
   public:
     explicit StoreOperation(OperationPtr value, OperationPtr address);
     ~StoreOperation() override = default;
 
     OperationPtr getValue();
     OperationPtr getAddress();
-    
+
     std::string toString() override;
 
   private:
     OperationWPtr value;
     OperationWPtr address;
 };
-}// namespace NES
-#endif//NES_STOREOPERATION_HPP
+}// namespace NES::Nautilus::IR::Operations
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

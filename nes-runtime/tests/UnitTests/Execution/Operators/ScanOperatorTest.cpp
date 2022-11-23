@@ -113,7 +113,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
         ASSERT_EQ(record.numberOfFields(), 2);
         ASSERT_EQ(record.read("f1"), (int64_t) i % 2);
         ASSERT_EQ(record.read("f2"), (int64_t) 1);
-    }   
+    }
 }
 
 }// namespace NES::Runtime::Execution::Operators

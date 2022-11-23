@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
-#define NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
+#ifndef NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_
 
 #include <filesystem>
 #include <ostream>
@@ -61,4 +61,4 @@ std::filesystem::path getLibPath(std::string libName);
 
 }// namespace NES::Compiler::ExecutablePath
 
-#endif//NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
+#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_

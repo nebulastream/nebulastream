@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_CSVSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#define NES_CORE_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -123,4 +123,4 @@ class CSVSource : public DataSource {
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
 }// namespace NES
 
-#endif// NES_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_CSVSOURCE_HPP_

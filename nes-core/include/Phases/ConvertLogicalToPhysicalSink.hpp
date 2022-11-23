@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
-#define NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
+#ifndef NES_CORE_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
+#define NES_CORE_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
 #include <Network/NetworkMessage.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -38,7 +38,7 @@ class ConvertLogicalToPhysicalSink {
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(Network::OperatorId operatorId,
+    static DataSinkPtr createDataSink(NES::OperatorId operatorId,
                                       const SinkDescriptorPtr& sinkDescriptor,
                                       const SchemaPtr& schema,
                                       const Runtime::NodeEnginePtr& nodeEngine,
@@ -51,4 +51,4 @@ class ConvertLogicalToPhysicalSink {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_

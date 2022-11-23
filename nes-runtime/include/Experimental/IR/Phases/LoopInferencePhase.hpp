@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_IR_PHASES_LOOPINFERENCEPHASE_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_IR_PHASES_LOOPINFERENCEPHASE_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <optional>
@@ -30,9 +30,10 @@ class LoopInferencePhase {
         void processBlock(BasicBlockPtr block);
         void processLoop(BasicBlockPtr block);
         std::optional<std::shared_ptr<Operations::CountedLoopInfo>> isCountedLoop(BasicBlockPtr block);
+
       private:
         std::shared_ptr<IRGraph> ir;
     };
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_NESIR_PHASES_LOOPINFERENCEPHASE_HPP_
+}// namespace NES::Nautilus::IR
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_IR_PHASES_LOOPINFERENCEPHASE_HPP_

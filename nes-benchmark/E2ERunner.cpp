@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,7 +22,7 @@
 #include <fstream>
 
 namespace NES::Exceptions {
-    extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 }
 const std::string logo = "/********************************************************\n"
                          " *     _   _   ______    _____\n"
@@ -39,7 +38,8 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
   public:
     void onFatalError(int signalNumber, std::string callStack) override {
         std::ostringstream fatalErrorMessage;
-        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callStack;
+        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
+                          << callStack;
 
         NES_FATAL_ERROR(fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
@@ -56,7 +56,6 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
 
 int main(int argc, const char* argv[]) {
 
-
     std::cout << logo << std::endl;
 
     // Activating and installing error listener
@@ -64,7 +63,8 @@ int main(int argc, const char* argv[]) {
     NES::Exceptions::installGlobalErrorListener(runner);
 
     if (argc > 3 || argc == 0) {
-        std::cerr << "Error: Only --configPath= and --logPath= are allowed as a command line argument!\nExiting now..." << std::endl;
+        std::cerr << "Error: Only --configPath= and --logPath= are allowed as a command line argument!\nExiting now..."
+                  << std::endl;
         return -1;
     }
 
@@ -80,7 +80,7 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    if (argMap.size() < 2) {
+    if (argMap.size() < 1) {
         std::cerr << "Error: Missing --configPath or --logPath could not been found in arguments!" << std::endl;
         return -1;
     }
@@ -93,7 +93,6 @@ int main(int argc, const char* argv[]) {
         std::cerr << "No yaml file provided or the file does not exist!" << std::endl;
         return -1;
     }
-
 
     NES::Logger::setupLogging(logPath, NES::Benchmark::E2EBenchmarkConfig::getLogLevel(configPath));
     NES::Benchmark::E2EBenchmarkConfig e2EBenchmarkConfig;
@@ -120,9 +119,7 @@ int main(int argc, const char* argv[]) {
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
         portOffset += 23;
-        NES::Benchmark::E2ESingleRun singleRun(configPerRun,
-                                               e2EBenchmarkConfig.getConfigOverAllRuns(),
-                                               portOffset);
+        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), portOffset);
 
         singleRun.run();
 

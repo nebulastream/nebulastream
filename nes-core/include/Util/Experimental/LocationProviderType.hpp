@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP
-#define NES_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP
+#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP_
+#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP_
 
 #include <string>
 namespace NES::Spatial::Mobility::Experimental {
@@ -33,4 +33,4 @@ std::string toString(LocationProviderType providerType);
 
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif//NES_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP
+#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP_

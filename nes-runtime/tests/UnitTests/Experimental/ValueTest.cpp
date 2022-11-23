@@ -44,7 +44,6 @@ class ValueTest : public testing::Test {
 
 TEST_F(ValueTest, assignMentTest) {
 
-
     auto intV = Int32(42);
     auto intValue = std::make_shared<Int32>(intV);
     std::shared_ptr<Any> valAny = cast<Any>(intValue);

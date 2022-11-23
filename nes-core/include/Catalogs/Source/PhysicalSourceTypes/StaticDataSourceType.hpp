@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_
-#define NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_
+#ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_
+#define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/GatheringMode.hpp>
@@ -82,4 +82,4 @@ class StaticDataSourceType : public PhysicalSourceType {
     const bool lateStart;
 };
 }// namespace NES::Experimental
-#endif// NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_
+#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_

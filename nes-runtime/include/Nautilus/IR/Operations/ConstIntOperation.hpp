@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTANTINTOPERATION_HPP
-#define NES_CONSTANTINTOPERATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Operations {
 
 class ConstIntOperation : public Operation {
   public:
-    explicit ConstIntOperation(OperationIdentifier identifier,  int64_t constantValue, Types::StampPtr stamp);
+    explicit ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp);
     ~ConstIntOperation() override = default;
     int64_t getConstantIntValue();
 
@@ -30,9 +30,10 @@ class ConstIntOperation : public Operation {
 
     std::string toString() override;
     static bool classof(const Operation* Op);
+
   private:
-    int64_t constantValue; // Can also hold uInts
+    int64_t constantValue;// Can also hold uInts
 };
 
-}// namespace NES
-#endif//NES_CONSTANTINTOPERATION_HPP
+}// namespace NES::Nautilus::IR::Operations
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_

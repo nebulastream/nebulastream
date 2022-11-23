@@ -11,15 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
-#define NES_RUNTIME_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
-#include <memory>
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <memory>
 
-namespace NES::Nautilus{
+namespace NES::Nautilus {
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
-}
+}// namespace NES::Nautilus
 
 namespace NES::Runtime::Execution::Expressions {
 using namespace Nautilus;
@@ -41,6 +41,6 @@ class Expression {
     virtual ~Expression() = default;
 };
 
-}// namespace NES
+}// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_RUNTIME_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_

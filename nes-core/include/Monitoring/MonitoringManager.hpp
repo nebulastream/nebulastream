@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
-#define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
+#define NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Plans/Query/QueryId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <chrono>
@@ -225,4 +225,4 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

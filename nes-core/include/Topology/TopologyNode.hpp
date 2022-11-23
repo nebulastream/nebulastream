@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
-#define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Spatial/Index/Location.hpp>
@@ -231,4 +231,4 @@ class TopologyNode : public Node {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif// NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_

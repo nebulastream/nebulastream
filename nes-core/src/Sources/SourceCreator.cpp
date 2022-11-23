@@ -349,31 +349,38 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     view);
 }
 }// namespace Experimental::MaterializedView
-
 #ifdef ENABLE_KAFKA_BUILD
+
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,
                                       Runtime::QueryManagerPtr queryManager,
+                                      uint64_t numbersOfBufferToProduce,
                                       std::string brokers,
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
+                                      std::string offsetMode,
                                       OperatorId operatorId,
-                                      size_t numSourceLocalBuffers) {
+                                      OriginId originId,
+                                      size_t numSourceLocalBuffers,
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<KafkaSource>(schema,
                                          bufferManager,
                                          queryManager,
+                                         numbersOfBufferToProduce,
                                          brokers,
                                          topic,
                                          groupId,
                                          autoCommit,
                                          kafkaConsumerTimeout,
+                                         offsetMode,
                                          operatorId,
-                                         numSourceLocalBuffers);
+                                         originId,
+                                         numSourceLocalBuffers,
+                                         successors);
 }
 #endif
-
 #ifdef ENABLE_OPC_BUILD
 const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     Runtime::BufferManagerPtr bufferManager,

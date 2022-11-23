@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
 
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <llvm/IR/Module.h>
@@ -30,14 +30,14 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class JITCompiler {
   public:
+    JITCompiler(); // Disable default constructor
+    ~JITCompiler();// Disable default destructor
 
-    JITCompiler();  // Disable default constructor
-    ~JITCompiler(); // Disable default destructor
-
-    static std::unique_ptr<mlir::ExecutionEngine> jitCompileModule(
-        mlir::OwningOpRef<mlir::ModuleOp> &module, llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline, 
-        const std::vector<std::string> &jitProxyFunctionSymbols, 
-        const std::vector<llvm::JITTargetAddress> &jitProxyFunctionTargetAddresses);
+    static std::unique_ptr<mlir::ExecutionEngine>
+    jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
+                     llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                     const std::vector<std::string>& jitProxyFunctionSymbols,
+                     const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses);
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_MLIR_JITCOMPILER_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

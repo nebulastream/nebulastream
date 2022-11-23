@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_OPERATOR_HANDLER_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_OPERATOR_HANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -144,4 +144,4 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 };
 }// namespace NES::Join::Experimental
 
-#endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_OPERATOR_HANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_

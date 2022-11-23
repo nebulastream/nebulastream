@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_STATE_STATEVARIABLE_HPP_
-#define NES_INCLUDE_STATE_STATEVARIABLE_HPP_
+#ifndef NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_
+#define NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_
 
 #include <Util/Logger/Logger.hpp>
 #include <string>
@@ -331,4 +331,4 @@ class StateVariable : public detail::Destroyable {
 };
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_STATE_STATEVARIABLE_HPP_
+#endif// NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_

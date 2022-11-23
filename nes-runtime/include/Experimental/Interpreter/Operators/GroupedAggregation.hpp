@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GROUPED_AGGREGATION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GROUPED_AGGREGATION_HPP_
-#include <Experimental/Interpreter/ExecutionContext.hpp>
+#ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_GROUPEDAGGREGATION_HPP_
+#define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_GROUPEDAGGREGATION_HPP_
 #include <Execution/Expressions/Expression.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AggregationFunction.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Util/Experimental/HashMap.hpp>
@@ -23,7 +23,6 @@
 namespace NES::Nautilus {
 class AggregationFunction;
 class AggregationState;
-
 
 class GroupedAggregationState : public OperatorState {
   public:
@@ -51,4 +50,4 @@ class GroupedAggregation : public ExecutableOperator {
 };
 
 }// namespace NES::Nautilus
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_AGGREGATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_OPERATORS_GROUPEDAGGREGATION_HPP_

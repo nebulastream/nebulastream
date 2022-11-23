@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_TRACING_FUNCTIONCALLTARGET_HPP_
-#define NES_NAUTILUS_TRACING_FUNCTIONCALLTARGET_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
 #include <ostream>
 #include <string>
 namespace NES::Nautilus::Tracing {
@@ -22,12 +22,12 @@ namespace NES::Nautilus::Tracing {
  */
 class FunctionCallTarget {
   public:
-    FunctionCallTarget(const std::string& mangledFunctionName,  void* functionPtr);
-     std::string mangledName;
-     void* functionPtr;
+    FunctionCallTarget(const std::string& mangledFunctionName, void* functionPtr);
+    std::string mangledName;
+    void* functionPtr;
     friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
 };
 
-}
+}// namespace NES::Nautilus::Tracing
 
-#endif//NES_NAUTILUS_TRACING_FUNCTIONCALLTARGET_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_

@@ -28,11 +28,9 @@ namespace NES::Nautilus::Backends::MLIR {
  * @return std::unique_ptr<mlir::Pass>: MLIR lowering pass corresponding to supplied Enum.
  */
 std::unique_ptr<mlir::Pass> getMLIRLoweringPass(MLIRPassManager::LoweringPass loweringPass) {
-    switch(loweringPass) {
-        case MLIRPassManager::LLVM:
-            return mlir::createLowerToLLVMPass();
-        case MLIRPassManager::SCF:
-            return mlir::createLowerToCFGPass();
+    switch (loweringPass) {
+        case MLIRPassManager::LLVM: return mlir::createLowerToLLVMPass();
+        case MLIRPassManager::SCF: return mlir::createLowerToCFGPass();
     }
 }
 
@@ -43,29 +41,28 @@ std::unique_ptr<mlir::Pass> getMLIRLoweringPass(MLIRPassManager::LoweringPass lo
  * @return std::unique_ptr<mlir::Pass>: MLIR optimization pass corresponding to supplied Enum.
  */
 std::unique_ptr<mlir::Pass> getMLIROptimizationPass(MLIRPassManager::OptimizationPass optimizationPass) {
-    switch(optimizationPass) {
-        case MLIRPassManager::OptimizationPass::Inline:
-            return mlir::createInlinerPass();
+    switch (optimizationPass) {
+        case MLIRPassManager::OptimizationPass::Inline: return mlir::createInlinerPass();
     }
 }
 
-int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module,
-                                                std::vector<LoweringPass> loweringPasses, 
+int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
+                                                std::vector<LoweringPass> loweringPasses,
                                                 std::vector<OptimizationPass> optimizationPasses) {
     mlir::PassManager passManager(module->getContext());
     applyPassManagerCLOptions(passManager);
 
     // Apply optimization passes.
-    if(!optimizationPasses.empty()) {
-        for(auto optimizationPass : optimizationPasses) {
-            passManager.addPass(getMLIROptimizationPass(optimizationPass));    
+    if (!optimizationPasses.empty()) {
+        for (auto optimizationPass : optimizationPasses) {
+            passManager.addPass(getMLIROptimizationPass(optimizationPass));
         }
     } else {
         passManager.addPass(mlir::createInlinerPass());
     }
     // Apply lowering passes.
-    if(!loweringPasses.empty()) {
-        for(auto loweringPass : loweringPasses) {
+    if (!loweringPasses.empty()) {
+        for (auto loweringPass : loweringPasses) {
             passManager.addPass(getMLIRLoweringPass(loweringPass));
         }
     } else {

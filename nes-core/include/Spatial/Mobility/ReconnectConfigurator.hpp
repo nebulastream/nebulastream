@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RECONNECTCONFIGURATOR_HPP
-#define NES_RECONNECTCONFIGURATOR_HPP
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
 
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
@@ -118,4 +118,4 @@ using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 }// namespace Spatial
 }// namespace NES
 
-#endif//NES_RECONNECTCONFIGURATOR_HPP
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_

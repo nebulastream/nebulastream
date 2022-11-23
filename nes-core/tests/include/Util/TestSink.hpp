@@ -38,7 +38,14 @@ class TestSink : public SinkMedium {
              const Runtime::NodeEnginePtr& nodeEngine,
              uint32_t numOfProducers = 1)
         : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
-          expectedBuffer(expectedBuffer){};
+          expectedBuffer(expectedBuffer) {
+        auto bufferManager = nodeEngine->getBufferManager(0);
+        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+            memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+            memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+        }
+    };
 
     static std::shared_ptr<TestSink>
     create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
@@ -58,15 +65,14 @@ class TestSink : public SinkMedium {
         return true;
     }
 
-    /**
-     * @brief Factory to create a new TestSink.
-     * @param expectedBuffer number of buffers expected this sink should receive.
-     * @return
-     */
-
     Runtime::TupleBuffer get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
+    }
+
+    Runtime::MemoryLayouts::DynamicTupleBuffer getResultBuffer(uint64_t index) {
+        auto buffer = get(index);
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     }
 
     void setup() override{};
@@ -86,6 +92,8 @@ class TestSink : public SinkMedium {
         resultBuffers.clear();
     }
 
+    void waitTillCompleted() { completed.get_future().wait(); }
+
   public:
     void shutdown() override { cleanupBuffers(); }
 
@@ -95,6 +103,7 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
     /// this vector must be cleanup by the test -- do not rely on the engine to clean it up for you!!
     std::vector<Runtime::TupleBuffer> resultBuffers;
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 };
 
 }// namespace NES

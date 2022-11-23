@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstddef>
@@ -49,4 +49,4 @@ class AbstractLineageManager {
     virtual size_t getLineageSize() const = 0;
 };
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_

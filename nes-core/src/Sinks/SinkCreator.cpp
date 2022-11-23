@@ -13,8 +13,8 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Operators/OperatorId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
+
+#include <Common/Identifiers.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
@@ -317,7 +317,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 
 }// namespace Experimental::MaterializedView
 
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD_SINK
 DataSinkPtr
 createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout) {
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);

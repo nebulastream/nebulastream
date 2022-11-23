@@ -28,6 +28,7 @@ bool WindowType::isSlidingWindow() { return false; }
 bool WindowType::isTumblingWindow() { return false; }
 
 bool WindowType::isThresholdWindow() { return false; }
+
 std::shared_ptr<TimeBasedWindowType> WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
     if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {
         return timeBasedWindowType;

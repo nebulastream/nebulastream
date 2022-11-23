@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
-#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
-#include <Nautilus/Tracing/ValueRef.hpp>
-#include <Nautilus/Tracing/Tag.hpp>
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
+#include <Nautilus/Tracing/Tag.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
 #include <functional>
 #include <list>
 #include <unordered_map>
@@ -47,6 +47,7 @@ class SymbolicExecutionContext {
      * @return the return value of this branch
      */
     bool executeCMP();
+
   private:
     /**
      * @brief Symbolic execution mode.
@@ -104,4 +105,4 @@ std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functo
 
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_SYMBOLICEXECUTIONCONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
