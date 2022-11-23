@@ -14,6 +14,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -35,6 +36,7 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
@@ -68,6 +70,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -150,6 +153,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
+        auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode);
+        parentOperator->setChild(mapJavaUdf);
+        return mapJavaUdf;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         // TODO 3280 change with a factory for different aggregation values
         auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
@@ -348,6 +355,22 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                                             aggregationResultFieldName,
                                                                             aggregationFunction,
                                                                             handlerIndex);
+}
+
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
+    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+    auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
+    auto className = mapJavaUdfDescriptor->getClassName();
+    auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
+    auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+    auto serializedInstance = mapJavaUdfDescriptor->getSerializedInstance();
+    auto methodName = mapJavaUdfDescriptor->getMethodName();
+    auto returnType = mapJavaUdfDescriptor->getReturnType();
+    // TODO move types into the map java udf
+    return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(className, byteCodeList, outputSchema, serializedInstance, methodName, returnType);
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>

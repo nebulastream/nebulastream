@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -49,6 +50,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -244,6 +246,14 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
+    operatorNode->replace(physicalMapOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto mapJavaUdfOperator = operatorNode->as<MapJavaUdfLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUdfOperator::create(mapJavaUdfOperator->getInputSchema(),
+                                                                                     mapJavaUdfOperator->getOutputSchema(),
+                                                                                     mapJavaUdfOperator->getJavaUdfDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
 

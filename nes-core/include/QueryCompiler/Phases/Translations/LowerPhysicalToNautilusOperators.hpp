@@ -114,6 +114,9 @@ class LowerPhysicalToNautilusOperators {
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& sharedPtr);
+    std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(ExpressionNodePtr expressionNode);
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -90,6 +90,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
+    * @brief Lowers a java udf map operator
+    * @param queryPlan current plan
+    * @param operatorNode current operator
+    */
+    void lowerJavaUdfMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+
+    /**
     * @brief Lowers a window operator
     * @param queryPlan current plan
     * @param operatorNode current operator
