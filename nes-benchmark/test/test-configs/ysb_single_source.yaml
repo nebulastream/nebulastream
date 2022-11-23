@@ -22,7 +22,7 @@ benchmarkName: YSBQuery
 query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
-numberOfBuffersToProduce: 1000
+numberOfBuffersToProduce: 500
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
