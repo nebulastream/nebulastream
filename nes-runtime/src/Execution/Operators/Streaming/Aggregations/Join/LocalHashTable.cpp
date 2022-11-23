@@ -18,10 +18,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void LocalHashTable::insert(Nautilus::Record& record, const std::string& joinFieldName) const {
+void LocalHashTable::insert(uint64_t key, const std::string& joinFieldName) const {
 
-    auto hashedKey = Util::murmurHash(record.read(joinFieldName));
-    buckets[hashedKey & LazyJoinBuild::MASK]->append(hashedKey, record);
+    auto hashedKey = Util::murmurHash(key);
+    buckets[hashedKey & LazyJoinOperatorHandler::MASK]->append(hashedKey);
 
 }
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {

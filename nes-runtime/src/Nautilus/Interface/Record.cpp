@@ -34,4 +34,7 @@ uint64_t Record::numberOfFields() { return fields.size(); }
 void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
 
 bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
+std::vector<Record::RecordFieldIdentifier> Record::getAllField() {
+    return fields.ke
+}
 }// namespace NES::Nautilus

@@ -54,6 +54,8 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
     size_t joinedTuples = 0;
     LazyJoinOperatorHandlerPtr operatorHandler = static_cast<LazyJoinOperatorHandlerPtr>(executionContext.getGlobalOperatorHandler(handlerIndex)->getValue());
 
+
+
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
@@ -86,6 +88,7 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
 
     return joinedTuples;
 }
+
 LazyJoinSink::LazyJoinSink(uint64_t handlerIndex, const std::string& joinFieldName)
     : handlerIndex(handlerIndex), joinFieldName(joinFieldName) {}
 

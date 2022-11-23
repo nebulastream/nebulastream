@@ -27,6 +27,7 @@ class LazyJoinOperatorHandler;
 using LazyJoinOperatorHandlerPtr = LazyJoinOperatorHandler const*;
 
 class LazyJoinOperatorHandler : public OperatorHandler {
+  public:
     static constexpr auto NUM_PARTITIONS = 8 * 1024;
     static constexpr auto MASK = NUM_PARTITIONS - 1;
 
@@ -40,7 +41,7 @@ class LazyJoinOperatorHandler : public OperatorHandler {
     ~LazyJoinOperatorHandler();
 
 
-    const Operators::LocalHashTable& getWorkerHashTable(size_t index) const;
+    Operators::LocalHashTable& getWorkerHashTable(size_t index);
 
     const Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide) const;
 

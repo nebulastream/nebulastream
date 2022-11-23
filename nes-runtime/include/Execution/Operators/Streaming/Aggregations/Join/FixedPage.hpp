@@ -61,7 +61,8 @@ class FixedPage{
     size_t size() const;
 
   private:
-    Nautilus::Record* data;
+    size_t sizeOfRecord;
+    uint8_t* data;
     size_t pos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;

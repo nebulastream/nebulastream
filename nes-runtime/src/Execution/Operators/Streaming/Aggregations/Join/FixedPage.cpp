@@ -29,14 +29,18 @@ FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_
 }
 
 
-bool FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
+uint8_t* FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
     // TODO think about if this is the correct way here...
+
+    move pointer sizeOfRecord
+        return pointer to memory area
+
     data[pos++] = record;
     bloomFilter->add(hash);
     return pos < capacity;
 }
 
-bool FixedPage::bloomFilterCheck(uint64_t key) const  { return bloomFilter->checkContains(key); }
+bool FixedPage::bloomFilterCheck(uint64_t hash) const  { return bloomFilter->checkContains(hash); }
 
 Nautilus::Record& FixedPage::operator[](size_t index) const  { return data[index]; }
 

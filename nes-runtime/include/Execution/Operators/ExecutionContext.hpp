@@ -82,6 +82,9 @@ class ExecutionContext final {
      */
     void emitBuffer(const RecordBuffer& rb);
 
+    const Value<MemRef>& getPipelineContext() const;
+    const Value<MemRef>& getWorkerContext() const;
+
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
