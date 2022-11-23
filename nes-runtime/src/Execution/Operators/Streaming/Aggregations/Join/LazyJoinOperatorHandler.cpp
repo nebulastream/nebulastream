@@ -14,6 +14,7 @@ limitations under the License.
 
 
 #include <atomic>
+#include <cstddef>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
 
 
