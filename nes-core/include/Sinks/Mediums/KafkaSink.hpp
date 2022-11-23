@@ -77,7 +77,6 @@ class KafkaSink : public SinkMedium {
 
     std::string brokers;
     std::string topic;
-    int partition;
 
     std::unique_ptr<cppkafka::Configuration> config;
     std::unique_ptr<cppkafka::Producer> producer;
