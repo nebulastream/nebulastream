@@ -26,9 +26,9 @@ class IfOperation : public Operation {
 
     OperationPtr getValue();
 
-    BasicBlockInvocation& getTrueBlockInvocation();
     BasicBlockPtr getMergeBlock();
     void setMergeBlock(BasicBlockPtr mergeBlock);
+    BasicBlockInvocation& getTrueBlockInvocation();
     BasicBlockInvocation& getFalseBlockInvocation();
     void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
     void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
