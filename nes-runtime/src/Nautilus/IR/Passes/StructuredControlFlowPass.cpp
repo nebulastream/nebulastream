@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp"
+#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
@@ -28,8 +31,8 @@
 using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
 
-std::shared_ptr<IR::IRGraph> StructuredControlFlowPass::apply(std::shared_ptr<IR::IRGraph> ir) {
-    auto phaseContext = StructuredControlFlowPassContext(std::move(ir));
+std::shared_ptr<IR::IRGraph> StructuredControlFlowPass::apply(std::shared_ptr<IR::IRGraph> ir, bool findSimpleCountedLoops) {
+    auto phaseContext = StructuredControlFlowPassContext(std::move(ir), findSimpleCountedLoops);
     return phaseContext.process();
 };
 
@@ -44,24 +47,58 @@ std::shared_ptr<IR::IRGraph> StructuredControlFlowPass::StructuredControlFlowPas
 void StructuredControlFlowPass::StructuredControlFlowPassContext::checkBranchForLoopHeadBlocks(
         IR::BasicBlockPtr& currentBlock, std::stack<IR::BasicBlockPtr>& candidates, 
         std::unordered_set<std::string>& visitedBlocks, std::unordered_set<std::string>& loopHeadCandidates) {
+    auto previousBlock = currentBlock;
     while(!visitedBlocks.contains(currentBlock->getIdentifier()) && 
             currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operation::BranchOp) {
             auto nextBlock = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp)->getNextBlockInvocation().getBlock();
             visitedBlocks.emplace(currentBlock->getIdentifier());
+            previousBlock = currentBlock;
             currentBlock = nextBlock;
         } else if (terminatorOp->getOperationType() == Operation::IfOp) {
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
             loopHeadCandidates.emplace(currentBlock->getIdentifier());
             candidates.emplace(currentBlock);
             visitedBlocks.emplace(currentBlock->getIdentifier());
+            previousBlock = currentBlock;
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
     }
     if(loopHeadCandidates.contains(currentBlock->getIdentifier())) {
         //todo replace ifOperation with loopOperation #3169
-        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+        // Add counted loop info for simple for-loops as discussed with Dwi
+        // Required:
+        //  lowerBound: 0 or if-condition-left (might be problematic)
+        //  upperBound: if-condition-right
+        //  stepSize:   1
+        //  inductionVariable: if-condition-left
+        //  loopBodyBlockRef:   if-true-branch
+        //  loopEndBlock: second predecessor
+        //  (afterLoopBlockRef: if-else-branch)
+        if(findSimpleCountedLoops) {
+            auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+            auto countedLoopInfo = std::make_unique<CountedLoopInfo>();
+            if(ifOp->getBooleanValue()->getOperationType() == Operation::CompareOp) {
+                auto compareOp = std::static_pointer_cast<Operations::CompareOperation>(ifOp->getBooleanValue());
+                countedLoopInfo->lowerBound = compareOp->getLeftInput();
+                countedLoopInfo->upperBound = compareOp->getRightInput();
+                countedLoopInfo->loopBodyInductionVariable = compareOp->getLeftInput();
+            }
+            countedLoopInfo->loopEndBlock = previousBlock;
+            // Todo the MLIR value for step size is only created when the respective block is called.
+            // -> this happens AFTER the loop-operation is created
+            // -> thus, the loop-operation would point to an undefined value? Can we then insert a value there?
+            // Solution for now: 
+            // -> Option 1: Simply create an MLIR constant integer with value 0 (Ignore ValueFrame).
+            // -> Option 2: Create an MLIR constant integer using the value defined in the given stepSize. Insert it
+            //              into the ValueFrame using the correct identifier, and then when the MLIR code generation
+            //              for the addOp, make sure that we check whether the value already exists so we do not 
+            //              overwrite it.
+            countedLoopInfo->stepSize = std::static_pointer_cast<Operations::AddOperation>(previousBlock->getOperations().at(countedLoopInfo->loopEndBlock->getOperations().size()-2))->getRightInput();
+            countedLoopInfo->loopBodyBlock = ifOp->getTrueBlockInvocation().getBlock();
+            ifOp->setCountedLoopInfo(std::move(countedLoopInfo));
+        }
         currentBlock->incrementNumLoopBackEdge();
     }
 }
