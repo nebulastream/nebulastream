@@ -33,19 +33,18 @@ class FixedPage{
     explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
 
     /**
-     * @brief returns the record at the given index
+     * @brief returns a pointer to the record at the given index
      * @param index
-     * @return Record
+     * @return pointer to the record
      */
-    Nautilus::Record& operator[](size_t index) const;
+    uint8_t* operator[](size_t index) const;
 
     /**
-     * @brief appends the record to this page and checks if there is enough space for another record
+     * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
-     * @param record
-     * @return still capacity for another record
+     * @return null pointer if there is no more space left on the page, otherwise the pointer
      */
-    bool append(const uint64_t hash, const Nautilus::Record& record);
+    uint8_t* append(const uint64_t hash);
 
     /**
      * @brief checks if the key might be in this page

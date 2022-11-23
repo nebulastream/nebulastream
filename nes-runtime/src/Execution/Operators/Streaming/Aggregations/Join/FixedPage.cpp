@@ -19,30 +19,28 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord) {
+FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord) : sizeOfRecord(sizeOfRecord) {
     auto ptr = tail.fetch_add(CHUNK_SIZE);
     NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
-    data = reinterpret_cast<Nautilus::Record*>(ptr);
+    data = reinterpret_cast<uint8_t*>(ptr);
 
     capacity = CHUNK_SIZE / sizeOfRecord;
     bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
 }
 
 
-uint8_t* FixedPage::append(const uint64_t hash, const Nautilus::Record& record)  {
-    // TODO think about if this is the correct way here...
+uint8_t* FixedPage::append(const uint64_t hash)  {
+    if (pos >= capacity) {
+        return nullptr;
+    }
 
-    move pointer sizeOfRecord
-        return pointer to memory area
-
-    data[pos++] = record;
     bloomFilter->add(hash);
-    return pos < capacity;
+    return &data[pos];
 }
 
 bool FixedPage::bloomFilterCheck(uint64_t hash) const  { return bloomFilter->checkContains(hash); }
 
-Nautilus::Record& FixedPage::operator[](size_t index) const  { return data[index]; }
+uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return pos; }
 
