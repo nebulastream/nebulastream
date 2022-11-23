@@ -125,7 +125,7 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
         createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
-    std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest), PARTITION(34).";
+    std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 
     EXPECT_EQ(kafkaSink->toString(), expected);
 
@@ -226,5 +226,5 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
 
     SUCCEED();
 }
-#ifdef RUNNING_KAFKA_INSTANCE
+#endif
 }// namespace NES
