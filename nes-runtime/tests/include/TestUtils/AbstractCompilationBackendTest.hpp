@@ -19,7 +19,7 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/IR/Passes/RemoveBrOnlyBlocksPass.hpp>
+#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 
@@ -31,7 +31,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    Nautilus::IR::RemoveBrOnlyBlocksPass removeBrOnlyBlocksPhase;
+    Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         std::cout << *executionTrace.get() << std::endl;

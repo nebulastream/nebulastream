@@ -137,88 +137,88 @@ Value<> doubleIfCondition() {
     return iw = iw + 2;
 }
 
-// TEST_P(IfCompilationTest, doubleIfCondition) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return doubleIfCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 23);
-// }
+TEST_P(IfCompilationTest, doubleIfCondition) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return doubleIfCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 23);
+}
 
-// Value<> ifElseIfCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(1);
-//     if (iw == 8) {
-//         iw = iw + 14;
-//     } else if (iw == 1) {
-//         iw = iw + 20;
-//     }
-//     return iw = iw + 2;
-// }
+Value<> ifElseIfCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (iw == 8) {
+        iw = iw + 14;
+    } else if (iw == 1) {
+        iw = iw + 20;
+    }
+    return iw = iw + 2;
+}
 
-// TEST_P(IfCompilationTest, ifElseIfCondition) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return ifElseIfCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 23);
-// }
+TEST_P(IfCompilationTest, ifElseIfCondition) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return ifElseIfCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 23);
+}
 
-// Value<> deeplyNestedIfElseCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(5);
-//     if (iw < 8) {
-//         if (iw > 6) {
-//             iw = iw + 10;
-//         } else {
-//             if (iw < 6) {
-//                 if (iw == 5) {
-//                     iw = iw + 5;
-//                 }
-//             }
-//         }
-//     } else {
-//         iw = iw + 20;
-//     }
-//     return iw = iw + 2;
-// }
+Value<> deeplyNestedIfElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(5);
+    if (iw < 8) {
+        if (iw > 6) {
+            iw = iw + 10;
+        } else {
+            if (iw < 6) {
+                if (iw == 5) {
+                    iw = iw + 5;
+                }
+            }
+        }
+    } else {
+        iw = iw + 20;
+    }
+    return iw = iw + 2;
+}
 
-// TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return deeplyNestedIfElseCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 12);
-// }
+TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return deeplyNestedIfElseCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 12);
+}
 
-// Value<> deeplyNestedIfElseIfCondition() {
-//     Value value = Value(1);
-//     Value iw = Value(5);
-//     if (iw < 8) {
-//         iw = iw + 10;
-//     } else {
-//         if (iw == 5) {
-//             iw = iw + 5;
-//         } else if (iw == 4) {
-//             iw = iw + 4;
-//         }
-//     }
-//     return iw = iw + 2;
-// }
+Value<> deeplyNestedIfElseIfCondition() {
+    Value value = Value(1);
+    Value iw = Value(5);
+    if (iw < 8) {
+        iw = iw + 10;
+    } else {
+        if (iw == 5) {
+            iw = iw + 5;
+        } else if (iw == 4) {
+            iw = iw + 4;
+        }
+    }
+    return iw = iw + 2;
+}
 
-// // Currently fails, because an empty block (Block 7) is created, during trace building.
-// // Fix in #3021
-// TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
-//     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
-//         return deeplyNestedIfElseIfCondition();
-//     });
-//     auto engine = prepare(executionTrace);
-//     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-//     ASSERT_EQ(function(), 12);
-// }
+// Currently fails, because an empty block (Block 7) is created, during trace building.
+// Fix in #3021
+TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+        return deeplyNestedIfElseIfCondition();
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    ASSERT_EQ(function(), 12);
+}
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.

@@ -13,5 +13,5 @@
 
 
 add_source_files(nes-runtime
-        RemoveBrOnlyBlocksPass.cpp
+        RemoveBrOnlyBlocksPhase.cpp
         )

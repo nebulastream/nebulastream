@@ -13,7 +13,7 @@
 
 add_subdirectory(BasicBlocks)
 add_subdirectory(Operations)
-add_subdirectory(Passes)
+add_subdirectory(Phases)
 add_subdirectory(Types)
 
 add_source_files(nes-runtime IRGraph.cpp)

@@ -29,7 +29,7 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class RemoveBranchOnlyBlocksPassTest : public testing::Test, public AbstractCompilationBackendTest {
+class RemoveBranchOnlyBlocksPhaseTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -46,8 +46,8 @@ class RemoveBranchOnlyBlocksPassTest : public testing::Test, public AbstractComp
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available passes.
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPasses(std::function<Value<>()> nautilusFunction) {
+    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
+    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
         auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() {
             return nautilusFunction();
         });
@@ -91,7 +91,7 @@ class RemoveBranchOnlyBlocksPassTest : public testing::Test, public AbstractComp
         std::stack<IR::BasicBlockPtr> blocksToVisit;
         std::unordered_set<std::string> visitedBlocks;
         blocksToVisit.push(currentBlock);
-        bool onlyCorrectBlocksAreLeft;
+        bool allRequiredBlocksAreVisited;
         bool predecessorsAreCorrect = true;
         bool nextBlocksAreCorrect = true;
         do {
@@ -125,7 +125,7 @@ class RemoveBranchOnlyBlocksPassTest : public testing::Test, public AbstractComp
                     NES_NOT_IMPLEMENTED();
                 }
             } else {
-                onlyCorrectBlocksAreLeft = false;
+                allRequiredBlocksAreVisited = false;
             }
             blocksToVisit.pop();
             auto terminatorOp = currentBlock->getTerminatorOp();
@@ -149,7 +149,7 @@ class RemoveBranchOnlyBlocksPassTest : public testing::Test, public AbstractComp
 };
 
 //==----------------------------------------------------------==//
-//==------------------ NAUTILUS PASS TESTS -------------------==//
+//==------------------ NAUTILUS Phase TESTS -------------------==//
 //==----------------------------------------------------------==//
 Value<> simpleIfOperationWithoutFalseBranch_0() {
     Value agg = Value(0);
@@ -160,13 +160,13 @@ Value<> simpleIfOperationWithoutFalseBranch_0() {
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPassTest, 0_SimpleIfOperationWithoutFalseBranch) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "3"});
     createCorrectBlock(correctBlocks, "1", {"0"}, {"3"});
     createCorrectBlock(correctBlocks, "3", {"0", "1"}, {});
-    auto ir = createTraceAndApplyPasses(&simpleIfOperationWithoutFalseBranch_0);
+    auto ir = createTraceAndApplyPhases(&simpleIfOperationWithoutFalseBranch_0);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -189,7 +189,7 @@ Value<> doubleVerticalDiamondInTrueBranch_2() {
     agg = agg + 1;
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPassTest, 2_doubleVerticalDiamondInTrueBranch) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
@@ -201,7 +201,7 @@ TEST_P(RemoveBranchOnlyBlocksPassTest, 2_doubleVerticalDiamondInTrueBranch) {
     createCorrectBlock(correctBlocks, "5", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "6", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "9", {"5", "6", "2"}, {});
-    auto ir = createTraceAndApplyPasses(&doubleVerticalDiamondInTrueBranch_2);
+    auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -218,7 +218,7 @@ Value<> loopMergeBlockBeforeCorrespondingIfOperation_3() {
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPassTest, 3_loopMergeBlockBeforeCorrespondingIfOperation) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOperation) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"6"});
@@ -227,7 +227,7 @@ TEST_P(RemoveBranchOnlyBlocksPassTest, 3_loopMergeBlockBeforeCorrespondingIfOper
     createCorrectBlock(correctBlocks, "3", {"1"}, {"6"});
     createCorrectBlock(correctBlocks, "4", {"1"}, {"6"});
     createCorrectBlock(correctBlocks, "2", {"6"}, {});
-    auto ir = createTraceAndApplyPasses(&loopMergeBlockBeforeCorrespondingIfOperation_3);
+    auto ir = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_3);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -251,7 +251,7 @@ Value<> mergeLoopMergeBlockWithLoopFollowUp_4() {
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPassTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
@@ -264,7 +264,7 @@ TEST_P(RemoveBranchOnlyBlocksPassTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
     createCorrectBlock(correctBlocks, "10", {"8", "12"}, {"8", "9"});
     createCorrectBlock(correctBlocks, "8", {"10"}, {"10"});
     createCorrectBlock(correctBlocks, "9", {"10"}, {});
-    auto ir = createTraceAndApplyPasses(&mergeLoopMergeBlockWithLoopFollowUp_4);
+    auto ir = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_4);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -272,9 +272,9 @@ TEST_P(RemoveBranchOnlyBlocksPassTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testLoopCompilation,
-                        RemoveBranchOnlyBlocksPassTest,
+                        RemoveBranchOnlyBlocksPhaseTest,
                         ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
-                        [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPassTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType>& info) {
                             return info.param;
                         });
 
