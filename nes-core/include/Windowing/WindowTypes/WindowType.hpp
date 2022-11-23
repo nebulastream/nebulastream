@@ -52,7 +52,20 @@ class WindowType {
        * Cast the current window type as a time based window type
        * @return a shared pointer of TimeBasedWindowType
        */
-    static std::shared_ptr<TimeBasedWindowType> asTimeBasedWindowType(std::shared_ptr<WindowType> windowType);
+    static TimeBasedWindowTypePtr asTimeBasedWindowType(std::shared_ptr<WindowType> windowType);
+
+    /**
+       * Cast the current window type as a content based window type
+       * @return a shared pointer of ContentBasedWindowType
+       */
+    static ContentBasedWindowTypePtr asContentBasedWindowType(std::shared_ptr<WindowType> windowType);
+
+    /**
+     * @brief Infer stamp of the window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    virtual bool inferStamp(const SchemaPtr& schema) = 0;
 };
 
 }// namespace NES::Windowing

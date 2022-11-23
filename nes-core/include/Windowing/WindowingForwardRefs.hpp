@@ -106,6 +106,12 @@ using WindowTypePtr = std::shared_ptr<WindowType>;
 class TimeBasedWindowType;
 using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
+class ContentBasedWindowType;
+using ContentBasedWindowTypePtr = std::shared_ptr<ContentBasedWindowType>;
+
+class ThresholdWindow;
+using ThresholdWindowPtr = std::shared_ptr<ThresholdWindow>;
+
 class TumblingWindow;
 using TumblingWindowPtr = std::shared_ptr<TumblingWindow>;
 

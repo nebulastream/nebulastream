@@ -59,11 +59,11 @@ class TimeBasedWindowType : public WindowType {
     virtual TimeMeasure getSlide() = 0;
 
     /**
-     * @brief Infer stamp of the window type
+     * @brief Infer stamp of time based window type
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    bool inferStamp(const SchemaPtr& schema);
+    bool inferStamp(const SchemaPtr& schema) override;
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;

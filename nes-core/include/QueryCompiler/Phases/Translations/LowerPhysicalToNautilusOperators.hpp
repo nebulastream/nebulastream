@@ -73,7 +73,9 @@ class LowerPhysicalToNautilusOperators {
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
-
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                         PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(ExpressionNodePtr expressionNode);
 };
 }// namespace QueryCompilation
