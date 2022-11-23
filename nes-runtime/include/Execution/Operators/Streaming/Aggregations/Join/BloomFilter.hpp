@@ -46,7 +46,7 @@ class alignas(64) BloomFilter {
      * @param hash
      * @return true or false
      */
-    bool checkContains(uint64_t key);
+    bool checkContains(uint64_t hash);
 
     /**
      * @brief destructs the BloomFilter

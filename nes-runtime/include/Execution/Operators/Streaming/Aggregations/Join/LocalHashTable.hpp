@@ -35,8 +35,9 @@ class LocalHashTable {
      * @brief inserts the record into the hash table
      * @param hash
      * @param record
+     * @return pointer to the 
      */
-    void insert(Nautilus::Record& record, const std::string& joinFieldName) const;
+    void* insert(Nautilus::Record& record, const std::string& joinFieldName) const;
 
     /**
      * @brief

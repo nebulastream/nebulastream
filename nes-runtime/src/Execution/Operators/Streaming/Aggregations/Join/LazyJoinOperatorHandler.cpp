@@ -21,7 +21,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-const Operators::LocalHashTable& LazyJoinOperatorHandler::getWorkerHashTable(size_t index) const {
+Operators::LocalHashTable& LazyJoinOperatorHandler::getWorkerHashTable(size_t index) {
     NES_ASSERT2_FMT(index < workerThreadsHashTable.size(), "LazyJoinOperatorHandler tried to access local hashtable via an index that is larger than the vector!");
 
     return workerThreadsHashTable[index];

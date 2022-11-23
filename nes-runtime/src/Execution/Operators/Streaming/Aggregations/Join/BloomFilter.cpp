@@ -48,10 +48,9 @@ void BloomFilter::add(uint64_t hash) {
     }
 }
 
-bool BloomFilter::checkContains(uint64_t key) {
+bool BloomFilter::checkContains(uint64_t hash) {
     uint16_t hits = 0;
 
-    auto hash = Util::murmurHash(key);
     uint32_t lower32Bits = hash & ((1UL << 32) - 1);
     uint32_t upper32Bits = hash >> 32;
 
