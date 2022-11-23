@@ -100,28 +100,38 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
             auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
             auto fieldSize = physicalType->size();
             std::string str;
+            auto indexInBuffer = buffer + offset + i * schema->getSchemaSizeInBytes();
 
             // handle variable-length field
             if (dataType->isText()) {
+                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                          "from the tuple buffer");
+
                 // read the child buffer index from the tuple buffer
                 Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
-                    *reinterpret_cast<uint32_t const*>(buffer + offset + i * schema->getSchemaSizeInBytes());
+                    *reinterpret_cast<uint32_t const*>(indexInBuffer);
 
                 // retrieve the child buffer from the tuple buffer
                 auto childTupleBuffer = tbuffer.loadChildBuffer(childIdx);
 
                 // retrieve the size of the variable-length field from the child buffer
-                uint32_t sizeOfTextField = 0;
-                std::memcpy(&sizeOfTextField, childTupleBuffer.getBuffer(), sizeof(uint32_t));
+                uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
 
                 // build the string
-                auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
-                std::string deserialized(begin, begin + sizeOfTextField);
-                str = std::move(deserialized);
+                if(sizeOfTextField > 0) {
+                    auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
+                    std::string deserialized(begin, begin + sizeOfTextField);
+                    str = std::move(deserialized);
+                }
+
+                else {
+                    NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
+                                "variable-length TEXT field. Returning an empty string.")
+                }
             }
 
             else {
-                str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
+                str = physicalType->convertRawToString(indexInBuffer);
             }
 
             ss << str.c_str();

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidArgumentException.hpp"
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <cstring>
 
 namespace NES {
