@@ -36,7 +36,7 @@ class StructuredControlFlowPass {
      * @param Trace.
      * @return The modified execution trace.
      */
-    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir);
+    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir, bool findSimpleCountedLoops = false);
 
     private:
     /**
@@ -57,7 +57,8 @@ class StructuredControlFlowPass {
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        StructuredControlFlowPassContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        StructuredControlFlowPassContext(std::shared_ptr<IR::IRGraph> ir, bool findSimpleCountedLoops) 
+            : ir(ir), findSimpleCountedLoops(findSimpleCountedLoops){};
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
          * 
@@ -103,6 +104,7 @@ class StructuredControlFlowPass {
       private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
+        bool findSimpleCountedLoops;
     };
 };
 
