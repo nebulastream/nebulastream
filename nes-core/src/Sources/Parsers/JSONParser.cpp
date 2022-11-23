@@ -31,7 +31,8 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
 bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                              const SchemaPtr& schema) {
+                                              const SchemaPtr& schema,
+                                              const Runtime::BufferManagerPtr& bufferManager) {
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount: " << tupleCount);
     std::vector<std::string> helperToken;
     // extract values as strings from JSON message - should be improved with JSON library
@@ -60,7 +61,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
         //the strings. This behavior can be improved with a JSON library in the future.
         jsonValue = Util::trim(jsonValue, '"');
         jsonValue = Util::trim(jsonValue, '\'');
-        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount);
+        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount, bufferManager);
     }
     return true;
 }

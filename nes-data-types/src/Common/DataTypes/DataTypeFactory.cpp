@@ -151,6 +151,7 @@ DataTypePtr DataTypeFactory::createType(BasicType type) {
         case UINT64: return DataTypeFactory::createUInt64();
         case FLOAT32: return DataTypeFactory::createFloat();
         case FLOAT64: return DataTypeFactory::createDouble();
+        case TEXT: return DataTypeFactory::createText();
         default: return nullptr;
     }
     return DataTypePtr();

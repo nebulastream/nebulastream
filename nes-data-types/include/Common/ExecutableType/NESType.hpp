@@ -51,7 +51,7 @@ concept IsDouble = std::is_same_v<Type, double>;
 template<class Type>
 concept IsChar = std::is_same_v<Type, char>;
 template<class Type>
-concept IsText = std::is_same_v<Type, char>;
+concept IsText = std::is_same_v<Type, uint32_t>;
 template<class Type>
 concept IsBool = std::is_same_v<Type, bool>;
 template<class Type>
