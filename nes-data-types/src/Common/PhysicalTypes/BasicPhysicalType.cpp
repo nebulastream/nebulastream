@@ -61,7 +61,8 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
         case TEXT: {
-            return "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.";
+            NES_DEBUG("BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.");
+            return "TEXT conversion to string not implemented.";
         }
         case CHAR:
             if (size() != 1) {
