@@ -132,7 +132,6 @@ Value<> simpleLoopInfoTest() {
     for(Value i = 0; i < limit; i = i + 1) {
         FunctionCall<>("simplePrint", simplePrint, printNumber);
     }
-    agg = agg + 1;
     return agg;
 }
 TEST_P(StructuredControlFlowPassTest, simpleLoopInfoTets) {
@@ -140,7 +139,7 @@ TEST_P(StructuredControlFlowPassTest, simpleLoopInfoTets) {
     // createCorrectBlock(correctBlocks, "0", 0, "7");
     // createCorrectBlock(correctBlocks, "3", 0, "9");
     // createCorrectBlock(correctBlocks, "7", 0, "8");
-    auto ir = createTraceAndApplyPasses(&simpleLoopInfoTest, true);
+    auto ir = createTraceAndApplyPasses(&simpleLoopInfoTest, /* findSimpleCountedLoop */ true);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
