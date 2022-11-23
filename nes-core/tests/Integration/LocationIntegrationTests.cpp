@@ -846,8 +846,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                                   currentPredictionAtCoordinator.value().expectedNewParentId);
                     }
                     predictedReconnect.reset();
-                } else {
-                    NES_DEBUG("no prediction!");
                 }
             }
         }
