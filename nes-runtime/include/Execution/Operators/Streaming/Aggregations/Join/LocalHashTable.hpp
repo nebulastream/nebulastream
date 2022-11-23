@@ -26,6 +26,11 @@ namespace NES::Runtime::Execution::Operators {
 class LocalHashTable {
 
   public:
+    explicit LocalHashTable(SchemaPtr schema,
+                            size_t numPartitions,
+                            std::atomic<uint64_t>& tail,
+                            size_t overrunAddress);
+
     /**
      * @brief inserts the record into the hash table
      * @param hash

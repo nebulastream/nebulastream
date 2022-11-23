@@ -30,7 +30,7 @@ class FixedPage{
     static constexpr auto CHUNK_SIZE = 4 * 1024;
     static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 
-    FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
+    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
 
     /**
      * @brief returns the record at the given index

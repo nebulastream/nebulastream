@@ -16,14 +16,15 @@ limitations under the License.
 #include <atomic>
 #include <cstddef>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 
 
 namespace NES::Runtime::Execution {
 
 const Operators::LocalHashTable& LazyJoinOperatorHandler::getWorkerHashTable(size_t index) const {
-    NES_ASSERT2_FMT(index < workerHashTable.size(), "LazyJoinOperatorHandler tried to access local hashtable via an index that is larger than the vector!");
+    NES_ASSERT2_FMT(index < workerThreadsHashTable.size(), "LazyJoinOperatorHandler tried to access local hashtable via an index that is larger than the vector!");
 
-    return workerHashTable[index];
+    return workerThreadsHashTable[index];
 }
 
 
@@ -40,5 +41,26 @@ uint64_t LazyJoinOperatorHandler::fetch_sub(uint64_t sub) const {
 }
 
 SchemaPtr LazyJoinOperatorHandler::getJoinSchema() const { return joinSchema; }
+
+LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchema,
+                                                 size_t maxNoWorkerThreads,
+                                                 uint64_t counterFinishedBuildingStart,
+                                                 size_t totalSizeForDataStructures) : joinSchema(joinSchema) {
+    counterFinishedBuilding.store(counterFinishedBuildingStart);
+
+    head = detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
+
+
+    workerThreadsHashTable.reserve(maxNoWorkerThreads);
+    for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
+        workerThreadsHashTable.emplace_back(Operators::LocalHashTable(joinSchema, NUM_PARTITIONS, tail, overrunAddress));
+    }
+
+
+}
+LazyJoinOperatorHandler::~LazyJoinOperatorHandler(){
+
+
+}
 
 } // namespace NES::Runtime::Execution
